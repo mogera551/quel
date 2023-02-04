@@ -11,7 +11,7 @@ export default class Data {
   /**
    * @type {class}
    */
-  viewModelClass;
+  ViewModel;
   /**
    * @type {HTMLTemplateElement}
    */

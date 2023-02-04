@@ -4,7 +4,13 @@ import ComponentData from "./Data.js";
 import View from "../view/View.js";
 
 export default class Component extends HTMLElement {
+  /**
+   * @type {ViewModel}
+   */
   viewModel;
+  /**
+   * @type {View}
+   */
   view;
 
   constructor() {
@@ -27,7 +33,7 @@ export default class Component extends HTMLElement {
    * @type {boolean}
    */
   get noShadowRoot() {
-    return this.hasAttribute("no-shadowroot");
+    return this.hasAttribute("no-shadow-root");
   }
 
   /**
