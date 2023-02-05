@@ -18,8 +18,9 @@ export default class Data {
   #template;
   get template() {
     if (typeof this.#template === "undefined") {
+      const html = this.html ? this.html.replaceAll(/\{([^\}]+)\}/g, (match, p1) => `<!--@@${p1}-->`) : "";
       this.#template = document.createElement("template");
-      this.#template.innerHTML = (this.css ? `<style>\n${this.css}\n</style>` : "") + this.html ?? "";
+      this.#template.innerHTML = (this.css ? `<style>\n${this.css}\n</style>` : "") + html;
     }
     return this.#template;
   }
