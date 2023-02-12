@@ -9,9 +9,9 @@ const SELECTOR = "[data-bind]";
  * @returns {integer[]}
  */
 const getNodeRoute = node => {
-  const routeIndexes = [];
+  let routeIndexes = [];
   while(node.parentNode != null) {
-    routeIndexes.unshift(Array.from(node.parentNode.childNodes).indexOf(node));
+    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
     node = node.parentNode;
   }
   return routeIndexes;
