@@ -1,11 +1,27 @@
 import "../types.js";
-import utils from "../utils.js"
+import utils from "../utils.js";
 import ComponentData from "./Data.js";
 import View from "../view/View.js";
+import createViewModel from "../viewModel/Proxy.js";
+import myname from "../myname.js";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Component}
+ */
+const getParentComponent = (node) => {
+  do {
+    node = node.parentNode;
+    if (node == null) return null;
+    if (node instanceof ShadowRoot) return node.host;
+    if (node instanceof Component) return node;
+  } while(true);
+};
 
 export default class Component extends HTMLElement {
   /**
-   * @type {ViewModel}
+   * @type {Proxy<ViewModel>}
    */
   viewModel;
   /**
@@ -15,10 +31,11 @@ export default class Component extends HTMLElement {
 
   constructor() {
     super();
-    const componentData = Component.componentDataByName.get(this.tagName);
-    componentData || utils.raise(`unknown tag name ${this.tagName}`);
     this.noShadowRoot || this.attachShadow({mode: 'open'});
-    this.view = new View(componentData.template, this.viewRootElement);
+    this.#initialPromise = new Promise((resolve, reject) => {
+      this.#initialResolve = resolve;
+      this.#initialReject = reject;
+    });
   }
 
   /**
@@ -44,11 +61,52 @@ export default class Component extends HTMLElement {
     return this.shadowRoot ?? this;
   }
 
+  async build() {
+    const componentData = Component.componentDataByName.get(this.tagName);
+    componentData || utils.raise(`unknown tag name ${this.tagName}`);
+    this.view = new View(componentData.template, this.viewRootElement);
+    this.viewModel = createViewModel(Reflect.construct(componentData.ViewModel, []));
+    await this.viewModel[Symbol.for(`${myname}:viewModel.init`)]();
+
+    this.view.render(this.viewModel);
+  }
+
+  /**
+   * @type {Promise}
+   */
+  #initialPromise;
+  /**
+   * @type {() => {}}
+   */
+  #initialResolve;
+  #initialReject;
+  get initialPromise() {
+    return this.#initialPromise;
+  }
+
+  /**
+   * 親コンポーネント
+   * @type {Component}
+   */
+  #parentComponent;
+  get parentComponent() {
+    if (typeof this.#parentComponent === "undefined") {
+      this.#parentComponent = getParentComponent(this);
+    }
+    return this.#parentComponent;
+  }
+
   /**
    * DOMツリーへ追加
    */
-  connectedCallback() {
-    this.view.render();
+  async connectedCallback() {
+    console.log(`${this.tagName}.connectCallback()`);
+    try {
+      this.parentComponent && await this.parentComponent.initialPromise;
+      await this.build();
+    } finally {
+      this.#initialResolve && this.#initialResolve();
+    }
   }
 
   /**
@@ -79,6 +137,7 @@ export default class Component extends HTMLElement {
    * @type {Map<string,ComponentData>}
    */
   static componentDataByName = new Map;
+  
   /**
    * 
    * @param {string} name 
