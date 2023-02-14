@@ -50,10 +50,9 @@ export default class extends BindDomIf {
      */
     let defaultBind = null;
     binds.forEach(bind => {
-      hasDefaultEvent |= bind.nodeProperty === DEFAULT_EVENT;
+      hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
       defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
-      if (!bind.isEvent || !bind.isInputable) return ;
-      bind.addEventListener();
+      bind.isEvent && bind.addEventListener();
     });
 
     if (defaultBind && !hasDefaultEvent) {
