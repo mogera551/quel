@@ -36,7 +36,7 @@ export default class extends BindDomIf {
     if (bind.nodeProperty !== "if" && bind.nodeProperty !== "loop") {
       utils.raise(`unknown node property ${bind.nodeProperty}`);
     }
-    bind.templateChildren = this.expandLoop(bind);
+    bind.templateChildren = this.expand(bind);
     bind.appendToParent();
     return [ bind ];
   }
@@ -46,7 +46,7 @@ export default class extends BindDomIf {
    * @param {BindInfo} bind 
    * @returns {TemplateChild[]}
    */
-  static expandLoop(bind) {
+  static expand(bind) {
     const { nodeProperty, viewModel, viewModelProperty, filters, indexes, template } = bind;
     const children = [];
 
