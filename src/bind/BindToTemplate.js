@@ -4,8 +4,11 @@ import BindInfo, {TemplateChild} from "./BindInfo.js";
 import utils from "../utils.js";
 import Binder from "./Binder.js";
 import myname from "../myname.js";
+import Parser from "./Parser.js";
+import Filter from "../filter/Filter.js";
 
 const DATASET_BIND_PROPERTY = "bind";
+const SYM_DIRECT_GET = Symbol.for(`${myname}:viewModel.directGet`);
 
 /**
  * 
@@ -24,8 +27,15 @@ export default class extends BindDomIf {
    */
   static bind(node, viewModel, indexes) {
     const template = toHTMLTemplateElement(node);
-    const viewModelProperty = template.dataset[DATASET_BIND_PROPERTY];
-    const bind = Object.assign(new BindInfo, {viewModelProperty, node, viewModel, indexes});
+    const bindText = template.dataset[DATASET_BIND_PROPERTY];
+    const binds = Parser
+      .parse(bindText, "")
+      .map(info => Object.assign(new BindInfo, info, {node, viewModel, indexes}));
+    if (binds.length === 0) return [];
+    const bind = binds[0];
+    if (bind.nodeProperty !== "if" && bind.nodeProperty !== "loop") {
+      utils.raise(`unknown node property ${bind.nodeProperty}`);
+    }
     bind.templateChildren = this.expandLoop(bind);
     bind.appendToParent();
     return [ bind ];
@@ -37,17 +47,26 @@ export default class extends BindDomIf {
    * @returns {TemplateChild[]}
    */
   static expandLoop(bind) {
-    const { viewModel, viewModelProperty, indexes, template } = bind;
+    const { nodeProperty, viewModel, viewModelProperty, filters, indexes, template } = bind;
     const children = [];
 
-    const values = viewModel[Symbol.for(`${myname}:viewModel.directGet`)](viewModelProperty, indexes);
-    Object.keys(values).forEach(index => {
-      const newIndexes = indexes.concat(index);
-      const rootElement = document.importNode(template.content, true);
-      const binds = Binder.bind(template, rootElement, viewModel, newIndexes);
-      const childNodes = Array.from(rootElement.childNodes);
-      children.push(Object.assign(new TemplateChild, { binds, childNodes }));
-    });
+    const viewModelValue = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (nodeProperty === "if") {
+      if (viewModelValue) {
+        const rootElement = document.importNode(template.content, true);
+        const binds = Binder.bind(template, rootElement, viewModel, indexes);
+        const childNodes = Array.from(rootElement.childNodes);
+        children.push(Object.assign(new TemplateChild, { binds, childNodes }));
+      }
+    } else if (nodeProperty === "loop") {
+      Object.keys(viewModelValue).forEach(index => {
+        const newIndexes = indexes.concat(index);
+        const rootElement = document.importNode(template.content, true);
+        const binds = Binder.bind(template, rootElement, viewModel, newIndexes);
+        const childNodes = Array.from(rootElement.childNodes);
+        children.push(Object.assign(new TemplateChild, { binds, childNodes }));
+      });
+    }
 
     return children;
   }
