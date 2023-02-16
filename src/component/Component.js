@@ -4,6 +4,7 @@ import ComponentData from "./Data.js";
 import View from "../view/View.js";
 import createViewModel from "../viewModel/Proxy.js";
 import { SYM_CALL_INIT } from "../viewModel/Symbols.js";
+import BindInfo from "../bind/BindInfo.js";
 
 /**
  * 
@@ -28,6 +29,10 @@ export default class Component extends HTMLElement {
    * @type {View}
    */
   view;
+  /**
+   * @type {BindInfo[]}
+   */
+  binds = [];
 
   constructor() {
     super();
@@ -69,7 +74,7 @@ export default class Component extends HTMLElement {
     this.viewModel = createViewModel(this, viewModel);
     await this.viewModel[SYM_CALL_INIT]();
 
-    this.view.render(this.viewModel);
+    this.binds = this.view.render(this.viewModel);
   }
 
   /**
@@ -132,6 +137,12 @@ export default class Component extends HTMLElement {
    */
   attributeChangedCallback(name, oldValue, newValue) {
     
+  }
+
+  notify(viewModelProperty, indexes) {
+    this.binds
+      .filter(bind => bind.viewModelProperty === viewModelProperty)
+      .forEach(bind => bind.updateNode());
   }
 
   /**

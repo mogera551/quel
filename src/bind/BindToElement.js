@@ -6,6 +6,7 @@ import utils from "../utils.js";
 
 const DATASET_BIND_PROPERTY = "bind";
 const DEFAULT_EVENT = "oninput";
+const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
 const DEFAULT_PROPERTY = "textContent";
 
 /**
@@ -56,7 +57,7 @@ export default class extends BindDomIf {
     });
 
     if (defaultBind && !hasDefaultEvent) {
-      element.addEventListener(DEFAULT_EVENT, (event) => {
+      element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
         defaultBind.updateViewModel();
       });
     }
