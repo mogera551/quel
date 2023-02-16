@@ -47,7 +47,7 @@ export default class PropertyInfo {
    * @param {Component} component 
    * @returns 
    */
-  parentGetter(component) {
+  nonPrimitiveGetter(component) {
     const { parentName, loopLevel, lastElement } = this;
     const viewModel = component.viewModel;
     const parent = viewModel[parentName];
@@ -60,7 +60,7 @@ export default class PropertyInfo {
    * @param {any} value 
    * @returns 
    */
-  parentSetter(component, value) {
+  nonPrimitiveSetter(component, value) {
     const { parentName, loopLevel, lastElement } = this;
     const viewModel = component.viewModel;
     const parent = viewModel[parentName];
@@ -78,10 +78,10 @@ export default class PropertyInfo {
     return {
       get : this.isPrimitive ?
         () => Reflect.apply(this.primitiveGetter, this, [component]) : 
-        () => Reflect.apply(this.parentGetter, this, [component]),
+        () => Reflect.apply(this.nonPrimitiveGetter, this, [component]),
       set : this.isPrimitive ?
         value => Reflect.apply(this.primitiveSetter, this, [component, value]) : 
-        value => Reflect.apply(this.parentSetter, this, [component, value]),
+        value => Reflect.apply(this.nonPrimitiveSetter, this, [component, value]),
       enumerable: true, 
       configurable: true,
     }
