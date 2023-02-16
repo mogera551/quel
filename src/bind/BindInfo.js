@@ -1,13 +1,10 @@
 import "../types.js";
 import utils from "../utils.js";
-import myname from "../myname.js"
 import NodePropertyTypeGetter, { NodePropertyType } from "../node/PropertyType.js";
 import Filter from "../filter/Filter.js";
+import { SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_CALL } from "../viewModel/Symbols.js";
 
 const PREFIX_EVENT = "on";
-const SYM_DIRECT_SET = Symbol.for(`${myname}:viewModel.directSet`);
-const SYM_DIRECT_GET = Symbol.for(`${myname}:viewModel.directGet`);
-const SYM_DIRECT_CALL = Symbol.for(`${myname}:viewModel.directCall`);
 const toHTMLElement = node => node instanceof HTMLElement ? node : utils.raise(`not HTMLElement`);
 const toHTMLInputElement = node => node instanceof HTMLInputElement ? node : utils.raise(`not HTMLInputElement`);
 
@@ -143,21 +140,21 @@ export default class BindInfo {
 
   #updateNodeByTopLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     node[nodeProperty] = value;
   }
 
   #updateNodeBy2ndLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const [nodeProp1, nodeProp2] = nodeProperty.split(".");
-    const value = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     node[nodeProp1][nodeProp2] = value;
   }
 
   #updateNodeBy3rdLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const [nodeProp1, nodeProp2, nodeProp3] = nodeProperty.split(".");
-    const value = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     node[nodeProp1][nodeProp2][nodeProp3] = value;
   }
 
@@ -165,21 +162,21 @@ export default class BindInfo {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const [type, className] = nodeProperty.split(".");
     const element = toHTMLElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     value ? element.classList.add(className) : element.classList.remove(className);
   }
 
   #updateNodeByRadio() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const radio = toHTMLInputElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     radio.checked = value === radio.value;
   }
 
   #updateNodeByCheckbox() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const checkbox = toHTMLInputElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     checkbox.checked = value.find(value => value === checkbox.value);
   }
 
@@ -203,21 +200,21 @@ export default class BindInfo {
   #updateViewModelByTopLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const value = Filter.applyForInput(node[nodeProperty], filters);
-    viewModel[SYM_DIRECT_SET](viewModelProperty, indexes, value);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
   }
 
   #updateViewModelBy2ndLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const [nodeProp1, nodeProp2] = nodeProperty.split(".");
     const value = Filter.applyForInput(node[nodeProp1][nodeProp2], filters);
-    viewModel[SYM_DIRECT_SET](viewModelProperty, indexes, value);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
   }
 
   #updateViewModelBy3rdLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const [nodeProp1, nodeProp2, nodeProp3] = nodeProperty.split(".");
     const value = Filter.applyForInput(node[nodeProp1][nodeProp2][nodeProp3], filters);
-    viewModel[SYM_DIRECT_SET](viewModelProperty, indexes, value);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
   }
 
   #updateViewModelByClassName() {
@@ -225,7 +222,7 @@ export default class BindInfo {
     const [type, className] = nodeProperty.split(".");
     const element = toHTMLElement(node);
     const value = Filter.applyForInput(element.classList.contains(className), filters);
-    viewModel[SYM_DIRECT_SET](viewModelProperty, indexes, value);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
   }
 
   #updateViewModelByRadio() {
@@ -233,7 +230,7 @@ export default class BindInfo {
     const radio = toHTMLInputElement(node);
     const radioValue = Filter.applyForInput(radio.value, filters);
     if (radio.checked) {
-      viewModel[SYM_DIRECT_SET](viewModelProperty, indexes, radioValue);
+      viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, radioValue);
     }
   }
 
@@ -241,9 +238,9 @@ export default class BindInfo {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = bind;
     const checkbox = toHTMLInputElement(node);
     const checkboxValue = Filter.applyForInput(checkbox.value, filters);
-    const value = new Set(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes));
+    const value = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes));
     (checkbox.checked) ? value.add(checkboxValue) : value.delete(checkboxValue);
-    viewModel[SYM_DIRECT_SET](viewModelProperty, indexes, Array.from(value));
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, Array.from(value));
   }
 
   /**
@@ -272,7 +269,7 @@ export default class BindInfo {
   addEventListener() {
     const {element, eventType, viewModel, viewModelProperty, indexes, filters} = this;
     element.addEventListener(eventType, (event) => {
-      viewModel[SYM_DIRECT_CALL](viewModelProperty, indexes, event);
+      viewModel[SYM_CALL_DIRECT_CALL](viewModelProperty, indexes, event);
     });
   }
 

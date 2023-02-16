@@ -3,12 +3,11 @@ import BindDomIf from "./BindToDomIf.js";
 import BindInfo, {TemplateChild} from "./BindInfo.js";
 import utils from "../utils.js";
 import Binder from "./Binder.js";
-import myname from "../myname.js";
 import Parser from "./Parser.js";
 import Filter from "../filter/Filter.js";
+import { SYM_CALL_DIRECT_GET } from "../viewModel/Symbols.js";
 
 const DATASET_BIND_PROPERTY = "bind";
-const SYM_DIRECT_GET = Symbol.for(`${myname}:viewModel.directGet`);
 
 /**
  * 
@@ -50,7 +49,7 @@ export default class extends BindDomIf {
     const { nodeProperty, viewModel, viewModelProperty, filters, indexes, template } = bind;
     const children = [];
 
-    const viewModelValue = Filter.applyForOutput(viewModel[SYM_DIRECT_GET](viewModelProperty, indexes), filters);
+    const viewModelValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     if (nodeProperty === "if") {
       if (viewModelValue) {
         const rootElement = document.importNode(template.content, true);
