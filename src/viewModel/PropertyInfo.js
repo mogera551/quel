@@ -50,9 +50,8 @@ export default class PropertyInfo {
   nonPrimitiveGetter(component) {
     const { parentName, loopLevel, lastElement } = this;
     const viewModel = component.viewModel;
-    const parent = viewModel[parentName];
-    return (lastElement === "*") ?
-      parent[viewModel[SYM_GET_INDEXES][loopLevel - 1]] : parent[lastElement];
+    const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
+    return viewModel[parentName][index];
   }
   /**
    * 
@@ -63,10 +62,8 @@ export default class PropertyInfo {
   nonPrimitiveSetter(component, value) {
     const { parentName, loopLevel, lastElement } = this;
     const viewModel = component.viewModel;
-    const parent = viewModel[parentName];
-    (lastElement === "*") ?
-      (parent[viewModel[SYM_GET_INDEXES][loopLevel - 1]] = value) : 
-      (parent[lastElement] = value);
+    const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
+    viewModel[parentName][index] = value;
     return true;
   }
   /**
