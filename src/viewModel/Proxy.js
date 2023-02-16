@@ -7,9 +7,10 @@ import {
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
 
-const CONTEXT_INDEXES = new Set([
-  "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8"
-]);
+const MAX_INDEXES_LEVEL = 8;
+const CONTEXT_INDEXES = new Set(
+  [...Array(MAX_INDEXES_LEVEL)].map((content,index) => `$${index + 1}`)   
+);
 
 class Handler {
   stackIndexes = [];
