@@ -8,6 +8,17 @@ export default class {
   }
 
   /**
+   * 関数かどうかをチェック
+   * @param {any} obj 
+   * @returns {boolean}
+   */
+  static isFunction = (obj) => {
+    const toString = Object.prototype.toString;
+    const text = toString.call(obj).slice(8, -1).toLowerCase();
+    return (text === "function" || text === "asyncfunction");
+  }
+
+  /**
    * 
    * @param {HTMLElement} element 
    * @returns {boolean}

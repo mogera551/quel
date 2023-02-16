@@ -3,7 +3,7 @@ import utils from "../utils.js";
 import ComponentData from "./Data.js";
 import View from "../view/View.js";
 import createViewModel from "../viewModel/Proxy.js";
-import myname from "../myname.js";
+import { SYM_CALL_INIT } from "../viewModel/Symbols.js";
 
 /**
  * 
@@ -65,8 +65,9 @@ export default class Component extends HTMLElement {
     const componentData = Component.componentDataByName.get(this.tagName);
     componentData || utils.raise(`unknown tag name ${this.tagName}`);
     this.view = new View(componentData.template, this.viewRootElement);
-    this.viewModel = createViewModel(Reflect.construct(componentData.ViewModel, []));
-    await this.viewModel[Symbol.for(`${myname}:viewModel.init`)]();
+    const viewModel = Reflect.construct(componentData.ViewModel, []);
+    this.viewModel = createViewModel(this, viewModel);
+    await this.viewModel[SYM_CALL_INIT]();
 
     this.view.render(this.viewModel);
   }

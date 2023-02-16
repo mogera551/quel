@@ -1,19 +1,90 @@
+import Component from "../component/Component.js";
+import { SYM_GET_INDEXES, SYM_GET_TARGET } from "./Symbols.js";
+
 export default class PropertyInfo {
 
-  prop;
+  name;
   elements;
   loopLevel;
-  parent;
+  parentProp;
   lastElement;
   regexp;
 
-  constructor(prop) {
-    this.prop = prop;
-    this.elements = prop.split(".");
-    this.loopLevel = this.paths.reduce((count, element) => count + (element === "*") ? 1 : 0, 0);
-    this.parent = this.elements.slice(0, -1).join(".");
+  constructor(name) {
+    this.name = name;
+    this.elements = name.split(".");
+    this.loopLevel = this.elements.reduce((count, element) => count + (element === "*") ? 1 : 0, 0);
+    this.parentName = this.elements.slice(0, -1).join(".");
     this.lastElement = this.elements.at(-1) ?? null;
-    this.regexp = (this.loopLevel > 0) ? new RegExp("^" + prop.replaceAll("*", "(\\w+)").replaceAll(".", "\\.") + "$") : null;
+    this.regexp = (this.loopLevel > 0) ? new RegExp("^" + name.replaceAll("*", "(\\w+)").replaceAll(".", "\\.") + "$") : null;
+    this.isPrimitive = this.elements.length === 1 && this.loopLevel === 0;
+    this.privateName = this.isPrimitive ? `_${name}` : null;
+    this.isObject = this.elements.length > 1 && this.loopLevel === 0;
+    this.isLoop = this.elements.length > 1 && this.loopLevel > 0;
+    this.isNotPrimitive = ! this.isPrimitive ;
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @returns 
+   */
+  primitiveGetter(component) {
+    return component.viewModel[this.privateName];
+  }
+  /**
+   * 
+   * @param {Component} component 
+   * @param {any} value 
+   * @returns 
+   */
+  primitiveSetter(component, value) {
+    component.viewModel[this.privateName] = value;
+    return true;
+  }
+  /**
+   * 
+   * @param {Component} component 
+   * @returns 
+   */
+  parentGetter(component) {
+    const { parentName, loopLevel, lastElement } = this;
+    const viewModel = component.viewModel;
+    const parent = viewModel[parentName];
+    return (lastElement === "*") ?
+      parent[viewModel[SYM_GET_INDEXES][loopLevel - 1]] : parent[lastElement];
+  }
+  /**
+   * 
+   * @param {Component} component 
+   * @param {any} value 
+   * @returns 
+   */
+  parentSetter(component, value) {
+    const { parentName, loopLevel, lastElement } = this;
+    const viewModel = component.viewModel;
+    const parent = viewModel[parentName];
+    (lastElement === "*") ?
+      (parent[viewModel[SYM_GET_INDEXES][loopLevel - 1]] = value) : 
+      (parent[lastElement] = value);
+    return true;
+  }
+  /**
+   * 
+   * @param {Component} component 
+   * @returns {PropertyDescriptor}
+   */
+  createPropertyDescriptor(component) {
+    return {
+      get : this.isPrimitive ?
+        () => Reflect.apply(this.primitiveGetter, this, [component]) : 
+        () => Reflect.apply(this.parentGetter, this, [component]),
+      set : this.isPrimitive ?
+        value => Reflect.apply(this.primitiveSetter, this, [component, value]) : 
+        value => Reflect.apply(this.parentSetter, this, [component, value]),
+      enumerable: true, 
+      configurable: true,
+    }
   }
 
   /**
