@@ -6,6 +6,7 @@ import {
 } from "./Symbols.js";
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
+import PropertyInfo from "./PropertyInfo.js";
 
 const MAX_INDEXES_LEVEL = 8;
 const CONTEXT_INDEXES = new Set(
@@ -18,13 +19,19 @@ class Handler {
    * @type {Component}
    */
   component;
+  /**
+   * @type {PropertyInfo[]}
+   */
+  definedProperties;
 
   /**
    * 
    * @param {Component} component 
+   * @param {PropertyInfo[]} definedProperties
    */
-  constructor(component) {
+  constructor(component, definedProperties) {
     this.component = component;
+    this.definedProperties = definedProperties;
   }
 
   get lastIndexes() {
@@ -129,9 +136,10 @@ class Handler {
 /**
  * 
  * @param {Component} component
- * @param {ViewModel} viewModel 
+ * @param {ViewModel} origViewModel 
  */
-export default function create(component, viewModel) {
-  return new Proxy(Accessor.convert(component, viewModel), new Handler(component));
+export default function create(component, origViewModel) {
+  const { viewModel, definedProperties } = Accessor.convert(component, origViewModel);
+  return new Proxy(viewModel, new Handler(component, definedProperties));
 
 }

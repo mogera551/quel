@@ -6,9 +6,14 @@ export default class PropertyInfo {
   name;
   elements;
   loopLevel;
-  parentProp;
+  parentName;
   lastElement;
   regexp;
+  isPrimitive;
+  privateName;
+  isObject;
+  isLoop;
+  isNotPrimitive;
 
   constructor(name) {
     this.name = name;
