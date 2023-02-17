@@ -79,7 +79,18 @@ export default class BindInfo {
   /**
    * @type {string[]}
    */
-  indexes;
+  #indexes;
+  #indexesString;
+  get indexes() {
+    return this.#indexes;
+  }
+  set indexes(value) {
+    this.#indexes = value;
+    this.#indexesString = value.toString();
+  }
+  get indexesString() {
+    return this.#indexesString;
+  }
 
   /**
    * @type {TemplateChild[]}
@@ -293,6 +304,16 @@ export default class BindInfo {
     binds.flatMap(traverse).forEach(bind => {
       bind.updateNode();
     });
+  }
+
+  static allBinds(binds) {
+    const traverse = bind => 
+      [bind].concat(
+        bind.templateChildren.flatMap(child => 
+          child.binds.flatMap(bind => traverse(bind))
+        )
+      );
+    return binds.flatMap(traverse);    
   }
 
 }

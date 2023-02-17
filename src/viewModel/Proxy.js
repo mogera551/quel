@@ -20,9 +20,13 @@ class Handler {
    */
   component;
   /**
+   * @type {Map<string,PropertyInfo>}
+   */
+  definedPropertyByProp = new Map;
+  /**
    * @type {PropertyInfo[]}
    */
-  definedProperties;
+  loopProperties = [];
 
   /**
    * 
@@ -31,7 +35,8 @@ class Handler {
    */
   constructor(component, definedProperties) {
     this.component = component;
-    this.definedProperties = definedProperties;
+    this.definedPropertyByProp = new Map(definedProperties.map(property => ([property.name, property])));
+    this.loopProperties = definedProperties.filter(property => property.isLoop);
   }
 
   get lastIndexes() {
@@ -50,11 +55,15 @@ class Handler {
     this.component.notify(prop, indexes)
   }
 
+  #getPropertyValue(target, prop, receiver) {
+    const value = Reflect.get(target, prop, receiver);
+    return value;
+  }
   [SYM_CALL_DIRECT_GET](prop, indexes, target, receiver) {
     let value;
     this.stackIndexes.push(indexes);
     try {
-      value = Reflect.get(target, prop, receiver);
+      value = this.#getPropertyValue(target, prop, receiver);
     } finally {
       this.stackIndexes.pop();
     }
@@ -62,11 +71,16 @@ class Handler {
 
   }
 
+  #setPropertyValue(target, prop, value, receiver) {
+    const indexes = this.lastIndexes;
+    Reflect.set(target, prop, value, receiver);
+    receiver[SYM_CALL_WRITE](prop, indexes);
+    return true;
+  }
   [SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver) {
     this.stackIndexes.push(indexes);
     try {
-      Reflect.set(target, prop, value, receiver);
-      receiver[SYM_CALL_WRITE](prop, indexes);
+      this.#setPropertyValue(target, prop, value, receiver);
     } finally {
       this.stackIndexes.pop();
     }
@@ -109,14 +123,28 @@ class Handler {
           return () => 
             Reflect.apply(this[SYM_CALL_INIT], this, [target, receiver]);
         case SYM_CALL_WRITE:
-          return prop => 
-            Reflect.apply(this[SYM_CALL_WRITE], this, [prop, target, receiver]);
+          return (prop, indexes) => 
+            Reflect.apply(this[SYM_CALL_WRITE], this, [prop, indexes, target, receiver]);
       }
     }
     if (CONTEXT_INDEXES.has(prop)) {
       return this.lastIndexes[parseInt(prop.slice(1)) - 1];
     }
-    return Reflect.get(target, prop, receiver);
+
+    if (this.definedPropertyByProp.has(prop)) {
+      return this.#getPropertyValue(target, prop, receiver);
+    } else {
+      if (prop[0] !== "_") {
+        let result;
+        const loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
+        if (loopProperty) {
+          const prop = loopProperty.name;
+          const indexes = result.slice(1);
+          return this[SYM_CALL_DIRECT_GET](prop, indexes, target, receiver);
+        }
+      }
+      return Reflect.get(target, prop, receiver);
+    }
   }
 
   /**
@@ -127,9 +155,22 @@ class Handler {
    * @param {Proxy<ViewModel>} receiver 
    */
   set(target, prop, value, receiver) {
-    Reflect.set(target, prop, value, receiver);
-    receiver[SYM_CALL_WRITE](prop, this.lastIndexes);
-    return true;
+    if (this.definedPropertyByProp.has(prop)) {
+      return this.#setPropertyValue(target, prop, value, receiver);
+    } else {
+      if (prop[0] !== "_") {
+        let result;
+        const loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
+        if (loopProperty) {
+          const prop = loopProperty.name;
+          const indexes = result.slice(1);
+          this[SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver);
+          return true;
+        }
+      }
+      Reflect.set(target, prop, value, receiver);
+      return true;
+    }
   }
 }
 

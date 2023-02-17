@@ -139,9 +139,15 @@ export default class Component extends HTMLElement {
     
   }
 
+  /**
+   * 
+   * @param {string} viewModelProperty 
+   * @param {integer[]} indexes 
+   */
   notify(viewModelProperty, indexes) {
-    this.binds
-      .filter(bind => bind.viewModelProperty === viewModelProperty)
+    const indexesString = indexes.toString();
+    BindInfo.allBinds(this.binds)
+      .filter(bind => bind.viewModelProperty === viewModelProperty && bind.indexesString === indexesString)
       .forEach(bind => bind.updateNode());
   }
 
