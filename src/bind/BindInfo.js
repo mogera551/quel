@@ -3,6 +3,7 @@ import utils from "../utils.js";
 import NodePropertyTypeGetter, { NodePropertyType } from "../node/PropertyType.js";
 import Filter from "../filter/Filter.js";
 import { SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_CALL } from "../viewModel/Symbols.js";
+import BindToTemplate from "./BindToTemplate.js";
 
 const PREFIX_EVENT = "on";
 const toHTMLElement = node => node instanceof HTMLElement ? node : utils.raise(`not HTMLElement`);
@@ -132,7 +133,7 @@ export default class BindInfo {
       case NodePropertyType.className: this.#updateNodeByClassName(); break;
       case NodePropertyType.radio: this.#updateNodeByRadio(); break;
       case NodePropertyType.checkbox: this.#updateNodeByCheckbox(); break;
-      case NodePropertyType.template: break;
+      case NodePropertyType.template: this.#updateNodeByTemplate(); break;
       case NodePropertyType.event: break;
       default: utils.raise(`unknown nodePropertyType ${this.nodePropertyType}`);
     }
@@ -180,6 +181,11 @@ export default class BindInfo {
     checkbox.checked = value.find(value => value === checkbox.value);
   }
 
+  #updateNodeByTemplate() {
+    this.removeFromParent();
+    this.templateChildren = BindToTemplate.expand(this);
+    this.appendToParent();
+  }
   /**
    * ViewModelのプロパティを更新する
    */

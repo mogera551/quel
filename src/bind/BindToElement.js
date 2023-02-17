@@ -42,7 +42,11 @@ export default class extends BindDomIf {
     // パース
     const binds = Perser
         .parse(bindText, defaultName)
-        .map(info => Object.assign(new BindInfo, info, {node, viewModel, indexes}));
+        .map(info => {
+          const bind = Object.assign(new BindInfo, info, {node, viewModel, indexes});
+          bind.updateNode();
+          return bind;
+        });
 
     // イベントハンドラ設定
     let hasDefaultEvent = false;

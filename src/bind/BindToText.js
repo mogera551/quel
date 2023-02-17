@@ -28,9 +28,14 @@ export default class extends BindDomIf {
     const textNode = document.createTextNode("");
     comment.parentNode.replaceChild(textNode, comment);
     // パース
-    return Perser
+    const binds = Perser
       .parse(bindText, DEFAULT_PROPERTY)
-      .map(info => Object.assign(new BindInfo, info, {node:textNode, viewModel, indexes}));
+      .map(info => {
+        const bind = Object.assign(new BindInfo, info, {node:textNode, viewModel, indexes});
+        bind.updateNode();
+        return bind;
+      });
+    return binds;
   }
 
 }

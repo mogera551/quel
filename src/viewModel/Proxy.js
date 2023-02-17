@@ -37,8 +37,9 @@ class Handler {
   }
 
   async [SYM_CALL_WRITE](prop, indexes, target, receiver) {
-    if (!("$onwrite" in target)) return;
-    await Reflect.apply(target["$onwrite"], receiver, [ prop, indexes ]);
+    if ("$onwrite" in target) {
+      await Reflect.apply(target["$onwrite"], receiver, [ prop, indexes ]);
+    }
     this.component.notify(prop, indexes)
   }
 
