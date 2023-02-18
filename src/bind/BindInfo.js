@@ -234,6 +234,7 @@ export default class BindInfo {
   }
 
   #updateNodeByTemplate() {
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
       this.removeFromParent();
