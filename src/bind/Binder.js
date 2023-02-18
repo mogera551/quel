@@ -20,7 +20,8 @@ export default class {
     return nodes.flatMap(node => 
       (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, viewModel, indexes) :
       (node instanceof HTMLElement) ? BindToElement.bind(node, viewModel, indexes) :
-      (node instanceof Comment) ? BindToText.bind(node, viewModel, indexes) : utils.raise(`unknown node type`)
+      (node instanceof Comment) ? BindToText.bind(node, viewModel, indexes) : 
+      utils.raise(`unknown node type`)
     );
   }
 

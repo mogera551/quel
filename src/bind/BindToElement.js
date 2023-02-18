@@ -3,6 +3,8 @@ import BindDomIf from "./BindToDomIf.js";
 import BindInfo from "./BindInfo.js";
 import Perser from "./Parser.js";
 import utils from "../utils.js";
+import Thread from "../thread/Thread.js";
+import { ProcessData } from "../thread/Processor.js";
 
 const DATASET_BIND_PROPERTY = "bind";
 const DEFAULT_EVENT = "oninput";
@@ -62,7 +64,10 @@ export default class extends BindDomIf {
 
     if (defaultBind && !hasDefaultEvent) {
       element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
-        defaultBind.updateViewModel();
+        const process = new ProcessData(defaultBind.updateViewModel, defaultBind, []);
+        Thread.current.addProcess(process);
+        // defaultBind.updateViewModel();
+        
       });
     }
 

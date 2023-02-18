@@ -7,6 +7,9 @@ import {
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
 import PropertyInfo from "./PropertyInfo.js";
+import { ProcessData } from "../thread/Processor.js";
+import Thread from "../thread/Thread.js";
+import { NotifyData } from "../thread/Notifier.js";
 
 const MAX_INDEXES_LEVEL = 8;
 const CONTEXT_INDEXES = new Set(
@@ -48,11 +51,12 @@ class Handler {
     return await Reflect.apply(target["$oninit"], receiver, []);
   }
 
-  async [SYM_CALL_WRITE](prop, indexes, target, receiver) {
+  [SYM_CALL_WRITE](prop, indexes, target, receiver) {
     if ("$onwrite" in target) {
-      await Reflect.apply(target["$onwrite"], receiver, [ prop, indexes ]);
+      const process = new ProcessData(target["$onwrite"], receiver, [ prop, indexes ]);
+      Thread.current.addProcess(process);
+      // await Reflect.apply(target["$onwrite"], receiver, [ prop, indexes ]);
     }
-    this.component.notify(prop, indexes)
   }
 
   #getPropertyValue(target, prop, receiver) {
@@ -75,6 +79,11 @@ class Handler {
     const indexes = this.lastIndexes;
     Reflect.set(target, prop, value, receiver);
     receiver[SYM_CALL_WRITE](prop, indexes);
+
+    const notify = new NotifyData(this.component, prop, indexes);
+    Thread.current.addNotify(notify);
+//    this.component.notify(prop, indexes)
+
     return true;
   }
   [SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver) {

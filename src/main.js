@@ -1,5 +1,6 @@
 import "./types.js";
 import Component from "./component/Component.js";
+import "./thread/Thread.js"; // threadの開始
 
 export default class {
   /**

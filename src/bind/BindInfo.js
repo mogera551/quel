@@ -4,6 +4,9 @@ import NodePropertyTypeGetter, { NodePropertyType } from "../node/PropertyType.j
 import Filter from "../filter/Filter.js";
 import { SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_CALL } from "../viewModel/Symbols.js";
 import BindToTemplate from "./BindToTemplate.js";
+import Thread from "../thread/Thread.js";
+import { ProcessData } from "../thread/Processor.js";
+import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 const PREFIX_EVENT = "on";
 const toHTMLElement = node => node instanceof HTMLElement ? node : utils.raise(`not HTMLElement`);
@@ -91,6 +94,14 @@ export default class BindInfo {
   get indexesString() {
     return this.#indexesString;
   }
+  /**
+   * @type {any}
+   */
+  lastNodeValue;
+  /**
+   * @type
+   */
+  lastViewModelValue;
 
   /**
    * @type {TemplateChild[]}
@@ -153,21 +164,36 @@ export default class BindInfo {
   #updateNodeByTopLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    node[nodeProperty] = value;
+    if (this.lastViewModelValue !== value) {
+      Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        node[nodeProperty] = value;
+      }));
+      this.lastViewModelValue = value;
+    }
   }
 
   #updateNodeBy2ndLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const [nodeProp1, nodeProp2] = nodeProperty.split(".");
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    node[nodeProp1][nodeProp2] = value;
+    if (this.lastViewModelValue !== value) {
+      Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        node[nodeProp1][nodeProp2] = value;
+      }));
+      this.lastViewModelValue = value;
+    }
   }
 
   #updateNodeBy3rdLevel() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const [nodeProp1, nodeProp2, nodeProp3] = nodeProperty.split(".");
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    node[nodeProp1][nodeProp2][nodeProp3] = value;
+    if (this.lastViewModelValue !== value) {
+      Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        node[nodeProp1][nodeProp2][nodeProp3] = value;
+      }));
+      this.lastViewModelValue = value;
+    }
   }
 
   #updateNodeByClassName() {
@@ -175,27 +201,46 @@ export default class BindInfo {
     const [type, className] = nodeProperty.split(".");
     const element = toHTMLElement(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    value ? element.classList.add(className) : element.classList.remove(className);
+    if (this.lastViewModelValue !== value) {
+      Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        value ? element.classList.add(className) : element.classList.remove(className);
+      }));
+      this.lastViewModelValue = value;
+    }
   }
 
   #updateNodeByRadio() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const radio = toHTMLInputElement(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    radio.checked = value === radio.value;
+    if (this.lastViewModelValue !== value) {
+      Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        radio.checked = value === radio.value;
+      }));
+      this.lastViewModelValue = value;
+    }
   }
 
   #updateNodeByCheckbox() {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const checkbox = toHTMLInputElement(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    checkbox.checked = value.find(value => value === checkbox.value);
+    if (this.lastViewModelValue !== value) {
+      Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        checkbox.checked = value.find(value => value === checkbox.value);
+      }));
+      this.lastViewModelValue = value;
+    }
   }
 
   #updateNodeByTemplate() {
-    this.removeFromParent();
-    this.templateChildren = BindToTemplate.expand(this);
-    this.appendToParent();
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    Thread.current.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      this.removeFromParent();
+      this.templateChildren = BindToTemplate.expand(this);
+      this.appendToParent();
+    }));
+    this.lastViewModelValue = value;
   }
   /**
    * ViewModelのプロパティを更新する
@@ -218,6 +263,7 @@ export default class BindInfo {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
     const value = Filter.applyForInput(node[nodeProperty], filters);
     viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
   }
 
   #updateViewModelBy2ndLevel() {
@@ -225,6 +271,7 @@ export default class BindInfo {
     const [nodeProp1, nodeProp2] = nodeProperty.split(".");
     const value = Filter.applyForInput(node[nodeProp1][nodeProp2], filters);
     viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
   }
 
   #updateViewModelBy3rdLevel() {
@@ -232,6 +279,7 @@ export default class BindInfo {
     const [nodeProp1, nodeProp2, nodeProp3] = nodeProperty.split(".");
     const value = Filter.applyForInput(node[nodeProp1][nodeProp2][nodeProp3], filters);
     viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
   }
 
   #updateViewModelByClassName() {
@@ -240,6 +288,7 @@ export default class BindInfo {
     const element = toHTMLElement(node);
     const value = Filter.applyForInput(element.classList.contains(className), filters);
     viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
   }
 
   #updateViewModelByRadio() {
@@ -248,6 +297,7 @@ export default class BindInfo {
     const radioValue = Filter.applyForInput(radio.value, filters);
     if (radio.checked) {
       viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, radioValue);
+      this.lastViewModelValue = radioValue;
     }
   }
 
@@ -255,9 +305,11 @@ export default class BindInfo {
     const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = bind;
     const checkbox = toHTMLInputElement(node);
     const checkboxValue = Filter.applyForInput(checkbox.value, filters);
-    const value = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes));
-    (checkbox.checked) ? value.add(checkboxValue) : value.delete(checkboxValue);
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, Array.from(value));
+    const setOfValue = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes));
+    (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
+    const value = Array.from(setOfValue);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
   }
 
   /**
@@ -286,7 +338,12 @@ export default class BindInfo {
   addEventListener() {
     const {element, eventType, viewModel, viewModelProperty, indexes, filters} = this;
     element.addEventListener(eventType, (event) => {
-      viewModel[SYM_CALL_DIRECT_CALL](viewModelProperty, indexes, event);
+      const process = new ProcessData(
+        viewModel[SYM_CALL_DIRECT_CALL], viewModel, [viewModelProperty, indexes, event]
+      );
+      Thread.current.addProcess(process);
+      //viewModel[SYM_CALL_DIRECT_CALL](viewModelProperty, indexes, event);
+
     });
   }
 
