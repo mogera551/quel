@@ -1,5 +1,6 @@
 import Component from "../component/Component.js";
 import { SYM_GET_INDEXES, SYM_GET_TARGET } from "./Symbols.js";
+import "../types.js";
 
 export default class PropertyInfo {
 
@@ -31,42 +32,40 @@ export default class PropertyInfo {
 
   /**
    * 
-   * @param {Component} component 
+   * @param {ViewModel} viewModel 
    * @returns 
    */
-  primitiveGetter(component) {
-    return component.viewModel[this.privateName];
+  primitiveGetter(viewModel) {
+    return viewModel[this.privateName];
   }
   /**
    * 
-   * @param {Component} component 
+   * @param {ViewModel} viewModel 
    * @param {any} value 
    * @returns 
    */
-  primitiveSetter(component, value) {
-    component.viewModel[this.privateName] = value;
+  primitiveSetter(viewModel, value) {
+    viewModel[this.privateName] = value;
     return true;
   }
   /**
    * 
-   * @param {Component} component 
+   * @param {ViewModel} viewModel 
    * @returns 
    */
-  nonPrimitiveGetter(component) {
+  nonPrimitiveGetter(viewModel) {
     const { parentName, loopLevel, lastElement } = this;
-    const viewModel = component.viewModel;
     const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
     return viewModel[parentName][index];
   }
   /**
    * 
-   * @param {Component} component 
+   * @param {ViewModel} viewModel 
    * @param {any} value 
    * @returns 
    */
-  nonPrimitiveSetter(component, value) {
+  nonPrimitiveSetter(viewModel, value) {
     const { parentName, loopLevel, lastElement } = this;
-    const viewModel = component.viewModel;
     const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
     viewModel[parentName][index] = value;
     return true;
@@ -79,11 +78,11 @@ export default class PropertyInfo {
   createPropertyDescriptor(component) {
     return {
       get : this.isPrimitive ?
-        () => Reflect.apply(this.primitiveGetter, this, [component]) : 
-        () => Reflect.apply(this.nonPrimitiveGetter, this, [component]),
+        () => Reflect.apply(this.primitiveGetter, this, [component.viewModel]) : 
+        () => Reflect.apply(this.nonPrimitiveGetter, this, [component.viewModel]),
       set : this.isPrimitive ?
-        value => Reflect.apply(this.primitiveSetter, this, [component, value]) : 
-        value => Reflect.apply(this.nonPrimitiveSetter, this, [component, value]),
+        value => Reflect.apply(this.primitiveSetter, this, [component.viewModel, value]) : 
+        value => Reflect.apply(this.nonPrimitiveSetter, this, [component.viewModel, value]),
       enumerable: true, 
       configurable: true,
     }

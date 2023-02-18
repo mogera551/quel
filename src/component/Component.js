@@ -107,12 +107,17 @@ export default class Component extends HTMLElement {
    */
   async connectedCallback() {
     console.log(`${this.tagName}.connectCallback()`);
+    performance.mark('component');
     try {
       this.parentComponent && await this.parentComponent.initialPromise;
       await this.build();
     } finally {
       this.#initialResolve && this.#initialResolve();
     }
+    performance.measure('component');
+    console.log(performance.getEntriesByType("measure"));    
+    performance.clearMeasures();
+    performance.clearMarks();
   }
 
   /**

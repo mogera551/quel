@@ -2,7 +2,7 @@ import "../types.js";
 import { 
   SYM_GET_INDEXES, SYM_GET_TARGET, 
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
-  SYM_CALL_INIT, SYM_CALL_WRITE
+  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE
 } from "./Symbols.js";
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
@@ -17,6 +17,7 @@ const CONTEXT_INDEXES = new Set(
 );
 
 class Handler {
+  valueByPropertyKey = new Map();
   stackIndexes = [];
   /**
    * @type {Component}
@@ -58,41 +59,67 @@ class Handler {
       // await Reflect.apply(target["$onwrite"], receiver, [ prop, indexes ]);
     }
   }
-
+/*
   #getPropertyValue(target, prop, receiver) {
+    const indexes = this.lastIndexes;
+    const key = `${prop}\t${indexes}`;
+    if (this.valueByPropertyKey.has(key)) return this.valueByPropertyKey.get(key);
+
     const value = Reflect.get(target, prop, receiver);
+    this.valueByPropertyKey.set(key, value);
     return value;
   }
+*/
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {PropertyInfo} prop 
+   * @param {Proxy<ViewModel>} receiver 
+   */
+  #getDefinedPropertyValue(target, prop, receiver) {
+    const { lastIndexes, valueByPropertyKey } = this;
+    const key = prop.isLoop ? `${prop.name}\t${lastIndexes.slice(0, prop.loopLevel)}` : prop.name;
+    const cacheValue = valueByPropertyKey.get(key);
+    if (typeof cacheValue !== "undefined") return cacheValue;
+    const value = Reflect.get(target, prop.name, receiver);
+    valueByPropertyKey.set(key, value);
+    return value;
+  }
+
   [SYM_CALL_DIRECT_GET](prop, indexes, target, receiver) {
     let value;
     this.stackIndexes.push(indexes);
     try {
-      value = this.#getPropertyValue(target, prop, receiver);
+      value = receiver[prop];
     } finally {
       this.stackIndexes.pop();
     }
     return value;
-
   }
 
-  #setPropertyValue(target, prop, value, receiver) {
-    const indexes = this.lastIndexes;
-    Reflect.set(target, prop, value, receiver);
-    receiver[SYM_CALL_WRITE](prop, indexes);
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {PropertyInfo} prop 
+   * @param {any} value 
+   * @param {Proxy<ViewModel>} receiver 
+   */
+ #setDefinedPropertyValue(target, prop, value, receiver) {
+  const { lastIndexes, valueByPropertyKey } = this;
+  const key = prop.isLoop ? `${prop.name}\t${lastIndexes.slice(0, prop.loopLevel)}` : prop.name;
+  Reflect.set(target, prop.name, value, receiver);
+  valueByPropertyKey.set(key, value);
+  return true;
+}
 
-    const notify = new NotifyData(this.component, prop, indexes);
-    Thread.current.addNotify(notify);
-//    this.component.notify(prop, indexes)
-
-    return true;
-  }
   [SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver) {
     this.stackIndexes.push(indexes);
     try {
-      this.#setPropertyValue(target, prop, value, receiver);
+      receiver[prop] = value;
     } finally {
       this.stackIndexes.pop();
     }
+    return true;
   }
 
   async [SYM_CALL_DIRECT_CALL](prop, indexes, event, target, receiver) {
@@ -104,6 +131,9 @@ class Handler {
     }
   }
 
+  [SYM_CALL_CLEAR_CACHE](target, receiver) {
+    this.valueByPropertyKey.clear();
+  }
   /**
    * 
    * @param {ViewModel} target 
@@ -134,14 +164,19 @@ class Handler {
         case SYM_CALL_WRITE:
           return (prop, indexes) => 
             Reflect.apply(this[SYM_CALL_WRITE], this, [prop, indexes, target, receiver]);
+        case SYM_CALL_CLEAR_CACHE:
+          return () => 
+            Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
       }
     }
     if (CONTEXT_INDEXES.has(prop)) {
       return this.lastIndexes[parseInt(prop.slice(1)) - 1];
     }
 
-    if (this.definedPropertyByProp.has(prop)) {
-      return this.#getPropertyValue(target, prop, receiver);
+    const defindedProperty = this.definedPropertyByProp.get(prop);
+    if (defindedProperty) {
+      // すでに、indexesはセットされている
+      return this.#getDefinedPropertyValue(target, defindedProperty, receiver);
     } else {
       if (prop[0] !== "_") {
         let result;
@@ -164,8 +199,12 @@ class Handler {
    * @param {Proxy<ViewModel>} receiver 
    */
   set(target, prop, value, receiver) {
-    if (this.definedPropertyByProp.has(prop)) {
-      return this.#setPropertyValue(target, prop, value, receiver);
+    const defindedProperty = this.definedPropertyByProp.get(prop);
+    if (defindedProperty) {
+      return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);
+//      return this.#setPropertyValue(target, prop, value, receiver);
+//      this[SYM_CALL_DIRECT_SET](prop, [], value, target, receiver);
+//      return true;
     } else {
       if (prop[0] !== "_") {
         let result;
@@ -187,6 +226,7 @@ class Handler {
  * 
  * @param {Component} component
  * @param {ViewModel} origViewModel 
+ * @returns {Proxy<ViewModel>}
  */
 export default function create(component, origViewModel) {
   const { viewModel, definedProperties } = Accessor.convert(component, origViewModel);
