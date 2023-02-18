@@ -60,16 +60,6 @@ export default class {
       // ルートから、nodeのインデックスの順番をキャッシュに覚えておく
       this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
     }
-    // selectの値の設定をoptiionsを構築した後にしたいので、selectが一番最後になるようにソートしておく
-    nodes.sort((node1, node2) => {
-      const isSelect1 = node1 instanceof HTMLSelectElement;
-      const isSelect2 = node2 instanceof HTMLSelectElement;
-      if (isSelect1 || isSelect2) {
-        return (isSelect1 && !isSelect2) ? 1 : -1;
-      } else {
-        return -1;
-      }
-    });
     return nodes;
 
   }
