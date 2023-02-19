@@ -118,7 +118,7 @@ class Handler {
     cache.delete(prop, indexes);
     cache.set(prop, indexes, value);
 
-    Thread.current.addNotify(new NotifyData(this.component, prop.name, lastIndexes));
+    Thread.current.addNotify(new NotifyData(this.component, prop.name, indexes));
     if (this.dependentMap.has(prop.name)) {
       const getDependentProps = (name) => 
         (this.dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
