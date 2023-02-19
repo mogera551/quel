@@ -37,6 +37,7 @@ export default class {
    */
   reorder(queue) {
     queue.sort((update1, update2) => {
+      if (update2.node instanceof HTMLTemplateElement) return 1;
       if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
       return -1;
     });
