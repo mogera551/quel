@@ -36,6 +36,7 @@ class Slot {
 
 }
 
+const debug = true;
 export default class Thread {
   /**
    * @type {(value:any)=>{}}
@@ -84,17 +85,19 @@ export default class Thread {
     do {
       try {
         await this.sleep();
-        performance.mark('slot-exec:start');
+        debug && performance.mark('slot-exec:start');
         try {
           await this.#slot.exec();
         } finally {
           this.#slot = undefined;
-          console.log("slot.exec stopped");
-          performance.mark('slot-exec:end')
-          performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
-          console.log(performance.getEntriesByType("measure"));    
-          performance.clearMeasures();
-          performance.clearMarks();
+//          console.log("slot.exec stopped");
+          if (debug) {
+            performance.mark('slot-exec:end')
+            performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
+            console.log(performance.getEntriesByType("measure"));    
+            performance.clearMeasures();
+            performance.clearMarks();
+          }
         }
       } catch(e) {
         if (typeof e !== "undefined") {
