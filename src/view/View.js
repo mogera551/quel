@@ -1,6 +1,6 @@
 import "../types.js";
 import Binder from "../bind/Binder.js";
-import BindInfo from "../bind/BindInfo.js";
+import Binds from "../bind/Binds.js";
 
 export default class View {
   /**
@@ -24,11 +24,11 @@ export default class View {
 
   /**
    * @param {ViewModel} viewModel
-   * @returns {BindInfo[]}
+   * @returns {Binds}
    */
   render(viewModel) {
     const content = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const binds = Binder.bind(this.template, content, viewModel);
+    const binds = new Binds(Binder.bind(this.template, content, viewModel));
     this.rootElement.appendChild(content);
     return binds;
   }
