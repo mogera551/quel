@@ -24,11 +24,6 @@ export default class {
     const buildMap = (binds) => {
       binds.forEach(bind => {
         this.bindsByKey.get(bind.viewModelPropertyKey)?.push(bind) ?? this.bindsByKey.set(bind.viewModelPropertyKey, [ bind ]);
-/*        
-        this.bindsByKey.set(bind.viewModelPropertyKey, 
-          this.bindsByKey.get(bind.viewModelPropertyKey)?.concat(bind) ?? [bind]
-        );
-*/
         (toTemplate(bind)?.templateChildren ?? []).forEach(templateChild => buildMap(templateChild.binds));
       });
     }
@@ -38,7 +33,7 @@ export default class {
   /**
    * 
    * @param {Set<string>} setOfKey 
-   * @returns {BindInfo[]}
+   * @returns {Template[]}
    */
   getTemplateBinds(setOfKey) {
     const templateBinds = [];
@@ -48,7 +43,6 @@ export default class {
       info.index++;
       if (info.binds) {
         if (info.index < info.binds.length) {
-          // ToDo
           const template = toTemplate(info.binds[info.index]);
           if (template) {
             if (setOfKey.has(template.viewModelPropertyKey)) {
@@ -74,24 +68,6 @@ export default class {
       }
     }
 
-    /**
-     * 
-     * @param {BindInfo[]} binds 
-     * @param {BindInfo[]} templateBinds
-     */
-/*
-    const getTemplateBinds = (binds, templateBinds) => {
-      binds.forEach(bind => {
-        if (setOfKey.has(bind.viewModelPropertyKey) && (bind instanceof Template)) {
-          templateBinds.push(bind);
-        } else {
-          bind.templateChildren.forEach(templateChild => getTemplateBinds(templateChild.binds, templateBinds))
-        }
-      })
-    }
-    const templateBinds = [];
-    getTemplateBinds(this.binds, templateBinds);
-*/
     return templateBinds;
   }
   /**
@@ -104,11 +80,7 @@ export default class {
      */
     const templateBinds = this.getTemplateBinds(setOfKey);
     if (templateBinds.length > 0) {
-      templateBinds.forEach(bind => {
-        bind.removeFromParent();
-        bind.templateChildren = BindToTemplate.expand(bind);
-        bind.appendToParent();
-      });
+      templateBinds.forEach(bind => bind.expand());
       this.buildMap();
     }
 

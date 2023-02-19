@@ -31,7 +31,11 @@ export default class extends BindDomIf {
     const bindText = template.dataset[DATASET_BIND_PROPERTY];
     const binds = Parser
       .parse(bindText, "")
-      .map(info => Factory.create(Object.assign(info, {node, viewModel, indexes})));
+      .map(info => { 
+        const bind = Factory.create(Object.assign(info, {node, viewModel, indexes}));
+        bind.updateNode();
+        return bind;
+      });
     if (binds.length === 0) return [];
     const bind = binds[0];
     if (bind.nodeProperty !== "if" && bind.nodeProperty !== "loop") {

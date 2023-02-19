@@ -79,4 +79,15 @@ export default class BindInfo {
    * ViewModelのプロパティを更新する
    */
   updateViewModel() {}
+
+  /**
+   * 
+   * @param {integer} index 
+   * @param {integer} diff 
+   */
+  changeIndexes(index, diff) {
+    const indexes = this.indexes.slice();
+    indexes[index] = (parseInt(indexes[index]) + diff).toString();
+    this.indexes = indexes;
+  }
 }

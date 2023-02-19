@@ -18,8 +18,9 @@ export default class Event extends BindInfo {
    * 
    */
   addEventListener() {
-    const {element, eventType, viewModel, viewModelProperty, indexes, filters} = this;
+    const {element, eventType, viewModel, viewModelProperty} = this;
     element.addEventListener(eventType, (event) => {
+      const indexes = this.indexes;
       const process = new ProcessData(
         viewModel[SYM_CALL_DIRECT_CALL], viewModel, [viewModelProperty, indexes, event]
       );

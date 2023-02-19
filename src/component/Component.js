@@ -150,13 +150,6 @@ export default class Component extends HTMLElement {
    */
   notify(setOfKey) {
     this.binds.updateViewModel(setOfKey);
-//    Thread.current.addComponentUpdate(new ComponentUpdateData(this));
-/*
-    setOfKey.forEach(key => {
-      const binds = this.bindsByKey.get(key) ?? [];
-      binds.forEach(bind => bind.updateNode());
-    })
-*/
   }
 
   /**
