@@ -90,10 +90,16 @@ export default class BindInfo {
   set indexes(value) {
     this.#indexes = value;
     this.#indexesString = value.toString();
+    this.#viewModelPropertyKey = `${this.viewModelProperty}\t${this.#indexesString}`;
   }
   get indexesString() {
     return this.#indexesString;
   }
+  #viewModelPropertyKey;
+  get viewModelPropertyKey() {
+    return this.#viewModelPropertyKey;
+  }
+  
   /**
    * @type {any}
    */

@@ -4,15 +4,36 @@ import utils from "../utils.js";
 import PropertyInfo from "./PropertyInfo.js";
 
 const notPrivate = property => property[0] !== "_";
+const DEPENDENCY_PROP = "$dependencyProps";
+
+function createDependencyMap(list) {
+  const map = new Map();
+  list.forEach(([prop, refProps]) => {
+    refProps.forEach(refProp => {
+      const props = map.get(refProp)?.concat(prop) ?? [ prop ];
+      map.set(refProp, props);
+    }) 
+
+  })
+  return map;
+}
 
 export default class {
   /**
    * 
    * @param {Component} component
    * @param {ViewModel} viewModel 
-   * @returns {{viewmodel:ViewModel, definedProperties:PropertyInfo[]}}
+   * @returns {{viewmodel:ViewModel, definedProperties:PropertyInfo[], dependentMap:Map<string,string[]>}}
    */
   static convert(component, viewModel) {
+    let dependentMap = new Map;
+    // $dependencyPropsを取得
+    if (DEPENDENCY_PROP in viewModel) {
+      const desc = Object.getOwnPropertyDescriptor(viewModel, DEPENDENCY_PROP);
+      desc.enumerable = false;
+      Object.defineProperty(viewModel, DEPENDENCY_PROP, desc);
+      dependentMap = createDependencyMap(desc.value);
+    }
     // プライベートプロパティを列挙不可にする
     for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(viewModel))) {
       if (notPrivate(prop)) continue;
@@ -50,7 +71,15 @@ export default class {
     }
     const definedProperties = Object.keys(viewModel).map(prop => PropertyInfo.create(prop));
 
-    return { viewModel, definedProperties };
+    // definedPropertiesからdependentMapに追加
+    definedProperties.forEach(property => {
+      if (property.isPrimitive) return;
+      if (property.lastElement === "*") return;
+      const props = dependentMap.get(property.parentName)?.concat(property.name) ?? [ property.name ];
+      dependentMap.set(property.parentName, props);
+    });
+
+    return { viewModel, definedProperties, dependentMap };
 
   }
 }

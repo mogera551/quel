@@ -1,5 +1,5 @@
 import Component from "../component/Component.js";
-import { SYM_GET_INDEXES, SYM_GET_TARGET } from "./Symbols.js";
+import { SYM_CALL_DIRECT_GET, SYM_GET_INDEXES, SYM_GET_TARGET } from "./Symbols.js";
 import "../types.js";
 
 export default class PropertyInfo {
@@ -86,6 +86,47 @@ export default class PropertyInfo {
       enumerable: true, 
       configurable: true,
     }
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {integer[]} indexes 
+   * @returns {integer[][]}
+   */
+  expand(viewModel, indexes) {
+    if (this.loopLevel === indexes.length) {
+      return [{ propertyInfo:this, indexes }];
+    } else if (this.loopLevel < indexes.length) {
+      return [{ propertyInfo:this, indexes:indexes.slice(0, this.loopLevel) }];
+    } else {
+      const traverse = (parentElements, elementIndex, loopIndexes) => {
+        const element = this.elements[elementIndex];
+        const isTerminate = (this.elements.length - 1) === elementIndex;
+        if (element === "*") {
+          if (loopIndexes.length < indexes.length) {
+            return isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
+              traverse(parentElements.concat(element), elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+          } else {
+            const parentProperty = parentElements.join(".");
+            const keys = Array.from(Object.keys(viewModel[SYM_CALL_DIRECT_GET](parentProperty, loopIndexes) ?? []));
+            return keys.map(key => {
+              return isTerminate ? [ loopIndexes.concat(key) ] :
+                traverse(parentElements.concat(element), elementIndex + 1, loopIndexes.concat(key));
+            })
+          }
+        } else {
+          return isTerminate ? [ loopIndexes ] : 
+           traverse(parentElements.concat(element), elementIndex + 1, loopIndexes);
+        }
+
+      };
+      const listOfIndexes = traverse([], 0, []);
+      //console.log(listOfIndexes);
+      return listOfIndexes;
+
+    }
+
   }
 
   /**

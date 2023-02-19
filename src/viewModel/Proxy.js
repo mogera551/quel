@@ -10,6 +10,7 @@ import PropertyInfo from "./PropertyInfo.js";
 import { ProcessData } from "../thread/Processor.js";
 import Thread from "../thread/Thread.js";
 import { NotifyData } from "../thread/Notifier.js";
+import Cache from "./Cache.js";
 
 const MAX_INDEXES_LEVEL = 8;
 const CONTEXT_INDEXES = new Set(
@@ -17,7 +18,17 @@ const CONTEXT_INDEXES = new Set(
 );
 
 class Handler {
-  valueByPropertyKey = new Map();
+  /**
+   * @type {Cache}
+   */
+  cache = new Cache();
+  /**
+   * @type {Map<string,{indexes:integer[],propertyInfo:PropertyInfo}>}
+   */
+  propertyInfoIndexesByProp = new Map();
+  /**
+   * @type {integer[][]}
+   */
   stackIndexes = [];
   /**
    * @type {Component}
@@ -33,14 +44,20 @@ class Handler {
   loopProperties = [];
 
   /**
+   * @type {Map<string,string[]>}
+   */
+  dependentMap;
+  /**
    * 
    * @param {Component} component 
    * @param {PropertyInfo[]} definedProperties
+   * @param {Map<string,string[]>} dependentMap
    */
-  constructor(component, definedProperties) {
+  constructor(component, definedProperties, dependentMap) {
     this.component = component;
     this.definedPropertyByProp = new Map(definedProperties.map(property => ([property.name, property])));
     this.loopProperties = definedProperties.filter(property => property.isLoop);
+    this.dependentMap = dependentMap;
   }
 
   get lastIndexes() {
@@ -59,17 +76,7 @@ class Handler {
       // await Reflect.apply(target["$onwrite"], receiver, [ prop, indexes ]);
     }
   }
-/*
-  #getPropertyValue(target, prop, receiver) {
-    const indexes = this.lastIndexes;
-    const key = `${prop}\t${indexes}`;
-    if (this.valueByPropertyKey.has(key)) return this.valueByPropertyKey.get(key);
 
-    const value = Reflect.get(target, prop, receiver);
-    this.valueByPropertyKey.set(key, value);
-    return value;
-  }
-*/
   /**
    * 
    * @param {ViewModel} target 
@@ -77,12 +84,12 @@ class Handler {
    * @param {Proxy<ViewModel>} receiver 
    */
   #getDefinedPropertyValue(target, prop, receiver) {
-    const { lastIndexes, valueByPropertyKey } = this;
-    const key = prop.isLoop ? `${prop.name}\t${lastIndexes.slice(0, prop.loopLevel)}` : prop.name;
-    const cacheValue = valueByPropertyKey.get(key);
+    const { lastIndexes, cache } = this;
+    const indexes = lastIndexes.slice(0, prop.loopLevel);
+    const cacheValue = cache.get(prop, indexes);
     if (typeof cacheValue !== "undefined") return cacheValue;
     const value = Reflect.get(target, prop.name, receiver);
-    valueByPropertyKey.set(key, value);
+    cache.set(prop, indexes, value);
     return value;
   }
 
@@ -104,11 +111,36 @@ class Handler {
    * @param {any} value 
    * @param {Proxy<ViewModel>} receiver 
    */
- #setDefinedPropertyValue(target, prop, value, receiver) {
-  const { lastIndexes, valueByPropertyKey } = this;
-  const key = prop.isLoop ? `${prop.name}\t${lastIndexes.slice(0, prop.loopLevel)}` : prop.name;
-  Reflect.set(target, prop.name, value, receiver);
-  valueByPropertyKey.set(key, value);
+  #setDefinedPropertyValue(target, prop, value, receiver) {
+    const { lastIndexes, cache } = this;
+    const indexes = lastIndexes.slice(0, prop.loopLevel);
+    Reflect.set(target, prop.name, value, receiver);
+    cache.delete(prop, indexes);
+    cache.set(prop, indexes, value);
+
+    Thread.current.addNotify(new NotifyData(this.component, prop.name, lastIndexes));
+    if (this.dependentMap.has(prop.name)) {
+      const getDependentProps = (name) => 
+        (this.dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
+      const dependentProps = new Set(getDependentProps(prop.name));
+      dependentProps.forEach(dependentProp => {
+        const definedProperty = this.definedPropertyByProp.get(dependentProp);
+        if (indexes.length < definedProperty.loopLevel) {
+          const listOfIndexes = definedProperty.expand(receiver, indexes);
+          listOfIndexes.forEach(depIndexes => {
+            cache.delete(definedProperty, depIndexes);
+            Thread.current.addNotify(new NotifyData(this.component, definedProperty.name, depIndexes));
+          });
+        } else {
+          const depIndexes = indexes.slice(0, definedProperty.loopLevel);
+          cache.delete(definedProperty, depIndexes);
+          Thread.current.addNotify(new NotifyData(this.component, definedProperty.name, depIndexes));
+        }
+      });
+    }
+
+  this[SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);
+
   return true;
 }
 
@@ -132,7 +164,7 @@ class Handler {
   }
 
   [SYM_CALL_CLEAR_CACHE](target, receiver) {
-    this.valueByPropertyKey.clear();
+    this.cache.clear();
   }
   /**
    * 
@@ -142,11 +174,11 @@ class Handler {
    * @returns 
    */
   get(target, prop, receiver) {
-    const stackIndexes = this.stackIndexes;
+    const lastIndexes = this.lastIndexes;
     if (typeof prop === "symbol") {
       switch(prop) {
         case SYM_GET_INDEXES:
-          return stackIndexes.at(-1);
+          return lastIndexes;
         case SYM_GET_TARGET:
           return target;
         case SYM_CALL_DIRECT_GET:
@@ -170,7 +202,7 @@ class Handler {
       }
     }
     if (CONTEXT_INDEXES.has(prop)) {
-      return this.lastIndexes[parseInt(prop.slice(1)) - 1];
+      return lastIndexes[parseInt(prop.slice(1)) - 1];
     }
 
     const defindedProperty = this.definedPropertyByProp.get(prop);
@@ -179,12 +211,15 @@ class Handler {
       return this.#getDefinedPropertyValue(target, defindedProperty, receiver);
     } else {
       if (prop[0] !== "_") {
-        let result;
-        const loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
-        if (loopProperty) {
-          const prop = loopProperty.name;
-          const indexes = result.slice(1);
-          return this[SYM_CALL_DIRECT_GET](prop, indexes, target, receiver);
+        let { loopProperty, indexes } = this.propertyInfoIndexesByProp.get(prop) ?? {};
+        if (loopProperty == null) {
+          let result;
+          loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
+          indexes = result.slice(1);
+          this.propertyInfoIndexesByProp.set(prop, { loopProperty, indexes });
+        }
+        if (loopProperty && indexes) {
+          return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, target, receiver);
         }
       }
       return Reflect.get(target, prop, receiver);
@@ -202,17 +237,17 @@ class Handler {
     const defindedProperty = this.definedPropertyByProp.get(prop);
     if (defindedProperty) {
       return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);
-//      return this.#setPropertyValue(target, prop, value, receiver);
-//      this[SYM_CALL_DIRECT_SET](prop, [], value, target, receiver);
-//      return true;
     } else {
       if (prop[0] !== "_") {
-        let result;
-        const loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
-        if (loopProperty) {
-          const prop = loopProperty.name;
-          const indexes = result.slice(1);
-          this[SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver);
+        let { loopProperty, indexes } = this.propertyInfoIndexesByProp.get(prop) ?? {};
+        if (loopProperty == null) {
+          let result;
+          loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
+          indexes = result.slice(1);
+          this.propertyInfoIndexesByProp.set(prop, { loopProperty, indexes });
+        }
+        if (loopProperty && indexes) {
+          this[SYM_CALL_DIRECT_SET](loopProperty.name, indexes, value, target, receiver);
           return true;
         }
       }
@@ -229,7 +264,7 @@ class Handler {
  * @returns {Proxy<ViewModel>}
  */
 export default function create(component, origViewModel) {
-  const { viewModel, definedProperties } = Accessor.convert(component, origViewModel);
-  return new Proxy(viewModel, new Handler(component, definedProperties));
+  const { viewModel, definedProperties, dependentMap } = Accessor.convert(component, origViewModel);
+  return new Proxy(viewModel, new Handler(component, definedProperties, dependentMap));
 
 }

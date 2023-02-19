@@ -52,9 +52,20 @@ export default class {
    */
   async exec() {
     while(this.queue.length > 0) {
-      const notify = this.queue.shift();
-      // notify
-      notify.component.notify(notify.name, notify.indexes);
+      const queue = this.queue.splice(0);
+      /**
+       * @type {Map<Component,NotifyData[]>}
+       */
+      const notifiesByComponent = new Map();
+      queue.forEach(notify => {
+        notifiesByComponent.set(notify.component, 
+          notifiesByComponent.get(notify.component)?.concat(notify) ?? [ notify ]
+        );
+      });
+      for(const [component, notifies] of notifiesByComponent.entries()) {
+        const setOfKey = new Set(notifies.map(notify => `${notify.name}\t${notify.indexes}`));
+        component.notify(setOfKey);
+      }
     }
   }
 

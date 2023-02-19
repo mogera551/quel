@@ -107,17 +107,12 @@ export default class Component extends HTMLElement {
    */
   async connectedCallback() {
     console.log(`${this.tagName}.connectCallback()`);
-    performance.mark('component');
     try {
       this.parentComponent && await this.parentComponent.initialPromise;
       await this.build();
     } finally {
       this.#initialResolve && this.#initialResolve();
     }
-    performance.measure('component');
-    console.log(performance.getEntriesByType("measure"));    
-    performance.clearMeasures();
-    performance.clearMarks();
   }
 
   /**
@@ -146,13 +141,12 @@ export default class Component extends HTMLElement {
 
   /**
    * 
-   * @param {string} viewModelProperty 
+   * @param {Set<string>} setOfKey 
    * @param {integer[]} indexes 
    */
-  notify(viewModelProperty, indexes) {
-    const indexesString = indexes.toString();
+  notify(setOfKey) {
     BindInfo.allBinds(this.binds)
-      .filter(bind => bind.viewModelProperty === viewModelProperty && bind.indexesString === indexesString)
+      .filter(bind => setOfKey.has(bind.viewModelPropertyKey))
       .forEach(bind => bind.updateNode());
   }
 
