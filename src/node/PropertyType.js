@@ -1,5 +1,7 @@
 import utils from "../utils.js";
 
+const PREFIX_EVENT = "on";
+
 /**
  * @enum {number}
  */
@@ -14,36 +16,44 @@ export const NodePropertyType = {
   event: 91,
 };
 
-
 export default class {
   /**
    * 
+   * @param {Node} node
    * @param {string} nodeProperty 
-   * @returns {NodePropertyType}
+   * @returns {{type:NodePropertyType,nodePropertyElements:string[],eventType:string}}
    */
-  static get(nodeProperty) {
-    const elements = nodeProperty.split(".");
-    if (elements.length === 1) {
-      if (elements[0] === "radio") {
-        return NodePropertyType.radio;
-      } else if (elements[1] === "checkbox") {
-        return NodePropertyType.checkbox;
+  static getInfo(node, nodeProperty) {
+    const result = {type:null, nodePropertyElements:[], eventType:null};
+    if (node instanceof HTMLTemplateElement) { 
+      result.type = NodePropertyType.template;
+      return result;
+    };
+
+    result.nodePropertyElements = nodeProperty.split(".");
+    if (result.nodePropertyElements.length === 1) {
+      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
+        result.type = NodePropertyType.event;
+        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+      } else if (result.nodePropertyElements[0] === "radio") {
+        result.type = NodePropertyType.radio;
+      } else if (result.nodePropertyElements[1] === "checkbox") {
+        result.type = NodePropertyType.checkbox;
       } else {
-        return NodePropertyType.levelTop;
+        result.type = NodePropertyType.levelTop;
       }
-    } else if (elements.length === 2) {
-      if (elements[0] === "className") {
-        return NodePropertyType.className;
+    } else if (result.nodePropertyElements.length === 2) {
+      if (result.nodePropertyElements[0] === "className") {
+        result.type = NodePropertyType.className;
       } else {
-        return NodePropertyType.level2nd;
+        result.type = NodePropertyType.level2nd;
       }
-    } else if (elements.length === 3) {
-      return NodePropertyType.level3rd;
+    } else if (result.nodePropertyElements.length === 3) {
+      result.type = NodePropertyType.level3rd;
     } else {
       utils.raise(`unknown property ${nodeProperty}`);
-
     }
-
+    return result;
   }
 }
 

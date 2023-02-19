@@ -4,7 +4,9 @@ import ComponentData from "./Data.js";
 import View from "../view/View.js";
 import createViewModel from "../viewModel/Proxy.js";
 import { SYM_CALL_INIT } from "../viewModel/Symbols.js";
-import BindInfo from "../bind/BindInfo.js";
+import Thread from "../thread/Thread.js";
+import { ProcessData } from "../thread/Processor.js";
+import Binds from "../bind/Binds.js";
 
 /**
  * 
@@ -30,9 +32,9 @@ export default class Component extends HTMLElement {
    */
   view;
   /**
-   * @type {BindInfo[]}
+   * @type {Binds}
    */
-  binds = [];
+  binds;
 
   constructor() {
     super();
@@ -74,7 +76,9 @@ export default class Component extends HTMLElement {
     this.viewModel = createViewModel(this, viewModel);
     await this.viewModel[SYM_CALL_INIT]();
 
-    this.binds = this.view.render(this.viewModel);
+    Thread.current.addProcess(new ProcessData(() => {
+      this.binds = this.view.render(this.viewModel);
+    }, this, []))
   }
 
   /**
@@ -106,7 +110,7 @@ export default class Component extends HTMLElement {
    * DOMツリーへ追加
    */
   async connectedCallback() {
-    console.log(`${this.tagName}.connectCallback()`);
+//    console.log(`${this.tagName}.connectCallback()`);
     try {
       this.parentComponent && await this.parentComponent.initialPromise;
       await this.build();
@@ -145,9 +149,14 @@ export default class Component extends HTMLElement {
    * @param {integer[]} indexes 
    */
   notify(setOfKey) {
-    BindInfo.allBinds(this.binds)
-      .filter(bind => setOfKey.has(bind.viewModelPropertyKey))
-      .forEach(bind => bind.updateNode());
+    this.binds.updateViewModel(setOfKey);
+//    Thread.current.addComponentUpdate(new ComponentUpdateData(this));
+/*
+    setOfKey.forEach(key => {
+      const binds = this.bindsByKey.get(key) ?? [];
+      binds.forEach(bind => bind.updateNode());
+    })
+*/
   }
 
   /**

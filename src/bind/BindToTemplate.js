@@ -1,11 +1,13 @@
 import "../types.js";
 import BindDomIf from "./BindToDomIf.js";
-import BindInfo, {TemplateChild} from "./BindInfo.js";
+import BindInfo from "../bindInfo/BindInfo.js";
+import { TemplateChild } from "../bindInfo/Template.js";
 import utils from "../utils.js";
 import Binder from "./Binder.js";
 import Parser from "./Parser.js";
 import Filter from "../filter/Filter.js";
 import { SYM_CALL_DIRECT_GET } from "../viewModel/Symbols.js";
+import Factory from "../bindInfo/Factory.js";
 
 const DATASET_BIND_PROPERTY = "bind";
 
@@ -29,7 +31,7 @@ export default class extends BindDomIf {
     const bindText = template.dataset[DATASET_BIND_PROPERTY];
     const binds = Parser
       .parse(bindText, "")
-      .map(info => Object.assign(new BindInfo, info, {node, viewModel, indexes}));
+      .map(info => Factory.create(Object.assign(info, {node, viewModel, indexes})));
     if (binds.length === 0) return [];
     const bind = binds[0];
     if (bind.nodeProperty !== "if" && bind.nodeProperty !== "loop") {

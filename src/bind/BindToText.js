@@ -1,8 +1,10 @@
 import "../types.js";
 import BindDomIf from "./BindToDomIf.js";
-import BindInfo from "./BindInfo.js";
+import BindInfo from "../bindInfo/BindInfo.js";
 import Perser from "./Parser.js";
 import utils from "../utils.js";
+import Thread from "../thread/Thread.js";
+import Factory from "../bindInfo/Factory.js";
 
 const DEFAULT_PROPERTY = "textContent";
 
@@ -31,7 +33,7 @@ export default class extends BindDomIf {
     const binds = Perser
       .parse(bindText, DEFAULT_PROPERTY)
       .map(info => {
-        const bind = Object.assign(new BindInfo, info, {node:textNode, viewModel, indexes});
+        const bind = Factory.create(Object.assign(info, {node:textNode, viewModel, indexes}));
         bind.updateNode();
         return bind;
       });

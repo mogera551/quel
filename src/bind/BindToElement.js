@@ -1,10 +1,12 @@
 import "../types.js";
 import BindDomIf from "./BindToDomIf.js";
-import BindInfo from "./BindInfo.js";
+import BindInfo from "../bindInfo/BindInfo.js";
 import Perser from "./Parser.js";
 import utils from "../utils.js";
 import Thread from "../thread/Thread.js";
 import { ProcessData } from "../thread/Processor.js";
+import Event from "../bindInfo/Event.js";
+import Factory from "../bindInfo/Factory.js";
 
 const DATASET_BIND_PROPERTY = "bind";
 const DEFAULT_EVENT = "oninput";
@@ -28,6 +30,8 @@ const getDefaultProperty = element => {
   DEFAULT_PROPERTY;
 };
 
+const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
+
 export default class extends BindDomIf {
   /**
    * 
@@ -45,7 +49,7 @@ export default class extends BindDomIf {
     const binds = Perser
         .parse(bindText, defaultName)
         .map(info => {
-          const bind = Object.assign(new BindInfo, info, {node, viewModel, indexes});
+          const bind = Factory.create(Object.assign(info, {node, viewModel, indexes}));
           bind.updateNode();
           return bind;
         });
@@ -59,15 +63,14 @@ export default class extends BindDomIf {
     binds.forEach(bind => {
       hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
       defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
-      bind.isEvent && bind.addEventListener();
+      const event = toEvent(bind);
+      event && event.addEventListener();
     });
 
     if (defaultBind && !hasDefaultEvent) {
       element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
         const process = new ProcessData(defaultBind.updateViewModel, defaultBind, []);
         Thread.current.addProcess(process);
-        // defaultBind.updateViewModel();
-        
       });
     }
 

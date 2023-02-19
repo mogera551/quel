@@ -1,5 +1,5 @@
 import "../types.js";
-import BindInfo from "./BindInfo.js";
+import BindInfo from "../bindInfo/BindInfo.js";
 
 export default class {
   /**

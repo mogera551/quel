@@ -1,6 +1,6 @@
 import "../types.js";
 import utils from "../utils.js";
-import BindInfo from "./BindInfo.js";
+import BindInfo from "../bindInfo/BindInfo.js";
 import Selector from "./Selector.js";
 import BindToTemplate from "./BindToTemplate.js";
 import BindToElement from "./BindToElement.js";
