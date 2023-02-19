@@ -56,12 +56,19 @@ export default class {
       /**
        * @type {Map<Component,NotifyData[]>}
        */
+/*
       const notifiesByComponent = new Map();
       queue.forEach(notify => {
         notifiesByComponent.set(notify.component, 
           notifiesByComponent.get(notify.component)?.concat(notify) ?? [ notify ]
         );
       });
+*/
+      const notifiesByComponent = queue.reduce((map, notify) => {
+        map.get(notify.component)?.push(notify) ?? map.set(notify.component, [ notify ]);
+        return map;
+      }, new Map);
+      
       for(const [component, notifies] of notifiesByComponent.entries()) {
         const setOfKey = new Set(notifies.map(notify => `${notify.name}\t${notify.indexes}`));
         component.notify(setOfKey);

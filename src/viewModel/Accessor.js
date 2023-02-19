@@ -10,8 +10,7 @@ function createDependencyMap(list) {
   const map = new Map();
   list.forEach(([prop, refProps]) => {
     refProps.forEach(refProp => {
-      const props = map.get(refProp)?.concat(prop) ?? [ prop ];
-      map.set(refProp, props);
+      map.get(refProp)?.push(prop) ?? map.set(refProp, [ prop ]);
     }) 
 
   })
