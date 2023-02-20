@@ -52,28 +52,17 @@ export default class extends BindDomIf {
    * @returns {TemplateChild[]}
    */
   static expand(bind) {
-    const { nodeProperty, viewModel, viewModelProperty, filters, indexes, template } = bind;
-    const children = [];
+    const { nodeProperty, viewModel, viewModelProperty, filters, indexes } = bind;
 
     const viewModelValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     if (nodeProperty === "if") {
       if (viewModelValue) {
-        const rootElement = document.importNode(template.content, true);
-        const binds = Binder.bind(template, rootElement, viewModel, indexes);
-        const childNodes = Array.from(rootElement.childNodes);
-        children.push(Object.assign(new TemplateChild, { binds, childNodes }));
+        return [ TemplateChild.create(bind, indexes) ];
       }
     } else if (nodeProperty === "loop") {
-      Object.keys(viewModelValue).forEach(index => {
-        const newIndexes = indexes.concat(index);
-        const rootElement = document.importNode(template.content, true);
-        const binds = Binder.bind(template, rootElement, viewModel, newIndexes);
-        const childNodes = Array.from(rootElement.childNodes);
-        children.push(Object.assign(new TemplateChild, { binds, childNodes }));
-      });
+      return Array.from(Object.keys(viewModelValue)).map(index => TemplateChild.create(bind, indexes.concat(index)));
     }
-
-    return children;
+    return [];
   }
 
 }

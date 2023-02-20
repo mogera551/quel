@@ -1,4 +1,4 @@
-import utils from "../utils.js";
+import main from "../main.js";
 import NodeUpdator, { NodeUpdateData } from "./NodeUpdator.js";
 import Notifier, { NotifyData } from "./Notifier.js";
 import Processor, { ProcessData } from "./Processor.js";
@@ -36,7 +36,6 @@ class Slot {
 
 }
 
-const debug = true;
 export default class Thread {
   /**
    * @type {(value:any)=>{}}
@@ -85,13 +84,13 @@ export default class Thread {
     do {
       try {
         await this.sleep();
-        debug && performance.mark('slot-exec:start');
+        main.getDebug() && performance.mark('slot-exec:start');
         try {
           await this.#slot.exec();
         } finally {
           this.#slot = undefined;
 //          console.log("slot.exec stopped");
-          if (debug) {
+          if (main.getDebug()) {
             performance.mark('slot-exec:end')
             performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
             console.log(performance.getEntriesByType("measure"));    

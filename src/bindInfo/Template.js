@@ -34,11 +34,10 @@ export class TemplateChild {
    * @param {Template} templateBind 
    * @param {integer} index 
    */
-  static create(templateBind, index) {
-    const {indexes, template, viewModel} = templateBind;
-    const newIndexes = indexes.concat(index);
+  static create(templateBind, indexes) {
+    const {template, viewModel} = templateBind;
     const rootElement = document.importNode(template.content, true);
-    const binds = Binder.bind(template, rootElement, viewModel, newIndexes);
+    const binds = Binder.bind(template, rootElement, viewModel, indexes);
     const childNodes = Array.from(rootElement.childNodes);
     return Object.assign(new TemplateChild, { binds, childNodes });
   }
@@ -105,8 +104,6 @@ export default class Template extends BindInfo {
   }
 
   expandLoop() {
-    //this.removeFromParent();
-
     const { viewModel, viewModelProperty, indexes, filters } = this;
     const lastValue = this.lastViewModelValue;
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
@@ -119,7 +116,7 @@ export default class Template extends BindInfo {
       const lastIndexes = indexesByLastValue.get(value) ?? [];
       if (lastIndexes.length === 0) {
         lastIndexByNewIndex.set(index, -1);
-        return TemplateChild.create(this, index);
+        return TemplateChild.create(this, indexes.concat(index));
       } else {
         const lastIndex = parseInt(lastIndexes.shift());
         lastIndexByNewIndex.set(index, lastIndex);
@@ -145,8 +142,6 @@ export default class Template extends BindInfo {
     this.templateChildren = newTemplateChildren;
 
     this.templateChildren.forEach(templateChild => templateChild.expand());
-
-    //this.appendToParent();
   }
   /**
    * 

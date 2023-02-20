@@ -139,10 +139,10 @@ class Handler {
       });
     }
 
-  this[SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);
+    this[SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);
 
-  return true;
-}
+    return true;
+  }
 
   [SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver) {
     this.stackIndexes.push(indexes);
@@ -177,16 +177,14 @@ class Handler {
     const lastIndexes = this.lastIndexes;
     if (typeof prop === "symbol") {
       switch(prop) {
-        case SYM_GET_INDEXES:
-          return lastIndexes;
-        case SYM_GET_TARGET:
-          return target;
         case SYM_CALL_DIRECT_GET:
           return (prop, indexes) => 
             Reflect.apply(this[SYM_CALL_DIRECT_GET], this, [prop, indexes, target, receiver]);
         case SYM_CALL_DIRECT_SET:
           return (prop, indexes, value) => 
             Reflect.apply(this[SYM_CALL_DIRECT_SET], this, [prop, indexes, value, target, receiver]);
+        case SYM_GET_INDEXES:
+          return lastIndexes;
         case SYM_CALL_DIRECT_CALL:
           return (prop, indexes, event) => 
             Reflect.apply(this[SYM_CALL_DIRECT_CALL], this, [prop, indexes, event, target, receiver]);
@@ -199,6 +197,8 @@ class Handler {
         case SYM_CALL_CLEAR_CACHE:
           return () => 
             Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
+        case SYM_GET_TARGET:
+          return target;
       }
     }
     if (CONTEXT_INDEXES.has(prop)) {

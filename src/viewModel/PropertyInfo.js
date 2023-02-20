@@ -96,33 +96,32 @@ export default class PropertyInfo {
    */
   expand(viewModel, indexes) {
     if (this.loopLevel === indexes.length) {
-      return [{ propertyInfo:this, indexes }];
+      return [ indexes ];
     } else if (this.loopLevel < indexes.length) {
-      return [{ propertyInfo:this, indexes:indexes.slice(0, this.loopLevel) }];
+      return [ indexes.slice(0, this.loopLevel) ];
     } else {
-      const traverse = (parentElements, elementIndex, loopIndexes) => {
+      const traverse = (parentName, elementIndex, loopIndexes) => {
+        const parentNameDot = parentName !== "" ? parentName + "." : parentName;
         const element = this.elements[elementIndex];
         const isTerminate = (this.elements.length - 1) === elementIndex;
         if (element === "*") {
           if (loopIndexes.length < indexes.length) {
             return isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
-              traverse(parentElements.concat(element), elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+              traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
           } else {
-            const parentProperty = parentElements.join(".");
-            const keys = Array.from(Object.keys(viewModel[SYM_CALL_DIRECT_GET](parentProperty, loopIndexes) ?? []));
+            const keys = Array.from(Object.keys(viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []));
             return keys.map(key => {
               return isTerminate ? [ loopIndexes.concat(key) ] :
-                traverse(parentElements.concat(element), elementIndex + 1, loopIndexes.concat(key));
+                traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(key));
             })
           }
         } else {
           return isTerminate ? [ loopIndexes ] : 
-           traverse(parentElements.concat(element), elementIndex + 1, loopIndexes);
+           traverse(parentNameDot + element, elementIndex + 1, loopIndexes);
         }
 
       };
-      const listOfIndexes = traverse([], 0, []);
-      //console.log(listOfIndexes);
+      const listOfIndexes = traverse("", 0, []);
       return listOfIndexes;
 
     }
