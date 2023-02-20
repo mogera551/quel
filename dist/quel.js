@@ -236,7 +236,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _main_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./main.js */ \"./src/main.js\");\n/* harmony import */ var _myname_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./myname.js */ \"./src/myname.js\");\n\r\n\r\n\r\nwindows[_myname_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"]] = _main_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"];\n\n//# sourceURL=webpack://quel/./src/export.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _main_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./main.js */ \"./src/main.js\");\n/* harmony import */ var _myname_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./myname.js */ \"./src/myname.js\");\n\r\n\r\n\r\nwindow[_myname_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"]] = _main_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"];\n\n//# sourceURL=webpack://quel/./src/export.js?");
 
 /***/ }),
 
