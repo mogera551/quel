@@ -13,6 +13,12 @@ export class TemplateChild {
    * @type {Node[]}
    */
   childNodes;
+  /**
+   * @type {Node}
+   */
+  get lastNode() {
+    return this.childNodes[this.childNodes.length - 1];
+  }
 
   removeFromParent() {
     this.childNodes.forEach(node => node.parentNode.removeChild(node));
@@ -115,7 +121,7 @@ export default class Template extends BindInfo {
     const newTemplateChildren = value.map((value, index) => {
       const lastIndexes = indexesByLastValue.get(value) ?? [];
       if (lastIndexes.length === 0) {
-        lastIndexByNewIndex.set(index, -1);
+        lastIndexByNewIndex.set(index, undefined);
         return TemplateChild.create(this, indexes.concat(index));
       } else {
         const lastIndex = parseInt(lastIndexes.shift());
@@ -128,20 +134,21 @@ export default class Template extends BindInfo {
     Array.from(indexesByLastValue.values()).flatMap(indexes => indexes).forEach(deleteIndex => {
       this.templateChildren[deleteIndex].removeFromParent();
     });
+    let prevChild = undefined;
     newTemplateChildren.forEach((templateChild, index) => {
       const prevLastIndex = lastIndexByNewIndex.get(index - 1);
       const lastIndex = lastIndexByNewIndex.get(index);
-      if (typeof prevLastIndex !== "undefined" && (prevLastIndex + 1) === lastIndex) return;
-      const prevChild = newTemplateChildren[index - 1];
-      let prevNode = prevChild?.childNodes[prevChild.childNodes.length - 1] ?? this.template;
-      templateChild.childNodes.forEach(node => {
-        prevNode.after(node);
-        prevNode = node;
-      });
+      if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
+        let prevNode = prevChild?.lastNode ?? this.template;
+        templateChild.childNodes.forEach(node => {
+          prevNode.after(node);
+          prevNode = node;
+        });
+      }
+      prevChild = templateChild;
     })
+    newTemplateChildren.forEach(templateChild => templateChild.expand());
     this.templateChildren = newTemplateChildren;
-
-    this.templateChildren.forEach(templateChild => templateChild.expand());
   }
   /**
    * 
