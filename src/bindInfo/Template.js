@@ -134,19 +134,14 @@ export default class Template extends BindInfo {
     Array.from(indexesByLastValue.values()).flatMap(indexes => indexes).forEach(deleteIndex => {
       this.templateChildren[deleteIndex].removeFromParent();
     });
-    let prevChild = undefined;
-    newTemplateChildren.forEach((templateChild, index) => {
+    newTemplateChildren.reduce((prevChild, templateChild, index) => {
       const prevLastIndex = lastIndexByNewIndex.get(index - 1);
       const lastIndex = lastIndexByNewIndex.get(index);
       if (typeof prevLastIndex === "undefined" || typeof lastIndex === "undefined" || prevLastIndex > lastIndex) {
-        let prevNode = prevChild?.lastNode ?? this.template;
-        templateChild.childNodes.forEach(node => {
-          prevNode.after(node);
-          prevNode = node;
-        });
+        (prevChild?.lastNode ?? this.template).after(...templateChild.childNodes);
       }
-      prevChild = templateChild;
-    })
+      return templateChild;
+    }, undefined);
     newTemplateChildren.forEach(templateChild => templateChild.expand());
     this.templateChildren = newTemplateChildren;
   }
