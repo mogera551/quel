@@ -25,7 +25,7 @@ class Handler {
   /**
    * @type {Map<string,{indexes:integer[],propertyInfo:PropertyInfo}>}
    */
-  propertyInfoIndexesByProp = new Map();
+  propertyInfoAndIndexesByProp = new Map();
   /**
    * @type {integer[][]}
    */
@@ -166,6 +166,27 @@ class Handler {
   [SYM_CALL_CLEAR_CACHE](target, receiver) {
     this.cache.clear();
   }
+
+  /**
+   * 
+   * @param {string} prop 
+   * @returns {{loopProperty:PropertyInfo,indexes:integer[]}}
+   */
+  #getLoopPropertyAndIndexesFromPropertyName(prop) {
+    let { loopProperty, indexes } = this.propertyInfoAndIndexesByProp.get(prop) ?? {};
+    if (typeof loopProperty === "undefined") {
+      for(const property of this.loopProperties) {
+        const result = property.regexp.exec(prop);
+        if (result) {
+          indexes = result.slice(1);
+          loopProperty = property;
+          this.propertyInfoAndIndexesByProp.set(prop, { loopProperty, indexes });
+          break;
+        }
+      }
+    }
+    return { loopProperty, indexes };
+  }
   /**
    * 
    * @param {ViewModel} target 
@@ -211,13 +232,7 @@ class Handler {
       return this.#getDefinedPropertyValue(target, defindedProperty, receiver);
     } else {
       if (prop[0] !== "_") {
-        let { loopProperty, indexes } = this.propertyInfoIndexesByProp.get(prop) ?? {};
-        if (loopProperty == null) {
-          let result;
-          loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
-          indexes = result.slice(1);
-          this.propertyInfoIndexesByProp.set(prop, { loopProperty, indexes });
-        }
+        const {loopProperty, indexes} = this.getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
           return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, target, receiver);
         }
@@ -239,13 +254,7 @@ class Handler {
       return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);
     } else {
       if (prop[0] !== "_") {
-        let { loopProperty, indexes } = this.propertyInfoIndexesByProp.get(prop) ?? {};
-        if (loopProperty == null) {
-          let result;
-          loopProperty = this.loopProperties.find(property => result = property.regexp.exec(prop));
-          indexes = result.slice(1);
-          this.propertyInfoIndexesByProp.set(prop, { loopProperty, indexes });
-        }
+        const {loopProperty, indexes} = this.getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
           this[SYM_CALL_DIRECT_SET](loopProperty.name, indexes, value, target, receiver);
           return true;
