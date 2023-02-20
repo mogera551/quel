@@ -232,7 +232,7 @@ class Handler {
       return this.#getDefinedPropertyValue(target, defindedProperty, receiver);
     } else {
       if (prop[0] !== "_") {
-        const {loopProperty, indexes} = this.getLoopPropertyAndIndexesFromPropertyName(prop);
+        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
           return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, target, receiver);
         }
@@ -254,7 +254,7 @@ class Handler {
       return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);
     } else {
       if (prop[0] !== "_") {
-        const {loopProperty, indexes} = this.getLoopPropertyAndIndexesFromPropertyName(prop);
+        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
           this[SYM_CALL_DIRECT_SET](loopProperty.name, indexes, value, target, receiver);
           return true;
