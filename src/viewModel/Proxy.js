@@ -2,7 +2,7 @@ import "../types.js";
 import { 
   SYM_GET_INDEXES, SYM_GET_TARGET, 
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
-  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE
+  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY
 } from "./Symbols.js";
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
@@ -11,11 +11,27 @@ import { ProcessData } from "../thread/Processor.js";
 import Thread from "../thread/Thread.js";
 import { NotifyData } from "../thread/Notifier.js";
 import Cache from "./Cache.js";
+import createArrayProxy from "./ArrayProxy.js";
 
 const MAX_INDEXES_LEVEL = 8;
 const CONTEXT_INDEXES = new Set(
   [...Array(MAX_INDEXES_LEVEL)].map((content,index) => `$${index + 1}`)   
 );
+
+/**
+ * 配列プロキシを取得
+ * 配列プロキシのプロキシといった重複をさけるため、
+ * いったん元の配列を求めてからプロキシにする
+ * @param {Component} component 
+ * @param {PropertyInfo} prop 
+ * @param {integer[]} indexes
+ * @param {any} value 
+ * @returns 
+ */
+const wrapArray = (component, prop, indexes, value) => {
+  value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
+  return (value instanceof Array) ? createArrayProxy(value, component, prop, indexes) : value;
+}
 
 class Handler {
   /**
@@ -84,13 +100,13 @@ class Handler {
    * @param {Proxy<ViewModel>} receiver 
    */
   #getDefinedPropertyValue(target, prop, receiver) {
-    const { lastIndexes, cache } = this;
+    const { component, lastIndexes, cache } = this;
     const indexes = lastIndexes.slice(0, prop.loopLevel);
     const cacheValue = cache.get(prop, indexes);
-    if (typeof cacheValue !== "undefined") return cacheValue;
+    if (typeof cacheValue !== "undefined") return wrapArray(component, prop, indexes, cacheValue);
     const value = Reflect.get(target, prop.name, receiver);
     cache.set(prop, indexes, value);
-    return value;
+    return wrapArray(component, prop, indexes, value);
   }
 
   [SYM_CALL_DIRECT_GET](prop, indexes, target, receiver) {
@@ -113,6 +129,7 @@ class Handler {
    */
   #setDefinedPropertyValue(target, prop, value, receiver) {
     const { lastIndexes, cache } = this;
+    value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
     const indexes = lastIndexes.slice(0, prop.loopLevel);
     Reflect.set(target, prop.name, value, receiver);
     cache.delete(prop, indexes);

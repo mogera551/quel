@@ -8,3 +8,6 @@ export const SYM_CALL_DIRECT_CALL = Symbol.for(`${myname}:viewModel.directCall`)
 export const SYM_CALL_INIT = Symbol.for(`${myname}:viewModel.init`);
 export const SYM_CALL_WRITE = Symbol.for(`${myname}:viewModel.write`);
 export const SYM_CALL_CLEAR_CACHE = Symbol.for(`${myname}:viewModel.clearCache`);
+
+export const SYM_GET_IS_PROXY = Symbol.for(`${myname}:arrayHandler.isProxy`);
+export const SYM_GET_RAW = Symbol.for(`${myname}:arrayHandler.raw`);
