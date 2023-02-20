@@ -138,7 +138,7 @@ export default class Template extends BindInfo {
     newTemplateChildren.forEach((templateChild, index) => {
       const prevLastIndex = lastIndexByNewIndex.get(index - 1);
       const lastIndex = lastIndexByNewIndex.get(index);
-      if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
+      if (typeof prevLastIndex === "undefined" || typeof lastIndex === "undefined" || prevLastIndex > lastIndex) {
         let prevNode = prevChild?.lastNode ?? this.template;
         templateChild.childNodes.forEach(node => {
           prevNode.after(node);
