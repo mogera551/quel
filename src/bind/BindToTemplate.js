@@ -24,7 +24,7 @@ export default class extends BindDomIf {
    * 
    * @param {Node} node 
    * @param {Component} component
-   * @param {string[]} indexes
+   * @param {number[]} indexes
    * @returns {BindInfo[]}
    */
   static bind(node, component, indexes) {
@@ -34,7 +34,7 @@ export default class extends BindDomIf {
     const binds = Parser
       .parse(bindText, "")
       .map(info => { 
-        const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes}));
+        const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));
         bind.updateNode();
         return bind;
       });

@@ -49,7 +49,7 @@ export class TemplateChild {
   /**
    * 
    * @param {Template} templateBind 
-   * @param {number} index 
+   * @param {number[]} indexes 
    */
   static create(templateBind, indexes) {
     const {component, template} = templateBind;
@@ -130,28 +130,28 @@ export default class Template extends BindInfo {
     /**
      * @type {any[]}
      */
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
 
-    const setOfLastValues = new Set(lastValue.values());
+    const setOfLastValue = new Set(lastValue); // 重複除外
     /**
      * @type {Map<any,number[]>}
      */
-    const indexesByLastValue = new Map(Array.from(setOfLastValues).map(value => [ value, [] ]));
+    const indexesByLastValue = new Map(Array.from(setOfLastValue).map(value => [ value, [] ]));
     lastValue.forEach((value, index) => indexesByLastValue.get(value).push(index));
     /**
      * @type {Map<number,number>}
      */
     const lastIndexByNewIndex = new Map;
-    const newTemplateChildren = value.map((value, index) => {
-      const lastIndexes = indexesByLastValue.get(value) ?? [];
-      if (lastIndexes.length === 0) {
-        lastIndexByNewIndex.set(index, undefined);
-        return TemplateChild.create(this, indexes.concat(index));
+    const newTemplateChildren = newValue.map((value, newIndex) => {
+      const lastIndexes = indexesByLastValue.get(value);
+      if (typeof lastIndexes === "undefined") {
+        lastIndexByNewIndex.set(newIndex, undefined);
+        return TemplateChild.create(this, indexes.concat(newIndex));
       } else {
         const lastIndex = lastIndexes.shift();
-        lastIndexByNewIndex.set(index, lastIndex);
+        lastIndexByNewIndex.set(newIndex, lastIndex);
         const templateChild = this.templateChildren[lastIndex];
-        templateChild.changeIndex(indexes.length, index - lastIndex);
+        (newIndex !== lastIndex) && templateChild.changeIndex(indexes.length, newIndex - lastIndex);
         return templateChild;
       }
     });
@@ -176,8 +176,6 @@ export default class Template extends BindInfo {
    */
   changeIndexes(index, diff) {
     this.indexes[index] = this.indexes[index] + diff;
-    this.templateChildren.forEach(templateChild => {
-      templateChild.binds.forEach(bind => bind.changeIndexes(index, diff));
-    });
+    this.templateChildren.forEach(templateChild => templateChild.changeIndex(index, diff));
   }
 }

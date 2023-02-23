@@ -100,8 +100,15 @@ export default class PropertyInfo {
     } else if (this.loopLevel < indexes.length) {
       return [ indexes.slice(0, this.loopLevel) ];
     } else {
+      /**
+       * 
+       * @param {string} parentName 
+       * @param {number} elementIndex 
+       * @param {number[]} loopIndexes 
+       * @returns {number[][]}
+       */
       const traverse = (parentName, elementIndex, loopIndexes) => {
-        const parentNameDot = parentName !== "" ? parentName + "." : parentName;
+        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
         const element = this.elements[elementIndex];
         const isTerminate = (this.elements.length - 1) === elementIndex;
         if (element === "*") {
@@ -109,10 +116,16 @@ export default class PropertyInfo {
             return isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
               traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
           } else {
+/*            
             const keys = Array.from(Object.keys(viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []));
             return keys.map(key => {
               return isTerminate ? [ loopIndexes.concat(key) ] :
                 traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(key));
+            });
+*/
+            return (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).map((value, index) => {
+              return isTerminate ? [ loopIndexes.concat(index) ] :
+                traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));
             })
           }
         } else {

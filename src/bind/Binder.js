@@ -13,7 +13,7 @@ export default class {
    * @param {HTMLTemplateElement} template 
    * @param {HTMLElement} rootElement 
    * @param {Component} component
-   * @param {string[]?} indexes
+   * @param {number[]?} indexes
    * @returns {BindInfo[]}
    */
   static bind(template, rootElement, component, indexes = []) {

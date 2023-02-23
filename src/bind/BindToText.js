@@ -20,7 +20,7 @@ export default class extends BindDomIf {
    * 
    * @param {Node} node 
    * @param {Component} component
-   * @param {string[]} indexes
+   * @param {number[]} indexes
    * @returns {BindInfo[]}
    */
   static bind(node, component, indexes) {
@@ -34,7 +34,7 @@ export default class extends BindDomIf {
     const binds = Perser
       .parse(bindText, DEFAULT_PROPERTY)
       .map(info => {
-        const bind = Factory.create(Object.assign(info, {node:textNode, component, viewModel, indexes}));
+        const bind = Factory.create(Object.assign(info, {node:textNode, component, viewModel, indexes:indexes.slice()}));
         bind.updateNode();
         return bind;
       });
