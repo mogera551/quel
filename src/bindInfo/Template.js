@@ -14,11 +14,28 @@ export class TemplateChild {
    */
   childNodes;
   /**
+   * @type {DocumentFragment}
+   */
+  fragment;
+  /**
    * @type {Node}
    */
   get lastNode() {
     return this.childNodes[this.childNodes.length - 1];
   }
+  /**
+   * @type {node[]|DocumentFragment}
+   */
+  get nodesForAppend() {
+    return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
+  }
+  /**
+   * @type {Set<Node>}
+   */
+  get setOfNodes() {
+    return new Set(this.childNodes);
+  }
+
 
   /**
    * 
@@ -46,17 +63,19 @@ export class TemplateChild {
   changeIndex(index, diff) {
     this.binds.forEach(bind => bind.changeIndexes(index, diff));
   }
+
   /**
    * 
    * @param {Template} templateBind 
    * @param {number[]} indexes 
+   * @returns {TemplateChild}
    */
   static create(templateBind, indexes) {
     const {component, template} = templateBind;
     const rootElement = document.importNode(template.content, true);
     const binds = Binder.bind(template, rootElement, component, indexes);
     const childNodes = Array.from(rootElement.childNodes);
-    return Object.assign(new TemplateChild, { binds, childNodes });
+    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement });
   }
 }
 
@@ -103,8 +122,7 @@ export default class Template extends BindInfo {
   appendToParent() {
     const fragment = document.createDocumentFragment();
     this.templateChildren
-      .flatMap(child => child.childNodes)
-      .forEach(node => fragment.appendChild(node));
+      .forEach(child => fragment.appendChild(...child.nodesForAppend));
     this.template.after(fragment);
   }
 
@@ -165,6 +183,9 @@ export default class Template extends BindInfo {
      */
     const lastIndexByNewIndex = new Map;
     // 新しくテンプレート子要素のリストを作成する
+    /**
+     * @type {TemplateChild[]}
+     */
     const newTemplateChildren = newValue.map((value, newIndex) => {
       const lastIndexes = indexesByLastValue.get(value);
       if (typeof lastIndexes === "undefined") {
@@ -181,19 +202,44 @@ export default class Template extends BindInfo {
         return templateChild;
       }
     });
-    // 既存の子要素が新しいテンプレート子要素にない、子要素のノードを削除
-    Array.from(indexesByLastValue.values()).flatMap(indexes => indexes).forEach(deleteIndex => {
-      this.templateChildren[deleteIndex].removeFromParent();
-    });
-
-    // 並び順が違っていたら子要素のノードを移動させる
-    newTemplateChildren.reduce(([prevChild, prevLastIndex], templateChild, index) => {
+    // 削除対象、追加・移動対象のインデックスを取得
+    const deleteIndexes = Array.from(indexesByLastValue.values()).flatMap(indexes => indexes);
+    const moveOrCreateIndexes = [];
+    newTemplateChildren.reduce(([prevLastIndex, moveOrCreateIndexes], templateChild, index) => {
       const lastIndex = lastIndexByNewIndex.get(index);
       if (typeof prevLastIndex === "undefined" || typeof lastIndex === "undefined" || prevLastIndex > lastIndex) {
-        (prevChild?.lastNode ?? this.template).after(...templateChild.childNodes);
+        moveOrCreateIndexes.push(index);
       }
-      return [templateChild, lastIndex];
-    }, [undefined, undefined]);
+      return [templateChild, moveOrCreateIndexes];
+    }, [undefined, moveOrCreateIndexes]);
+
+    const changeCost = deleteIndexes.length * 2 + moveOrCreateIndexes.length;
+    const rebuildCost = newTemplateChildren.length;
+    if (changeCost < rebuildCost) {
+      deleteIndexes.reverse();
+      deleteIndexes.forEach(deleteIndex => {
+        this.templateChildren[deleteIndex].removeFromParent();
+      });
+  
+      moveOrCreateIndexes.forEach(moveOrCreateIndex => {
+        const templateChild = newTemplateChildren[moveOrCreateIndex];
+        const beforeChild = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.template;
+        beforeChild.after(...templateChild.nodesForAppend);
+      });
+    } else {
+      const setOfAllNodes = new Set(this.templateChildren.flatMap(templateChild => templateChild.childNodes));
+      const keepNodes = [];
+      const parentNode = this.template.parentNode;
+      for(const node of parentNode.childNodes) {
+        !setOfAllNodes.has(node) && keepNodes.push(node);
+      }
+      parentNode.textContent = "";
+      keepNodes.forEach(node => parentNode.appendChild(node));
+      newTemplateChildren.reduce((prevChild, templateChild) => {
+        (prevChild?.lastNode ?? this.template).after(...templateChild.nodesForAppend)
+        return templateChild;
+      }, undefined);
+    }
 
     // 子要素の展開を実行
     newTemplateChildren.forEach(templateChild => templateChild.expand());
