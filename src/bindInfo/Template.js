@@ -147,28 +147,33 @@ export default class Template extends BindInfo {
     /**
      * @type {any[]}
      */
-    const lastValue = this.lastViewModelValue;
+    const lastValue = this.lastViewModelValue ?? [];
     /**
      * @type {any[]}
      */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters) ?? [];
 
-    const setOfLastValue = new Set(lastValue); // 重複除外
     /**
      * @type {Map<any,number[]>}
      */
-    const indexesByLastValue = new Map(Array.from(setOfLastValue).map(value => [ value, [] ]));
-    lastValue.forEach((value, index) => indexesByLastValue.get(value).push(index));
+    const indexesByLastValue = lastValue.reduce((map, value, index) => {
+      map.get(value)?.push(index) ?? map.set(value, [ index ]);
+      return map;
+    }, new Map);
     /**
      * @type {Map<number,number>}
      */
     const lastIndexByNewIndex = new Map;
+    // 新しくテンプレート子要素のリストを作成する
     const newTemplateChildren = newValue.map((value, newIndex) => {
       const lastIndexes = indexesByLastValue.get(value);
       if (typeof lastIndexes === "undefined") {
+        // 元のインデックスがない場合、新規
         lastIndexByNewIndex.set(newIndex, undefined);
         return TemplateChild.create(this, indexes.concat(newIndex));
       } else {
+        // 元のインデックスがある場合、子要素のループインデックスを書き換え
+        // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素
         const lastIndex = lastIndexes.shift();
         lastIndexByNewIndex.set(newIndex, lastIndex);
         const templateChild = this.templateChildren[lastIndex];
@@ -176,17 +181,21 @@ export default class Template extends BindInfo {
         return templateChild;
       }
     });
+    // 既存の子要素が新しいテンプレート子要素にない、子要素のノードを削除
     Array.from(indexesByLastValue.values()).flatMap(indexes => indexes).forEach(deleteIndex => {
       this.templateChildren[deleteIndex].removeFromParent();
     });
-    newTemplateChildren.reduce((prevChild, templateChild, index) => {
-      const prevLastIndex = lastIndexByNewIndex.get(index - 1);
+
+    // 並び順が違っていたら子要素のノードを移動させる
+    newTemplateChildren.reduce(([prevChild, prevLastIndex], templateChild, index) => {
       const lastIndex = lastIndexByNewIndex.get(index);
       if (typeof prevLastIndex === "undefined" || typeof lastIndex === "undefined" || prevLastIndex > lastIndex) {
         (prevChild?.lastNode ?? this.template).after(...templateChild.childNodes);
       }
-      return templateChild;
-    }, undefined);
+      return [templateChild, lastIndex];
+    }, [undefined, undefined]);
+
+    // 子要素の展開を実行
     newTemplateChildren.forEach(templateChild => templateChild.expand());
     this.templateChildren = newTemplateChildren;
   }

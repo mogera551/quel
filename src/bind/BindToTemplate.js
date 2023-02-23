@@ -1,7 +1,7 @@
 import "../types.js";
 import BindDomIf from "./BindToDomIf.js";
 import BindInfo from "../bindInfo/BindInfo.js";
-import { TemplateChild } from "../bindInfo/Template.js";
+import Template, { TemplateChild } from "../bindInfo/Template.js";
 import utils from "../utils.js";
 import Binder from "./Binder.js";
 import Parser from "./Parser.js";
@@ -18,6 +18,12 @@ const DATASET_BIND_PROPERTY = "bind";
  * @returns {HTMLTemplateElement}
  */
 const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
+
+/**
+ * @param {BindInfo} bind 
+ * @returns {Template}
+ */
+const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
 
 export default class extends BindDomIf {
   /**
@@ -39,32 +45,15 @@ export default class extends BindDomIf {
         return bind;
       });
     if (binds.length === 0) return [];
-    const bind = binds[0];
-    if (bind.nodeProperty !== "if" && bind.nodeProperty !== "loop") {
-      utils.raise(`unknown node property ${bind.nodeProperty}`);
-    }
-    bind.templateChildren = this.expand(bind);
-    bind.appendToParent();
-    return [ bind ];
-  }
-
-  /**
-   * 
-   * @param {BindInfo} bind 
-   * @returns {TemplateChild[]}
-   */
-  static expand(bind) {
-    const { nodeProperty, viewModel, viewModelProperty, filters, indexes } = bind;
-
-    const viewModelValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    if (nodeProperty === "if") {
-      if (viewModelValue) {
-        return [ TemplateChild.create(bind, indexes) ];
+    const templateBind = toTemplate(binds[0]);
+    if (templateBind) {
+      if (templateBind.nodeProperty !== "if" && templateBind.nodeProperty !== "loop") {
+        utils.raise(`unknown node property ${templateBind.nodeProperty}`);
       }
-    } else if (nodeProperty === "loop") {
-      return viewModelValue.map((value, index) => TemplateChild.create(bind, indexes.concat(index)));
+      templateBind.expand();
+      return [ templateBind ];
+    } else {
+      utils.raise(`not template bind`);
     }
-    return [];
   }
-
 }
