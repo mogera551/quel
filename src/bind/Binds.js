@@ -1,7 +1,5 @@
 import Template from "../bindInfo/Template.js";
 import BindInfo from "../bindInfo/BindInfo.js";
-import BindToTemplate from "./BindToTemplate.js";
-import utils from "../utils.js";
 
 const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
 
@@ -9,10 +7,13 @@ export default class {
   /**
    * @type {BindInfo[]}
    */
-  binds;
-  bindsByKey = new Map;
+  #binds;
+  /**
+   * @type {Map<string,BindInfo[]>}
+   */
+  #bindsByKey = new Map;
   constructor(binds) {
-    this.binds = binds;
+    this.#binds = binds;
     this.buildMap();
   }
 
@@ -23,12 +24,12 @@ export default class {
      */
     const buildMap = (binds) => {
       binds.forEach(bind => {
-        this.bindsByKey.get(bind.viewModelPropertyKey)?.push(bind) ?? this.bindsByKey.set(bind.viewModelPropertyKey, [ bind ]);
+        this.#bindsByKey.get(bind.viewModelPropertyKey)?.push(bind) ?? this.#bindsByKey.set(bind.viewModelPropertyKey, [ bind ]);
         (toTemplate(bind)?.templateChildren ?? []).forEach(templateChild => buildMap(templateChild.binds));
       });
     }
-    this.bindsByKey.clear();
-    buildMap(this.binds);
+    this.#bindsByKey.clear();
+    buildMap(this.#binds);
   }
   /**
    * 
@@ -37,7 +38,7 @@ export default class {
    */
   getTemplateBinds(setOfKey) {
     const templateBinds = [];
-    const stack = [ { binds:this.binds, children:null, index:-1 } ];
+    const stack = [ { binds:this.#binds, children:null, index:-1 } ];
     while(stack.length > 0) {
       const info = stack[stack.length - 1];
       info.index++;
@@ -99,7 +100,7 @@ export default class {
         }
       });
     }
-    updateViewModelProperty(this.binds);
+    updateViewModelProperty(this.#binds);
   }
 
 }

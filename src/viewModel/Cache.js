@@ -8,7 +8,7 @@ export default class {
   /**
    * @type {Map<PropertyInfo,Map<string,any>>}
    */
-  valueByIndexesByProp = new Map();
+  #valueByIndexesByProp = new Map();
 
   /**
    * 
@@ -17,7 +17,7 @@ export default class {
    * @returns {any}
    */
   get(property, indexes) {
-    return this.valueByIndexesByProp.get(property)?.get(indexes.toString());
+    return this.#valueByIndexesByProp.get(property)?.get(indexes.toString());
   }
 
   /**
@@ -27,10 +27,10 @@ export default class {
    * @param {any} value 
    */
   set(property, indexes, value) {
-    let valueByIndexs = this.valueByIndexesByProp.get(property);
+    let valueByIndexs = this.#valueByIndexesByProp.get(property);
     if (typeof valueByIndexs === "undefined") {
       valueByIndexs = new Map();
-      this.valueByIndexesByProp.set(property, valueByIndexs);
+      this.#valueByIndexesByProp.set(property, valueByIndexs);
     }
     valueByIndexs.set(indexes.toString(), value);
   }
@@ -42,7 +42,7 @@ export default class {
    * @returns {boolean}
    */
   has(property, indexes) {
-    return this.valueByIndexesByProp.get(property)?.has(indexes.toString()) ?? false;
+    return this.#valueByIndexesByProp.get(property)?.has(indexes.toString()) ?? false;
   }
 
   /**
@@ -52,16 +52,16 @@ export default class {
    */
   delete(property, indexes) {
     const indexesString = indexes.toString();
-    let valueByIndexes = this.valueByIndexesByProp.get(property);
+    let valueByIndexes = this.#valueByIndexesByProp.get(property);
     if (valueByIndexes) {
       valueByIndexes.delete(indexesString);
       if (valueByIndexes.size === 0) {
-        this.valueByIndexesByProp.delete(property);
+        this.#valueByIndexesByProp.delete(property);
       }
     }
     // 関連するキャッシュを取得し、削除する
     const indexesStarts = indexesString + ",";
-    const properties = Array.from(this.valueByIndexesByProp.keys());
+    const properties = Array.from(this.#valueByIndexesByProp.keys());
     /**
      * 
      * @param {PropertyInfo} property 
@@ -72,14 +72,14 @@ export default class {
         .flatMap(prop => [prop].concat(getDependentProps(prop)));
     const dependentProps = getDependentProps(property);
     dependentProps.forEach(property => {
-      const valueByIndexes = this.valueByIndexesByProp.get(property);
+      const valueByIndexes = this.#valueByIndexesByProp.get(property);
       for(const indexes of valueByIndexes.keys()) {
         if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
           valueByIndexes.delete(indexes);
         }
       }
       if (valueByIndexes.size === 0) {
-        this.valueByIndexesByProp.delete(property);
+        this.#valueByIndexesByProp.delete(property);
       }
     });
 
@@ -87,7 +87,7 @@ export default class {
   }
 
   clear() {
-    this.valueByIndexesByProp.clear();
+    this.#valueByIndexesByProp.clear();
   }
   
 

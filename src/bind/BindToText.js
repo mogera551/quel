@@ -3,8 +3,8 @@ import BindDomIf from "./BindToDomIf.js";
 import BindInfo from "../bindInfo/BindInfo.js";
 import Perser from "./Parser.js";
 import utils from "../utils.js";
-import Thread from "../thread/Thread.js";
 import Factory from "../bindInfo/Factory.js";
+import Component from "../component/Component.js";
 
 const DEFAULT_PROPERTY = "textContent";
 
@@ -19,12 +19,13 @@ export default class extends BindDomIf {
   /**
    * 
    * @param {Node} node 
-   * @param {ViewModel} viewModel
+   * @param {Component} component
    * @param {string[]} indexes
    * @returns {BindInfo[]}
    */
-  static bind(node, viewModel, indexes) {
+  static bind(node, component, indexes) {
     // コメントノードをテキストノードに差し替える
+    const viewModel = component.viewModel;
     const comment = toComment(node);
     const bindText = comment.textContent.slice(2); // @@をスキップ
     const textNode = document.createTextNode("");
@@ -33,7 +34,7 @@ export default class extends BindDomIf {
     const binds = Perser
       .parse(bindText, DEFAULT_PROPERTY)
       .map(info => {
-        const bind = Factory.create(Object.assign(info, {node:textNode, viewModel, indexes}));
+        const bind = Factory.create(Object.assign(info, {node:textNode, component, viewModel, indexes}));
         bind.updateNode();
         return bind;
       });

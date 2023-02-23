@@ -8,7 +8,6 @@ import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
 import PropertyInfo from "./PropertyInfo.js";
 import { ProcessData } from "../thread/Processor.js";
-import Thread from "../thread/Thread.js";
 import { NotifyData } from "../thread/Notifier.js";
 import Cache from "./Cache.js";
 import createArrayProxy from "./ArrayProxy.js";
@@ -87,9 +86,9 @@ class Handler {
 
   [SYM_CALL_WRITE](prop, indexes, target, receiver) {
     if ("$onwrite" in target) {
+      const { component } = this;
       const process = new ProcessData(target["$onwrite"], receiver, [ prop, indexes ]);
-      Thread.current.addProcess(process);
-      // await Reflect.apply(target["$onwrite"], receiver, [ prop, indexes ]);
+      component.updateSlot.addProcess(process);
     }
   }
 
@@ -128,14 +127,14 @@ class Handler {
    * @param {Proxy<ViewModel>} receiver 
    */
   #setDefinedPropertyValue(target, prop, value, receiver) {
-    const { lastIndexes, cache } = this;
+    const { component, lastIndexes, cache } = this;
     value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
     const indexes = lastIndexes.slice(0, prop.loopLevel);
     Reflect.set(target, prop.name, value, receiver);
     cache.delete(prop, indexes);
     cache.set(prop, indexes, value);
 
-    Thread.current.addNotify(new NotifyData(this.component, prop.name, indexes));
+    component.updateSlot.addNotify(new NotifyData(component, prop.name, indexes));
     if (this.dependentMap.has(prop.name)) {
       const getDependentProps = (name) => 
         (this.dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
@@ -146,12 +145,12 @@ class Handler {
           const listOfIndexes = definedProperty.expand(receiver, indexes);
           listOfIndexes.forEach(depIndexes => {
             cache.delete(definedProperty, depIndexes);
-            Thread.current.addNotify(new NotifyData(this.component, definedProperty.name, depIndexes));
+            component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
           });
         } else {
           const depIndexes = indexes.slice(0, definedProperty.loopLevel);
           cache.delete(definedProperty, depIndexes);
-          Thread.current.addNotify(new NotifyData(this.component, definedProperty.name, depIndexes));
+          component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
         }
       });
     }

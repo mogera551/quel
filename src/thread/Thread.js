@@ -3,35 +3,109 @@ import NodeUpdator, { NodeUpdateData } from "./NodeUpdator.js";
 import Notifier, { NotifyData } from "./Notifier.js";
 import Processor, { ProcessData } from "./Processor.js";
 
-class Slot {
+export class UpdateSlot {
   /**
    * @type {Processor}
    */
-  processor;
+  #processor;
   /**
    * @type {Notifier}
    */
-  notifier;
+  #notifier;
   /**
    * @type {NodeUpdator}
    */
-  nodeUpdator;
-
+  #nodeUpdator;
+  /**
+   * @type {()=>{}}
+   */
+  #callback;
+  /**
+   * @type {Promise}
+   */
+  #promise;
+  /**
+   * @type {(value) => {}}
+   */
+  #resolve;
+  /**
+   * @type {() => {}}
+   */
+  #reject;
+  
   /**
    * 
+   * @param {()=>{}?} callback
    */
-  constructor() {
-    this.processor = new Processor;
-    this.notifier = new Notifier;
-    this.nodeUpdator = new NodeUpdator;
+  constructor(callback = null) {
+    this.#processor = new Processor;
+    this.#notifier = new Notifier;
+    this.#nodeUpdator = new NodeUpdator;
+    this.#callback = callback;
+    this.#promise = new Promise((resolve, reject) => {
+      this.#resolve = resolve;
+      this.#reject = reject;
+    })
+  }
+
+  resolve() {
+    this.#resolve && this.#resolve();
+    this.#resolve = null;
+  }
+
+  reject() {
+    this.#reject && this.#reject();
+    this.#reject = null;
+  }
+
+  async waiting() {
+    return this.#promise;
   }
 
   async exec() {
     do {
-      await this.processor.exec();
-      await this.notifier.exec();
-      await this.nodeUpdator.exec();
-    } while(!this.processor.isEmpty || !this.notifier.isEmpty || !this.nodeUpdator.isEmpty);
+      await this.#processor.exec();
+      await this.#notifier.exec();
+      await this.#nodeUpdator.exec();
+    } while(!this.#processor.isEmpty || !this.#notifier.isEmpty || !this.#nodeUpdator.isEmpty);
+  }
+
+  /**
+   * 
+   * @param {ProcessData} processData 
+   */
+  addProcess(processData) {
+    this.#processor.queue.push(processData);
+    this.resolve();
+  }
+  
+  /**
+   * 
+   * @param {NotifyData} notifyData 
+   */
+  addNotify(notifyData) {
+    this.#notifier.queue.push(notifyData);
+    this.resolve();
+  }
+
+  /**
+   * 
+   * @param {NodeUpdateData} nodeUpdateData 
+   */
+  addNodeUpdate(nodeUpdateData) {
+    this.#nodeUpdator.queue.push(nodeUpdateData);
+    this.resolve();
+  }
+
+  /**
+   * 
+   */
+  callback() {
+    this.#callback && this.#callback();
+  }
+
+  static create(callback) {
+    return new UpdateSlot(callback);
   }
 
 }
@@ -45,19 +119,19 @@ export default class Thread {
    * @type {()=>{}}
    */
   #reject;
+
   /**
-   * @type {Slot}
+   * 
    */
-  #slot;
   constructor() {
     this.main();
   }
 
   /**
    * 
-   * @returns 
+   * @returns {Promise<UpdateSlot>}
    */
-  async sleep() {
+  async #sleep() {
     return new Promise((resolve, reject) => {
       this.#resolve = resolve;
       this.#reject = reject;
@@ -73,23 +147,20 @@ export default class Thread {
 
   /**
    * 
-   * @param {Slot} slot 
+   * @param {UpdateSlot} slot 
    */
   wakeup(slot) {
-    this.#slot = slot;
-    this.#resolve();
+    this.#resolve(slot);
   }
 
   async main() {
     do {
       try {
-        await this.sleep();
+        const slot = await this.#sleep();
+        await slot.waiting(); // queueにデータが入るまで待機
         main.getDebug() && performance.mark('slot-exec:start');
         try {
-          await this.#slot.exec();
-        } finally {
-          this.#slot = undefined;
-//          console.log("slot.exec stopped");
+          await slot.exec();
           if (main.getDebug()) {
             performance.mark('slot-exec:end')
             performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
@@ -97,6 +168,8 @@ export default class Thread {
             performance.clearMeasures();
             performance.clearMarks();
           }
+        } finally {
+          slot.callback();
         }
       } catch(e) {
         if (typeof e !== "undefined") {
@@ -109,68 +182,4 @@ export default class Thread {
     } while(true);
   }
 
-  /**
-   * 
-   * @param {ProcessData} process 
-   */
-  addProcess(process) {
-    const slot = this.#slot ?? new Slot;
-    slot.processor.queue.push(process);
-    this.#slot || this.wakeup(slot);
-  }
-
-  /**
-   * 
-   * @param {NotifyData} notify 
-   */
-  addNotify(notify) {
-    const slot = this.#slot ?? new Slot;
-    slot.notifier.queue.push(notify);
-    this.#slot || this.wakeup(slot);
-  }
-
-  /**
-   * 
-   * @param {NodeUpdateData} nodeUpdate 
-   */
-  addNodeUpdate(nodeUpdate) {
-    const slot = this.#slot ?? new Slot;
-    slot.nodeUpdator.queue.push(nodeUpdate);
-    this.#slot || this.wakeup(slot);
-  }
-
-  /**
-   * @type {Thread[]}
-   */
-  static stack = [];
-
-
-  static start() {
-    this.stack.push(new Thread());
-  }
-
-  /**
-   * 現在のスレッド
-   * @type {Thread} 
-   */
-  static get current() {
-    return this.stack.at(-1);
-  }
-
-  /**
-   * 別スレッドを作成する
-   */
-  static suspend() {
-    this.stack.push(new Thread());
-  }
-
-  /**
-   * 現在のスレッドを停止し、元のスレッドを復帰
-   */
-  static resume() {
-    const curThread = this.stack.pop();
-    curThread.stop();
-  }
 }
-
-Thread.start();

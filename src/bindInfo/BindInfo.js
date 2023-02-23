@@ -1,6 +1,7 @@
 import "../types.js";
 import utils from "../utils.js";
 import Filter from "../filter/Filter.js";
+import Component from "../component/Component.js";
 
 export default class BindInfo {
   /**
@@ -28,6 +29,10 @@ export default class BindInfo {
     this.#nodePropertyElements = value;
   }
 
+  /**
+   * @type {Component}
+   */
+  component;
   /**
    * @type {ViewModel}
    */

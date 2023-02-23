@@ -19,6 +19,7 @@ export class NotifyData {
   set indexes(value) {
     this.#indexes = value;
     this.#indexesString = value.toString();
+    this.#key = this.name + "\t" + this.#indexesString;
   }
   /**
    * @type {string}
@@ -26,6 +27,13 @@ export class NotifyData {
   #indexesString;
   get indexesString() {
     return this.#indexesString;
+  }
+  /**
+   * @type {string}
+   */
+  #key;
+  get key() {
+    return this.#key;
   }
 
   /**
@@ -41,6 +49,8 @@ export class NotifyData {
   }
 }
 
+const getNnotifyKey = notify => notify.key;
+
 export default class {
   /**
    * @type {NotifyData[]}
@@ -52,17 +62,17 @@ export default class {
    */
   async exec() {
     while(this.queue.length > 0) {
-      const queue = this.queue.splice(0);
+      const notifies = this.queue.splice(0);
       /**
        * @type {Map<Component,NotifyData[]>}
        */
-      const notifiesByComponent = queue.reduce((map, notify) => {
+      const notifiesByComponent = notifies.reduce((map, notify) => {
         map.get(notify.component)?.push(notify) ?? map.set(notify.component, [ notify ]);
         return map;
       }, new Map);
       
       for(const [component, notifies] of notifiesByComponent.entries()) {
-        const setOfKey = new Set(notifies.map(notify => `${notify.name}\t${notify.indexes}`));
+        const setOfKey = new Set(notifies.map(getNnotifyKey));
         component.notify(setOfKey);
       }
     }

@@ -8,6 +8,7 @@ import Parser from "./Parser.js";
 import Filter from "../filter/Filter.js";
 import { SYM_CALL_DIRECT_GET } from "../viewModel/Symbols.js";
 import Factory from "../bindInfo/Factory.js";
+import Component from "../component/Component.js";
 
 const DATASET_BIND_PROPERTY = "bind";
 
@@ -22,17 +23,18 @@ export default class extends BindDomIf {
   /**
    * 
    * @param {Node} node 
-   * @param {ViewModel} viewModel
+   * @param {Component} component
    * @param {string[]} indexes
    * @returns {BindInfo[]}
    */
-  static bind(node, viewModel, indexes) {
+  static bind(node, component, indexes) {
+    const viewModel = component.viewModel;
     const template = toHTMLTemplateElement(node);
     const bindText = template.dataset[DATASET_BIND_PROPERTY];
     const binds = Parser
       .parse(bindText, "")
       .map(info => { 
-        const bind = Factory.create(Object.assign(info, {node, viewModel, indexes}));
+        const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes}));
         bind.updateNode();
         return bind;
       });

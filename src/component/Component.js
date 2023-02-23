@@ -4,7 +4,7 @@ import ComponentData from "./Data.js";
 import View from "../view/View.js";
 import createViewModel from "../viewModel/Proxy.js";
 import { SYM_CALL_INIT } from "../viewModel/Symbols.js";
-import Thread from "../thread/Thread.js";
+import Thread, { UpdateSlot } from "../thread/Thread.js";
 import { ProcessData } from "../thread/Processor.js";
 import Binds from "../bind/Binds.js";
 
@@ -17,8 +17,11 @@ const getParentComponent = (node) => {
   do {
     node = node.parentNode;
     if (node == null) return null;
-    if (node instanceof ShadowRoot) return node.host;
     if (node instanceof Component) return node;
+    if (node instanceof ShadowRoot) {
+      if (node.host instanceof Component) return node.host;
+      node = node.host;
+    }
   } while(true);
 };
 
@@ -30,11 +33,28 @@ export default class Component extends HTMLElement {
   /**
    * @type {View}
    */
-  view;
+  #view;
   /**
    * @type {Binds}
    */
-  binds;
+  #binds;
+  /**
+   * @type {Thread}
+   */
+  #thread;
+  /**
+   * @type {UpdateSlot}
+   */
+  #updateSlot;
+  get updateSlot() {
+    if (typeof this.#updateSlot === "undefined") {
+      this.#updateSlot = UpdateSlot.create(() => {
+        this.#updateSlot = undefined;
+      });
+      this.#thread.wakeup(this.#updateSlot);
+    }
+    return this.#updateSlot;
+  }
 
   constructor() {
     super();
@@ -43,6 +63,7 @@ export default class Component extends HTMLElement {
       this.#initialResolve = resolve;
       this.#initialReject = reject;
     });
+    this.#thread = new Thread;
   }
 
   /**
@@ -71,14 +92,14 @@ export default class Component extends HTMLElement {
   async build() {
     const componentData = Component.componentDataByName.get(this.tagName);
     componentData || utils.raise(`unknown tag name ${this.tagName}`);
-    this.view = new View(componentData.template, this.viewRootElement);
+    this.#view = new View(componentData.template, this.viewRootElement);
     const viewModel = Reflect.construct(componentData.ViewModel, []);
     this.viewModel = createViewModel(this, viewModel);
     await this.viewModel[SYM_CALL_INIT]();
 
-    Thread.current.addProcess(new ProcessData(() => {
-      this.binds = this.view.render(this.viewModel);
-    }, this, []))
+    this.updateSlot.addProcess(new ProcessData(() => {
+      this.#binds = this.#view.render(this);
+    }, this, []));
   }
 
   /**
@@ -149,7 +170,7 @@ export default class Component extends HTMLElement {
    * @param {integer[]} indexes 
    */
   notify(setOfKey) {
-    this.binds.updateViewModel(setOfKey);
+    this.#binds.updateViewModel(setOfKey);
   }
 
   /**

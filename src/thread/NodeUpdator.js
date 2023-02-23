@@ -33,23 +33,23 @@ export default class {
 
   /**
    * 
-   * @param {NodeUpdateData[]} queue 
+   * @param {NodeUpdateData[]} updates 
    */
-  reorder(queue) {
-    queue.sort((update1, update2) => {
+  reorder(updates) {
+    updates.sort((update1, update2) => {
       if (update2.node instanceof HTMLTemplateElement) return 1;
       if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
       return -1;
     });
+    return updates;
   }
   /**
    * 
    */
   async exec() {
     while(this.queue.length > 0) {
-      const queue = this.queue.splice(0);
-      this.reorder(queue);
-      queue.forEach(update => Reflect.apply(update.updateFunc, update, []));
+      const updates = this.reorder(this.queue.splice(0));
+      updates.forEach(update => Reflect.apply(update.updateFunc, update, []));
     }
   }
 

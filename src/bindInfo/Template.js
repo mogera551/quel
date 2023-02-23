@@ -41,9 +41,9 @@ export class TemplateChild {
    * @param {integer} index 
    */
   static create(templateBind, indexes) {
-    const {template, viewModel} = templateBind;
+    const {component, template} = templateBind;
     const rootElement = document.importNode(template.content, true);
-    const binds = Binder.bind(template, rootElement, viewModel, indexes);
+    const binds = Binder.bind(template, rootElement, component, indexes);
     const childNodes = Array.from(rootElement.childNodes);
     return Object.assign(new TemplateChild, { binds, childNodes });
   }
@@ -62,7 +62,8 @@ export default class Template extends BindInfo {
   }
 
   updateNode() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    // 値だけ更新
+    const {viewModel, viewModelProperty, indexes, filters} = this;
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     if (this.nodeProperty === "loop") {
       this.lastViewModelValue = (value ?? []).slice();

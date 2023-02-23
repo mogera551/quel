@@ -1,7 +1,6 @@
 import BindInfo from "./BindInfo.js";
 import { SYM_CALL_DIRECT_CALL } from "../viewModel/Symbols.js";
 import { ProcessData } from "../thread/Processor.js";
-import Thread from "../thread/Thread.js";
 
 export default class Event extends BindInfo {
   #eventType;
@@ -18,15 +17,13 @@ export default class Event extends BindInfo {
    * 
    */
   addEventListener() {
-    const {element, eventType, viewModel, viewModelProperty} = this;
+    const {component, element, eventType, viewModel, viewModelProperty} = this;
     element.addEventListener(eventType, (event) => {
       const indexes = this.indexes;
       const process = new ProcessData(
         viewModel[SYM_CALL_DIRECT_CALL], viewModel, [viewModelProperty, indexes, event]
       );
-      Thread.current.addProcess(process);
-      //viewModel[SYM_CALL_DIRECT_CALL](viewModelProperty, indexes, event);
-
+      component.updateSlot.addProcess(process);
     });
   }
 }

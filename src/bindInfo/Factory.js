@@ -8,6 +8,7 @@ import Radio from "./Radio.js";
 import Checkbox from "./Checkbox.js";
 import Template from "./Template.js";
 import Event from "./Event.js";
+import Component from "../component/Component.js";
 
 const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
 const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
@@ -32,6 +33,7 @@ export default class Factory {
   /**
    * 
    * @param {{
+   * component:Component,
    * node:Node,
    * nodeProperty:string,
    * viewModel:ViewModel,
@@ -40,8 +42,8 @@ export default class Factory {
    * indexes:integer[]
    * }}  
    */
-  static create({node, nodeProperty, viewModel, viewModelProperty, filters, indexes}) {
-    const bindInfo = {node, nodeProperty, viewModel, viewModelProperty, filters, indexes};
+  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes}) {
+    const bindInfo = {component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes};
     const info = PropertyType.getInfo(node, nodeProperty);
     return creatorByType.get(info.type)(bindInfo, info);
   }

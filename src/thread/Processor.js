@@ -36,8 +36,10 @@ export default class {
    */
   async exec() {
     while(this.queue.length > 0) {
-      const process = this.queue.shift();
-      await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
+      const processes = this.queue.splice(0);
+      for(const process of processes) {
+        await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
+      }
     }
   }
 

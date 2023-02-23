@@ -1,6 +1,5 @@
 import Component from "../component/Component.js";
 import { NotifyData } from "../thread/Notifier.js";
-import Thread from "../thread/Thread.js";
 import PropertyInfo from "./PropertyInfo.js";
 import { SYM_GET_IS_PROXY, SYM_GET_RAW } from "./Symbols.js";
 
@@ -12,16 +11,16 @@ class ArrayHandler {
   /**
    * @type {Component}
    */
-  component;
+  #component;
   /**
    * @type {PropertyInfo}
    */
-  prop;
+  #prop;
   /**
    * ループインデックス
    * @type {integer[]}
    */
-  indexes;
+  #indexes;
   /**
    * コンストラクタ
    * @param {Component} component 
@@ -29,9 +28,9 @@ class ArrayHandler {
    * @param {integer[]} indexes
    */
   constructor(component, prop, indexes) {
-    this.component = component;
-    this.prop = prop;
-    this.indexes = indexes;
+    this.#component = component;
+    this.#prop = prop;
+    this.#indexes = indexes;
   }
 
   /**
@@ -61,7 +60,7 @@ class ArrayHandler {
   set(target, prop, value, receiver) {
     Reflect.set(target, prop, value, receiver);
     if (prop === "length") {
-      Thread.current.addNotify(new NotifyData(this.component, this.prop.name, this.indexes));
+      this.#component.updateSlot.addNotify(new NotifyData(this.#component, this.#prop.name, this.#indexes));
     }
     return true;
   }
