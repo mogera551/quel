@@ -24,7 +24,7 @@ export default class PropertyInfo {
     this.lastElement = this.elements.at(-1) ?? null;
     this.regexp = (this.loopLevel > 0) ? new RegExp("^" + name.replaceAll("*", "(\\w+)").replaceAll(".", "\\.") + "$") : null;
     this.isPrimitive = this.elements.length === 1 && this.loopLevel === 0;
-    this.privateName = this.isPrimitive ? `_${name}` : null;
+    this.privateName = this.isPrimitive ? ("_" + name) : null;
     this.isObject = this.elements.length > 1 && this.loopLevel === 0;
     this.isLoop = this.elements.length > 1 && this.loopLevel > 0;
     this.isNotPrimitive = ! this.isPrimitive ;

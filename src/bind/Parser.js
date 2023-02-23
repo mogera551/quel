@@ -99,7 +99,7 @@ export default class {
    * @returns {BindTextInfo[]}
    */
   static parse(text, defaultName) {
-    const key = `${text}\t${defaultName}`;
+    const key = text + "\t" + defaultName;
     let binds = this.bindTextsByKey.get(key);
     if (typeof binds === "undefined") {
       binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));

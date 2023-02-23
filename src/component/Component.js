@@ -131,7 +131,6 @@ export default class Component extends HTMLElement {
    * DOMツリーへ追加
    */
   async connectedCallback() {
-//    console.log(`${this.tagName}.connectCallback()`);
     try {
       this.parentComponent && await this.parentComponent.initialPromise;
       await this.build();

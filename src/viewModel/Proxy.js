@@ -14,7 +14,7 @@ import createArrayProxy from "./ArrayProxy.js";
 
 const MAX_INDEXES_LEVEL = 8;
 const CONTEXT_INDEXES = new Set(
-  [...Array(MAX_INDEXES_LEVEL)].map((content,index) => `$${index + 1}`)   
+  [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1))   
 );
 
 /**

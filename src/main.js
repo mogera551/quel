@@ -11,7 +11,7 @@ export default class {
   static components(components) {
     const prefix = this.#prefix;
     Object.entries(components).forEach(([name, componentData]) => {
-      const componentName = prefix ? `${prefix}-${name}` : name;
+      const componentName = prefix ? (prefix + "-" + name) : name;
       Component.regist(componentName, componentData);
     });
     return this;
