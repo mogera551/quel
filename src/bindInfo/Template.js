@@ -20,10 +20,16 @@ export class TemplateChild {
     return this.childNodes[this.childNodes.length - 1];
   }
 
+  /**
+   * 
+   */
   removeFromParent() {
     this.childNodes.forEach(node => node.parentNode.removeChild(node));
   }
 
+  /**
+   * 
+   */
   expand() {
     this.binds.forEach(bind => {
       if (bind instanceof Template) {
@@ -32,13 +38,18 @@ export class TemplateChild {
     })
   }
 
+  /**
+   * 
+   * @param {number} index 
+   * @param {number} diff 
+   */
   changeIndex(index, diff) {
     this.binds.forEach(bind => bind.changeIndexes(index, diff));
   }
   /**
    * 
    * @param {Template} templateBind 
-   * @param {integer} index 
+   * @param {number} index 
    */
   static create(templateBind, indexes) {
     const {component, template} = templateBind;
@@ -148,11 +159,11 @@ export default class Template extends BindInfo {
   }
   /**
    * 
-   * @param {integer} index 
-   * @param {integer} diff 
+   * @param {number} index 
+   * @param {number} diff 
    */
   changeIndexes(index, diff) {
-    this.indexes[index] = (parseInt(this.indexes[index]) + diff).toString();
+    this.indexes[index] = this.indexes[index] + diff;
     this.templateChildren.forEach(templateChild => {
       templateChild.binds.forEach(bind => bind.changeIndexes(index, diff));
     });

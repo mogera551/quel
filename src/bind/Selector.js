@@ -6,7 +6,7 @@ const SELECTOR = "[data-bind]";
  * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
  * => [1,3,7,2]
  * @param {Node} node 
- * @returns {integer[]}
+ * @returns {number[]}
  */
 const getNodeRoute = node => {
   let routeIndexes = [];
@@ -33,7 +33,7 @@ const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getC
 
 export default class {
   /**
-   * @type {Map<HTMLTemplateElement, integer[][]>}
+   * @type {Map<HTMLTemplateElement, number[][]>}
    */
   static listOfRouteIndexesByTemplate = new Map();
   /**

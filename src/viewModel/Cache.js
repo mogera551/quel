@@ -13,7 +13,7 @@ export default class {
   /**
    * 
    * @param {PropertyInfo} property 
-   * @param {integer[]} indexes 
+   * @param {number[]} indexes 
    * @returns {any}
    */
   get(property, indexes) {
@@ -23,7 +23,7 @@ export default class {
   /**
    * 
    * @param {PropertyInfo} property 
-   * @param {integer[]} indexes 
+   * @param {number[]} indexes 
    * @param {any} value 
    */
   set(property, indexes, value) {
@@ -38,7 +38,7 @@ export default class {
   /**
    * 
    * @param {PropertyInfo} property 
-   * @param {integer[]} indexes 
+   * @param {number[]} indexes 
    * @returns {boolean}
    */
   has(property, indexes) {
@@ -48,7 +48,7 @@ export default class {
   /**
    * 
    * @param {PropertyInfo} property 
-   * @param {integer[]} indexes 
+   * @param {number[]} indexes 
    */
   delete(property, indexes) {
     const indexesString = indexes.toString();

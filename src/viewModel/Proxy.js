@@ -23,7 +23,7 @@ const CONTEXT_INDEXES = new Set(
  * いったん元の配列を求めてからプロキシにする
  * @param {Component} component 
  * @param {PropertyInfo} prop 
- * @param {integer[]} indexes
+ * @param {number[]} indexes
  * @param {any} value 
  * @returns 
  */
@@ -38,11 +38,11 @@ class Handler {
    */
   cache = new Cache();
   /**
-   * @type {Map<string,{indexes:integer[],propertyInfo:PropertyInfo}>}
+   * @type {Map<string,{indexes:number[],propertyInfo:PropertyInfo}>}
    */
   propertyInfoAndIndexesByProp = new Map();
   /**
-   * @type {integer[][]}
+   * @type {number[][]}
    */
   stackIndexes = [];
   /**
@@ -84,6 +84,13 @@ class Handler {
     return await Reflect.apply(target["$oninit"], receiver, []);
   }
 
+  /**
+   * 
+   * @param {string} prop 
+   * @param {number[]} indexes 
+   * @param {*} target 
+   * @param {*} receiver 
+   */
   [SYM_CALL_WRITE](prop, indexes, target, receiver) {
     if ("$onwrite" in target) {
       const { component } = this;
@@ -186,7 +193,7 @@ class Handler {
   /**
    * 
    * @param {string} prop 
-   * @returns {{loopProperty:PropertyInfo,indexes:integer[]}}
+   * @returns {{loopProperty:PropertyInfo,indexes:number[]}}
    */
   #getLoopPropertyAndIndexesFromPropertyName(prop) {
     let { loopProperty, indexes } = this.propertyInfoAndIndexesByProp.get(prop) ?? {};
@@ -239,7 +246,7 @@ class Handler {
       }
     }
     if (CONTEXT_INDEXES.has(prop)) {
-      return lastIndexes[parseInt(prop.slice(1)) - 1];
+      return Number(lastIndexes[parseInt(prop.slice(1)) - 1]);
     }
 
     const defindedProperty = this.definedPropertyByProp.get(prop);

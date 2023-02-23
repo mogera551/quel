@@ -91,8 +91,8 @@ export default class PropertyInfo {
   /**
    * 
    * @param {ViewModel} viewModel 
-   * @param {integer[]} indexes 
-   * @returns {integer[][]}
+   * @param {number[]} indexes 
+   * @returns {number[][]}
    */
   expand(viewModel, indexes) {
     if (this.loopLevel === indexes.length) {

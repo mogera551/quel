@@ -39,7 +39,7 @@ export default class Factory {
    * viewModel:ViewModel,
    * viewModelProperty:string,
    * filters:Filter[],
-   * indexes:integer[]
+   * indexes:number[]
    * }}  
    */
   static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes}) {

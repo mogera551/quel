@@ -46,7 +46,7 @@ export default class BindInfo {
    */
   filters;
   /**
-   * @type {string[]}
+   * @type {number[]}
    */
   #indexes;
   #indexesString;
@@ -87,12 +87,10 @@ export default class BindInfo {
 
   /**
    * 
-   * @param {integer} index 
-   * @param {integer} diff 
+   * @param {number} index 
+   * @param {number} diff 
    */
   changeIndexes(index, diff) {
-    const indexes = this.indexes.slice();
-    indexes[index] = (parseInt(indexes[index]) + diff).toString();
-    this.indexes = indexes;
+    this.indexes[index] = this.indexes[index] + diff;
   }
 }

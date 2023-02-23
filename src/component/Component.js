@@ -166,7 +166,7 @@ export default class Component extends HTMLElement {
   /**
    * 
    * @param {Set<string>} setOfKey 
-   * @param {integer[]} indexes 
+   * @param {number[]} indexes 
    */
   notify(setOfKey) {
     this.#binds.updateViewModel(setOfKey);

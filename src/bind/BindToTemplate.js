@@ -62,7 +62,7 @@ export default class extends BindDomIf {
         return [ TemplateChild.create(bind, indexes) ];
       }
     } else if (nodeProperty === "loop") {
-      return Array.from(Object.keys(viewModelValue)).map(index => TemplateChild.create(bind, indexes.concat(index)));
+      return viewModelValue.map((value, index) => TemplateChild.create(bind, indexes.concat(index)));
     }
     return [];
   }

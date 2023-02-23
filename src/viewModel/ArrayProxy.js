@@ -18,14 +18,14 @@ class ArrayHandler {
   #prop;
   /**
    * ループインデックス
-   * @type {integer[]}
+   * @type {number[]}
    */
   #indexes;
   /**
    * コンストラクタ
    * @param {Component} component 
    * @param {string} prop 
-   * @param {integer[]} indexes
+   * @param {number[]} indexes
    */
   constructor(component, prop, indexes) {
     this.#component = component;
@@ -71,7 +71,7 @@ class ArrayHandler {
  * @param {Array<any>} array 
  * @param {Component} component 
  * @param {PropertyInfo} prop 
- * @param {integer[]} indexes 
+ * @param {number[]} indexes 
  * @returns 
  */
 export default function create(array, component, prop, indexes) {

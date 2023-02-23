@@ -10,7 +10,7 @@ export class NotifyData {
    */
   name;
   /**
-   * @type {integer[]}
+   * @type {number[]}
    */
   #indexes;
   get indexes() {
@@ -40,7 +40,7 @@ export class NotifyData {
    * 
    * @param {Component} component
    * @param {string} name 
-   * @param {integer[]} indexes 
+   * @param {number[]} indexes 
    */
   constructor(component, name, indexes) {
     this.component = component;
