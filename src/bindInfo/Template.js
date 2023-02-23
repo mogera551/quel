@@ -82,6 +82,7 @@ export default class Template extends BindInfo {
       this.lastViewModelValue = value;
     }
   }
+  
   /**
    * 
    */
@@ -107,6 +108,9 @@ export default class Template extends BindInfo {
     this.template.after(fragment);
   }
 
+  /**
+   * 
+   */
   expand() {
     if (this.nodeProperty === "loop") {
       this.expandLoop();
@@ -115,12 +119,29 @@ export default class Template extends BindInfo {
     }
   }
 
+  /**
+   * 
+   * @returns 
+   */
   expandIf() {
+    const { viewModel, viewModelProperty, indexes, filters } = this;
+    /**
+     * @type {any}
+     */
+    const lastValue = this.lastViewModelValue;
+    /**
+     * @type {any}
+     */
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (lastValue === newValue) return;
     this.removeFromParent();
-    this.templateChildren = BindToTemplate.expand(bind);
+    this.templateChildren = [TemplateChild.create(this, indexes)];
     this.appendToParent();
   }
 
+  /**
+   * 
+   */
   expandLoop() {
     const { viewModel, viewModelProperty, indexes, filters } = this;
     /**
@@ -169,6 +190,7 @@ export default class Template extends BindInfo {
     newTemplateChildren.forEach(templateChild => templateChild.expand());
     this.templateChildren = newTemplateChildren;
   }
+
   /**
    * 
    * @param {number} index 
