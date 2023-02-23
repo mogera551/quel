@@ -123,12 +123,24 @@ export default class Template extends BindInfo {
 
   expandLoop() {
     const { viewModel, viewModelProperty, indexes, filters } = this;
+    /**
+     * @type {any[]}
+     */
     const lastValue = this.lastViewModelValue;
+    /**
+     * @type {any[]}
+     */
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
 
     const setOfLastValues = new Set(lastValue.values());
+    /**
+     * @type {Map<any,number[]>}
+     */
     const indexesByLastValue = new Map(Array.from(setOfLastValues).map(value => [ value, [] ]));
     lastValue.forEach((value, index) => indexesByLastValue.get(value).push(index));
+    /**
+     * @type {Map<number,number>}
+     */
     const lastIndexByNewIndex = new Map;
     const newTemplateChildren = value.map((value, index) => {
       const lastIndexes = indexesByLastValue.get(value) ?? [];
@@ -136,7 +148,7 @@ export default class Template extends BindInfo {
         lastIndexByNewIndex.set(index, undefined);
         return TemplateChild.create(this, indexes.concat(index));
       } else {
-        const lastIndex = parseInt(lastIndexes.shift());
+        const lastIndex = lastIndexes.shift();
         lastIndexByNewIndex.set(index, lastIndex);
         const templateChild = this.templateChildren[lastIndex];
         templateChild.changeIndex(indexes.length, index - lastIndex);

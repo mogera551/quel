@@ -246,7 +246,7 @@ class Handler {
       }
     }
     if (CONTEXT_INDEXES.has(prop)) {
-      return Number(lastIndexes[parseInt(prop.slice(1)) - 1]);
+      return lastIndexes[Number(prop.slice(1)) - 1];
     }
 
     const defindedProperty = this.definedPropertyByProp.get(prop);
