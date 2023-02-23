@@ -6,14 +6,18 @@ import PropertyInfo from "./PropertyInfo.js";
 const notPrivate = property => property[0] !== "_";
 const DEPENDENT_PROP = "$dependentProps";
 
-function createDependentMap(list) {
+/**
+ * 
+ * @param {{prop:string,refProps:string[]}[]} depObject
+ * @returns 
+ */
+function createDependentMap(depObject) {
   const map = new Map();
-  list.forEach(([prop, refProps]) => {
+  Object.entries(depObject).forEach(([prop, refProps]) => {
     refProps.forEach(refProp => {
       map.get(refProp)?.push(prop) ?? map.set(refProp, [ prop ]);
     }) 
-
-  })
+  });
   return map;
 }
 
