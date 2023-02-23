@@ -4,9 +4,9 @@ import utils from "../utils.js";
 import PropertyInfo from "./PropertyInfo.js";
 
 const notPrivate = property => property[0] !== "_";
-const DEPENDENCY_PROP = "$dependencyProps";
+const DEPENDENT_PROP = "$dependentProps";
 
-function createDependencyMap(list) {
+function createDependentMap(list) {
   const map = new Map();
   list.forEach(([prop, refProps]) => {
     refProps.forEach(refProp => {
@@ -27,11 +27,11 @@ export default class {
   static convert(component, viewModel) {
     let dependentMap = new Map;
     // $dependencyPropsを取得
-    if (DEPENDENCY_PROP in viewModel) {
-      const desc = Object.getOwnPropertyDescriptor(viewModel, DEPENDENCY_PROP);
+    if (DEPENDENT_PROP in viewModel) {
+      const desc = Object.getOwnPropertyDescriptor(viewModel, DEPENDENT_PROP);
       desc.enumerable = false;
-      Object.defineProperty(viewModel, DEPENDENCY_PROP, desc);
-      dependentMap = createDependencyMap(desc.value);
+      Object.defineProperty(viewModel, DEPENDENT_PROP, desc);
+      dependentMap = createDependentMap(desc.value);
     }
     // プライベートプロパティを列挙不可にする
     for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(viewModel))) {
