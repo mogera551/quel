@@ -182,6 +182,7 @@ export default class Template extends BindInfo {
      * @type {Map<number,number>}
      */
     const lastIndexByNewIndex = new Map;
+    const moveOrCreateIndexes = [];
     // 新しくテンプレート子要素のリストを作成する
     /**
      * @type {TemplateChild[]}
@@ -191,6 +192,7 @@ export default class Template extends BindInfo {
       if (typeof lastIndexes === "undefined") {
         // 元のインデックスがない場合、新規
         lastIndexByNewIndex.set(newIndex, undefined);
+        moveOrCreateIndexes.push(newIndex);
         return TemplateChild.create(this, indexes.concat(newIndex));
       } else {
         // 元のインデックスがある場合、子要素のループインデックスを書き換え
@@ -199,47 +201,24 @@ export default class Template extends BindInfo {
         lastIndexByNewIndex.set(newIndex, lastIndex);
         const templateChild = this.templateChildren[lastIndex];
         (newIndex !== lastIndex) && templateChild.changeIndex(indexes.length, newIndex - lastIndex);
+        const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
+        if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
+          moveOrCreateIndexes.push(newIndex);
+        }
         return templateChild;
       }
     });
     // 削除対象、追加・移動対象のインデックスを取得
     const deleteIndexes = Array.from(indexesByLastValue.values()).flatMap(indexes => indexes);
-    const moveOrCreateIndexes = [];
-    newTemplateChildren.reduce(([prevLastIndex, moveOrCreateIndexes], templateChild, index) => {
-      const lastIndex = lastIndexByNewIndex.get(index);
-      if (typeof prevLastIndex === "undefined" || typeof lastIndex === "undefined" || prevLastIndex > lastIndex) {
-        moveOrCreateIndexes.push(index);
-      }
-      return [templateChild, moveOrCreateIndexes];
-    }, [undefined, moveOrCreateIndexes]);
+    deleteIndexes.forEach(deleteIndex => {
+      this.templateChildren[deleteIndex].removeFromParent();
+    });
 
-    const changeCost = deleteIndexes.length * 2 + moveOrCreateIndexes.length;
-    const rebuildCost = newTemplateChildren.length;
-    if (changeCost < rebuildCost) {
-      deleteIndexes.reverse();
-      deleteIndexes.forEach(deleteIndex => {
-        this.templateChildren[deleteIndex].removeFromParent();
-      });
-  
-      moveOrCreateIndexes.forEach(moveOrCreateIndex => {
-        const templateChild = newTemplateChildren[moveOrCreateIndex];
-        const beforeChild = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.template;
-        beforeChild.after(...templateChild.nodesForAppend);
-      });
-    } else {
-      const setOfAllNodes = new Set(this.templateChildren.flatMap(templateChild => templateChild.childNodes));
-      const keepNodes = [];
-      const parentNode = this.template.parentNode;
-      for(const node of parentNode.childNodes) {
-        !setOfAllNodes.has(node) && keepNodes.push(node);
-      }
-      parentNode.textContent = "";
-      keepNodes.forEach(node => parentNode.appendChild(node));
-      newTemplateChildren.reduce((prevChild, templateChild) => {
-        (prevChild?.lastNode ?? this.template).after(...templateChild.nodesForAppend)
-        return templateChild;
-      }, undefined);
-    }
+    moveOrCreateIndexes.forEach(moveOrCreateIndex => {
+      const templateChild = newTemplateChildren[moveOrCreateIndex];
+      const beforeNode = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.template;
+      beforeNode.after(...templateChild.nodesForAppend);
+    });
 
     // 子要素の展開を実行
     newTemplateChildren.forEach(templateChild => templateChild.expand());
