@@ -41,7 +41,6 @@ export default class extends BindDomIf {
       .parse(bindText, "")
       .map(info => { 
         const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));
-        bind.updateNode();
         return bind;
       });
     if (binds.length === 0) return [];
@@ -51,6 +50,7 @@ export default class extends BindDomIf {
         utils.raise(`unknown node property ${templateBind.nodeProperty}`);
       }
       templateBind.expand();
+      templateBind.updateNode();
       return [ templateBind ];
     } else {
       utils.raise(`not template bind`);
