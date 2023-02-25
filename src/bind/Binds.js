@@ -94,10 +94,7 @@ export default class {
         if (setOfKey.has(bind.viewModelPropertyKey)) {
           bind.updateNode();
         }
-        const template = toTemplate(bind);
-        if (template) {
-          template.templateChildren.forEach(templateChild => updateViewModelProperty(templateChild.binds))
-        }
+        toTemplate(bind)?.templateChildren.forEach(templateChild => updateViewModelProperty(templateChild.binds))
       });
     }
     updateViewModelProperty(this.#binds);

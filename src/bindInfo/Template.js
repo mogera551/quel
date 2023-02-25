@@ -209,10 +209,12 @@ export default class Template extends BindInfo {
       }
     });
     // 削除対象、追加・移動対象のインデックスを取得
-    const deleteIndexes = Array.from(indexesByLastValue.values()).flatMap(indexes => indexes);
-    deleteIndexes.forEach(deleteIndex => {
-      this.templateChildren[deleteIndex].removeFromParent();
-    });
+    const deleteIndexes = [];
+    for(const indexes of indexesByLastValue.values()) {
+      for(const index of indexes) {
+        this.templateChildren[index].removeFromParent();
+      }
+    }
 
     moveOrCreateIndexes.forEach(moveOrCreateIndex => {
       const templateChild = newTemplateChildren[moveOrCreateIndex];

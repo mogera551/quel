@@ -116,13 +116,6 @@ export default class PropertyInfo {
             return isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
               traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
           } else {
-/*            
-            const keys = Array.from(Object.keys(viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []));
-            return keys.map(key => {
-              return isTerminate ? [ loopIndexes.concat(key) ] :
-                traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(key));
-            });
-*/
             return (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).map((value, index) => {
               return isTerminate ? [ loopIndexes.concat(index) ] :
                 traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));
