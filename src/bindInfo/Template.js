@@ -153,8 +153,12 @@ export default class Template extends BindInfo {
     const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     if (lastValue === newValue) return;
     this.removeFromParent();
-    this.templateChildren = [TemplateChild.create(this, indexes)];
-    this.appendToParent();
+    if (newValue) {
+      this.templateChildren = [TemplateChild.create(this, indexes)];
+      this.appendToParent();
+    } else {
+      this.templateChildren = [];
+    }
   }
 
   /**
