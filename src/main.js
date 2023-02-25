@@ -1,5 +1,6 @@
 import "./types.js";
 import Component from "./component/Component.js";
+import Filter from "./filter/Filter.js";
 
 export default class Main {
   static #config = {
@@ -9,6 +10,7 @@ export default class Main {
   /**
    * 
    * @param {Object<string,UserComponentData>} components 
+   * @returns {Main}
    */
   static components(components) {
     const prefix = this.prefix;
@@ -20,8 +22,20 @@ export default class Main {
   }
   /**
    * 
+   * @param {Object<string,UserFilterData>} filters 
+   * @returns {Main}
+   */
+  static filters(filters) {
+    Object.entries(filters).forEach(([name, filterData]) => {
+      const { input, output } = filterData;
+      Filter.regist(name, output, input);
+    });
+    return this;
+  }
+  /**
+   * 
    * @param {{prefix:string,debug:boolean}}  
-   * @returns 
+   * @returns {Main}
    */
   static config({ prefix = undefined, debug = false }) {
     this.#config = Object.assign(this.#config, { prefix, debug });
