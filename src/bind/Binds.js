@@ -72,16 +72,19 @@ export default class {
     return templateBinds;
   }
   /**
-   * 
+   * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
    * @param {Set<string>} setOfKey 
    */
   updateViewModel(setOfKey) {
+    // templateを先に展開する
     /**
-     * @type {Template[]}
+     * @type {Set<Template>}
      */
-    const templateBinds = this.getTemplateBinds(setOfKey);
-    if (templateBinds.length > 0) {
-      templateBinds.forEach(bind => bind.expand());
+    const templateBinds = new Set(this.getTemplateBinds(setOfKey));
+    if (templateBinds.size > 0) {
+      for(const templateBind of templateBinds) {
+        templateBind.updateNode();
+      }
       this.buildMap();
     }
 
@@ -91,7 +94,7 @@ export default class {
      */
     const updateViewModelProperty = (binds) => {
       binds.forEach(bind => {
-        if (setOfKey.has(bind.viewModelPropertyKey)) {
+        if (!templateBinds.has(bind) && setOfKey.has(bind.viewModelPropertyKey)) {
           bind.updateNode();
         }
         toTemplate(bind)?.templateChildren.forEach(templateChild => updateViewModelProperty(templateChild.binds))

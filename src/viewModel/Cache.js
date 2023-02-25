@@ -9,6 +9,18 @@ export default class {
    * @type {Map<PropertyInfo,Map<string,any>>}
    */
   #valueByIndexesByProp = new Map();
+  /**
+   * @type {PropertyInfo[]}
+   */
+  #definedProperties
+  /**
+   * 
+   * @param {PropertyInfo[]} definedProperties 
+   */
+  constructor(definedProperties) {
+    this.#definedProperties = definedProperties;
+
+  }
 
   /**
    * 
@@ -61,18 +73,19 @@ export default class {
     }
     // 関連するキャッシュを取得し、削除する
     const indexesStarts = indexesString + ",";
-    const properties = Array.from(this.#valueByIndexesByProp.keys());
+    //const properties = Array.from(this.#valueByIndexesByProp.keys());
     /**
      * 
      * @param {PropertyInfo} property 
      * @returns {PropertyInfo[]}
      */
-    const getDependentProps = property => properties
+    const getDependentProps = property => this.#definedProperties
         .filter(prop => !prop.isPrimitive && prop.parentName === property.name)
         .flatMap(prop => [prop].concat(getDependentProps(prop)));
     const dependentProps = getDependentProps(property);
     dependentProps.forEach(property => {
       const valueByIndexes = this.#valueByIndexesByProp.get(property);
+      if (typeof valueByIndexes === "undefined") return;
       for(const indexes of valueByIndexes.keys()) {
         if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
           valueByIndexes.delete(indexes);

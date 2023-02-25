@@ -45,11 +45,11 @@ export default class BindInfo {
    * @type {Filter[]}
    */
   filters;
+
   /**
    * @type {number[]}
    */
   #indexes;
-  #indexesString;
   get indexes() {
     return this.#indexes;
   }
@@ -58,13 +58,24 @@ export default class BindInfo {
     this.#indexesString = value.toString();
     this.#viewModelPropertyKey = this.viewModelProperty + "\t" + this.#indexesString;
   }
+  /**
+   * @type {string}
+   */
+  #indexesString;
   get indexesString() {
     return this.#indexesString;
   }
+  /**
+   * @type {string}
+   */
   #viewModelPropertyKey;
   get viewModelPropertyKey() {
     return this.#viewModelPropertyKey;
   }
+  /**
+   * @type {number[]}
+   */
+  contextIndexes;
   
   /**
    * @type {any}
@@ -92,5 +103,6 @@ export default class BindInfo {
    */
   changeIndexes(index, diff) {
     this.indexes[index] = this.indexes[index] + diff;
+    this.contextIndexes[index] = this.contextIndexes[index] + diff;
   }
 }

@@ -9,6 +9,7 @@ import Checkbox from "./Checkbox.js";
 import Template from "./Template.js";
 import Event from "./Event.js";
 import Component from "../component/Component.js";
+import PropertyInfo from "../viewModel/PropertyInfo.js";
 
 const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
 const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
@@ -43,7 +44,10 @@ export default class Factory {
    * }}  
    */
   static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes}) {
-    const bindInfo = {component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes};
+    const bindInfo = {component, node, nodeProperty, viewModel, viewModelProperty, filters};
+    const propInfo = PropertyInfo.create(viewModelProperty);
+    bindInfo.indexes = indexes.slice(0, propInfo.loopLevel);
+    bindInfo.contextIndexes = indexes;
     const info = PropertyType.getInfo(node, nodeProperty);
     return creatorByType.get(info.type)(bindInfo, info);
   }

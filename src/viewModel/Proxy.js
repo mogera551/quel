@@ -36,7 +36,7 @@ class Handler {
   /**
    * @type {Cache}
    */
-  cache = new Cache();
+  cache;
   /**
    * @type {Map<string,{indexes:number[],propertyInfo:PropertyInfo}>}
    */
@@ -73,6 +73,7 @@ class Handler {
     this.definedPropertyByProp = new Map(definedProperties.map(property => ([property.name, property])));
     this.loopProperties = definedProperties.filter(property => property.isLoop);
     this.dependentMap = dependentMap;
+    this.cache = new Cache(definedProperties);
   }
 
   get lastIndexes() {

@@ -169,7 +169,7 @@ export default class Component extends HTMLElement {
    * @param {number[]} indexes 
    */
   notify(setOfKey) {
-    this.#binds.updateViewModel(setOfKey);
+    this.#binds?.updateViewModel(setOfKey);
   }
 
   /**

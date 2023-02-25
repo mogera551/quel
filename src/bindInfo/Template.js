@@ -36,7 +36,6 @@ export class TemplateChild {
     return new Set(this.childNodes);
   }
 
-
   /**
    * 
    */
@@ -47,11 +46,9 @@ export class TemplateChild {
   /**
    * 
    */
-  expand() {
+  updateNode() {
     this.binds.forEach(bind => {
-      if (bind instanceof Template) {
-        bind.expand();
-      }
+      bind.updateNode();
     })
   }
 
@@ -92,14 +89,8 @@ export default class Template extends BindInfo {
   }
 
   updateNode() {
-    // 値だけ更新
-    const {viewModel, viewModelProperty, indexes, filters} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    if (this.nodeProperty === "loop") {
-      this.lastViewModelValue = (value ?? []).slice();
-    } else {
-      this.lastViewModelValue = value;
-    }
+    const newValue = (this.nodeProperty === "loop") ? this.expandLoop() : this.expandIf();
+    this.lastViewModelValue = newValue;
   }
   
   /**
@@ -128,18 +119,7 @@ export default class Template extends BindInfo {
 
   /**
    * 
-   */
-  expand() {
-    if (this.nodeProperty === "loop") {
-      this.expandLoop();
-    } else {
-      this.expandIf();
-    }
-  }
-
-  /**
-   * 
-   * @returns 
+   * @returns {any} newValue
    */
   expandIf() {
     const { viewModel, viewModelProperty, indexes, filters } = this;
@@ -151,7 +131,7 @@ export default class Template extends BindInfo {
      * @type {any}
      */
     const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    if (lastValue === newValue) return;
+    if (lastValue === newValue) return newValue;
     this.removeFromParent();
     if (newValue) {
       this.templateChildren = [TemplateChild.create(this, indexes)];
@@ -159,10 +139,11 @@ export default class Template extends BindInfo {
     } else {
       this.templateChildren = [];
     }
+    return newValue;
   }
 
   /**
-   * 
+   * @returns {any[]} newValue
    */
   expandLoop() {
     const { viewModel, viewModelProperty, indexes, filters } = this;
@@ -227,8 +208,11 @@ export default class Template extends BindInfo {
     });
 
     // 子要素の展開を実行
-    newTemplateChildren.forEach(templateChild => templateChild.expand());
+    newTemplateChildren.forEach(templateChild => templateChild.updateNode());
+
     this.templateChildren = newTemplateChildren;
+
+    return newValue;
   }
 
   /**

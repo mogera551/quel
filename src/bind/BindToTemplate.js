@@ -49,7 +49,6 @@ export default class extends BindDomIf {
       if (templateBind.nodeProperty !== "if" && templateBind.nodeProperty !== "loop") {
         utils.raise(`unknown node property ${templateBind.nodeProperty}`);
       }
-      templateBind.expand();
       templateBind.updateNode();
       return [ templateBind ];
     } else {
