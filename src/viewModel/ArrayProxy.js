@@ -1,5 +1,6 @@
 import Component from "../component/Component.js";
 import { NotifyData } from "../thread/Notifier.js";
+import { ProcessData } from "../thread/Processor.js";
 import PropertyInfo from "./PropertyInfo.js";
 import { SYM_GET_IS_PROXY, SYM_GET_RAW } from "./Symbols.js";
 
@@ -60,7 +61,12 @@ class ArrayHandler {
   set(target, prop, value, receiver) {
     Reflect.set(target, prop, value, receiver);
     if (prop === "length") {
-      this.#component.updateSlot.addNotify(new NotifyData(this.#component, this.#prop.name, this.#indexes));
+      const component = this.#component;
+      const viewModel = component.viewModel;
+      const propName = this.#prop.name;
+      component.updateSlot.addProcess(new ProcessData(() => {
+        viewModel[propName] = target;
+      }, viewModel, []));
     }
     return true;
   }

@@ -90,7 +90,7 @@ export default class Template extends BindInfo {
 
   updateNode() {
     const newValue = (this.nodeProperty === "loop") ? this.expandLoop() : this.expandIf();
-    this.lastViewModelValue = newValue;
+    this.lastViewModelValue = (newValue instanceof Array) ? newValue.slice() : newValue;
   }
   
   /**
