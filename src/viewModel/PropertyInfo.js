@@ -19,7 +19,7 @@ export default class PropertyInfo {
   constructor(name) {
     this.name = name;
     this.elements = name.split(".");
-    this.loopLevel = this.elements.reduce((count, element) => count + (element === "*") ? 1 : 0, 0);
+    this.loopLevel = this.elements.reduce((count, element) => count + ((element === "*") ? 1 : 0), 0);
     this.parentName = this.elements.slice(0, -1).join(".");
     this.lastElement = this.elements.at(-1) ?? null;
     this.regexp = (this.loopLevel > 0) ? new RegExp("^" + name.replaceAll("*", "(\\w+)").replaceAll(".", "\\.") + "$") : null;
