@@ -201,7 +201,7 @@ class Handler {
       for(const property of this.loopProperties) {
         const result = property.regexp.exec(prop);
         if (result) {
-          indexes = result.slice(1);
+          indexes = result.slice(1).map(Number);
           loopProperty = property;
           this.propertyInfoAndIndexesByProp.set(prop, { loopProperty, indexes });
           break;
