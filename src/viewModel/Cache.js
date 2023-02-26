@@ -63,17 +63,20 @@ export default class {
    * @param {number[]} indexes 
    */
   delete(property, indexes) {
-    const indexesString = indexes.toString();
+    const indexesString = indexes.slice(0, property.loopLevel).toString();
+    const indexesStarts = indexesString + ",";
     let valueByIndexes = this.#valueByIndexesByProp.get(property);
     if (valueByIndexes) {
-      valueByIndexes.delete(indexesString);
+      for(const indexes of valueByIndexes.keys()) {
+        if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
+          valueByIndexes.delete(indexes);
+        }
+      }
       if (valueByIndexes.size === 0) {
         this.#valueByIndexesByProp.delete(property);
       }
     }
     // 関連するキャッシュを取得し、削除する
-    const indexesStarts = indexesString + ",";
-    //const properties = Array.from(this.#valueByIndexesByProp.keys());
     /**
      * 
      * @param {PropertyInfo} property 

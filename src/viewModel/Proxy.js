@@ -149,15 +149,14 @@ class Handler {
       const dependentProps = new Set(getDependentProps(prop.name));
       dependentProps.forEach(dependentProp => {
         const definedProperty = this.definedPropertyByProp.get(dependentProp);
+        cache.delete(definedProperty, indexes);
         if (indexes.length < definedProperty.loopLevel) {
           const listOfIndexes = definedProperty.expand(receiver, indexes);
           listOfIndexes.forEach(depIndexes => {
-            cache.delete(definedProperty, depIndexes);
             component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
           });
         } else {
           const depIndexes = indexes.slice(0, definedProperty.loopLevel);
-          cache.delete(definedProperty, depIndexes);
           component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
         }
       });

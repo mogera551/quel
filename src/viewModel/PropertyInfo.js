@@ -111,20 +111,22 @@ export default class PropertyInfo {
         const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
         const element = this.elements[elementIndex];
         const isTerminate = (this.elements.length - 1) === elementIndex;
+        let retValues;
         if (element === "*") {
           if (loopIndexes.length < indexes.length) {
-            return isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
+            retValues = isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
               traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
           } else {
-            return (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).map((value, index) => {
-              return isTerminate ? [ loopIndexes.concat(index) ] :
+            retValues = (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).flatMap((value, index) => {
+              return isTerminate ? loopIndexes.concat(index) :
                 traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));
             })
           }
         } else {
-          return isTerminate ? [ loopIndexes ] : 
+          retValues = isTerminate ? [ loopIndexes ] : 
            traverse(parentNameDot + element, elementIndex + 1, loopIndexes);
         }
+        return retValues;
 
       };
       const listOfIndexes = traverse("", 0, []);
