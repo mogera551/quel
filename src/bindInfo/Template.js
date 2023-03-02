@@ -4,6 +4,13 @@ import Filter from "../filter/Filter.js";
 import { SYM_CALL_DIRECT_GET } from "../viewModel/Symbols.js";
 import BindInfo from "./BindInfo.js";
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLTemplateElement}
+ */
+const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
+
 export class TemplateChild {
   /**
    * @type {BindInfo[]}
@@ -77,6 +84,16 @@ export class TemplateChild {
 }
 
 export default class Template extends BindInfo {
+  get node() {
+    return super.node;
+  }
+  set node(node) {
+    const template = toHTMLTemplateElement(node);
+    const comment = document.createComment(`template ${template.dataset["bind"]}`);
+    template.parentNode.replaceChild(comment, template);
+    super.node = comment;
+    this.template = template;
+  }
   /**
    * @type {TemplateChild[]}
    */
@@ -84,8 +101,12 @@ export default class Template extends BindInfo {
   /**
    * @type {HTMLTemplateElement}
    */
+  #template;
   get template() {
-    return (this.node instanceof HTMLTemplateElement) ? this.node : utils.raise("not HTMLTemplateElement");
+    return this.#template;
+  }
+  set template(value) {
+    this.#template = value;
   }
 
   updateNode() {
@@ -114,7 +135,7 @@ export default class Template extends BindInfo {
     const fragment = document.createDocumentFragment();
     this.templateChildren
       .forEach(child => fragment.appendChild(...child.nodesForAppend));
-    this.template.after(fragment);
+    this.node.after(fragment);
   }
 
   /**
@@ -194,7 +215,6 @@ export default class Template extends BindInfo {
       }
     });
     // 削除対象、追加・移動対象のインデックスを取得
-    const deleteIndexes = [];
     for(const indexes of indexesByLastValue.values()) {
       for(const index of indexes) {
         this.templateChildren[index].removeFromParent();
@@ -203,7 +223,7 @@ export default class Template extends BindInfo {
 
     moveOrCreateIndexes.forEach(moveOrCreateIndex => {
       const templateChild = newTemplateChildren[moveOrCreateIndex];
-      const beforeNode = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.template;
+      const beforeNode = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.node;
       beforeNode.after(...templateChild.nodesForAppend);
     });
 

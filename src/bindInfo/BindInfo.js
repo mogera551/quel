@@ -7,7 +7,13 @@ export default class BindInfo {
   /**
    * @type {Node}
    */
-  node;
+  #node;
+  get node() {
+    return this.#node;
+  }
+  set node(node) {
+    this.#node = node;
+  }
   /**
    * @type {HTMLElement}
    */
