@@ -1,4 +1,5 @@
 import "../types.js";
+import main from "../main.js";
 import { 
   SYM_GET_INDEXES, SYM_GET_TARGET, 
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
@@ -17,6 +18,9 @@ const CONTEXT_INDEXES = new Set(
   [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1))   
 );
 const CONTEXT_COMPONENT = "$component";
+const CONTEXT_DATA = "$data";
+const CONTEXT_OPEN_DIALOG = "$openDialog";
+const CONTEXT_CLOSE_DIALOG = "$closeDialog";
 
 /**
  * 配列プロキシを取得
@@ -251,6 +255,26 @@ class Handler {
     }
     if (prop === CONTEXT_COMPONENT) {
       return component;
+    }
+    if (prop === CONTEXT_DATA) {
+      return component.data;
+    }
+    if (prop === CONTEXT_OPEN_DIALOG) {
+      return async (name, data, attributes) => {
+        const dialog = document.createElement(main.prefix ? (main.prefix + "-" + name) : name);
+        Object.entries(attributes ?? {}).forEach(([key, value]) => {
+          dialog.setAttribute(key, value);
+        })
+        Object.assign(dialog.data, data ?? {});
+        document.body.appendChild(dialog);
+        return dialog.alivePromise;
+      };
+    }
+    if (prop === CONTEXT_CLOSE_DIALOG) {
+      return (data) => {
+        Object.assign(component.data, data);
+        component.parentNode.removeChild(component);
+      };
     }
 
     const defindedProperty = this.definedPropertyByProp.get(prop);

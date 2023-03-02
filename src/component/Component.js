@@ -55,6 +55,13 @@ export default class Component extends HTMLElement {
     }
     return this.#updateSlot;
   }
+  /**
+   * @type {Object<string,any>}
+   */
+  #data = {};
+  get data() {
+    return this.#data;
+  }
 
   constructor() {
     super();
@@ -117,6 +124,19 @@ export default class Component extends HTMLElement {
   }
 
   /**
+   * @type {Promise}
+   */
+  #alivePromise;
+  /**
+   * @type {() => {}}
+   */
+  #aliveResolve;
+  #aliveReject;
+  get alivePromise() {
+    return this.#alivePromise;
+  }
+
+  /**
    * 親コンポーネント
    * @type {Component}
    */
@@ -134,6 +154,10 @@ export default class Component extends HTMLElement {
   async connectedCallback() {
     try {
       this.parentComponent && await this.parentComponent.initialPromise;
+      this.#alivePromise = new Promise((resolve, reject) => {
+        this.#aliveResolve = resolve;
+        this.#aliveReject = reject;
+      });
       await this.build();
     } finally {
       this.#initialResolve && this.#initialResolve();
@@ -144,7 +168,7 @@ export default class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    
+    this.#aliveResolve && this.#aliveResolve(this.data);
   }
 
   /**
