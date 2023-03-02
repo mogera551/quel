@@ -70,6 +70,7 @@ export default class extends BindDomIf {
 
     if (defaultBind && !hasDefaultEvent) {
       element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
+        event.stopPropagation();
         const process = new ProcessData(defaultBind.updateViewModel, defaultBind, []);
         component.updateSlot.addProcess(process);
       });
