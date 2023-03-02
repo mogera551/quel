@@ -58,12 +58,10 @@ export default class Component extends HTMLElement {
 
   constructor() {
     super();
-    this.noShadowRoot || this.attachShadow({mode: 'open'});
     this.#initialPromise = new Promise((resolve, reject) => {
       this.#initialResolve = resolve;
       this.#initialReject = reject;
     });
-    this.#thread = new Thread;
   }
 
   /**
@@ -90,6 +88,9 @@ export default class Component extends HTMLElement {
   }
 
   async build() {
+    this.noShadowRoot || this.attachShadow({mode: 'open'});
+    this.#thread = new Thread;
+
     const componentData = Component.componentDataByName.get(this.tagName);
     componentData || utils.raise(`unknown tag name ${this.tagName}`);
     this.#view = new View(componentData.template, this.viewRootElement);
