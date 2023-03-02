@@ -16,6 +16,7 @@ const MAX_INDEXES_LEVEL = 8;
 const CONTEXT_INDEXES = new Set(
   [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1))   
 );
+const CONTEXT_COMPONENT = "$component";
 
 /**
  * 配列プロキシを取得
@@ -218,7 +219,7 @@ class Handler {
    * @returns 
    */
   get(target, prop, receiver) {
-    const lastIndexes = this.lastIndexes;
+    const { lastIndexes, component } = this;
     if (typeof prop === "symbol") {
       switch(prop) {
         case SYM_CALL_DIRECT_GET:
@@ -247,6 +248,9 @@ class Handler {
     }
     if (CONTEXT_INDEXES.has(prop)) {
       return lastIndexes[Number(prop.slice(1)) - 1];
+    }
+    if (prop === CONTEXT_COMPONENT) {
+      return component;
     }
 
     const defindedProperty = this.definedPropertyByProp.get(prop);
