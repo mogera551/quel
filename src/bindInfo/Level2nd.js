@@ -17,7 +17,7 @@ export default class Level2nd extends BindInfo {
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
-        node[nodeProperty1][nodeProperty2] = value;
+        node[nodeProperty1][nodeProperty2] = value ?? "";
       }));
       this.lastViewModelValue = value;
     }

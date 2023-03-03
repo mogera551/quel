@@ -9,7 +9,7 @@ export default class LevelTop extends BindInfo {
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
-        node[nodeProperty] = value;
+        node[nodeProperty] = value ?? "";
       }));
       this.lastViewModelValue = value;
     }

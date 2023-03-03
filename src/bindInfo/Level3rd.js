@@ -19,7 +19,7 @@ export default class Level3rd extends BindInfo {
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
-        node[nodeProperty1][nodeProperty2][nodeProperty3] = value;
+        node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? "";
       }));
       this.lastViewModelValue = value;
     }
