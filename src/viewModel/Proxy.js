@@ -21,6 +21,7 @@ const CONTEXT_COMPONENT = "$component";
 const CONTEXT_DATA = "$data";
 const CONTEXT_OPEN_DIALOG = "$openDialog";
 const CONTEXT_CLOSE_DIALOG = "$closeDialog";
+const CONTEXT_NOTIFY = "$notify";
 
 /**
  * 配列プロキシを取得
@@ -223,7 +224,7 @@ class Handler {
    * @returns 
    */
   get(target, prop, receiver) {
-    const { lastIndexes, component } = this;
+    const { lastIndexes, component, cache } = this;
     if (typeof prop === "symbol") {
       switch(prop) {
         case SYM_CALL_DIRECT_GET:
@@ -274,6 +275,13 @@ class Handler {
       return (data) => {
         Object.assign(component.data, data);
         component.parentNode.removeChild(component);
+      };
+    }
+    if (prop === CONTEXT_NOTIFY) {
+      return (prop, indexes) => {
+        const definedProp = this.definedPropertyByProp.get(prop);
+        cache.delete(definedProp, indexes);
+        component.updateSlot.addNotify(new NotifyData(component, prop, indexes));
       };
     }
 
