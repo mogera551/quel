@@ -52,6 +52,7 @@ class ArrayHandler {
   /**
    * setter
    * lengthプロパティの場合、変更通知を送信する
+   * $onwriteを呼び出したいので、viewModelのプロパティに値をセットする
    * @param {Object} target Array
    * @param {string} prop プロパティ
    * @param {Any} value 
