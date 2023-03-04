@@ -1,6 +1,4 @@
 import "../types.js";
-import utils from "../utils.js";
-import ComponentData from "./Data.js";
 import View from "../view/View.js";
 import createViewModel from "../viewModel/Proxy.js";
 import { SYM_CALL_INIT } from "../viewModel/Symbols.js";
@@ -25,7 +23,53 @@ const getParentComponent = (node) => {
   } while(true);
 };
 
+/**
+ * HTMLの変換
+ * {{loop:}}{{if:}}を<template>へ置換
+ * {{end:}}を</template>へ置換
+ * {{...}}を<!--@@...-->へ置換
+ * @param {string} html 
+ * @returns {string}
+ */
+const replaceTag = (html) => {
+  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, p1) => {
+    p1 = p1.trim();
+    if (p1.startsWith("loop:") || p1.startsWith("if:")) {
+      return `<template data-bind="${p1}">`;
+    } else if (p1.startsWith("end:")){
+      return `</template>`;
+    } else {
+      return `<!--@@${p1}-->`;
+    }
+  });
+}
+
+/**
+ * @param {string?} html
+ * @param {string?} css
+ * @returns {HTMLTemplateElement}
+ */
+const htmlToTemplate = (html, css) => {
+  const template = document.createElement("template");
+  template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? replaceTag(html) : "");
+  return template;
+}
+
 export default class Component extends HTMLElement {
+  /**
+   * @type {string}
+   * @static
+   */
+  static html;
+  /**
+   * @type {HTMLTemplateElement}
+   */
+  static template;
+  /**
+   * @type {class}
+   * @static
+   */
+  static ViewModel;
   /**
    * @type {Proxy<ViewModel>}
    */
@@ -95,13 +139,12 @@ export default class Component extends HTMLElement {
   }
 
   async build() {
+    const { template, ViewModel } = this.constructor;
     this.noShadowRoot || this.attachShadow({mode: 'open'});
     this.#thread = new Thread;
 
-    const componentData = Component.componentDataByName.get(this.tagName);
-    componentData || utils.raise(`unknown tag name ${this.tagName}`);
-    this.#view = new View(componentData.template, this.viewRootElement);
-    const viewModel = Reflect.construct(componentData.ViewModel, []);
+    this.#view = new View(template, this.viewRootElement);
+    const viewModel = Reflect.construct(ViewModel, []);
     this.viewModel = createViewModel(this, viewModel);
     await this.viewModel[SYM_CALL_INIT]();
 
@@ -198,22 +241,19 @@ export default class Component extends HTMLElement {
   }
 
   /**
-   * @type {Map<string,ComponentData>}
-   */
-  static componentDataByName = new Map;
-  
-  /**
    * 
    * @param {string} name 
    * @param {UserComponentData} componentData 
    */
   static regist(name, componentData) {
-    const upperName = name.toUpperCase();
-    this.componentDataByName.set(upperName, Object.assign(new ComponentData(), componentData));
-    const componentClass = class extends Component {}; // 同じクラスを登録できないため
+    const template = htmlToTemplate(componentData.html, componentData.css);
+    // 同じクラスを登録できないため
+    const componentClass = class extends Component {
+      static template = template;
+      static ViewModel = componentData.ViewModel;
+    };
     // nameにはハイフンが必要、アルファベットの大文字は使えません
     customElements.define(name, componentClass);
-
   }
 
 }
