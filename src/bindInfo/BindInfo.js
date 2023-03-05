@@ -111,4 +111,9 @@ export default class BindInfo {
     this.indexes[index] = this.indexes[index] + diff;
     this.contextIndexes[index] = this.contextIndexes[index] + diff;
   }
+
+  /**
+   * 
+   */
+  removeFromParent() { }
 }

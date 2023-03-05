@@ -47,7 +47,8 @@ export class TemplateChild {
    * 
    */
   removeFromParent() {
-    this.childNodes.forEach(node => node.parentNode.removeChild(node));
+    this.childNodes.forEach(node => node.parentNode?.removeChild(node));
+    this.binds.forEach(bind => bind.removeFromParent());
   }
 
   /**
@@ -118,6 +119,8 @@ export default class Template extends BindInfo {
    * 
    */
   removeFromParent() {
+    this.templateChildren.forEach(child => child.removeFromParent());
+/*
     const nodes = this.templateChildren.flatMap(child => child.childNodes);
     if (nodes.length > 0) {
       const oldParentNode = nodes[0].parentNode;
@@ -126,6 +129,7 @@ export default class Template extends BindInfo {
       nodes.forEach(node => node.parentNode.removeChild(node));
       newParentNode.parentNode.replaceChild(oldParentNode, newParentNode);
     }
+*/
   }
 
   /**

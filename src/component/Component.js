@@ -32,14 +32,20 @@ const getParentComponent = (node) => {
  * @returns {string}
  */
 const replaceTag = (html) => {
-  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, p1) => {
-    p1 = p1.trim();
-    if (p1.startsWith("loop:") || p1.startsWith("if:")) {
-      return `<template data-bind="${p1}">`;
-    } else if (p1.startsWith("end:")){
+  const stack = [];
+  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+    expr = expr.trim();
+    if (expr.startsWith("loop:") || expr.startsWith("if:")) {
+      stack.push(expr);
+      return `<template data-bind="${expr}">`;
+    } else if (expr.startsWith("else:")){
+      const saveExpr = stack.at(-1);
+      return `</template><template data-bind="${saveExpr}|not">`;
+    } else if (expr.startsWith("end:")){
+      stack.pop();
       return `</template>`;
     } else {
-      return `<!--@@${p1}-->`;
+      return `<!--@@${expr}-->`;
     }
   });
 }
