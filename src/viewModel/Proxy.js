@@ -1,7 +1,7 @@
 import "../types.js";
 import main from "../main.js";
 import { 
-  SYM_GET_INDEXES, SYM_GET_TARGET, 
+  SYM_GET_INDEXES, SYM_GET_TARGET, SYM_GET_DEPENDENT_MAP,
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
   SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY
 } from "./Symbols.js";
@@ -224,7 +224,7 @@ class Handler {
    * @returns 
    */
   get(target, prop, receiver) {
-    const { lastIndexes, component, cache } = this;
+    const { lastIndexes, component, cache, dependentMap } = this;
     if (typeof prop === "symbol") {
       switch(prop) {
         case SYM_CALL_DIRECT_GET:
@@ -249,6 +249,8 @@ class Handler {
             Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
         case SYM_GET_TARGET:
           return target;
+        case SYM_GET_DEPENDENT_MAP:
+          return dependentMap;
       }
     }
     if (CONTEXT_INDEXES.has(prop)) {

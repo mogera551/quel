@@ -2,6 +2,7 @@ import myname from "../myname.js";
 
 export const SYM_GET_INDEXES = Symbol.for(`${myname}:viewModel.indexes`);
 export const SYM_GET_TARGET = Symbol.for(`${myname}:viewModel.target`);
+export const SYM_GET_DEPENDENT_MAP = Symbol.for(`${myname}:viewModel.dependentMap`);
 export const SYM_CALL_DIRECT_GET = Symbol.for(`${myname}:viewModel.directGet`);
 export const SYM_CALL_DIRECT_SET = Symbol.for(`${myname}:viewModel.directSet`);
 export const SYM_CALL_DIRECT_CALL = Symbol.for(`${myname}:viewModel.directCall`);

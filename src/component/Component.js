@@ -5,6 +5,7 @@ import { SYM_CALL_INIT } from "../viewModel/Symbols.js";
 import Thread, { UpdateSlot } from "../thread/Thread.js";
 import { ProcessData } from "../thread/Processor.js";
 import Binds from "../bind/Binds.js";
+import createData from "./Data.js"
 
 /**
  * 
@@ -108,7 +109,7 @@ export default class Component extends HTMLElement {
   /**
    * @type {Object<string,any>}
    */
-  #data = {};
+  #data = createData(this);
   get data() {
     return this.#data;
   }
