@@ -3,7 +3,7 @@ import main from "../main.js";
 import { 
   SYM_GET_INDEXES, SYM_GET_TARGET, SYM_GET_DEPENDENT_MAP,
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
-  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY
+  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY, SYM_CALL_CLEAR_CACHE_NOUPDATED
 } from "./Symbols.js";
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
@@ -118,7 +118,7 @@ class Handler {
     const cacheValue = cache.get(prop, indexes);
     if (typeof cacheValue !== "undefined") return wrapArray(component, prop, indexes, cacheValue);
     const value = Reflect.get(target, prop.name, receiver);
-    cache.set(prop, indexes, value);
+    cache.set(prop, indexes, value, false);
     return wrapArray(component, prop, indexes, value);
   }
 
@@ -145,8 +145,8 @@ class Handler {
     value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
     const indexes = lastIndexes.slice(0, prop.loopLevel);
     Reflect.set(target, prop.name, value, receiver);
-    cache.delete(prop, indexes);
-    cache.set(prop, indexes, value);
+//    cache.delete(prop, indexes);
+    cache.set(prop, indexes, value, true);
 
     component.updateSlot.addNotify(new NotifyData(component, prop.name, indexes));
     if (this.dependentMap.has(prop.name)) {
@@ -155,7 +155,7 @@ class Handler {
       const dependentProps = new Set(getDependentProps(prop.name));
       dependentProps.forEach(dependentProp => {
         const definedProperty = this.definedPropertyByProp.get(dependentProp);
-        cache.delete(definedProperty, indexes);
+//        cache.delete(definedProperty, indexes);
         if (indexes.length < definedProperty.loopLevel) {
           const listOfIndexes = definedProperty.expand(receiver, indexes);
           listOfIndexes.forEach(depIndexes => {
@@ -194,6 +194,10 @@ class Handler {
 
   [SYM_CALL_CLEAR_CACHE](target, receiver) {
     this.cache.clear();
+  }
+
+  [SYM_CALL_CLEAR_CACHE_NOUPDATED](target, receiver) {
+    this.cache.clearNoUpdated();
   }
 
   /**
@@ -247,6 +251,9 @@ class Handler {
         case SYM_CALL_CLEAR_CACHE:
           return () => 
             Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
+        case SYM_CALL_CLEAR_CACHE_NOUPDATED:
+          return () => 
+            Reflect.apply(this[SYM_CALL_CLEAR_CACHE_NOUPDATED], this, [target, receiver]);
         case SYM_GET_TARGET:
           return target;
         case SYM_GET_DEPENDENT_MAP:
@@ -282,7 +289,7 @@ class Handler {
     if (prop === CONTEXT_NOTIFY) {
       return (prop, indexes) => {
         const definedProp = this.definedPropertyByProp.get(prop);
-        cache.delete(definedProp, indexes);
+//        cache.delete(definedProp, indexes);
         component.updateSlot.addNotify(new NotifyData(component, prop, indexes));
       };
     }

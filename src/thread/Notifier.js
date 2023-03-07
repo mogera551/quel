@@ -1,4 +1,5 @@
 import Component from "../component/Component.js";
+import { UpdateSlotStatus } from "./Thread.js";
 
 export class NotifyData {
   /**
@@ -58,23 +59,39 @@ export default class {
   queue = [];
 
   /**
+   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
    * 
    */
   async exec() {
-    while(this.queue.length > 0) {
-      const notifies = this.queue.splice(0);
-      /**
-       * @type {Map<Component,NotifyData[]>}
-       */
-      const notifiesByComponent = notifies.reduce((map, notify) => {
-        map.get(notify.component)?.push(notify) ?? map.set(notify.component, [ notify ]);
-        return map;
-      }, new Map);
-      
-      for(const [component, notifies] of notifiesByComponent.entries()) {
-        const setOfKey = new Set(notifies.map(getNnotifyKey));
-        component.notify(setOfKey);
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNotify);
+    try {
+      while(this.queue.length > 0) {
+        const notifies = this.queue.splice(0);
+        /**
+         * @type {Map<Component,NotifyData[]>}
+         */
+        const notifiesByComponent = notifies.reduce((map, notify) => {
+          map.get(notify.component)?.push(notify) ?? map.set(notify.component, [ notify ]);
+          return map;
+        }, new Map);
+        
+        for(const [component, notifies] of notifiesByComponent.entries()) {
+          const setOfKey = new Set(notifies.map(getNnotifyKey));
+          component.notify(setOfKey);
+        }
       }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNotify);
     }
   }
 

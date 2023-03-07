@@ -13,14 +13,18 @@ class CacheValue {
    * @type { any }
    */
   value;
+  /**
+   * @type {boolean}
+   */
+  updated;
 
   /**
    * 
    * @param {any} value 
    */
-  constructor(value) {
+  constructor(value, updated) {
     this.value = value;
-
+    this.updated = updated;
   }
 }
 
@@ -29,7 +33,7 @@ export default class {
   /**
    * @type {Map<PropertyInfo,Map<string,CacheValue>>}
    */
-  #valueByIndexesByProp = new Map();
+  #cacheValueByIndexesByProp = new Map();
   /**
    * @type {PropertyInfo[]}
    */
@@ -50,7 +54,7 @@ export default class {
    * @returns {any}
    */
   get(property, indexes) {
-    const cacheValue = this.#valueByIndexesByProp.get(property)?.get(indexes.toString());
+    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());
     return cacheValue ? (!cacheValue.dirty ? cacheValue.value : undefined) : undefined;
   }
 
@@ -59,14 +63,15 @@ export default class {
    * @param {PropertyInfo} property 
    * @param {number[]} indexes 
    * @param {any} value 
+   * @param {boolean} updated
    */
-  set(property, indexes, value) {
-    let valueByIndexs = this.#valueByIndexesByProp.get(property);
-    if (typeof valueByIndexs === "undefined") {
-      valueByIndexs = new Map();
-      this.#valueByIndexesByProp.set(property, valueByIndexs);
+  set(property, indexes, value, updated) {
+    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
+    if (typeof cacheValueByIndexes === "undefined") {
+      cacheValueByIndexes = new Map();
+      this.#cacheValueByIndexesByProp.set(property, cacheValueByIndexes);
     }
-    valueByIndexs.set(indexes.toString(), new CacheValue(value));
+    cacheValueByIndexes.set(indexes.toString(), new CacheValue(value, updated));
   }
 
   /**
@@ -76,7 +81,7 @@ export default class {
    * @returns {boolean}
    */
   has(property, indexes) {
-    const cacheValue = this.#valueByIndexesByProp.get(property)?.get(indexes.toString());
+    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());
     return cacheValue ? (!cacheValue.dirty) : false;
   }
 
@@ -88,11 +93,11 @@ export default class {
   delete(property, indexes) {
     const indexesString = indexes.slice(0, property.loopLevel).toString();
     const indexesStarts = indexesString + ",";
-    let valueByIndexes = this.#valueByIndexesByProp.get(property);
-    if (valueByIndexes) {
-      for(const indexes of valueByIndexes.keys()) {
+    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
+    if (cacheValueByIndexes) {
+      for(const indexes of cacheValueByIndexes.keys()) {
         if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
-          valueByIndexes.get(indexes).dirty = true;
+          cacheValueByIndexes.get(indexes).dirty = true;
         }
       }
     }
@@ -107,19 +112,27 @@ export default class {
         .flatMap(prop => [prop].concat(getDependentProps(prop)));
     const dependentProps = getDependentProps(property);
     dependentProps.forEach(property => {
-      const valueByIndexes = this.#valueByIndexesByProp.get(property);
-      if (typeof valueByIndexes === "undefined") return;
-      for(const indexes of valueByIndexes.keys()) {
+      const cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
+      if (typeof cacheValueByIndexes === "undefined") return;
+      for(const indexes of cacheValueByIndexes.keys()) {
         if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
-          valueByIndexes.get(indexes).dirty = true;;
+          cacheValueByIndexes.get(indexes).dirty = true;;
         }
       }
     });
-
-
   }
 
   clear() {
-    this.#valueByIndexesByProp.clear();
+    this.#cacheValueByIndexesByProp.clear();
+  }
+
+  clearNoUpdated() {
+    for(const [ key, cacheValueByIndexes ] of this.#cacheValueByIndexesByProp.entries()) {
+      for(const [ indexes, cacheValue ] of cacheValueByIndexes.entries()) {
+        if (!cacheValue.dirty && !cacheValue.updated) {
+          cacheValue.dirty = true;
+        }
+      }
+    }
   }
 }

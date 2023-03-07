@@ -3,6 +3,23 @@ import NodeUpdator, { NodeUpdateData } from "./NodeUpdator.js";
 import Notifier, { NotifyData } from "./Notifier.js";
 import Processor, { ProcessData } from "./Processor.js";
 
+/**
+ * @enum {number}
+ */
+export const UpdateSlotStatus = {
+  beginProcess: 1,
+  endProcess: 2,
+  beginNotify: 3,
+  endNotify: 4,
+  beginNodeUpdate: 5,
+  endNodeUpdate: 6,
+};
+
+/**
+ * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
+ */
+
+
 export class UpdateSlot {
   /**
    * @type {Processor}
@@ -36,11 +53,12 @@ export class UpdateSlot {
   /**
    * 
    * @param {()=>{}?} callback
+   * @param {UpdateSlotStatusCallback?} statusCallback
    */
-  constructor(callback = null) {
-    this.#processor = new Processor;
-    this.#notifier = new Notifier;
-    this.#nodeUpdator = new NodeUpdator;
+  constructor(callback = null, statusCallback = null) {
+    this.#processor = new Processor(statusCallback);
+    this.#notifier = new Notifier(statusCallback);
+    this.#nodeUpdator = new NodeUpdator(statusCallback);
     this.#callback = callback;
     this.#promise = new Promise((resolve, reject) => {
       this.#resolve = resolve;
@@ -104,8 +122,14 @@ export class UpdateSlot {
     this.#callback && this.#callback();
   }
 
-  static create(callback) {
-    return new UpdateSlot(callback);
+  /**
+   * 
+   * @param {()=>{}} callback 
+   * @param {UpdateSlotStatusCallback} statusCallback 
+   * @returns 
+   */
+  static create(callback, statusCallback) {
+    return new UpdateSlot(callback, statusCallback);
   }
 
 }

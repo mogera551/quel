@@ -1,8 +1,8 @@
 import "../types.js";
 import View from "../view/View.js";
 import createViewModel from "../viewModel/Proxy.js";
-import { SYM_CALL_INIT } from "../viewModel/Symbols.js";
-import Thread, { UpdateSlot } from "../thread/Thread.js";
+import { SYM_CALL_CLEAR_CACHE, SYM_CALL_CLEAR_CACHE_NOUPDATED, SYM_CALL_INIT } from "../viewModel/Symbols.js";
+import Thread, { UpdateSlot, UpdateSlotStatus } from "../thread/Thread.js";
 import { ProcessData } from "../thread/Processor.js";
 import Binds from "../bind/Binds.js";
 import createData from "./Data.js"
@@ -101,6 +101,13 @@ export default class Component extends HTMLElement {
     if (typeof this.#updateSlot === "undefined") {
       this.#updateSlot = UpdateSlot.create(() => {
         this.#updateSlot = undefined;
+      }, (updateSlotStatus) => {
+        if (updateSlotStatus === UpdateSlotStatus.beginProcess) {
+          this.viewModel[SYM_CALL_CLEAR_CACHE]();
+        }
+        if (updateSlotStatus === UpdateSlotStatus.beginNotify) {
+          this.viewModel[SYM_CALL_CLEAR_CACHE_NOUPDATED]();
+        }
       });
       this.#thread.wakeup(this.#updateSlot);
     }

@@ -1,3 +1,5 @@
+import { UpdateSlotStatus } from "./Thread.js";
+
 export class NodeUpdateData {
   /**
    * @type {Node}
@@ -32,6 +34,17 @@ export default class {
   queue = [];
 
   /**
+   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
    * 
    * @param {NodeUpdateData[]} updates 
    */
@@ -47,9 +60,14 @@ export default class {
    * 
    */
   async exec() {
-    while(this.queue.length > 0) {
-      const updates = this.reorder(this.queue.splice(0));
-      updates.forEach(update => Reflect.apply(update.updateFunc, update, []));
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
+    try {
+      while(this.queue.length > 0) {
+        const updates = this.reorder(this.queue.splice(0));
+        updates.forEach(update => Reflect.apply(update.updateFunc, update, []));
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
     }
   }
 

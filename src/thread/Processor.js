@@ -1,3 +1,5 @@
+import { UpdateSlotStatus } from "./Thread.js";
+
 export class ProcessData {
   /**
    * @type {()=>{}}
@@ -32,14 +34,30 @@ export default class {
   queue = [];
 
   /**
+   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
    * 
    */
   async exec() {
-    while(this.queue.length > 0) {
-      const processes = this.queue.splice(0);
-      for(const process of processes) {
-        await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginProcess);
+    try {
+      while(this.queue.length > 0) {
+        const processes = this.queue.splice(0);
+        for(const process of processes) {
+          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
+        }
       }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endProcess);
     }
   }
 
