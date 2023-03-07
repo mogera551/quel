@@ -1,12 +1,33 @@
+import PropertyInfo from "./PropertyInfo.js";
+
 /**
  * キャッシュのキーは、プロパティとインデックス
  */
 
-import PropertyInfo from "./PropertyInfo.js";
+class CacheValue {
+  /**
+   * @type { boolean }
+   */
+  dirty = false;
+  /**
+   * @type { any }
+   */
+  value;
+
+  /**
+   * 
+   * @param {any} value 
+   */
+  constructor(value) {
+    this.value = value;
+
+  }
+}
+
 
 export default class {
   /**
-   * @type {Map<PropertyInfo,Map<string,any>>}
+   * @type {Map<PropertyInfo,Map<string,CacheValue>>}
    */
   #valueByIndexesByProp = new Map();
   /**
@@ -29,7 +50,8 @@ export default class {
    * @returns {any}
    */
   get(property, indexes) {
-    return this.#valueByIndexesByProp.get(property)?.get(indexes.toString());
+    const cacheValue = this.#valueByIndexesByProp.get(property)?.get(indexes.toString());
+    return cacheValue ? (!cacheValue.dirty ? cacheValue.value : undefined) : undefined;
   }
 
   /**
@@ -44,7 +66,7 @@ export default class {
       valueByIndexs = new Map();
       this.#valueByIndexesByProp.set(property, valueByIndexs);
     }
-    valueByIndexs.set(indexes.toString(), value);
+    valueByIndexs.set(indexes.toString(), new CacheValue(value));
   }
 
   /**
@@ -54,7 +76,8 @@ export default class {
    * @returns {boolean}
    */
   has(property, indexes) {
-    return this.#valueByIndexesByProp.get(property)?.has(indexes.toString()) ?? false;
+    const cacheValue = this.#valueByIndexesByProp.get(property)?.get(indexes.toString());
+    return cacheValue ? (!cacheValue.dirty) : false;
   }
 
   /**
@@ -69,11 +92,8 @@ export default class {
     if (valueByIndexes) {
       for(const indexes of valueByIndexes.keys()) {
         if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
-          valueByIndexes.delete(indexes);
+          valueByIndexes.get(indexes).dirty = true;
         }
-      }
-      if (valueByIndexes.size === 0) {
-        this.#valueByIndexesByProp.delete(property);
       }
     }
     // 関連するキャッシュを取得し、削除する
@@ -91,11 +111,8 @@ export default class {
       if (typeof valueByIndexes === "undefined") return;
       for(const indexes of valueByIndexes.keys()) {
         if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
-          valueByIndexes.delete(indexes);
+          valueByIndexes.get(indexes).dirty = true;;
         }
-      }
-      if (valueByIndexes.size === 0) {
-        this.#valueByIndexesByProp.delete(property);
       }
     });
 
@@ -105,7 +122,4 @@ export default class {
   clear() {
     this.#valueByIndexesByProp.clear();
   }
-  
-
-
 }
