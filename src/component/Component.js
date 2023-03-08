@@ -1,7 +1,7 @@
 import "../types.js";
 import View from "../view/View.js";
 import createViewModel from "../viewModel/Proxy.js";
-import { SYM_CALL_CLEAR_CACHE, SYM_CALL_CLEAR_CACHE_NOUPDATED, SYM_CALL_INIT } from "../viewModel/Symbols.js";
+import { SYM_CALL_CLEAR_CACHE, SYM_CALL_CLEAR_CACHE_NOUPDATED, SYM_CALL_CONNECT, SYM_CALL_INIT } from "../viewModel/Symbols.js";
 import Thread, { UpdateSlot, UpdateSlotStatus } from "../thread/Thread.js";
 import { ProcessData } from "../thread/Processor.js";
 import Binds from "../bind/Binds.js";
@@ -146,7 +146,7 @@ export default class Component extends HTMLElement {
 
   /**
    * viewのルートとなる要素
-   * @type {HTMLElement}
+   * @type {ShadowRoot|HTMLElement}
    */
   get viewRootElement() {
     return this.shadowRoot ?? this;
@@ -162,8 +162,9 @@ export default class Component extends HTMLElement {
     this.viewModel = createViewModel(this, viewModel);
     await this.viewModel[SYM_CALL_INIT]();
 
-    this.updateSlot.addProcess(new ProcessData(() => {
+    this.updateSlot.addProcess(new ProcessData(async () => {
       this.#binds = this.#view.render(this);
+      await this.viewModel[SYM_CALL_CONNECT]();
     }, this, []));
   }
 

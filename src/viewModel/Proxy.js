@@ -3,7 +3,7 @@ import main from "../main.js";
 import { 
   SYM_GET_INDEXES, SYM_GET_TARGET, SYM_GET_DEPENDENT_MAP,
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
-  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY, SYM_CALL_CLEAR_CACHE_NOUPDATED
+  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY, SYM_CALL_CLEAR_CACHE_NOUPDATED, SYM_CALL_CONNECT
 } from "./Symbols.js";
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
@@ -89,6 +89,11 @@ class Handler {
   async [SYM_CALL_INIT](target, receiver) {
     if (!("$oninit" in target)) return;
     return await Reflect.apply(target["$oninit"], receiver, []);
+  }
+
+  async [SYM_CALL_CONNECT](target, receiver) {
+    if (!("$onconnect" in target)) return;
+    return await Reflect.apply(target["$onconnect"], receiver, []);
   }
 
   /**
@@ -248,6 +253,9 @@ class Handler {
         case SYM_CALL_WRITE:
           return (prop, indexes) => 
             Reflect.apply(this[SYM_CALL_WRITE], this, [prop, indexes, target, receiver]);
+        case SYM_CALL_CONNECT:
+          return () => 
+            Reflect.apply(this[SYM_CALL_CONNECT], this, [target, receiver]);
         case SYM_CALL_CLEAR_CACHE:
           return () => 
             Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
