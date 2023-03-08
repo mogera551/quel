@@ -1,5 +1,4 @@
 import Binder from "../bind/Binder.js";
-import BindToTemplate from "../bind/BindToTemplate.js";
 import Filter from "../filter/Filter.js";
 import { SYM_CALL_DIRECT_GET } from "../viewModel/Symbols.js";
 import BindInfo from "./BindInfo.js";

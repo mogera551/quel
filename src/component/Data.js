@@ -1,37 +1,55 @@
 import { NotifyData } from "../thread/Notifier.js";
-import { SYM_GET_DEPENDENT_MAP } from "../viewModel/Symbols.js";
+import { SYM_CALL_BIND_DATA, SYM_CALL_BIND_PROPERTY } from "../viewModel/Symbols.js";
 import Component from "./Component.js";
 
 class Handler {
   /**
+   * @type {{key:string,value:any}} 
+   */
+  #data = {};
+  /**
    * @type {Component}
    */
-  component;
+  #component;
+
+  #bindPropByThisProp = new Map();
+
+  get data() {
+    return (this.#component ? this.#component?.parentComponent?.viewModel : this.#data) ?? {};
+  }
+
   /**
    * 
-   * @param {Component} component 
+   * @param {{key:string,value:any}|Component} data 
    */
-  constructor(component) {
-    this.component = component;
-
+  [SYM_CALL_BIND_DATA](data) {
+    if (data instanceof Component) {
+      this.#component = data;
+    } else {
+      this.#data = data;
+    }
   }
+
+  [SYM_CALL_BIND_PROPERTY](thisProp, bindProp, indexes) {
+    this.#bindPropByThisProp.set(thisProp, { bindProp,  indexes } );
+  }
+
   get(target, prop, receiver) {
-    console.log("get", prop);
-    return Reflect.get(target, prop, receiver);
+    if (prop === SYM_CALL_BIND_DATA) {
+      return (data) => Reflect.apply(this[SYM_CALL_BIND_DATA], this, [data]);
+    }
+    if (prop === SYM_CALL_BIND_PROPERTY) {
+      return (thisProp, bindProp) => Reflect.apply(this[SYM_CALL_BIND_PROPERTY], this, [thisProp, bindProp]);
+    }
+    const { data } = this;
+    const { bindProp, indexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, indexes:[] };
+    return Reflect.get(data, bindProp, data);
   }
 
   set(target, prop, value, receiver) {
-    console.log("set", prop);
-    const { component } = this;
-    Reflect.set(target, prop, value, receiver);
-    const dependentMap = component.viewModel[SYM_GET_DEPENDENT_MAP];
-    const getDependentProps = (name) => 
-      (dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
-    const dependentProps = new Set(getDependentProps(`$data.${prop}`));
-    dependentProps.forEach(dependentProp => {
-      component.updateSlot.addNotify(new NotifyData(component, dependentProp, []));
-    });
-    return true;
+    const { data } = this;
+    const { bindProp, indexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, indexes:[] };
+    return Reflect.set(data, bindProp, value, data);
   }
 }
 

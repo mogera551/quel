@@ -3,7 +3,8 @@ import main from "../main.js";
 import { 
   SYM_GET_INDEXES, SYM_GET_TARGET, SYM_GET_DEPENDENT_MAP,
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
-  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY, SYM_CALL_CLEAR_CACHE_NOUPDATED, SYM_CALL_CONNECT
+  SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY, 
+  SYM_CALL_CLEAR_CACHE_NOUPDATED, SYM_CALL_CONNECT, SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS, SYM_CALL_BIND_DATA
 } from "./Symbols.js";
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
@@ -138,6 +139,26 @@ class Handler {
     return value;
   }
 
+  [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes) {
+    const { dependentMap, definedPropertyByProp, component } = this;
+    if (dependentMap.has(propertyName)) {
+      const getDependentProps = (name) => 
+        (dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
+      const dependentProps = new Set(getDependentProps(propertyName));
+      dependentProps.forEach(dependentProp => {
+        const definedProperty = definedPropertyByProp.get(dependentProp);
+        if (indexes.length < definedProperty.loopLevel) {
+          const listOfIndexes = definedProperty.expand(receiver, indexes);
+          listOfIndexes.forEach(depIndexes => {
+            component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
+          });
+        } else {
+          const depIndexes = indexes.slice(0, definedProperty.loopLevel);
+          component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
+        }
+      });
+    }
+  }
   /**
    * 
    * @param {ViewModel} target 
@@ -150,28 +171,10 @@ class Handler {
     value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
     const indexes = lastIndexes.slice(0, prop.loopLevel);
     Reflect.set(target, prop.name, value, receiver);
-//    cache.delete(prop, indexes);
     cache.set(prop, indexes, value, true);
-
     component.updateSlot.addNotify(new NotifyData(component, prop.name, indexes));
-    if (this.dependentMap.has(prop.name)) {
-      const getDependentProps = (name) => 
-        (this.dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
-      const dependentProps = new Set(getDependentProps(prop.name));
-      dependentProps.forEach(dependentProp => {
-        const definedProperty = this.definedPropertyByProp.get(dependentProp);
-//        cache.delete(definedProperty, indexes);
-        if (indexes.length < definedProperty.loopLevel) {
-          const listOfIndexes = definedProperty.expand(receiver, indexes);
-          listOfIndexes.forEach(depIndexes => {
-            component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
-          });
-        } else {
-          const depIndexes = indexes.slice(0, definedProperty.loopLevel);
-          component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
-        }
-      });
-    }
+
+    this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](prop.name, indexes);
 
     this[SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);
 
@@ -262,6 +265,9 @@ class Handler {
         case SYM_CALL_CLEAR_CACHE_NOUPDATED:
           return () => 
             Reflect.apply(this[SYM_CALL_CLEAR_CACHE_NOUPDATED], this, [target, receiver]);
+        case SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS:
+          return (prop, indexes) => 
+            Reflect.apply(this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS], this, [prop, indexes, target, receiver]);
         case SYM_GET_TARGET:
           return target;
         case SYM_GET_DEPENDENT_MAP:
@@ -282,8 +288,8 @@ class Handler {
         const dialog = document.createElement(main.prefix ? (main.prefix + "-" + name) : name);
         Object.entries(attributes ?? {}).forEach(([key, value]) => {
           dialog.setAttribute(key, value);
-        })
-        Object.assign(dialog.data, data ?? {});
+        });
+        dialog.data[SYM_CALL_BIND_DATA](data ?? {});
         document.body.appendChild(dialog);
         return dialog.alivePromise;
       };

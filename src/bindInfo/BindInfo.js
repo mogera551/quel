@@ -23,7 +23,14 @@ export default class BindInfo {
   /**
    * @type {string}
    */
-  nodeProperty;
+  #nodeProperty;
+  get nodeProperty() {
+    return this.#nodeProperty;
+  }
+  set nodeProperty(value) {
+    this.#nodeProperty = value;
+  }
+
   /**
    * @type {string[]}
    */
@@ -46,7 +53,13 @@ export default class BindInfo {
   /**
    * @type {string}
    */
-  viewModelProperty;
+  #viewModelProperty;
+  get viewModelProperty() {
+    return this.#viewModelProperty;
+  }
+  set viewModelProperty(value) {
+    this.#viewModelProperty = value;
+  }
   /**
    * @type {Filter[]}
    */

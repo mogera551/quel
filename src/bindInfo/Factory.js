@@ -10,6 +10,7 @@ import Template from "./Template.js";
 import Event from "./Event.js";
 import Component from "../component/Component.js";
 import PropertyInfo from "../viewModel/PropertyInfo.js";
+import BindComponent from "./Component.js";
 
 const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
 const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
@@ -19,6 +20,7 @@ const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info)
 const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
 const createTemplate = (bindInfo, info) => Object.assign(new Template, bindInfo, info);
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
+const createComponent = (bindInfo, info) => Object.assign(new BindComponent, bindInfo, info);
 
 const creatorByType = new Map();
 creatorByType.set(NodePropertyType.levelTop, createLevelTop);
@@ -29,6 +31,7 @@ creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
 creatorByType.set(NodePropertyType.template, createTemplate);
 creatorByType.set(NodePropertyType.event, createEvent);
+creatorByType.set(NodePropertyType.component, createComponent);
 
 export default class Factory {
   /**

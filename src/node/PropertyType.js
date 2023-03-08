@@ -1,3 +1,4 @@
+import Component from "../component/Component.js";
 import utils from "../utils.js";
 
 const PREFIX_EVENT = "on";
@@ -14,6 +15,7 @@ export const NodePropertyType = {
   checkbox: 30,
   template: 90,
   event: 91,
+  component: 92,
 };
 
 export default class {
@@ -31,6 +33,10 @@ export default class {
     };
 
     result.nodePropertyElements = nodeProperty.split(".");
+    if (node instanceof Component) { 
+      result.type = NodePropertyType.component;
+      return result;
+    };
     if (result.nodePropertyElements.length === 1) {
       if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
         result.type = NodePropertyType.event;
