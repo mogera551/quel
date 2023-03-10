@@ -139,7 +139,7 @@ class Handler {
     return value;
   }
 
-  [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes) {
+  [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes, target, receiver) {
     const { dependentMap, definedPropertyByProp, component } = this;
     if (dependentMap.has(propertyName)) {
       const getDependentProps = (name) => 
@@ -174,7 +174,7 @@ class Handler {
     cache.set(prop, indexes, value, true);
     component.updateSlot.addNotify(new NotifyData(component, prop.name, indexes));
 
-    this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](prop.name, indexes);
+    this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](prop.name, indexes, target, receiver);
 
     this[SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);
 
