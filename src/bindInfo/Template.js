@@ -155,14 +155,19 @@ export default class Template extends BindInfo {
      * @type {any}
      */
     const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
-    if (lastValue === newValue) return newValue;
-    this.removeFromParent();
-    if (newValue) {
-      this.templateChildren = [TemplateChild.create(this, indexes)];
-      this.appendToParent();
-    } else {
-      this.templateChildren = [];
+    if (lastValue !== newValue) {
+      this.removeFromParent();
+      if (newValue) {
+        this.templateChildren = [TemplateChild.create(this, indexes)];
+        this.appendToParent();
+      } else {
+        this.templateChildren = [];
+      }
     }
+
+    // 子要素の展開を実行
+    this.templateChildren.forEach(templateChild => templateChild.updateNode());
+
     return newValue;
   }
 
