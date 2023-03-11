@@ -4,7 +4,7 @@ import {
   SYM_GET_INDEXES, SYM_GET_TARGET, SYM_GET_DEPENDENT_MAP,
   SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_DIRECT_CALL,
   SYM_CALL_INIT, SYM_CALL_WRITE, SYM_CALL_CLEAR_CACHE, SYM_GET_RAW, SYM_GET_IS_PROXY, 
-  SYM_CALL_CLEAR_CACHE_NOUPDATED, SYM_CALL_CONNECT, SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS, SYM_CALL_BIND_DATA
+  SYM_CALL_CONNECT, SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS, SYM_CALL_BIND_DATA
 } from "./Symbols.js";
 import Component from "../component/Component.js";
 import Accessor from "./Accessor.js";
@@ -70,6 +70,10 @@ class Handler {
    */
   dependentMap;
   /**
+   * @type {Map<string,Set<PropertyInfo>>}
+   */
+  setOfDependentPropsByPropName = new Map;
+  /**
    * 
    * @param {Component} component 
    * @param {PropertyInfo[]} definedProperties
@@ -81,6 +85,18 @@ class Handler {
     this.loopProperties = definedProperties.filter(property => property.isLoop);
     this.dependentMap = dependentMap;
     this.cache = new Cache(definedProperties);
+    const getDependentProps = (setOfProperties, propertyName) => {
+      (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {
+        const property = PropertyInfo.create(refPropertyName);
+        if (!setOfProperties.has(property)) {
+          setOfProperties.add(property);
+          getDependentProps(setOfProperties, refPropertyName);
+        }
+      });
+      return setOfProperties;
+    };
+    this.setOfDependentPropsByPropName = 
+      new Map(definedProperties.map(property => [property.name, getDependentProps(new Set, property.name)]));
   }
 
   get lastIndexes() {
@@ -124,7 +140,7 @@ class Handler {
     const cacheValue = cache.get(prop, indexes);
     if (typeof cacheValue !== "undefined") return wrapArray(component, prop, indexes, cacheValue);
     const value = Reflect.get(target, prop.name, receiver);
-    cache.set(prop, indexes, value, false);
+    cache.set(prop, indexes, value);
     return wrapArray(component, prop, indexes, value);
   }
 
@@ -140,25 +156,10 @@ class Handler {
   }
 
   [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes, target, receiver) {
-    const { dependentMap, definedPropertyByProp, component } = this;
+    const { dependentMap, setOfDependentPropsByPropName, component } = this;
     if (dependentMap.has(propertyName)) {
-      /**
-       * 
-       * @param {Set<string>} setOfProperties 
-       * @param {string} propertyName 
-       */
-      const getDependentProps = (setOfProperties, propertyName) => {
-        (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {
-          if (!setOfProperties.has(refPropertyName)) {
-            setOfProperties.add(refPropertyName);
-            getDependentProps(setOfProperties, refPropertyName);
-          }
-        });
-        return setOfProperties;
-      };
-      const dependentPropNames = getDependentProps(new Set, propertyName);
-      dependentPropNames.forEach(dependentPropName => {
-        const definedProperty = definedPropertyByProp.get(dependentPropName);
+      const dependentProps = setOfDependentPropsByPropName.get(propertyName) ?? new Set;
+      dependentProps.forEach(definedProperty => {
         if (indexes.length < definedProperty.loopLevel) {
           const listOfIndexes = definedProperty.expand(receiver, indexes);
           listOfIndexes.forEach(depIndexes => {
@@ -183,7 +184,7 @@ class Handler {
     value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
     const indexes = lastIndexes.slice(0, prop.loopLevel);
     Reflect.set(target, prop.name, value, receiver);
-    cache.set(prop, indexes, value, true);
+
     component.updateSlot.addNotify(new NotifyData(component, prop.name, indexes));
 
     this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](prop.name, indexes, target, receiver);
@@ -214,10 +215,6 @@ class Handler {
 
   [SYM_CALL_CLEAR_CACHE](target, receiver) {
     this.cache.clear();
-  }
-
-  [SYM_CALL_CLEAR_CACHE_NOUPDATED](target, receiver) {
-    this.cache.clearNoUpdated();
   }
 
   /**
@@ -274,9 +271,6 @@ class Handler {
         case SYM_CALL_CLEAR_CACHE:
           return () => 
             Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
-        case SYM_CALL_CLEAR_CACHE_NOUPDATED:
-          return () => 
-            Reflect.apply(this[SYM_CALL_CLEAR_CACHE_NOUPDATED], this, [target, receiver]);
         case SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS:
           return (prop, indexes) => 
             Reflect.apply(this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS], this, [prop, indexes, target, receiver]);
@@ -314,8 +308,6 @@ class Handler {
     }
     if (prop === CONTEXT_NOTIFY) {
       return (prop, indexes) => {
-        const definedProp = this.definedPropertyByProp.get(prop);
-//        cache.delete(definedProp, indexes);
         component.updateSlot.addNotify(new NotifyData(component, prop, indexes));
       };
     }

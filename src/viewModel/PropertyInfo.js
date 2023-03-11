@@ -144,6 +144,7 @@ export default class PropertyInfo {
    */
   static #propertyInfoByProp = new Map;
   static create(prop) {
+    if (prop === "") return undefined;
     let propertyInfo = this.#propertyInfoByProp.get(prop);
     if (typeof propertyInfo === "undefined") {
       propertyInfo = new PropertyInfo(prop);

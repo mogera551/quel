@@ -13,18 +13,13 @@ class CacheValue {
    * @type { any }
    */
   value;
-  /**
-   * @type {boolean}
-   */
-  updated;
 
   /**
    * 
    * @param {any} value 
    */
-  constructor(value, updated) {
+  constructor(value) {
     this.value = value;
-    this.updated = updated;
   }
 }
 
@@ -42,6 +37,10 @@ export default class {
    * @type {Map<string,PropertyInfo[]>}
    */
   #definedPropertiesByParentName;
+  /**
+   * @type {Map<string,PropertyInfo[]>}
+   */
+  #dependentPropsByName;
 
   /**
    * 
@@ -56,7 +55,15 @@ export default class {
       map.set(definedProperty.parentName, [ definedProperty ]);
       return map;
     }, new Map);
-
+    const getDependentProps = (properties, propertyName) => {
+      (this.#definedPropertiesByParentName.get(propertyName) ?? []).forEach(definedProperty => {
+        properties.push(definedProperty);
+        getDependentProps(properties, definedProperty.name);
+      });
+      return properties;
+    }
+    this.#dependentPropsByName = 
+      new Map(definedProperties.map(property => [ property.name, getDependentProps(new Array, property.name) ]));
   }
 
   /**
@@ -75,18 +82,14 @@ export default class {
    * @param {PropertyInfo} property 
    * @param {number[]} indexes 
    * @param {any} value 
-   * @param {boolean} updated
    */
-  set(property, indexes, value, updated) {
-    if (this.#definedPropertiesByParentName.has(property.name)) {
-      this.delete(property, indexes);
-    }
+  set(property, indexes, value) {
     let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
     if (typeof cacheValueByIndexes === "undefined") {
       cacheValueByIndexes = new Map();
       this.#cacheValueByIndexesByProp.set(property, cacheValueByIndexes);
     }
-    cacheValueByIndexes.set(indexes.toString(), new CacheValue(value, updated));
+    cacheValueByIndexes.set(indexes.toString(), new CacheValue(value));
   }
 
   /**
@@ -116,16 +119,7 @@ export default class {
         }
       }
     }
-    // 関連するキャッシュを取得し、削除する
-    /**
-     * 
-     * @param {PropertyInfo} property 
-     * @returns {PropertyInfo[]}
-     */
-    const getDependentProps = property => this.#definedProperties
-        .filter(prop => !prop.isPrimitive && prop.parentName === property.name)
-        .flatMap(prop => [prop].concat(getDependentProps(prop)));
-    const dependentProps = getDependentProps(property);
+    const dependentProps = this.#dependentPropsByName.get(property.name) ?? []
     dependentProps.forEach(property => {
       const cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
       if (typeof cacheValueByIndexes === "undefined") return;
@@ -139,15 +133,5 @@ export default class {
 
   clear() {
     this.#cacheValueByIndexesByProp.clear();
-  }
-
-  clearNoUpdated() {
-    for(const [ key, cacheValueByIndexes ] of this.#cacheValueByIndexesByProp.entries()) {
-      for(const [ indexes, cacheValue ] of cacheValueByIndexes.entries()) {
-        if (!cacheValue.dirty && !cacheValue.updated) {
-          cacheValue.dirty = true;
-        }
-      }
-    }
   }
 }
