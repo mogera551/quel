@@ -29,6 +29,9 @@ export default class PropertyInfo {
     this.isLoop = this.elements.length > 1 && this.loopLevel > 0;
     this.isNotPrimitive = ! this.isPrimitive ;
   }
+  get parentProperty() {
+    return PropertyInfo.create(this.parentName);
+  }
 
   /**
    * 

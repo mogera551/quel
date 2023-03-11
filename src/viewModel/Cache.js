@@ -37,13 +37,25 @@ export default class {
   /**
    * @type {PropertyInfo[]}
    */
-  #definedProperties
+  #definedProperties;
+  /**
+   * @type {Map<string,PropertyInfo[]>}
+   */
+  #definedPropertiesByParentName;
+
   /**
    * 
    * @param {PropertyInfo[]} definedProperties 
    */
   constructor(definedProperties) {
     this.#definedProperties = definedProperties;
+    this.#definedPropertiesByParentName = definedProperties
+    .filter(definedProperty => definedProperty.parentName !== "")
+    .reduce((map, definedProperty) => {
+      map.get(definedProperty.parentName)?.push(definedProperty) ??
+      map.set(definedProperty.parentName, [ definedProperty ]);
+      return map;
+    }, new Map);
 
   }
 
@@ -66,6 +78,9 @@ export default class {
    * @param {boolean} updated
    */
   set(property, indexes, value, updated) {
+    if (this.#definedPropertiesByParentName.has(property.name)) {
+      this.delete(property, indexes);
+    }
     let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
     if (typeof cacheValueByIndexes === "undefined") {
       cacheValueByIndexes = new Map();
