@@ -116,7 +116,7 @@ export default class Component extends HTMLElement {
   /**
    * @type {Object<string,any>}
    */
-  #data = createData(this);
+  #data = createData();
   get data() {
     return this.#data;
   }
@@ -153,13 +153,13 @@ export default class Component extends HTMLElement {
   }
 
   async build() {
-    const { template, ViewModel } = this.constructor;
+    const { template, ViewModel } = this.constructor; // staticから取得
     this.noShadowRoot || this.attachShadow({mode: 'open'});
     this.#thread = new Thread;
 
     this.#view = new View(template, this.viewRootElement);
-    const viewModel = Reflect.construct(ViewModel, []);
-    this.viewModel = createViewModel(this, viewModel);
+    const rawViewModel = Reflect.construct(ViewModel, []);
+    this.viewModel = createViewModel(this, rawViewModel);
     await this.viewModel[SYM_CALL_INIT]();
 
     this.updateSlot.addProcess(new ProcessData(async () => {
