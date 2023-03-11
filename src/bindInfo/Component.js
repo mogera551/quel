@@ -1,6 +1,6 @@
 import BindInfo from "./BindInfo.js";
 import Filter from "../filter/Filter.js";
-import { SYM_CALL_BIND_DATA, SYM_CALL_BIND_PROPERTY, SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET, SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS, SYM_GET_DEPENDENT_MAP } from "../viewModel/Symbols.js";
+import { SYM_CALL_BIND_DATA, SYM_CALL_BIND_PROPERTY, SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS } from "../viewModel/Symbols.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 import Component from "../component/Component.js";
 
