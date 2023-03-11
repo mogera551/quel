@@ -8,12 +8,12 @@ const DEPENDENT_PROP = "$dependentProps";
 
 /**
  * 
- * @param {{prop:string,refProps:string[]}[]} depObject
+ * @param {{prop:string,refProps:string[]}[]} dependentProps
  * @returns 
  */
-function createDependentMap(depObject) {
+function createDependentMap(dependentProps) {
   const map = new Map();
-  Object.entries(depObject).forEach(([prop, refProps]) => {
+  Object.entries(dependentProps).forEach(([prop, refProps]) => {
     refProps.forEach(refProp => {
       map.get(refProp)?.push(prop) ?? map.set(refProp, [ prop ]);
     }) 
@@ -30,7 +30,7 @@ export default class {
    */
   static convert(component, viewModel) {
     let dependentMap = new Map;
-    // $dependencyPropsを取得
+    // $dependentPropsを取得
     if (DEPENDENT_PROP in viewModel) {
       const desc = Object.getOwnPropertyDescriptor(viewModel, DEPENDENT_PROP);
       desc.enumerable = false;
