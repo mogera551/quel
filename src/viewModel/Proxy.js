@@ -142,9 +142,21 @@ class Handler {
   [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes, target, receiver) {
     const { dependentMap, definedPropertyByProp, component } = this;
     if (dependentMap.has(propertyName)) {
-      const getDependentProps = (name) => 
-        (dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
-      const dependentPropNames = new Set(getDependentProps(propertyName));
+      /**
+       * 
+       * @param {Set<string>} setOfProperties 
+       * @param {string} propertyName 
+       */
+      const getDependentProps = (setOfProperties, propertyName) => {
+        (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {
+          if (!setOfProperties.has(refPropertyName)) {
+            setOfProperties.add(refPropertyName);
+            getDependentProps(setOfProperties, refPropertyName);
+          }
+        });
+        return setOfProperties;
+      };
+      const dependentPropNames = getDependentProps(new Set, propertyName);
       dependentPropNames.forEach(dependentPropName => {
         const definedProperty = definedPropertyByProp.get(dependentPropName);
         if (indexes.length < definedProperty.loopLevel) {

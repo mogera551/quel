@@ -77,7 +77,7 @@ export default class {
     // definedPropertiesからdependentMapに追加
     definedProperties.forEach(property => {
       if (property.isPrimitive) return;
-      if (property.lastElement === "*") return;
+      //if (property.lastElement === "*") return;
       const props = dependentMap.get(property.parentName)?.concat(property.name) ?? [ property.name ];
       dependentMap.set(property.parentName, props);
     });
