@@ -144,9 +144,9 @@ class Handler {
     if (dependentMap.has(propertyName)) {
       const getDependentProps = (name) => 
         (dependentMap.get(name) ?? []).flatMap(name => [name].concat(getDependentProps(name)));
-      const dependentProps = new Set(getDependentProps(propertyName));
-      dependentProps.forEach(dependentProp => {
-        const definedProperty = definedPropertyByProp.get(dependentProp);
+      const dependentPropNames = new Set(getDependentProps(propertyName));
+      dependentPropNames.forEach(dependentPropName => {
+        const definedProperty = definedPropertyByProp.get(dependentPropName);
         if (indexes.length < definedProperty.loopLevel) {
           const listOfIndexes = definedProperty.expand(receiver, indexes);
           listOfIndexes.forEach(depIndexes => {
@@ -313,6 +313,16 @@ class Handler {
       // すでに、indexesはセットされている
       return this.#getDefinedPropertyValue(target, defindedProperty, receiver);
     } else {
+      if (prop[0] === "@") {
+        const propName = prop.slice(1);
+        const defindedProperty = this.definedPropertyByProp.get(propName);
+        if (defindedProperty) {
+          return defindedProperty.expand(receiver, []).map(indexes => {
+            const value = this[SYM_CALL_DIRECT_GET](propName, indexes, target, receiver);
+            return [ value, indexes];
+          });
+        }
+      }
       if (prop[0] !== "_") {
         const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
@@ -335,6 +345,16 @@ class Handler {
     if (defindedProperty) {
       return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);
     } else {
+      if (prop[0] === "@") {
+        const propName = prop.slice(1);
+        const defindedProperty = this.definedPropertyByProp.get(propName);
+        if (defindedProperty) {
+          defindedProperty.expand(receiver, []).forEach(indexes => {
+            this[SYM_CALL_DIRECT_SET](propName, indexes, value, target, receiver);
+          });
+          return true;
+        }
+      }
       if (prop[0] !== "_") {
         const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
