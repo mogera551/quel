@@ -1,7 +1,11 @@
-import { NotifyData } from "../thread/Notifier.js";
 import { SYM_CALL_BIND_DATA, SYM_CALL_BIND_PROPERTY } from "../viewModel/Symbols.js";
 import Component from "./Component.js";
 
+function getPath(pattern, indexes) {
+  let i = 0;
+  return pattern.replaceAll("*", () => indexes[i++] ?? "*");
+}
+  
 class Handler {
   /**
    * @type {{key:string,value:any}} 
@@ -39,17 +43,19 @@ class Handler {
       return (data) => Reflect.apply(this[SYM_CALL_BIND_DATA], this, [data]);
     }
     if (prop === SYM_CALL_BIND_PROPERTY) {
-      return (thisProp, bindProp) => Reflect.apply(this[SYM_CALL_BIND_PROPERTY], this, [thisProp, bindProp]);
+      return (thisProp, bindProp, indexes) => Reflect.apply(this[SYM_CALL_BIND_PROPERTY], this, [thisProp, bindProp, indexes]);
     }
     const { data } = this;
     const { bindProp, indexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, indexes:[] };
-    return Reflect.get(data, bindProp, data);
+    const bindPath = getPath(bindProp, indexes);
+    return Reflect.get(data, bindPath, data);
   }
 
   set(target, prop, value, receiver) {
     const { data } = this;
     const { bindProp, indexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, indexes:[] };
-    return Reflect.set(data, bindProp, value, data);
+    const bindPath = getPath(bindProp, indexes);
+    return Reflect.set(data, bindPath, value, data);
   }
 }
 

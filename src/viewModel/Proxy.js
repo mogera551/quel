@@ -70,9 +70,9 @@ class Handler {
    */
   dependentMap;
   /**
-   * @type {Map<string,Set<PropertyInfo>>}
+   * @type {Map<string,Set<string>>}
    */
-  setOfDependentPropsByPropName = new Map;
+  setOfDependentPropNamesByPropName = new Map;
   /**
    * 
    * @param {Component} component 
@@ -85,18 +85,17 @@ class Handler {
     this.loopProperties = definedProperties.filter(property => property.isLoop);
     this.dependentMap = dependentMap;
     this.cache = new Cache(definedProperties);
-    const getDependentProps = (setOfProperties, propertyName) => {
+    const getDependentProps = (setOfPropertyNames, propertyName) => {
       (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {
-        const property = PropertyInfo.create(refPropertyName);
-        if (!setOfProperties.has(property)) {
-          setOfProperties.add(property);
-          getDependentProps(setOfProperties, refPropertyName);
+        if (!setOfPropertyNames.has(refPropertyName)) {
+          setOfPropertyNames.add(refPropertyName);
+          getDependentProps(setOfPropertyNames, refPropertyName);
         }
       });
-      return setOfProperties;
+      return setOfPropertyNames;
     };
-    this.setOfDependentPropsByPropName = 
-      new Map(definedProperties.map(property => [property.name, getDependentProps(new Set, property.name)]));
+    this.setOfDependentPropNamesByPropName = 
+      new Map(Array.from(dependentMap.keys()).map(propertyName => [propertyName, getDependentProps(new Set, propertyName)]));
   }
 
   get lastIndexes() {
@@ -156,18 +155,25 @@ class Handler {
   }
 
   [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes, target, receiver) {
-    const { dependentMap, setOfDependentPropsByPropName, component } = this;
+    const { dependentMap, setOfDependentPropNamesByPropName, component } = this;
     if (dependentMap.has(propertyName)) {
-      const dependentProps = setOfDependentPropsByPropName.get(propertyName) ?? new Set;
-      dependentProps.forEach(definedProperty => {
-        if (indexes.length < definedProperty.loopLevel) {
-          const listOfIndexes = definedProperty.expand(receiver, indexes);
-          listOfIndexes.forEach(depIndexes => {
-            component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
-          });
+      const dependentPropNames = setOfDependentPropNamesByPropName.get(propertyName) ?? new Set;
+      dependentPropNames.forEach(definedPropertyName => {
+        
+        if (definedPropertyName.startsWith("$data")) {
+          component.updateSlot.addNotify(new NotifyData(component, definedPropertyName, []));
         } else {
-          const depIndexes = indexes.slice(0, definedProperty.loopLevel);
-          component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
+          const definedProperty = PropertyInfo.create(definedPropertyName);
+          if (indexes.length < definedProperty.loopLevel) {
+            const listOfIndexes = definedProperty.expand(receiver, indexes);
+            listOfIndexes.forEach(depIndexes => {
+              component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
+            });
+          } else {
+            const depIndexes = indexes.slice(0, definedProperty.loopLevel);
+            component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
+          }
+  
         }
       });
     }

@@ -20,7 +20,7 @@ export default class ComponentBind extends BindInfo {
   }
   bindProp() {
     const component = toComponent(this.node);
-    component?.data[SYM_CALL_BIND_PROPERTY](this.dataProperty, this.viewModelProperty)
+    component?.data[SYM_CALL_BIND_PROPERTY](this.dataProperty, this.viewModelProperty, this.indexes)
   }
   set nodeProperty(value) {
     super.nodeProperty = value;
@@ -52,20 +52,12 @@ export default class ComponentBind extends BindInfo {
   }
 
   updateNode() {
-    const {component, node, nodeProperty, dataProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const { node, dataProperty } = this;
     const thisComponent = toComponent(node);
     thisComponent.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${dataProperty}`, []);
   }
 
   updateViewModel() {
-/*
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const thisComponent = toComponent(node);
-    const value = Filter.applyForInput(node[nodeProperty], filters);
-    thisComponent.data
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
-    this.lastViewModelValue = value;
-*/
   }
 
 }
