@@ -13,16 +13,19 @@ import { ProcessData } from "../thread/Processor.js";
 import { NotifyData } from "../thread/Notifier.js";
 import Cache from "./Cache.js";
 import createArrayProxy from "./ArrayProxy.js";
+import Globals from "./Globals.js";
 
 const MAX_INDEXES_LEVEL = 8;
-const CONTEXT_INDEXES = new Set(
-  [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1))   
-);
+const CONTEXT_INDEXES = [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1));
+const SET_OF_CONTEXT_INDEXES = new Set(CONTEXT_INDEXES);
 const CONTEXT_COMPONENT = "$component";
 const CONTEXT_DATA = "$data";
 const CONTEXT_OPEN_DIALOG = "$openDialog";
 const CONTEXT_CLOSE_DIALOG = "$closeDialog";
 const CONTEXT_NOTIFY = "$notify";
+const CONTEXT_GLOBALS = "$globals";
+const CONTEXT_PARAMS = [CONTEXT_COMPONENT, CONTEXT_DATA, CONTEXT_OPEN_DIALOG, CONTEXT_CLOSE_DIALOG, CONTEXT_NOTIFY, CONTEXT_GLOBALS];
+const SET_OF_CONTEXT_ALL_PARAMS = new Set(CONTEXT_INDEXES.concat(CONTEXT_PARAMS));
 
 /**
  * 配列プロキシを取得
@@ -74,16 +77,28 @@ class Handler {
    */
   setOfDependentPropNamesByPropName = new Map;
   /**
+   * @type {string[]}
+   */
+  cachablePropertyNames = [];
+  setOfCachablePropertyNames = new Set;
+  /**
+   * 
+   */
+  globals;
+  /**
    * 
    * @param {Component} component 
    * @param {PropertyInfo[]} definedProperties
    * @param {Map<string,string[]>} dependentMap
+   * @param {string[]} cachablePropertyNames
    */
-  constructor(component, definedProperties, dependentMap) {
+  constructor(component, definedProperties, dependentMap, cachablePropertyNames) {
     this.component = component;
     this.definedPropertyByProp = new Map(definedProperties.map(property => ([property.name, property])));
     this.loopProperties = definedProperties.filter(property => property.isLoop);
     this.dependentMap = dependentMap;
+    this.cachablePropertyNames = cachablePropertyNames;
+    this.setOfCachablePropertyNames = new Set(cachablePropertyNames);
     this.cache = new Cache(definedProperties);
     const getDependentProps = (setOfPropertyNames, propertyName) => {
       (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {
@@ -96,6 +111,8 @@ class Handler {
     };
     this.setOfDependentPropNamesByPropName = 
       new Map(Array.from(dependentMap.keys()).map(propertyName => [propertyName, getDependentProps(new Set, propertyName)]));
+    this.globals = Globals.create(component);
+
   }
 
   get lastIndexes() {
@@ -134,12 +151,20 @@ class Handler {
    * @param {Proxy<ViewModel>} receiver 
    */
   #getDefinedPropertyValue(target, prop, receiver) {
-    const { component, lastIndexes, cache } = this;
+    const { component, lastIndexes, cache, setOfCachablePropertyNames } = this;
     const indexes = lastIndexes.slice(0, prop.loopLevel);
-    const cacheValue = cache.get(prop, indexes);
-    if (typeof cacheValue !== "undefined") return wrapArray(component, prop, indexes, cacheValue);
-    const value = Reflect.get(target, prop.name, receiver);
-    cache.set(prop, indexes, value);
+    let value;
+    if (setOfCachablePropertyNames.has(prop.name)) {
+      const cacheValue = cache.get(prop, indexes);
+      if (typeof cacheValue === "undefined") {
+        value = Reflect.get(target, prop.name, receiver);
+        cache.set(prop, indexes, value);
+      } else {
+        value = cacheValue;
+      }
+    } else {
+      value = Reflect.get(target, prop.name, receiver);
+    }
     return wrapArray(component, prop, indexes, value);
   }
 
@@ -251,8 +276,8 @@ class Handler {
    * @returns 
    */
   get(target, prop, receiver) {
-    const { lastIndexes, component, cache, dependentMap } = this;
     if (typeof prop === "symbol") {
+      const { lastIndexes, dependentMap } = this;
       switch(prop) {
         case SYM_CALL_DIRECT_GET:
           return (prop, indexes) => 
@@ -286,36 +311,39 @@ class Handler {
           return dependentMap;
       }
     }
-    if (CONTEXT_INDEXES.has(prop)) {
-      return lastIndexes[Number(prop.slice(1)) - 1];
-    }
-    if (prop === CONTEXT_COMPONENT) {
-      return component;
-    }
-    if (prop === CONTEXT_DATA) {
-      return component.data;
-    }
-    if (prop === CONTEXT_OPEN_DIALOG) {
-      return async (name, data, attributes) => {
-        const dialog = document.createElement(main.prefix ? (main.prefix + "-" + name) : name);
-        Object.entries(attributes ?? {}).forEach(([key, value]) => {
-          dialog.setAttribute(key, value);
-        });
-        dialog.data[SYM_CALL_BIND_DATA](data ?? {});
-        document.body.appendChild(dialog);
-        return dialog.alivePromise;
-      };
-    }
-    if (prop === CONTEXT_CLOSE_DIALOG) {
-      return (data) => {
-        Object.assign(component.data, data);
-        component.parentNode.removeChild(component);
-      };
-    }
-    if (prop === CONTEXT_NOTIFY) {
-      return (prop, indexes) => {
-        component.updateSlot.addNotify(new NotifyData(component, prop, indexes));
-      };
+    if (SET_OF_CONTEXT_ALL_PARAMS.has(prop)) {
+      const { lastIndexes, component } = this;
+      if (SET_OF_CONTEXT_INDEXES.has(prop)) {
+        return lastIndexes[Number(prop.slice(1)) - 1];
+      } else {
+        switch(prop) {
+          case CONTEXT_COMPONENT:
+            return component;
+          case CONTEXT_DATA:
+            return component.data;
+          case CONTEXT_OPEN_DIALOG:
+            return async (name, data, attributes) => {
+              const dialog = document.createElement(main.prefix ? (main.prefix + "-" + name) : name);
+              Object.entries(attributes ?? {}).forEach(([key, value]) => {
+                dialog.setAttribute(key, value);
+              });
+              dialog.data[SYM_CALL_BIND_DATA](data ?? {});
+              document.body.appendChild(dialog);
+              return dialog.alivePromise;
+            };
+          case CONTEXT_CLOSE_DIALOG:
+            return (data) => {
+              Object.assign(component.data, data);
+              component.parentNode.removeChild(component);
+            };
+          case CONTEXT_NOTIFY:
+            return (prop, indexes) => {
+              component.updateSlot.addNotify(new NotifyData(component, prop, indexes));
+            };
+          case CONTEXT_GLOBALS:
+            return this.globals;
+        }
+      }
     }
 
     const defindedProperty = this.definedPropertyByProp.get(prop);
@@ -385,7 +413,7 @@ class Handler {
  * @returns {Proxy<ViewModel>}
  */
 export default function create(component, origViewModel) {
-  const { viewModel, definedProperties, dependentMap } = Accessor.convert(component, origViewModel);
-  return new Proxy(viewModel, new Handler(component, definedProperties, dependentMap));
+  const { viewModel, definedProperties, dependentMap, cachablePropertyNames } = Accessor.convert(component, origViewModel);
+  return new Proxy(viewModel, new Handler(component, definedProperties, dependentMap, cachablePropertyNames));
 
 }

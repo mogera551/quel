@@ -121,9 +121,11 @@ export default class BindInfo {
    * @param {number} diff 
    */
   changeIndexes(index, diff) {
-    this.indexes[index] = this.indexes[index] + diff;
-    this.contextIndexes[index] = this.contextIndexes[index] + diff;
-  }
+    const { indexes, contextIndexes } = this;
+    indexes[index] = indexes[index] + diff;
+    contextIndexes[index] = contextIndexes[index] + diff;
+    this.indexes = indexes;
+ }
 
   /**
    * 

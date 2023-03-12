@@ -26,7 +26,7 @@ export default class {
    * 
    * @param {Component} component
    * @param {ViewModel} viewModel 
-   * @returns {{viewmodel:ViewModel, definedProperties:PropertyInfo[], dependentMap:Map<string,string[]>}}
+   * @returns {{viewmodel:ViewModel, definedProperties:PropertyInfo[], dependentMap:Map<string,string[]>, cachablePropertyNames:string[]}}
    */
   static convert(component, viewModel) {
     let dependentMap = new Map;
@@ -66,23 +66,24 @@ export default class {
     });
 
     // getterを列挙可にする
+    const cachablePropertyNames = [];
     for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(viewModel)))) {
       if (prop === "constructor") continue;
       if (utils.isFunction(desc.value)) continue;
       desc.enumerable = true;
       Object.defineProperty(viewModel, prop, desc);
+      cachablePropertyNames.push(prop);
     }
     const definedProperties = Object.keys(viewModel).map(prop => PropertyInfo.create(prop));
 
     // definedPropertiesからdependentMapに追加
     definedProperties.forEach(property => {
       if (property.isPrimitive) return;
-      //if (property.lastElement === "*") return;
       const props = dependentMap.get(property.parentName)?.concat(property.name) ?? [ property.name ];
       dependentMap.set(property.parentName, props);
     });
 
-    return { viewModel, definedProperties, dependentMap };
+    return { viewModel, definedProperties, dependentMap, cachablePropertyNames };
 
   }
 }
