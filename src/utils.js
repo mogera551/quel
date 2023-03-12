@@ -28,4 +28,11 @@ export default class {
       (element instanceof HTMLInputElement && element.type !== "button");
   }
 
+  /**
+   * Snake case to kebab case
+   * @param {string} text 
+   * @returns {string}
+   */
+  static toKebabCase = text => text.replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase());
+
 }
