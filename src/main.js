@@ -1,6 +1,7 @@
 import "./types.js";
 import Component from "./component/Component.js";
 import Filter from "./filter/Filter.js";
+import GlobalData from "./global/Data.js";
 
 export default class Main {
   static #config = {
@@ -34,6 +35,13 @@ export default class Main {
   }
   /**
    * 
+   * @param {Object<string,any>} data 
+   */
+  static globals(data) {
+    Object.assign(GlobalData.data, data);
+  }
+  /**
+   * 
    * @param {{prefix:string,debug:boolean}}  
    * @returns {Main}
    */
@@ -41,9 +49,15 @@ export default class Main {
     this.#config = Object.assign(this.#config, { prefix, debug });
     return this;
   }
+  /**
+   * @type {boolean}
+   */
   static get debug() {
     return this.#config.debug;
   }
+  /**
+   * @type {string}
+   */
   static get prefix() {
     return this.#config.prefix;
   }

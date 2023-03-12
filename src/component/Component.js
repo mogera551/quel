@@ -5,7 +5,9 @@ import { SYM_CALL_CLEAR_CACHE, SYM_CALL_CONNECT, SYM_CALL_INIT } from "../viewMo
 import Thread, { UpdateSlot, UpdateSlotStatus } from "../thread/Thread.js";
 import { ProcessData } from "../thread/Processor.js";
 import Binds from "../bind/Binds.js";
-import createData from "./Data.js"
+import createData from "./Data.js";
+import Parser from "../bind/Parser.js";
+import GlobalData from "../global/Data.js";
 
 /**
  * 
@@ -206,12 +208,25 @@ export default class Component extends HTMLElement {
     return this.#parentComponent;
   }
 
+  bindGlobalData(bindText) {
+    const binds = Parser.parse(bindText, "");
+    if (binds.length > 0) {
+      GlobalData.boundFromComponent(this);
+      binds.forEach(({ nodeProperty, viewModelProperty }) => {
+        GlobalData.boundPropertyFromComponent(viewModelProperty, this, nodeProperty);
+      })
+    }
+  }
   /**
    * DOMツリーへ追加
    */
   async connectedCallback() {
     try {
-      this.parentComponent && await this.parentComponent.initialPromise;
+      if (this.parentComponent) {
+        await this.parentComponent.initialPromise;
+      } else {
+        this.bindGlobalData(this.dataset.bind ?? "");
+      }
       this.#alivePromise = new Promise((resolve, reject) => {
         this.#aliveResolve = resolve;
         this.#aliveReject = reject;
