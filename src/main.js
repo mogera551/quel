@@ -3,6 +3,8 @@ import Component from "./component/Component.js";
 import Filter from "./filter/Filter.js";
 import GlobalData from "./global/Data.js";
 import utils from "./utils.js";
+import Prefix from "./loader/Prefix.js";
+import AutoLoader from "./loader/AutoLoader.js";
 
 export default class Main {
   static #config = {
@@ -41,6 +43,10 @@ export default class Main {
    */
   static prefixes(prefixes) {
     Object.assign(this.#prefixes, prefixes);
+    for(let [ prefix, path ] of Object.entries(prefixes)) {
+      Prefix.add(prefix, path);
+    }
+    
     return this;
   }
   /**
@@ -74,6 +80,11 @@ export default class Main {
       const componentModule = await import(/* webpackIgnore: true */fullPath);
       Component.regist(registComponentName, componentModule.default);
     }
+    return this;
+  }
+
+  static async autoload() {
+    AutoLoader.observe();
     return this;
   }
   /**
