@@ -13,7 +13,7 @@ export class outputFilters {
   static le           = (value, options) => Number(value) <= Number(options[0]);
   static gt           = (value, options) => Number(value) > Number(options[0]);
   static ge           = (value, options) => Number(value) >= Number(options[0]);
-  static embed        = (value, options) => (value != null) ? decodeURI((options[0] ?? "").replaceAll("%s", value)) : null;
+  static embed        = (value, options) => (value != null) ? decodeURI((options[0] ?? "").replaceAll("*", value)) : null;
   static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
   static null         = (value, options) => (value == null) ? true : false;
 }
