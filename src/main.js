@@ -4,7 +4,6 @@ import Filter from "./filter/Filter.js";
 import GlobalData from "./global/Data.js";
 import utils from "./utils.js";
 import Prefix from "./loader/Prefix.js";
-import AutoLoader from "./loader/AutoLoader.js";
 
 export default class Main {
   static #config = {
@@ -83,10 +82,6 @@ export default class Main {
     return this;
   }
 
-  static async autoload() {
-    AutoLoader.observe();
-    return this;
-  }
   /**
    * 
    * @param {Object<string,any>} data 
