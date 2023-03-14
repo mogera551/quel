@@ -323,7 +323,7 @@ class Handler {
             return component.data;
           case CONTEXT_OPEN_DIALOG:
             return async (name, data, attributes) => {
-              const dialog = document.createElement(main.prefix ? (main.prefix + "-" + name) : name);
+              const dialog = document.createElement(name);
               Object.entries(attributes ?? {}).forEach(([key, value]) => {
                 dialog.setAttribute(key, value);
               });

@@ -10,9 +10,14 @@ export default class Prefix {
 
   static prefixes = [];
   static add(prefix, path) {
-    this.prefixes.push(new Prefix, {prefix, path});
+    this.prefixes.push(Object.assign(new Prefix, {prefix, path}));
   }
 
+  /**
+   * 
+   * @param {string} tagName 
+   * @returns {{prefix:string,path:string}}
+   */
   static getByTagName(tagName) {
     const prefix = this.prefixes.find(prefix => {
       const match = prefix.prefix + "-";
