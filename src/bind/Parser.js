@@ -40,8 +40,7 @@ const has = s => s.length > 0;
  */
 const parseFilter = text => {
   const [name, ...options] = text.split(",").map(trim);
-  const decodedOptions = options.map(text => decodeURIComponent(text));
-  return Object.assign(new Filter, {name, options:decodedOptions});
+  return Object.assign(new Filter, {name, options});
 };
 
 /**
