@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "test": "test"
   },
@@ -26,6 +27,8 @@
     "webpack": "^5.75.0"
   },
   "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.0",
+    "rollup": "^3.19.1",
     "webpack-cli": "^5.0.1"
   }
 }

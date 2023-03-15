@@ -1,581 +1,3394 @@
-/*
- * ATTENTION: The "eval" devtool has been used (maybe by default in mode: "development").
- * This devtool is neither made for production nor for readable output files.
- * It uses "eval()" calls to create a separate source file in the browser devtools.
- * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
- * or disable the default devtool with "devtool: false".
- * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+class utils$1 {
+  /**
+   * 
+   * @param {string} message 
+   */
+  static raise(message) {
+    throw message;
+  }
+
+  /**
+   * 関数かどうかをチェック
+   * @param {any} obj 
+   * @returns {boolean}
+   */
+  static isFunction = (obj) => {
+    const toString = Object.prototype.toString;
+    const text = toString.call(obj).slice(8, -1).toLowerCase();
+    return (text === "function" || text === "asyncfunction");
+  }
+
+  /**
+   * 
+   * @param {HTMLElement} element 
+   * @returns {boolean}
+   */
+  static isInputableElement(element) {
+    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || 
+      (element instanceof HTMLInputElement && element.type !== "button");
+  }
+
+  /**
+   * to kebab case (upper camel, lower camel, snakeを想定)
+   * @param {string} text 
+   * @returns {string}
+   */
+  static toKebabCase = text => (typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase()) : text;
+
+}
+
+class outputFilters {
+  static localeString = (value, options) => (value != null) ? Number(value).toLocaleString() : null;
+  static fixed        = (value, options) => (value != null) ? Number(value).toFixed(options[0] ?? 0) : null;
+  static styleDisplay = (value, options) => value ? (options[0] ?? "") : "none";
+  static truthy       = (value, options) => value ? true : false;
+  static falsey       = (value, options) => !value ? true : false;
+  static not          = this.falsey;
+  static upperCase    = (value, options) => (value != null) ? String(value).toUpperCase() : null;
+  static lowerCase    = (value, options) => (value != null) ? String(value).toLowerCase() : null;
+  static eq           = (value, options) => value == options[0];
+  static ne           = (value, options) => value != options[0];
+  static lt           = (value, options) => Number(value) < Number(options[0]);
+  static le           = (value, options) => Number(value) <= Number(options[0]);
+  static gt           = (value, options) => Number(value) > Number(options[0]);
+  static ge           = (value, options) => Number(value) >= Number(options[0]);
+  static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? "").replaceAll("%s", value)) : null;
+  static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
+  static null         = (value, options) => (value == null) ? true : false;
+}
+
+class inputFilters {
+  static number       = (value, options) => Number(value);
+  static boolean      = (value, options) => Boolean(value);
+}
+
+// "property:vmProperty|toFix,2|toLocaleString;"
+// => toFix,2|toLocaleString
+
+class Filter {
+  /**
+   * @type {string}
+   */
+  name;
+  /**
+   * @type {string[]}
+   */
+  options;
+
+  /**
+   * 
+   * @param {any} value 
+   * @param {Filter[]} filters 
+   * @returns {any}
+   */
+  static applyForInput(value, filters) {
+    return filters.reduceRight((v, f) => (f.name in inputFilters) ? inputFilters[f.name](v, f.options) : v, value);
+  }
+  /**
+   * 
+   * @param {any} value 
+   * @param {Filter[]} filters 
+   * @returns {any}
+   */
+  static applyForOutput(value, filters) {
+    return filters.reduce((v, f) => (f.name in outputFilters) ? outputFilters[f.name](v, f.options) : v, value);
+  }
+  /**
+   * 
+   * @param {string} name 
+   * @param {(value:any,options:string[])=>{}} outputFilter 
+   * @param {(value:any,options:string[])=>{}} inputFilter 
+   */
+  static regist(name, outputFilter, inputFilter) {
+    if (name in outputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
+    if (name in inputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
+    outputFilter && (outputFilters[name] = outputFilter);
+    inputFilter && (inputFilters[name] = inputFilter);
+  }
+}
+
+class BindInfo {
+  /**
+   * @type {Node}
+   */
+  #node;
+  get node() {
+    return this.#node;
+  }
+  set node(node) {
+    this.#node = node;
+  }
+  /**
+   * @type {HTMLElement}
+   */
+  get element() {
+    return (this.node instanceof HTMLElement) ? this.node : utils$1.raise("not HTMLElement");
+  }
+  /**
+   * @type {string}
+   */
+  #nodeProperty;
+  get nodeProperty() {
+    return this.#nodeProperty;
+  }
+  set nodeProperty(value) {
+    this.#nodeProperty = value;
+  }
+
+  /**
+   * @type {string[]}
+   */
+  #nodePropertyElements;
+  get nodePropertyElements() {
+    return this.#nodePropertyElements;
+  }
+  set nodePropertyElements(value) {
+    this.#nodePropertyElements = value;
+  }
+
+  /**
+   * @type {Component}
+   */
+  component;
+  /**
+   * @type {ViewModel}
+   */
+  viewModel;
+  /**
+   * @type {string}
+   */
+  #viewModelProperty;
+  get viewModelProperty() {
+    return this.#viewModelProperty;
+  }
+  set viewModelProperty(value) {
+    this.#viewModelProperty = value;
+  }
+  /**
+   * @type {Filter[]}
+   */
+  filters;
+
+  /**
+   * @type {number[]}
+   */
+  #indexes;
+  get indexes() {
+    return this.#indexes;
+  }
+  set indexes(value) {
+    this.#indexes = value;
+    this.#indexesString = value.toString();
+    this.#viewModelPropertyKey = this.viewModelProperty + "\t" + this.#indexesString;
+  }
+  /**
+   * @type {string}
+   */
+  #indexesString;
+  get indexesString() {
+    return this.#indexesString;
+  }
+  /**
+   * @type {string}
+   */
+  #viewModelPropertyKey;
+  get viewModelPropertyKey() {
+    return this.#viewModelPropertyKey;
+  }
+  /**
+   * @type {number[]}
+   */
+  contextIndexes;
+  
+  /**
+   * @type {any}
+   */
+  lastNodeValue;
+  /**
+   * @type
+   */
+  lastViewModelValue;
+
+  /**
+   * Nodeのプロパティを更新する
+   */
+  updateNode() {}
+
+  /**
+   * ViewModelのプロパティを更新する
+   */
+  updateViewModel() {}
+
+  /**
+   * 
+   * @param {number} index 
+   * @param {number} diff 
+   */
+  changeIndexes(index, diff) {
+    const { indexes, contextIndexes } = this;
+    indexes[index] = indexes[index] + diff;
+    contextIndexes[index] = contextIndexes[index] + diff;
+    this.indexes = indexes;
+ }
+
+  /**
+   * 
+   */
+  removeFromParent() { }
+}
+
+const SELECTOR = "[data-bind]";
+
+/**
+ * ルートノードから、nodeまでのchileNodesのインデックスリストを取得する
+ * ex.
+ * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
+ * => [1,3,7,2]
+ * @param {Node} node 
+ * @returns {number[]}
  */
-/******/ (() => { // webpackBootstrap
-/******/ 	var __webpack_modules__ = ({
-
-/***/ "./src/bindInfo/BindInfo.js":
-/*!**********************************!*\
-  !*** ./src/bindInfo/BindInfo.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ BindInfo)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n\r\n\r\nclass BindInfo {\r\n  /**\r\n   * @type {Node}\r\n   */\r\n  #node;\r\n  get node() {\r\n    return this.#node;\r\n  }\r\n  set node(node) {\r\n    this.#node = node;\r\n  }\r\n  /**\r\n   * @type {HTMLElement}\r\n   */\r\n  get element() {\r\n    return (this.node instanceof HTMLElement) ? this.node : _utils_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].raise(\"not HTMLElement\");\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  #nodeProperty;\r\n  get nodeProperty() {\r\n    return this.#nodeProperty;\r\n  }\r\n  set nodeProperty(value) {\r\n    this.#nodeProperty = value;\r\n  }\r\n\r\n  /**\r\n   * @type {string[]}\r\n   */\r\n  #nodePropertyElements;\r\n  get nodePropertyElements() {\r\n    return this.#nodePropertyElements;\r\n  }\r\n  set nodePropertyElements(value) {\r\n    this.#nodePropertyElements = value;\r\n  }\r\n\r\n  /**\r\n   * @type {Component}\r\n   */\r\n  component;\r\n  /**\r\n   * @type {ViewModel}\r\n   */\r\n  viewModel;\r\n  /**\r\n   * @type {string}\r\n   */\r\n  #viewModelProperty;\r\n  get viewModelProperty() {\r\n    return this.#viewModelProperty;\r\n  }\r\n  set viewModelProperty(value) {\r\n    this.#viewModelProperty = value;\r\n  }\r\n  /**\r\n   * @type {Filter[]}\r\n   */\r\n  filters;\r\n\r\n  /**\r\n   * @type {number[]}\r\n   */\r\n  #indexes;\r\n  get indexes() {\r\n    return this.#indexes;\r\n  }\r\n  set indexes(value) {\r\n    this.#indexes = value;\r\n    this.#indexesString = value.toString();\r\n    this.#viewModelPropertyKey = this.viewModelProperty + \"\\t\" + this.#indexesString;\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  #indexesString;\r\n  get indexesString() {\r\n    return this.#indexesString;\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  #viewModelPropertyKey;\r\n  get viewModelPropertyKey() {\r\n    return this.#viewModelPropertyKey;\r\n  }\r\n  /**\r\n   * @type {number[]}\r\n   */\r\n  contextIndexes;\r\n  \r\n  /**\r\n   * @type {any}\r\n   */\r\n  lastNodeValue;\r\n  /**\r\n   * @type\r\n   */\r\n  lastViewModelValue;\r\n\r\n  /**\r\n   * Nodeのプロパティを更新する\r\n   */\r\n  updateNode() {}\r\n\r\n  /**\r\n   * ViewModelのプロパティを更新する\r\n   */\r\n  updateViewModel() {}\r\n\r\n  /**\r\n   * \r\n   * @param {number} index \r\n   * @param {number} diff \r\n   */\r\n  changeIndexes(index, diff) {\r\n    const { indexes, contextIndexes } = this;\r\n    indexes[index] = indexes[index] + diff;\r\n    contextIndexes[index] = contextIndexes[index] + diff;\r\n    this.indexes = indexes;\r\n }\r\n\r\n  /**\r\n   * \r\n   */\r\n  removeFromParent() { }\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/BindInfo.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Checkbox.js":
-/*!**********************************!*\
-  !*** ./src/bindInfo/Checkbox.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Checkbox)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../thread/NodeUpdator.js */ \"./src/thread/NodeUpdator.js\");\n\r\n\r\n\r\n\r\n\r\n\r\nconst toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : _utils_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].raise();\r\n\r\nclass Checkbox extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  updateNode() {\r\n    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const checkbox = toHTMLInputElement(node);\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);\r\n    if (this.lastViewModelValue !== value) {\r\n      component.updateSlot.addNodeUpdate(new _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_4__.NodeUpdateData(node, nodeProperty, () => {\r\n        checkbox.checked = value.find(value => value === checkbox.value);\r\n      }));\r\n      this.lastViewModelValue = value;\r\n    }\r\n  }\r\n\r\n  updateViewModel() {\r\n    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = bind;\r\n    const checkbox = toHTMLInputElement(node);\r\n    const checkboxValue = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForInput(checkbox.value, filters);\r\n    const setOfValue = new Set(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes));\r\n    (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);\r\n    const value = Array.from(setOfValue);\r\n    viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);\r\n    this.lastViewModelValue = value;\r\n  }\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Checkbox.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/ClassName.js":
-/*!***********************************!*\
-  !*** ./src/bindInfo/ClassName.js ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ ClassName)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../thread/NodeUpdator.js */ \"./src/thread/NodeUpdator.js\");\n\r\n\r\n\r\n\r\n\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns {HTMLElement}\r\n */\r\nconst toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);\r\n\r\nclass ClassName extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  get className() {\r\n    return this.nodePropertyElements[1];\r\n  }\r\n  updateNode() {\r\n    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters, className} = this;\r\n    const element = toHTMLElement(node);\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);\r\n    if (this.lastViewModelValue !== value) {\r\n      component.updateSlot.addNodeUpdate(new _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__.NodeUpdateData(node, nodeProperty, () => {\r\n        value ? element.classList.add(className) : element.classList.remove(className);\r\n      }));\r\n      this.lastViewModelValue = value;\r\n    }\r\n  }\r\n\r\n  updateViewModel() {\r\n    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters, className} = this;\r\n    const element = toHTMLElement(node);\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForInput(element.classList.contains(className), filters);\r\n    viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);\r\n    this.lastViewModelValue = value;\r\n  }\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/ClassName.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Component.js":
-/*!***********************************!*\
-  !*** ./src/bindInfo/Component.js ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ ComponentBind)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n\r\nconst toComponent = node => (node instanceof _component_Component_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"]) ? node : undefined;\r\n\r\nclass ComponentBind extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  /**\r\n   * @type {Node}\r\n   */\r\n  get node() {\r\n    return super.node;\r\n  }\r\n  set node(node) {\r\n    super.node = node;\r\n    this.bindData();\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  get viewModelProperty() {\r\n    return super.viewModelProperty;\r\n  }\r\n  set viewModelProperty(value) {\r\n    super.viewModelProperty = value;\r\n    if (this.viewModelProperty && this.nodePropertyElements) {\r\n      this.bindProperty();\r\n    }\r\n  }\r\n  /**\r\n   * @type {string[]}\r\n   */\r\n  get nodePropertyElements() {\r\n    return super.nodePropertyElements;\r\n  }\r\n  set nodePropertyElements(value) {\r\n    super.nodePropertyElements = value;\r\n    if (this.viewModelProperty && this.nodePropertyElements) {\r\n      this.bindProperty();\r\n    }\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  get dataNameProperty() {\r\n    return this.nodePropertyElements[0];\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  get dataProperty() {\r\n    return this.nodePropertyElements[1];\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  bindData() {\r\n    const component = toComponent(this.node);\r\n    component?.data[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_1__.SYM_CALL_BIND_DATA](component);\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  bindProperty() {\r\n    const component = toComponent(this.node);\r\n    component?.data[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_1__.SYM_CALL_BIND_PROPERTY](this.dataProperty, this.viewModelProperty, this.indexes)\r\n  }\r\n\r\n  updateNode() {\r\n    const { node, dataProperty } = this;\r\n    const thisComponent = toComponent(node);\r\n    thisComponent.viewModel?.[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_1__.SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${dataProperty}`, []);\r\n  }\r\n\r\n  updateViewModel() {\r\n  }\r\n\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Component.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Event.js":
-/*!*******************************!*\
-  !*** ./src/bindInfo/Event.js ***!
-  \*******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Event)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _thread_Processor_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../thread/Processor.js */ \"./src/thread/Processor.js\");\n\r\n\r\n\r\n\r\nclass Event extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  #eventType;\r\n  /**\r\n   * @type {string}\r\n   */\r\n  get eventType() {\r\n    return this.#eventType;\r\n  }\r\n  set eventType(value) {\r\n    this.#eventType = value;\r\n  }\r\n  /**\r\n   * \r\n   */\r\n  addEventListener() {\r\n    const {component, element, eventType, viewModel, viewModelProperty} = this;\r\n    element.addEventListener(eventType, (event) => {\r\n      event.stopPropagation();\r\n      const contextIndexes = this.contextIndexes;\r\n      const process = new _thread_Processor_js__WEBPACK_IMPORTED_MODULE_2__.ProcessData(\r\n        viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_1__.SYM_CALL_DIRECT_CALL], viewModel, [viewModelProperty, contextIndexes, event]\r\n      );\r\n      component.updateSlot.addProcess(process);\r\n    });\r\n  }\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Event.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Factory.js":
-/*!*********************************!*\
-  !*** ./src/bindInfo/Factory.js ***!
-  \*********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Factory)\n/* harmony export */ });\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../node/PropertyType.js */ \"./src/node/PropertyType.js\");\n/* harmony import */ var _LevelTop_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./LevelTop.js */ \"./src/bindInfo/LevelTop.js\");\n/* harmony import */ var _Level2nd_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Level2nd.js */ \"./src/bindInfo/Level2nd.js\");\n/* harmony import */ var _Level3rd_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Level3rd.js */ \"./src/bindInfo/Level3rd.js\");\n/* harmony import */ var _ClassName_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ClassName.js */ \"./src/bindInfo/ClassName.js\");\n/* harmony import */ var _Radio_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Radio.js */ \"./src/bindInfo/Radio.js\");\n/* harmony import */ var _Checkbox_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Checkbox.js */ \"./src/bindInfo/Checkbox.js\");\n/* harmony import */ var _Template_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./Template.js */ \"./src/bindInfo/Template.js\");\n/* harmony import */ var _Event_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./Event.js */ \"./src/bindInfo/Event.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _viewModel_PropertyInfo_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../viewModel/PropertyInfo.js */ \"./src/viewModel/PropertyInfo.js\");\n/* harmony import */ var _Component_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./Component.js */ \"./src/bindInfo/Component.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nconst createLevelTop = (bindInfo, info) => Object.assign(new _LevelTop_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"], bindInfo, info);\r\nconst createLevel2nd = (bindInfo, info) => Object.assign(new _Level2nd_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"], bindInfo, info);\r\nconst createLevel3rd = (bindInfo, info) => Object.assign(new _Level3rd_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"], bindInfo, info);\r\nconst createClassName = (bindInfo, info) => Object.assign(new _ClassName_js__WEBPACK_IMPORTED_MODULE_5__[\"default\"], bindInfo, info);\r\nconst createRadio = (bindInfo, info) => Object.assign(new _Radio_js__WEBPACK_IMPORTED_MODULE_6__[\"default\"], bindInfo, info);\r\nconst createCheckbox = (bindInfo, info) => Object.assign(new _Checkbox_js__WEBPACK_IMPORTED_MODULE_7__[\"default\"], bindInfo, info);\r\nconst createTemplate = (bindInfo, info) => Object.assign(new _Template_js__WEBPACK_IMPORTED_MODULE_8__[\"default\"], bindInfo, info);\r\nconst createEvent = (bindInfo, info) => Object.assign(new _Event_js__WEBPACK_IMPORTED_MODULE_9__[\"default\"], bindInfo, info);\r\nconst createComponent = (bindInfo, info) => Object.assign(new _Component_js__WEBPACK_IMPORTED_MODULE_12__[\"default\"], bindInfo, info);\r\n\r\nconst creatorByType = new Map();\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.levelTop, createLevelTop);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.level2nd, createLevel2nd);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.level3rd, createLevel3rd);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.className, createClassName);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.radio, createRadio);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.checkbox, createCheckbox);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.template, createTemplate);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.event, createEvent);\r\ncreatorByType.set(_node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__.NodePropertyType.component, createComponent);\r\n\r\nclass Factory {\r\n  /**\r\n   * \r\n   * @param {{\r\n   * component:Component,\r\n   * node:Node,\r\n   * nodeProperty:string,\r\n   * viewModel:ViewModel,\r\n   * viewModelProperty:string,\r\n   * filters:Filter[],\r\n   * indexes:number[]\r\n   * }}  \r\n   */\r\n  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes}) {\r\n    const bindInfo = {component, node, nodeProperty, viewModel, viewModelProperty, filters};\r\n    const propInfo = _viewModel_PropertyInfo_js__WEBPACK_IMPORTED_MODULE_11__[\"default\"].create(viewModelProperty);\r\n    bindInfo.indexes = indexes.slice(0, propInfo.loopLevel);\r\n    bindInfo.contextIndexes = indexes;\r\n    const info = _node_PropertyType_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].getInfo(node, nodeProperty);\r\n    return creatorByType.get(info.type)(bindInfo, info);\r\n  }\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Factory.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Level2nd.js":
-/*!**********************************!*\
-  !*** ./src/bindInfo/Level2nd.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Level2nd)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../thread/NodeUpdator.js */ \"./src/thread/NodeUpdator.js\");\n\r\n\r\n\r\n\r\n\r\nclass Level2nd extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  get nodeProperty1() {\r\n    return this.nodePropertyElements[0];\r\n  }\r\n  get nodeProperty2() {\r\n    return this.nodePropertyElements[1];\r\n  }\r\n\r\n  updateNode() {\r\n    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const {nodeProperty1, nodeProperty2} = this;\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);\r\n    if (this.lastViewModelValue !== value) {\r\n      component.updateSlot.addNodeUpdate(new _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__.NodeUpdateData(node, nodeProperty, () => {\r\n        node[nodeProperty1][nodeProperty2] = value ?? \"\";\r\n      }));\r\n      this.lastViewModelValue = value;\r\n    }\r\n  }\r\n\r\n  updateViewModel() {\r\n    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const {nodeProperty1, nodeProperty2} = this;\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForInput(node[nodeProperty1][nodeProperty2], filters);\r\n    viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);\r\n    this.lastViewModelValue = value;\r\n  }\r\n\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Level2nd.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Level3rd.js":
-/*!**********************************!*\
-  !*** ./src/bindInfo/Level3rd.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Level3rd)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../thread/NodeUpdator.js */ \"./src/thread/NodeUpdator.js\");\n\r\n\r\n\r\n\r\n\r\nclass Level3rd extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  get nodeProperty1() {\r\n    return this.nodePropertyElements[0];\r\n  }\r\n  get nodeProperty2() {\r\n    return this.nodePropertyElements[1];\r\n  }\r\n  get nodeProperty3() {\r\n    return this.nodePropertyElements[2];\r\n  }\r\n  updateNode() {\r\n    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);\r\n    if (this.lastViewModelValue !== value) {\r\n      component.updateSlot.addNodeUpdate(new _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__.NodeUpdateData(node, nodeProperty, () => {\r\n        node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? \"\";\r\n      }));\r\n      this.lastViewModelValue = value;\r\n    }\r\n  }\r\n\r\n  updateViewModel() {\r\n    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForInput(node[nodeProperty1][nodeProperty2][nodeProperty3], filters);\r\n    viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);\r\n    this.lastViewModelValue = value;\r\n  }\r\n\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Level3rd.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/LevelTop.js":
-/*!**********************************!*\
-  !*** ./src/bindInfo/LevelTop.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ LevelTop)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../thread/NodeUpdator.js */ \"./src/thread/NodeUpdator.js\");\n\r\n\r\n\r\n\r\n\r\nclass LevelTop extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  updateNode() {\r\n    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);\r\n    if (this.lastViewModelValue !== value) {\r\n      component.updateSlot.addNodeUpdate(new _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_3__.NodeUpdateData(node, nodeProperty, () => {\r\n        node[nodeProperty] = value ?? \"\";\r\n      }));\r\n      this.lastViewModelValue = value;\r\n    }\r\n  }\r\n\r\n  updateViewModel() {\r\n    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForInput(node[nodeProperty], filters);\r\n    viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);\r\n    this.lastViewModelValue = value;\r\n  }\r\n\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/LevelTop.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Radio.js":
-/*!*******************************!*\
-  !*** ./src/bindInfo/Radio.js ***!
-  \*******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Radio)\n/* harmony export */ });\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../thread/NodeUpdator.js */ \"./src/thread/NodeUpdator.js\");\n\r\n\r\n\r\n\r\n\r\n\r\nconst toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : _utils_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].raise();\r\n\r\nclass Radio extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"] {\r\n  updateNode() {\r\n    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const radio = toHTMLInputElement(node);\r\n    const value = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);\r\n    if (this.lastViewModelValue !== value) {\r\n      component.updateSlot.addNodeUpdate(new _thread_NodeUpdator_js__WEBPACK_IMPORTED_MODULE_4__.NodeUpdateData(node, nodeProperty, () => {\r\n        radio.checked = value === radio.value;\r\n      }));\r\n      this.lastViewModelValue = value;\r\n    }\r\n  }\r\n\r\n  updateViewModel() {\r\n    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;\r\n    const radio = toHTMLInputElement(node);\r\n    const radioValue = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForInput(radio.value, filters);\r\n    if (radio.checked) {\r\n      viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](viewModelProperty, indexes, radioValue);\r\n      this.lastViewModelValue = radioValue;\r\n    }\r\n  }\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Radio.js?");
-
-/***/ }),
-
-/***/ "./src/bindInfo/Template.js":
-/*!**********************************!*\
-  !*** ./src/bindInfo/Template.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"TemplateChild\": () => (/* binding */ TemplateChild),\n/* harmony export */   \"default\": () => (/* binding */ Template)\n/* harmony export */ });\n/* harmony import */ var _bind_Binder_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../bind/Binder.js */ \"./src/bind/Binder.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _BindInfo_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n\r\n\r\n\r\n\r\n\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns {HTMLTemplateElement}\r\n */\r\nconst toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise(\"not HTMLTemplateElement\");\r\n\r\nclass TemplateChild {\r\n  /**\r\n   * @type {BindInfo[]}\r\n   */\r\n  binds;\r\n  /**\r\n   * @type {Node[]}\r\n   */\r\n  childNodes;\r\n  /**\r\n   * @type {DocumentFragment}\r\n   */\r\n  fragment;\r\n  /**\r\n   * @type {Node}\r\n   */\r\n  get lastNode() {\r\n    return this.childNodes[this.childNodes.length - 1];\r\n  }\r\n  /**\r\n   * @type {node[]|DocumentFragment}\r\n   */\r\n  get nodesForAppend() {\r\n    return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;\r\n  }\r\n  /**\r\n   * @type {Set<Node>}\r\n   */\r\n  get setOfNodes() {\r\n    return new Set(this.childNodes);\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  removeFromParent() {\r\n    this.childNodes.forEach(node => node.parentNode?.removeChild(node));\r\n    this.binds.forEach(bind => bind.removeFromParent());\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  updateNode() {\r\n    this.binds.forEach(bind => {\r\n      bind.updateNode();\r\n    })\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {number} index \r\n   * @param {number} diff \r\n   */\r\n  changeIndex(index, diff) {\r\n    this.binds.forEach(bind => bind.changeIndexes(index, diff));\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {Template} templateBind \r\n   * @param {number[]} indexes \r\n   * @returns {TemplateChild}\r\n   */\r\n  static create(templateBind, indexes) {\r\n    const {component, template} = templateBind;\r\n    const rootElement = document.importNode(template.content, true);\r\n    const binds = _bind_Binder_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"].bind(template, rootElement, component, indexes);\r\n    const childNodes = Array.from(rootElement.childNodes);\r\n    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement });\r\n  }\r\n}\r\n\r\nclass Template extends _BindInfo_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"] {\r\n  get node() {\r\n    return super.node;\r\n  }\r\n  set node(node) {\r\n    const template = toHTMLTemplateElement(node);\r\n    const comment = document.createComment(`template ${template.dataset[\"bind\"]}`);\r\n    template.parentNode.replaceChild(comment, template);\r\n    super.node = comment;\r\n    this.template = template;\r\n  }\r\n  /**\r\n   * @type {TemplateChild[]}\r\n   */\r\n  templateChildren = [];\r\n  /**\r\n   * @type {HTMLTemplateElement}\r\n   */\r\n  #template;\r\n  get template() {\r\n    return this.#template;\r\n  }\r\n  set template(value) {\r\n    this.#template = value;\r\n  }\r\n\r\n  updateNode() {\r\n    const newValue = (this.nodeProperty === \"loop\") ? this.expandLoop() : this.expandIf();\r\n    this.lastViewModelValue = (newValue instanceof Array) ? newValue.slice() : newValue;\r\n  }\r\n  \r\n  /**\r\n   * \r\n   */\r\n  removeFromParent() {\r\n    this.templateChildren.forEach(child => child.removeFromParent());\r\n/*\r\n    const nodes = this.templateChildren.flatMap(child => child.childNodes);\r\n    if (nodes.length > 0) {\r\n      const oldParentNode = nodes[0].parentNode;\r\n      const newParentNode = oldParentNode.cloneNode(false);\r\n      oldParentNode.parentNode.replaceChild(newParentNode, oldParentNode)\r\n      nodes.forEach(node => node.parentNode.removeChild(node));\r\n      newParentNode.parentNode.replaceChild(oldParentNode, newParentNode);\r\n    }\r\n*/\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  appendToParent() {\r\n    const fragment = document.createDocumentFragment();\r\n    this.templateChildren\r\n      .forEach(child => fragment.appendChild(...child.nodesForAppend));\r\n    this.node.after(fragment);\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @returns {any} newValue\r\n   */\r\n  expandIf() {\r\n    const { viewModel, viewModelProperty, indexes, filters } = this;\r\n    /**\r\n     * @type {any}\r\n     */\r\n    const lastValue = this.lastViewModelValue;\r\n    /**\r\n     * @type {any}\r\n     */\r\n    const newValue = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);\r\n    if (lastValue !== newValue) {\r\n      this.removeFromParent();\r\n      if (newValue) {\r\n        this.templateChildren = [TemplateChild.create(this, indexes)];\r\n        this.appendToParent();\r\n      } else {\r\n        this.templateChildren = [];\r\n      }\r\n    }\r\n\r\n    // 子要素の展開を実行\r\n    this.templateChildren.forEach(templateChild => templateChild.updateNode());\r\n\r\n    return newValue;\r\n  }\r\n\r\n  /**\r\n   * @returns {any[]} newValue\r\n   */\r\n  expandLoop() {\r\n    const { viewModel, viewModelProperty, indexes, filters } = this;\r\n    /**\r\n     * @type {any[]}\r\n     */\r\n    const lastValue = this.lastViewModelValue ?? [];\r\n    /**\r\n     * @type {any[]}\r\n     */\r\n    const newValue = _filter_Filter_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].applyForOutput(viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters) ?? [];\r\n\r\n    /**\r\n     * @type {Map<any,number[]>}\r\n     */\r\n    const indexesByLastValue = lastValue.reduce((map, value, index) => {\r\n      map.get(value)?.push(index) ?? map.set(value, [ index ]);\r\n      return map;\r\n    }, new Map);\r\n    /**\r\n     * @type {Map<number,number>}\r\n     */\r\n    const lastIndexByNewIndex = new Map;\r\n    const moveOrCreateIndexes = [];\r\n    // 新しくテンプレート子要素のリストを作成する\r\n    /**\r\n     * @type {TemplateChild[]}\r\n     */\r\n    const newTemplateChildren = newValue.map((value, newIndex) => {\r\n      const lastIndexes = indexesByLastValue.get(value);\r\n      if (typeof lastIndexes === \"undefined\") {\r\n        // 元のインデックスがない場合、新規\r\n        lastIndexByNewIndex.set(newIndex, undefined);\r\n        moveOrCreateIndexes.push(newIndex);\r\n        return TemplateChild.create(this, indexes.concat(newIndex));\r\n      } else {\r\n        // 元のインデックスがある場合、子要素のループインデックスを書き換え\r\n        // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素\r\n        const lastIndex = lastIndexes.shift();\r\n        lastIndexByNewIndex.set(newIndex, lastIndex);\r\n        const templateChild = this.templateChildren[lastIndex];\r\n        (newIndex !== lastIndex) && templateChild.changeIndex(indexes.length, newIndex - lastIndex);\r\n        const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);\r\n        if (typeof prevLastIndex === \"undefined\" || prevLastIndex > lastIndex) {\r\n          moveOrCreateIndexes.push(newIndex);\r\n        }\r\n        return templateChild;\r\n      }\r\n    });\r\n    // 削除対象、追加・移動対象のインデックスを取得\r\n    for(const indexes of indexesByLastValue.values()) {\r\n      for(const index of indexes) {\r\n        this.templateChildren[index].removeFromParent();\r\n      }\r\n    }\r\n\r\n    moveOrCreateIndexes.forEach(moveOrCreateIndex => {\r\n      const templateChild = newTemplateChildren[moveOrCreateIndex];\r\n      const beforeNode = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.node;\r\n      beforeNode.after(...templateChild.nodesForAppend);\r\n    });\r\n\r\n    // 子要素の展開を実行\r\n    newTemplateChildren.forEach(templateChild => templateChild.updateNode());\r\n\r\n    this.templateChildren = newTemplateChildren;\r\n\r\n    return newValue;\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {number} index \r\n   * @param {number} diff \r\n   */\r\n  changeIndexes(index, diff) {\r\n    this.indexes[index] = this.indexes[index] + diff;\r\n    this.templateChildren.forEach(templateChild => templateChild.changeIndex(index, diff));\r\n  }\r\n}\n\n//# sourceURL=webpack://quel/./src/bindInfo/Template.js?");
-
-/***/ }),
-
-/***/ "./src/bind/BindToDomIf.js":
-/*!*********************************!*\
-  !*** ./src/bind/BindToDomIf.js ***!
-  \*********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _bindInfo_BindInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../bindInfo/BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * \r\n   * @param {Node} node\r\n   * @param {Component} component\r\n   * @param {string[]} indexes\r\n   * @returns {BindInfo[]} \r\n   */\r\n  static bind(node, component, indexes) { }\r\n}); \n\n//# sourceURL=webpack://quel/./src/bind/BindToDomIf.js?");
-
-/***/ }),
-
-/***/ "./src/bind/BindToElement.js":
-/*!***********************************!*\
-  !*** ./src/bind/BindToElement.js ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _BindToDomIf_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./BindToDomIf.js */ \"./src/bind/BindToDomIf.js\");\n/* harmony import */ var _bindInfo_BindInfo_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../bindInfo/BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _Parser_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Parser.js */ \"./src/bind/Parser.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _thread_Processor_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../thread/Processor.js */ \"./src/thread/Processor.js\");\n/* harmony import */ var _bindInfo_Event_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../bindInfo/Event.js */ \"./src/bindInfo/Event.js\");\n/* harmony import */ var _bindInfo_Factory_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../bindInfo/Factory.js */ \"./src/bindInfo/Factory.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nconst DATASET_BIND_PROPERTY = \"bind\";\r\nconst DEFAULT_EVENT = \"oninput\";\r\nconst DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);\r\nconst DEFAULT_PROPERTY = \"textContent\";\r\n\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns {HTMLElement}\r\n */\r\nconst toHTMLElement = node => (node instanceof HTMLElement) ? node : _utils_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].raise(`not HTMLElement`);\r\n\r\n/**\r\n * \r\n * @param {HTMLElement} element \r\n */\r\nconst getDefaultProperty = element => {\r\n  return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? \"value\" : \r\n  element instanceof HTMLInputElement ? ((element.type === \"radio\" || element.type === \"checkbox\") ? \"checked\" : \"value\") : \r\n  DEFAULT_PROPERTY;\r\n};\r\n\r\nconst toEvent = bind => (bind instanceof _bindInfo_Event_js__WEBPACK_IMPORTED_MODULE_6__[\"default\"]) ? bind : undefined; \r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class extends _BindToDomIf_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"] {\r\n  /**\r\n   * \r\n   * @param {Node} node \r\n   * @param {Component} component\r\n   * @param {number[]} indexes\r\n   * @returns {BindInfo[]}\r\n   */\r\n  static bind(node, component, indexes) {\r\n    const viewModel = component.viewModel;\r\n    const element = toHTMLElement(node);\r\n    const bindText = element.dataset[DATASET_BIND_PROPERTY];\r\n    const defaultName = getDefaultProperty(element);\r\n\r\n    // パース\r\n    const binds = _Parser_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].parse(bindText, defaultName)\r\n        .map(info => {\r\n          const bind = _bindInfo_Factory_js__WEBPACK_IMPORTED_MODULE_7__[\"default\"].create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));\r\n          bind.updateNode();\r\n          return bind;\r\n        });\r\n\r\n    // イベントハンドラ設定\r\n    let hasDefaultEvent = false;\r\n    /**\r\n     * @type {BindInfo}\r\n     */\r\n    let defaultBind = null;\r\n    binds.forEach(bind => {\r\n      hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;\r\n      defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;\r\n      const event = toEvent(bind);\r\n      event && event.addEventListener();\r\n    });\r\n\r\n    if (defaultBind && !hasDefaultEvent) {\r\n      element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {\r\n        event.stopPropagation();\r\n        const process = new _thread_Processor_js__WEBPACK_IMPORTED_MODULE_5__.ProcessData(defaultBind.updateViewModel, defaultBind, []);\r\n        component.updateSlot.addProcess(process);\r\n      });\r\n    }\r\n\r\n    return binds;\r\n  }\r\n\r\n});\n\n//# sourceURL=webpack://quel/./src/bind/BindToElement.js?");
-
-/***/ }),
-
-/***/ "./src/bind/BindToTemplate.js":
-/*!************************************!*\
-  !*** ./src/bind/BindToTemplate.js ***!
-  \************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _BindToDomIf_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./BindToDomIf.js */ \"./src/bind/BindToDomIf.js\");\n/* harmony import */ var _bindInfo_BindInfo_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../bindInfo/BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _bindInfo_Template_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../bindInfo/Template.js */ \"./src/bindInfo/Template.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _Binder_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Binder.js */ \"./src/bind/Binder.js\");\n/* harmony import */ var _Parser_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Parser.js */ \"./src/bind/Parser.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _bindInfo_Factory_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../bindInfo/Factory.js */ \"./src/bindInfo/Factory.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nconst DATASET_BIND_PROPERTY = \"bind\";\r\n\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns {HTMLTemplateElement}\r\n */\r\nconst toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : _utils_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].raise(\"not HTMLTemplateElement\");\r\n\r\n/**\r\n * @param {BindInfo} bind \r\n * @returns {Template}\r\n */\r\nconst toTemplate = bind => (bind instanceof _bindInfo_Template_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"]) ? bind : undefined;\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class extends _BindToDomIf_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"] {\r\n  /**\r\n   * \r\n   * @param {Node} node \r\n   * @param {Component} component\r\n   * @param {number[]} indexes\r\n   * @returns {BindInfo[]}\r\n   */\r\n  static bind(node, component, indexes) {\r\n    const viewModel = component.viewModel;\r\n    const template = toHTMLTemplateElement(node);\r\n    const bindText = template.dataset[DATASET_BIND_PROPERTY];\r\n    const binds = _Parser_js__WEBPACK_IMPORTED_MODULE_6__[\"default\"].parse(bindText, \"\")\r\n      .map(info => { \r\n        const bind = _bindInfo_Factory_js__WEBPACK_IMPORTED_MODULE_9__[\"default\"].create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));\r\n        return bind;\r\n      });\r\n    if (binds.length === 0) return [];\r\n    const templateBind = toTemplate(binds[0]);\r\n    if (templateBind) {\r\n      if (templateBind.nodeProperty !== \"if\" && templateBind.nodeProperty !== \"loop\") {\r\n        _utils_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].raise(`unknown node property ${templateBind.nodeProperty}`);\r\n      }\r\n      templateBind.updateNode();\r\n      return [ templateBind ];\r\n    } else {\r\n      _utils_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].raise(`not template bind`);\r\n    }\r\n  }\r\n});\n\n//# sourceURL=webpack://quel/./src/bind/BindToTemplate.js?");
-
-/***/ }),
-
-/***/ "./src/bind/BindToText.js":
-/*!********************************!*\
-  !*** ./src/bind/BindToText.js ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _BindToDomIf_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./BindToDomIf.js */ \"./src/bind/BindToDomIf.js\");\n/* harmony import */ var _bindInfo_BindInfo_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../bindInfo/BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _Parser_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Parser.js */ \"./src/bind/Parser.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _bindInfo_Factory_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../bindInfo/Factory.js */ \"./src/bindInfo/Factory.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nconst DEFAULT_PROPERTY = \"textContent\";\r\n\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns {Comment}\r\n */\r\nconst toComment = node => (node instanceof Comment) ? node : _utils_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].raise(\"not Comment\");\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class extends _BindToDomIf_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"] {\r\n  /**\r\n   * \r\n   * @param {Node} node \r\n   * @param {Component} component\r\n   * @param {number[]} indexes\r\n   * @returns {BindInfo[]}\r\n   */\r\n  static bind(node, component, indexes) {\r\n    // コメントノードをテキストノードに差し替える\r\n    const viewModel = component.viewModel;\r\n    const comment = toComment(node);\r\n    const bindText = comment.textContent.slice(2); // @@をスキップ\r\n    const textNode = document.createTextNode(\"\");\r\n    comment.parentNode.replaceChild(textNode, comment);\r\n    // パース\r\n    const binds = _Parser_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].parse(bindText, DEFAULT_PROPERTY)\r\n      .map(info => {\r\n        const bind = _bindInfo_Factory_js__WEBPACK_IMPORTED_MODULE_5__[\"default\"].create(Object.assign(info, {node:textNode, component, viewModel, indexes:indexes.slice()}));\r\n        bind.updateNode();\r\n        return bind;\r\n      });\r\n    return binds;\r\n  }\r\n\r\n});\n\n//# sourceURL=webpack://quel/./src/bind/BindToText.js?");
-
-/***/ }),
-
-/***/ "./src/bind/Binder.js":
-/*!****************************!*\
-  !*** ./src/bind/Binder.js ***!
-  \****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _bindInfo_BindInfo_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../bindInfo/BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n/* harmony import */ var _Selector_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Selector.js */ \"./src/bind/Selector.js\");\n/* harmony import */ var _BindToTemplate_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./BindToTemplate.js */ \"./src/bind/BindToTemplate.js\");\n/* harmony import */ var _BindToElement_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./BindToElement.js */ \"./src/bind/BindToElement.js\");\n/* harmony import */ var _BindToText_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./BindToText.js */ \"./src/bind/BindToText.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * \r\n   * @param {HTMLTemplateElement} template \r\n   * @param {HTMLElement} rootElement \r\n   * @param {Component} component\r\n   * @param {number[]?} indexes\r\n   * @returns {BindInfo[]}\r\n   */\r\n  static bind(template, rootElement, component, indexes = []) {\r\n    const nodes = _Selector_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].getTargetNodes(template, rootElement);\r\n    return nodes.flatMap(node => \r\n      (node instanceof HTMLTemplateElement) ? _BindToTemplate_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].bind(node, component, indexes) :\r\n      (node instanceof HTMLElement) ? _BindToElement_js__WEBPACK_IMPORTED_MODULE_5__[\"default\"].bind(node, component, indexes) :\r\n      (node instanceof Comment) ? _BindToText_js__WEBPACK_IMPORTED_MODULE_6__[\"default\"].bind(node, component, indexes) : \r\n      _utils_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].raise(`unknown node type`)\r\n    );\r\n  }\r\n\r\n});\n\n//# sourceURL=webpack://quel/./src/bind/Binder.js?");
-
-/***/ }),
-
-/***/ "./src/bind/Binds.js":
-/*!***************************!*\
-  !*** ./src/bind/Binds.js ***!
-  \***************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _bindInfo_Template_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../bindInfo/Template.js */ \"./src/bindInfo/Template.js\");\n/* harmony import */ var _bindInfo_BindInfo_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../bindInfo/BindInfo.js */ \"./src/bindInfo/BindInfo.js\");\n\r\n\r\n\r\nconst toTemplate = bind => (bind instanceof _bindInfo_Template_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]) ? bind : undefined;\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * @type {BindInfo[]}\r\n   */\r\n  #binds;\r\n  /**\r\n   * @type {Map<string,BindInfo[]>}\r\n   */\r\n  #bindsByKey = new Map;\r\n  constructor(binds) {\r\n    this.#binds = binds;\r\n    this.buildMap();\r\n  }\r\n\r\n  buildMap() {\r\n    /**\r\n     * \r\n     * @param {BindInfo[]} binds \r\n     */\r\n    const buildMap = (binds) => {\r\n      binds.forEach(bind => {\r\n        this.#bindsByKey.get(bind.viewModelPropertyKey)?.push(bind) ?? this.#bindsByKey.set(bind.viewModelPropertyKey, [ bind ]);\r\n        (toTemplate(bind)?.templateChildren ?? []).forEach(templateChild => buildMap(templateChild.binds));\r\n      });\r\n    }\r\n    this.#bindsByKey.clear();\r\n    buildMap(this.#binds);\r\n  }\r\n  /**\r\n   * \r\n   * @param {Set<string>} setOfKey \r\n   * @returns {Template[]}\r\n   */\r\n  getTemplateBinds(setOfKey) {\r\n    const templateBinds = [];\r\n    const stack = [ { binds:this.#binds, children:null, index:-1 } ];\r\n    while(stack.length > 0) {\r\n      const info = stack[stack.length - 1];\r\n      info.index++;\r\n      if (info.binds) {\r\n        if (info.index < info.binds.length) {\r\n          const template = toTemplate(info.binds[info.index]);\r\n          if (template) {\r\n            if (setOfKey.has(template.viewModelPropertyKey)) {\r\n              templateBinds.push(template);\r\n            } else {\r\n              if (template.templateChildren.length > 0) {\r\n                stack.push({ binds:null, children:template.templateChildren, index:-1 });\r\n              }\r\n            }\r\n          }\r\n        } else {\r\n          stack.pop();\r\n        }\r\n      } else {\r\n        if (info.index < info.children.length) {\r\n          const child = info.children[info.index];\r\n          if (child.binds.length > 0) {\r\n            stack.push({ binds:child.binds, children:null, index:-1 });\r\n          }\r\n        } else {\r\n          stack.pop();\r\n        }\r\n      }\r\n    }\r\n\r\n    return templateBinds;\r\n  }\r\n  /**\r\n   * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する\r\n   * @param {Set<string>} setOfKey \r\n   */\r\n  updateViewModel(setOfKey) {\r\n    // templateを先に展開する\r\n    /**\r\n     * @type {Set<Template>}\r\n     */\r\n    const templateBinds = new Set(this.getTemplateBinds(setOfKey));\r\n    if (templateBinds.size > 0) {\r\n      for(const templateBind of templateBinds) {\r\n        templateBind.updateNode();\r\n      }\r\n      this.buildMap();\r\n    }\r\n\r\n    /**\r\n     * \r\n     * @param {BindInfo[]} binds \r\n     */\r\n    const updateViewModelProperty = (binds) => {\r\n      binds.forEach(bind => {\r\n        if (!templateBinds.has(bind) && setOfKey.has(bind.viewModelPropertyKey)) {\r\n          bind.updateNode();\r\n        }\r\n        toTemplate(bind)?.templateChildren.forEach(templateChild => updateViewModelProperty(templateChild.binds))\r\n      });\r\n    }\r\n    updateViewModelProperty(this.#binds);\r\n  }\r\n\r\n});\n\n//# sourceURL=webpack://quel/./src/bind/Binds.js?");
-
-/***/ }),
-
-/***/ "./src/bind/Parser.js":
-/*!****************************!*\
-  !*** ./src/bind/Parser.js ***!
-  \****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"BindTextInfo\": () => (/* binding */ BindTextInfo),\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../filter/Filter.js */ \"./src/filter/Filter.js\");\n\r\n\r\nconst SAMENAME = \"@\";\r\nconst DEFAULT = \"$\";\r\n\r\nclass BindTextInfo {\r\n  /**\r\n   * @type {string}\r\n   */\r\n  nodeProperty;\r\n  /**\r\n   * @type {string}\r\n   */\r\n  viewModelProperty;\r\n  /**\r\n   * @type {Filter[]}\r\n   */\r\n  filters;\r\n}\r\n\r\n/**\r\n * トリム関数\r\n * @param {string} s \r\n * @returns {string}\r\n */\r\nconst trim = s => s.trim();\r\n\r\n/**\r\n * 長さチェック関数\r\n * @param {string} s \r\n * @returns {string}\r\n */\r\nconst has = s => s.length > 0;\r\n\r\n/**\r\n * フィルターのパース\r\n * \"eq,100|falsey\" ---> [Filter(eq, [100]), Filter(falsey)]\r\n * @param {string} text \r\n * @returns {Filter}\r\n */\r\nconst parseFilter = text => {\r\n  const [name, ...options] = text.split(\",\").map(trim);\r\n  return Object.assign(new _filter_Filter_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"], {name, options});\r\n};\r\n\r\n/**\r\n * ViewModelプロパティのパース\r\n * \"value|eq,100|falsey\" ---> [\"value\", Filter[]]\r\n * @param {string} text \r\n * @returns {{viewModelProperty:string,filters:Filter[]}}\r\n */\r\nconst parseViewModelProperty = text => {\r\n  const [viewModelProperty, ...filterTexts] = text.split(\"|\").map(trim);\r\n  return {viewModelProperty, filters:filterTexts.map(text => parseFilter(text))};\r\n};\r\n\r\n/**\r\n * 式のパース\r\n * \"textContent:value|eq,100|falsey\" ---> [\"textContent\", \"value\", Filter[eq, falsey]]\r\n * @param {string} expr \r\n * @param {string} defaultName \r\n * @returns {{nodeProperty:string,viewModelProp:string,filters:Filter[]}}\r\n */\r\nconst parseExpression = (expr, defaultName) => {\r\n  const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(\":\").map(trim)).splice(-2);\r\n  const { viewModelProperty, filters } = parseViewModelProperty(viewModelPropertyText);\r\n  return { nodeProperty, viewModelProperty, filters };\r\n};\r\n\r\n/**\r\n * 属性値のパース\r\n * @param {string} text 属性値\r\n * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値\r\n * @returns {{prop:string,viewModelProp:string,filters:Filter[]}[]}\r\n */\r\nconst parseBindText = (text, defaultName) => {\r\n  return text.split(\";\").map(trim).filter(has).map(s => { \r\n    let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);\r\n    viewModelProperty = viewModelProperty === SAMENAME ? prop : viewModelProperty;\r\n    nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;\r\n    return { nodeProperty, viewModelProperty, filters };\r\n  });\r\n};\r\n\r\n\r\n/**\r\n * data-bind属性をパースする関数群\r\n */\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * @type {Map<string,BindTextInfo[]>}\r\n   */\r\n  static bindTextsByKey = new Map();\r\n\r\n  /**\r\n   * 属性値のパース\r\n   * @param {string} text 属性値\r\n   * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値\r\n   * @returns {BindTextInfo[]}\r\n   */\r\n  static parse(text, defaultName) {\r\n    const key = text + \"\\t\" + defaultName;\r\n    let binds = this.bindTextsByKey.get(key);\r\n    if (typeof binds === \"undefined\") {\r\n      binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));\r\n      this.bindTextsByKey.set(key, binds);\r\n    }\r\n    return binds;\r\n  }\r\n});\n\n//# sourceURL=webpack://quel/./src/bind/Parser.js?");
-
-/***/ }),
-
-/***/ "./src/bind/Selector.js":
-/*!******************************!*\
-  !*** ./src/bind/Selector.js ***!
-  \******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\nconst SELECTOR = \"[data-bind]\";\r\n\r\n/**\r\n * ルートノードから、nodeまでのchileNodesのインデックスリストを取得する\r\n * ex.\r\n * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]\r\n * => [1,3,7,2]\r\n * @param {Node} node \r\n * @returns {number[]}\r\n */\r\nconst getNodeRoute = node => {\r\n  let routeIndexes = [];\r\n  while(node.parentNode != null) {\r\n    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);\r\n    node = node.parentNode;\r\n  }\r\n  return routeIndexes;\r\n};\r\n\r\n\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns \r\n */\r\nconst isCommentNode = node => node instanceof Comment && node.textContent[0] === \"@\" && node.textContent[1] === \"@\" && node.textContent[2] !== \"@\";\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns \r\n */\r\nconst getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * @type {Map<HTMLTemplateElement, number[][]>}\r\n   */\r\n  static listOfRouteIndexesByTemplate = new Map();\r\n  /**\r\n   * \r\n   * @param {HTMLTemplateElement} template \r\n   * @param {HTMLElement} rootElement\r\n   * @returns {Node[]}\r\n   */\r\n  static getTargetNodes(template, rootElement) {\r\n    /**\r\n     * @type {Node[]}\r\n     */\r\n    let nodes;\r\n\r\n    if (this.listOfRouteIndexesByTemplate.has(template)) {\r\n      // キャッシュがある場合\r\n      // querySelectorAllをせずにNodeの位置を特定できる\r\n      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);\r\n      nodes = listOfRouteIndexes.map(routeIndexes => routeIndexes.reduce((node, routeIndex) => node.childNodes[routeIndex], rootElement));\r\n    } else {\r\n      // data-bindを持つノード、コメントのノードを取得しリストを作成する\r\n      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));\r\n\r\n      // ルートから、nodeのインデックスの順番をキャッシュに覚えておく\r\n      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));\r\n    }\r\n    return nodes;\r\n\r\n  }\r\n\r\n});\r\n\r\n\n\n//# sourceURL=webpack://quel/./src/bind/Selector.js?");
-
-/***/ }),
-
-/***/ "./src/component/Component.js":
-/*!************************************!*\
-  !*** ./src/component/Component.js ***!
-  \************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Component)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _view_View_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../view/View.js */ \"./src/view/View.js\");\n/* harmony import */ var _viewModel_Proxy_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../viewModel/Proxy.js */ \"./src/viewModel/Proxy.js\");\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _thread_Thread_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../thread/Thread.js */ \"./src/thread/Thread.js\");\n/* harmony import */ var _thread_Processor_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../thread/Processor.js */ \"./src/thread/Processor.js\");\n/* harmony import */ var _bind_Binds_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../bind/Binds.js */ \"./src/bind/Binds.js\");\n/* harmony import */ var _Data_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Data.js */ \"./src/component/Data.js\");\n/* harmony import */ var _bind_Parser_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../bind/Parser.js */ \"./src/bind/Parser.js\");\n/* harmony import */ var _global_Data_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../global/Data.js */ \"./src/global/Data.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n/**\r\n * \r\n * @param {Node} node \r\n * @returns {Component}\r\n */\r\nconst getParentComponent = (node) => {\r\n  do {\r\n    node = node.parentNode;\r\n    if (node == null) return null;\r\n    if (node instanceof Component) return node;\r\n    if (node instanceof ShadowRoot) {\r\n      if (node.host instanceof Component) return node.host;\r\n      node = node.host;\r\n    }\r\n  } while(true);\r\n};\r\n\r\n/**\r\n * HTMLの変換\r\n * {{loop:}}{{if:}}を<template>へ置換\r\n * {{end:}}を</template>へ置換\r\n * {{...}}を<!--@@...-->へ置換\r\n * @param {string} html \r\n * @returns {string}\r\n */\r\nconst replaceTag = (html) => {\r\n  const stack = [];\r\n  return html.replaceAll(/\\{\\{([^\\}]+)\\}\\}/g, (match, expr) => {\r\n    expr = expr.trim();\r\n    if (expr.startsWith(\"loop:\") || expr.startsWith(\"if:\")) {\r\n      stack.push(expr);\r\n      return `<template data-bind=\"${expr}\">`;\r\n    } else if (expr.startsWith(\"else:\")){\r\n      const saveExpr = stack.at(-1);\r\n      return `</template><template data-bind=\"${saveExpr}|not\">`;\r\n    } else if (expr.startsWith(\"end:\")){\r\n      stack.pop();\r\n      return `</template>`;\r\n    } else {\r\n      return `<!--@@${expr}-->`;\r\n    }\r\n  });\r\n}\r\n\r\n/**\r\n * @param {string?} html\r\n * @param {string?} css\r\n * @returns {HTMLTemplateElement}\r\n */\r\nconst htmlToTemplate = (html, css) => {\r\n  const template = document.createElement(\"template\");\r\n  template.innerHTML = (css ? `<style>\\n${css}\\n</style>` : \"\") + (html ? replaceTag(html) : \"\");\r\n  return template;\r\n}\r\n\r\nclass Component extends HTMLElement {\r\n  /**\r\n   * @type {string}\r\n   * @static\r\n   */\r\n  static html;\r\n  /**\r\n   * @type {HTMLTemplateElement}\r\n   */\r\n  static template;\r\n  /**\r\n   * @type {class}\r\n   * @static\r\n   */\r\n  static ViewModel;\r\n  /**\r\n   * @type {Proxy<ViewModel>}\r\n   */\r\n  viewModel;\r\n  /**\r\n   * @type {View}\r\n   */\r\n  #view;\r\n  /**\r\n   * @type {Binds}\r\n   */\r\n  #binds;\r\n  /**\r\n   * @type {Thread}\r\n   */\r\n  #thread;\r\n  /**\r\n   * @type {UpdateSlot}\r\n   */\r\n  #updateSlot;\r\n  get updateSlot() {\r\n    if (typeof this.#updateSlot === \"undefined\") {\r\n      this.#updateSlot = _thread_Thread_js__WEBPACK_IMPORTED_MODULE_4__.UpdateSlot.create(() => {\r\n        this.#updateSlot = undefined;\r\n      }, (updateSlotStatus) => {\r\n        if (updateSlotStatus === _thread_Thread_js__WEBPACK_IMPORTED_MODULE_4__.UpdateSlotStatus.beginProcess) {\r\n          this.viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_3__.SYM_CALL_CLEAR_CACHE]();\r\n        }\r\n        if (updateSlotStatus === _thread_Thread_js__WEBPACK_IMPORTED_MODULE_4__.UpdateSlotStatus.beginNotify) {\r\n          this.viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_3__.SYM_CALL_CLEAR_CACHE]();\r\n        }\r\n      });\r\n      this.#thread.wakeup(this.#updateSlot);\r\n    }\r\n    return this.#updateSlot;\r\n  }\r\n  /**\r\n   * @type {Object<string,any>}\r\n   */\r\n  #data = (0,_Data_js__WEBPACK_IMPORTED_MODULE_7__[\"default\"])();\r\n  get data() {\r\n    return this.#data;\r\n  }\r\n\r\n  constructor() {\r\n    super();\r\n    this.#initialPromise = new Promise((resolve, reject) => {\r\n      this.#initialResolve = resolve;\r\n      this.#initialReject = reject;\r\n    });\r\n  }\r\n\r\n  /**\r\n   * @type {string[]}\r\n   */\r\n  static get observedAttributes() {\r\n    return [/* 変更を監視する属性名の配列 */];\r\n  }\r\n  \r\n  /**\r\n   * shadowRootを使ってカプセル化をしない(true)\r\n   * @type {boolean}\r\n   */\r\n  get noShadowRoot() {\r\n    return this.hasAttribute(\"no-shadow-root\");\r\n  }\r\n\r\n  /**\r\n   * viewのルートとなる要素\r\n   * @type {ShadowRoot|HTMLElement}\r\n   */\r\n  get viewRootElement() {\r\n    return this.shadowRoot ?? this;\r\n  }\r\n\r\n  async build() {\r\n    const { template, ViewModel } = this.constructor; // staticから取得\r\n    this.noShadowRoot || this.attachShadow({mode: 'open'});\r\n    this.#thread = new _thread_Thread_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"];\r\n\r\n    this.#view = new _view_View_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"](template, this.viewRootElement);\r\n    const rawViewModel = Reflect.construct(ViewModel, []);\r\n    this.viewModel = (0,_viewModel_Proxy_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"])(this, rawViewModel);\r\n    await this.viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_3__.SYM_CALL_INIT]();\r\n\r\n    this.updateSlot.addProcess(new _thread_Processor_js__WEBPACK_IMPORTED_MODULE_5__.ProcessData(async () => {\r\n      this.#binds = this.#view.render(this);\r\n      await this.viewModel[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_3__.SYM_CALL_CONNECT]();\r\n    }, this, []));\r\n  }\r\n\r\n  /**\r\n   * @type {Promise}\r\n   */\r\n  #initialPromise;\r\n  /**\r\n   * @type {() => {}}\r\n   */\r\n  #initialResolve;\r\n  #initialReject;\r\n  get initialPromise() {\r\n    return this.#initialPromise;\r\n  }\r\n\r\n  /**\r\n   * @type {Promise}\r\n   */\r\n  #alivePromise;\r\n  /**\r\n   * @type {() => {}}\r\n   */\r\n  #aliveResolve;\r\n  #aliveReject;\r\n  get alivePromise() {\r\n    return this.#alivePromise;\r\n  }\r\n\r\n  /**\r\n   * 親コンポーネント\r\n   * @type {Component}\r\n   */\r\n  #parentComponent;\r\n  get parentComponent() {\r\n    if (typeof this.#parentComponent === \"undefined\") {\r\n      this.#parentComponent = getParentComponent(this);\r\n    }\r\n    return this.#parentComponent;\r\n  }\r\n\r\n  bindGlobalData(bindText) {\r\n    const binds = _bind_Parser_js__WEBPACK_IMPORTED_MODULE_8__[\"default\"].parse(bindText, \"\");\r\n    if (binds.length > 0) {\r\n      _global_Data_js__WEBPACK_IMPORTED_MODULE_9__[\"default\"].boundFromComponent(this);\r\n      binds.forEach(({ nodeProperty, viewModelProperty }) => {\r\n        _global_Data_js__WEBPACK_IMPORTED_MODULE_9__[\"default\"].boundPropertyFromComponent(viewModelProperty, this, nodeProperty);\r\n      })\r\n    }\r\n  }\r\n  /**\r\n   * DOMツリーへ追加\r\n   */\r\n  async connectedCallback() {\r\n    try {\r\n      if (this.parentComponent) {\r\n        await this.parentComponent.initialPromise;\r\n      } else {\r\n        this.bindGlobalData(this.dataset.bind ?? \"\");\r\n      }\r\n      this.#alivePromise = new Promise((resolve, reject) => {\r\n        this.#aliveResolve = resolve;\r\n        this.#aliveReject = reject;\r\n      });\r\n      await this.build();\r\n    } finally {\r\n      this.#initialResolve && this.#initialResolve();\r\n    }\r\n  }\r\n\r\n  /**\r\n   * DOMツリーから削除\r\n   */\r\n  disconnectedCallback() {\r\n    this.#aliveResolve && this.#aliveResolve(this.data);\r\n  }\r\n\r\n  /**\r\n   * 移動時\r\n   */\r\n  adoptedCallback() {\r\n    \r\n  }\r\n\r\n  /**\r\n   * 属性値更新\r\n   * @param {string} name \r\n   * @param {any} oldValue \r\n   * @param {any} newValue \r\n   */\r\n  attributeChangedCallback(name, oldValue, newValue) {\r\n    \r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {Set<string>} setOfKey \r\n   * @param {number[]} indexes \r\n   */\r\n  notify(setOfKey) {\r\n    this.#binds?.updateViewModel(setOfKey);\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {string} name \r\n   * @param {UserComponentData} componentData \r\n   */\r\n  static regist(name, componentData) {\r\n    const template = htmlToTemplate(componentData.html, componentData.css);\r\n    // 同じクラスを登録できないため\r\n    const componentClass = class extends Component {\r\n      static template = template;\r\n      static ViewModel = componentData.ViewModel;\r\n    };\r\n    // nameにはハイフンが必要、アルファベットの大文字は使えません\r\n    customElements.define(name, componentClass);\r\n  }\r\n\r\n}\n\n//# sourceURL=webpack://quel/./src/component/Component.js?");
-
-/***/ }),
-
-/***/ "./src/component/Data.js":
-/*!*******************************!*\
-  !*** ./src/component/Data.js ***!
-  \*******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ createData)\n/* harmony export */ });\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _Component_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\nfunction getPath(pattern, indexes) {\r\n  let i = 0;\r\n  return pattern.replaceAll(\"*\", () => indexes[i++] ?? \"*\");\r\n}\r\n  \r\nclass Handler {\r\n  /**\r\n   * @type {{key:string,value:any}} \r\n   */\r\n  #data = {};\r\n  /**\r\n   * @type {Component}\r\n   */\r\n  #component;\r\n  /**\r\n   * @type {Map<string,{bindProp:string,bindIndexes:number[]}>}\r\n   */\r\n  #bindPropByThisProp = new Map();\r\n\r\n  /**\r\n   * @type {{key:string,value:any}|ViewModel}\r\n   */\r\n  get data() {\r\n    return (this.#component ? this.#component?.parentComponent?.viewModel : this.#data) ?? {};\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {{key:string,value:any}|Component} data \r\n   */\r\n  [_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_DATA](data) {\r\n    if (data instanceof _Component_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"]) {\r\n      this.#component = data;\r\n    } else {\r\n      this.#data = data;\r\n    }\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {string} thisProp \r\n   * @param {string} bindProp \r\n   * @param {number[]} bindIndexes \r\n   */\r\n  [_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_PROPERTY](thisProp, bindProp, bindIndexes) {\r\n    this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {any} target \r\n   * @param {string} prop \r\n   * @param {Proxy<Handler>} receiver \r\n   * @returns \r\n   */\r\n  get(target, prop, receiver) {\r\n    if (prop === _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_DATA) {\r\n      return (data) => Reflect.apply(this[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_DATA], this, [data]);\r\n    }\r\n    if (prop === _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_PROPERTY) {\r\n      return (thisProp, bindProp, bindIndexes) => Reflect.apply(this[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_PROPERTY], this, [thisProp, bindProp, bindIndexes]);\r\n    }\r\n    const { data } = this;\r\n    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, bindIndexes:[] };\r\n    const bindPath = getPath(bindProp, bindIndexes);\r\n    return Reflect.get(data, bindPath, data);\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {any} target \r\n   * @param {string} prop \r\n   * @param {any} value \r\n   * @param {Prooxy<Handler>} receiver \r\n   * @returns \r\n   */\r\n  set(target, prop, value, receiver) {\r\n    const { data } = this;\r\n    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, bindIndexes:[] };\r\n    const bindPath = getPath(bindProp, bindIndexes);\r\n    return Reflect.set(data, bindPath, value, data);\r\n  }\r\n}\r\n\r\n/**\r\n * \r\n * @returns {Proxy<Handler>}\r\n */\r\nfunction createData() {\r\n  return new Proxy({}, new Handler());\r\n}\n\n//# sourceURL=webpack://quel/./src/component/Data.js?");
-
-/***/ }),
-
-/***/ "./src/export.js":
-/*!***********************!*\
-  !*** ./src/export.js ***!
-  \***********************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _main_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./main.js */ \"./src/main.js\");\n/* harmony import */ var _myname_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./myname.js */ \"./src/myname.js\");\n\r\n\r\n\r\nwindow[_myname_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"]] = _main_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"];\n\n//# sourceURL=webpack://quel/./src/export.js?");
-
-/***/ }),
-
-/***/ "./src/filter/Builtin.js":
-/*!*******************************!*\
-  !*** ./src/filter/Builtin.js ***!
-  \*******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"inputFilters\": () => (/* binding */ inputFilters),\n/* harmony export */   \"outputFilters\": () => (/* binding */ outputFilters)\n/* harmony export */ });\nclass outputFilters {\r\n  static localeString = (value, options) => (value != null) ? Number(value).toLocaleString() : null;\r\n  static fixed        = (value, options) => (value != null) ? Number(value).toFixed(options[0] ?? 0) : null;\r\n  static styleDisplay = (value, options) => value ? (options[0] ?? \"\") : \"none\";\r\n  static truthy       = (value, options) => value ? true : false;\r\n  static falsey       = (value, options) => !value ? true : false;\r\n  static not          = this.falsey;\r\n  static upperCase    = (value, options) => (value != null) ? String(value).toUpperCase() : null;\r\n  static lowerCase    = (value, options) => (value != null) ? String(value).toLowerCase() : null;\r\n  static eq           = (value, options) => value == options[0];\r\n  static ne           = (value, options) => value != options[0];\r\n  static lt           = (value, options) => Number(value) < Number(options[0]);\r\n  static le           = (value, options) => Number(value) <= Number(options[0]);\r\n  static gt           = (value, options) => Number(value) > Number(options[0]);\r\n  static ge           = (value, options) => Number(value) >= Number(options[0]);\r\n  static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? \"\").replaceAll(\"%s\", value)) : null;\r\n  static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;\r\n  static null         = (value, options) => (value == null) ? true : false;\r\n}\r\n\r\nclass inputFilters {\r\n  static number       = (value, options) => Number(value);\r\n  static boolean      = (value, options) => Boolean(value);\r\n}\n\n//# sourceURL=webpack://quel/./src/filter/Builtin.js?");
-
-/***/ }),
-
-/***/ "./src/filter/Filter.js":
-/*!******************************!*\
-  !*** ./src/filter/Filter.js ***!
-  \******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Filter)\n/* harmony export */ });\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _Builtin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Builtin.js */ \"./src/filter/Builtin.js\");\n\r\n\r\n\r\n// \"property:vmProperty|toFix,2|toLocaleString;\"\r\n// => toFix,2|toLocaleString\r\n\r\nclass Filter {\r\n  /**\r\n   * @type {string}\r\n   */\r\n  name;\r\n  /**\r\n   * @type {string[]}\r\n   */\r\n  options;\r\n\r\n  /**\r\n   * \r\n   * @param {any} value \r\n   * @param {Filter[]} filters \r\n   * @returns {any}\r\n   */\r\n  static applyForInput(value, filters) {\r\n    return filters.reduceRight((v, f) => (f.name in _Builtin_js__WEBPACK_IMPORTED_MODULE_1__.inputFilters) ? _Builtin_js__WEBPACK_IMPORTED_MODULE_1__.inputFilters[f.name](v, f.options) : v, value);\r\n  }\r\n  /**\r\n   * \r\n   * @param {any} value \r\n   * @param {Filter[]} filters \r\n   * @returns {any}\r\n   */\r\n  static applyForOutput(value, filters) {\r\n    return filters.reduce((v, f) => (f.name in _Builtin_js__WEBPACK_IMPORTED_MODULE_1__.outputFilters) ? _Builtin_js__WEBPACK_IMPORTED_MODULE_1__.outputFilters[f.name](v, f.options) : v, value);\r\n  }\r\n  /**\r\n   * \r\n   * @param {string} name \r\n   * @param {(value:any,options:string[])=>{}} outputFilter \r\n   * @param {(value:any,options:string[])=>{}} inputFilter \r\n   */\r\n  static regist(name, outputFilter, inputFilter) {\r\n    if (name in _Builtin_js__WEBPACK_IMPORTED_MODULE_1__.outputFilters) _utils_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"].raise(`regist filter error duplicate name (${name})`);\r\n    if (name in _Builtin_js__WEBPACK_IMPORTED_MODULE_1__.inputFilters) _utils_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"].raise(`regist filter error duplicate name (${name})`);\r\n    outputFilter && (_Builtin_js__WEBPACK_IMPORTED_MODULE_1__.outputFilters[name] = outputFilter);\r\n    inputFilter && (_Builtin_js__WEBPACK_IMPORTED_MODULE_1__.inputFilters[name] = inputFilter);\r\n  }\r\n}\r\n\n\n//# sourceURL=webpack://quel/./src/filter/Filter.js?");
-
-/***/ }),
-
-/***/ "./src/global/Data.js":
-/*!****************************!*\
-  !*** ./src/global/Data.js ***!
-  \****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ GlobalData)\n/* harmony export */ });\n/* harmony import */ var _viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../viewModel/Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\nclass Handler {\r\n  set(target, prop, value, receiver) {\r\n    Reflect.set(target, prop, value, receiver);\r\n    GlobalData.binds\r\n    .filter(bind => prop === bind.globalProperty)\r\n    .forEach(bind => {\r\n      const [dataProp, nameProp] = bind.componentProperty.split(\".\");\r\n      bind.component.viewModel?.[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${nameProp}`, []);\r\n    });\r\n    GlobalData.globalBinds\r\n    .filter(bind => prop === bind.globalProperty)\r\n    .forEach(bind => {\r\n      bind.component.viewModel?.[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$globals.${prop}`, []);\r\n    });\r\n    return true;\r\n  }\r\n}\r\n\r\nclass GlobalData {\r\n  /**\r\n   * @type {{globalProperty:string,component:Component,componentProperty:string}[]}\r\n   */\r\n  static binds = [];\r\n  /**\r\n   * @type {{globalProperty:string,component:Component}[]}\r\n   */\r\n  static globalBinds = [];\r\n  /**\r\n   * \r\n   * @param {Component} component \r\n   */\r\n  static boundFromComponent(component) {\r\n    component.data[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_DATA](this.data);\r\n  }\r\n  /**\r\n   * \r\n   * @param {string} globalProperty \r\n   * @param {Component} component \r\n   * @param {string} componentProperty \r\n   */\r\n  static boundPropertyFromComponent(globalProperty, component, componentProperty) {\r\n    this.binds.push({ globalProperty, component, componentProperty });\r\n    component.data[_viewModel_Symbols_js__WEBPACK_IMPORTED_MODULE_0__.SYM_CALL_BIND_PROPERTY](componentProperty, globalProperty);\r\n  }\r\n  /**\r\n   * \r\n   * @param {Component} component \r\n   * @param {string} globalProperty\r\n   */\r\n  static globalBoundFromComponent(component, globalProperty) {\r\n    this.globalBinds.push({ component, globalProperty });\r\n  }\r\n  /**\r\n   * \r\n   * @returns \r\n   */\r\n  static create() {\r\n    return new Proxy({}, new Handler);\r\n  }\r\n  /**\r\n   * @type {Object<string,any>}\r\n   */\r\n  static data = this.create();\r\n\r\n}\r\n\r\n\n\n//# sourceURL=webpack://quel/./src/global/Data.js?");
-
-/***/ }),
-
-/***/ "./src/loader/ComponentNameType.js":
-/*!*****************************************!*\
-  !*** ./src/loader/ComponentNameType.js ***!
-  \*****************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"ComponentNameType\": () => (/* binding */ ComponentNameType),\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n\r\n\r\n/**\r\n * @enum {number}\r\n */\r\nconst ComponentNameType = {\r\n  kebab: 1,\r\n  snake: 2,\r\n  upperCamel: 3,\r\n  lowerCamel: 4,\r\n};\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * \r\n   * @param {string} name \r\n   * @returns {{\r\n   *  [ComponentNameType.kebab]:string,\r\n   *  [ComponentNameType.snake]:string,\r\n   *  [ComponentNameType.upperCamel]:string,\r\n   *  [ComponentNameType.lowerCamel]:string,\r\n   * }}\r\n   */\r\n  static getNames(name) {\r\n    const kebabName = _utils_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"].toKebabCase(name);\r\n    const snakeName = kebabName.replaceAll(\"-\", \"_\");\r\n    const upperCamelName = kebabName.split(\"-\").map((text, index) => {\r\n      if (typeof text[0] !== \"undefined\") {\r\n        text = text[0].toUpperCase() + text.slice(1);\r\n      }\r\n      return text;\r\n    }).join(\"\");\r\n    const lowerCamelName = upperCamelName[0].toLowerCase() + upperCamelName.slice(1);\r\n    return {\r\n      [ComponentNameType.kebab]: kebabName,\r\n      [ComponentNameType.snake]: snakeName,\r\n      [ComponentNameType.upperCamel]: upperCamelName,\r\n      [ComponentNameType.lowerCamel]: lowerCamelName,\r\n    }\r\n\r\n  }\r\n});\n\n//# sourceURL=webpack://quel/./src/loader/ComponentNameType.js?");
-
-/***/ }),
-
-/***/ "./src/loader/Loader.js":
-/*!******************************!*\
-  !*** ./src/loader/Loader.js ***!
-  \******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _ComponentNameType_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ComponentNameType.js */ \"./src/loader/ComponentNameType.js\");\n/* harmony import */ var _Prefix_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Prefix.js */ \"./src/loader/Prefix.js\");\n\r\n\r\n\r\n\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  static replaceNames = _ComponentNameType_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"].getNames(\"component-name\")\r\n  /**\r\n   * \r\n   * @param {string} tagName \r\n   * @param {ComponentNameType} defaultComponentNameType \r\n   * @param {string} defaultComponentPath \r\n   */\r\n  static async load(tagName, defaultComponentNameType, defaultComponentPath) {\r\n    const { replaceNames } = this;\r\n    const registTagName = _utils_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].toKebabCase(tagName);\r\n    // タグに一致するプレフィックスを取得する\r\n    const prefixInfo = _Prefix_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].getByTagName(registTagName);\r\n    // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする\r\n    const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;\r\n    // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する\r\n    const componentNames = _ComponentNameType_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"].getNames(componentName);\r\n    const prefixPath = prefixInfo?.path ?? defaultComponentPath;\r\n    // パスのパターンをコンポーネント名でリプレース\r\n    let path = prefixPath;\r\n    for(let nameType in _ComponentNameType_js__WEBPACK_IMPORTED_MODULE_2__.ComponentNameType) {\r\n      path = path.replaceAll(`{${replaceNames[nameType]}}`, componentNames[nameType]);\r\n    }\r\n    // リプレースが発生しなければ、デフォルトの方法として、パスの後ろにコンポーネント名.jsを付加する\r\n    if (path === prefixPath) {\r\n      path += ((path.at(-1) !== \"/\") ? \"/\" : \"\") + componentNames[defaultComponentNameType] + \".js\";\r\n    }\r\n    // http://～を先方に付加して相対パスを解決する\r\n    const paths = location.pathname.split(\"/\");\r\n    paths[paths.length - 1] = path;\r\n    const fullPath = location.origin + paths.join(\"/\");\r\n    try {\r\n      const componentModule = await import(/* webpackIgnore: true */fullPath);\r\n      _component_Component_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"].regist(registTagName, componentModule.default);\r\n    } catch(e) {\r\n      console.log(`can't load component { registTagName:${registTagName}, fullPath:${fullPath} }`);\r\n      console.error(e);\r\n    }\r\n\r\n  }\r\n});\n\n//# sourceURL=webpack://quel/./src/loader/Loader.js?");
-
-/***/ }),
-
-/***/ "./src/loader/Prefix.js":
-/*!******************************!*\
-  !*** ./src/loader/Prefix.js ***!
-  \******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Prefix)\n/* harmony export */ });\nclass Prefix {\r\n  /**\r\n   * @type {string}\r\n   */\r\n  prefix;\r\n  /**\r\n   * @type {string}\r\n   */\r\n  path;\r\n\r\n  static prefixes = [];\r\n  static add(prefix, path) {\r\n    this.prefixes.push(Object.assign(new Prefix, {prefix, path}));\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {string} tagName \r\n   * @returns {{prefix:string,path:string}}\r\n   */\r\n  static getByTagName(tagName) {\r\n    const prefix = this.prefixes.find(prefix => {\r\n      const match = prefix.prefix + \"-\";\r\n      return tagName.startsWith(match);\r\n    });\r\n    return prefix;\r\n  }\r\n}\r\n\r\n\n\n//# sourceURL=webpack://quel/./src/loader/Prefix.js?");
-
-/***/ }),
-
-/***/ "./src/main.js":
-/*!*********************!*\
-  !*** ./src/main.js ***!
-  \*********************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ Main)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _filter_Filter_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./filter/Filter.js */ \"./src/filter/Filter.js\");\n/* harmony import */ var _global_Data_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./global/Data.js */ \"./src/global/Data.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils.js */ \"./src/utils.js\");\n/* harmony import */ var _loader_Prefix_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./loader/Prefix.js */ \"./src/loader/Prefix.js\");\n/* harmony import */ var _loader_ComponentNameType_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./loader/ComponentNameType.js */ \"./src/loader/ComponentNameType.js\");\n/* harmony import */ var _loader_Loader_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./loader/Loader.js */ \"./src/loader/Loader.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nconst DEAFULT_PATH = \"./\";\r\n\r\nclass Main {\r\n  /**\r\n   * @type {{\r\n   * debug:boolean,\r\n   * defaultComponentNameType:ComponentNameType,\r\n   * defaultComponentPath:string,\r\n   * }}\r\n   */\r\n  static #config = {\r\n    debug: false,\r\n    defaultComponentNameType: _loader_ComponentNameType_js__WEBPACK_IMPORTED_MODULE_6__.ComponentNameType.lowerCamel,\r\n    defaultComponentPath:DEAFULT_PATH,\r\n\r\n  };\r\n  /**\r\n   * \r\n   * @param {Object<string,UserComponentData>} components \r\n   * @returns {Main}\r\n   */\r\n  static components(components) {\r\n    Object.entries(components).forEach(([name, componentData]) => {\r\n      const componentName = _utils_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].toKebabCase(name);\r\n      _component_Component_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].regist(componentName, componentData);\r\n    });\r\n    return this;\r\n  }\r\n  /**\r\n   * \r\n   * @param {Object<string,UserFilterData>} filters \r\n   * @returns {Main}\r\n   */\r\n  static filters(filters) {\r\n    Object.entries(filters).forEach(([name, filterData]) => {\r\n      const { input, output } = filterData;\r\n      _filter_Filter_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"].regist(name, output, input);\r\n    });\r\n    return this;\r\n  }\r\n  /**\r\n   * @param {Object<string,string>} prefixes\r\n   */\r\n  static prefixes(prefixes) {\r\n    for(let [ prefix, path ] of Object.entries(prefixes)) {\r\n      _loader_Prefix_js__WEBPACK_IMPORTED_MODULE_5__[\"default\"].add(prefix, path);\r\n    }\r\n    \r\n    return this;\r\n  }\r\n  /**\r\n   * @param \r\n   */\r\n  static async load(...tagNames) {\r\n    for(const tagName of tagNames) {\r\n      await _loader_Loader_js__WEBPACK_IMPORTED_MODULE_7__[\"default\"].load(tagName, this.#config.defaultComponentNameType, this.#config.defaultComponentPath);\r\n    }\r\n    return this;\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {Object<string,any>} data \r\n   */\r\n  static globals(data) {\r\n    Object.assign(_global_Data_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].data, data);\r\n  }\r\n  /**\r\n   * \r\n   * @param {{\r\n   * debug:boolean,\r\n   * defaultComponentNameType:ComponentNameType,\r\n   * defaultComponentPath:string,\r\n   * }}  \r\n   * @returns {Main}\r\n   */\r\n  static config({ \r\n    defaultComponentNameType = _loader_ComponentNameType_js__WEBPACK_IMPORTED_MODULE_6__.ComponentNameType.lowerCamel,\r\n    defaultComponentPath = DEAFULT_PATH,\r\n    debug = false }) {\r\n    this.#config = Object.assign(this.#config, { debug, defaultComponentNameType, defaultComponentPath });\r\n    return this;\r\n  }\r\n  /**\r\n   * @type {boolean}\r\n   */\r\n  static get debug() {\r\n    return this.#config.debug;\r\n  }\r\n}\n\n//# sourceURL=webpack://quel/./src/main.js?");
-
-/***/ }),
-
-/***/ "./src/myname.js":
-/*!***********************!*\
-  !*** ./src/myname.js ***!
-  \***********************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\nconst name = \"quel\";\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (name);\r\n\n\n//# sourceURL=webpack://quel/./src/myname.js?");
-
-/***/ }),
-
-/***/ "./src/node/PropertyType.js":
-/*!**********************************!*\
-  !*** ./src/node/PropertyType.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"NodePropertyType\": () => (/* binding */ NodePropertyType),\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n\r\n\r\n\r\nconst PREFIX_EVENT = \"on\";\r\n\r\n/**\r\n * @enum {number}\r\n */\r\nconst NodePropertyType = {\r\n  levelTop: 1,\r\n  level2nd: 2,\r\n  level3rd: 3,\r\n  className: 10,\r\n  radio: 20,\r\n  checkbox: 30,\r\n  template: 90,\r\n  event: 91,\r\n  component: 92,\r\n};\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * \r\n   * @param {Node} node\r\n   * @param {string} nodeProperty \r\n   * @returns {{type:NodePropertyType,nodePropertyElements:string[],eventType:string}}\r\n   */\r\n  static getInfo(node, nodeProperty) {\r\n    const result = {type:null, nodePropertyElements:[], eventType:null};\r\n    if (node instanceof HTMLTemplateElement) { \r\n      result.type = NodePropertyType.template;\r\n      return result;\r\n    };\r\n\r\n    result.nodePropertyElements = nodeProperty.split(\".\");\r\n    if (node instanceof _component_Component_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]) { \r\n      result.type = NodePropertyType.component;\r\n      return result;\r\n    };\r\n    if (result.nodePropertyElements.length === 1) {\r\n      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {\r\n        result.type = NodePropertyType.event;\r\n        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);\r\n      } else if (result.nodePropertyElements[0] === \"radio\") {\r\n        result.type = NodePropertyType.radio;\r\n      } else if (result.nodePropertyElements[1] === \"checkbox\") {\r\n        result.type = NodePropertyType.checkbox;\r\n      } else {\r\n        result.type = NodePropertyType.levelTop;\r\n      }\r\n    } else if (result.nodePropertyElements.length === 2) {\r\n      if (result.nodePropertyElements[0] === \"className\") {\r\n        result.type = NodePropertyType.className;\r\n      } else {\r\n        result.type = NodePropertyType.level2nd;\r\n      }\r\n    } else if (result.nodePropertyElements.length === 3) {\r\n      result.type = NodePropertyType.level3rd;\r\n    } else {\r\n      _utils_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].raise(`unknown property ${nodeProperty}`);\r\n    }\r\n    return result;\r\n  }\r\n});\r\n\r\n\n\n//# sourceURL=webpack://quel/./src/node/PropertyType.js?");
-
-/***/ }),
-
-/***/ "./src/thread/NodeUpdator.js":
-/*!***********************************!*\
-  !*** ./src/thread/NodeUpdator.js ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"NodeUpdateData\": () => (/* binding */ NodeUpdateData),\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _Thread_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Thread.js */ \"./src/thread/Thread.js\");\n\r\n\r\nclass NodeUpdateData {\r\n  /**\r\n   * @type {Node}\r\n   */\r\n  node;\r\n  /**\r\n   * @type {string}\r\n   */\r\n  property;\r\n  /**\r\n   * @type {()=>{}}\r\n   */\r\n  updateFunc;\r\n\r\n  /**\r\n   * \r\n   * @param {Node} node \r\n   * @param {string} property \r\n   * @param {()=>{}} updateFunc \r\n   */\r\n  constructor(node, property, updateFunc) {\r\n    this.node = node;\r\n    this.property = property;\r\n    this.updateFunc = updateFunc;\r\n  }\r\n}\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * @type {NodeUpdateData[]}\r\n   */\r\n  queue = [];\r\n\r\n  /**\r\n   * @type {import(\"./Thread.js\").UpdateSlotStatusCallback}\r\n   */\r\n  #statusCallback;\r\n  /**\r\n   * @param {import(\"./Thread.js\").UpdateSlotStatusCallback} statusCallback\r\n   */\r\n  constructor(statusCallback) {\r\n    this.#statusCallback = statusCallback;\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {NodeUpdateData[]} updates \r\n   */\r\n  reorder(updates) {\r\n    updates.sort((update1, update2) => {\r\n      if (update2.node instanceof HTMLTemplateElement) return 1;\r\n      if (update1.node instanceof HTMLSelectElement && update1.property === \"value\") return 1;\r\n      return -1;\r\n    });\r\n    return updates;\r\n  }\r\n  /**\r\n   * \r\n   */\r\n  async exec() {\r\n    this.#statusCallback && this.#statusCallback(_Thread_js__WEBPACK_IMPORTED_MODULE_0__.UpdateSlotStatus.beginNodeUpdate);\r\n    try {\r\n      while(this.queue.length > 0) {\r\n        const updates = this.reorder(this.queue.splice(0));\r\n        updates.forEach(update => Reflect.apply(update.updateFunc, update, []));\r\n      }\r\n    } finally {\r\n      this.#statusCallback && this.#statusCallback(_Thread_js__WEBPACK_IMPORTED_MODULE_0__.UpdateSlotStatus.endNodeUpdate);\r\n    }\r\n  }\r\n\r\n  /**\r\n   * @type {boolean}\r\n   */\r\n  get isEmpty() {\r\n    return this.queue.length === 0;\r\n  }\r\n});\r\n\n\n//# sourceURL=webpack://quel/./src/thread/NodeUpdator.js?");
-
-/***/ }),
-
-/***/ "./src/thread/Notifier.js":
-/*!********************************!*\
-  !*** ./src/thread/Notifier.js ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"NotifyData\": () => (/* binding */ NotifyData),\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _Thread_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Thread.js */ \"./src/thread/Thread.js\");\n\r\n\r\n\r\nclass NotifyData {\r\n  /**\r\n   * @type {Component}\r\n   */\r\n  component;\r\n  /**\r\n   * @type {string}\r\n   */\r\n  name;\r\n  /**\r\n   * @type {number[]}\r\n   */\r\n  #indexes;\r\n  get indexes() {\r\n    return this.#indexes;\r\n  }\r\n  set indexes(value) {\r\n    this.#indexes = value;\r\n    this.#indexesString = value.toString();\r\n    this.#key = this.name + \"\\t\" + this.#indexesString;\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  #indexesString;\r\n  get indexesString() {\r\n    return this.#indexesString;\r\n  }\r\n  /**\r\n   * @type {string}\r\n   */\r\n  #key;\r\n  get key() {\r\n    return this.#key;\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {Component} component\r\n   * @param {string} name \r\n   * @param {number[]} indexes \r\n   */\r\n  constructor(component, name, indexes) {\r\n    this.component = component;\r\n    this.name = name;\r\n    this.indexes = indexes;\r\n  }\r\n}\r\n\r\nconst getNnotifyKey = notify => notify.key;\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * @type {NotifyData[]}\r\n   */\r\n  queue = [];\r\n\r\n  /**\r\n   * @type {import(\"./Thread.js\").UpdateSlotStatusCallback}\r\n   */\r\n  #statusCallback;\r\n  /**\r\n   * @param {import(\"./Thread.js\").UpdateSlotStatusCallback} statusCallback\r\n   */\r\n  constructor(statusCallback) {\r\n    this.#statusCallback = statusCallback;\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  async exec() {\r\n    this.#statusCallback && this.#statusCallback(_Thread_js__WEBPACK_IMPORTED_MODULE_1__.UpdateSlotStatus.beginNotify);\r\n    try {\r\n      while(this.queue.length > 0) {\r\n        const notifies = this.queue.splice(0);\r\n        /**\r\n         * @type {Map<Component,NotifyData[]>}\r\n         */\r\n        const notifiesByComponent = notifies.reduce((map, notify) => {\r\n          map.get(notify.component)?.push(notify) ?? map.set(notify.component, [ notify ]);\r\n          return map;\r\n        }, new Map);\r\n        \r\n        for(const [component, notifies] of notifiesByComponent.entries()) {\r\n          const setOfKey = new Set(notifies.map(getNnotifyKey));\r\n          component.notify(setOfKey);\r\n        }\r\n      }\r\n    } finally {\r\n      this.#statusCallback && this.#statusCallback(_Thread_js__WEBPACK_IMPORTED_MODULE_1__.UpdateSlotStatus.endNotify);\r\n    }\r\n  }\r\n\r\n  /**\r\n   * @type {boolean}\r\n   */\r\n  get isEmpty() {\r\n    return this.queue.length === 0;\r\n  }\r\n});\r\n\n\n//# sourceURL=webpack://quel/./src/thread/Notifier.js?");
-
-/***/ }),
-
-/***/ "./src/thread/Processor.js":
-/*!*********************************!*\
-  !*** ./src/thread/Processor.js ***!
-  \*********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"ProcessData\": () => (/* binding */ ProcessData),\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _Thread_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Thread.js */ \"./src/thread/Thread.js\");\n\r\n\r\nclass ProcessData {\r\n  /**\r\n   * @type {()=>{}}\r\n   */\r\n  target;\r\n  /**\r\n   * @type {Object}\r\n   */\r\n  thisArgument;\r\n  /**\r\n   * @type {any[]}\r\n   */\r\n  argumentsList;\r\n\r\n  /**\r\n   * \r\n   * @param {()=>{}} target \r\n   * @param {Object} thisArgument \r\n   * @param {any[]} argumentsList \r\n   */\r\n  constructor(target, thisArgument, argumentsList) {\r\n    this.target = target;\r\n    this.thisArgument = thisArgument;\r\n    this.argumentsList = argumentsList;\r\n  }\r\n}\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * @type {ProcessData[]}\r\n   */\r\n  queue = [];\r\n\r\n  /**\r\n   * @type {import(\"./Thread.js\").UpdateSlotStatusCallback}\r\n   */\r\n  #statusCallback;\r\n  /**\r\n   * @param {import(\"./Thread.js\").UpdateSlotStatusCallback} statusCallback\r\n   */\r\n  constructor(statusCallback) {\r\n    this.#statusCallback = statusCallback;\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  async exec() {\r\n    this.#statusCallback && this.#statusCallback(_Thread_js__WEBPACK_IMPORTED_MODULE_0__.UpdateSlotStatus.beginProcess);\r\n    try {\r\n      while(this.queue.length > 0) {\r\n        const processes = this.queue.splice(0);\r\n        for(const process of processes) {\r\n          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);\r\n        }\r\n      }\r\n    } finally {\r\n      this.#statusCallback && this.#statusCallback(_Thread_js__WEBPACK_IMPORTED_MODULE_0__.UpdateSlotStatus.endProcess);\r\n    }\r\n  }\r\n\r\n  /**\r\n   * @type {boolean}\r\n   */\r\n  get isEmpty() {\r\n    return this.queue.length === 0;\r\n  }\r\n});\n\n//# sourceURL=webpack://quel/./src/thread/Processor.js?");
-
-/***/ }),
-
-/***/ "./src/thread/Thread.js":
-/*!******************************!*\
-  !*** ./src/thread/Thread.js ***!
-  \******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"UpdateSlot\": () => (/* binding */ UpdateSlot),\n/* harmony export */   \"UpdateSlotStatus\": () => (/* binding */ UpdateSlotStatus),\n/* harmony export */   \"default\": () => (/* binding */ Thread)\n/* harmony export */ });\n/* harmony import */ var _main_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../main.js */ \"./src/main.js\");\n/* harmony import */ var _NodeUpdator_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NodeUpdator.js */ \"./src/thread/NodeUpdator.js\");\n/* harmony import */ var _Notifier_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Notifier.js */ \"./src/thread/Notifier.js\");\n/* harmony import */ var _Processor_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Processor.js */ \"./src/thread/Processor.js\");\n\r\n\r\n\r\n\r\n\r\n/**\r\n * @enum {number}\r\n */\r\nconst UpdateSlotStatus = {\r\n  beginProcess: 1,\r\n  endProcess: 2,\r\n  beginNotify: 3,\r\n  endNotify: 4,\r\n  beginNodeUpdate: 5,\r\n  endNodeUpdate: 6,\r\n};\r\n\r\n/**\r\n * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback\r\n */\r\n\r\n\r\nclass UpdateSlot {\r\n  /**\r\n   * @type {Processor}\r\n   */\r\n  #processor;\r\n  /**\r\n   * @type {Notifier}\r\n   */\r\n  #notifier;\r\n  /**\r\n   * @type {NodeUpdator}\r\n   */\r\n  #nodeUpdator;\r\n  /**\r\n   * @type {()=>{}}\r\n   */\r\n  #callback;\r\n  /**\r\n   * @type {Promise}\r\n   */\r\n  #promise;\r\n  /**\r\n   * @type {(value) => {}}\r\n   */\r\n  #resolve;\r\n  /**\r\n   * @type {() => {}}\r\n   */\r\n  #reject;\r\n  \r\n  /**\r\n   * \r\n   * @param {()=>{}?} callback\r\n   * @param {UpdateSlotStatusCallback?} statusCallback\r\n   */\r\n  constructor(callback = null, statusCallback = null) {\r\n    this.#processor = new _Processor_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"](statusCallback);\r\n    this.#notifier = new _Notifier_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"](statusCallback);\r\n    this.#nodeUpdator = new _NodeUpdator_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"](statusCallback);\r\n    this.#callback = callback;\r\n    this.#promise = new Promise((resolve, reject) => {\r\n      this.#resolve = resolve;\r\n      this.#reject = reject;\r\n    })\r\n  }\r\n\r\n  resolve() {\r\n    this.#resolve && this.#resolve();\r\n    this.#resolve = null;\r\n  }\r\n\r\n  reject() {\r\n    this.#reject && this.#reject();\r\n    this.#reject = null;\r\n  }\r\n\r\n  async waiting() {\r\n    return this.#promise;\r\n  }\r\n\r\n  async exec() {\r\n    do {\r\n      await this.#processor.exec();\r\n      await this.#notifier.exec();\r\n      await this.#nodeUpdator.exec();\r\n    } while(!this.#processor.isEmpty || !this.#notifier.isEmpty || !this.#nodeUpdator.isEmpty);\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {ProcessData} processData \r\n   */\r\n  addProcess(processData) {\r\n    this.#processor.queue.push(processData);\r\n    this.resolve();\r\n  }\r\n  \r\n  /**\r\n   * \r\n   * @param {NotifyData} notifyData \r\n   */\r\n  addNotify(notifyData) {\r\n    this.#notifier.queue.push(notifyData);\r\n    this.resolve();\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {NodeUpdateData} nodeUpdateData \r\n   */\r\n  addNodeUpdate(nodeUpdateData) {\r\n    this.#nodeUpdator.queue.push(nodeUpdateData);\r\n    this.resolve();\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  callback() {\r\n    this.#callback && this.#callback();\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {()=>{}} callback \r\n   * @param {UpdateSlotStatusCallback} statusCallback \r\n   * @returns \r\n   */\r\n  static create(callback, statusCallback) {\r\n    return new UpdateSlot(callback, statusCallback);\r\n  }\r\n\r\n}\r\n\r\nclass Thread {\r\n  /**\r\n   * @type {(value:any)=>{}}\r\n   */\r\n  #resolve;\r\n  /**\r\n   * @type {()=>{}}\r\n   */\r\n  #reject;\r\n\r\n  /**\r\n   * \r\n   */\r\n  constructor() {\r\n    this.main();\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @returns {Promise<UpdateSlot>}\r\n   */\r\n  async #sleep() {\r\n    return new Promise((resolve, reject) => {\r\n      this.#resolve = resolve;\r\n      this.#reject = reject;\r\n    });\r\n  }\r\n\r\n  /**\r\n   * \r\n   */\r\n  stop() {\r\n    this.#reject();\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {UpdateSlot} slot \r\n   */\r\n  wakeup(slot) {\r\n    this.#resolve(slot);\r\n  }\r\n\r\n  async main() {\r\n    do {\r\n      try {\r\n        const slot = await this.#sleep();\r\n        await slot.waiting(); // queueにデータが入るまで待機\r\n        _main_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"].debug && performance.mark('slot-exec:start');\r\n        try {\r\n          await slot.exec();\r\n          if (_main_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"].debug) {\r\n            performance.mark('slot-exec:end')\r\n            performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');\r\n            console.log(performance.getEntriesByType(\"measure\"));    \r\n            performance.clearMeasures();\r\n            performance.clearMarks();\r\n          }\r\n        } finally {\r\n          slot.callback();\r\n        }\r\n      } catch(e) {\r\n        if (typeof e !== \"undefined\") {\r\n          console.error(e);\r\n          if (!confirm(\"致命的なエラーが発生しました。続行しますか？\")) {\r\n            break;\r\n          }\r\n        }\r\n      }\r\n    } while(true);\r\n  }\r\n\r\n}\r\n\n\n//# sourceURL=webpack://quel/./src/thread/Thread.js?");
-
-/***/ }),
-
-/***/ "./src/types.js":
-/*!**********************!*\
-  !*** ./src/types.js ***!
-  \**********************/
-/***/ (() => {
-
-eval("/**\r\n * @typedef {{html?:string,css?:string,ViewModel:class,template?:HTMLTemplateElement}} UserComponentData\r\n * \r\n * @typedef {(value:any,options:string[])=>{return:any}} FilterFunc\r\n * \r\n * @typedef {{input:FilterFunc,output:FilterFunc}} UserFilterData\r\n * \r\n * @typedef {Object<string,any>} ViewModel \r\n */\n\n//# sourceURL=webpack://quel/./src/types.js?");
-
-/***/ }),
-
-/***/ "./src/utils.js":
-/*!**********************!*\
-  !*** ./src/utils.js ***!
-  \**********************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * \r\n   * @param {string} message \r\n   */\r\n  static raise(message) {\r\n    throw message;\r\n  }\r\n\r\n  /**\r\n   * 関数かどうかをチェック\r\n   * @param {any} obj \r\n   * @returns {boolean}\r\n   */\r\n  static isFunction = (obj) => {\r\n    const toString = Object.prototype.toString;\r\n    const text = toString.call(obj).slice(8, -1).toLowerCase();\r\n    return (text === \"function\" || text === \"asyncfunction\");\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {HTMLElement} element \r\n   * @returns {boolean}\r\n   */\r\n  static isInputableElement(element) {\r\n    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || \r\n      (element instanceof HTMLInputElement && element.type !== \"button\");\r\n  }\r\n\r\n  /**\r\n   * Snake case to kebab case\r\n   * @param {string} text \r\n   * @returns {string}\r\n   */\r\n  static toKebabCase = text => text.replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? \"-\" : \"\") + char.toLowerCase());\r\n\r\n});\n\n//# sourceURL=webpack://quel/./src/utils.js?");
-
-/***/ }),
-
-/***/ "./src/viewModel/Accessor.js":
-/*!***********************************!*\
-  !*** ./src/viewModel/Accessor.js ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils.js */ \"./src/utils.js\");\n/* harmony import */ var _PropertyInfo_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./PropertyInfo.js */ \"./src/viewModel/PropertyInfo.js\");\n\r\n\r\n\r\n\r\n\r\nconst notPrivate = property => property[0] !== \"_\";\r\nconst DEPENDENT_PROP = \"$dependentProps\";\r\n\r\n/**\r\n * \r\n * @param {{prop:string,refProps:string[]}[]} dependentProps\r\n * @returns \r\n */\r\nfunction createDependentMap(dependentProps) {\r\n  const map = new Map();\r\n  Object.entries(dependentProps).forEach(([prop, refProps]) => {\r\n    refProps.forEach(refProp => {\r\n      map.get(refProp)?.push(prop) ?? map.set(refProp, [ prop ]);\r\n    }) \r\n  });\r\n  return map;\r\n}\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * \r\n   * @param {Component} component\r\n   * @param {ViewModel} viewModel \r\n   * @returns {{viewmodel:ViewModel, definedProperties:PropertyInfo[], dependentMap:Map<string,string[]>, cachablePropertyNames:string[]}}\r\n   */\r\n  static convert(component, viewModel) {\r\n    let dependentMap = new Map;\r\n    // $dependentPropsを取得\r\n    if (DEPENDENT_PROP in viewModel) {\r\n      const desc = Object.getOwnPropertyDescriptor(viewModel, DEPENDENT_PROP);\r\n      desc.enumerable = false;\r\n      Object.defineProperty(viewModel, DEPENDENT_PROP, desc);\r\n      dependentMap = createDependentMap(desc.value);\r\n    }\r\n    // プライベートプロパティを列挙不可にする\r\n    for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(viewModel))) {\r\n      if (notPrivate(prop)) continue;\r\n      desc.enumerable = false;\r\n      Object.defineProperty(viewModel, prop, desc);\r\n    }\r\n\r\n    // 普通のプロパティをgetter/setter化する\r\n    const accessorProperties = \r\n      Object.keys(viewModel).filter(notPrivate).map(property => _PropertyInfo_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].create(property));\r\n\r\n    accessorProperties.forEach(property => {\r\n      const value = viewModel[property.name];\r\n      delete viewModel[property.name];\r\n      const desc = property.createPropertyDescriptor(component);\r\n      Object.defineProperty(viewModel, property.name, desc);\r\n\r\n      if (!(property.privateName in viewModel)) {\r\n        const privateDesc = {\r\n          value,\r\n          writable: true, \r\n          enumerable: false, \r\n          configurable: true,\r\n        }\r\n        Object.defineProperty(viewModel, property.privateName, privateDesc);\r\n      }\r\n    });\r\n\r\n    // getterを列挙可にする\r\n    const cachablePropertyNames = [];\r\n    for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(viewModel)))) {\r\n      if (prop === \"constructor\") continue;\r\n      if (_utils_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"].isFunction(desc.value)) continue;\r\n      desc.enumerable = true;\r\n      Object.defineProperty(viewModel, prop, desc);\r\n      cachablePropertyNames.push(prop);\r\n    }\r\n    const definedProperties = Object.keys(viewModel).map(prop => _PropertyInfo_js__WEBPACK_IMPORTED_MODULE_3__[\"default\"].create(prop));\r\n\r\n    // definedPropertiesからdependentMapに追加\r\n    definedProperties.forEach(property => {\r\n      if (property.isPrimitive) return;\r\n      const props = dependentMap.get(property.parentName)?.concat(property.name) ?? [ property.name ];\r\n      dependentMap.set(property.parentName, props);\r\n    });\r\n\r\n    return { viewModel, definedProperties, dependentMap, cachablePropertyNames };\r\n\r\n  }\r\n});\n\n//# sourceURL=webpack://quel/./src/viewModel/Accessor.js?");
-
-/***/ }),
-
-/***/ "./src/viewModel/ArrayProxy.js":
-/*!*************************************!*\
-  !*** ./src/viewModel/ArrayProxy.js ***!
-  \*************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ create)\n/* harmony export */ });\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _thread_Notifier_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../thread/Notifier.js */ \"./src/thread/Notifier.js\");\n/* harmony import */ var _thread_Processor_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../thread/Processor.js */ \"./src/thread/Processor.js\");\n/* harmony import */ var _PropertyInfo_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./PropertyInfo.js */ \"./src/viewModel/PropertyInfo.js\");\n/* harmony import */ var _Symbols_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Symbols.js */ \"./src/viewModel/Symbols.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n/**\r\n * 配列プロキシ\r\n * 更新（追加・削除）があった場合、更新通知を送る機能を付加する\r\n */\r\nclass ArrayHandler {\r\n  /**\r\n   * @type {Component}\r\n   */\r\n  #component;\r\n  /**\r\n   * @type {PropertyInfo}\r\n   */\r\n  #prop;\r\n  /**\r\n   * ループインデックス\r\n   * @type {number[]}\r\n   */\r\n  #indexes;\r\n  /**\r\n   * コンストラクタ\r\n   * @param {Component} component \r\n   * @param {string} prop \r\n   * @param {number[]} indexes\r\n   */\r\n  constructor(component, prop, indexes) {\r\n    this.#component = component;\r\n    this.#prop = prop;\r\n    this.#indexes = indexes;\r\n  }\r\n\r\n  /**\r\n   * getter\r\n   * SymIsProxyはtrueを返す\r\n   * SymRawは元の配列を返す\r\n   * @param {Array} target Array\r\n   * @param {string} prop プロパティ\r\n   * @param {Proxy} receiver 配列プロキシ\r\n   * @returns \r\n   */\r\n  get(target, prop, receiver) {\r\n    if (prop === _Symbols_js__WEBPACK_IMPORTED_MODULE_4__.SYM_GET_IS_PROXY) return true;\r\n    if (prop === _Symbols_js__WEBPACK_IMPORTED_MODULE_4__.SYM_GET_RAW) return target;\r\n    return Reflect.get(target, prop, receiver);\r\n  }\r\n\r\n  /**\r\n   * setter\r\n   * lengthプロパティの場合、変更通知を送信する\r\n   * $onwriteを呼び出したいので、viewModelのプロパティに値をセットする\r\n   * @param {Object} target Array\r\n   * @param {string} prop プロパティ\r\n   * @param {Any} value \r\n   * @param {Proxy} receiver 配列プロキシ\r\n   * @returns \r\n   */\r\n  set(target, prop, value, receiver) {\r\n    Reflect.set(target, prop, value, receiver);\r\n    if (prop === \"length\") {\r\n      const component = this.#component;\r\n      const viewModel = component.viewModel;\r\n      const propName = this.#prop.name;\r\n      component.updateSlot.addProcess(new _thread_Processor_js__WEBPACK_IMPORTED_MODULE_2__.ProcessData(() => {\r\n        viewModel[propName] = target;\r\n      }, viewModel, []));\r\n    }\r\n    return true;\r\n  }\r\n}\r\n\r\n/**\r\n * \r\n * @param {Array<any>} array \r\n * @param {Component} component \r\n * @param {PropertyInfo} prop \r\n * @param {number[]} indexes \r\n * @returns \r\n */\r\nfunction create(array, component, prop, indexes) {\r\n  return new Proxy(array, new ArrayHandler(component, prop, indexes))\r\n}\r\n\n\n//# sourceURL=webpack://quel/./src/viewModel/ArrayProxy.js?");
-
-/***/ }),
-
-/***/ "./src/viewModel/Cache.js":
-/*!********************************!*\
-  !*** ./src/viewModel/Cache.js ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _PropertyInfo_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./PropertyInfo.js */ \"./src/viewModel/PropertyInfo.js\");\n\r\n\r\n/**\r\n * キャッシュのキーは、プロパティとインデックス\r\n */\r\n\r\nclass CacheValue {\r\n  /**\r\n   * @type { boolean }\r\n   */\r\n  dirty = false;\r\n  /**\r\n   * @type { any }\r\n   */\r\n  value;\r\n\r\n  /**\r\n   * \r\n   * @param {any} value \r\n   */\r\n  constructor(value) {\r\n    this.value = value;\r\n  }\r\n}\r\n\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * @type {Map<PropertyInfo,Map<string,CacheValue>>}\r\n   */\r\n  #cacheValueByIndexesByProp = new Map();\r\n  /**\r\n   * @type {PropertyInfo[]}\r\n   */\r\n  #definedProperties;\r\n  /**\r\n   * @type {Map<string,PropertyInfo[]>}\r\n   */\r\n  #definedPropertiesByParentName;\r\n  /**\r\n   * @type {Map<string,PropertyInfo[]>}\r\n   */\r\n  #dependentPropsByName;\r\n\r\n  /**\r\n   * \r\n   * @param {PropertyInfo[]} definedProperties \r\n   */\r\n  constructor(definedProperties) {\r\n    this.#definedProperties = definedProperties;\r\n    this.#definedPropertiesByParentName = definedProperties\r\n    .filter(definedProperty => definedProperty.parentName !== \"\")\r\n    .reduce((map, definedProperty) => {\r\n      map.get(definedProperty.parentName)?.push(definedProperty) ??\r\n      map.set(definedProperty.parentName, [ definedProperty ]);\r\n      return map;\r\n    }, new Map);\r\n    const getDependentProps = (properties, propertyName) => {\r\n      (this.#definedPropertiesByParentName.get(propertyName) ?? []).forEach(definedProperty => {\r\n        properties.push(definedProperty);\r\n        getDependentProps(properties, definedProperty.name);\r\n      });\r\n      return properties;\r\n    }\r\n    this.#dependentPropsByName = \r\n      new Map(definedProperties.map(property => [ property.name, getDependentProps(new Array, property.name) ]));\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {PropertyInfo} property \r\n   * @param {number[]} indexes \r\n   * @returns {any}\r\n   */\r\n  get(property, indexes) {\r\n    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());\r\n    return cacheValue ? (!cacheValue.dirty ? cacheValue.value : undefined) : undefined;\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {PropertyInfo} property \r\n   * @param {number[]} indexes \r\n   * @param {any} value \r\n   */\r\n  set(property, indexes, value) {\r\n    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);\r\n    if (typeof cacheValueByIndexes === \"undefined\") {\r\n      cacheValueByIndexes = new Map();\r\n      this.#cacheValueByIndexesByProp.set(property, cacheValueByIndexes);\r\n    }\r\n    cacheValueByIndexes.set(indexes.toString(), new CacheValue(value));\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {PropertyInfo} property \r\n   * @param {number[]} indexes \r\n   * @returns {boolean}\r\n   */\r\n  has(property, indexes) {\r\n    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());\r\n    return cacheValue ? (!cacheValue.dirty) : false;\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {PropertyInfo} property \r\n   * @param {number[]} indexes \r\n   */\r\n  delete(property, indexes) {\r\n    const indexesString = indexes.slice(0, property.loopLevel).toString();\r\n    const indexesStarts = indexesString + \",\";\r\n    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);\r\n    if (cacheValueByIndexes) {\r\n      for(const indexes of cacheValueByIndexes.keys()) {\r\n        if (indexesString === \"\" || indexes === indexesString || indexes.startsWith(indexesStarts)) {\r\n          cacheValueByIndexes.get(indexes).dirty = true;\r\n        }\r\n      }\r\n    }\r\n    const dependentProps = this.#dependentPropsByName.get(property.name) ?? []\r\n    dependentProps.forEach(property => {\r\n      const cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);\r\n      if (typeof cacheValueByIndexes === \"undefined\") return;\r\n      for(const indexes of cacheValueByIndexes.keys()) {\r\n        if (indexesString === \"\" || indexes === indexesString || indexes.startsWith(indexesStarts)) {\r\n          cacheValueByIndexes.get(indexes).dirty = true;;\r\n        }\r\n      }\r\n    });\r\n  }\r\n\r\n  clear() {\r\n    this.#cacheValueByIndexesByProp.clear();\r\n  }\r\n});\n\n//# sourceURL=webpack://quel/./src/viewModel/Cache.js?");
-
-/***/ }),
-
-/***/ "./src/viewModel/Globals.js":
-/*!**********************************!*\
-  !*** ./src/viewModel/Globals.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _global_Data_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../global/Data.js */ \"./src/global/Data.js\");\n\r\n\r\n\r\nclass Handler {\r\n  /**\r\n   * @type {Component}\r\n   */\r\n  component;\r\n  /**\r\n   * \r\n   * @param {Component} component \r\n   */\r\n  constructor(component) {\r\n    this.component = component;\r\n  }\r\n\r\n  /**\r\n   * @type {Set<string>}\r\n   */\r\n  setOfBindParams = new Set;\r\n\r\n  boundFromComponent(globalProperty) {\r\n    _global_Data_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].globalBoundFromComponent(this.component, globalProperty);\r\n    this.setOfBindParams.add(globalProperty);\r\n\r\n  }\r\n  get(target, prop, receiver) {\r\n    if (!this.setOfBindParams.has(prop)) {\r\n      this.boundFromComponent(prop);\r\n    }\r\n    return Reflect.get(target, prop, target);\r\n  }\r\n\r\n  set(target, prop, value, receiver) {\r\n    if (!this.setOfBindParams.has(prop)) {\r\n      this.boundFromComponent(prop);\r\n    }\r\n    Reflect.set(target, prop, value, target);\r\n    return true;\r\n  }\r\n}\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {\r\n  /**\r\n   * \r\n   * @param {Component} component \r\n   * @returns \r\n   */\r\n  static create(component) {\r\n    return new Proxy(_global_Data_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].data, new Handler(component))\r\n  }\r\n\r\n});\n\n//# sourceURL=webpack://quel/./src/viewModel/Globals.js?");
-
-/***/ }),
-
-/***/ "./src/viewModel/PropertyInfo.js":
-/*!***************************************!*\
-  !*** ./src/viewModel/PropertyInfo.js ***!
-  \***************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ PropertyInfo)\n/* harmony export */ });\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _Symbols_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_2__);\n\r\n\r\n\r\n\r\nclass PropertyInfo {\r\n\r\n  name;\r\n  elements;\r\n  loopLevel;\r\n  parentName;\r\n  lastElement;\r\n  regexp;\r\n  isPrimitive;\r\n  privateName;\r\n  isObject;\r\n  isLoop;\r\n  isNotPrimitive;\r\n\r\n  constructor(name) {\r\n    this.name = name;\r\n    this.elements = name.split(\".\");\r\n    this.loopLevel = this.elements.reduce((count, element) => count + ((element === \"*\") ? 1 : 0), 0);\r\n    this.parentName = this.elements.slice(0, -1).join(\".\");\r\n    this.lastElement = this.elements.at(-1) ?? null;\r\n    this.regexp = (this.loopLevel > 0) ? new RegExp(\"^\" + name.replaceAll(\"*\", \"(\\\\w+)\").replaceAll(\".\", \"\\\\.\") + \"$\") : null;\r\n    this.isPrimitive = this.elements.length === 1 && this.loopLevel === 0;\r\n    this.privateName = this.isPrimitive ? (\"_\" + name) : null;\r\n    this.isObject = this.elements.length > 1 && this.loopLevel === 0;\r\n    this.isLoop = this.elements.length > 1 && this.loopLevel > 0;\r\n    this.isNotPrimitive = ! this.isPrimitive ;\r\n  }\r\n  get parentProperty() {\r\n    return PropertyInfo.create(this.parentName);\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {ViewModel} viewModel \r\n   * @returns \r\n   */\r\n  primitiveGetter(viewModel) {\r\n    return viewModel[this.privateName];\r\n  }\r\n  /**\r\n   * \r\n   * @param {ViewModel} viewModel \r\n   * @param {any} value \r\n   * @returns \r\n   */\r\n  primitiveSetter(viewModel, value) {\r\n    viewModel[this.privateName] = value;\r\n    return true;\r\n  }\r\n  /**\r\n   * \r\n   * @param {ViewModel} viewModel \r\n   * @returns \r\n   */\r\n  nonPrimitiveGetter(viewModel) {\r\n    const { parentName, loopLevel, lastElement } = this;\r\n    const index = (lastElement === \"*\") ? viewModel[_Symbols_js__WEBPACK_IMPORTED_MODULE_1__.SYM_GET_INDEXES][loopLevel - 1] : lastElement;\r\n    return viewModel[parentName][index];\r\n  }\r\n  /**\r\n   * \r\n   * @param {ViewModel} viewModel \r\n   * @param {any} value \r\n   * @returns \r\n   */\r\n  nonPrimitiveSetter(viewModel, value) {\r\n    const { parentName, loopLevel, lastElement } = this;\r\n    const index = (lastElement === \"*\") ? viewModel[_Symbols_js__WEBPACK_IMPORTED_MODULE_1__.SYM_GET_INDEXES][loopLevel - 1] : lastElement;\r\n    viewModel[parentName][index] = value;\r\n    return true;\r\n  }\r\n  /**\r\n   * \r\n   * @param {Component} component \r\n   * @returns {PropertyDescriptor}\r\n   */\r\n  createPropertyDescriptor(component) {\r\n    return {\r\n      get : this.isPrimitive ?\r\n        () => Reflect.apply(this.primitiveGetter, this, [component.viewModel]) : \r\n        () => Reflect.apply(this.nonPrimitiveGetter, this, [component.viewModel]),\r\n      set : this.isPrimitive ?\r\n        value => Reflect.apply(this.primitiveSetter, this, [component.viewModel, value]) : \r\n        value => Reflect.apply(this.nonPrimitiveSetter, this, [component.viewModel, value]),\r\n      enumerable: true, \r\n      configurable: true,\r\n    }\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {ViewModel} viewModel \r\n   * @param {number[]} indexes \r\n   * @returns {number[][]}\r\n   */\r\n  expand(viewModel, indexes) {\r\n    if (this.loopLevel === indexes.length) {\r\n      return [ indexes ];\r\n    } else if (this.loopLevel < indexes.length) {\r\n      return [ indexes.slice(0, this.loopLevel) ];\r\n    } else {\r\n      /**\r\n       * \r\n       * @param {string} parentName \r\n       * @param {number} elementIndex \r\n       * @param {number[]} loopIndexes \r\n       * @returns {number[][]}\r\n       */\r\n      const traverse = (parentName, elementIndex, loopIndexes) => {\r\n        const parentNameDot = parentName !== \"\" ? (parentName + \".\") : parentName;\r\n        const element = this.elements[elementIndex];\r\n        const isTerminate = (this.elements.length - 1) === elementIndex;\r\n        let retValues;\r\n        if (element === \"*\") {\r\n          if (loopIndexes.length < indexes.length) {\r\n            retValues = isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :\r\n              traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));\r\n          } else {\r\n            retValues = (viewModel[_Symbols_js__WEBPACK_IMPORTED_MODULE_1__.SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).flatMap((value, index) => {\r\n              return isTerminate ? [ loopIndexes.concat(index) ] :\r\n                traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));\r\n            })\r\n          }\r\n        } else {\r\n          retValues = isTerminate ? [ loopIndexes ] : \r\n           traverse(parentNameDot + element, elementIndex + 1, loopIndexes);\r\n        }\r\n        return retValues;\r\n\r\n      };\r\n      const listOfIndexes = traverse(\"\", 0, []);\r\n      return listOfIndexes;\r\n\r\n    }\r\n\r\n  }\r\n\r\n  /**\r\n   * @type {Map<string,PropertyInfo>}\r\n   */\r\n  static #propertyInfoByProp = new Map;\r\n  static create(prop) {\r\n    if (prop === \"\") return undefined;\r\n    let propertyInfo = this.#propertyInfoByProp.get(prop);\r\n    if (typeof propertyInfo === \"undefined\") {\r\n      propertyInfo = new PropertyInfo(prop);\r\n      this.#propertyInfoByProp.set(prop, propertyInfo);\r\n    }\r\n    return propertyInfo;\r\n  }\r\n  \r\n}\n\n//# sourceURL=webpack://quel/./src/viewModel/PropertyInfo.js?");
-
-/***/ }),
-
-/***/ "./src/viewModel/Proxy.js":
-/*!********************************!*\
-  !*** ./src/viewModel/Proxy.js ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ create)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _main_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../main.js */ \"./src/main.js\");\n/* harmony import */ var _Symbols_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Symbols.js */ \"./src/viewModel/Symbols.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n/* harmony import */ var _Accessor_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Accessor.js */ \"./src/viewModel/Accessor.js\");\n/* harmony import */ var _PropertyInfo_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./PropertyInfo.js */ \"./src/viewModel/PropertyInfo.js\");\n/* harmony import */ var _thread_Processor_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../thread/Processor.js */ \"./src/thread/Processor.js\");\n/* harmony import */ var _thread_Notifier_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../thread/Notifier.js */ \"./src/thread/Notifier.js\");\n/* harmony import */ var _Cache_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./Cache.js */ \"./src/viewModel/Cache.js\");\n/* harmony import */ var _ArrayProxy_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ArrayProxy.js */ \"./src/viewModel/ArrayProxy.js\");\n/* harmony import */ var _Globals_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./Globals.js */ \"./src/viewModel/Globals.js\");\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nconst MAX_INDEXES_LEVEL = 8;\r\nconst CONTEXT_INDEXES = [...Array(MAX_INDEXES_LEVEL)].map((content,index) => \"$\" + (index + 1));\r\nconst SET_OF_CONTEXT_INDEXES = new Set(CONTEXT_INDEXES);\r\nconst CONTEXT_COMPONENT = \"$component\";\r\nconst CONTEXT_DATA = \"$data\";\r\nconst CONTEXT_OPEN_DIALOG = \"$openDialog\";\r\nconst CONTEXT_CLOSE_DIALOG = \"$closeDialog\";\r\nconst CONTEXT_NOTIFY = \"$notify\";\r\nconst CONTEXT_GLOBALS = \"$globals\";\r\nconst CONTEXT_PARAMS = [CONTEXT_COMPONENT, CONTEXT_DATA, CONTEXT_OPEN_DIALOG, CONTEXT_CLOSE_DIALOG, CONTEXT_NOTIFY, CONTEXT_GLOBALS];\r\nconst SET_OF_CONTEXT_ALL_PARAMS = new Set(CONTEXT_INDEXES.concat(CONTEXT_PARAMS));\r\n\r\n/**\r\n * 配列プロキシを取得\r\n * 配列プロキシのプロキシといった重複をさけるため、\r\n * いったん元の配列を求めてからプロキシにする\r\n * @param {Component} component \r\n * @param {PropertyInfo} prop \r\n * @param {number[]} indexes\r\n * @param {any} value \r\n * @returns \r\n */\r\nconst wrapArray = (component, prop, indexes, value) => {\r\n  value = value?.[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_GET_IS_PROXY] ? value[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_GET_RAW] : value;\r\n  return (value instanceof Array) ? (0,_ArrayProxy_js__WEBPACK_IMPORTED_MODULE_9__[\"default\"])(value, component, prop, indexes) : value;\r\n}\r\n\r\nclass Handler {\r\n  /**\r\n   * @type {Cache}\r\n   */\r\n  cache;\r\n  /**\r\n   * @type {Map<string,{indexes:number[],propertyInfo:PropertyInfo}>}\r\n   */\r\n  propertyInfoAndIndexesByProp = new Map();\r\n  /**\r\n   * @type {number[][]}\r\n   */\r\n  stackIndexes = [];\r\n  /**\r\n   * @type {Component}\r\n   */\r\n  component;\r\n  /**\r\n   * @type {Map<string,PropertyInfo>}\r\n   */\r\n  definedPropertyByProp = new Map;\r\n  /**\r\n   * @type {PropertyInfo[]}\r\n   */\r\n  loopProperties = [];\r\n\r\n  /**\r\n   * @type {Map<string,string[]>}\r\n   */\r\n  dependentMap;\r\n  /**\r\n   * @type {Map<string,Set<string>>}\r\n   */\r\n  setOfDependentPropNamesByPropName = new Map;\r\n  /**\r\n   * @type {string[]}\r\n   */\r\n  cachablePropertyNames = [];\r\n  setOfCachablePropertyNames = new Set;\r\n  /**\r\n   * \r\n   */\r\n  globals;\r\n  /**\r\n   * \r\n   * @param {Component} component \r\n   * @param {PropertyInfo[]} definedProperties\r\n   * @param {Map<string,string[]>} dependentMap\r\n   * @param {string[]} cachablePropertyNames\r\n   */\r\n  constructor(component, definedProperties, dependentMap, cachablePropertyNames) {\r\n    this.component = component;\r\n    this.definedPropertyByProp = new Map(definedProperties.map(property => ([property.name, property])));\r\n    this.loopProperties = definedProperties.filter(property => property.isLoop);\r\n    this.dependentMap = dependentMap;\r\n    this.cachablePropertyNames = cachablePropertyNames;\r\n    this.setOfCachablePropertyNames = new Set(cachablePropertyNames);\r\n    this.cache = new _Cache_js__WEBPACK_IMPORTED_MODULE_8__[\"default\"](definedProperties);\r\n    const getDependentProps = (setOfPropertyNames, propertyName) => {\r\n      (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {\r\n        if (!setOfPropertyNames.has(refPropertyName)) {\r\n          setOfPropertyNames.add(refPropertyName);\r\n          getDependentProps(setOfPropertyNames, refPropertyName);\r\n        }\r\n      });\r\n      return setOfPropertyNames;\r\n    };\r\n    this.setOfDependentPropNamesByPropName = \r\n      new Map(Array.from(dependentMap.keys()).map(propertyName => [propertyName, getDependentProps(new Set, propertyName)]));\r\n    this.globals = _Globals_js__WEBPACK_IMPORTED_MODULE_10__[\"default\"].create(component);\r\n\r\n  }\r\n\r\n  get lastIndexes() {\r\n    return this.stackIndexes[this.stackIndexes.length - 1] ?? [];\r\n  }\r\n\r\n  async [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_INIT](target, receiver) {\r\n    if (!(\"$oninit\" in target)) return;\r\n    return await Reflect.apply(target[\"$oninit\"], receiver, []);\r\n  }\r\n\r\n  async [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_CONNECT](target, receiver) {\r\n    if (!(\"$onconnect\" in target)) return;\r\n    return await Reflect.apply(target[\"$onconnect\"], receiver, []);\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {string} prop \r\n   * @param {number[]} indexes \r\n   * @param {*} target \r\n   * @param {*} receiver \r\n   */\r\n  [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_WRITE](prop, indexes, target, receiver) {\r\n    if (\"$onwrite\" in target) {\r\n      const { component } = this;\r\n      const process = new _thread_Processor_js__WEBPACK_IMPORTED_MODULE_6__.ProcessData(target[\"$onwrite\"], receiver, [ prop, indexes ]);\r\n      component.updateSlot.addProcess(process);\r\n    }\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {ViewModel} target \r\n   * @param {PropertyInfo} prop \r\n   * @param {Proxy<ViewModel>} receiver \r\n   */\r\n  #getDefinedPropertyValue(target, prop, receiver) {\r\n    const { component, lastIndexes, cache, setOfCachablePropertyNames } = this;\r\n    const indexes = lastIndexes.slice(0, prop.loopLevel);\r\n    let value;\r\n    if (setOfCachablePropertyNames.has(prop.name)) {\r\n      const cacheValue = cache.get(prop, indexes);\r\n      if (typeof cacheValue === \"undefined\") {\r\n        value = Reflect.get(target, prop.name, receiver);\r\n        cache.set(prop, indexes, value);\r\n      } else {\r\n        value = cacheValue;\r\n      }\r\n    } else {\r\n      value = Reflect.get(target, prop.name, receiver);\r\n    }\r\n    return wrapArray(component, prop, indexes, value);\r\n  }\r\n\r\n  [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](prop, indexes, target, receiver) {\r\n    let value;\r\n    this.stackIndexes.push(indexes);\r\n    try {\r\n      value = receiver[prop];\r\n    } finally {\r\n      this.stackIndexes.pop();\r\n    }\r\n    return value;\r\n  }\r\n\r\n  [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes, target, receiver) {\r\n    const { dependentMap, setOfDependentPropNamesByPropName, component } = this;\r\n    if (dependentMap.has(propertyName)) {\r\n      const dependentPropNames = setOfDependentPropNamesByPropName.get(propertyName) ?? new Set;\r\n      dependentPropNames.forEach(definedPropertyName => {\r\n        \r\n        if (definedPropertyName.startsWith(\"$data\")) {\r\n          component.updateSlot.addNotify(new _thread_Notifier_js__WEBPACK_IMPORTED_MODULE_7__.NotifyData(component, definedPropertyName, []));\r\n        } else {\r\n          const definedProperty = _PropertyInfo_js__WEBPACK_IMPORTED_MODULE_5__[\"default\"].create(definedPropertyName);\r\n          if (indexes.length < definedProperty.loopLevel) {\r\n            const listOfIndexes = definedProperty.expand(receiver, indexes);\r\n            listOfIndexes.forEach(depIndexes => {\r\n              component.updateSlot.addNotify(new _thread_Notifier_js__WEBPACK_IMPORTED_MODULE_7__.NotifyData(component, definedProperty.name, depIndexes));\r\n            });\r\n          } else {\r\n            const depIndexes = indexes.slice(0, definedProperty.loopLevel);\r\n            component.updateSlot.addNotify(new _thread_Notifier_js__WEBPACK_IMPORTED_MODULE_7__.NotifyData(component, definedProperty.name, depIndexes));\r\n          }\r\n  \r\n        }\r\n      });\r\n    }\r\n  }\r\n  /**\r\n   * \r\n   * @param {ViewModel} target \r\n   * @param {PropertyInfo} prop \r\n   * @param {any} value \r\n   * @param {Proxy<ViewModel>} receiver \r\n   */\r\n  #setDefinedPropertyValue(target, prop, value, receiver) {\r\n    const { component, lastIndexes, cache } = this;\r\n    value = value?.[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_GET_IS_PROXY] ? value[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_GET_RAW] : value;\r\n    const indexes = lastIndexes.slice(0, prop.loopLevel);\r\n    Reflect.set(target, prop.name, value, receiver);\r\n\r\n    component.updateSlot.addNotify(new _thread_Notifier_js__WEBPACK_IMPORTED_MODULE_7__.NotifyData(component, prop.name, indexes));\r\n\r\n    this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](prop.name, indexes, target, receiver);\r\n\r\n    this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);\r\n\r\n    return true;\r\n  }\r\n\r\n  [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver) {\r\n    this.stackIndexes.push(indexes);\r\n    try {\r\n      receiver[prop] = value;\r\n    } finally {\r\n      this.stackIndexes.pop();\r\n    }\r\n    return true;\r\n  }\r\n\r\n  async [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_CALL](prop, indexes, event, target, receiver) {\r\n    this.stackIndexes.push(indexes);\r\n    try {\r\n      await Reflect.apply(target[prop], receiver, [event, ...indexes]);\r\n    } finally {\r\n      this.stackIndexes.pop();\r\n    }\r\n  }\r\n\r\n  [_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_CLEAR_CACHE](target, receiver) {\r\n    this.cache.clear();\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {string} prop \r\n   * @returns {{loopProperty:PropertyInfo,indexes:number[]}}\r\n   */\r\n  #getLoopPropertyAndIndexesFromPropertyName(prop) {\r\n    let { loopProperty, indexes } = this.propertyInfoAndIndexesByProp.get(prop) ?? {};\r\n    if (typeof loopProperty === \"undefined\") {\r\n      for(const property of this.loopProperties) {\r\n        const result = property.regexp.exec(prop);\r\n        if (result) {\r\n          indexes = result.slice(1).map(Number);\r\n          loopProperty = property;\r\n          this.propertyInfoAndIndexesByProp.set(prop, { loopProperty, indexes });\r\n          break;\r\n        }\r\n      }\r\n    }\r\n    return { loopProperty, indexes };\r\n  }\r\n  /**\r\n   * \r\n   * @param {ViewModel} target \r\n   * @param {string} prop \r\n   * @param {Proxy<ViewModel>} receiver \r\n   * @returns \r\n   */\r\n  get(target, prop, receiver) {\r\n    if (typeof prop === \"symbol\") {\r\n      const { lastIndexes, dependentMap } = this;\r\n      switch(prop) {\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET:\r\n          return (prop, indexes) => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET], this, [prop, indexes, target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET:\r\n          return (prop, indexes, value) => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET], this, [prop, indexes, value, target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_GET_INDEXES:\r\n          return lastIndexes;\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_CALL:\r\n          return (prop, indexes, event) => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_CALL], this, [prop, indexes, event, target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_INIT:\r\n          return () => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_INIT], this, [target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_WRITE:\r\n          return (prop, indexes) => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_WRITE], this, [prop, indexes, target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_CONNECT:\r\n          return () => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_CONNECT], this, [target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_CLEAR_CACHE:\r\n          return () => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_CLEAR_CACHE], this, [target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS:\r\n          return (prop, indexes) => \r\n            Reflect.apply(this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS], this, [prop, indexes, target, receiver]);\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_GET_TARGET:\r\n          return target;\r\n        case _Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_GET_DEPENDENT_MAP:\r\n          return dependentMap;\r\n      }\r\n    }\r\n    if (SET_OF_CONTEXT_ALL_PARAMS.has(prop)) {\r\n      const { lastIndexes, component } = this;\r\n      if (SET_OF_CONTEXT_INDEXES.has(prop)) {\r\n        return lastIndexes[Number(prop.slice(1)) - 1];\r\n      } else {\r\n        switch(prop) {\r\n          case CONTEXT_COMPONENT:\r\n            return component;\r\n          case CONTEXT_DATA:\r\n            return component.data;\r\n          case CONTEXT_OPEN_DIALOG:\r\n            return async (name, data, attributes) => {\r\n              const dialog = document.createElement(name);\r\n              Object.entries(attributes ?? {}).forEach(([key, value]) => {\r\n                dialog.setAttribute(key, value);\r\n              });\r\n              dialog.data[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_BIND_DATA](data ?? {});\r\n              document.body.appendChild(dialog);\r\n              return dialog.alivePromise;\r\n            };\r\n          case CONTEXT_CLOSE_DIALOG:\r\n            return (data) => {\r\n              Object.assign(component.data, data);\r\n              component.parentNode.removeChild(component);\r\n            };\r\n          case CONTEXT_NOTIFY:\r\n            return (prop, indexes) => {\r\n              component.updateSlot.addNotify(new _thread_Notifier_js__WEBPACK_IMPORTED_MODULE_7__.NotifyData(component, prop, indexes));\r\n            };\r\n          case CONTEXT_GLOBALS:\r\n            return this.globals;\r\n        }\r\n      }\r\n    }\r\n\r\n    const defindedProperty = this.definedPropertyByProp.get(prop);\r\n    if (defindedProperty) {\r\n      // すでに、indexesはセットされている\r\n      return this.#getDefinedPropertyValue(target, defindedProperty, receiver);\r\n    } else {\r\n      if (prop[0] === \"@\") {\r\n        const propName = prop.slice(1);\r\n        const defindedProperty = this.definedPropertyByProp.get(propName);\r\n        if (defindedProperty) {\r\n          return defindedProperty.expand(receiver, []).map(indexes => {\r\n            const value = this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](propName, indexes, target, receiver);\r\n            return [ value, indexes];\r\n          });\r\n        }\r\n      }\r\n      if (prop[0] !== \"_\") {\r\n        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);\r\n        if (loopProperty && indexes) {\r\n          return this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_GET](loopProperty.name, indexes, target, receiver);\r\n        }\r\n      }\r\n      return Reflect.get(target, prop, receiver);\r\n    }\r\n  }\r\n\r\n  /**\r\n   * \r\n   * @param {ViewModel} target \r\n   * @param {string} prop \r\n   * @param {any} value \r\n   * @param {Proxy<ViewModel>} receiver \r\n   */\r\n  set(target, prop, value, receiver) {\r\n    const defindedProperty = this.definedPropertyByProp.get(prop);\r\n    if (defindedProperty) {\r\n      return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);\r\n    } else {\r\n      if (prop[0] === \"@\") {\r\n        const propName = prop.slice(1);\r\n        const defindedProperty = this.definedPropertyByProp.get(propName);\r\n        if (defindedProperty) {\r\n          defindedProperty.expand(receiver, []).forEach(indexes => {\r\n            this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](propName, indexes, value, target, receiver);\r\n          });\r\n          return true;\r\n        }\r\n      }\r\n      if (prop[0] !== \"_\") {\r\n        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);\r\n        if (loopProperty && indexes) {\r\n          this[_Symbols_js__WEBPACK_IMPORTED_MODULE_2__.SYM_CALL_DIRECT_SET](loopProperty.name, indexes, value, target, receiver);\r\n          return true;\r\n        }\r\n      }\r\n      Reflect.set(target, prop, value, receiver);\r\n      return true;\r\n    }\r\n  }\r\n}\r\n\r\n/**\r\n * \r\n * @param {Component} component\r\n * @param {ViewModel} origViewModel \r\n * @returns {Proxy<ViewModel>}\r\n */\r\nfunction create(component, origViewModel) {\r\n  const { viewModel, definedProperties, dependentMap, cachablePropertyNames } = _Accessor_js__WEBPACK_IMPORTED_MODULE_4__[\"default\"].convert(component, origViewModel);\r\n  return new Proxy(viewModel, new Handler(component, definedProperties, dependentMap, cachablePropertyNames));\r\n\r\n}\n\n//# sourceURL=webpack://quel/./src/viewModel/Proxy.js?");
-
-/***/ }),
-
-/***/ "./src/viewModel/Symbols.js":
-/*!**********************************!*\
-  !*** ./src/viewModel/Symbols.js ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"SYM_CALL_BIND_DATA\": () => (/* binding */ SYM_CALL_BIND_DATA),\n/* harmony export */   \"SYM_CALL_BIND_PROPERTY\": () => (/* binding */ SYM_CALL_BIND_PROPERTY),\n/* harmony export */   \"SYM_CALL_CLEAR_CACHE\": () => (/* binding */ SYM_CALL_CLEAR_CACHE),\n/* harmony export */   \"SYM_CALL_CONNECT\": () => (/* binding */ SYM_CALL_CONNECT),\n/* harmony export */   \"SYM_CALL_DIRECT_CALL\": () => (/* binding */ SYM_CALL_DIRECT_CALL),\n/* harmony export */   \"SYM_CALL_DIRECT_GET\": () => (/* binding */ SYM_CALL_DIRECT_GET),\n/* harmony export */   \"SYM_CALL_DIRECT_SET\": () => (/* binding */ SYM_CALL_DIRECT_SET),\n/* harmony export */   \"SYM_CALL_INIT\": () => (/* binding */ SYM_CALL_INIT),\n/* harmony export */   \"SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS\": () => (/* binding */ SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS),\n/* harmony export */   \"SYM_CALL_WRITE\": () => (/* binding */ SYM_CALL_WRITE),\n/* harmony export */   \"SYM_GET_DEPENDENT_MAP\": () => (/* binding */ SYM_GET_DEPENDENT_MAP),\n/* harmony export */   \"SYM_GET_INDEXES\": () => (/* binding */ SYM_GET_INDEXES),\n/* harmony export */   \"SYM_GET_IS_PROXY\": () => (/* binding */ SYM_GET_IS_PROXY),\n/* harmony export */   \"SYM_GET_RAW\": () => (/* binding */ SYM_GET_RAW),\n/* harmony export */   \"SYM_GET_TARGET\": () => (/* binding */ SYM_GET_TARGET)\n/* harmony export */ });\n/* harmony import */ var _myname_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../myname.js */ \"./src/myname.js\");\n\r\n\r\nconst SYM_GET_INDEXES = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.indexes`);\r\nconst SYM_GET_TARGET = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.target`);\r\nconst SYM_GET_DEPENDENT_MAP = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.dependentMap`);\r\nconst SYM_CALL_DIRECT_GET = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.directGet`);\r\nconst SYM_CALL_DIRECT_SET = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.directSet`);\r\nconst SYM_CALL_DIRECT_CALL = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.directCall`);\r\nconst SYM_CALL_INIT = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.init`);\r\nconst SYM_CALL_CONNECT = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.connect`);\r\nconst SYM_CALL_WRITE = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.write`);\r\nconst SYM_CALL_CLEAR_CACHE = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.clearCache`);\r\nconst SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:viewModel.notifyForDependentProps`);\r\n\r\nconst SYM_GET_IS_PROXY = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:arrayHandler.isProxy`);\r\nconst SYM_GET_RAW = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:arrayHandler.raw`);\r\n\r\nconst SYM_CALL_BIND_DATA = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:componentData.bindData`);\r\nconst SYM_CALL_BIND_PROPERTY = Symbol.for(`${_myname_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]}:componentData.bindProperty`);\r\n\n\n//# sourceURL=webpack://quel/./src/viewModel/Symbols.js?");
-
-/***/ }),
-
-/***/ "./src/view/View.js":
-/*!**************************!*\
-  !*** ./src/view/View.js ***!
-  \**************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ View)\n/* harmony export */ });\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../types.js */ \"./src/types.js\");\n/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_types_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _bind_Binder_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../bind/Binder.js */ \"./src/bind/Binder.js\");\n/* harmony import */ var _bind_Binds_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../bind/Binds.js */ \"./src/bind/Binds.js\");\n/* harmony import */ var _component_Component_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../component/Component.js */ \"./src/component/Component.js\");\n\r\n\r\n\r\n\r\n\r\nclass View {\r\n  /**\r\n   * @type {HTMLTemplateElement}\r\n   */\r\n  template;\r\n  /**\r\n   * @type {HTMLElement}\r\n   */\r\n  rootElement;\r\n\r\n  /**\r\n   * \r\n   * @param {HTMLTemplateElement} template \r\n   * @param {HTMLElement} rootElement \r\n   */\r\n  constructor(template, rootElement) {\r\n    this.template = template;\r\n    this.rootElement = rootElement;\r\n  }\r\n\r\n  /**\r\n   * @param {Component} component\r\n   * @returns {Binds}\r\n   */\r\n  render(component) {\r\n    const content = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html\r\n    const binds = new _bind_Binds_js__WEBPACK_IMPORTED_MODULE_2__[\"default\"](_bind_Binder_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"].bind(this.template, content, component));\r\n    this.rootElement.appendChild(content);\r\n    return binds;\r\n  }\r\n\r\n}\n\n//# sourceURL=webpack://quel/./src/view/View.js?");
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module can't be inlined because the eval devtool is used.
-/******/ 	var __webpack_exports__ = __webpack_require__("./src/export.js");
-/******/ 	
-/******/ })()
-;
+const getNodeRoute = node => {
+  let routeIndexes = [];
+  while(node.parentNode != null) {
+    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
+    node = node.parentNode;
+  }
+  return routeIndexes;
+};
+
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns 
+ */
+const isCommentNode = node => node instanceof Comment && node.textContent[0] === "@" && node.textContent[1] === "@" && node.textContent[2] !== "@";
+/**
+ * 
+ * @param {Node} node 
+ * @returns 
+ */
+const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
+
+class Selector {
+  /**
+   * @type {Map<HTMLTemplateElement, number[][]>}
+   */
+  static listOfRouteIndexesByTemplate = new Map();
+  /**
+   * 
+   * @param {HTMLTemplateElement} template 
+   * @param {HTMLElement} rootElement
+   * @returns {Node[]}
+   */
+  static getTargetNodes(template, rootElement) {
+    /**
+     * @type {Node[]}
+     */
+    let nodes;
+
+    if (this.listOfRouteIndexesByTemplate.has(template)) {
+      // キャッシュがある場合
+      // querySelectorAllをせずにNodeの位置を特定できる
+      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
+      nodes = listOfRouteIndexes.map(routeIndexes => routeIndexes.reduce((node, routeIndex) => node.childNodes[routeIndex], rootElement));
+    } else {
+      // data-bindを持つノード、コメントのノードを取得しリストを作成する
+      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+
+      // ルートから、nodeのインデックスの順番をキャッシュに覚えておく
+      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
+    }
+    return nodes;
+
+  }
+
+}
+
+class BindDomIf {
+  /**
+   * 
+   * @param {Node} node
+   * @param {Component} component
+   * @param {string[]} indexes
+   * @returns {BindInfo[]} 
+   */
+  static bind(node, component, indexes) { }
+}
+
+const name = "quel";
+
+const SYM_GET_INDEXES = Symbol.for(`${name}:viewModel.indexes`);
+const SYM_GET_TARGET = Symbol.for(`${name}:viewModel.target`);
+const SYM_GET_DEPENDENT_MAP = Symbol.for(`${name}:viewModel.dependentMap`);
+const SYM_CALL_DIRECT_GET = Symbol.for(`${name}:viewModel.directGet`);
+const SYM_CALL_DIRECT_SET = Symbol.for(`${name}:viewModel.directSet`);
+const SYM_CALL_DIRECT_CALL = Symbol.for(`${name}:viewModel.directCall`);
+const SYM_CALL_INIT = Symbol.for(`${name}:viewModel.init`);
+const SYM_CALL_CONNECT = Symbol.for(`${name}:viewModel.connect`);
+const SYM_CALL_WRITE = Symbol.for(`${name}:viewModel.write`);
+const SYM_CALL_CLEAR_CACHE = Symbol.for(`${name}:viewModel.clearCache`);
+const SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS = Symbol.for(`${name}:viewModel.notifyForDependentProps`);
+
+const SYM_GET_IS_PROXY = Symbol.for(`${name}:arrayHandler.isProxy`);
+const SYM_GET_RAW = Symbol.for(`${name}:arrayHandler.raw`);
+
+const SYM_CALL_BIND_DATA = Symbol.for(`${name}:componentData.bindData`);
+const SYM_CALL_BIND_PROPERTY = Symbol.for(`${name}:componentData.bindProperty`);
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLTemplateElement}
+ */
+const toHTMLTemplateElement$1 = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
+
+class TemplateChild {
+  /**
+   * @type {BindInfo[]}
+   */
+  binds;
+  /**
+   * @type {Node[]}
+   */
+  childNodes;
+  /**
+   * @type {DocumentFragment}
+   */
+  fragment;
+  /**
+   * @type {Node}
+   */
+  get lastNode() {
+    return this.childNodes[this.childNodes.length - 1];
+  }
+  /**
+   * @type {node[]|DocumentFragment}
+   */
+  get nodesForAppend() {
+    return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
+  }
+  /**
+   * @type {Set<Node>}
+   */
+  get setOfNodes() {
+    return new Set(this.childNodes);
+  }
+
+  /**
+   * 
+   */
+  removeFromParent() {
+    this.childNodes.forEach(node => node.parentNode?.removeChild(node));
+    this.binds.forEach(bind => bind.removeFromParent());
+  }
+
+  /**
+   * 
+   */
+  updateNode() {
+    this.binds.forEach(bind => {
+      bind.updateNode();
+    });
+  }
+
+  /**
+   * 
+   * @param {number} index 
+   * @param {number} diff 
+   */
+  changeIndex(index, diff) {
+    this.binds.forEach(bind => bind.changeIndexes(index, diff));
+  }
+
+  /**
+   * 
+   * @param {Template} templateBind 
+   * @param {number[]} indexes 
+   * @returns {TemplateChild}
+   */
+  static create(templateBind, indexes) {
+    const {component, template} = templateBind;
+    const rootElement = document.importNode(template.content, true);
+    const binds = Binder.bind(template, rootElement, component, indexes);
+    const childNodes = Array.from(rootElement.childNodes);
+    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement });
+  }
+}
+
+class Template extends BindInfo {
+  get node() {
+    return super.node;
+  }
+  set node(node) {
+    const template = toHTMLTemplateElement$1(node);
+    const comment = document.createComment(`template ${template.dataset["bind"]}`);
+    template.parentNode.replaceChild(comment, template);
+    super.node = comment;
+    this.template = template;
+  }
+  /**
+   * @type {TemplateChild[]}
+   */
+  templateChildren = [];
+  /**
+   * @type {HTMLTemplateElement}
+   */
+  #template;
+  get template() {
+    return this.#template;
+  }
+  set template(value) {
+    this.#template = value;
+  }
+
+  updateNode() {
+    const newValue = (this.nodeProperty === "loop") ? this.expandLoop() : this.expandIf();
+    this.lastViewModelValue = (newValue instanceof Array) ? newValue.slice() : newValue;
+  }
+  
+  /**
+   * 
+   */
+  removeFromParent() {
+    this.templateChildren.forEach(child => child.removeFromParent());
+/*
+    const nodes = this.templateChildren.flatMap(child => child.childNodes);
+    if (nodes.length > 0) {
+      const oldParentNode = nodes[0].parentNode;
+      const newParentNode = oldParentNode.cloneNode(false);
+      oldParentNode.parentNode.replaceChild(newParentNode, oldParentNode)
+      nodes.forEach(node => node.parentNode.removeChild(node));
+      newParentNode.parentNode.replaceChild(oldParentNode, newParentNode);
+    }
+*/
+  }
+
+  /**
+   * 
+   */
+  appendToParent() {
+    const fragment = document.createDocumentFragment();
+    this.templateChildren
+      .forEach(child => fragment.appendChild(...child.nodesForAppend));
+    this.node.after(fragment);
+  }
+
+  /**
+   * 
+   * @returns {any} newValue
+   */
+  expandIf() {
+    const { viewModel, viewModelProperty, indexes, filters } = this;
+    /**
+     * @type {any}
+     */
+    const lastValue = this.lastViewModelValue;
+    /**
+     * @type {any}
+     */
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (lastValue !== newValue) {
+      this.removeFromParent();
+      if (newValue) {
+        this.templateChildren = [TemplateChild.create(this, indexes)];
+        this.appendToParent();
+      } else {
+        this.templateChildren = [];
+      }
+    }
+
+    // 子要素の展開を実行
+    this.templateChildren.forEach(templateChild => templateChild.updateNode());
+
+    return newValue;
+  }
+
+  /**
+   * @returns {any[]} newValue
+   */
+  expandLoop() {
+    const { viewModel, viewModelProperty, indexes, filters } = this;
+    /**
+     * @type {any[]}
+     */
+    const lastValue = this.lastViewModelValue ?? [];
+    /**
+     * @type {any[]}
+     */
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters) ?? [];
+
+    /**
+     * @type {Map<any,number[]>}
+     */
+    const indexesByLastValue = lastValue.reduce((map, value, index) => {
+      map.get(value)?.push(index) ?? map.set(value, [ index ]);
+      return map;
+    }, new Map);
+    /**
+     * @type {Map<number,number>}
+     */
+    const lastIndexByNewIndex = new Map;
+    const moveOrCreateIndexes = [];
+    // 新しくテンプレート子要素のリストを作成する
+    /**
+     * @type {TemplateChild[]}
+     */
+    const newTemplateChildren = newValue.map((value, newIndex) => {
+      const lastIndexes = indexesByLastValue.get(value);
+      if (typeof lastIndexes === "undefined") {
+        // 元のインデックスがない場合、新規
+        lastIndexByNewIndex.set(newIndex, undefined);
+        moveOrCreateIndexes.push(newIndex);
+        return TemplateChild.create(this, indexes.concat(newIndex));
+      } else {
+        // 元のインデックスがある場合、子要素のループインデックスを書き換え
+        // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素
+        const lastIndex = lastIndexes.shift();
+        lastIndexByNewIndex.set(newIndex, lastIndex);
+        const templateChild = this.templateChildren[lastIndex];
+        (newIndex !== lastIndex) && templateChild.changeIndex(indexes.length, newIndex - lastIndex);
+        const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
+        if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
+          moveOrCreateIndexes.push(newIndex);
+        }
+        return templateChild;
+      }
+    });
+    // 削除対象、追加・移動対象のインデックスを取得
+    for(const indexes of indexesByLastValue.values()) {
+      for(const index of indexes) {
+        this.templateChildren[index].removeFromParent();
+      }
+    }
+
+    moveOrCreateIndexes.forEach(moveOrCreateIndex => {
+      const templateChild = newTemplateChildren[moveOrCreateIndex];
+      const beforeNode = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.node;
+      beforeNode.after(...templateChild.nodesForAppend);
+    });
+
+    // 子要素の展開を実行
+    newTemplateChildren.forEach(templateChild => templateChild.updateNode());
+
+    this.templateChildren = newTemplateChildren;
+
+    return newValue;
+  }
+
+  /**
+   * 
+   * @param {number} index 
+   * @param {number} diff 
+   */
+  changeIndexes(index, diff) {
+    this.indexes[index] = this.indexes[index] + diff;
+    this.templateChildren.forEach(templateChild => templateChild.changeIndex(index, diff));
+  }
+}
+
+const SAMENAME = "@";
+const DEFAULT = "$";
+
+class BindTextInfo {
+  /**
+   * @type {string}
+   */
+  nodeProperty;
+  /**
+   * @type {string}
+   */
+  viewModelProperty;
+  /**
+   * @type {Filter[]}
+   */
+  filters;
+}
+
+/**
+ * トリム関数
+ * @param {string} s 
+ * @returns {string}
+ */
+const trim = s => s.trim();
+
+/**
+ * 長さチェック関数
+ * @param {string} s 
+ * @returns {string}
+ */
+const has = s => s.length > 0;
+
+/**
+ * フィルターのパース
+ * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
+ * @param {string} text 
+ * @returns {Filter}
+ */
+const parseFilter = text => {
+  const [name, ...options] = text.split(",").map(trim);
+  return Object.assign(new Filter, {name, options});
+};
+
+/**
+ * ViewModelプロパティのパース
+ * "value|eq,100|falsey" ---> ["value", Filter[]]
+ * @param {string} text 
+ * @returns {{viewModelProperty:string,filters:Filter[]}}
+ */
+const parseViewModelProperty = text => {
+  const [viewModelProperty, ...filterTexts] = text.split("|").map(trim);
+  return {viewModelProperty, filters:filterTexts.map(text => parseFilter(text))};
+};
+
+/**
+ * 式のパース
+ * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
+ * @param {string} expr 
+ * @param {string} defaultName 
+ * @returns {{nodeProperty:string,viewModelProp:string,filters:Filter[]}}
+ */
+const parseExpression = (expr, defaultName) => {
+  const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
+  const { viewModelProperty, filters } = parseViewModelProperty(viewModelPropertyText);
+  return { nodeProperty, viewModelProperty, filters };
+};
+
+/**
+ * 属性値のパース
+ * @param {string} text 属性値
+ * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+ * @returns {{prop:string,viewModelProp:string,filters:Filter[]}[]}
+ */
+const parseBindText = (text, defaultName) => {
+  return text.split(";").map(trim).filter(has).map(s => { 
+    let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
+    viewModelProperty = viewModelProperty === SAMENAME ? prop : viewModelProperty;
+    nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
+    return { nodeProperty, viewModelProperty, filters };
+  });
+};
+
+
+/**
+ * data-bind属性をパースする関数群
+ */
+class Parser {
+  /**
+   * @type {Map<string,BindTextInfo[]>}
+   */
+  static bindTextsByKey = new Map();
+
+  /**
+   * 属性値のパース
+   * @param {string} text 属性値
+   * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+   * @returns {BindTextInfo[]}
+   */
+  static parse(text, defaultName) {
+    const key = text + "\t" + defaultName;
+    let binds = this.bindTextsByKey.get(key);
+    if (typeof binds === "undefined") {
+      binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
+      this.bindTextsByKey.set(key, binds);
+    }
+    return binds;
+  }
+}
+
+const PREFIX_EVENT = "on";
+
+/**
+ * @enum {number}
+ */
+const NodePropertyType = {
+  levelTop: 1,
+  level2nd: 2,
+  level3rd: 3,
+  className: 10,
+  radio: 20,
+  checkbox: 30,
+  template: 90,
+  event: 91,
+  component: 92,
+};
+
+class PropertyType {
+  /**
+   * 
+   * @param {Node} node
+   * @param {string} nodeProperty 
+   * @returns {{type:NodePropertyType,nodePropertyElements:string[],eventType:string}}
+   */
+  static getInfo(node, nodeProperty) {
+    const result = {type:null, nodePropertyElements:[], eventType:null};
+    if (node instanceof HTMLTemplateElement) { 
+      result.type = NodePropertyType.template;
+      return result;
+    }
+    result.nodePropertyElements = nodeProperty.split(".");
+    if (node instanceof Component) { 
+      result.type = NodePropertyType.component;
+      return result;
+    }    if (result.nodePropertyElements.length === 1) {
+      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
+        result.type = NodePropertyType.event;
+        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+      } else if (result.nodePropertyElements[0] === "radio") {
+        result.type = NodePropertyType.radio;
+      } else if (result.nodePropertyElements[1] === "checkbox") {
+        result.type = NodePropertyType.checkbox;
+      } else {
+        result.type = NodePropertyType.levelTop;
+      }
+    } else if (result.nodePropertyElements.length === 2) {
+      if (result.nodePropertyElements[0] === "className") {
+        result.type = NodePropertyType.className;
+      } else {
+        result.type = NodePropertyType.level2nd;
+      }
+    } else if (result.nodePropertyElements.length === 3) {
+      result.type = NodePropertyType.level3rd;
+    } else {
+      utils$1.raise(`unknown property ${nodeProperty}`);
+    }
+    return result;
+  }
+}
+
+class NotifyData {
+  /**
+   * @type {Component}
+   */
+  component;
+  /**
+   * @type {string}
+   */
+  name;
+  /**
+   * @type {number[]}
+   */
+  #indexes;
+  get indexes() {
+    return this.#indexes;
+  }
+  set indexes(value) {
+    this.#indexes = value;
+    this.#indexesString = value.toString();
+    this.#key = this.name + "\t" + this.#indexesString;
+  }
+  /**
+   * @type {string}
+   */
+  #indexesString;
+  get indexesString() {
+    return this.#indexesString;
+  }
+  /**
+   * @type {string}
+   */
+  #key;
+  get key() {
+    return this.#key;
+  }
+
+  /**
+   * 
+   * @param {Component} component
+   * @param {string} name 
+   * @param {number[]} indexes 
+   */
+  constructor(component, name, indexes) {
+    this.component = component;
+    this.name = name;
+    this.indexes = indexes;
+  }
+}
+
+const getNnotifyKey = notify => notify.key;
+
+class Notifier {
+  /**
+   * @type {NotifyData[]}
+   */
+  queue = [];
+
+  /**
+   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
+   * 
+   */
+  async exec() {
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNotify);
+    try {
+      while(this.queue.length > 0) {
+        const notifies = this.queue.splice(0);
+        /**
+         * @type {Map<Component,NotifyData[]>}
+         */
+        const notifiesByComponent = notifies.reduce((map, notify) => {
+          map.get(notify.component)?.push(notify) ?? map.set(notify.component, [ notify ]);
+          return map;
+        }, new Map);
+        
+        for(const [component, notifies] of notifiesByComponent.entries()) {
+          const setOfKey = new Set(notifies.map(getNnotifyKey));
+          component.notify(setOfKey);
+        }
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNotify);
+    }
+  }
+
+  /**
+   * @type {boolean}
+   */
+  get isEmpty() {
+    return this.queue.length === 0;
+  }
+}
+
+class ProcessData {
+  /**
+   * @type {()=>{}}
+   */
+  target;
+  /**
+   * @type {Object}
+   */
+  thisArgument;
+  /**
+   * @type {any[]}
+   */
+  argumentsList;
+
+  /**
+   * 
+   * @param {()=>{}} target 
+   * @param {Object} thisArgument 
+   * @param {any[]} argumentsList 
+   */
+  constructor(target, thisArgument, argumentsList) {
+    this.target = target;
+    this.thisArgument = thisArgument;
+    this.argumentsList = argumentsList;
+  }
+}
+
+class Processor {
+  /**
+   * @type {ProcessData[]}
+   */
+  queue = [];
+
+  /**
+   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
+   * 
+   */
+  async exec() {
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginProcess);
+    try {
+      while(this.queue.length > 0) {
+        const processes = this.queue.splice(0);
+        for(const process of processes) {
+          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
+        }
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endProcess);
+    }
+  }
+
+  /**
+   * @type {boolean}
+   */
+  get isEmpty() {
+    return this.queue.length === 0;
+  }
+}
+
+/**
+ * @enum {number}
+ */
+const UpdateSlotStatus = {
+  beginProcess: 1,
+  endProcess: 2,
+  beginNotify: 3,
+  endNotify: 4,
+  beginNodeUpdate: 5,
+  endNodeUpdate: 6,
+};
+
+/**
+ * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
+ */
+
+
+class UpdateSlot {
+  /**
+   * @type {Processor}
+   */
+  #processor;
+  /**
+   * @type {Notifier}
+   */
+  #notifier;
+  /**
+   * @type {NodeUpdator}
+   */
+  #nodeUpdator;
+  /**
+   * @type {()=>{}}
+   */
+  #callback;
+  /**
+   * @type {Promise}
+   */
+  #promise;
+  /**
+   * @type {(value) => {}}
+   */
+  #resolve;
+  /**
+   * @type {() => {}}
+   */
+  #reject;
+  
+  /**
+   * 
+   * @param {()=>{}?} callback
+   * @param {UpdateSlotStatusCallback?} statusCallback
+   */
+  constructor(callback = null, statusCallback = null) {
+    this.#processor = new Processor(statusCallback);
+    this.#notifier = new Notifier(statusCallback);
+    this.#nodeUpdator = new NodeUpdator(statusCallback);
+    this.#callback = callback;
+    this.#promise = new Promise((resolve, reject) => {
+      this.#resolve = resolve;
+      this.#reject = reject;
+    });
+  }
+
+  resolve() {
+    this.#resolve && this.#resolve();
+    this.#resolve = null;
+  }
+
+  reject() {
+    this.#reject && this.#reject();
+    this.#reject = null;
+  }
+
+  async waiting() {
+    return this.#promise;
+  }
+
+  async exec() {
+    do {
+      await this.#processor.exec();
+      await this.#notifier.exec();
+      await this.#nodeUpdator.exec();
+    } while(!this.#processor.isEmpty || !this.#notifier.isEmpty || !this.#nodeUpdator.isEmpty);
+  }
+
+  /**
+   * 
+   * @param {ProcessData} processData 
+   */
+  addProcess(processData) {
+    this.#processor.queue.push(processData);
+    this.resolve();
+  }
+  
+  /**
+   * 
+   * @param {NotifyData} notifyData 
+   */
+  addNotify(notifyData) {
+    this.#notifier.queue.push(notifyData);
+    this.resolve();
+  }
+
+  /**
+   * 
+   * @param {NodeUpdateData} nodeUpdateData 
+   */
+  addNodeUpdate(nodeUpdateData) {
+    this.#nodeUpdator.queue.push(nodeUpdateData);
+    this.resolve();
+  }
+
+  /**
+   * 
+   */
+  callback() {
+    this.#callback && this.#callback();
+  }
+
+  /**
+   * 
+   * @param {()=>{}} callback 
+   * @param {UpdateSlotStatusCallback} statusCallback 
+   * @returns 
+   */
+  static create(callback, statusCallback) {
+    return new UpdateSlot(callback, statusCallback);
+  }
+
+}
+
+class Thread {
+  /**
+   * @type {(value:any)=>{}}
+   */
+  #resolve;
+  /**
+   * @type {()=>{}}
+   */
+  #reject;
+
+  /**
+   * 
+   */
+  constructor() {
+    this.main();
+  }
+
+  /**
+   * 
+   * @returns {Promise<UpdateSlot>}
+   */
+  async #sleep() {
+    return new Promise((resolve, reject) => {
+      this.#resolve = resolve;
+      this.#reject = reject;
+    });
+  }
+
+  /**
+   * 
+   */
+  stop() {
+    this.#reject();
+  }
+
+  /**
+   * 
+   * @param {UpdateSlot} slot 
+   */
+  wakeup(slot) {
+    this.#resolve(slot);
+  }
+
+  async main() {
+    do {
+      try {
+        const slot = await this.#sleep();
+        await slot.waiting(); // queueにデータが入るまで待機
+        Main.debug && performance.mark('slot-exec:start');
+        try {
+          await slot.exec();
+          if (Main.debug) {
+            performance.mark('slot-exec:end');
+            performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
+            console.log(performance.getEntriesByType("measure"));    
+            performance.clearMeasures();
+            performance.clearMarks();
+          }
+        } finally {
+          slot.callback();
+        }
+      } catch(e) {
+        if (typeof e !== "undefined") {
+          console.error(e);
+          if (!confirm("致命的なエラーが発生しました。続行しますか？")) {
+            break;
+          }
+        }
+      }
+    } while(true);
+  }
+
+}
+
+class NodeUpdateData {
+  /**
+   * @type {Node}
+   */
+  node;
+  /**
+   * @type {string}
+   */
+  property;
+  /**
+   * @type {()=>{}}
+   */
+  updateFunc;
+
+  /**
+   * 
+   * @param {Node} node 
+   * @param {string} property 
+   * @param {()=>{}} updateFunc 
+   */
+  constructor(node, property, updateFunc) {
+    this.node = node;
+    this.property = property;
+    this.updateFunc = updateFunc;
+  }
+}
+
+class NodeUpdator {
+  /**
+   * @type {NodeUpdateData[]}
+   */
+  queue = [];
+
+  /**
+   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
+   * 
+   * @param {NodeUpdateData[]} updates 
+   */
+  reorder(updates) {
+    updates.sort((update1, update2) => {
+      if (update2.node instanceof HTMLTemplateElement) return 1;
+      if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
+      return -1;
+    });
+    return updates;
+  }
+  /**
+   * 
+   */
+  async exec() {
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
+    try {
+      while(this.queue.length > 0) {
+        const updates = this.reorder(this.queue.splice(0));
+        updates.forEach(update => Reflect.apply(update.updateFunc, update, []));
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
+    }
+  }
+
+  /**
+   * @type {boolean}
+   */
+  get isEmpty() {
+    return this.queue.length === 0;
+  }
+}
+
+class LevelTop extends BindInfo {
+  updateNode() {
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        node[nodeProperty] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  updateViewModel() {
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const value = Filter.applyForInput(node[nodeProperty], filters);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+class Level2nd extends BindInfo {
+  get nodeProperty1() {
+    return this.nodePropertyElements[0];
+  }
+  get nodeProperty2() {
+    return this.nodePropertyElements[1];
+  }
+
+  updateNode() {
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {nodeProperty1, nodeProperty2} = this;
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        node[nodeProperty1][nodeProperty2] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  updateViewModel() {
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {nodeProperty1, nodeProperty2} = this;
+    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2], filters);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+class Level3rd extends BindInfo {
+  get nodeProperty1() {
+    return this.nodePropertyElements[0];
+  }
+  get nodeProperty2() {
+    return this.nodePropertyElements[1];
+  }
+  get nodeProperty3() {
+    return this.nodePropertyElements[2];
+  }
+  updateNode() {
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  updateViewModel() {
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
+    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2][nodeProperty3], filters);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLElement}
+ */
+const toHTMLElement$1 = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
+
+class ClassName extends BindInfo {
+  get className() {
+    return this.nodePropertyElements[1];
+  }
+  updateNode() {
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters, className} = this;
+    const element = toHTMLElement$1(node);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        value ? element.classList.add(className) : element.classList.remove(className);
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  updateViewModel() {
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters, className} = this;
+    const element = toHTMLElement$1(node);
+    const value = Filter.applyForInput(element.classList.contains(className), filters);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
+  }
+}
+
+const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node : utils$1.raise();
+
+class Radio extends BindInfo {
+  updateNode() {
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const radio = toHTMLInputElement$1(node);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        radio.checked = value === radio.value;
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  updateViewModel() {
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const radio = toHTMLInputElement$1(node);
+    const radioValue = Filter.applyForInput(radio.value, filters);
+    if (radio.checked) {
+      viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, radioValue);
+      this.lastViewModelValue = radioValue;
+    }
+  }
+}
+
+const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils$1.raise();
+
+class Checkbox extends BindInfo {
+  updateNode() {
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const checkbox = toHTMLInputElement(node);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+        checkbox.checked = value.find(value => value === checkbox.value);
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  updateViewModel() {
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = bind;
+    const checkbox = toHTMLInputElement(node);
+    const checkboxValue = Filter.applyForInput(checkbox.value, filters);
+    const setOfValue = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes));
+    (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
+    const value = Array.from(setOfValue);
+    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.lastViewModelValue = value;
+  }
+}
+
+class Event extends BindInfo {
+  #eventType;
+  /**
+   * @type {string}
+   */
+  get eventType() {
+    return this.#eventType;
+  }
+  set eventType(value) {
+    this.#eventType = value;
+  }
+  /**
+   * 
+   */
+  addEventListener() {
+    const {component, element, eventType, viewModel, viewModelProperty} = this;
+    element.addEventListener(eventType, (event) => {
+      event.stopPropagation();
+      const contextIndexes = this.contextIndexes;
+      const process = new ProcessData(
+        viewModel[SYM_CALL_DIRECT_CALL], viewModel, [viewModelProperty, contextIndexes, event]
+      );
+      component.updateSlot.addProcess(process);
+    });
+  }
+}
+
+class PropertyInfo {
+
+  name;
+  elements;
+  loopLevel;
+  parentName;
+  lastElement;
+  regexp;
+  isPrimitive;
+  privateName;
+  isObject;
+  isLoop;
+  isNotPrimitive;
+
+  constructor(name) {
+    this.name = name;
+    this.elements = name.split(".");
+    this.loopLevel = this.elements.reduce((count, element) => count + ((element === "*") ? 1 : 0), 0);
+    this.parentName = this.elements.slice(0, -1).join(".");
+    this.lastElement = this.elements.at(-1) ?? null;
+    this.regexp = (this.loopLevel > 0) ? new RegExp("^" + name.replaceAll("*", "(\\w+)").replaceAll(".", "\\.") + "$") : null;
+    this.isPrimitive = this.elements.length === 1 && this.loopLevel === 0;
+    this.privateName = this.isPrimitive ? ("_" + name) : null;
+    this.isObject = this.elements.length > 1 && this.loopLevel === 0;
+    this.isLoop = this.elements.length > 1 && this.loopLevel > 0;
+    this.isNotPrimitive = ! this.isPrimitive ;
+  }
+  get parentProperty() {
+    return PropertyInfo.create(this.parentName);
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @returns 
+   */
+  primitiveGetter(viewModel) {
+    return viewModel[this.privateName];
+  }
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {any} value 
+   * @returns 
+   */
+  primitiveSetter(viewModel, value) {
+    viewModel[this.privateName] = value;
+    return true;
+  }
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @returns 
+   */
+  nonPrimitiveGetter(viewModel) {
+    const { parentName, loopLevel, lastElement } = this;
+    const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
+    return viewModel[parentName][index];
+  }
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {any} value 
+   * @returns 
+   */
+  nonPrimitiveSetter(viewModel, value) {
+    const { parentName, loopLevel, lastElement } = this;
+    const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
+    viewModel[parentName][index] = value;
+    return true;
+  }
+  /**
+   * 
+   * @param {Component} component 
+   * @returns {PropertyDescriptor}
+   */
+  createPropertyDescriptor(component) {
+    return {
+      get : this.isPrimitive ?
+        () => Reflect.apply(this.primitiveGetter, this, [component.viewModel]) : 
+        () => Reflect.apply(this.nonPrimitiveGetter, this, [component.viewModel]),
+      set : this.isPrimitive ?
+        value => Reflect.apply(this.primitiveSetter, this, [component.viewModel, value]) : 
+        value => Reflect.apply(this.nonPrimitiveSetter, this, [component.viewModel, value]),
+      enumerable: true, 
+      configurable: true,
+    }
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {number[]} indexes 
+   * @returns {number[][]}
+   */
+  expand(viewModel, indexes) {
+    if (this.loopLevel === indexes.length) {
+      return [ indexes ];
+    } else if (this.loopLevel < indexes.length) {
+      return [ indexes.slice(0, this.loopLevel) ];
+    } else {
+      /**
+       * 
+       * @param {string} parentName 
+       * @param {number} elementIndex 
+       * @param {number[]} loopIndexes 
+       * @returns {number[][]}
+       */
+      const traverse = (parentName, elementIndex, loopIndexes) => {
+        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
+        const element = this.elements[elementIndex];
+        const isTerminate = (this.elements.length - 1) === elementIndex;
+        let retValues;
+        if (element === "*") {
+          if (loopIndexes.length < indexes.length) {
+            retValues = isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
+              traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+          } else {
+            retValues = (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).flatMap((value, index) => {
+              return isTerminate ? [ loopIndexes.concat(index) ] :
+                traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));
+            });
+          }
+        } else {
+          retValues = isTerminate ? [ loopIndexes ] : 
+           traverse(parentNameDot + element, elementIndex + 1, loopIndexes);
+        }
+        return retValues;
+
+      };
+      const listOfIndexes = traverse("", 0, []);
+      return listOfIndexes;
+
+    }
+
+  }
+
+  /**
+   * @type {Map<string,PropertyInfo>}
+   */
+  static #propertyInfoByProp = new Map;
+  static create(prop) {
+    if (prop === "") return undefined;
+    let propertyInfo = this.#propertyInfoByProp.get(prop);
+    if (typeof propertyInfo === "undefined") {
+      propertyInfo = new PropertyInfo(prop);
+      this.#propertyInfoByProp.set(prop, propertyInfo);
+    }
+    return propertyInfo;
+  }
+  
+}
+
+const toComponent = node => (node instanceof Component) ? node : undefined;
+
+class ComponentBind extends BindInfo {
+  /**
+   * @type {Node}
+   */
+  get node() {
+    return super.node;
+  }
+  set node(node) {
+    super.node = node;
+    this.bindData();
+  }
+  /**
+   * @type {string}
+   */
+  get viewModelProperty() {
+    return super.viewModelProperty;
+  }
+  set viewModelProperty(value) {
+    super.viewModelProperty = value;
+    if (this.viewModelProperty && this.nodePropertyElements) {
+      this.bindProperty();
+    }
+  }
+  /**
+   * @type {string[]}
+   */
+  get nodePropertyElements() {
+    return super.nodePropertyElements;
+  }
+  set nodePropertyElements(value) {
+    super.nodePropertyElements = value;
+    if (this.viewModelProperty && this.nodePropertyElements) {
+      this.bindProperty();
+    }
+  }
+  /**
+   * @type {string}
+   */
+  get dataNameProperty() {
+    return this.nodePropertyElements[0];
+  }
+  /**
+   * @type {string}
+   */
+  get dataProperty() {
+    return this.nodePropertyElements[1];
+  }
+
+  /**
+   * 
+   */
+  bindData() {
+    const component = toComponent(this.node);
+    component?.data[SYM_CALL_BIND_DATA](component);
+  }
+
+  /**
+   * 
+   */
+  bindProperty() {
+    const component = toComponent(this.node);
+    component?.data[SYM_CALL_BIND_PROPERTY](this.dataProperty, this.viewModelProperty, this.indexes);
+  }
+
+  updateNode() {
+    const { node, dataProperty } = this;
+    const thisComponent = toComponent(node);
+    thisComponent.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${dataProperty}`, []);
+  }
+
+  updateViewModel() {
+  }
+
+}
+
+const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
+const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
+const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo, info);
+const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
+const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
+const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
+const createTemplate = (bindInfo, info) => Object.assign(new Template, bindInfo, info);
+const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
+const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
+
+const creatorByType = new Map();
+creatorByType.set(NodePropertyType.levelTop, createLevelTop);
+creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
+creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
+creatorByType.set(NodePropertyType.className, createClassName);
+creatorByType.set(NodePropertyType.radio, createRadio);
+creatorByType.set(NodePropertyType.checkbox, createCheckbox);
+creatorByType.set(NodePropertyType.template, createTemplate);
+creatorByType.set(NodePropertyType.event, createEvent);
+creatorByType.set(NodePropertyType.component, createComponent);
+
+class Factory {
+  /**
+   * 
+   * @param {{
+   * component:Component,
+   * node:Node,
+   * nodeProperty:string,
+   * viewModel:ViewModel,
+   * viewModelProperty:string,
+   * filters:Filter[],
+   * indexes:number[]
+   * }}  
+   */
+  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes}) {
+    const bindInfo = {component, node, nodeProperty, viewModel, viewModelProperty, filters};
+    const propInfo = PropertyInfo.create(viewModelProperty);
+    bindInfo.indexes = indexes.slice(0, propInfo.loopLevel);
+    bindInfo.contextIndexes = indexes;
+    const info = PropertyType.getInfo(node, nodeProperty);
+    return creatorByType.get(info.type)(bindInfo, info);
+  }
+}
+
+const DATASET_BIND_PROPERTY$1 = "bind";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLTemplateElement}
+ */
+const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils$1.raise("not HTMLTemplateElement");
+
+/**
+ * @param {BindInfo} bind 
+ * @returns {Template}
+ */
+const toTemplate$1 = bind => (bind instanceof Template) ? bind : undefined;
+
+class BindToTemplate extends BindDomIf {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {number[]} indexes
+   * @returns {BindInfo[]}
+   */
+  static bind(node, component, indexes) {
+    const viewModel = component.viewModel;
+    const template = toHTMLTemplateElement(node);
+    const bindText = template.dataset[DATASET_BIND_PROPERTY$1];
+    const binds = Parser
+      .parse(bindText, "")
+      .map(info => { 
+        const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));
+        return bind;
+      });
+    if (binds.length === 0) return [];
+    const templateBind = toTemplate$1(binds[0]);
+    if (templateBind) {
+      if (templateBind.nodeProperty !== "if" && templateBind.nodeProperty !== "loop") {
+        utils$1.raise(`unknown node property ${templateBind.nodeProperty}`);
+      }
+      templateBind.updateNode();
+      return [ templateBind ];
+    } else {
+      utils$1.raise(`not template bind`);
+    }
+  }
+}
+
+const DATASET_BIND_PROPERTY = "bind";
+const DEFAULT_EVENT = "oninput";
+const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
+const DEFAULT_PROPERTY$1 = "textContent";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLElement}
+ */
+const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils$1.raise(`not HTMLElement`);
+
+/**
+ * 
+ * @param {HTMLElement} element 
+ */
+const getDefaultProperty = element => {
+  return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
+  element instanceof HTMLInputElement ? ((element.type === "radio" || element.type === "checkbox") ? "checked" : "value") : 
+  DEFAULT_PROPERTY$1;
+};
+
+const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
+
+class BindToElement extends BindDomIf {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {number[]} indexes
+   * @returns {BindInfo[]}
+   */
+  static bind(node, component, indexes) {
+    const viewModel = component.viewModel;
+    const element = toHTMLElement(node);
+    const bindText = element.dataset[DATASET_BIND_PROPERTY];
+    const defaultName = getDefaultProperty(element);
+
+    // パース
+    const binds = Parser
+        .parse(bindText, defaultName)
+        .map(info => {
+          const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));
+          bind.updateNode();
+          return bind;
+        });
+
+    // イベントハンドラ設定
+    let hasDefaultEvent = false;
+    /**
+     * @type {BindInfo}
+     */
+    let defaultBind = null;
+    binds.forEach(bind => {
+      hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
+      defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
+      const event = toEvent(bind);
+      event && event.addEventListener();
+    });
+
+    if (defaultBind && !hasDefaultEvent) {
+      element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
+        event.stopPropagation();
+        const process = new ProcessData(defaultBind.updateViewModel, defaultBind, []);
+        component.updateSlot.addProcess(process);
+      });
+    }
+
+    return binds;
+  }
+
+}
+
+const DEFAULT_PROPERTY = "textContent";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Comment}
+ */
+const toComment = node => (node instanceof Comment) ? node : utils$1.raise("not Comment");
+
+class BindToText extends BindDomIf {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {number[]} indexes
+   * @returns {BindInfo[]}
+   */
+  static bind(node, component, indexes) {
+    // コメントノードをテキストノードに差し替える
+    const viewModel = component.viewModel;
+    const comment = toComment(node);
+    const bindText = comment.textContent.slice(2); // @@をスキップ
+    const textNode = document.createTextNode("");
+    comment.parentNode.replaceChild(textNode, comment);
+    // パース
+    const binds = Parser
+      .parse(bindText, DEFAULT_PROPERTY)
+      .map(info => {
+        const bind = Factory.create(Object.assign(info, {node:textNode, component, viewModel, indexes:indexes.slice()}));
+        bind.updateNode();
+        return bind;
+      });
+    return binds;
+  }
+
+}
+
+class Binder {
+  /**
+   * 
+   * @param {HTMLTemplateElement} template 
+   * @param {HTMLElement} rootElement 
+   * @param {Component} component
+   * @param {number[]?} indexes
+   * @returns {BindInfo[]}
+   */
+  static bind(template, rootElement, component, indexes = []) {
+    const nodes = Selector.getTargetNodes(template, rootElement);
+    return nodes.flatMap(node => 
+      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, indexes) :
+      (node instanceof HTMLElement) ? BindToElement.bind(node, component, indexes) :
+      (node instanceof Comment) ? BindToText.bind(node, component, indexes) : 
+      utils$1.raise(`unknown node type`)
+    );
+  }
+
+}
+
+const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
+
+class Binds {
+  /**
+   * @type {BindInfo[]}
+   */
+  #binds;
+  /**
+   * @type {Map<string,BindInfo[]>}
+   */
+  #bindsByKey = new Map;
+  constructor(binds) {
+    this.#binds = binds;
+    this.buildMap();
+  }
+
+  buildMap() {
+    /**
+     * 
+     * @param {BindInfo[]} binds 
+     */
+    const buildMap = (binds) => {
+      binds.forEach(bind => {
+        this.#bindsByKey.get(bind.viewModelPropertyKey)?.push(bind) ?? this.#bindsByKey.set(bind.viewModelPropertyKey, [ bind ]);
+        (toTemplate(bind)?.templateChildren ?? []).forEach(templateChild => buildMap(templateChild.binds));
+      });
+    };
+    this.#bindsByKey.clear();
+    buildMap(this.#binds);
+  }
+  /**
+   * 
+   * @param {Set<string>} setOfKey 
+   * @returns {Template[]}
+   */
+  getTemplateBinds(setOfKey) {
+    const templateBinds = [];
+    const stack = [ { binds:this.#binds, children:null, index:-1 } ];
+    while(stack.length > 0) {
+      const info = stack[stack.length - 1];
+      info.index++;
+      if (info.binds) {
+        if (info.index < info.binds.length) {
+          const template = toTemplate(info.binds[info.index]);
+          if (template) {
+            if (setOfKey.has(template.viewModelPropertyKey)) {
+              templateBinds.push(template);
+            } else {
+              if (template.templateChildren.length > 0) {
+                stack.push({ binds:null, children:template.templateChildren, index:-1 });
+              }
+            }
+          }
+        } else {
+          stack.pop();
+        }
+      } else {
+        if (info.index < info.children.length) {
+          const child = info.children[info.index];
+          if (child.binds.length > 0) {
+            stack.push({ binds:child.binds, children:null, index:-1 });
+          }
+        } else {
+          stack.pop();
+        }
+      }
+    }
+
+    return templateBinds;
+  }
+  /**
+   * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
+   * @param {Set<string>} setOfKey 
+   */
+  updateViewModel(setOfKey) {
+    // templateを先に展開する
+    /**
+     * @type {Set<Template>}
+     */
+    const templateBinds = new Set(this.getTemplateBinds(setOfKey));
+    if (templateBinds.size > 0) {
+      for(const templateBind of templateBinds) {
+        templateBind.updateNode();
+      }
+      this.buildMap();
+    }
+
+    /**
+     * 
+     * @param {BindInfo[]} binds 
+     */
+    const updateViewModelProperty = (binds) => {
+      binds.forEach(bind => {
+        if (!templateBinds.has(bind) && setOfKey.has(bind.viewModelPropertyKey)) {
+          bind.updateNode();
+        }
+        toTemplate(bind)?.templateChildren.forEach(templateChild => updateViewModelProperty(templateChild.binds));
+      });
+    };
+    updateViewModelProperty(this.#binds);
+  }
+
+}
+
+class View {
+  /**
+   * @type {HTMLTemplateElement}
+   */
+  template;
+  /**
+   * @type {HTMLElement}
+   */
+  rootElement;
+
+  /**
+   * 
+   * @param {HTMLTemplateElement} template 
+   * @param {HTMLElement} rootElement 
+   */
+  constructor(template, rootElement) {
+    this.template = template;
+    this.rootElement = rootElement;
+  }
+
+  /**
+   * @param {Component} component
+   * @returns {Binds}
+   */
+  render(component) {
+    const content = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const binds = new Binds(Binder.bind(this.template, content, component));
+    this.rootElement.appendChild(content);
+    return binds;
+  }
+
+}
+
+const notPrivate = property => property[0] !== "_";
+const DEPENDENT_PROP = "$dependentProps";
+
+/**
+ * 
+ * @param {{prop:string,refProps:string[]}[]} dependentProps
+ * @returns 
+ */
+function createDependentMap(dependentProps) {
+  const map = new Map();
+  Object.entries(dependentProps).forEach(([prop, refProps]) => {
+    refProps.forEach(refProp => {
+      map.get(refProp)?.push(prop) ?? map.set(refProp, [ prop ]);
+    }); 
+  });
+  return map;
+}
+
+class Accessor {
+  /**
+   * 
+   * @param {Component} component
+   * @param {ViewModel} viewModel 
+   * @returns {{viewmodel:ViewModel, definedProperties:PropertyInfo[], dependentMap:Map<string,string[]>, cachablePropertyNames:string[]}}
+   */
+  static convert(component, viewModel) {
+    let dependentMap = new Map;
+    // $dependentPropsを取得
+    if (DEPENDENT_PROP in viewModel) {
+      const desc = Object.getOwnPropertyDescriptor(viewModel, DEPENDENT_PROP);
+      desc.enumerable = false;
+      Object.defineProperty(viewModel, DEPENDENT_PROP, desc);
+      dependentMap = createDependentMap(desc.value);
+    }
+    // プライベートプロパティを列挙不可にする
+    for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(viewModel))) {
+      if (notPrivate(prop)) continue;
+      desc.enumerable = false;
+      Object.defineProperty(viewModel, prop, desc);
+    }
+
+    // 普通のプロパティをgetter/setter化する
+    const accessorProperties = 
+      Object.keys(viewModel).filter(notPrivate).map(property => PropertyInfo.create(property));
+
+    accessorProperties.forEach(property => {
+      const value = viewModel[property.name];
+      delete viewModel[property.name];
+      const desc = property.createPropertyDescriptor(component);
+      Object.defineProperty(viewModel, property.name, desc);
+
+      if (!(property.privateName in viewModel)) {
+        const privateDesc = {
+          value,
+          writable: true, 
+          enumerable: false, 
+          configurable: true,
+        };
+        Object.defineProperty(viewModel, property.privateName, privateDesc);
+      }
+    });
+
+    // getterを列挙可にする
+    const cachablePropertyNames = [];
+    for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(viewModel)))) {
+      if (prop === "constructor") continue;
+      if (utils$1.isFunction(desc.value)) continue;
+      desc.enumerable = true;
+      Object.defineProperty(viewModel, prop, desc);
+      cachablePropertyNames.push(prop);
+    }
+    const definedProperties = Object.keys(viewModel).map(prop => PropertyInfo.create(prop));
+
+    // definedPropertiesからdependentMapに追加
+    definedProperties.forEach(property => {
+      if (property.isPrimitive) return;
+      const props = dependentMap.get(property.parentName)?.concat(property.name) ?? [ property.name ];
+      dependentMap.set(property.parentName, props);
+    });
+
+    return { viewModel, definedProperties, dependentMap, cachablePropertyNames };
+
+  }
+}
+
+/**
+ * キャッシュのキーは、プロパティとインデックス
+ */
+
+class CacheValue {
+  /**
+   * @type { boolean }
+   */
+  dirty = false;
+  /**
+   * @type { any }
+   */
+  value;
+
+  /**
+   * 
+   * @param {any} value 
+   */
+  constructor(value) {
+    this.value = value;
+  }
+}
+
+
+class Cache {
+  /**
+   * @type {Map<PropertyInfo,Map<string,CacheValue>>}
+   */
+  #cacheValueByIndexesByProp = new Map();
+  /**
+   * @type {PropertyInfo[]}
+   */
+  #definedProperties;
+  /**
+   * @type {Map<string,PropertyInfo[]>}
+   */
+  #definedPropertiesByParentName;
+  /**
+   * @type {Map<string,PropertyInfo[]>}
+   */
+  #dependentPropsByName;
+
+  /**
+   * 
+   * @param {PropertyInfo[]} definedProperties 
+   */
+  constructor(definedProperties) {
+    this.#definedProperties = definedProperties;
+    this.#definedPropertiesByParentName = definedProperties
+    .filter(definedProperty => definedProperty.parentName !== "")
+    .reduce((map, definedProperty) => {
+      map.get(definedProperty.parentName)?.push(definedProperty) ??
+      map.set(definedProperty.parentName, [ definedProperty ]);
+      return map;
+    }, new Map);
+    const getDependentProps = (properties, propertyName) => {
+      (this.#definedPropertiesByParentName.get(propertyName) ?? []).forEach(definedProperty => {
+        properties.push(definedProperty);
+        getDependentProps(properties, definedProperty.name);
+      });
+      return properties;
+    };
+    this.#dependentPropsByName = 
+      new Map(definedProperties.map(property => [ property.name, getDependentProps(new Array, property.name) ]));
+  }
+
+  /**
+   * 
+   * @param {PropertyInfo} property 
+   * @param {number[]} indexes 
+   * @returns {any}
+   */
+  get(property, indexes) {
+    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());
+    return cacheValue ? (!cacheValue.dirty ? cacheValue.value : undefined) : undefined;
+  }
+
+  /**
+   * 
+   * @param {PropertyInfo} property 
+   * @param {number[]} indexes 
+   * @param {any} value 
+   */
+  set(property, indexes, value) {
+    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
+    if (typeof cacheValueByIndexes === "undefined") {
+      cacheValueByIndexes = new Map();
+      this.#cacheValueByIndexesByProp.set(property, cacheValueByIndexes);
+    }
+    cacheValueByIndexes.set(indexes.toString(), new CacheValue(value));
+  }
+
+  /**
+   * 
+   * @param {PropertyInfo} property 
+   * @param {number[]} indexes 
+   * @returns {boolean}
+   */
+  has(property, indexes) {
+    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());
+    return cacheValue ? (!cacheValue.dirty) : false;
+  }
+
+  /**
+   * 
+   * @param {PropertyInfo} property 
+   * @param {number[]} indexes 
+   */
+  delete(property, indexes) {
+    const indexesString = indexes.slice(0, property.loopLevel).toString();
+    const indexesStarts = indexesString + ",";
+    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
+    if (cacheValueByIndexes) {
+      for(const indexes of cacheValueByIndexes.keys()) {
+        if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
+          cacheValueByIndexes.get(indexes).dirty = true;
+        }
+      }
+    }
+    const dependentProps = this.#dependentPropsByName.get(property.name) ?? [];
+    dependentProps.forEach(property => {
+      const cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
+      if (typeof cacheValueByIndexes === "undefined") return;
+      for(const indexes of cacheValueByIndexes.keys()) {
+        if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
+          cacheValueByIndexes.get(indexes).dirty = true;        }
+      }
+    });
+  }
+
+  clear() {
+    this.#cacheValueByIndexesByProp.clear();
+  }
+}
+
+/**
+ * 配列プロキシ
+ * 更新（追加・削除）があった場合、更新通知を送る機能を付加する
+ */
+class ArrayHandler {
+  /**
+   * @type {Component}
+   */
+  #component;
+  /**
+   * @type {PropertyInfo}
+   */
+  #prop;
+  /**
+   * ループインデックス
+   * @type {number[]}
+   */
+  #indexes;
+  /**
+   * コンストラクタ
+   * @param {Component} component 
+   * @param {string} prop 
+   * @param {number[]} indexes
+   */
+  constructor(component, prop, indexes) {
+    this.#component = component;
+    this.#prop = prop;
+    this.#indexes = indexes;
+  }
+
+  /**
+   * getter
+   * SymIsProxyはtrueを返す
+   * SymRawは元の配列を返す
+   * @param {Array} target Array
+   * @param {string} prop プロパティ
+   * @param {Proxy} receiver 配列プロキシ
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (prop === SYM_GET_IS_PROXY) return true;
+    if (prop === SYM_GET_RAW) return target;
+    return Reflect.get(target, prop, receiver);
+  }
+
+  /**
+   * setter
+   * lengthプロパティの場合、変更通知を送信する
+   * $onwriteを呼び出したいので、viewModelのプロパティに値をセットする
+   * @param {Object} target Array
+   * @param {string} prop プロパティ
+   * @param {Any} value 
+   * @param {Proxy} receiver 配列プロキシ
+   * @returns 
+   */
+  set(target, prop, value, receiver) {
+    Reflect.set(target, prop, value, receiver);
+    if (prop === "length") {
+      const component = this.#component;
+      const viewModel = component.viewModel;
+      const propName = this.#prop.name;
+      component.updateSlot.addProcess(new ProcessData(() => {
+        viewModel[propName] = target;
+      }, viewModel, []));
+    }
+    return true;
+  }
+}
+
+/**
+ * 
+ * @param {Array<any>} array 
+ * @param {Component} component 
+ * @param {PropertyInfo} prop 
+ * @param {number[]} indexes 
+ * @returns 
+ */
+function create$1(array, component, prop, indexes) {
+  return new Proxy(array, new ArrayHandler(component, prop, indexes))
+}
+
+let Handler$3 = class Handler {
+  set(target, prop, value, receiver) {
+    Reflect.set(target, prop, value, receiver);
+    GlobalData.binds
+    .filter(bind => prop === bind.globalProperty)
+    .forEach(bind => {
+      const [dataProp, nameProp] = bind.componentProperty.split(".");
+      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${nameProp}`, []);
+    });
+    GlobalData.globalBinds
+    .filter(bind => prop === bind.globalProperty)
+    .forEach(bind => {
+      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$globals.${prop}`, []);
+    });
+    return true;
+  }
+};
+
+class GlobalData {
+  /**
+   * @type {{globalProperty:string,component:Component,componentProperty:string}[]}
+   */
+  static binds = [];
+  /**
+   * @type {{globalProperty:string,component:Component}[]}
+   */
+  static globalBinds = [];
+  /**
+   * 
+   * @param {Component} component 
+   */
+  static boundFromComponent(component) {
+    component.data[SYM_CALL_BIND_DATA](this.data);
+  }
+  /**
+   * 
+   * @param {string} globalProperty 
+   * @param {Component} component 
+   * @param {string} componentProperty 
+   */
+  static boundPropertyFromComponent(globalProperty, component, componentProperty) {
+    this.binds.push({ globalProperty, component, componentProperty });
+    component.data[SYM_CALL_BIND_PROPERTY](componentProperty, globalProperty);
+  }
+  /**
+   * 
+   * @param {Component} component 
+   * @param {string} globalProperty
+   */
+  static globalBoundFromComponent(component, globalProperty) {
+    this.globalBinds.push({ component, globalProperty });
+  }
+  /**
+   * 
+   * @returns 
+   */
+  static create() {
+    return new Proxy({}, new Handler$3);
+  }
+  /**
+   * @type {Object<string,any>}
+   */
+  static data = this.create();
+
+}
+
+let Handler$2 = class Handler {
+  /**
+   * @type {Component}
+   */
+  component;
+  /**
+   * 
+   * @param {Component} component 
+   */
+  constructor(component) {
+    this.component = component;
+  }
+
+  /**
+   * @type {Set<string>}
+   */
+  setOfBindParams = new Set;
+
+  boundFromComponent(globalProperty) {
+    GlobalData.globalBoundFromComponent(this.component, globalProperty);
+    this.setOfBindParams.add(globalProperty);
+
+  }
+  get(target, prop, receiver) {
+    if (!this.setOfBindParams.has(prop)) {
+      this.boundFromComponent(prop);
+    }
+    return Reflect.get(target, prop, target);
+  }
+
+  set(target, prop, value, receiver) {
+    if (!this.setOfBindParams.has(prop)) {
+      this.boundFromComponent(prop);
+    }
+    Reflect.set(target, prop, value, target);
+    return true;
+  }
+};
+
+class Globals {
+  /**
+   * 
+   * @param {Component} component 
+   * @returns 
+   */
+  static create(component) {
+    return new Proxy(GlobalData.data, new Handler$2(component))
+  }
+
+}
+
+const MAX_INDEXES_LEVEL = 8;
+const CONTEXT_INDEXES = [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1));
+const SET_OF_CONTEXT_INDEXES = new Set(CONTEXT_INDEXES);
+const CONTEXT_COMPONENT = "$component";
+const CONTEXT_DATA = "$data";
+const CONTEXT_OPEN_DIALOG = "$openDialog";
+const CONTEXT_CLOSE_DIALOG = "$closeDialog";
+const CONTEXT_NOTIFY = "$notify";
+const CONTEXT_GLOBALS = "$globals";
+const CONTEXT_PARAMS = [CONTEXT_COMPONENT, CONTEXT_DATA, CONTEXT_OPEN_DIALOG, CONTEXT_CLOSE_DIALOG, CONTEXT_NOTIFY, CONTEXT_GLOBALS];
+const SET_OF_CONTEXT_ALL_PARAMS = new Set(CONTEXT_INDEXES.concat(CONTEXT_PARAMS));
+
+/**
+ * 配列プロキシを取得
+ * 配列プロキシのプロキシといった重複をさけるため、
+ * いったん元の配列を求めてからプロキシにする
+ * @param {Component} component 
+ * @param {PropertyInfo} prop 
+ * @param {number[]} indexes
+ * @param {any} value 
+ * @returns 
+ */
+const wrapArray = (component, prop, indexes, value) => {
+  value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
+  return (value instanceof Array) ? create$1(value, component, prop, indexes) : value;
+};
+
+let Handler$1 = class Handler {
+  /**
+   * @type {Cache}
+   */
+  cache;
+  /**
+   * @type {Map<string,{indexes:number[],propertyInfo:PropertyInfo}>}
+   */
+  propertyInfoAndIndexesByProp = new Map();
+  /**
+   * @type {number[][]}
+   */
+  stackIndexes = [];
+  /**
+   * @type {Component}
+   */
+  component;
+  /**
+   * @type {Map<string,PropertyInfo>}
+   */
+  definedPropertyByProp = new Map;
+  /**
+   * @type {PropertyInfo[]}
+   */
+  loopProperties = [];
+
+  /**
+   * @type {Map<string,string[]>}
+   */
+  dependentMap;
+  /**
+   * @type {Map<string,Set<string>>}
+   */
+  setOfDependentPropNamesByPropName = new Map;
+  /**
+   * @type {string[]}
+   */
+  cachablePropertyNames = [];
+  setOfCachablePropertyNames = new Set;
+  /**
+   * 
+   */
+  globals;
+  /**
+   * 
+   * @param {Component} component 
+   * @param {PropertyInfo[]} definedProperties
+   * @param {Map<string,string[]>} dependentMap
+   * @param {string[]} cachablePropertyNames
+   */
+  constructor(component, definedProperties, dependentMap, cachablePropertyNames) {
+    this.component = component;
+    this.definedPropertyByProp = new Map(definedProperties.map(property => ([property.name, property])));
+    this.loopProperties = definedProperties.filter(property => property.isLoop);
+    this.dependentMap = dependentMap;
+    this.cachablePropertyNames = cachablePropertyNames;
+    this.setOfCachablePropertyNames = new Set(cachablePropertyNames);
+    this.cache = new Cache(definedProperties);
+    const getDependentProps = (setOfPropertyNames, propertyName) => {
+      (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {
+        if (!setOfPropertyNames.has(refPropertyName)) {
+          setOfPropertyNames.add(refPropertyName);
+          getDependentProps(setOfPropertyNames, refPropertyName);
+        }
+      });
+      return setOfPropertyNames;
+    };
+    this.setOfDependentPropNamesByPropName = 
+      new Map(Array.from(dependentMap.keys()).map(propertyName => [propertyName, getDependentProps(new Set, propertyName)]));
+    this.globals = Globals.create(component);
+
+  }
+
+  get lastIndexes() {
+    return this.stackIndexes[this.stackIndexes.length - 1] ?? [];
+  }
+
+  async [SYM_CALL_INIT](target, receiver) {
+    if (!("$oninit" in target)) return;
+    return await Reflect.apply(target["$oninit"], receiver, []);
+  }
+
+  async [SYM_CALL_CONNECT](target, receiver) {
+    if (!("$onconnect" in target)) return;
+    return await Reflect.apply(target["$onconnect"], receiver, []);
+  }
+
+  /**
+   * 
+   * @param {string} prop 
+   * @param {number[]} indexes 
+   * @param {*} target 
+   * @param {*} receiver 
+   */
+  [SYM_CALL_WRITE](prop, indexes, target, receiver) {
+    if ("$onwrite" in target) {
+      const { component } = this;
+      const process = new ProcessData(target["$onwrite"], receiver, [ prop, indexes ]);
+      component.updateSlot.addProcess(process);
+    }
+  }
+
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {PropertyInfo} prop 
+   * @param {Proxy<ViewModel>} receiver 
+   */
+  #getDefinedPropertyValue(target, prop, receiver) {
+    const { component, lastIndexes, cache, setOfCachablePropertyNames } = this;
+    const indexes = lastIndexes.slice(0, prop.loopLevel);
+    let value;
+    if (setOfCachablePropertyNames.has(prop.name)) {
+      const cacheValue = cache.get(prop, indexes);
+      if (typeof cacheValue === "undefined") {
+        value = Reflect.get(target, prop.name, receiver);
+        cache.set(prop, indexes, value);
+      } else {
+        value = cacheValue;
+      }
+    } else {
+      value = Reflect.get(target, prop.name, receiver);
+    }
+    return wrapArray(component, prop, indexes, value);
+  }
+
+  [SYM_CALL_DIRECT_GET](prop, indexes, target, receiver) {
+    let value;
+    this.stackIndexes.push(indexes);
+    try {
+      value = receiver[prop];
+    } finally {
+      this.stackIndexes.pop();
+    }
+    return value;
+  }
+
+  [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes, target, receiver) {
+    const { dependentMap, setOfDependentPropNamesByPropName, component } = this;
+    if (dependentMap.has(propertyName)) {
+      const dependentPropNames = setOfDependentPropNamesByPropName.get(propertyName) ?? new Set;
+      dependentPropNames.forEach(definedPropertyName => {
+        
+        if (definedPropertyName.startsWith("$data")) {
+          component.updateSlot.addNotify(new NotifyData(component, definedPropertyName, []));
+        } else {
+          const definedProperty = PropertyInfo.create(definedPropertyName);
+          if (indexes.length < definedProperty.loopLevel) {
+            const listOfIndexes = definedProperty.expand(receiver, indexes);
+            listOfIndexes.forEach(depIndexes => {
+              component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
+            });
+          } else {
+            const depIndexes = indexes.slice(0, definedProperty.loopLevel);
+            component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
+          }
+  
+        }
+      });
+    }
+  }
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {PropertyInfo} prop 
+   * @param {any} value 
+   * @param {Proxy<ViewModel>} receiver 
+   */
+  #setDefinedPropertyValue(target, prop, value, receiver) {
+    const { component, lastIndexes, cache } = this;
+    value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
+    const indexes = lastIndexes.slice(0, prop.loopLevel);
+    Reflect.set(target, prop.name, value, receiver);
+
+    component.updateSlot.addNotify(new NotifyData(component, prop.name, indexes));
+
+    this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](prop.name, indexes, target, receiver);
+
+    this[SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);
+
+    return true;
+  }
+
+  [SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver) {
+    this.stackIndexes.push(indexes);
+    try {
+      receiver[prop] = value;
+    } finally {
+      this.stackIndexes.pop();
+    }
+    return true;
+  }
+
+  async [SYM_CALL_DIRECT_CALL](prop, indexes, event, target, receiver) {
+    this.stackIndexes.push(indexes);
+    try {
+      await Reflect.apply(target[prop], receiver, [event, ...indexes]);
+    } finally {
+      this.stackIndexes.pop();
+    }
+  }
+
+  [SYM_CALL_CLEAR_CACHE](target, receiver) {
+    this.cache.clear();
+  }
+
+  /**
+   * 
+   * @param {string} prop 
+   * @returns {{loopProperty:PropertyInfo,indexes:number[]}}
+   */
+  #getLoopPropertyAndIndexesFromPropertyName(prop) {
+    let { loopProperty, indexes } = this.propertyInfoAndIndexesByProp.get(prop) ?? {};
+    if (typeof loopProperty === "undefined") {
+      for(const property of this.loopProperties) {
+        const result = property.regexp.exec(prop);
+        if (result) {
+          indexes = result.slice(1).map(Number);
+          loopProperty = property;
+          this.propertyInfoAndIndexesByProp.set(prop, { loopProperty, indexes });
+          break;
+        }
+      }
+    }
+    return { loopProperty, indexes };
+  }
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {string} prop 
+   * @param {Proxy<ViewModel>} receiver 
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (typeof prop === "symbol") {
+      const { lastIndexes, dependentMap } = this;
+      switch(prop) {
+        case SYM_CALL_DIRECT_GET:
+          return (prop, indexes) => 
+            Reflect.apply(this[SYM_CALL_DIRECT_GET], this, [prop, indexes, target, receiver]);
+        case SYM_CALL_DIRECT_SET:
+          return (prop, indexes, value) => 
+            Reflect.apply(this[SYM_CALL_DIRECT_SET], this, [prop, indexes, value, target, receiver]);
+        case SYM_GET_INDEXES:
+          return lastIndexes;
+        case SYM_CALL_DIRECT_CALL:
+          return (prop, indexes, event) => 
+            Reflect.apply(this[SYM_CALL_DIRECT_CALL], this, [prop, indexes, event, target, receiver]);
+        case SYM_CALL_INIT:
+          return () => 
+            Reflect.apply(this[SYM_CALL_INIT], this, [target, receiver]);
+        case SYM_CALL_WRITE:
+          return (prop, indexes) => 
+            Reflect.apply(this[SYM_CALL_WRITE], this, [prop, indexes, target, receiver]);
+        case SYM_CALL_CONNECT:
+          return () => 
+            Reflect.apply(this[SYM_CALL_CONNECT], this, [target, receiver]);
+        case SYM_CALL_CLEAR_CACHE:
+          return () => 
+            Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
+        case SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS:
+          return (prop, indexes) => 
+            Reflect.apply(this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS], this, [prop, indexes, target, receiver]);
+        case SYM_GET_TARGET:
+          return target;
+        case SYM_GET_DEPENDENT_MAP:
+          return dependentMap;
+      }
+    }
+    if (SET_OF_CONTEXT_ALL_PARAMS.has(prop)) {
+      const { lastIndexes, component } = this;
+      if (SET_OF_CONTEXT_INDEXES.has(prop)) {
+        return lastIndexes[Number(prop.slice(1)) - 1];
+      } else {
+        switch(prop) {
+          case CONTEXT_COMPONENT:
+            return component;
+          case CONTEXT_DATA:
+            return component.data;
+          case CONTEXT_OPEN_DIALOG:
+            return async (name, data, attributes) => {
+              const dialog = document.createElement(name);
+              Object.entries(attributes ?? {}).forEach(([key, value]) => {
+                dialog.setAttribute(key, value);
+              });
+              dialog.data[SYM_CALL_BIND_DATA](data ?? {});
+              document.body.appendChild(dialog);
+              return dialog.alivePromise;
+            };
+          case CONTEXT_CLOSE_DIALOG:
+            return (data) => {
+              Object.assign(component.data, data);
+              component.parentNode.removeChild(component);
+            };
+          case CONTEXT_NOTIFY:
+            return (prop, indexes) => {
+              component.updateSlot.addNotify(new NotifyData(component, prop, indexes));
+            };
+          case CONTEXT_GLOBALS:
+            return this.globals;
+        }
+      }
+    }
+
+    const defindedProperty = this.definedPropertyByProp.get(prop);
+    if (defindedProperty) {
+      // すでに、indexesはセットされている
+      return this.#getDefinedPropertyValue(target, defindedProperty, receiver);
+    } else {
+      if (prop[0] === "@") {
+        const propName = prop.slice(1);
+        const defindedProperty = this.definedPropertyByProp.get(propName);
+        if (defindedProperty) {
+          return defindedProperty.expand(receiver, []).map(indexes => {
+            const value = this[SYM_CALL_DIRECT_GET](propName, indexes, target, receiver);
+            return [ value, indexes];
+          });
+        }
+      }
+      if (prop[0] !== "_") {
+        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
+        if (loopProperty && indexes) {
+          return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, target, receiver);
+        }
+      }
+      return Reflect.get(target, prop, receiver);
+    }
+  }
+
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Proxy<ViewModel>} receiver 
+   */
+  set(target, prop, value, receiver) {
+    const defindedProperty = this.definedPropertyByProp.get(prop);
+    if (defindedProperty) {
+      return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);
+    } else {
+      if (prop[0] === "@") {
+        const propName = prop.slice(1);
+        const defindedProperty = this.definedPropertyByProp.get(propName);
+        if (defindedProperty) {
+          defindedProperty.expand(receiver, []).forEach(indexes => {
+            this[SYM_CALL_DIRECT_SET](propName, indexes, value, target, receiver);
+          });
+          return true;
+        }
+      }
+      if (prop[0] !== "_") {
+        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
+        if (loopProperty && indexes) {
+          this[SYM_CALL_DIRECT_SET](loopProperty.name, indexes, value, target, receiver);
+          return true;
+        }
+      }
+      Reflect.set(target, prop, value, receiver);
+      return true;
+    }
+  }
+};
+
+/**
+ * 
+ * @param {Component} component
+ * @param {ViewModel} origViewModel 
+ * @returns {Proxy<ViewModel>}
+ */
+function create(component, origViewModel) {
+  const { viewModel, definedProperties, dependentMap, cachablePropertyNames } = Accessor.convert(component, origViewModel);
+  return new Proxy(viewModel, new Handler$1(component, definedProperties, dependentMap, cachablePropertyNames));
+
+}
+
+function getPath(pattern, indexes) {
+  let i = 0;
+  return pattern.replaceAll("*", () => indexes[i++] ?? "*");
+}
+  
+class Handler {
+  /**
+   * @type {{key:string,value:any}} 
+   */
+  #data = {};
+  /**
+   * @type {Component}
+   */
+  #component;
+  /**
+   * @type {Map<string,{bindProp:string,bindIndexes:number[]}>}
+   */
+  #bindPropByThisProp = new Map();
+
+  /**
+   * @type {{key:string,value:any}|ViewModel}
+   */
+  get data() {
+    return (this.#component ? this.#component?.parentComponent?.viewModel : this.#data) ?? {};
+  }
+
+  /**
+   * 
+   * @param {{key:string,value:any}|Component} data 
+   */
+  [SYM_CALL_BIND_DATA](data) {
+    if (data instanceof Component) {
+      this.#component = data;
+    } else {
+      this.#data = data;
+    }
+  }
+
+  /**
+   * 
+   * @param {string} thisProp 
+   * @param {string} bindProp 
+   * @param {number[]} bindIndexes 
+   */
+  [SYM_CALL_BIND_PROPERTY](thisProp, bindProp, bindIndexes) {
+    this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {Proxy<Handler>} receiver 
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (prop === SYM_CALL_BIND_DATA) {
+      return (data) => Reflect.apply(this[SYM_CALL_BIND_DATA], this, [data]);
+    }
+    if (prop === SYM_CALL_BIND_PROPERTY) {
+      return (thisProp, bindProp, bindIndexes) => Reflect.apply(this[SYM_CALL_BIND_PROPERTY], this, [thisProp, bindProp, bindIndexes]);
+    }
+    const { data } = this;
+    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, bindIndexes:[] };
+    const bindPath = getPath(bindProp, bindIndexes);
+    return Reflect.get(data, bindPath, data);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Prooxy<Handler>} receiver 
+   * @returns 
+   */
+  set(target, prop, value, receiver) {
+    const { data } = this;
+    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, bindIndexes:[] };
+    const bindPath = getPath(bindProp, bindIndexes);
+    return Reflect.set(data, bindPath, value, data);
+  }
+}
+
+/**
+ * 
+ * @returns {Proxy<Handler>}
+ */
+function createData() {
+  return new Proxy({}, new Handler());
+}
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Component}
+ */
+const getParentComponent = (node) => {
+  do {
+    node = node.parentNode;
+    if (node == null) return null;
+    if (node instanceof Component) return node;
+    if (node instanceof ShadowRoot) {
+      if (node.host instanceof Component) return node.host;
+      node = node.host;
+    }
+  } while(true);
+};
+
+/**
+ * HTMLの変換
+ * {{loop:}}{{if:}}を<template>へ置換
+ * {{end:}}を</template>へ置換
+ * {{...}}を<!--@@...-->へ置換
+ * @param {string} html 
+ * @returns {string}
+ */
+const replaceTag = (html) => {
+  const stack = [];
+  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+    expr = expr.trim();
+    if (expr.startsWith("loop:") || expr.startsWith("if:")) {
+      stack.push(expr);
+      return `<template data-bind="${expr}">`;
+    } else if (expr.startsWith("else:")){
+      const saveExpr = stack.at(-1);
+      return `</template><template data-bind="${saveExpr}|not">`;
+    } else if (expr.startsWith("end:")){
+      stack.pop();
+      return `</template>`;
+    } else {
+      return `<!--@@${expr}-->`;
+    }
+  });
+};
+
+/**
+ * @param {string?} html
+ * @param {string?} css
+ * @returns {HTMLTemplateElement}
+ */
+const htmlToTemplate = (html, css) => {
+  const template = document.createElement("template");
+  template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? replaceTag(html) : "");
+  return template;
+};
+
+class Component extends HTMLElement {
+  /**
+   * @type {string}
+   * @static
+   */
+  static html;
+  /**
+   * @type {HTMLTemplateElement}
+   */
+  static template;
+  /**
+   * @type {class}
+   * @static
+   */
+  static ViewModel;
+  /**
+   * @type {Proxy<ViewModel>}
+   */
+  viewModel;
+  /**
+   * @type {View}
+   */
+  #view;
+  /**
+   * @type {Binds}
+   */
+  #binds;
+  /**
+   * @type {Thread}
+   */
+  #thread;
+  /**
+   * @type {UpdateSlot}
+   */
+  #updateSlot;
+  get updateSlot() {
+    if (typeof this.#updateSlot === "undefined") {
+      this.#updateSlot = UpdateSlot.create(() => {
+        this.#updateSlot = undefined;
+      }, (updateSlotStatus) => {
+        if (updateSlotStatus === UpdateSlotStatus.beginProcess) {
+          this.viewModel[SYM_CALL_CLEAR_CACHE]();
+        }
+        if (updateSlotStatus === UpdateSlotStatus.beginNotify) {
+          this.viewModel[SYM_CALL_CLEAR_CACHE]();
+        }
+      });
+      this.#thread.wakeup(this.#updateSlot);
+    }
+    return this.#updateSlot;
+  }
+  /**
+   * @type {Object<string,any>}
+   */
+  #data = createData();
+  get data() {
+    return this.#data;
+  }
+
+  constructor() {
+    super();
+    this.#initialPromise = new Promise((resolve, reject) => {
+      this.#initialResolve = resolve;
+      this.#initialReject = reject;
+    });
+  }
+
+  /**
+   * @type {string[]}
+   */
+  static get observedAttributes() {
+    return [/* 変更を監視する属性名の配列 */];
+  }
+  
+  /**
+   * shadowRootを使ってカプセル化をしない(true)
+   * @type {boolean}
+   */
+  get noShadowRoot() {
+    return this.hasAttribute("no-shadow-root");
+  }
+
+  /**
+   * viewのルートとなる要素
+   * @type {ShadowRoot|HTMLElement}
+   */
+  get viewRootElement() {
+    return this.shadowRoot ?? this;
+  }
+
+  async build() {
+    const { template, ViewModel } = this.constructor; // staticから取得
+    this.noShadowRoot || this.attachShadow({mode: 'open'});
+    this.#thread = new Thread;
+
+    this.#view = new View(template, this.viewRootElement);
+    const rawViewModel = Reflect.construct(ViewModel, []);
+    this.viewModel = create(this, rawViewModel);
+    await this.viewModel[SYM_CALL_INIT]();
+
+    this.updateSlot.addProcess(new ProcessData(async () => {
+      this.#binds = this.#view.render(this);
+      await this.viewModel[SYM_CALL_CONNECT]();
+    }, this, []));
+  }
+
+  /**
+   * @type {Promise}
+   */
+  #initialPromise;
+  /**
+   * @type {() => {}}
+   */
+  #initialResolve;
+  #initialReject;
+  get initialPromise() {
+    return this.#initialPromise;
+  }
+
+  /**
+   * @type {Promise}
+   */
+  #alivePromise;
+  /**
+   * @type {() => {}}
+   */
+  #aliveResolve;
+  #aliveReject;
+  get alivePromise() {
+    return this.#alivePromise;
+  }
+
+  /**
+   * 親コンポーネント
+   * @type {Component}
+   */
+  #parentComponent;
+  get parentComponent() {
+    if (typeof this.#parentComponent === "undefined") {
+      this.#parentComponent = getParentComponent(this);
+    }
+    return this.#parentComponent;
+  }
+
+  bindGlobalData(bindText) {
+    const binds = Parser.parse(bindText, "");
+    if (binds.length > 0) {
+      GlobalData.boundFromComponent(this);
+      binds.forEach(({ nodeProperty, viewModelProperty }) => {
+        GlobalData.boundPropertyFromComponent(viewModelProperty, this, nodeProperty);
+      });
+    }
+  }
+  /**
+   * DOMツリーへ追加
+   */
+  async connectedCallback() {
+    try {
+      if (this.parentComponent) {
+        await this.parentComponent.initialPromise;
+      } else {
+        this.bindGlobalData(this.dataset.bind ?? "");
+      }
+      this.#alivePromise = new Promise((resolve, reject) => {
+        this.#aliveResolve = resolve;
+        this.#aliveReject = reject;
+      });
+      await this.build();
+    } finally {
+      this.#initialResolve && this.#initialResolve();
+    }
+  }
+
+  /**
+   * DOMツリーから削除
+   */
+  disconnectedCallback() {
+    this.#aliveResolve && this.#aliveResolve(this.data);
+  }
+
+  /**
+   * 移動時
+   */
+  adoptedCallback() {
+    
+  }
+
+  /**
+   * 属性値更新
+   * @param {string} name 
+   * @param {any} oldValue 
+   * @param {any} newValue 
+   */
+  attributeChangedCallback(name, oldValue, newValue) {
+    
+  }
+
+  /**
+   * 
+   * @param {Set<string>} setOfKey 
+   * @param {number[]} indexes 
+   */
+  notify(setOfKey) {
+    this.#binds?.updateViewModel(setOfKey);
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {UserComponentData} componentData 
+   */
+  static regist(name, componentData) {
+    const template = htmlToTemplate(componentData.html, componentData.css);
+    // 同じクラスを登録できないため
+    const componentClass = class extends Component {
+      static template = template;
+      static ViewModel = componentData.ViewModel;
+    };
+    // nameにはハイフンが必要、アルファベットの大文字は使えません
+    customElements.define(name, componentClass);
+  }
+
+}
+
+class Prefix {
+  /**
+   * @type {string}
+   */
+  prefix;
+  /**
+   * @type {string}
+   */
+  path;
+
+  static prefixes = [];
+  static add(prefix, path) {
+    this.prefixes.push(Object.assign(new Prefix, {prefix, path}));
+  }
+
+  /**
+   * 
+   * @param {string} tagName 
+   * @returns {{prefix:string,path:string}}
+   */
+  static getByTagName(tagName) {
+    const prefix = this.prefixes.find(prefix => {
+      const match = prefix.prefix + "-";
+      return tagName.startsWith(match);
+    });
+    return prefix;
+  }
+}
+
+/**
+ * @enum {number}
+ */
+const ComponentNameType = {
+  kebab: 1,
+  snake: 2,
+  upperCamel: 3,
+  lowerCamel: 4,
+};
+
+class ComponentNameTypeUtil {
+  /**
+   * 
+   * @param {string} name 
+   * @returns {{
+   *  [ComponentNameType.kebab]:string,
+   *  [ComponentNameType.snake]:string,
+   *  [ComponentNameType.upperCamel]:string,
+   *  [ComponentNameType.lowerCamel]:string,
+   * }}
+   */
+  static getNames(name) {
+    const kebabName = utils$1.toKebabCase(name);
+    const snakeName = kebabName.replaceAll("-", "_");
+    const upperCamelName = kebabName.split("-").map((text, index) => {
+      if (typeof text[0] !== "undefined") {
+        text = text[0].toUpperCase() + text.slice(1);
+      }
+      return text;
+    }).join("");
+    const lowerCamelName = upperCamelName[0].toLowerCase() + upperCamelName.slice(1);
+    return {
+      [ComponentNameType.kebab]: kebabName,
+      [ComponentNameType.snake]: snakeName,
+      [ComponentNameType.upperCamel]: upperCamelName,
+      [ComponentNameType.lowerCamel]: lowerCamelName,
+    }
+
+  }
+}
+
+class Loader {
+  static replaceNames = ComponentNameTypeUtil.getNames("component-name")
+  /**
+   * 
+   * @param {string} tagName 
+   * @param {ComponentNameType} defaultComponentNameType 
+   * @param {string} defaultComponentPath 
+   */
+  static async load(tagName, defaultComponentNameType, defaultComponentPath) {
+    const { replaceNames } = this;
+    const registTagName = utils$1.toKebabCase(tagName);
+    // タグに一致するプレフィックスを取得する
+    const prefixInfo = Prefix.getByTagName(registTagName);
+    // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする
+    const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;
+    // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する
+    const componentNames = ComponentNameTypeUtil.getNames(componentName);
+    const prefixPath = prefixInfo?.path ?? defaultComponentPath;
+    // パスのパターンをコンポーネント名でリプレース
+    let path = prefixPath;
+    for(let nameType in ComponentNameType) {
+      path = path.replaceAll(`{${replaceNames[nameType]}}`, componentNames[nameType]);
+    }
+    // リプレースが発生しなければ、デフォルトの方法として、パスの後ろにコンポーネント名.jsを付加する
+    if (path === prefixPath) {
+      path += ((path.at(-1) !== "/") ? "/" : "") + componentNames[defaultComponentNameType] + ".js";
+    }
+    // http://～を先方に付加して相対パスを解決する
+    const paths = location.pathname.split("/");
+    paths[paths.length - 1] = path;
+    const fullPath = location.origin + paths.join("/");
+    try {
+      const componentModule = await import(/* webpackIgnore: true */fullPath);
+      Component.regist(registTagName, componentModule.default);
+    } catch(e) {
+      console.log(`can't load component { registTagName:${registTagName}, fullPath:${fullPath} }`);
+      console.error(e);
+    }
+
+  }
+}
+
+const DEAFULT_PATH = "./";
+
+class Main {
+  /**
+   * @type {{
+   * debug:boolean,
+   * defaultComponentNameType:ComponentNameType,
+   * defaultComponentPath:string,
+   * }}
+   */
+  static #config = {
+    debug: false,
+    defaultComponentNameType: ComponentNameType.lowerCamel,
+    defaultComponentPath:DEAFULT_PATH,
+
+  };
+  /**
+   * 
+   * @param {Object<string,UserComponentData>} components 
+   * @returns {Main}
+   */
+  static components(components) {
+    Object.entries(components).forEach(([name, componentData]) => {
+      const componentName = utils$1.toKebabCase(name);
+      Component.regist(componentName, componentData);
+    });
+    return this;
+  }
+  /**
+   * 
+   * @param {Object<string,UserFilterData>} filters 
+   * @returns {Main}
+   */
+  static filters(filters) {
+    Object.entries(filters).forEach(([name, filterData]) => {
+      const { input, output } = filterData;
+      Filter.regist(name, output, input);
+    });
+    return this;
+  }
+  /**
+   * @param {Object<string,string>} prefixes
+   */
+  static prefixes(prefixes) {
+    for(let [ prefix, path ] of Object.entries(prefixes)) {
+      Prefix.add(prefix, path);
+    }
+    
+    return this;
+  }
+  /**
+   * @param 
+   */
+  static async load(...tagNames) {
+    for(const tagName of tagNames) {
+      await Loader.load(tagName, this.#config.defaultComponentNameType, this.#config.defaultComponentPath);
+    }
+    return this;
+  }
+
+  /**
+   * 
+   * @param {Object<string,any>} data 
+   */
+  static globals(data) {
+    Object.assign(GlobalData.data, data);
+  }
+  /**
+   * 
+   * @param {{
+   * debug:boolean,
+   * defaultComponentNameType:ComponentNameType,
+   * defaultComponentPath:string,
+   * }}  
+   * @returns {Main}
+   */
+  static config({ 
+    defaultComponentNameType = ComponentNameType.lowerCamel,
+    defaultComponentPath = DEAFULT_PATH,
+    debug = false }) {
+    this.#config = Object.assign(this.#config, { debug, defaultComponentNameType, defaultComponentPath });
+    return this;
+  }
+  /**
+   * @type {boolean}
+   */
+  static get debug() {
+    return this.#config.debug;
+  }
+}
+const defaultPath = DEAFULT_PATH;
+
+export { ComponentNameType, Main as default, defaultPath };

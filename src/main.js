@@ -97,3 +97,6 @@ export default class Main {
     return this.#config.debug;
   }
 }
+
+export { ComponentNameType } from "./loader/ComponentNameType.js";
+export const defaultPath = DEAFULT_PATH;
