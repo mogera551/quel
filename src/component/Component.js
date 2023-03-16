@@ -28,7 +28,7 @@ const getParentComponent = (node) => {
 
 /**
  * HTMLの変換
- * {{loop:}}{{if:}}を<template>へ置換
+ * {{loop:}}{{if:}}{{else:}}を<template>へ置換
  * {{end:}}を</template>へ置換
  * {{...}}を<!--@@...-->へ置換
  * @param {string} html 
