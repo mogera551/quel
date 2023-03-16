@@ -5,8 +5,8 @@ import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 export default class LevelTop extends BindInfo {
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         node[nodeProperty] = value ?? "";

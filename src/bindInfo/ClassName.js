@@ -15,9 +15,9 @@ export default class ClassName extends BindInfo {
     return this.nodePropertyElements[1];
   }
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters, className} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters, className} = this;
     const element = toHTMLElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         value ? element.classList.add(className) : element.classList.remove(className);

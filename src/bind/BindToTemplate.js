@@ -1,12 +1,9 @@
 import "../types.js";
 import BindDomIf from "./BindToDomIf.js";
 import BindInfo from "../bindInfo/BindInfo.js";
-import Template, { TemplateChild } from "../bindInfo/Template.js";
+import Template from "../bindInfo/Template.js";
 import utils from "../utils.js";
-import Binder from "./Binder.js";
 import Parser from "./Parser.js";
-import Filter from "../filter/Filter.js";
-import { SYM_CALL_DIRECT_GET } from "../viewModel/Symbols.js";
 import Factory from "../bindInfo/Factory.js";
 import Component from "../component/Component.js";
 

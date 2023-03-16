@@ -479,7 +479,7 @@ class Template extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { viewModel, viewModelProperty, indexes, filters } = this;
+    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
     /**
      * @type {any}
      */
@@ -487,7 +487,7 @@ class Template extends BindInfo {
     /**
      * @type {any}
      */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
@@ -508,7 +508,7 @@ class Template extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { viewModel, viewModelProperty, indexes, filters } = this;
+    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
     /**
      * @type {any[]}
      */
@@ -516,7 +516,7 @@ class Template extends BindInfo {
     /**
      * @type {any[]}
      */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters) ?? [];
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters) ?? [];
 
     /**
      * @type {Map<any,number[]>}
@@ -1213,8 +1213,8 @@ class NodeUpdator {
 
 class LevelTop extends BindInfo {
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         node[nodeProperty] = value ?? "";
@@ -1241,9 +1241,9 @@ class Level2nd extends BindInfo {
   }
 
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const {nodeProperty1, nodeProperty2} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         node[nodeProperty1][nodeProperty2] = value ?? "";
@@ -1273,9 +1273,9 @@ class Level3rd extends BindInfo {
     return this.nodePropertyElements[2];
   }
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? "";
@@ -1306,9 +1306,9 @@ class ClassName extends BindInfo {
     return this.nodePropertyElements[1];
   }
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters, className} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters, className} = this;
     const element = toHTMLElement$1(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         value ? element.classList.add(className) : element.classList.remove(className);
@@ -1330,9 +1330,9 @@ const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node :
 
 class Radio extends BindInfo {
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const radio = toHTMLInputElement$1(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, contextIndexes, indexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         radio.checked = value === radio.value;
@@ -1356,9 +1356,9 @@ const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : u
 
 class Checkbox extends BindInfo {
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const checkbox = toHTMLInputElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         checkbox.checked = value.find(value => value === checkbox.value);
@@ -1368,10 +1368,10 @@ class Checkbox extends BindInfo {
   }
 
   updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = bind;
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = bind;
     const checkbox = toHTMLInputElement(node);
     const checkboxValue = Filter.applyForInput(checkbox.value, filters);
-    const setOfValue = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes));
+    const setOfValue = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes));
     (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
     const value = Array.from(setOfValue);
     viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
@@ -1524,7 +1524,7 @@ class PropertyInfo {
             retValues = isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
               traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
           } else {
-            retValues = (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).flatMap((value, index) => {
+            retValues = (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes, undefined) ?? []).flatMap((value, index) => {
               return isTerminate ? [ loopIndexes.concat(index) ] :
                 traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));
             });
@@ -2566,8 +2566,11 @@ let Handler$1 = class Handler {
     return wrapArray(component, prop, indexes, value);
   }
 
-  [SYM_CALL_DIRECT_GET](prop, indexes, target, receiver) {
+  [SYM_CALL_DIRECT_GET](prop, indexes, contextIndexes, target, receiver) {
     let value;
+    if (SET_OF_CONTEXT_INDEXES.has(prop)) {
+      return contextIndexes[Number(prop.slice(1)) - 1];
+    }
     this.stackIndexes.push(indexes);
     try {
       value = receiver[prop];
@@ -2678,8 +2681,8 @@ let Handler$1 = class Handler {
       const { lastIndexes, dependentMap } = this;
       switch(prop) {
         case SYM_CALL_DIRECT_GET:
-          return (prop, indexes) => 
-            Reflect.apply(this[SYM_CALL_DIRECT_GET], this, [prop, indexes, target, receiver]);
+          return (prop, indexes, contextIndexes) => 
+            Reflect.apply(this[SYM_CALL_DIRECT_GET], this, [prop, indexes, contextIndexes, target, receiver]);
         case SYM_CALL_DIRECT_SET:
           return (prop, indexes, value) => 
             Reflect.apply(this[SYM_CALL_DIRECT_SET], this, [prop, indexes, value, target, receiver]);
@@ -2754,7 +2757,7 @@ let Handler$1 = class Handler {
         const defindedProperty = this.definedPropertyByProp.get(propName);
         if (defindedProperty) {
           return defindedProperty.expand(receiver, []).map(indexes => {
-            const value = this[SYM_CALL_DIRECT_GET](propName, indexes, target, receiver);
+            const value = this[SYM_CALL_DIRECT_GET](propName, indexes, undefined, target, receiver);
             return [ value, indexes];
           });
         }
@@ -2762,7 +2765,7 @@ let Handler$1 = class Handler {
       if (prop[0] !== "_") {
         const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
-          return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, target, receiver);
+          return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, undefined, target, receiver);
         }
       }
       return Reflect.get(target, prop, receiver);

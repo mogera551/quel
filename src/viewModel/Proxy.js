@@ -168,8 +168,11 @@ class Handler {
     return wrapArray(component, prop, indexes, value);
   }
 
-  [SYM_CALL_DIRECT_GET](prop, indexes, target, receiver) {
+  [SYM_CALL_DIRECT_GET](prop, indexes, contextIndexes, target, receiver) {
     let value;
+    if (SET_OF_CONTEXT_INDEXES.has(prop)) {
+      return contextIndexes[Number(prop.slice(1)) - 1];
+    }
     this.stackIndexes.push(indexes);
     try {
       value = receiver[prop];
@@ -280,8 +283,8 @@ class Handler {
       const { lastIndexes, dependentMap } = this;
       switch(prop) {
         case SYM_CALL_DIRECT_GET:
-          return (prop, indexes) => 
-            Reflect.apply(this[SYM_CALL_DIRECT_GET], this, [prop, indexes, target, receiver]);
+          return (prop, indexes, contextIndexes) => 
+            Reflect.apply(this[SYM_CALL_DIRECT_GET], this, [prop, indexes, contextIndexes, target, receiver]);
         case SYM_CALL_DIRECT_SET:
           return (prop, indexes, value) => 
             Reflect.apply(this[SYM_CALL_DIRECT_SET], this, [prop, indexes, value, target, receiver]);
@@ -356,7 +359,7 @@ class Handler {
         const defindedProperty = this.definedPropertyByProp.get(propName);
         if (defindedProperty) {
           return defindedProperty.expand(receiver, []).map(indexes => {
-            const value = this[SYM_CALL_DIRECT_GET](propName, indexes, target, receiver);
+            const value = this[SYM_CALL_DIRECT_GET](propName, indexes, undefined, target, receiver);
             return [ value, indexes];
           });
         }
@@ -364,7 +367,7 @@ class Handler {
       if (prop[0] !== "_") {
         const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
         if (loopProperty && indexes) {
-          return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, target, receiver);
+          return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, undefined, target, receiver);
         }
       }
       return Reflect.get(target, prop, receiver);

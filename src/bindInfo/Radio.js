@@ -8,9 +8,9 @@ const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : u
 
 export default class Radio extends BindInfo {
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const radio = toHTMLInputElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, contextIndexes, indexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         radio.checked = value === radio.value;

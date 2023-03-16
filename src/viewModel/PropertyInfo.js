@@ -120,7 +120,7 @@ export default class PropertyInfo {
             retValues = isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
               traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
           } else {
-            retValues = (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes) ?? []).flatMap((value, index) => {
+            retValues = (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes, undefined) ?? []).flatMap((value, index) => {
               return isTerminate ? [ loopIndexes.concat(index) ] :
                 traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));
             })

@@ -146,7 +146,7 @@ export default class Template extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { viewModel, viewModelProperty, indexes, filters } = this;
+    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
     /**
      * @type {any}
      */
@@ -154,7 +154,7 @@ export default class Template extends BindInfo {
     /**
      * @type {any}
      */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
@@ -175,7 +175,7 @@ export default class Template extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { viewModel, viewModelProperty, indexes, filters } = this;
+    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
     /**
      * @type {any[]}
      */
@@ -183,7 +183,7 @@ export default class Template extends BindInfo {
     /**
      * @type {any[]}
      */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters) ?? [];
+    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters) ?? [];
 
     /**
      * @type {Map<any,number[]>}

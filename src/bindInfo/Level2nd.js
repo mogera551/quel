@@ -12,9 +12,9 @@ export default class Level2nd extends BindInfo {
   }
 
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const {nodeProperty1, nodeProperty2} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         node[nodeProperty1][nodeProperty2] = value ?? "";

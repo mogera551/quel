@@ -8,9 +8,9 @@ const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : u
 
 export default class Checkbox extends BindInfo {
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const checkbox = toHTMLInputElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes), filters);
+    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
         checkbox.checked = value.find(value => value === checkbox.value);
@@ -20,10 +20,10 @@ export default class Checkbox extends BindInfo {
   }
 
   updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = bind;
+    const {node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = bind;
     const checkbox = toHTMLInputElement(node);
     const checkboxValue = Filter.applyForInput(checkbox.value, filters);
-    const setOfValue = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes));
+    const setOfValue = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes));
     (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
     const value = Array.from(setOfValue);
     viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
