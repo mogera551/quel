@@ -2,6 +2,11 @@ import Component from "../component/Component.js";
 import utils from "../utils.js";
 import ComponentNameTypeUtil, { ComponentNameType } from "./ComponentNameType.js";
 
+const ComponentFileFormat = {
+  component:0,
+  quel:1,
+}
+
 export default class {
   static replaceNames = ComponentNameTypeUtil.getNames("component-name")
   /**
@@ -13,12 +18,14 @@ export default class {
    */
   static async load(tagName, customTagPrefix, defaultComponentNameType, defaultComponentPath) {
     const { replaceNames } = this;
-    const registTagName = utils.toKebabCase(tagName);
+    const componentFileFormat = tagName[0] === "@" ? ComponentFileFormat.quel : ComponentFileFormat.component;
+    const rawTagName = tagName[0] === "@" ? tagName.slice(1) : tagName;
+    const registTagName = utils.toKebabCase(rawTagName);
     // タグに一致するプレフィックスを取得する
     const prefixInfo = 
       Object.entries(customTagPrefix)
         .map(([prefix, path]) => ({prefix, path}))
-        .find(({prefix, path}) => tagName.startsWith(prefix + "-"));
+        .find(({prefix, path}) => rawTagName.startsWith(prefix + "-"));
     // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする
     const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;
     // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する
@@ -39,7 +46,12 @@ export default class {
     const fullPath = location.origin + paths.join("/");
     try {
       const componentModule = await import(/* webpackIgnore: true */fullPath);
-      Component.regist(registTagName, componentModule.default);
+      if (componentFileFormat === ComponentFileFormat.component) {
+        customElements.define(registTagName, componentModule.default);
+      } else if (componentFileFormat === ComponentFileFormat.quel) {
+        Component.regist(registTagName, componentModule.default);
+      } else {
+      }
     } catch(e) {
       console.log(`can't load component { registTagName:${registTagName}, fullPath:${fullPath} }`);
       console.error(e);

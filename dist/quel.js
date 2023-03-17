@@ -3241,6 +3241,11 @@ class ComponentNameTypeUtil {
   }
 }
 
+const ComponentFileFormat = {
+  component:0,
+  quel:1,
+};
+
 class ComponentsLoader {
   static replaceNames = ComponentNameTypeUtil.getNames("component-name")
   /**
@@ -3252,12 +3257,14 @@ class ComponentsLoader {
    */
   static async load(tagName, customTagPrefix, defaultComponentNameType, defaultComponentPath) {
     const { replaceNames } = this;
-    const registTagName = utils$1.toKebabCase(tagName);
+    const componentFileFormat = tagName[0] === "@" ? ComponentFileFormat.quel : ComponentFileFormat.component;
+    const rawTagName = tagName[0] === "@" ? tagName.slice(1) : tagName;
+    const registTagName = utils$1.toKebabCase(rawTagName);
     // タグに一致するプレフィックスを取得する
     const prefixInfo = 
       Object.entries(customTagPrefix)
         .map(([prefix, path]) => ({prefix, path}))
-        .find(({prefix, path}) => tagName.startsWith(prefix + "-"));
+        .find(({prefix, path}) => rawTagName.startsWith(prefix + "-"));
     // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする
     const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;
     // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する
@@ -3278,7 +3285,12 @@ class ComponentsLoader {
     const fullPath = location.origin + paths.join("/");
     try {
       const componentModule = await import(/* webpackIgnore: true */fullPath);
-      Component.regist(registTagName, componentModule.default);
+      if (componentFileFormat === ComponentFileFormat.component) {
+        customElements.define(registTagName, componentModule.default);
+      } else if (componentFileFormat === ComponentFileFormat.quel) {
+        Component.regist(registTagName, componentModule.default);
+      } else {
+      }
     } catch(e) {
       console.log(`can't load component { registTagName:${registTagName}, fullPath:${fullPath} }`);
       console.error(e);
