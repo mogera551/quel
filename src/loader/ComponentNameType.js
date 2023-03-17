@@ -10,6 +10,16 @@ export const ComponentNameType = {
   lowerCamel: 4,
 };
 
+/**
+ * @type {Object<string,ComponentNameType>}
+ */
+export const componentNameTypes = {
+  "kebab": ComponentNameType.kebab,
+  "snake": ComponentNameType.snake,
+  "uppercamel": ComponentNameType.upperCamel,
+  "lowercamel": ComponentNameType.lowerCamel,
+}
+
 export default class {
   /**
    * 

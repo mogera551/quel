@@ -1,21 +1,24 @@
 import Component from "../component/Component.js";
 import utils from "../utils.js";
 import ComponentNameTypeUtil, { ComponentNameType } from "./ComponentNameType.js";
-import Prefix from "./Prefix.js";
 
 export default class {
   static replaceNames = ComponentNameTypeUtil.getNames("component-name")
   /**
    * 
    * @param {string} tagName 
+   * @param {Object<string,string>} customTagPrefix
    * @param {ComponentNameType} defaultComponentNameType 
    * @param {string} defaultComponentPath 
    */
-  static async load(tagName, defaultComponentNameType, defaultComponentPath) {
+  static async load(tagName, customTagPrefix, defaultComponentNameType, defaultComponentPath) {
     const { replaceNames } = this;
     const registTagName = utils.toKebabCase(tagName);
     // タグに一致するプレフィックスを取得する
-    const prefixInfo = Prefix.getByTagName(registTagName);
+    const prefixInfo = 
+      Object.entries(customTagPrefix)
+        .map(([prefix, path]) => ({prefix, path}))
+        .find(({prefix, path}) => tagName.startsWith(prefix + "-"));
     // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする
     const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;
     // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する
@@ -23,7 +26,7 @@ export default class {
     const prefixPath = prefixInfo?.path ?? defaultComponentPath;
     // パスのパターンをコンポーネント名でリプレース
     let path = prefixPath;
-    for(let nameType in ComponentNameType) {
+    for(let nameType of Object.values(ComponentNameType)) {
       path = path.replaceAll(`{${replaceNames[nameType]}}`, componentNames[nameType]);
     }
     // リプレースが発生しなければ、デフォルトの方法として、パスの後ろにコンポーネント名.jsを付加する
