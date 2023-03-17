@@ -756,6 +756,360 @@ class PropertyType {
   }
 }
 
+let Handler$3 = class Handler {
+  set(target, prop, value, receiver) {
+    Reflect.set(target, prop, value, receiver);
+    GlobalData.binds
+    .filter(bind => prop === bind.globalProperty)
+    .forEach(bind => {
+      const [dataProp, nameProp] = bind.componentProperty.split(".");
+      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${nameProp}`, []);
+    });
+    GlobalData.globalBinds
+    .filter(bind => prop === bind.globalProperty)
+    .forEach(bind => {
+      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$globals.${prop}`, []);
+    });
+    return true;
+  }
+};
+
+class GlobalData {
+  /**
+   * @type {{globalProperty:string,component:Component,componentProperty:string}[]}
+   */
+  static binds = [];
+  /**
+   * @type {{globalProperty:string,component:Component}[]}
+   */
+  static globalBinds = [];
+  /**
+   * 
+   * @param {Component} component 
+   */
+  static boundFromComponent(component) {
+    component.data[SYM_CALL_BIND_DATA](this.data);
+  }
+  /**
+   * 
+   * @param {string} globalProperty 
+   * @param {Component} component 
+   * @param {string} componentProperty 
+   */
+  static boundPropertyFromComponent(globalProperty, component, componentProperty) {
+    this.binds.push({ globalProperty, component, componentProperty });
+    component.data[SYM_CALL_BIND_PROPERTY](componentProperty, globalProperty);
+  }
+  /**
+   * 
+   * @param {Component} component 
+   * @param {string} globalProperty
+   */
+  static globalBoundFromComponent(component, globalProperty) {
+    this.globalBinds.push({ component, globalProperty });
+  }
+  /**
+   * 
+   * @returns 
+   */
+  static create() {
+    return new Proxy({}, new Handler$3);
+  }
+  /**
+   * @type {Object<string,any>}
+   */
+  static data = this.create();
+
+}
+
+/**
+ * @enum {number}
+ */
+const ComponentNameType = {
+  kebab: 1,
+  snake: 2,
+  upperCamel: 3,
+  lowerCamel: 4,
+};
+
+/**
+ * @type {Object<string,ComponentNameType>}
+ */
+const componentNameTypes = {
+  "kebab": ComponentNameType.kebab,
+  "snake": ComponentNameType.snake,
+  "uppercamel": ComponentNameType.upperCamel,
+  "lowercamel": ComponentNameType.lowerCamel,
+};
+
+class ComponentNameTypeUtil {
+  /**
+   * 
+   * @param {string} name 
+   * @returns {{
+   *  [ComponentNameType.kebab]:string,
+   *  [ComponentNameType.snake]:string,
+   *  [ComponentNameType.upperCamel]:string,
+   *  [ComponentNameType.lowerCamel]:string,
+   * }}
+   */
+  static getNames(name) {
+    const kebabName = utils$1.toKebabCase(name);
+    const snakeName = kebabName.replaceAll("-", "_");
+    const upperCamelName = kebabName.split("-").map((text, index) => {
+      if (typeof text[0] !== "undefined") {
+        text = text[0].toUpperCase() + text.slice(1);
+      }
+      return text;
+    }).join("");
+    const lowerCamelName = upperCamelName[0].toLowerCase() + upperCamelName.slice(1);
+    return {
+      [ComponentNameType.kebab]: kebabName,
+      [ComponentNameType.snake]: snakeName,
+      [ComponentNameType.upperCamel]: upperCamelName,
+      [ComponentNameType.lowerCamel]: lowerCamelName,
+    }
+
+  }
+}
+
+const ComponentFileFormat = {
+  component:0,
+  quel:1,
+};
+
+class ComponentsLoader {
+  static replaceNames = ComponentNameTypeUtil.getNames("component-name")
+  /**
+   * 
+   * @param {string} tagName 
+   * @param {Object<string,string>} customTagPrefix
+   * @param {ComponentNameType} defaultComponentNameType 
+   * @param {string} defaultComponentPath 
+   */
+  static async load(tagName, customTagPrefix, defaultComponentNameType, defaultComponentPath) {
+    const { replaceNames } = this;
+    const componentFileFormat = tagName[0] === "@" ? ComponentFileFormat.quel : ComponentFileFormat.component;
+    const rawTagName = tagName[0] === "@" ? tagName.slice(1) : tagName;
+    const registTagName = utils$1.toKebabCase(rawTagName);
+    // タグに一致するプレフィックスを取得する
+    const prefixInfo = 
+      Object.entries(customTagPrefix)
+        .map(([prefix, path]) => ({prefix, path}))
+        .find(({prefix, path}) => rawTagName.startsWith(prefix + "-"));
+    // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする
+    const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;
+    // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する
+    const componentNames = ComponentNameTypeUtil.getNames(componentName);
+    const prefixPath = prefixInfo?.path ?? defaultComponentPath;
+    // パスのパターンをコンポーネント名でリプレース
+    let path = prefixPath;
+    for(let nameType of Object.values(ComponentNameType)) {
+      path = path.replaceAll(`{${replaceNames[nameType]}}`, componentNames[nameType]);
+    }
+    // リプレースが発生しなければ、デフォルトの方法として、パスの後ろにコンポーネント名.jsを付加する
+    if (path === prefixPath) {
+      path += ((path.at(-1) !== "/") ? "/" : "") + componentNames[defaultComponentNameType] + ".js";
+    }
+    // http://～を先方に付加して相対パスを解決する
+    const paths = location.pathname.split("/");
+    paths[paths.length - 1] = path;
+    const fullPath = location.origin + paths.join("/");
+    try {
+      const componentModule = await import(/* webpackIgnore: true */fullPath);
+      if (componentFileFormat === ComponentFileFormat.component) {
+        customElements.define(registTagName, componentModule.default);
+      } else if (componentFileFormat === ComponentFileFormat.quel) {
+        Component.regist(registTagName, componentModule.default);
+      } else {
+      }
+    } catch(e) {
+      console.log(`can't load component { registTagName:${registTagName}, fullPath:${fullPath} }`);
+      console.error(e);
+    }
+
+  }
+}
+
+class FilterLoader {
+  /**
+   * 
+   * @param {string} filterName 
+   * @param {string} defaultCustomFilterPath 
+   */
+  static async load(filterName, defaultCustomFilterPath) {
+    let path = defaultCustomFilterPath;
+    path += ((path.at(-1) !== "/") ? "/" : "") + filterName + ".js";
+    const paths = location.pathname.split("/");
+    paths[paths.length - 1] = path;
+    const fullPath = location.origin + paths.join("/");
+    try {
+      const filterModule = await import(/* webpackIgnore: true */fullPath);
+      const { output, input } = filterModule.default;
+      Filter.regist(filterName, output, input);
+    } catch(e) {
+      console.log(`can't load filter { filterName:${filterName}, fullPath:${fullPath} }`);
+      console.error(e);
+    }
+  }
+}
+
+const DEAFULT_PATH = "./";
+const DEFAULT_COMPONEN_NAME_TYPE = "lowercamel";
+
+class Main {
+  /**
+   * @type {{
+   * debug:boolean,
+   * loadComponent:boolean,
+   * defaultComponentNameType:string,
+   * defaultComponentPath:string,
+   * customTag:string[],
+   * customTagPrefix:Object<string,string>,
+   * loadCustomFilter:boolean,
+   * customFilterPath:string,
+   * customFilter:string[],
+   * }}
+   */
+  static #config = {
+    debug: false,
+    loadComponent:false,
+    defaultComponentNameType: DEFAULT_COMPONEN_NAME_TYPE,
+    defaultComponentPath:DEAFULT_PATH,
+    customTag:[],
+    customTagPrefix:{},
+    loadCustomFilter:false,
+    customFilterPath:DEAFULT_PATH,
+    customFilter:[],
+  };
+  /**
+   * @typedef {class<HTMLElement>} ComponentClass
+   */
+  /**
+   * 
+   * @param {Object<string,ComponentClass>} components 
+   * @returns {Main}
+   */
+  static components(components) {
+    Object.entries(components).forEach(([name, componentClass]) => {
+      const componentName = utils$1.toKebabCase(name);
+      customElements.define(componentName, componentClass);
+    });
+    return this;
+  }
+  /**
+   * 
+   * @param {Object<string,UserComponentData>} components 
+   * @returns {Main}
+   */
+  static componentsData(components) {
+    Object.entries(components).forEach(([name, componentData]) => {
+      const componentName = utils$1.toKebabCase(name);
+      const componentClass = Component.getClass(componentData);
+      customElements.define(componentName, componentClass);
+    });
+    return this;
+  }
+  /**
+   * 
+   * @param {Object<string,UserFilterData>} filters 
+   * @returns {Main}
+   */
+  static filters(filters) {
+    Object.entries(filters).forEach(([name, filterData]) => {
+      const { input, output } = filterData;
+      Filter.regist(name, output, input);
+    });
+    return this;
+  }
+  /**
+   * @param 
+   */
+  static async load(...tagNames) {
+    const {
+      loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix,
+    } = this.#config;
+    if (loadComponent) {
+      const componentNameType = componentNameTypes[defaultComponentNameType.toLowerCase()];
+      for(const tagName of tagNames) {
+        await ComponentsLoader.load(tagName, customTagPrefix, componentNameType, defaultComponentPath);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * 
+   * @param {Object<string,any>} data 
+   */
+  static globals(data) {
+    Object.assign(GlobalData.data, data);
+  }
+  /**
+   * 
+   * @param {{
+   * debug:boolean,
+   * loadComponent:boolean,
+   * defaultComponentNameType:string,
+   * defaultComponentPath:string,
+   * customTag:string[],
+   * customTagPrefix:Object<string,string>,
+   * loadCustomFilter:boolean,
+   * customFilterPath:string,
+   * customFilter:string[],
+   * }}  
+   * @returns {Main}
+   */
+  static config({ 
+    debug = false,
+    loadComponent = false,
+    defaultComponentNameType = DEFAULT_COMPONEN_NAME_TYPE,
+    defaultComponentPath = DEAFULT_PATH,
+    customTag = [],
+    customTagPrefix = {},
+    loadCustomFilter = false,
+    customFilterPath = DEAFULT_PATH,
+    customFilter = [],
+  }) {
+    this.#config = Object.assign(this.#config, { debug });
+    if (loadCustomFilter) {
+      this.#config = Object.assign(this.#config, { loadCustomFilter, customFilterPath, customFilter });
+    }
+    if (loadComponent) {
+      this.#config = 
+        Object.assign(this.#config, { loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix });
+    }
+    return this;
+  }
+
+  /**
+   * 
+   */
+  static async boot() {
+    const {
+      loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix,
+      loadCustomFilter, customFilterPath, customFilter
+    } = this.#config;
+    if (loadCustomFilter) {
+      for(let filter of customFilter) {
+        await FilterLoader.load(filter, customFilterPath);
+      }
+    }
+    if (loadComponent) {
+      const componentNameType = componentNameTypes[defaultComponentNameType.toLowerCase()];
+      for(let tagName of customTag) {
+        await ComponentsLoader.load(tagName, customTagPrefix, componentNameType, defaultComponentPath);
+      }
+    }
+  }
+  /**
+   * @type {boolean}
+   */
+  static get debug() {
+    return this.#config.debug;
+  }
+}
+
 class NotifyData {
   /**
    * @type {Component}
@@ -2296,72 +2650,6 @@ function create$1(array, component, prop, indexes) {
   return new Proxy(array, new ArrayHandler(component, prop, indexes))
 }
 
-let Handler$3 = class Handler {
-  set(target, prop, value, receiver) {
-    Reflect.set(target, prop, value, receiver);
-    GlobalData.binds
-    .filter(bind => prop === bind.globalProperty)
-    .forEach(bind => {
-      const [dataProp, nameProp] = bind.componentProperty.split(".");
-      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${nameProp}`, []);
-    });
-    GlobalData.globalBinds
-    .filter(bind => prop === bind.globalProperty)
-    .forEach(bind => {
-      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$globals.${prop}`, []);
-    });
-    return true;
-  }
-};
-
-class GlobalData {
-  /**
-   * @type {{globalProperty:string,component:Component,componentProperty:string}[]}
-   */
-  static binds = [];
-  /**
-   * @type {{globalProperty:string,component:Component}[]}
-   */
-  static globalBinds = [];
-  /**
-   * 
-   * @param {Component} component 
-   */
-  static boundFromComponent(component) {
-    component.data[SYM_CALL_BIND_DATA](this.data);
-  }
-  /**
-   * 
-   * @param {string} globalProperty 
-   * @param {Component} component 
-   * @param {string} componentProperty 
-   */
-  static boundPropertyFromComponent(globalProperty, component, componentProperty) {
-    this.binds.push({ globalProperty, component, componentProperty });
-    component.data[SYM_CALL_BIND_PROPERTY](componentProperty, globalProperty);
-  }
-  /**
-   * 
-   * @param {Component} component 
-   * @param {string} globalProperty
-   */
-  static globalBoundFromComponent(component, globalProperty) {
-    this.globalBinds.push({ component, globalProperty });
-  }
-  /**
-   * 
-   * @returns 
-   */
-  static create() {
-    return new Proxy({}, new Handler$3);
-  }
-  /**
-   * @type {Object<string,any>}
-   */
-  static data = this.create();
-
-}
-
 let Handler$2 = class Handler {
   /**
    * @type {Component}
@@ -3174,293 +3462,28 @@ class Component extends HTMLElement {
 
   /**
    * 
-   * @param {string} name 
    * @param {UserComponentData} componentData 
+   * @returns {class<HTMLElement>}
    */
-  static regist(name, componentData) {
+  static getClass(componentData) {
     const template = htmlToTemplate(componentData.html, componentData.css);
     // 同じクラスを登録できないため
     const componentClass = class extends Component {
       static template = template;
       static ViewModel = componentData.ViewModel;
     };
-    // nameにはハイフンが必要、アルファベットの大文字は使えません
-    customElements.define(name, componentClass);
+    return componentClass;
   }
 
 }
 
 /**
- * @enum {number}
+ * 
+ * @param {UserComponentData} componentData 
+ * @returns {class<HTMLElement>}
  */
-const ComponentNameType = {
-  kebab: 1,
-  snake: 2,
-  upperCamel: 3,
-  lowerCamel: 4,
-};
-
-/**
- * @type {Object<string,ComponentNameType>}
- */
-const componentNameTypes = {
-  "kebab": ComponentNameType.kebab,
-  "snake": ComponentNameType.snake,
-  "uppercamel": ComponentNameType.upperCamel,
-  "lowercamel": ComponentNameType.lowerCamel,
-};
-
-class ComponentNameTypeUtil {
-  /**
-   * 
-   * @param {string} name 
-   * @returns {{
-   *  [ComponentNameType.kebab]:string,
-   *  [ComponentNameType.snake]:string,
-   *  [ComponentNameType.upperCamel]:string,
-   *  [ComponentNameType.lowerCamel]:string,
-   * }}
-   */
-  static getNames(name) {
-    const kebabName = utils$1.toKebabCase(name);
-    const snakeName = kebabName.replaceAll("-", "_");
-    const upperCamelName = kebabName.split("-").map((text, index) => {
-      if (typeof text[0] !== "undefined") {
-        text = text[0].toUpperCase() + text.slice(1);
-      }
-      return text;
-    }).join("");
-    const lowerCamelName = upperCamelName[0].toLowerCase() + upperCamelName.slice(1);
-    return {
-      [ComponentNameType.kebab]: kebabName,
-      [ComponentNameType.snake]: snakeName,
-      [ComponentNameType.upperCamel]: upperCamelName,
-      [ComponentNameType.lowerCamel]: lowerCamelName,
-    }
-
-  }
+function getComponentClass(componentData) {
+  return Component.getClass(componentData);
 }
 
-const ComponentFileFormat = {
-  component:0,
-  quel:1,
-};
-
-class ComponentsLoader {
-  static replaceNames = ComponentNameTypeUtil.getNames("component-name")
-  /**
-   * 
-   * @param {string} tagName 
-   * @param {Object<string,string>} customTagPrefix
-   * @param {ComponentNameType} defaultComponentNameType 
-   * @param {string} defaultComponentPath 
-   */
-  static async load(tagName, customTagPrefix, defaultComponentNameType, defaultComponentPath) {
-    const { replaceNames } = this;
-    const componentFileFormat = tagName[0] === "@" ? ComponentFileFormat.quel : ComponentFileFormat.component;
-    const rawTagName = tagName[0] === "@" ? tagName.slice(1) : tagName;
-    const registTagName = utils$1.toKebabCase(rawTagName);
-    // タグに一致するプレフィックスを取得する
-    const prefixInfo = 
-      Object.entries(customTagPrefix)
-        .map(([prefix, path]) => ({prefix, path}))
-        .find(({prefix, path}) => rawTagName.startsWith(prefix + "-"));
-    // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする
-    const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;
-    // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する
-    const componentNames = ComponentNameTypeUtil.getNames(componentName);
-    const prefixPath = prefixInfo?.path ?? defaultComponentPath;
-    // パスのパターンをコンポーネント名でリプレース
-    let path = prefixPath;
-    for(let nameType of Object.values(ComponentNameType)) {
-      path = path.replaceAll(`{${replaceNames[nameType]}}`, componentNames[nameType]);
-    }
-    // リプレースが発生しなければ、デフォルトの方法として、パスの後ろにコンポーネント名.jsを付加する
-    if (path === prefixPath) {
-      path += ((path.at(-1) !== "/") ? "/" : "") + componentNames[defaultComponentNameType] + ".js";
-    }
-    // http://～を先方に付加して相対パスを解決する
-    const paths = location.pathname.split("/");
-    paths[paths.length - 1] = path;
-    const fullPath = location.origin + paths.join("/");
-    try {
-      const componentModule = await import(/* webpackIgnore: true */fullPath);
-      if (componentFileFormat === ComponentFileFormat.component) {
-        customElements.define(registTagName, componentModule.default);
-      } else if (componentFileFormat === ComponentFileFormat.quel) {
-        Component.regist(registTagName, componentModule.default);
-      } else {
-      }
-    } catch(e) {
-      console.log(`can't load component { registTagName:${registTagName}, fullPath:${fullPath} }`);
-      console.error(e);
-    }
-
-  }
-}
-
-class FilterLoader {
-  /**
-   * 
-   * @param {string} filterName 
-   * @param {string} defaultCustomFilterPath 
-   */
-  static async load(filterName, defaultCustomFilterPath) {
-    let path = defaultCustomFilterPath;
-    path += ((path.at(-1) !== "/") ? "/" : "") + filterName + ".js";
-    const paths = location.pathname.split("/");
-    paths[paths.length - 1] = path;
-    const fullPath = location.origin + paths.join("/");
-    try {
-      const filterModule = await import(/* webpackIgnore: true */fullPath);
-      const { output, input } = filterModule.default;
-      Filter.regist(filterName, output, input);
-    } catch(e) {
-      console.log(`can't load filter { filterName:${filterName}, fullPath:${fullPath} }`);
-      console.error(e);
-    }
-  }
-}
-
-const DEAFULT_PATH = "./";
-const DEFAULT_COMPONEN_NAME_TYPE = "lowercamel";
-
-class Main {
-  /**
-   * @type {{
-   * debug:boolean,
-   * loadComponent:boolean,
-   * defaultComponentNameType:string,
-   * defaultComponentPath:string,
-   * customTag:string[],
-   * customTagPrefix:Object<string,string>,
-   * loadCustomFilter:boolean,
-   * customFilterPath:string,
-   * customFilter:string[],
-   * }}
-   */
-  static #config = {
-    debug: false,
-    loadComponent:false,
-    defaultComponentNameType: DEFAULT_COMPONEN_NAME_TYPE,
-    defaultComponentPath:DEAFULT_PATH,
-    customTag:[],
-    customTagPrefix:{},
-    loadCustomFilter:false,
-    customFilterPath:DEAFULT_PATH,
-    customFilter:[],
-  };
-  /**
-   * 
-   * @param {Object<string,UserComponentData>} components 
-   * @returns {Main}
-   */
-  static components(components) {
-    Object.entries(components).forEach(([name, componentData]) => {
-      const componentName = utils$1.toKebabCase(name);
-      Component.regist(componentName, componentData);
-    });
-    return this;
-  }
-  /**
-   * 
-   * @param {Object<string,UserFilterData>} filters 
-   * @returns {Main}
-   */
-  static filters(filters) {
-    Object.entries(filters).forEach(([name, filterData]) => {
-      const { input, output } = filterData;
-      Filter.regist(name, output, input);
-    });
-    return this;
-  }
-  /**
-   * @param 
-   */
-  static async load(...tagNames) {
-    const {
-      loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix,
-    } = this.#config;
-    if (loadComponent) {
-      const componentNameType = componentNameTypes[defaultComponentNameType.toLowerCase()];
-      for(const tagName of tagNames) {
-        await ComponentsLoader.load(tagName, customTagPrefix, componentNameType, defaultComponentPath);
-      }
-    }
-    return this;
-  }
-
-  /**
-   * 
-   * @param {Object<string,any>} data 
-   */
-  static globals(data) {
-    Object.assign(GlobalData.data, data);
-  }
-  /**
-   * 
-   * @param {{
-   * debug:boolean,
-   * loadComponent:boolean,
-   * defaultComponentNameType:string,
-   * defaultComponentPath:string,
-   * customTag:string[],
-   * customTagPrefix:Object<string,string>,
-   * loadCustomFilter:boolean,
-   * customFilterPath:string,
-   * customFilter:string[],
-   * }}  
-   * @returns {Main}
-   */
-  static config({ 
-    debug = false,
-    loadComponent = false,
-    defaultComponentNameType = DEFAULT_COMPONEN_NAME_TYPE,
-    defaultComponentPath = DEAFULT_PATH,
-    customTag = [],
-    customTagPrefix = {},
-    loadCustomFilter = false,
-    customFilterPath = DEAFULT_PATH,
-    customFilter = [],
-  }) {
-    this.#config = Object.assign(this.#config, { debug });
-    if (loadCustomFilter) {
-      this.#config = Object.assign(this.#config, { loadCustomFilter, customFilterPath, customFilter });
-    }
-    if (loadComponent) {
-      this.#config = 
-        Object.assign(this.#config, { loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix });
-    }
-    return this;
-  }
-
-  /**
-   * 
-   */
-  static async boot() {
-    const {
-      loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix,
-      loadCustomFilter, customFilterPath, customFilter
-    } = this.#config;
-    if (loadCustomFilter) {
-      for(let filter of customFilter) {
-        await FilterLoader.load(filter, customFilterPath);
-      }
-    }
-    if (loadComponent) {
-      const componentNameType = componentNameTypes[defaultComponentNameType.toLowerCase()];
-      for(let tagName of customTag) {
-        await ComponentsLoader.load(tagName, customTagPrefix, componentNameType, defaultComponentPath);
-      }
-    }
-  }
-  /**
-   * @type {boolean}
-   */
-  static get debug() {
-    return this.#config.debug;
-  }
-}
-const defaultPath = DEAFULT_PATH;
-
-export { ComponentNameType, Main as default, defaultPath };
+export { Main as default, getComponentClass };

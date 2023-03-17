@@ -1,4 +1,5 @@
+import { getComponentClass } from "./component/Component.js";
 import main from "./main.js";
-import myname from "./myname.js";
 
-window[myname] = main;
+export default main;
+export { getComponentClass }; 

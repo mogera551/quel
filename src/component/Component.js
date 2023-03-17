@@ -272,18 +272,26 @@ export default class Component extends HTMLElement {
 
   /**
    * 
-   * @param {string} name 
    * @param {UserComponentData} componentData 
+   * @returns {class<HTMLElement>}
    */
-  static regist(name, componentData) {
+  static getClass(componentData) {
     const template = htmlToTemplate(componentData.html, componentData.css);
     // 同じクラスを登録できないため
     const componentClass = class extends Component {
       static template = template;
       static ViewModel = componentData.ViewModel;
     };
-    // nameにはハイフンが必要、アルファベットの大文字は使えません
-    customElements.define(name, componentClass);
+    return componentClass;
   }
 
+}
+
+/**
+ * 
+ * @param {UserComponentData} componentData 
+ * @returns {class<HTMLElement>}
+ */
+export function getComponentClass(componentData) {
+  return Component.getClass(componentData);
 }

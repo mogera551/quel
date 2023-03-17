@@ -36,14 +36,30 @@ export default class Main {
     customFilter:[],
   };
   /**
+   * @typedef {class<HTMLElement>} ComponentClass
+   */
+  /**
+   * 
+   * @param {Object<string,ComponentClass>} components 
+   * @returns {Main}
+   */
+  static components(components) {
+    Object.entries(components).forEach(([name, componentClass]) => {
+      const componentName = utils.toKebabCase(name);
+      customElements.define(componentName, componentClass);
+    });
+    return this;
+  }
+  /**
    * 
    * @param {Object<string,UserComponentData>} components 
    * @returns {Main}
    */
-  static components(components) {
+  static componentsData(components) {
     Object.entries(components).forEach(([name, componentData]) => {
       const componentName = utils.toKebabCase(name);
-      Component.regist(componentName, componentData);
+      const componentClass = Component.getClass(componentData)
+      customElements.define(componentName, componentClass);
     });
     return this;
   }
@@ -146,6 +162,3 @@ export default class Main {
     return this.#config.debug;
   }
 }
-
-export { ComponentNameType } from "./loader/ComponentNameType.js";
-export const defaultPath = DEAFULT_PATH;

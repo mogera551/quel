@@ -1,5 +1,5 @@
 export default {
-  input: 'src/main.js',
+  input: 'src/export.js',
 	output: {
 		file: 'dist/quel.js',
 	},  
