@@ -1110,6 +1110,8 @@ class Main {
   }
 }
 
+var main = Main;
+
 class NotifyData {
   /**
    * @type {Component}
@@ -1460,10 +1462,10 @@ class Thread {
       try {
         const slot = await this.#sleep();
         await slot.waiting(); // queueにデータが入るまで待機
-        Main.debug && performance.mark('slot-exec:start');
+        main.debug && performance.mark('slot-exec:start');
         try {
           await slot.exec();
-          if (Main.debug) {
+          if (main.debug) {
             performance.mark('slot-exec:end');
             performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
             console.log(performance.getEntriesByType("measure"));    

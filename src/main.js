@@ -10,7 +10,7 @@ import FilterLoader from "./filter/Loader.js";
 const DEAFULT_PATH = "./";
 const DEFAULT_COMPONEN_NAME_TYPE = "lowercamel";
 
-export default class Main {
+export class Main {
   /**
    * @type {{
    * debug:boolean,
@@ -162,3 +162,5 @@ export default class Main {
     return this.#config.debug;
   }
 }
+
+export default Main;

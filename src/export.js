@@ -1,5 +1,2 @@
-import { getComponentClass } from "./component/Component.js";
-import main from "./main.js";
-
-export default main;
-export { getComponentClass }; 
+export { getComponentClass } from "./component/Component.js";
+export { Main as default } from "./main.js";
