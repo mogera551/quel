@@ -3510,8 +3510,8 @@ class Component extends HTMLElement {
  * @param {UserComponentData} componentData 
  * @returns {class<HTMLElement>}
  */
-function getComponentClass(componentData) {
+function createComponentClass(componentData) {
   return Component.getClass(componentData);
 }
 
-export { Main as default, getComponentClass };
+export { createComponentClass, Main as default };
