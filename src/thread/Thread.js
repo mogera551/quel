@@ -111,7 +111,8 @@ export class UpdateSlot {
    * @param {NodeUpdateData} nodeUpdateData 
    */
   addNodeUpdate(nodeUpdateData) {
-    this.#nodeUpdator.queue.push(nodeUpdateData);
+//    this.#nodeUpdator.queue.push(nodeUpdateData);
+    this.#nodeUpdator.add(nodeUpdateData);
     this.resolve();
   }
 

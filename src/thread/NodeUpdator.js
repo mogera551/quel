@@ -9,6 +9,8 @@ export class NodeUpdateData {
    * @type {string}
    */
   property;
+  viewModelProperty;
+  value;
   /**
    * @type {()=>{}}
    */
@@ -20,9 +22,11 @@ export class NodeUpdateData {
    * @param {string} property 
    * @param {()=>{}} updateFunc 
    */
-  constructor(node, property, updateFunc) {
+  constructor(node, property, viewModelProperty, value, updateFunc) {
     this.node = node;
     this.property = property;
+    this.viewModelProperty = viewModelProperty;
+    this.value = value;
     this.updateFunc = updateFunc;
   }
 }
@@ -45,6 +49,23 @@ export default class {
   }
 
   /**
+   * @type {Map<Node,Map<string,NodeUpdateData>>}
+   */
+  nodeUpdateDataByPropertyByNode = new Map();
+  /**
+   * 
+   * @param {NodeUpdateData} nodeUpdateData 
+   */
+  add(nodeUpdateData) {
+    let nodeUpdateDataByProperty = this.nodeUpdateDataByPropertyByNode.get(nodeUpdateData.node);
+    if (nodeUpdateDataByProperty == null) {
+      nodeUpdateDataByProperty = new Map;
+      this.nodeUpdateDataByPropertyByNode.set(nodeUpdateData.node, nodeUpdateDataByProperty);
+    }
+    nodeUpdateDataByProperty.set(nodeUpdateData.property, nodeUpdateData);
+  }
+
+  /**
    * 
    * @param {NodeUpdateData[]} updates 
    */
@@ -62,9 +83,13 @@ export default class {
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
     try {
-      while(this.queue.length > 0) {
-        const updates = this.reorder(this.queue.splice(0));
-        updates.forEach(update => Reflect.apply(update.updateFunc, update, []));
+      while(this.nodeUpdateDataByPropertyByNode.size > 0) {
+        const updates = Array.from(this.nodeUpdateDataByPropertyByNode.entries()).flatMap(([ node, nodeUpdateDataByProperty ]) => {
+          return Array.from(nodeUpdateDataByProperty.entries()).map(([property, nodeUpdateData]) => nodeUpdateData)
+        });
+        this.nodeUpdateDataByPropertyByNode.clear();
+        const orderedUpdates = this.reorder(updates.splice(0));
+        orderedUpdates.forEach(update => Reflect.apply(update.updateFunc, update, []));
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);

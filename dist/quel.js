@@ -1391,7 +1391,8 @@ class UpdateSlot {
    * @param {NodeUpdateData} nodeUpdateData 
    */
   addNodeUpdate(nodeUpdateData) {
-    this.#nodeUpdator.queue.push(nodeUpdateData);
+//    this.#nodeUpdator.queue.push(nodeUpdateData);
+    this.#nodeUpdator.add(nodeUpdateData);
     this.resolve();
   }
 
@@ -1497,6 +1498,8 @@ class NodeUpdateData {
    * @type {string}
    */
   property;
+  viewModelProperty;
+  value;
   /**
    * @type {()=>{}}
    */
@@ -1508,9 +1511,11 @@ class NodeUpdateData {
    * @param {string} property 
    * @param {()=>{}} updateFunc 
    */
-  constructor(node, property, updateFunc) {
+  constructor(node, property, viewModelProperty, value, updateFunc) {
     this.node = node;
     this.property = property;
+    this.viewModelProperty = viewModelProperty;
+    this.value = value;
     this.updateFunc = updateFunc;
   }
 }
@@ -1533,6 +1538,23 @@ class NodeUpdator {
   }
 
   /**
+   * @type {Map<Node,Map<string,NodeUpdateData>>}
+   */
+  nodeUpdateDataByPropertyByNode = new Map();
+  /**
+   * 
+   * @param {NodeUpdateData} nodeUpdateData 
+   */
+  add(nodeUpdateData) {
+    let nodeUpdateDataByProperty = this.nodeUpdateDataByPropertyByNode.get(nodeUpdateData.node);
+    if (nodeUpdateDataByProperty == null) {
+      nodeUpdateDataByProperty = new Map;
+      this.nodeUpdateDataByPropertyByNode.set(nodeUpdateData.node, nodeUpdateDataByProperty);
+    }
+    nodeUpdateDataByProperty.set(nodeUpdateData.property, nodeUpdateData);
+  }
+
+  /**
    * 
    * @param {NodeUpdateData[]} updates 
    */
@@ -1550,9 +1572,13 @@ class NodeUpdator {
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
     try {
-      while(this.queue.length > 0) {
-        const updates = this.reorder(this.queue.splice(0));
-        updates.forEach(update => Reflect.apply(update.updateFunc, update, []));
+      while(this.nodeUpdateDataByPropertyByNode.size > 0) {
+        const updates = Array.from(this.nodeUpdateDataByPropertyByNode.entries()).flatMap(([ node, nodeUpdateDataByProperty ]) => {
+          return Array.from(nodeUpdateDataByProperty.entries()).map(([property, nodeUpdateData]) => nodeUpdateData)
+        });
+        this.nodeUpdateDataByPropertyByNode.clear();
+        const orderedUpdates = this.reorder(updates.splice(0));
+        orderedUpdates.forEach(update => Reflect.apply(update.updateFunc, update, []));
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
@@ -1572,7 +1598,7 @@ class LevelTop extends BindInfo {
     const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         node[nodeProperty] = value ?? "";
       }));
       this.lastViewModelValue = value;
@@ -1601,7 +1627,7 @@ class Level2nd extends BindInfo {
     const {nodeProperty1, nodeProperty2} = this;
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         node[nodeProperty1][nodeProperty2] = value ?? "";
       }));
       this.lastViewModelValue = value;
@@ -1633,7 +1659,7 @@ class Level3rd extends BindInfo {
     const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? "";
       }));
       this.lastViewModelValue = value;
@@ -1666,7 +1692,7 @@ class ClassName extends BindInfo {
     const element = toHTMLElement$1(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         value ? element.classList.add(className) : element.classList.remove(className);
       }));
       this.lastViewModelValue = value;
@@ -1690,7 +1716,7 @@ class Radio extends BindInfo {
     const radio = toHTMLInputElement$1(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, contextIndexes, indexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         radio.checked = value === radio.value;
       }));
       this.lastViewModelValue = value;
@@ -1716,7 +1742,7 @@ class Checkbox extends BindInfo {
     const checkbox = toHTMLInputElement(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         checkbox.checked = value.find(value => value === checkbox.value);
       }));
       this.lastViewModelValue = value;

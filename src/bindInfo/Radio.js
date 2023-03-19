@@ -12,7 +12,7 @@ export default class Radio extends BindInfo {
     const radio = toHTMLInputElement(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, contextIndexes, indexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         radio.checked = value === radio.value;
       }));
       this.lastViewModelValue = value;

@@ -19,7 +19,7 @@ export default class ClassName extends BindInfo {
     const element = toHTMLElement(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         value ? element.classList.add(className) : element.classList.remove(className);
       }));
       this.lastViewModelValue = value;

@@ -12,7 +12,7 @@ export default class Checkbox extends BindInfo {
     const checkbox = toHTMLInputElement(node);
     const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         checkbox.checked = value.find(value => value === checkbox.value);
       }));
       this.lastViewModelValue = value;
