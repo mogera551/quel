@@ -491,7 +491,7 @@ class Template extends BindInfo {
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
-        this.templateChildren = [TemplateChild.create(this, indexes)];
+        this.templateChildren = [TemplateChild.create(this, contextIndexes)];
         this.appendToParent();
       } else {
         this.templateChildren = [];
@@ -3040,7 +3040,8 @@ let Handler$1 = class Handler {
             return component.data;
           case CONTEXT_OPEN_DIALOG:
             return async (name, data, attributes) => {
-              const dialog = document.createElement(name);
+              const tagName = utils$1.toKebabCase(name);
+              const dialog = document.createElement(tagName);
               Object.entries(attributes ?? {}).forEach(([key, value]) => {
                 dialog.setAttribute(key, value);
               });

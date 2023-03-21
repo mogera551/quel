@@ -158,7 +158,7 @@ export default class Template extends BindInfo {
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
-        this.templateChildren = [TemplateChild.create(this, indexes)];
+        this.templateChildren = [TemplateChild.create(this, contextIndexes)];
         this.appendToParent();
       } else {
         this.templateChildren = [];

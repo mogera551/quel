@@ -14,6 +14,7 @@ import { NotifyData } from "../thread/Notifier.js";
 import Cache from "./Cache.js";
 import createArrayProxy from "./ArrayProxy.js";
 import Globals from "./Globals.js";
+import utils from "../utils.js";
 
 const MAX_INDEXES_LEVEL = 8;
 const CONTEXT_INDEXES = [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1));
@@ -326,7 +327,8 @@ class Handler {
             return component.data;
           case CONTEXT_OPEN_DIALOG:
             return async (name, data, attributes) => {
-              const dialog = document.createElement(name);
+              const tagName = utils.toKebabCase(name);
+              const dialog = document.createElement(tagName);
               Object.entries(attributes ?? {}).forEach(([key, value]) => {
                 dialog.setAttribute(key, value);
               });
