@@ -19,6 +19,6 @@ export class outputFilters {
 }
 
 export class inputFilters {
-  static number       = (value, options) => Number(value);
-  static boolean      = (value, options) => Boolean(value);
+  static number       = (value, options) => value === "" ? null : Number(value);
+  static boolean      = (value, options) => value === "" ? null : Boolean(value);
 }
