@@ -1,19 +1,10 @@
-import quel from "quel";
+import { loader } from "quel";
 
+const DEFAULT_CONFIG_PATH = "./quel.config.json";
 async function boot() {
   const url = new URL(import.meta.url);
   const path = url.searchParams.get("config");
-  const paths = location.pathname.split("/");
-  paths[paths.length - 1] = path;
-  const fullPath = location.origin + paths.join("/");
-  
-  try {
-    const response = await fetch(fullPath);
-    const config = await response.json();
-    quel.config(config).boot();
-  } catch(e) {
-    console.error(e);
-  }
+  loader.configFile(path ?? DEFAULT_CONFIG_PATH).load();
 }
 
 await boot();
