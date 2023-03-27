@@ -15,5 +15,5 @@ export const SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS = Symbol.for(`${myname}:viewMod
 export const SYM_GET_IS_PROXY = Symbol.for(`${myname}:arrayHandler.isProxy`);
 export const SYM_GET_RAW = Symbol.for(`${myname}:arrayHandler.raw`);
 
-export const SYM_CALL_BIND_DATA = Symbol.for(`${myname}:componentData.bindData`);
-export const SYM_CALL_BIND_PROPERTY = Symbol.for(`${myname}:componentData.bindProperty`);
+export const SYM_CALL_BIND_DATA = Symbol.for(`${myname}:componentModule.bindData`);
+export const SYM_CALL_BIND_PROPERTY = Symbol.for(`${myname}:componentModule.bindProperty`);

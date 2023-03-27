@@ -333,8 +333,8 @@ const SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS = Symbol.for(`${name}:viewModel.notify
 const SYM_GET_IS_PROXY = Symbol.for(`${name}:arrayHandler.isProxy`);
 const SYM_GET_RAW = Symbol.for(`${name}:arrayHandler.raw`);
 
-const SYM_CALL_BIND_DATA = Symbol.for(`${name}:componentData.bindData`);
-const SYM_CALL_BIND_PROPERTY = Symbol.for(`${name}:componentData.bindProperty`);
+const SYM_CALL_BIND_DATA = Symbol.for(`${name}:componentModule.bindData`);
+const SYM_CALL_BIND_PROPERTY = Symbol.for(`${name}:componentModule.bindProperty`);
 
 /**
  * 
@@ -822,165 +822,14 @@ class GlobalData {
 
 }
 
-/**
- * @enum {number}
- */
-const ComponentNameType = {
-  kebab: 1,
-  snake: 2,
-  upperCamel: 3,
-  lowerCamel: 4,
-};
-
-/**
- * @type {Object<string,ComponentNameType>}
- */
-const componentNameTypes = {
-  "kebab": ComponentNameType.kebab,
-  "snake": ComponentNameType.snake,
-  "uppercamel": ComponentNameType.upperCamel,
-  "lowercamel": ComponentNameType.lowerCamel,
-};
-
-class ComponentNameTypeUtil {
-  /**
-   * 
-   * @param {string} name 
-   * @returns {{
-   *  [ComponentNameType.kebab]:string,
-   *  [ComponentNameType.snake]:string,
-   *  [ComponentNameType.upperCamel]:string,
-   *  [ComponentNameType.lowerCamel]:string,
-   * }}
-   */
-  static getNames(name) {
-    const kebabName = utils$1.toKebabCase(name);
-    const snakeName = kebabName.replaceAll("-", "_");
-    const upperCamelName = kebabName.split("-").map((text, index) => {
-      if (typeof text[0] !== "undefined") {
-        text = text[0].toUpperCase() + text.slice(1);
-      }
-      return text;
-    }).join("");
-    const lowerCamelName = upperCamelName[0].toLowerCase() + upperCamelName.slice(1);
-    return {
-      [ComponentNameType.kebab]: kebabName,
-      [ComponentNameType.snake]: snakeName,
-      [ComponentNameType.upperCamel]: upperCamelName,
-      [ComponentNameType.lowerCamel]: lowerCamelName,
-    }
-
-  }
-}
-
-const ComponentFileFormat = {
-  component:0,
-  quel:1,
-};
-
-class ComponentsLoader {
-  static replaceNames = ComponentNameTypeUtil.getNames("component-name")
-  /**
-   * 
-   * @param {string} tagName 
-   * @param {Object<string,string>} customTagPrefix
-   * @param {ComponentNameType} defaultComponentNameType 
-   * @param {string} defaultComponentPath 
-   */
-  static async load(tagName, customTagPrefix, defaultComponentNameType, defaultComponentPath) {
-    const { replaceNames } = this;
-    const componentFileFormat = tagName[0] === "@" ? ComponentFileFormat.quel : ComponentFileFormat.component;
-    const rawTagName = tagName[0] === "@" ? tagName.slice(1) : tagName;
-    const registTagName = utils$1.toKebabCase(rawTagName);
-    // タグに一致するプレフィックスを取得する
-    const prefixInfo = 
-      Object.entries(customTagPrefix)
-        .map(([prefix, path]) => ({prefix, path}))
-        .find(({prefix, path}) => rawTagName.startsWith(prefix + "-"));
-    // プレフィックスがある場合、プレフィックスを除いた部分をコンポーネント名とする
-    const componentName = prefixInfo ? registTagName.slice(prefixInfo.prefix.length + 1) : registTagName;
-    // タイプ別（スネーク、ケバブ、キャメル）のコンポーネント名を取得する
-    const componentNames = ComponentNameTypeUtil.getNames(componentName);
-    const prefixPath = prefixInfo?.path ?? defaultComponentPath;
-    // パスのパターンをコンポーネント名でリプレース
-    let path = prefixPath;
-    for(let nameType of Object.values(ComponentNameType)) {
-      path = path.replaceAll(`{${replaceNames[nameType]}}`, componentNames[nameType]);
-    }
-    // リプレースが発生しなければ、デフォルトの方法として、パスの後ろにコンポーネント名.jsを付加する
-    if (path === prefixPath) {
-      path += ((path.at(-1) !== "/") ? "/" : "") + componentNames[defaultComponentNameType] + ".js";
-    }
-    // http://～を先方に付加して相対パスを解決する
-    const paths = location.pathname.split("/");
-    paths[paths.length - 1] = path;
-    const fullPath = location.origin + paths.join("/");
-    try {
-      const componentModule = await import(/* webpackIgnore: true */fullPath);
-      if (componentFileFormat === ComponentFileFormat.component) {
-        customElements.define(registTagName, componentModule.default);
-      } else if (componentFileFormat === ComponentFileFormat.quel) {
-        Component.regist(registTagName, componentModule.default);
-      } else {
-      }
-    } catch(e) {
-      console.log(`can't load component { registTagName:${registTagName}, fullPath:${fullPath} }`);
-      console.error(e);
-    }
-
-  }
-}
-
-class FilterLoader {
-  /**
-   * 
-   * @param {string} filterName 
-   * @param {string} defaultCustomFilterPath 
-   */
-  static async load(filterName, defaultCustomFilterPath) {
-    let path = defaultCustomFilterPath;
-    path += ((path.at(-1) !== "/") ? "/" : "") + filterName + ".js";
-    const paths = location.pathname.split("/");
-    paths[paths.length - 1] = path;
-    const fullPath = location.origin + paths.join("/");
-    try {
-      const filterModule = await import(/* webpackIgnore: true */fullPath);
-      const { output, input } = filterModule.default;
-      Filter.regist(filterName, output, input);
-    } catch(e) {
-      console.log(`can't load filter { filterName:${filterName}, fullPath:${fullPath} }`);
-      console.error(e);
-    }
-  }
-}
-
-const DEAFULT_PATH$1 = "./";
-const DEFAULT_COMPONEN_NAME_TYPE = "lowercamel";
-
 class Main {
   /**
    * @type {{
    * debug:boolean,
-   * loadComponent:boolean,
-   * defaultComponentNameType:string,
-   * defaultComponentPath:string,
-   * customTag:string[],
-   * customTagPrefix:Object<string,string>,
-   * loadCustomFilter:boolean,
-   * customFilterPath:string,
-   * customFilter:string[],
    * }}
    */
   static #config = {
     debug: false,
-    loadComponent:false,
-    defaultComponentNameType: DEFAULT_COMPONEN_NAME_TYPE,
-    defaultComponentPath:DEAFULT_PATH$1,
-    customTag:[],
-    customTagPrefix:{},
-    loadCustomFilter:false,
-    customFilterPath:DEAFULT_PATH$1,
-    customFilter:[],
   };
   /**
    * @typedef {class<HTMLElement>} ComponentClass
@@ -999,13 +848,13 @@ class Main {
   }
   /**
    * 
-   * @param {Object<string,UserComponentData>} components 
+   * @param {Object<string,UserComponentModule} components 
    * @returns {Main}
    */
-  static componentsData(components) {
-    Object.entries(components).forEach(([name, componentData]) => {
+  static componentModules(components) {
+    Object.entries(components).forEach(([name, componentModule]) => {
       const componentName = utils$1.toKebabCase(name);
-      const componentClass = Component.getClass(componentData);
+      const componentClass = Component.getClass(componentModule);
       customElements.define(componentName, componentClass);
     });
     return this;
@@ -1022,21 +871,6 @@ class Main {
     });
     return this;
   }
-  /**
-   * @param 
-   */
-  static async load(...tagNames) {
-    const {
-      loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix,
-    } = this.#config;
-    if (loadComponent) {
-      const componentNameType = componentNameTypes[defaultComponentNameType.toLowerCase()];
-      for(const tagName of tagNames) {
-        await ComponentsLoader.load(tagName, customTagPrefix, componentNameType, defaultComponentPath);
-      }
-    }
-    return this;
-  }
 
   /**
    * 
@@ -1049,59 +883,16 @@ class Main {
    * 
    * @param {{
    * debug:boolean,
-   * loadComponent:boolean,
-   * defaultComponentNameType:string,
-   * defaultComponentPath:string,
-   * customTag:string[],
-   * customTagPrefix:Object<string,string>,
-   * loadCustomFilter:boolean,
-   * customFilterPath:string,
-   * customFilter:string[],
    * }}  
    * @returns {Main}
    */
   static config({ 
     debug = false,
-    loadComponent = false,
-    defaultComponentNameType = DEFAULT_COMPONEN_NAME_TYPE,
-    defaultComponentPath = DEAFULT_PATH$1,
-    customTag = [],
-    customTagPrefix = {},
-    loadCustomFilter = false,
-    customFilterPath = DEAFULT_PATH$1,
-    customFilter = [],
   }) {
     this.#config = Object.assign(this.#config, { debug });
-    if (loadCustomFilter) {
-      this.#config = Object.assign(this.#config, { loadCustomFilter, customFilterPath, customFilter });
-    }
-    if (loadComponent) {
-      this.#config = 
-        Object.assign(this.#config, { loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix });
-    }
     return this;
   }
 
-  /**
-   * 
-   */
-  static async boot() {
-    const {
-      loadComponent, defaultComponentNameType, defaultComponentPath, customTag, customTagPrefix,
-      loadCustomFilter, customFilterPath, customFilter
-    } = this.#config;
-    if (loadCustomFilter) {
-      for(let filter of customFilter) {
-        await FilterLoader.load(filter, customFilterPath);
-      }
-    }
-    if (loadComponent) {
-      const componentNameType = componentNameTypes[defaultComponentNameType.toLowerCase()];
-      for(let tagName of customTag) {
-        await ComponentsLoader.load(tagName, customTagPrefix, componentNameType, defaultComponentPath);
-      }
-    }
-  }
   /**
    * @type {boolean}
    */
@@ -1109,8 +900,6 @@ class Main {
     return this.#config.debug;
   }
 }
-
-var main = Main;
 
 class NotifyData {
   /**
@@ -1463,10 +1252,10 @@ class Thread {
       try {
         const slot = await this.#sleep();
         await slot.waiting(); // queueにデータが入るまで待機
-        main.debug && performance.mark('slot-exec:start');
+        Main.debug && performance.mark('slot-exec:start');
         try {
           await slot.exec();
-          if (main.debug) {
+          if (Main.debug) {
             performance.mark('slot-exec:end');
             performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
             console.log(performance.getEntriesByType("measure"));    
@@ -3491,15 +3280,15 @@ class Component extends HTMLElement {
 
   /**
    * 
-   * @param {UserComponentData} componentData 
+   * @param {UserComponentModule} componentModule 
    * @returns {class<HTMLElement>}
    */
-  static getClass(componentData) {
-    const template = htmlToTemplate(componentData.html, componentData.css);
+  static getClass(componentModule) {
+    const template = htmlToTemplate(componentModule.html, componentModule.css);
     // 同じクラスを登録できないため
     const componentClass = class extends Component {
       static template = template;
-      static ViewModel = componentData.ViewModel;
+      static ViewModel = componentModule.ViewModel;
     };
     return componentClass;
   }
@@ -3508,11 +3297,11 @@ class Component extends HTMLElement {
 
 /**
  * 
- * @param {UserComponentData} componentData 
+ * @param {UserComponentModule} componentModule 
  * @returns {class<HTMLElement>}
  */
-function createComponentClass(componentData) {
-  return Component.getClass(componentData);
+function generateComponentClass(componentModule) {
+  return Component.getClass(componentModule);
 }
 
 class Registrar {
@@ -3966,4 +3755,4 @@ class QuelModuleRegistrar extends Registrar {
 
 const loader = Loader.create(QuelModuleRegistrar);
 
-export { createComponentClass, Main as default, loader };
+export { Main as default, generateComponentClass, loader };

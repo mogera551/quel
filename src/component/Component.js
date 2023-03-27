@@ -272,15 +272,15 @@ export default class Component extends HTMLElement {
 
   /**
    * 
-   * @param {UserComponentData} componentData 
+   * @param {UserComponentModule} componentModule 
    * @returns {class<HTMLElement>}
    */
-  static getClass(componentData) {
-    const template = htmlToTemplate(componentData.html, componentData.css);
+  static getClass(componentModule) {
+    const template = htmlToTemplate(componentModule.html, componentModule.css);
     // 同じクラスを登録できないため
     const componentClass = class extends Component {
       static template = template;
-      static ViewModel = componentData.ViewModel;
+      static ViewModel = componentModule.ViewModel;
     };
     return componentClass;
   }
@@ -289,9 +289,9 @@ export default class Component extends HTMLElement {
 
 /**
  * 
- * @param {UserComponentData} componentData 
+ * @param {UserComponentModule} componentModule 
  * @returns {class<HTMLElement>}
  */
-export function createComponentClass(componentData) {
-  return Component.getClass(componentData);
+export function generateComponentClass(componentModule) {
+  return Component.getClass(componentModule);
 }
