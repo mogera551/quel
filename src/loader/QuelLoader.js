@@ -1,4 +1,4 @@
-import { Loader, Registrar } from "./vanilla_module_loader.js";
+import { Loader, Registrar } from "./vanilla_module_loader.min.js";
 import Filter from "../filter/Filter";
 import Component from "../component/Component.js";
 
