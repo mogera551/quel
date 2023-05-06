@@ -1,5 +1,5 @@
 import { Component } from "../../src/component/Component.js";
-import { createViewModel } from "../../src/newViewModel/Proxy.js";
+import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { View } from "../../src/view/View.js";
 

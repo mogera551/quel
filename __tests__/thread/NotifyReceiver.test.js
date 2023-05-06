@@ -1,6 +1,6 @@
 import { NotifyReceiver } from "../../src/thread/NotifyReceiver.js";
 import { Component } from "../../src/component/Component.js";
-import { createViewModel } from "../../src/newViewModel/Proxy.js";
+import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { dotNotation } from "../../modules/imports.js";
 import { UpdateSlotStatus } from "../../src/thread/UpdateSLotStatus.js";
 

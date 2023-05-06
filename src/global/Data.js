@@ -1,5 +1,5 @@
 import "../types.js";
-import { Symbols } from "../newViewModel/Symbols.js";
+import { Symbols } from "../viewModel/Symbols.js";
 import { dotNotation } from "../../modules/imports.js";
 
 class GlobalDataHandler extends dotNotation.Handler {

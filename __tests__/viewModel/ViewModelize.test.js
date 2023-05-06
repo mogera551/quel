@@ -1,4 +1,4 @@
-import { ViewModelize } from "../../src/newViewModel/ViewModelize.js";
+import { ViewModelize } from "../../src/viewModel/ViewModelize.js";
 
 test('ViewModelize getProperties, getMethods', () => {
   class BaseViewModel {

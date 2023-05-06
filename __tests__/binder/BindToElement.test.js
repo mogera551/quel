@@ -1,6 +1,6 @@
 import { Component } from "../../src/component/Component.js";
 import { BindToElement } from "../../src/binder/BindToElement.js";
-import { Symbols } from "../../src/newViewModel/Symbols.js";
+import { Symbols } from "../../src/viewModel/Symbols.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";

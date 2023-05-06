@@ -1,7 +1,7 @@
 import "../types.js";
 import { View } from "../view/View.js";
-import { createViewModel } from "../newViewModel/Proxy.js";
-import { Symbols } from "../newViewModel/Symbols.js";
+import { createViewModel } from "../viewModel/Proxy.js";
+import { Symbols } from "../viewModel/Symbols.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { Binds } from "../bindInfo/Binds.js";
 import { createProps } from "./Props.js";

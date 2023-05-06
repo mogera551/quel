@@ -1,4 +1,4 @@
-import { DependentProps } from "../../src/newViewModel/DependentProps.js";
+import { DependentProps } from "../../src/viewModel/DependentProps.js";
 
 test("DependentProps addDefaultProp primitive", () => {
   const dependentProps = new DependentProps;

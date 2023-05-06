@@ -1,6 +1,6 @@
 import "../types.js";
 import  { utils } from "../utils.js";
-import { Symbols } from "../newViewModel/Symbols.js";
+import { Symbols } from "../viewModel/Symbols.js";
 import { dotNotation } from "../../modules/imports.js";
 
 export class BindInfo {

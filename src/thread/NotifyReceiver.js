@@ -1,4 +1,4 @@
-import { ViewModelHandler } from "../newViewModel/Proxy.js";
+import { ViewModelHandler } from "../viewModel/Proxy.js";
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NotifyReceiver {

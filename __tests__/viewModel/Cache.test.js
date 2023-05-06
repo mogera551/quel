@@ -1,5 +1,5 @@
 import { dotNotation } from "../../modules/imports.js";
-import { Cache } from "../../src/newViewModel/Cache.js";
+import { Cache } from "../../src/viewModel/Cache.js";
 
 test('Handler stackIndexes', () => {
   const cache = new Cache;

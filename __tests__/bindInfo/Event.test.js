@@ -1,5 +1,5 @@
 import { Event as EventBind } from "../../src/bindInfo/Event.js";
-import { Symbols } from "../../src/newViewModel/Symbols.js";
+import { Symbols } from "../../src/viewModel/Symbols.js";
 
 test("Event", async () => {
   const button = document.createElement("button");

@@ -1,11 +1,11 @@
 import { Component } from "../../src/component/Component.js";
 import { dotNotation } from "../../modules/imports.js";
-import { Cache } from "../../src/newViewModel/Cache.js";
-import { ViewModelHandler, createViewModel } from "../../src/newViewModel/Proxy.js";
-import { Symbols } from "../../src/newViewModel/Symbols.js";
+import { Cache } from "../../src/viewModel/Cache.js";
+import { ViewModelHandler, createViewModel } from "../../src/viewModel/Proxy.js";
+import { Symbols } from "../../src/viewModel/Symbols.js";
 import { GlobalData } from "../../src/global/Data.js";
-import { DependentProps } from "../../src/newViewModel/DependentProps.js";
-import { ViewModelize } from "../../src/newViewModel/ViewModelize.js";
+import { DependentProps } from "../../src/viewModel/DependentProps.js";
+import { ViewModelize } from "../../src/viewModel/ViewModelize.js";
 
 class ViewModel {
   "aaa" = [10,20,30];

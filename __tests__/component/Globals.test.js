@@ -1,8 +1,8 @@
 import { Component } from "../../src/component/Component.js";
 import { createGlobals } from "../../src/component/Globals.js";
 import { GlobalData } from "../../src/global/Data.js";
-import { createViewModel } from "../../src/newViewModel/Proxy.js";
-import { Symbols } from "../../src/newViewModel/Symbols.js";
+import { createViewModel } from "../../src/viewModel/Proxy.js";
+import { Symbols } from "../../src/viewModel/Symbols.js";
 
 customElements.define("custom-tag", Component);
 const component = document.createElement("custom-tag");

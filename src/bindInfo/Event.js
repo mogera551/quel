@@ -1,6 +1,6 @@
 import "../types.js";
 import { BindInfo } from "./BindInfo.js";
-import { Symbols } from "../newViewModel/Symbols.js";
+import { Symbols } from "../viewModel/Symbols.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 
 export class Event extends BindInfo {

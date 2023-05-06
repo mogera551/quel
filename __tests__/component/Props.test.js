@@ -1,6 +1,6 @@
 import { Component } from "../../src/component/Component.js";
 import { createProps } from "../../src/component/Props.js";
-import { Symbols } from "../../src/newViewModel/Symbols.js";
+import { Symbols } from "../../src/viewModel/Symbols.js";
 import { dotNotation } from "../../modules/imports.js";
 
 class ViewModelHandler extends dotNotation.Handler {

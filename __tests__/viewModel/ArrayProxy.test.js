@@ -1,5 +1,5 @@
-import { Handler, create } from "../../src/newViewModel/ArrayProxy.js";
-import { Symbols } from "../../src/newViewModel/Symbols.js";
+import { Handler, create } from "../../src/viewModel/ArrayProxy.js";
+import { Symbols } from "../../src/viewModel/Symbols.js";
 
 test('ArrayProxy Handler', () => {
   let called = false;
