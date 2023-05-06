@@ -444,9 +444,18 @@ test('Handler makeNotifyForDependentProps', () => {
     ];
     get "ccc"() {
       return this["aaa"] * 100;
-    } 
+    }
+    "ddd" = 1000;
+    get "eee"() {
+      return 200;
+    }
+    get "fff"() {
+      return 100;
+    }
     $dependentProps = {
       "ccc": [ "aaa" ],
+      "eee": [ "fff" ],
+      "fff": [ "eee" ],
     };
   }
   const proxyViewModel = createViewModel(component, ViewModel);
@@ -481,7 +490,19 @@ test('Handler makeNotifyForDependentProps', () => {
     { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[2,2] },
     { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[2,3] },
   ])
-//console.log(notifies2);
+
+  const notifies3 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:dotNotation.PropertyName.create("eee"), indexes:[] });
+  expect(notifies3).toEqual([
+    { propName:dotNotation.PropertyName.create("fff"), indexes:[] },
+    { propName:dotNotation.PropertyName.create("eee"), indexes:[] },
+  ]);
+
+  const notifies4 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:dotNotation.PropertyName.create("fff"), indexes:[] });
+  expect(notifies4).toEqual([
+    { propName:dotNotation.PropertyName.create("eee"), indexes:[] },
+    { propName:dotNotation.PropertyName.create("fff"), indexes:[] },
+  ]);
+  //console.log(notifies2);
 });
 
 test('Proxy Array', () => {

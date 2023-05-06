@@ -2571,8 +2571,11 @@ class ViewModelHandler extends dotNotation.Handler {
    * @param {number[]} indexes 
    * @returns {import("../../modules/dot-notation/dot-notation.js").PropertyAccess[]}
    */
-  static makeNotifyForDependentProps(viewModel, propertyAccess) {
+  static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
     const { propName, indexes } = propertyAccess;
+    const propertyAccessKey = propName.name + "\t" + indexes.toString();
+    if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
+    setOfSavePropertyAccessKeys.add(propertyAccessKey);
     const dependentProps = viewModel[Symbols.getDependentProps]();
     const setOfProps = dependentProps.setOfPropsByRefProp.get(propName.name);
     const propertyAccesses = [];
@@ -2586,7 +2589,7 @@ class ViewModelHandler extends dotNotation.Handler {
         const notifyIndexes = indexes.slice(0, curPropName.level);
         propertyAccesses.push({ propName:curPropName, indexes:notifyIndexes });
       }
-      propertyAccesses.push(...this.makeNotifyForDependentProps(viewModel, { propName:curPropName, indexes }));
+      propertyAccesses.push(...this.makeNotifyForDependentProps(viewModel, { propName:curPropName, indexes }, setOfSavePropertyAccessKeys));
     }
     return propertyAccesses;
   }
