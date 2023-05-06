@@ -240,7 +240,7 @@ export class Component extends HTMLElement {
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   applyToNode(setOfViewModelPropertyKeys) {
-    this.#binds && Binds.applyToNodeValue(this.#binds, setOfViewModelPropertyKeys);
+    this.#binds && Binds.applyToNode(this.#binds, setOfViewModelPropertyKeys);
   }
 
   /**

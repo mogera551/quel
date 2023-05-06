@@ -59,10 +59,12 @@ export class Factory {
     if (propName.level > 0) {
       let parentContextBind = contextBind;
       while(parentContextBind != null) {
-        if (parentContextBind.viewModelProperty === propName.parentPath) break;
+        const parentPropName = dotNotation.PropertyName.create(parentContextBind.viewModelProperty);
+        if ((parentPropName.level + 1) === propName.level
+         && propName.setOfParentPaths.has(parentContextBind.viewModelProperty)) break;
         parentContextBind = parentContextBind.contextBind;
       }
-      if (parentContextBind === null) utils.raise("not found parent contextBind");
+      if (parentContextBind === null) utils.raise(`not found parent contextBind, viewModelProperty = ${viewModelProperty}`);
       const positionContextIndexes = parentContextBind.contextIndexes.length;
       bindInfo.indexes = parentContextBind.indexes.concat(contextIndexes[positionContextIndexes]);
       bindInfo.positionContextIndexes = positionContextIndexes;
