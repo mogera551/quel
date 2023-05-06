@@ -1,0 +1,49 @@
+import "../types.js";
+import { dotNotation } from "../../modules/imports.js";
+
+export class DependentProps {
+  #setOfDefaultProps = new Set;
+  /**
+   * @type {Map<string,Set<string>>}
+   */
+  #setOfPropsByRefProp = new Map;
+  get setOfPropsByRefProp() {
+    return this.#setOfPropsByRefProp;
+  }
+
+  /**
+   * @param {string} prop
+   * @returns {boolean} 
+   */
+  hasDefaultProp(prop) {
+    return this.#setOfDefaultProps.has(prop);
+  }
+  /**
+   * 
+   * @param {string} prop 
+   */
+  addDefaultProp(prop) {
+    let currentName = dotNotation.PropertyName.create(prop);
+    while(currentName.parentPath !== "") {
+      const parentName = dotNotation.PropertyName.create(currentName.parentPath);
+      if (!this.#setOfDefaultProps.has(currentName.name)) {
+        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]))
+        this.#setOfDefaultProps.add(currentName.name);
+      }
+      currentName = parentName;
+    }
+  }
+
+  /**
+   * 
+   * @param {{prop:string,refProps:string[]}} props 
+   */
+  setDependentProps(props) {
+    for(const [prop, refProps] of Object.entries(props)) {
+      for(const refProp of refProps) {
+        this.#setOfPropsByRefProp.get(refProp)?.add(prop) ?? this.#setOfPropsByRefProp.set(refProp, new Set([prop]));
+      }
+    }
+  }
+
+}

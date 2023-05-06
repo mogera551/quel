@@ -1,6 +1,7 @@
+import "../types.js";
 import { Loader, Registrar } from "./vanilla_module_loader.min.js";
-import Filter from "../filter/Filter";
-import Component from "../component/Component.js";
+import { Filter } from "../filter/Filter";
+import { Component } from "../component/Component.js";
 
 class QuelModuleRegistrar extends Registrar {
   static regist(name, module) {

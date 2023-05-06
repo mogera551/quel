@@ -1,3 +1,4 @@
+import "../types.js";
 export class outputFilters {
   static localeString = (value, options) => (value != null) ? Number(value).toLocaleString() : null;
   static fixed        = (value, options) => (value != null) ? Number(value).toFixed(options[0] ?? 0) : null;

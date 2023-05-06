@@ -1,10 +1,10 @@
-class utils$1 {
+class utils {
   /**
    * 
    * @param {string} message 
    */
   static raise(message) {
-    throw message;
+    throw new Error(message);
   }
 
   /**
@@ -100,12 +100,506 @@ class Filter {
    * @param {(value:any,options:string[])=>{}} inputFilter 
    */
   static regist(name, outputFilter, inputFilter) {
-    if (name in outputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
-    if (name in inputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
+    if (name in outputFilters) utils.raise(`regist filter error duplicate name (${name})`);
+    if (name in inputFilters) utils.raise(`regist filter error duplicate name (${name})`);
     outputFilter && (outputFilters[name] = outputFilter);
     inputFilter && (inputFilters[name] = inputFilter);
   }
 }
+
+/**
+ * @enum {number}
+ */
+const NodePropertyType = {
+  levelTop: 1,
+  level2nd: 2,
+  level3rd: 3,
+  className: 10,
+  radio: 20,
+  checkbox: 30,
+  template: 90,
+  event: 91,
+  component: 92,
+};
+
+const TEMPLATE_BRANCH = "if"; // 条件分岐
+const TEMPLATE_REPEAT = "loop"; // 繰り返し
+
+const PREFIX_EVENT = "on";
+
+class NodePropertyInfo {
+  /**
+   * @type {NodePropertyType}
+   */
+  type;
+  /**
+   * @type {string[]}
+   */
+  nodePropertyElements = [];
+  /**
+   * @type {string}
+   */
+  eventType;
+
+  /**
+   * 
+   * @param {Node} node
+   * @param {string} nodeProperty 
+   * @returns {NodePropertyInfo}
+   */
+  static get(node, nodeProperty) {
+    const result = new NodePropertyInfo;
+    result.nodePropertyElements = nodeProperty.split(".");
+    if (node instanceof HTMLTemplateElement) {
+      if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
+        result.type = NodePropertyType.template;
+        return result;
+      }
+    }
+    if (node instanceof Component && result.nodePropertyElements[0] === "$props") { 
+      result.type = NodePropertyType.component;
+      return result;
+    }    if (result.nodePropertyElements.length === 1) {
+      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
+        result.type = NodePropertyType.event;
+        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+      } else if (result.nodePropertyElements[0] === "radio") {
+        result.type = NodePropertyType.radio;
+      } else if (result.nodePropertyElements[0] === "checkbox") {
+        result.type = NodePropertyType.checkbox;
+      } else {
+        result.type = NodePropertyType.levelTop;
+      }
+    } else if (result.nodePropertyElements.length === 2) {
+      if (result.nodePropertyElements[0] === "className") {
+        result.type = NodePropertyType.className;
+      } else {
+        result.type = NodePropertyType.level2nd;
+      }
+    } else if (result.nodePropertyElements.length === 3) {
+      result.type = NodePropertyType.level3rd;
+    } else {
+      utils.raise(`unknown property ${nodeProperty}`);
+    }
+    return result;
+  }
+}
+
+const name = "quel";
+
+const WILDCARD = "*";
+const DELIMITER = ".";
+const SYM_PREFIX = "dot-notation"; // + Math.trunc(Math.random() * 9999_9999);
+const SYM_DIRECT_GET = Symbol.for(SYM_PREFIX + ".direct_get");
+const SYM_DIRECT_SET = Symbol.for(SYM_PREFIX + ".direct_set");
+const SYM_IS_SUPPORT_DOT_NOTATION = Symbol.for(SYM_PREFIX + ".is_support_dot_notation");
+
+/**
+ * @enum {Symbol}
+ */
+const Symbols$1 = {
+  directlyGet: SYM_DIRECT_GET,
+  directlySet: SYM_DIRECT_SET,
+  isSupportDotNotation: SYM_IS_SUPPORT_DOT_NOTATION,
+};
+
+const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
+
+class PropertyName {
+  /**
+   * @type {string}
+   */
+  name;
+  /**
+   * @type {string[]}
+   */
+  pathNames = [];
+  /**
+   * @type {string[]}
+   */
+  parentPathNames = [];
+  /**
+   * @type {string}
+   */
+  parentPath;
+  /**
+   * @type {string[]}
+   */
+  parentPaths = [];
+  /**
+   * @type {Set<string>}
+   */
+  setOfParentPaths;
+  /**
+   * @type {RegExp}
+   */
+  regexp;
+  /**
+   * @type {number}
+   */
+  level = 0;
+  /**
+   * @type {boolean}
+   */
+  isPrimitive;
+
+  /**
+   * 
+   * @param {string} name 
+   */
+  constructor(name) {
+    this.name = name;
+    this.pathNames = name.split(DELIMITER);
+    this.parentPathNames = this.pathNames.slice(0, -1);
+    this.parentPaths = this.parentPathNames.reduce((paths, pathName) => { 
+      paths.push(paths.at(-1)?.concat(pathName) ?? [pathName]);
+      return paths;
+    }, []).map(paths => paths.join("."));
+    this.setOfParentPaths = new Set(this.parentPaths);
+    this.parentPath = this.parentPathNames.join(DELIMITER);
+    this.lastPathName = this.pathNames.at(-1);
+    this.regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
+    this.level = this.pathNames.filter(pathName => pathName === WILDCARD).length;
+    this.isPrimitive = (this.pathNames.length === 1);
+  }
+
+  findNearestWildcard() {
+    return PropertyName.findNearestWildcard(this);
+  }
+
+  /**
+   * 
+   * @param {PropertyName} propName 
+   * @returns {PropertyName}
+   */
+  static findNearestWildcard(propName) {
+    if (propName.lastPathName === WILDCARD) return propName;
+    if (propName.parentPath === "") return undefined;
+    return this.findNearestWildcard(PropertyName.create(propName.parentPath));
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @returns {PropertyName}
+   */
+  static create(name) {
+    const propertyName = this.propertyNameByName.get(name);
+    if (propertyName) return propertyName;
+    const newPropertyName = new PropertyName(name);
+    this.propertyNameByName.set(name, newPropertyName);
+    return newPropertyName;
+  }
+  /**
+   * @type {Map<string,PropertyName>}
+   */
+  static propertyNameByName = new Map;
+
+  /**
+   * 
+   * @param {*} prop 
+   * @returns {PropertyAccess}
+   */
+  static parse(prop) {
+    const indexes = [];
+    const patternPropElements = [];
+    for(const propElement of prop.split(".")) {
+      const index = Number(propElement);
+      if (isNaN(index)) {
+        patternPropElements.push(propElement);
+      } else {
+        indexes.push(index);
+        patternPropElements.push("*");
+      }
+    }
+    return { 
+      propName: PropertyName.create(patternPropElements.join(".")),
+      indexes
+    };
+  }
+}
+
+/**
+ * @typedef {{propName:PropertyName,indexes:number[]}} PropertyAccess
+ */
+
+let Handler$3 = class Handler {
+  /**
+   * @type {number[][]}
+   */
+  #stackIndexes = [];
+  /**
+   * @type {Map<string,PropertyAccess>}
+   */
+  #matchByName = new Map;
+
+  get lastIndexes() {
+    return this.#stackIndexes[this.#stackIndexes.length - 1];
+  }
+
+  get stackIndexes() {
+    return this.#stackIndexes;
+  }
+
+  /**
+   * @type {Map<string,PropertyAccess>}
+   */
+  get matchByName() {
+    return this.#matchByName;
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{propName:PropertyName}}  
+   * @param {Proxy} receiver
+   * @returns {any}
+   */
+  getByPropertyName(target, { propName }, receiver) {
+    let value = undefined;
+    if (Reflect.has(target, propName.name)) {
+      value = Reflect.get(target, propName.name, receiver);
+    } else {
+      if (propName.parentPath !== "") {
+        const parentPropName = PropertyName.create(propName.parentPath);
+        const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
+        if (typeof parent !== "undefined") {
+          const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+          value = Reflect.get(parent, lastName);
+        }
+      }
+    }
+    return value;
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{propName:PropertyName,value:any}}  
+   * @param {Proxy} receiver
+   * @returns {boolean}
+   */
+  setByPropertyName(target, { propName, value }, receiver) {
+    let result = false;
+    if (Reflect.has(target, propName.name) || propName.isPrimitive) {
+      result = Reflect.set(target, propName.name, value, receiver);
+    } else {
+      const parentPropName = PropertyName.create(propName.parentPath);
+      const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
+      if (typeof parent !== "undefined") {
+        const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+        result = Reflect.set(parent, lastName, value);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * 
+   * @param {number[]} indexes 
+   * @param {()=>{}} callback 
+   * @returns 
+   */
+  pushIndexes(indexes, callback) {
+    this.#stackIndexes.push(indexes);
+    try {
+      return Reflect.apply(callback, this, []);
+    } finally {
+      this.#stackIndexes.pop();
+    }
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {Proxy} receiver 
+   * @returns {({}:PropertyAccess) => {any}  }
+   */
+  getFunc = (target, receiver) => ({propName, indexes}) => 
+    this.pushIndexes(indexes, () => this.getByPropertyName(target, { propName }, receiver));
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {Proxy} receiver 
+   * @returns {({}:PropertyAccess, value:any) => {boolean}  }
+   */
+  setFunc = (target, receiver) => ({propName, indexes}, value) => 
+    this.pushIndexes(indexes, () => this.setByPropertyName(target, { propName, value }, receiver));
+
+  /**
+   * 
+   * @param {any} target
+   * @param {{propName:PropertyName,indexes:number[]}} 
+   * @param {Proxy} receiver
+   * @returns {any[]}
+   */
+  getExpandLastLevel(target, { propName, indexes }, receiver) {
+    const getFunc = this.getFunc(target, receiver);
+    const wildcardProp = propName.findNearestWildcard();
+    if (!wildcardProp) throw new Error(`not found wildcard path of '${propName.name}'`);
+    const listProp = PropertyName.create(wildcardProp.parentPath);
+    return getFunc({propName:listProp, indexes}).map((value, index) => getFunc({propName, indexes:indexes.concat(index)}));
+  }
+
+  /**
+   * 
+   * @param {any} target
+   * @param {{propName:PropertyName,indexes:number[],values:any[]}}  
+   * @param {Proxy} receiver
+   * @returns {boolean}
+   */
+  setExpandLastLevel(target, { propName, indexes, values }, receiver) {
+    const getFunc = this.getFunc(target, receiver);
+    const setFunc = this.setFunc(target, receiver);
+    const wildcardProp = propName.findNearestWildcard();
+    if (!wildcardProp) throw new Error(`not found wildcard path of '${propName.name}'`);
+    const listProp = PropertyName.create(wildcardProp.parentPath);
+    const listValues = getFunc({propName:listProp, indexes});
+    if (wildcardProp.name === propName.name) {
+      // propName末尾が*の場合
+      setFunc({propName:listProp, indexes}, values);
+    } else {
+      if (values.length !== listValues.length) throw new Error(`not match value count '${propName.name}'`);
+      for(let i in listValues) {
+        setFunc({propName, indexes:indexes.concat(Number(i))}, values[i]);
+      }
+    }
+    return true;
+  }
+  
+  /**
+   * 
+   * @param {any} target 
+   * @param {{prop:string,indexes:number[]}} 
+   * @param {Proxy<>} receiver 
+   * @returns {any}
+   */
+  [Symbols$1.directlyGet](target, {prop, indexes}, receiver) {
+    const propName = PropertyName.create(prop);
+    return this.pushIndexes(indexes, () => this.getByPropertyName(target, { propName }, receiver));
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{prop:string,indexes:number[],value:any}} 
+   * @param {Proxy<>} receiver 
+   * @returns {boolean}
+   */
+  [Symbols$1.directlySet](target, {prop, indexes, value}, receiver) {
+    const propName = PropertyName.create(prop);
+    return this.pushIndexes(indexes, () => this.setByPropertyName(target, { propName, value }, receiver));
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {Proxy} receiver 
+   * @returns {any}
+   */
+  get(target, prop, receiver) {
+    if (typeof prop === "string" && (prop.startsWith("@@__") || prop === "constructor")) {
+      return Reflect.get(target, prop, receiver);
+    }
+    const getFunc = this.getFunc(target, receiver);
+    const lastIndexes = this.lastIndexes;
+    let match;
+    if (prop === Symbols$1.directlyGet) {
+      // プロパティとindexesを直接指定してgetする
+      return (prop, indexes) => 
+        Reflect.apply(this[Symbols$1.directlyGet], this, [target, { prop, indexes }, receiver]);
+    } else if (prop === Symbols$1.directlySet) {
+      // プロパティとindexesを直接指定してsetする
+      return (prop, indexes, value) => 
+        Reflect.apply(this[Symbols$1.directlySet], this, [target, { prop, indexes, value }, receiver]);
+    } else if (prop === Symbols$1.isSupportDotNotation) {
+      return true;
+    } else if (match = RE_CONTEXT_INDEX.exec(prop)) {
+      // $数字のプロパティ
+      // indexesへのアクセス
+      return lastIndexes?.[Number(match[1]) - 1] ?? undefined;
+    //} else if (prop.at(0) === "@" && prop.at(1) === "@") {
+    } else if (prop.at(0) === "@") {
+      const name = prop.slice(1);
+      const propName = PropertyName.create(name);
+      if (((lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
+      const baseIndexes = lastIndexes?.slice(0, propName.level - 1) ?? [];
+      return this.getExpandLastLevel(target, { propName, indexes:baseIndexes }, receiver);
+    }
+    if (this.#matchByName.has(prop)) {
+      return getFunc(this.#matchByName.get(prop));
+    }
+    const propAccess = PropertyName.parse(prop);
+    if (propAccess.propName.level === propAccess.indexes.length) {
+      this.#matchByName.set(prop, propAccess);
+    }
+    propAccess.indexes.push(...lastIndexes?.slice(propAccess.indexes.length) ?? []);
+    return getFunc(propAccess);
+  }
+
+  /**
+   * 
+   * @param {object} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Proxy} receiver 
+   */
+  set(target, prop, value, receiver) {
+    if (typeof prop === "string" && (prop.startsWith("@@__") || prop === "constructor")) {
+      return Reflect.set(target, prop, value, receiver);
+    }
+    const setFunc = this.setFunc(target, receiver);
+    const lastIndexes = this.lastIndexes;
+    if (prop.at(0) === "@") {
+      const name = prop.slice(1);
+      const propName = PropertyName.create(name);
+      if (((this.lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
+      const baseIndexes = this.lastIndexes?.slice(0, propName.level - 1) ?? [];
+      return this.setExpandLastLevel(target, { propName, indexes:baseIndexes, values:value }, receiver);
+    }
+    if (this.#matchByName.has(prop)) {
+      return setFunc(this.#matchByName.get(prop), value);
+    }
+    const propAccess = PropertyName.parse(prop);
+    if (propAccess.propName.level === propAccess.indexes.length) {
+      this.#matchByName.set(prop, propAccess);
+    }
+    this.#matchByName.set(prop, propAccess);
+    propAccess.indexes.push(...lastIndexes?.slice(propAccess.indexes.length) ?? []);
+    return setFunc(propAccess, value);
+  }
+};
+
+const dotNotation = { Handler: Handler$3, PropertyName, Symbols: Symbols$1, RE_CONTEXT_INDEX };
+
+const DotNotationSymbols = dotNotation.Symbols;
+
+/**
+ * @enum {Symbol}
+ */
+const Symbols = Object.assign({
+  isProxy: Symbol.for(`${name}:arrayHandler.isProxy`),
+  getRaw: Symbol.for(`${name}:arrayHandler.raw`),
+  connectedCallback: Symbol.for(`${name}:viewModel.connectedCallback`),
+  disconnectedCallback: Symbol.for(`${name}:viewModel.disconnectedCallback`),
+  initCallback: Symbol.for(`${name}:viewModel.initCallback`),
+  writeCallback: Symbol.for(`${name}:viewModel.writeCallback`),
+  getDependentProps: Symbol.for(`${name}:viewModel.getDependentProps`),
+  getHandler: Symbol.for(`${name}:viewModel.getHandler`),
+  addNotify: Symbol.for(`${name}:viewModel.addNotify`),
+
+  beCacheable: Symbol.for(`${name}:viewModel.beCacheable`),
+  beUncacheable: Symbol.for(`${name}:viewModel.beUncacheable`),
+
+  boundByComponent: Symbol.for(`${name}:globalData.boundByComponent`),
+
+  directlyCall: Symbol.for(`${name}:viewModel.directCall`),
+  bindTo: Symbol.for(`${name}:componentModule.bindTo`),
+  bindProperty: Symbol.for(`${name}:componentModule.bindProperty`),
+  notifyForDependentProps: Symbol.for(`${name}:viewModel.notifyForDependentProps`),
+}, DotNotationSymbols);
 
 class BindInfo {
   /**
@@ -122,8 +616,16 @@ class BindInfo {
    * @type {HTMLElement}
    */
   get element() {
-    return (this.node instanceof HTMLElement) ? this.node : utils$1.raise("not HTMLElement");
+    return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
   }
+  /**
+   * @type {BindInfo}
+   */
+  contextBind;
+  /**
+   * @type {BindInfo}
+   */
+  parentContextBind;
   /**
    * @type {string}
    */
@@ -147,7 +649,7 @@ class BindInfo {
   }
 
   /**
-   * @type {Component}
+   * @type {import("../component/Component.js").Component} 
    */
   component;
   /**
@@ -163,9 +665,35 @@ class BindInfo {
   }
   set viewModelProperty(value) {
     this.#viewModelProperty = value;
+    this.#viewModelPropertyName = dotNotation.PropertyName.create(value);
+    if (dotNotation.RE_CONTEXT_INDEX.exec(value)) {
+      this.#contextIndex = Number(value.slice(1)) - 1;
+    } else {
+      this.#contextIndex = undefined;
+    }
   }
   /**
-   * @type {Filter[]}
+   * @type {import("../../modules/dot-notation/dot-notation.js").PropertyName}
+   */
+  #viewModelPropertyName;
+  get viewModelPropertyName() {
+    return this.#viewModelPropertyName;
+  }
+  /**
+   * @type {number}
+   */
+  #contextIndex;
+  get contextIndex() {
+    return this.#contextIndex;
+  }
+  /**
+   * @type {boolean}
+   */
+  get isContextIndex() {
+    return (typeof this.#contextIndex !== "undefined");
+  }
+  /**
+   * @type {import("../filter/Filter.js").Filter[]}
    */
   filters;
 
@@ -179,7 +707,7 @@ class BindInfo {
   set indexes(value) {
     this.#indexes = value;
     this.#indexesString = value.toString();
-    this.#viewModelPropertyKey = this.viewModelProperty + "\t" + this.#indexesString;
+    this.#viewModelPropertyKey = this.#viewModelProperty + "\t" + this.#indexesString;
   }
   /**
    * @type {string}
@@ -199,36 +727,62 @@ class BindInfo {
    * @type {number[]}
    */
   contextIndexes;
+  /**
+   * @type {number}
+   */
+  positionContextIndexes = -1;
   
   /**
    * @type {any}
    */
   lastNodeValue;
   /**
-   * @type
+   * @type {any}
    */
   lastViewModelValue;
 
   /**
-   * Nodeのプロパティを更新する
+   * 
+   * @returns {any}
+   */
+  getViewModelValue() {
+    return (this.isContextIndex) ?
+      this.contextIndexes[this.contextIndex] :
+      this.viewModel[Symbols.directlyGet](this.viewModelProperty, this.indexes);
+  }
+
+  /**
+   * 
+   * @param {any} value
+   */
+  setViewModelValue(value) {
+    if (!this.isContextIndex) {
+      this.viewModel[Symbols.directlySet](this.viewModelProperty, this.indexes, value);
+    }
+  }
+
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {}
 
   /**
-   * ViewModelのプロパティを更新する
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {}
 
   /**
    * 
-   * @param {number} index 
+   * @param {BindInfo} target 
    * @param {number} diff 
    */
-  changeIndexes(index, diff) {
+  changeIndexes(target, diff) {
     const { indexes, contextIndexes } = this;
-    indexes[index] = indexes[index] + diff;
-    contextIndexes[index] = contextIndexes[index] + diff;
-    this.indexes = indexes;
+    if (this.viewModelPropertyName.setOfParentPaths.has(target.viewModelProperty)) {
+      indexes[target.indexes.length] = indexes[target.indexes.length] + diff;
+    }
+    contextIndexes[target.contextIndexes.length] = contextIndexes[target.contextIndexes.length] + diff;
+    
  }
 
   /**
@@ -237,10 +791,320 @@ class BindInfo {
   removeFromParent() { }
 }
 
+/**
+ * @enum {number}
+ */
+const UpdateSlotStatus = {
+  beginViewModelUpdate: 1,
+  endViewMmodelUpdate: 2,
+  beginNotifyReceive: 3,
+  endNotifyReceive: 4,
+  beginNodeUpdate: 5,
+  endNodeUpdate: 6,
+};
+
+class NodeUpdateData {
+  /**
+   * @type {Node}
+   */
+  node;
+  /**
+   * @type {string}
+   */
+  property;
+  viewModelProperty;
+  value;
+  /**
+   * @type {()=>{}}
+   */
+  updateFunc;
+
+  /**
+   * 
+   * @param {Node} node 
+   * @param {string} property 
+   * @param {()=>{}} updateFunc 
+   */
+  constructor(node, property, viewModelProperty, value, updateFunc) {
+    this.node = node;
+    this.property = property;
+    this.viewModelProperty = viewModelProperty;
+    this.value = value;
+    this.updateFunc = updateFunc;
+  }
+}
+
+class NodeUpdator {
+  /**
+   * @type {NodeUpdateData[]}
+   */
+  queue = [];
+
+  /**
+   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
+   * 
+   * @param {NodeUpdateData[]} updates 
+   */
+  reorder(updates) {
+    updates.sort((update1, update2) => {
+      if (update1.node instanceof HTMLTemplateElement && update2.node instanceof HTMLTemplateElement) return 0;
+      if (update2.node instanceof HTMLTemplateElement) return 1;
+      if (update1.node instanceof HTMLTemplateElement) return -1;
+      if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
+      if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
+      if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;
+      return 0;
+    });
+    return updates;
+  }
+  /**
+   * 
+   */
+  async exec() {
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
+    try {
+      while(this.queue.length > 0) {
+        const updates = this.queue.splice(0);
+        const orderedUpdates = this.reorder(updates);
+        for(const update of orderedUpdates) {
+          Reflect.apply(update.updateFunc, update, []);
+        }
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
+    }
+  }
+
+  /**
+   * @type {boolean}
+   */
+  get isEmpty() {
+    return this.queue.length === 0;
+  }
+}
+
+class LevelTop extends BindInfo {
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, nodeProperty, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
+        node[nodeProperty] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, nodeProperty, filters} = this;
+    const value = Filter.applyForInput(node[nodeProperty], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+class Level2nd extends BindInfo {
+  get nodeProperty1() {
+    return this.nodePropertyElements[0];
+  }
+  get nodeProperty2() {
+    return this.nodePropertyElements[1];
+  }
+
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, nodeProperty, viewModelProperty, filters} = this;
+    const {nodeProperty1, nodeProperty2} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
+        node[nodeProperty1][nodeProperty2] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, filters} = this;
+    const {nodeProperty1, nodeProperty2} = this;
+    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+class Level3rd extends BindInfo {
+  get nodeProperty1() {
+    return this.nodePropertyElements[0];
+  }
+  get nodeProperty2() {
+    return this.nodePropertyElements[1];
+  }
+  get nodeProperty3() {
+    return this.nodePropertyElements[2];
+  }
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, nodeProperty, viewModelProperty, filters} = this;
+    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
+        node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, filters} = this;
+    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
+    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2][nodeProperty3], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLElement}
+ */
+const toHTMLElement$1 = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
+
+class ClassName extends BindInfo {
+  /**
+   * @type {string}
+   */
+  get className() {
+    return this.nodePropertyElements[1];
+  }
+
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, nodeProperty, viewModelProperty, filters, className} = this;
+    const element = toHTMLElement$1(node);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
+        value ? element.classList.add(className) : element.classList.remove(className);
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, filters, className} = this;
+    const element = toHTMLElement$1(node);
+    const value = Filter.applyForInput(element.classList.contains(className), filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+}
+
+const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node : utils.raise();
+
+class Radio extends BindInfo {
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, nodeProperty, viewModelProperty, filters} = this;
+    const radio = toHTMLInputElement$1(node);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
+        radio.checked = value === radio.value;
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, filters} = this;
+    const radio = toHTMLInputElement$1(node);
+    const radioValue = Filter.applyForInput(radio.value, filters);
+    if (radio.checked) {
+      this.setViewModelValue(radioValue);
+      this.lastViewModelValue = radioValue;
+    }
+  }
+}
+
+const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise();
+
+class Checkbox extends BindInfo {
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, nodeProperty, viewModelProperty, filters} = this;
+    const checkbox = toHTMLInputElement(node);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
+        checkbox.checked = value.find(value => value === checkbox.value);
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, filters} = this;
+    const checkbox = toHTMLInputElement(node);
+    const checkboxValue = Filter.applyForInput(checkbox.value, filters);
+    const setOfValue = new Set(this.getViewModelValue());
+    (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
+    const value = Array.from(setOfValue);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+}
+
 const SELECTOR = "[data-bind]";
 
 /**
- * ルートノードから、nodeまでのchileNodesのインデックスリストを取得する
+ * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
  * ex.
  * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
  * => [1,3,7,2]
@@ -266,7 +1130,7 @@ const isCommentNode = node => node instanceof Comment && node.textContent[0] ===
 /**
  * 
  * @param {Node} node 
- * @returns 
+ * @returns {Comment[]}
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
@@ -289,14 +1153,14 @@ class Selector {
 
     if (this.listOfRouteIndexesByTemplate.has(template)) {
       // キャッシュがある場合
-      // querySelectorAllをせずにNodeの位置を特定できる
+      // querySelectorAllを行わずにNodeの位置を特定できる
       const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
       nodes = listOfRouteIndexes.map(routeIndexes => routeIndexes.reduce((node, routeIndex) => node.childNodes[routeIndex], rootElement));
     } else {
-      // data-bindを持つノード、コメントのノードを取得しリストを作成する
+      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
       nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
 
-      // ルートから、nodeのインデックスの順番をキャッシュに覚えておく
+      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
       this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
     }
     return nodes;
@@ -304,37 +1168,6 @@ class Selector {
   }
 
 }
-
-class BindDomIf {
-  /**
-   * 
-   * @param {Node} node
-   * @param {Component} component
-   * @param {string[]} indexes
-   * @returns {BindInfo[]} 
-   */
-  static bind(node, component, indexes) { }
-}
-
-const name = "quel";
-
-const SYM_GET_INDEXES = Symbol.for(`${name}:viewModel.indexes`);
-const SYM_GET_TARGET = Symbol.for(`${name}:viewModel.target`);
-const SYM_GET_DEPENDENT_MAP = Symbol.for(`${name}:viewModel.dependentMap`);
-const SYM_CALL_DIRECT_GET = Symbol.for(`${name}:viewModel.directGet`);
-const SYM_CALL_DIRECT_SET = Symbol.for(`${name}:viewModel.directSet`);
-const SYM_CALL_DIRECT_CALL = Symbol.for(`${name}:viewModel.directCall`);
-const SYM_CALL_INIT = Symbol.for(`${name}:viewModel.init`);
-const SYM_CALL_CONNECT = Symbol.for(`${name}:viewModel.connect`);
-const SYM_CALL_WRITE = Symbol.for(`${name}:viewModel.write`);
-const SYM_CALL_CLEAR_CACHE = Symbol.for(`${name}:viewModel.clearCache`);
-const SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS = Symbol.for(`${name}:viewModel.notifyForDependentProps`);
-
-const SYM_GET_IS_PROXY = Symbol.for(`${name}:arrayHandler.isProxy`);
-const SYM_GET_RAW = Symbol.for(`${name}:arrayHandler.raw`);
-
-const SYM_CALL_BIND_DATA = Symbol.for(`${name}:componentModule.bindData`);
-const SYM_CALL_BIND_PROPERTY = Symbol.for(`${name}:componentModule.bindProperty`);
 
 /**
  * 
@@ -368,12 +1201,6 @@ class TemplateChild {
   get nodesForAppend() {
     return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
   }
-  /**
-   * @type {Set<Node>}
-   */
-  get setOfNodes() {
-    return new Set(this.childNodes);
-  }
 
   /**
    * 
@@ -394,11 +1221,11 @@ class TemplateChild {
 
   /**
    * 
-   * @param {number} index 
+   * @param {BindInfo} target 
    * @param {number} diff 
    */
-  changeIndex(index, diff) {
-    this.binds.forEach(bind => bind.changeIndexes(index, diff));
+  changeIndexes(target, diff) {
+    this.binds.forEach(bind => bind.changeIndexes(target, diff));
   }
 
   /**
@@ -410,7 +1237,8 @@ class TemplateChild {
   static create(templateBind, indexes) {
     const {component, template} = templateBind;
     const rootElement = document.importNode(template.content, true);
-    const binds = Binder.bind(template, rootElement, component, indexes);
+    const nodes = Selector.getTargetNodes(template, rootElement);
+    const binds = Binder.bind(nodes, component, templateBind, indexes);
     const childNodes = Array.from(rootElement.childNodes);
     return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement });
   }
@@ -427,6 +1255,13 @@ class Template extends BindInfo {
     super.node = comment;
     this.template = template;
   }
+  get nodeProperty() {
+    return super.nodeProperty;
+  }
+  set nodeProperty(value) {
+    super.nodeProperty = value;
+  }
+
   /**
    * @type {TemplateChild[]}
    */
@@ -443,7 +1278,8 @@ class Template extends BindInfo {
   }
 
   updateNode() {
-    const newValue = (this.nodeProperty === "loop") ? this.expandLoop() : this.expandIf();
+    const newValue = (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
+      (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
     this.lastViewModelValue = (newValue instanceof Array) ? newValue.slice() : newValue;
   }
   
@@ -452,16 +1288,6 @@ class Template extends BindInfo {
    */
   removeFromParent() {
     this.templateChildren.forEach(child => child.removeFromParent());
-/*
-    const nodes = this.templateChildren.flatMap(child => child.childNodes);
-    if (nodes.length > 0) {
-      const oldParentNode = nodes[0].parentNode;
-      const newParentNode = oldParentNode.cloneNode(false);
-      oldParentNode.parentNode.replaceChild(newParentNode, oldParentNode)
-      nodes.forEach(node => node.parentNode.removeChild(node));
-      newParentNode.parentNode.replaceChild(oldParentNode, newParentNode);
-    }
-*/
   }
 
   /**
@@ -479,15 +1305,9 @@ class Template extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
-    /**
-     * @type {any}
-     */
+    const { contextIndexes, filters } = this;
     const lastValue = this.lastViewModelValue;
-    /**
-     * @type {any}
-     */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
@@ -508,7 +1328,7 @@ class Template extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
+    const { contextIndexes, filters, templateChildren } = this;
     /**
      * @type {any[]}
      */
@@ -516,7 +1336,7 @@ class Template extends BindInfo {
     /**
      * @type {any[]}
      */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters) ?? [];
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters) ?? [];
 
     /**
      * @type {Map<any,number[]>}
@@ -536,18 +1356,18 @@ class Template extends BindInfo {
      */
     const newTemplateChildren = newValue.map((value, newIndex) => {
       const lastIndexes = indexesByLastValue.get(value);
-      if (typeof lastIndexes === "undefined") {
+      if (typeof lastIndexes === "undefined" || lastIndexes.length === 0) {
         // 元のインデックスがない場合、新規
         lastIndexByNewIndex.set(newIndex, undefined);
         moveOrCreateIndexes.push(newIndex);
-        return TemplateChild.create(this, indexes.concat(newIndex));
+        return TemplateChild.create(this, contextIndexes.concat(newIndex));
       } else {
         // 元のインデックスがある場合、子要素のループインデックスを書き換え
         // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素
         const lastIndex = lastIndexes.shift();
         lastIndexByNewIndex.set(newIndex, lastIndex);
-        const templateChild = this.templateChildren[lastIndex];
-        (newIndex !== lastIndex) && templateChild.changeIndex(indexes.length, newIndex - lastIndex);
+        const templateChild = templateChildren[lastIndex];
+        (newIndex !== lastIndex) && templateChild.changeIndexes(this, newIndex - lastIndex);
         const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
         if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
           moveOrCreateIndexes.push(newIndex);
@@ -555,10 +1375,10 @@ class Template extends BindInfo {
         return templateChild;
       }
     });
-    // 削除対象、追加・移動対象のインデックスを取得
+    // 削除対象、追加・移動対象のインデックスを取得し、ノードを削除
     for(const indexes of indexesByLastValue.values()) {
       for(const index of indexes) {
-        this.templateChildren[index].removeFromParent();
+        templateChildren[index].removeFromParent();
       }
     }
 
@@ -578,12 +1398,250 @@ class Template extends BindInfo {
 
   /**
    * 
-   * @param {number} index 
+   * @param {BindInfo} target 
    * @param {number} diff 
    */
-  changeIndexes(index, diff) {
-    this.indexes[index] = this.indexes[index] + diff;
-    this.templateChildren.forEach(templateChild => templateChild.changeIndex(index, diff));
+  changeIndexes(target, diff) {
+    super.changeIndexes(target, diff);
+    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(target, diff));
+  }
+}
+
+class ProcessData {
+  /**
+   * @type {()=>{}}
+   */
+  target;
+  /**
+   * @type {Object}
+   */
+  thisArgument;
+  /**
+   * @type {any[]}
+   */
+  argumentsList;
+
+  /**
+   * 
+   * @param {()=>{}} target 
+   * @param {Object} thisArgument 
+   * @param {any[]} argumentsList 
+   */
+  constructor(target, thisArgument, argumentsList) {
+    this.target = target;
+    this.thisArgument = thisArgument;
+    this.argumentsList = argumentsList;
+  }
+}
+
+class ViewModelUpdator {
+  /**
+   * @type {ProcessData[]}
+   */
+  queue = [];
+
+  /**
+   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
+   */
+  #statusCallback;
+  /**
+   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
+   * 
+   */
+  async exec() {
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginViewModelUpdate);
+    try {
+      while(this.queue.length > 0) {
+        const processes = this.queue.splice(0);
+        for(const process of processes) {
+          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
+        }
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endViewMmodelUpdate);
+    }
+  }
+
+  /**
+   * @type {boolean}
+   */
+  get isEmpty() {
+    return this.queue.length === 0;
+  }
+}
+
+class Event extends BindInfo {
+  #eventType;
+  /**
+   * @type {string}
+   */
+  get eventType() {
+    return this.#eventType;
+  }
+  set eventType(value) {
+    this.#eventType = value;
+  }
+  /**
+   * 
+   */
+  addEventListener() {
+    const {component, element, eventType, viewModel, viewModelProperty} = this;
+    element.addEventListener(eventType, (event) => {
+      event.stopPropagation();
+      const contextIndexes = this.contextIndexes;
+      const process = new ProcessData(
+        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, contextIndexes, event]
+      );
+      component.updateSlot.addProcess(process);
+    });
+  }
+}
+
+const toComponent = node => (node instanceof Component) ? node : utils.raise('not Component');
+
+class ComponentBind extends BindInfo {
+  /**
+   * @type {Node}
+   */
+  get node() {
+    return super.node;
+  }
+  set node(node) {
+    this.thisComponent = toComponent(node);
+    super.node = node;
+  }
+  #isSetProperty() {
+    return (typeof this.viewModelProperty !== "undefined" && typeof this.nodePropertyElements !== "undefined");
+  }
+  /**
+   * @type {string}
+   */
+  get viewModelProperty() {
+    return super.viewModelProperty;
+  }
+  set viewModelProperty(value) {
+    super.viewModelProperty = value;
+    if (this.#isSetProperty()) {
+      this.bindProperty();
+    }
+  }
+  /**
+   * @type {string[]}
+   */
+  get nodePropertyElements() {
+    return super.nodePropertyElements;
+  }
+  set nodePropertyElements(value) {
+    super.nodePropertyElements = value;
+    if (this.#isSetProperty()) {
+      this.bindProperty();
+    }
+  }
+  /**
+   * @type {string}
+   */
+  get dataNameProperty() {
+    return this.nodePropertyElements[0];
+  }
+  /**
+   * @type {string}
+   */
+  get dataProperty() {
+    return this.nodePropertyElements[1];
+  }
+
+  #thisComponent;
+  get thisComponent() {
+    return this.#thisComponent;
+  }
+  set thisComponent(value) {
+    this.#thisComponent = value;
+  }
+
+  /**
+   * 
+   */
+  bindProperty() {
+    this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes);
+  }
+
+  /**
+   * 
+   */
+  updateNode() {
+    const { node, dataProperty } = this;
+    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}`, []);
+  }
+
+  updateViewModel() {
+  }
+
+}
+
+const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
+const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
+const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo, info);
+const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
+const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
+const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
+const createTemplate = (bindInfo, info) => Object.assign(new Template, bindInfo, info);
+const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
+const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
+
+const creatorByType = new Map();
+creatorByType.set(NodePropertyType.levelTop, createLevelTop);
+creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
+creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
+creatorByType.set(NodePropertyType.className, createClassName);
+creatorByType.set(NodePropertyType.radio, createRadio);
+creatorByType.set(NodePropertyType.checkbox, createCheckbox);
+creatorByType.set(NodePropertyType.template, createTemplate);
+creatorByType.set(NodePropertyType.event, createEvent);
+creatorByType.set(NodePropertyType.component, createComponent);
+
+class Factory {
+  /**
+   * 
+   * @param {{
+   * component:import("../component/Component.js").Component,
+   * node:Node,
+   * nodeProperty:string,
+   * viewModel:ViewModel,
+   * viewModelProperty:string,
+   * filters:Filter[],
+   * contextBind:import("../bindInfo/BindInfo.js").BindInfo,
+   * contextIndexes:number[],
+   * }}
+   * @returns {import("../bindInfo/BindInfo.js").BindInfo}
+   */
+  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, contextBind, contextIndexes}) {
+    const bindInfo = {
+      component, node, nodeProperty, viewModel, viewModelProperty, filters, 
+      contextBind, parentContextBind:null, contextIndexes, positionContextIndexes:-1
+    };
+    const propName = dotNotation.PropertyName.create(viewModelProperty);
+    if (propName.level > 0) {
+      let parentContextBind = contextBind;
+      while(parentContextBind != null) {
+        if (parentContextBind.viewModelProperty === propName.parentPath) break;
+        parentContextBind = parentContextBind.contextBind;
+      }
+      if (parentContextBind === null) utils.raise("not found parent contextBind");
+      const positionContextIndexes = parentContextBind.contextIndexes.length;
+      bindInfo.indexes = parentContextBind.indexes.concat(contextIndexes[positionContextIndexes]);
+      bindInfo.positionContextIndexes = positionContextIndexes;
+      bindInfo.parentContextBind = parentContextBind;
+    } else {
+      bindInfo.indexes = [];
+    }
+    const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
+    return creatorByType.get(nodeInfo.type)(bindInfo, nodeInfo);
   }
 }
 
@@ -663,12 +1721,11 @@ const parseExpression = (expr, defaultName) => {
 const parseBindText = (text, defaultName) => {
   return text.split(";").map(trim).filter(has).map(s => { 
     let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
-    viewModelProperty = viewModelProperty === SAMENAME ? prop : viewModelProperty;
+    viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
     return { nodeProperty, viewModelProperty, filters };
   });
 };
-
 
 /**
  * data-bind属性をパースする関数群
@@ -696,130 +1753,1307 @@ class Parser {
   }
 }
 
-const PREFIX_EVENT = "on";
-
-/**
- * @enum {number}
- */
-const NodePropertyType = {
-  levelTop: 1,
-  level2nd: 2,
-  level3rd: 3,
-  className: 10,
-  radio: 20,
-  checkbox: 30,
-  template: 90,
-  event: 91,
-  component: 92,
-};
-
-class PropertyType {
+class BindToDom {
   /**
    * 
    * @param {Node} node
-   * @param {string} nodeProperty 
-   * @returns {{type:NodePropertyType,nodePropertyElements:string[],eventType:string}}
+   * @param {import("../component/Component.js").Component} component
+   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
+   * @param {string[]} contextIndexes
+   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]} 
    */
-  static getInfo(node, nodeProperty) {
-    const result = {type:null, nodePropertyElements:[], eventType:null};
-    if (node instanceof HTMLTemplateElement) { 
-      result.type = NodePropertyType.template;
-      return result;
-    }
-    result.nodePropertyElements = nodeProperty.split(".");
-    if (node instanceof Component) { 
-      result.type = NodePropertyType.component;
-      return result;
-    }    if (result.nodePropertyElements.length === 1) {
-      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
-        result.type = NodePropertyType.event;
-        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
-      } else if (result.nodePropertyElements[0] === "radio") {
-        result.type = NodePropertyType.radio;
-      } else if (result.nodePropertyElements[1] === "checkbox") {
-        result.type = NodePropertyType.checkbox;
-      } else {
-        result.type = NodePropertyType.levelTop;
-      }
-    } else if (result.nodePropertyElements.length === 2) {
-      if (result.nodePropertyElements[0] === "className") {
-        result.type = NodePropertyType.className;
-      } else {
-        result.type = NodePropertyType.level2nd;
-      }
-    } else if (result.nodePropertyElements.length === 3) {
-      result.type = NodePropertyType.level3rd;
-    } else {
-      utils$1.raise(`unknown property ${nodeProperty}`);
-    }
-    return result;
+  static bind(node, component, contextBind, contextIndexes) { }
+
+  /**
+   * 
+   * @param {Node} node 
+   * @param {import("../component/Component.js").Component} component
+   * @param {Object<string,any>} viewModel 
+   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
+   * @param {number[]} contextIndexes 
+   * @returns {(text:string, defaultName:string)=> import("../bindInfo/BindInfo.js").BindInfo[]}
+   */
+  static parseBindText = (node, component, viewModel, contextBind, contextIndexes) => 
+    (text, defaultName) => 
+      Parser.parse(text, defaultName)
+        .map(info => Factory.create(Object.assign(info, {node, component, viewModel, contextBind, contextIndexes:contextIndexes.slice()})));
+
+  /**
+   * 
+   * @param {import("../bindInfo/BindInfo.js").BindInfo} bind 
+   * @returns {void}
+   */
+  static applyUpdateNode = bind => bind.updateNode();
+}
+
+const DATASET_BIND_PROPERTY$1 = "bind";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLTemplateElement}
+ */
+const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
+
+class BindToTemplate extends BindToDom {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {import("../component/Component.js").Component} component
+   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
+   * @param {number[]} contextIndexes
+   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   */
+  static bind(node, component, contextBind, contextIndexes) {
+    const viewModel = component.viewModel;
+    const template = toHTMLTemplateElement(node);
+    const bindText = template.dataset[DATASET_BIND_PROPERTY$1];
+
+    // パース
+    const parseBindText = this.parseBindText(node, component, viewModel, contextBind, contextIndexes);
+    let binds = parseBindText(bindText, "");
+    binds = binds.length > 0 ? [ binds[0] ] : [];
+    binds.forEach(this.applyUpdateNode);
+
+    return binds;
   }
 }
 
-let Handler$3 = class Handler {
+const DATASET_BIND_PROPERTY = "bind";
+const DEFAULT_EVENT = "oninput";
+const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
+const DEFAULT_PROPERTY$1 = "textContent";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLElement}
+ */
+const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
+
+/**
+ * 
+ * @param {HTMLElement} element 
+ * @returns {string}
+ */
+const getDefaultProperty = element => {
+  return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
+  element instanceof HTMLInputElement ? ((element.type === "radio" || element.type === "checkbox") ? "checked" : "value") : 
+  DEFAULT_PROPERTY$1;
+};
+
+/**
+ * 
+ * @param { import("../bindInfo/BindInfo.js").BindInfo } bind 
+ * @returns { Event | undefined }
+ */
+const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
+
+/**
+ * ユーザー操作によりデフォルト値が変わるかどうか
+ * getDefaultPropertyと似ているが、HTMLOptionElementを含まない
+ * @param { Node } node
+ * @returns { boolean }
+ */
+const isInputableElement = node => node instanceof HTMLElement && 
+  (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
+
+
+class BindToElement extends BindToDom {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {import("../component/Component.js").Component} component
+   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
+   * @param {number[]} contextIndexes
+   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   */
+  static bind(node, component, contextBind, contextIndexes) {
+    const viewModel = component.viewModel;
+    const element = toHTMLElement(node);
+    const bindText = element.dataset[DATASET_BIND_PROPERTY];
+    const defaultName = getDefaultProperty(element);
+
+    // パース
+    const parseBindText = this.parseBindText(node, component, viewModel, contextBind, contextIndexes);
+    const binds = parseBindText(bindText, defaultName);
+    binds.forEach(this.applyUpdateNode);
+
+    // イベントハンドラ設定
+    let hasDefaultEvent = false;
+    /**
+     * @type {import("../bindInfo/BindInfo.js").BindInfo}
+     */
+    let defaultBind = null;
+    binds.forEach(bind => {
+      hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
+      defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
+      toEvent(bind)?.addEventListener();
+    });
+
+    if (defaultBind && !hasDefaultEvent && isInputableElement(node)) {
+      // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
+      // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
+      // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
+      // ・nodeが入力系（input, textarea, select） → 入力系に限定
+      element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
+        event.stopPropagation();
+        const process = new ProcessData(defaultBind.updateViewModel, defaultBind, []);
+        component.updateSlot.addProcess(process);
+      });
+    }
+
+    return binds;
+  }
+
+}
+
+const DEFAULT_PROPERTY = "textContent";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Comment}
+ */
+const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+
+class BindToText extends BindToDom {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {import("../component/Component.js").Component} component
+   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
+   * @param {number[]} contextIndexes
+   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   */
+  static bind(node, component, contextBind, contextIndexes) {
+    // コメントノードをテキストノードに差し替える
+    const viewModel = component.viewModel;
+    const comment = toComment(node);
+    const bindText = comment.textContent.slice(2); // @@をスキップ
+    const textNode = document.createTextNode("");
+    comment.parentNode.replaceChild(textNode, comment);
+
+    // パース
+    const parseBindText = this.parseBindText(textNode, component, viewModel, contextBind, contextIndexes);
+    const binds = parseBindText(bindText, DEFAULT_PROPERTY);
+    binds.forEach(this.applyUpdateNode);
+
+    return binds;
+  }
+
+}
+
+class Binder {
+  /**
+   * 
+   * @param {Node[]} nodes
+   * @param {import("../component/Component.js").Component} component
+   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
+   * @param {number[]} contextIndexes
+   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   */
+  static bind(nodes, component, contextBind, contextIndexes) {
+    return nodes.flatMap(node => 
+      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, contextBind, contextIndexes) :
+      (node instanceof HTMLElement) ? BindToElement.bind(node, component, contextBind, contextIndexes) :
+      (node instanceof Comment) ? BindToText.bind(node, component, contextBind, contextIndexes) : 
+      utils.raise(`unknown node type`)
+    );
+  }
+
+}
+
+class View {
+  /**
+   * 
+   * @param {HTMLElement} rootElement 
+   * @param {import("../component/Component.js").Component} component 
+   * @param {HTMLTemplateElement} template 
+   * @returns 
+   */
+  static render(rootElement, component, template) {
+    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(template, content);
+    const binds = Binder.bind(nodes, component, null, []);
+    rootElement.appendChild(content);
+    return binds;
+  }
+}
+
+class Cache {
+  #valueByIndexesStringByPropertyName = new Map;
+  
+  /**
+   * 
+   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyName} propName 
+   * @param {number[]} indexes 
+   * @returns {any}
+   */
+  get(propName, indexes) {
+    const valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
+    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;
+  }
+
+  /**
+   * 
+   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyName} propName 
+   * @param {number[]} indexes 
+   * @param {any} value
+   * @returns {any}
+   */
+  set(propName, indexes, value) {
+    let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
+    if (!valueByIndexesString) {
+      valueByIndexesString = new Map;
+      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
+    }
+    valueByIndexesString.set(indexes.toString(), value);
+    return value;
+  }
+
+  /**
+   * 
+   */
+  clear() {
+    this.#valueByIndexesStringByPropertyName.clear();
+  }
+
+}
+
+/**
+ * @typedef {{
+ *   removeProps:string[],
+ *   definedProps:string[],
+ *   accessorProps:string[],
+ *   methods:string[]
+ * }} ViewModelInfo
+ */
+class ViewModelize {
+  /**
+   * オブジェクトのすべてのプロパティのデスクリプタを取得する
+   * 継承元を遡る、ただし、Objectのプロパティは取得しない
+   * @param {any} target 
+   * @returns {Map<string,PropertyDescriptor>}
+   */
+  static getDescByName(target) {
+    /**
+     * @type {Map<string,PropertyDescriptor>}
+     */
+    const descByName = new Map;
+    let object = target;
+    while(object !== Object.prototype) {
+      const descs = Object.getOwnPropertyDescriptors(object);
+      for(const [name, desc] of Object.entries(descs)) {
+        if (descByName.has(name)) continue;
+        descByName.set(name, desc);
+      }
+      object = Object.getPrototypeOf(object);
+    }
+    return descByName;
+  }
+
+  /**
+   * オブジェクト内のメソッドを取得する
+   * コンストラクタは含まない
+   * @param {[string,PropertyDescriptor][]} descByNameEntries 
+   * @returns {[string,PropertyDescriptor][]}
+   */
+  static getMethods(descByNameEntries, targetClass) {
+    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value === "function")
+  }
+
+  /**
+   * オブジェクト内のプロパティを取得する
+   * @param {[string,PropertyDescriptor][]} descByNameEntries 
+   * @returns {[string,PropertyDescriptor][]}
+   */
+  static getProperties(descByNameEntries, targetClass) {
+    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value !== "function")
+  }
+
+  /**
+   * ViewModel化
+   * ・非プリミティブかつ初期値のないプロパティは削除する
+   * @param {any} target 
+   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
+   */
+  static viewModelize(target) {
+    const viewModelConstructor = target.constructor;
+    let viewModelInfo = this.viewModelInfoByConstructor.get(viewModelConstructor);
+    if (!viewModelInfo) {
+      const descByName = this.getDescByName(target);
+      const descByNameEntries = Array.from(descByName.entries());
+      const removeProps = [];
+      const definedProps = [];
+      const accessorProps = [];
+      const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
+      this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
+        definedProps.push(name);
+        const propName = PropertyName.create(name);
+        if (!propName.isPrimitive) {
+          if (("value" in desc) && typeof desc.value === "undefined") {
+            removeProps.push(name);
+          }
+        }
+        if ("get" in desc && typeof desc.get !== "undefined") {
+          accessorProps.push(name);
+        }
+      });
+      viewModelInfo = { removeProps, definedProps, methods, accessorProps };
+      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);    }
+    viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
+    return {
+      definedProps:viewModelInfo.definedProps, 
+      methods:viewModelInfo.methods, 
+      accessorProps:viewModelInfo.accessorProps,
+      viewModel:target
+    };
+  }
+
+  /**
+   * @type {Map<class.constructor,ViewModelInfo>}
+   */
+  static viewModelInfoByConstructor = new Map;
+  
+}
+
+/**
+ * 配列プロキシ
+ * 更新（追加・削除）があった場合、更新コールバックを呼び出す
+ */
+let Handler$2 = class Handler {
+  #updateCallback;
+  get updateCallback() {
+    return this.#updateCallback;
+  }
+  /**
+   * コンストラクタ
+   * @param {()=>{}} updateCallback
+   */
+  constructor(updateCallback) {
+    this.#updateCallback = updateCallback;
+  }
+
+  /**
+   * getter
+   * SymIsProxyはtrueを返す
+   * SymRawは元の配列を返す
+   * @param {Array} target Array
+   * @param {string} prop プロパティ
+   * @param {Proxy} receiver 配列プロキシ
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (prop === Symbols.isProxy) return true;
+    if (prop === Symbols.getRaw) return target;
+    return Reflect.get(target, prop, receiver);
+  }
+
+  /**
+   * setter
+   * 更新があった場合、lengthがsetされる
+   * @param {Object} target Array
+   * @param {string} prop プロパティ
+   * @param {Any} value 
+   * @param {Proxy} receiver 配列プロキシ
+   * @returns 
+   */
   set(target, prop, value, receiver) {
     Reflect.set(target, prop, value, receiver);
-    GlobalData.binds
-    .filter(bind => prop === bind.globalProperty)
-    .forEach(bind => {
-      const [dataProp, nameProp] = bind.componentProperty.split(".");
-      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${nameProp}`, []);
-    });
-    GlobalData.globalBinds
-    .filter(bind => prop === bind.globalProperty)
-    .forEach(bind => {
-      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$globals.${prop}`, []);
-    });
+    if (prop === "length") {
+      this.updateCallback();
+    }
     return true;
   }
 };
 
+/**
+ * 
+ * @param {any[]} array
+ * @param {()=>{}} updateCallback
+ * @returns 
+ */
+function create(array, updateCallback) {
+  return new Proxy(array, new Handler$2(updateCallback))
+}
+
+class DependentProps {
+  #setOfDefaultProps = new Set;
+  /**
+   * @type {Map<string,Set<string>>}
+   */
+  #setOfPropsByRefProp = new Map;
+  get setOfPropsByRefProp() {
+    return this.#setOfPropsByRefProp;
+  }
+
+  /**
+   * @param {string} prop
+   * @returns {boolean} 
+   */
+  hasDefaultProp(prop) {
+    return this.#setOfDefaultProps.has(prop);
+  }
+  /**
+   * 
+   * @param {string} prop 
+   */
+  addDefaultProp(prop) {
+    let currentName = dotNotation.PropertyName.create(prop);
+    while(currentName.parentPath !== "") {
+      const parentName = dotNotation.PropertyName.create(currentName.parentPath);
+      if (!this.#setOfDefaultProps.has(currentName.name)) {
+        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]));
+        this.#setOfDefaultProps.add(currentName.name);
+      }
+      currentName = parentName;
+    }
+  }
+
+  /**
+   * 
+   * @param {{prop:string,refProps:string[]}} props 
+   */
+  setDependentProps(props) {
+    for(const [prop, refProps] of Object.entries(props)) {
+      for(const refProp of refProps) {
+        this.#setOfPropsByRefProp.get(refProp)?.add(prop) ?? this.#setOfPropsByRefProp.set(refProp, new Set([prop]));
+      }
+    }
+  }
+
+}
+
+const INIT_CALLBACK = "$initCallback";
+const WRITE_CALLBACK = "$writeCallback";
+const CONNECTED_CALLBACK = "$connectedCallback";
+const DISCONNECTED_CALLBACK = "$disconnectedCallback";
+
+/**
+ * @type {{symbol:Symbol,callbackName:string}}
+ */
+const callbackNameBySymbol = {
+  [Symbols.connectedCallback]: CONNECTED_CALLBACK,
+  [Symbols.disconnectedCallback]: DISCONNECTED_CALLBACK,
+  [Symbols.writeCallback]: WRITE_CALLBACK,
+  [Symbols.initCallback]: INIT_CALLBACK,
+};
+/**
+ * @type {Set<Symbol>}
+ */
+const setOfAllCallbacks = new Set([
+  Symbols.connectedCallback,
+  Symbols.disconnectedCallback,
+  Symbols.writeCallback,
+  Symbols.initCallback,
+]);
+
+/**
+ * 
+ */
+const setOfApiFunctions = new Set([
+  Symbols.directlyCall,
+  Symbols.getDependentProps,
+  //Symbols.addNotify,
+  Symbols.notifyForDependentProps,
+  Symbols.getHandler,
+  Symbols.beCacheable,
+  Symbols.beUncacheable,
+]);
+
+const PROPS_PROPERTY = "$props";
+const GLOBALS_PROPERTY = "$globals";
+const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
+
+/**
+ * @type {Set<string>}
+ */
+const setOfProperties = new Set([
+  PROPS_PROPERTY,
+  GLOBALS_PROPERTY,
+  DEPENDENT_PROPS_PROPERTY,
+]);
+
+/**
+ * キャッシュ機能
+ *   ViewModelのアクセサプロパティなら、キャッシュする
+ * 配列プロキシ
+ * 通知機能
+ *   ViewModelのプロパティを更新した場合、関連するプロパティの更新通知を発行する
+ * コンポーネントイベントハンドラ呼び出し
+ *   初期化：$initCallback
+ *   プロパティ書き込み：$writeCallback
+ *   DOMツリー追加時：$connectedCallback
+ *   DOMツリー削除時：$disconnectedCallback
+ * バインドイベントハンドラ呼び出し
+ * コンテキスト変数の提供
+ *   インデックス：$1～$8
+ *   コンポーネント：$component
+ */
+/**
+ * @type {ProxyHandler<ViewModel>}
+ */
+class ViewModelHandler extends dotNotation.Handler {
+  /**
+   * @type {import("../component/Component.js").Component}
+   */
+  #component;
+  get component() {
+    return this.#component;
+  }
+  /**
+   * @type {Cache}
+   */
+  #cache = new Cache;
+  get cache() {
+    return this.#cache;
+  }
+  /**
+   * @type {string[]}
+   */
+  #methods;
+  get methods() {
+    return this.#methods;
+  }
+  /**
+   * @type {string[]}
+   */
+  #accessorProperties;
+  get accessorProperties() {
+    return this.#accessorProperties;
+  }
+  #setOfAccessorProperties;
+  get setOfAccessorProperties() {
+    return this.#setOfAccessorProperties;
+  }
+
+  /**
+   * @type {DependentProps}
+   */
+  #dependentProps = new DependentProps
+  get dependentProps() {
+    return this.#dependentProps;
+  }
+
+  /**
+   * @type {boolean}
+   */
+  #cacheable = false;
+  get cacheable() {
+    return this.#cacheable;
+  }
+  set cacheable(value) {
+    this.#cacheable = value;
+  }
+
+  /**
+   * 
+   * @param {import("../component/Component.js").Component} component
+   * @param {string[]} accessorProperties
+   * @param {string[]} methods
+   * @param {{prop:string,refProps:string[]}|undefined}
+   */
+  constructor(component, accessorProperties, methods, dependentProps) {
+    super();
+    this.#component = component;
+    this.#methods = methods;
+    this.#accessorProperties = accessorProperties;
+    this.#setOfAccessorProperties = new Set(this.#accessorProperties);
+    this.#dependentProps.setDependentProps(dependentProps ?? {});
+  }
+
+  #updateArray(target, propertyAccess, receiver) {
+    this.#addNotify(target, propertyAccess, receiver);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}  
+   * @param {Proxy} receiver 
+   */
+  getByPropertyName(target, { propName }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.#dependentProps.hasDefaultProp(propName.name) && this.#dependentProps.addDefaultProp(propName.name);
+    }
+    let value;
+    if (setOfProperties.has(propName.name)) {
+      if (propName.name === PROPS_PROPERTY) {
+        return this.component.props;
+      } else if (propName.name === GLOBALS_PROPERTY) {
+        return this.component.globals;
+//      } else if (propName.name === DEPENDENT_PROPS_PROPERTY) {
+      } else {
+        return Reflect.get(target, DEPENDENT_PROPS_PROPERTY, receiver);
+      }
+    } else {
+      if (this.#setOfAccessorProperties.has(propName.name) && this.#cacheable) {
+        // アクセサプロパティの場合、キャッシュから取得する
+        const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
+        value = this.#cache.get(propName, indexes);
+        if (typeof value === "undefined") {
+          value = super.getByPropertyName(target, { propName }, receiver);
+          this.#cache.set(propName, indexes, value);
+        }
+      } else {
+        value = super.getByPropertyName(target, { propName }, receiver);
+      }
+    }
+    return value;
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,value:any}}  
+   * @param {Proxy} receiver 
+   */
+  setByPropertyName(target, { propName, value }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.#dependentProps.hasDefaultProp(propName.name) && this.#dependentProps.addDefaultProp(propName.name);
+    }
+    const indexes = this.lastIndexes;
+    const propertyAccess = { propName, indexes };
+    const result = super.setByPropertyName(target, { propName, value }, receiver);
+    receiver[Symbols.writeCallback](propName.name, indexes);
+    this.#addNotify(target, propertyAccess, receiver);
+
+    return result;
+  }
+
+  #addProcess(target, thisArg, argumentArray) {
+    this.#component.updateSlot.addProcess(new ProcessData(target, thisArg, argumentArray));
+  }
+
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess 
+   * @param {Proxy} receiver 
+   */
+  #addNotify(target, propertyAccess, receiver) {
+    this.#component.updateSlot.addNotify(propertyAccess);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{prop:string,indexes:number[]}} 
+   * @param {Proxy<>} receiver 
+   * @returns {any}
+   */
+  [Symbols.directlyGet](target, {prop, indexes}, receiver) {
+    let value =  super[Symbols.directlyGet](target, {prop, indexes}, receiver);
+    if (value instanceof Array) {
+      const propName = dotNotation.PropertyName.create(prop);
+      value = create(value, () => {
+        this.#updateArray(target, { propName, indexes }, receiver);
+      });
+    }
+    return value;
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {Proxy<>} receiver 
+   * @returns {boolean}
+   */
+  [Symbols.beCacheable](target, receiver) {
+    this.cacheable = true;
+    this.#cache.clear();
+    return this.cacheable;
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {Proxy<>} receiver 
+   * @returns {boolean}
+   */
+  [Symbols.beUncacheable](target, receiver) {
+    this.cacheable = false;
+    return this.cacheable;
+  }
+  /**
+   * 
+   * @param {any} target 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,indexes:number[],event:Event}} param1 
+   * @param {Proxy} receiver 
+   */
+  async #directryCall(target, { propName, indexes, event }, receiver) {
+    this.stackIndexes.push(indexes);
+    try {
+      return await Reflect.apply(target[propName.name], receiver, [event, ...indexes]);
+    } finally {
+      this.stackIndexes.pop();
+    }
+  }
+
+  wrapArray(target, {prop, value}, receiver) {
+    if (value instanceof Array) {
+      const lastIndexes = this.lastIndexes;
+      value = create(value, () => {
+        let { propName, indexes } = dotNotation.PropertyName.parse(prop);
+        if (!propName.isPrimitive) {
+          if (propName.level > indexes.length) {
+            indexes = lastIndexes.slice(0, propName.level);
+          }
+        }
+        this.#updateArray(target, { propName, indexes }, receiver);
+      });
+    }
+    return value;
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {Proxy} receiver 
+   * @returns {any}
+   */
+  get(target, prop, receiver) {
+    if (setOfAllCallbacks.has(prop)) {
+      const callbackName = callbackNameBySymbol[prop];
+      const applyCallback = (...args) => async () => Reflect.apply(target[callbackName], receiver, args);
+      if (prop === Symbols.initCallback) {
+        return (callbackName in target) ? (...args) => applyCallback(...args)() : () => {};
+      } else {
+        return (callbackName in target) ? (...args) => this.#addProcess(applyCallback(...args), receiver, []) : () => {};
+      }
+    } else if (setOfApiFunctions.has(prop)) {
+      if (prop === Symbols.directlyCall) {
+        return async (prop, indexes, event) => 
+          this.#directryCall(target, { propName:dotNotation.PropertyName.create(prop), indexes, event }, receiver);
+      } else if (prop === Symbols.notifyForDependentProps) {
+        return (prop, indexes) => {
+          const propertyAccess = { propName:dotNotation.PropertyName.create(prop), indexes };
+          this.#addNotify(target, propertyAccess, receiver);
+        }
+      } else if (prop === Symbols.getDependentProps) {
+        return () => this.dependentProps;
+      } else if (prop === Symbols.getHandler) {
+        return () => this;
+      } else if (prop === Symbols.beCacheable) {
+        return () => Reflect.apply(this[Symbols.beCacheable], this, [target, receiver]);
+//      } else if (prop === Symbols.beUncacheable) {
+      } else {
+        return () => Reflect.apply(this[Symbols.beUncacheable], this, [target, receiver]);
+      }
+    } else {
+      const value = super.get(target, prop, receiver);
+      return this.wrapArray(target, { prop, value }, receiver);
+    }
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Proxy} receiver 
+   * @returns {boolean}
+   */
+  set(target, prop, value, receiver) {
+    value = (value?.[Symbols.isProxy]) ? value[Symbols.getRaw] : value;
+    return super.set(target, prop, value, receiver);
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess
+   * @param {string} prop 
+   * @param {number[]} indexes 
+   * @returns {import("../../modules/dot-notation/dot-notation.js").PropertyAccess[]}
+   */
+  static makeNotifyForDependentProps(viewModel, propertyAccess) {
+    const { propName, indexes } = propertyAccess;
+    const dependentProps = viewModel[Symbols.getDependentProps]();
+    const setOfProps = dependentProps.setOfPropsByRefProp.get(propName.name);
+    const propertyAccesses = [];
+    if (typeof setOfProps === "undefined") return [];
+    for(const prop of setOfProps) {
+      const curPropName = dotNotation.PropertyName.create(prop);
+      if (indexes.length < curPropName.level) {
+        const listOfIndexes = ViewModelHandler.expandIndexes(viewModel, { propName:curPropName, indexes });
+        propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));
+      } else {
+        const notifyIndexes = indexes.slice(0, curPropName.level);
+        propertyAccesses.push({ propName:curPropName, indexes:notifyIndexes });
+      }
+      propertyAccesses.push(...this.makeNotifyForDependentProps(viewModel, { propName:curPropName, indexes }));
+    }
+    return propertyAccesses;
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess
+   * @param {number[]} indexes 
+   * @returns {number[][]}
+   */
+  static expandIndexes(viewModel, propertyAccess) {
+    const { propName, indexes } = propertyAccess;
+    if (propName.level === indexes.length) {
+      return [ indexes ];
+    } else if (propName.level < indexes.length) {
+      return [ indexes.slice(0, propName.level) ];
+    } else {
+      /**
+       * 
+       * @param {string} parentName 
+       * @param {number} elementIndex 
+       * @param {number[]} loopIndexes 
+       * @returns {number[][]}
+       */
+      const traverse = (parentName, elementIndex, loopIndexes) => {
+        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
+        const element = propName.pathNames[elementIndex];
+        const isTerminate = (propName.pathNames.length - 1) === elementIndex;
+        const currentName = parentNameDot + element;
+        let retIndexes;
+        if (isTerminate) {
+          if (element === "*") {
+            retIndexes = (viewModel[Symbols.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
+              return [ loopIndexes.concat(index) ];
+            });
+          } else {
+            retIndexes = [ loopIndexes ];
+          }
+        } else {
+          if (element === "*") {
+            if (loopIndexes.length < indexes.length) {
+              retIndexes = traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+            } else {
+              retIndexes = (viewModel[Symbols.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
+                return traverse(currentName, elementIndex + 1, loopIndexes.concat(index));
+              });
+            }
+          } else {
+            retIndexes = traverse(currentName, elementIndex + 1, loopIndexes);
+          }
+
+        }
+        return retIndexes;
+      };
+      const listOfIndexes = traverse("", 0, []);
+      return listOfIndexes;
+    }
+  }
+}
+
+/**
+ * 
+ * @param {import("../component/Component.js").Component} component 
+ * @param {class<ViewModel>} viewModelClass 
+ * @returns {Proxy<ViewModel>}
+ */
+function createViewModel(component, viewModelClass) {
+  const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(viewModelClass, []));
+  const { viewModel, accessorProps, methods } = viewModelInfo;
+  return new Proxy(viewModel, new ViewModelHandler(component, accessorProps, methods, viewModel[DEPENDENT_PROPS_PROPERTY]));
+}
+
+const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
+
+class Binds {
+  /**
+   * 
+   * @param {import("./BindInfo.js").BindInfo[]} binds
+   * @param {Set<string>} setOfKey 
+   * @returns {Template[]}
+   */
+  static getTemplateBinds(binds, setOfKey) {
+    const templateBinds = [];
+    const stack = [ { binds, children:null, index:-1 } ];
+    while(stack.length > 0) {
+      const info = stack[stack.length - 1];
+      info.index++;
+      if (info.binds) {
+        if (info.index < info.binds.length) {
+          const template = toTemplate(info.binds[info.index]);
+          if (template) {
+            if (setOfKey.has(template.viewModelPropertyKey)) {
+              templateBinds.push(template);
+            } else {
+              if (template.templateChildren.length > 0) {
+                stack.push({ binds:null, children:template.templateChildren, index:-1 });
+              }
+            }
+          }
+        } else {
+          stack.pop();
+        }
+      } else {
+        if (info.index < info.children.length) {
+          const child = info.children[info.index];
+          if (child.binds.length > 0) {
+            stack.push({ binds:child.binds, children:null, index:-1 });
+          }
+        } else {
+          stack.pop();
+        }
+      }
+    }
+
+    return templateBinds;
+  }
+
+  /**
+   * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
+   * @param {import("./BindInfo.js").BindInfo[]} binds
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  static applyToNode(binds, setOfUpdatedViewModelPropertyKeys) {
+    // templateを先に展開する
+    /**
+     * @type {Set<Template>}
+     */
+    const templateBinds = new Set(this.getTemplateBinds(binds, setOfUpdatedViewModelPropertyKeys));
+    if (templateBinds.size > 0) {
+      for(const templateBind of templateBinds) {
+        templateBind.updateNode();
+      }
+    }
+
+    /**
+     * 
+     * @param {import("./BindInfo.js").BindInfo[]} binds 
+     */
+    const updateNode = (binds) => {
+      binds.forEach(bind => {
+        if (!templateBinds.has(bind) && setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
+          bind.updateNode();
+        }
+        toTemplate(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds));
+      });
+    };
+    updateNode(binds);
+  }
+
+}
+
+/**
+ * @typedef { {prop:string,value:any} } PropsAccessor
+ */
+
+/**
+ * @type {ProxyHandler<typeof PropsAccessor>}
+ */
+let Handler$1 = class Handler {
+  /**
+   * @type {import("./Component.js").Component}
+   */
+  #component;
+  /**
+   * @type {Map<string,{bindProp:string,bindIndexes:number[]}>}
+   */
+  #bindPropByThisProp = new Map();
+
+  /**
+   * @type {Proxy<typeof ViewModel>}
+   */
+  #data = new Proxy({}, new dotNotation.Handler);
+
+  /**
+   * @type {{key:string,value:any}|ViewModel}
+   */
+  get data() {
+    const data = this.#component?.parentComponent?.viewModel ?? this.#data;
+//    (data[Symbols.isSupportDotNotation]) || utils.raise(`data is not support dot-notation`);
+    return data;
+  }
+
+  /**
+   * 
+   * @param {import("./Component.js").Component} component 
+   */
+  constructor(component) {
+    this.#component = component;
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {Proxy<Handler>} receiver 
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (prop === Symbols.bindProperty) {
+      return (thisProp, bindProp, bindIndexes) => 
+        this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
+    }
+    const { data } = this;
+    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
+    if (bindProp) {
+      return data[Symbols.directlyGet](bindProp, bindIndexes);
+    } else {
+      console.log(`undefined property ${prop}`);
+      return undefined;
+    }
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Prooxy<Handler>} receiver 
+   * @returns 
+   */
+  set(target, prop, value, receiver) {
+    const { data } = this;
+    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
+    if (bindProp) {
+      return data[Symbols.directlySet](bindProp, bindIndexes, value);
+    } else {
+      console.log(`undefined property ${prop}`);
+      return false;
+    }
+  }
+};
+
+/**
+ * 
+ * @type {import("./Component.js").Component} component
+ * @returns {Proxy<Handler>}
+ */
+function createProps(component) {
+  return new Proxy({}, new Handler$1(component));
+}
+
+class GlobalDataHandler extends dotNotation.Handler {
+  /**
+   * @type {Map<string,Set<import("../component/Component.js").Component[]>>}
+   */
+  #setOfComponentByProp = new Map;
+  /**
+   * 
+   * @param {any} target 
+   * @param {string|Symbol} prop 
+   * @param {any} receiver 
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (prop === Symbols.boundByComponent) {
+      return (component, prop) => {
+        let setOfComponent = this.#setOfComponentByProp.get(prop);
+        if (setOfComponent == null) {
+          this.#setOfComponentByProp.set(prop, new Set([ component ]));
+        } else {
+          setOfComponent.add(component);
+        }
+      }
+    }
+    return super.get(target, prop, receiver);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string|Symbol} prop 
+   * @param {any} value 
+   * @param {Proxy} receiver 
+   * @returns 
+   */
+  set(target, prop, value, receiver) {
+    const { propName, indexes } = dotNotation.PropertyName.parse(prop);
+    const result = receiver[Symbols.directlySet](propName.name, indexes, value);
+    let setOfComponent = this.#setOfComponentByProp.get(propName.name);
+    if (setOfComponent) {
+      for(const component of setOfComponent) {
+        component.viewModel[Symbols.notifyForDependentProps]("$globals." + propName.name, indexes);
+      }
+    }
+    return result;
+  }
+
+}
+
 class GlobalData {
-  /**
-   * @type {{globalProperty:string,component:Component,componentProperty:string}[]}
-   */
-  static binds = [];
-  /**
-   * @type {{globalProperty:string,component:Component}[]}
-   */
-  static globalBinds = [];
-  /**
-   * 
-   * @param {Component} component 
-   */
-  static boundFromComponent(component) {
-    component.data[SYM_CALL_BIND_DATA](this.data);
-  }
-  /**
-   * 
-   * @param {string} globalProperty 
-   * @param {Component} component 
-   * @param {string} componentProperty 
-   */
-  static boundPropertyFromComponent(globalProperty, component, componentProperty) {
-    this.binds.push({ globalProperty, component, componentProperty });
-    component.data[SYM_CALL_BIND_PROPERTY](componentProperty, globalProperty);
-  }
-  /**
-   * 
-   * @param {Component} component 
-   * @param {string} globalProperty
-   */
-  static globalBoundFromComponent(component, globalProperty) {
-    this.globalBinds.push({ component, globalProperty });
-  }
   /**
    * 
    * @returns 
    */
   static create() {
-    return new Proxy({}, new Handler$3);
+    return new Proxy({}, new GlobalDataHandler);
   }
   /**
    * @type {Object<string,any>}
    */
   static data = this.create();
 
+}
+
+/**
+ * @typedef {{prop:string,value:any}} GlobalDataAccessor
+ */
+/**
+ * @type {ProxyHandler<typeof GlobalDataAccessor>}
+ */
+class Handler {
+  /**
+   * @type {import("./Component.js").Component}
+   */
+  #component;
+  /**
+   * @type {Set<string>}
+   */
+  setOfProps = new Set;
+
+  /**
+   * 
+   * @param {import("./Component.js").Component} component 
+   */
+  constructor(component) {
+    this.#component = component;
+  }
+
+  /**
+   * 
+   * @param {string} prop 
+   */
+  bindProperty(prop) {
+    GlobalData.data[Symbols.boundByComponent](this.#component, prop);
+    this.setOfProps.add(prop);
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {number[]} indexes 
+   * @returns {any}
+   */
+  directGet = (name, indexes) => {
+    if (!this.setOfProps.has(name)) {
+      this.bindProperty(name);
+    }
+    return GlobalData.data[Symbols.directlyGet](name, indexes);
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {number[]} indexes 
+   * @param {any} value 
+   * @returns {boolean}
+   */
+  directSet = (name, indexes, value) => {
+    if (!this.setOfProps.has(name)) {
+      this.bindProperty(name);
+    }
+    return GlobalData.data[Symbols.directlySet](name, indexes, value);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {Proxy<Handler>} receiver 
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (prop === Symbols.directlyGet) {
+      return this.directGet;
+    } else if (prop === Symbols.directlySet) {
+      return this.directSet;
+    } else if (prop === Symbols.isSupportDotNotation) {
+      return true;
+    }
+    const { propName, indexes } = dotNotation.PropertyName.parse(prop);
+    return this.directGet(propName.name, indexes);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Prooxy<Handler>} receiver 
+   * @returns 
+   */
+  set(target, prop, value, receiver) {
+    const { propName, indexes } = dotNotation.PropertyName.parse(prop);
+    return this.directSet(propName.name, indexes, value);
+  }
+}
+
+/**
+ * 
+ * @param {import("./Component.js").Component} component
+ * @returns {Proxy<Handler>}
+ */
+function createGlobals(component) {
+  return new Proxy({}, new Handler(component));
+}
+
+class Module {
+  /**
+   * @type {string}
+   */
+  html;
+  /**
+   * @type {string}
+   */
+  css;
+  /**
+   * @type {class<ViewModel>}
+   */
+  ViewModel;
+
+  /**
+   * @type {HTMLTemplateElement}
+   */
+  #template;
+  get template() {
+    if (typeof this.#template === "undefined") {
+      this.#template = Module.htmlToTemplate(this.html, this.css);
+    }
+    return this.#template;
+  }
+
+  /**
+   * HTMLの変換
+   * {{loop:}}{{if:}}{{else:}}を<template>へ置換
+   * {{end:}}を</template>へ置換
+   * {{...}}を<!--@@...-->へ置換
+   * @param {string} html 
+   * @returns {string}
+   */
+  static replaceTag(html) {
+    const stack = [];
+    return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+      expr = expr.trim();
+      if (expr.startsWith("loop:") || expr.startsWith("if:")) {
+        stack.push(expr);
+        return `<template data-bind="${expr}">`;
+      } else if (expr.startsWith("else:")){
+        const saveExpr = stack.at(-1);
+        return `</template><template data-bind="${saveExpr}|not">`;
+      } else if (expr.startsWith("end:")){
+        stack.pop();
+        return `</template>`;
+      } else {
+        return `<!--@@${expr}-->`;
+      }
+    });
+  }
+
+  /**
+   * @param {string?} html
+   * @param {string?} css
+   * @returns {HTMLTemplateElement}
+   */
+  static htmlToTemplate(html, css) {
+    const template = document.createElement("template");
+    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ?　Module.replaceTag(html) : "");
+    return template;
+  }
 }
 
 class Main {
@@ -841,7 +3075,7 @@ class Main {
    */
   static components(components) {
     Object.entries(components).forEach(([name, componentClass]) => {
-      const componentName = utils$1.toKebabCase(name);
+      const componentName = utils.toKebabCase(name);
       customElements.define(componentName, componentClass);
     });
     return this;
@@ -853,7 +3087,7 @@ class Main {
    */
   static componentModules(components) {
     Object.entries(components).forEach(([name, componentModule]) => {
-      const componentName = utils$1.toKebabCase(name);
+      const componentName = utils.toKebabCase(name);
       const componentClass = Component.getClass(componentModule);
       customElements.define(componentName, componentClass);
     });
@@ -901,306 +3135,7 @@ class Main {
   }
 }
 
-class NotifyData {
-  /**
-   * @type {Component}
-   */
-  component;
-  /**
-   * @type {string}
-   */
-  name;
-  /**
-   * @type {number[]}
-   */
-  #indexes;
-  get indexes() {
-    return this.#indexes;
-  }
-  set indexes(value) {
-    this.#indexes = value;
-    this.#indexesString = value.toString();
-    this.#key = this.name + "\t" + this.#indexesString;
-  }
-  /**
-   * @type {string}
-   */
-  #indexesString;
-  get indexesString() {
-    return this.#indexesString;
-  }
-  /**
-   * @type {string}
-   */
-  #key;
-  get key() {
-    return this.#key;
-  }
-
-  /**
-   * 
-   * @param {Component} component
-   * @param {string} name 
-   * @param {number[]} indexes 
-   */
-  constructor(component, name, indexes) {
-    this.component = component;
-    this.name = name;
-    this.indexes = indexes;
-  }
-}
-
-const getNnotifyKey = notify => notify.key;
-
-class Notifier {
-  /**
-   * @type {NotifyData[]}
-   */
-  queue = [];
-
-  /**
-   * @type {import("./Thread.js").UpdateSlotStatusCallback}
-   */
-  #statusCallback;
-  /**
-   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
-
-  /**
-   * 
-   */
-  async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNotify);
-    try {
-      while(this.queue.length > 0) {
-        const notifies = this.queue.splice(0);
-        /**
-         * @type {Map<Component,NotifyData[]>}
-         */
-        const notifiesByComponent = notifies.reduce((map, notify) => {
-          map.get(notify.component)?.push(notify) ?? map.set(notify.component, [ notify ]);
-          return map;
-        }, new Map);
-        
-        for(const [component, notifies] of notifiesByComponent.entries()) {
-          const setOfKey = new Set(notifies.map(getNnotifyKey));
-          component.notify(setOfKey);
-        }
-      }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNotify);
-    }
-  }
-
-  /**
-   * @type {boolean}
-   */
-  get isEmpty() {
-    return this.queue.length === 0;
-  }
-}
-
-class ProcessData {
-  /**
-   * @type {()=>{}}
-   */
-  target;
-  /**
-   * @type {Object}
-   */
-  thisArgument;
-  /**
-   * @type {any[]}
-   */
-  argumentsList;
-
-  /**
-   * 
-   * @param {()=>{}} target 
-   * @param {Object} thisArgument 
-   * @param {any[]} argumentsList 
-   */
-  constructor(target, thisArgument, argumentsList) {
-    this.target = target;
-    this.thisArgument = thisArgument;
-    this.argumentsList = argumentsList;
-  }
-}
-
-class Processor {
-  /**
-   * @type {ProcessData[]}
-   */
-  queue = [];
-
-  /**
-   * @type {import("./Thread.js").UpdateSlotStatusCallback}
-   */
-  #statusCallback;
-  /**
-   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
-
-  /**
-   * 
-   */
-  async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginProcess);
-    try {
-      while(this.queue.length > 0) {
-        const processes = this.queue.splice(0);
-        for(const process of processes) {
-          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
-        }
-      }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endProcess);
-    }
-  }
-
-  /**
-   * @type {boolean}
-   */
-  get isEmpty() {
-    return this.queue.length === 0;
-  }
-}
-
-/**
- * @enum {number}
- */
-const UpdateSlotStatus = {
-  beginProcess: 1,
-  endProcess: 2,
-  beginNotify: 3,
-  endNotify: 4,
-  beginNodeUpdate: 5,
-  endNodeUpdate: 6,
-};
-
-/**
- * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
- */
-
-
-class UpdateSlot {
-  /**
-   * @type {Processor}
-   */
-  #processor;
-  /**
-   * @type {Notifier}
-   */
-  #notifier;
-  /**
-   * @type {NodeUpdator}
-   */
-  #nodeUpdator;
-  /**
-   * @type {()=>{}}
-   */
-  #callback;
-  /**
-   * @type {Promise}
-   */
-  #promise;
-  /**
-   * @type {(value) => {}}
-   */
-  #resolve;
-  /**
-   * @type {() => {}}
-   */
-  #reject;
-  
-  /**
-   * 
-   * @param {()=>{}?} callback
-   * @param {UpdateSlotStatusCallback?} statusCallback
-   */
-  constructor(callback = null, statusCallback = null) {
-    this.#processor = new Processor(statusCallback);
-    this.#notifier = new Notifier(statusCallback);
-    this.#nodeUpdator = new NodeUpdator(statusCallback);
-    this.#callback = callback;
-    this.#promise = new Promise((resolve, reject) => {
-      this.#resolve = resolve;
-      this.#reject = reject;
-    });
-  }
-
-  resolve() {
-    this.#resolve && this.#resolve();
-    this.#resolve = null;
-  }
-
-  reject() {
-    this.#reject && this.#reject();
-    this.#reject = null;
-  }
-
-  async waiting() {
-    return this.#promise;
-  }
-
-  async exec() {
-    do {
-      await this.#processor.exec();
-      await this.#notifier.exec();
-      await this.#nodeUpdator.exec();
-    } while(!this.#processor.isEmpty || !this.#notifier.isEmpty || !this.#nodeUpdator.isEmpty);
-  }
-
-  /**
-   * 
-   * @param {ProcessData} processData 
-   */
-  addProcess(processData) {
-    this.#processor.queue.push(processData);
-    this.resolve();
-  }
-  
-  /**
-   * 
-   * @param {NotifyData} notifyData 
-   */
-  addNotify(notifyData) {
-    this.#notifier.queue.push(notifyData);
-    this.resolve();
-  }
-
-  /**
-   * 
-   * @param {NodeUpdateData} nodeUpdateData 
-   */
-  addNodeUpdate(nodeUpdateData) {
-//    this.#nodeUpdator.queue.push(nodeUpdateData);
-    this.#nodeUpdator.add(nodeUpdateData);
-    this.resolve();
-  }
-
-  /**
-   * 
-   */
-  callback() {
-    this.#callback && this.#callback();
-  }
-
-  /**
-   * 
-   * @param {()=>{}} callback 
-   * @param {UpdateSlotStatusCallback} statusCallback 
-   * @returns 
-   */
-  static create(callback, statusCallback) {
-    return new UpdateSlot(callback, statusCallback);
-  }
+class ThreadStop extends Error {
 
 }
 
@@ -1213,6 +3148,13 @@ class Thread {
    * @type {()=>{}}
    */
   #reject;
+  /**
+   * @type {boolean}
+   */
+  #alive = true;
+  get alive() {
+    return this.#alive;
+  }
 
   /**
    * 
@@ -1223,7 +3165,7 @@ class Thread {
 
   /**
    * 
-   * @returns {Promise<UpdateSlot>}
+   * @returns {Promise<import("./UpdateSlot.js").UpdateSlot>}
    */
   async #sleep() {
     return new Promise((resolve, reject) => {
@@ -1236,12 +3178,12 @@ class Thread {
    * 
    */
   stop() {
-    this.#reject();
+    this.#reject(new ThreadStop("stop"));
   }
 
   /**
    * 
-   * @param {UpdateSlot} slot 
+   * @param {import("./UpdateSlot.js").UpdateSlot} slot 
    */
   wakeup(slot) {
     this.#resolve(slot);
@@ -1266,7 +3208,9 @@ class Thread {
           slot.callback();
         }
       } catch(e) {
-        if (typeof e !== "undefined") {
+        if (e instanceof ThreadStop) {
+          break;
+        } else {
           console.error(e);
           if (!confirm("致命的なエラーが発生しました。続行しますか？")) {
             break;
@@ -1274,103 +3218,56 @@ class Thread {
         }
       }
     } while(true);
+
+    this.#alive = false;
   }
 
 }
 
-class NodeUpdateData {
+class NotifyReceiver {
   /**
-   * @type {Node}
-   */
-  node;
-  /**
-   * @type {string}
-   */
-  property;
-  viewModelProperty;
-  value;
-  /**
-   * @type {()=>{}}
-   */
-  updateFunc;
-
-  /**
-   * 
-   * @param {Node} node 
-   * @param {string} property 
-   * @param {()=>{}} updateFunc 
-   */
-  constructor(node, property, viewModelProperty, value, updateFunc) {
-    this.node = node;
-    this.property = property;
-    this.viewModelProperty = viewModelProperty;
-    this.value = value;
-    this.updateFunc = updateFunc;
-  }
-}
-
-class NodeUpdator {
-  /**
-   * @type {NodeUpdateData[]}
+   * @type {import("../../modules/dot-notation/dot-notation.js").PropertyAccess[]}
    */
   queue = [];
 
   /**
-   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
    */
   #statusCallback;
+
   /**
-   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   * @type {import("../component/Component.js").Component}
    */
-  constructor(statusCallback) {
+  #component;
+
+  /**
+   * @param {import("../component/Component.js").Component} component
+   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(component, statusCallback) {
+    this.#component = component;
     this.#statusCallback = statusCallback;
   }
 
   /**
-   * @type {Map<Node,Map<string,NodeUpdateData>>}
-   */
-  nodeUpdateDataByPropertyByNode = new Map();
-  /**
-   * 
-   * @param {NodeUpdateData} nodeUpdateData 
-   */
-  add(nodeUpdateData) {
-    let nodeUpdateDataByProperty = this.nodeUpdateDataByPropertyByNode.get(nodeUpdateData.node);
-    if (nodeUpdateDataByProperty == null) {
-      nodeUpdateDataByProperty = new Map;
-      this.nodeUpdateDataByPropertyByNode.set(nodeUpdateData.node, nodeUpdateDataByProperty);
-    }
-    nodeUpdateDataByProperty.set(nodeUpdateData.property, nodeUpdateData);
-  }
-
-  /**
-   * 
-   * @param {NodeUpdateData[]} updates 
-   */
-  reorder(updates) {
-    updates.sort((update1, update2) => {
-      if (update2.node instanceof HTMLTemplateElement) return 1;
-      if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
-      return -1;
-    });
-    return updates;
-  }
-  /**
    * 
    */
   async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNotifyReceive);
     try {
-      while(this.nodeUpdateDataByPropertyByNode.size > 0) {
-        const updates = Array.from(this.nodeUpdateDataByPropertyByNode.entries()).flatMap(([ node, nodeUpdateDataByProperty ]) => {
-          return Array.from(nodeUpdateDataByProperty.entries()).map(([property, nodeUpdateData]) => nodeUpdateData)
-        });
-        this.nodeUpdateDataByPropertyByNode.clear();
-        const orderedUpdates = this.reorder(updates.splice(0));
-        orderedUpdates.forEach(update => Reflect.apply(update.updateFunc, update, []));
+      while(this.queue.length > 0) {
+        const notifies = this.queue.splice(0);
+        const dependentPropertyAccesses = [];
+        for(const propertyAccess of notifies) {
+          dependentPropertyAccesses.push(...ViewModelHandler.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
+        }
+        const setOfUpdatedViewModelPropertyKeys = new Set(
+          notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
+        );
+        this.#component.applyToNode(setOfUpdatedViewModelPropertyKeys);
       }
     } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNotifyReceive);
     }
   }
 
@@ -1382,1639 +3279,159 @@ class NodeUpdator {
   }
 }
 
-class LevelTop extends BindInfo {
-  updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        node[nodeProperty] = value ?? "";
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const value = Filter.applyForInput(node[nodeProperty], filters);
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
-    this.lastViewModelValue = value;
-  }
-
-}
-
-class Level2nd extends BindInfo {
-  get nodeProperty1() {
-    return this.nodePropertyElements[0];
-  }
-  get nodeProperty2() {
-    return this.nodePropertyElements[1];
-  }
-
-  updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
-    const {nodeProperty1, nodeProperty2} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        node[nodeProperty1][nodeProperty2] = value ?? "";
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const {nodeProperty1, nodeProperty2} = this;
-    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2], filters);
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
-    this.lastViewModelValue = value;
-  }
-
-}
-
-class Level3rd extends BindInfo {
-  get nodeProperty1() {
-    return this.nodePropertyElements[0];
-  }
-  get nodeProperty2() {
-    return this.nodePropertyElements[1];
-  }
-  get nodeProperty3() {
-    return this.nodePropertyElements[2];
-  }
-  updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
-    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? "";
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
-    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2][nodeProperty3], filters);
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
-    this.lastViewModelValue = value;
-  }
-
-}
-
 /**
- * 
- * @param {Node} node 
- * @returns {HTMLElement}
+ * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
  */
-const toHTMLElement$1 = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
-
-class ClassName extends BindInfo {
-  get className() {
-    return this.nodePropertyElements[1];
-  }
-  updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters, className} = this;
-    const element = toHTMLElement$1(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        value ? element.classList.add(className) : element.classList.remove(className);
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters, className} = this;
-    const element = toHTMLElement$1(node);
-    const value = Filter.applyForInput(element.classList.contains(className), filters);
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
-    this.lastViewModelValue = value;
-  }
-}
-
-const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node : utils$1.raise();
-
-class Radio extends BindInfo {
-  updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
-    const radio = toHTMLInputElement$1(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, contextIndexes, indexes), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        radio.checked = value === radio.value;
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
-    const radio = toHTMLInputElement$1(node);
-    const radioValue = Filter.applyForInput(radio.value, filters);
-    if (radio.checked) {
-      viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, radioValue);
-      this.lastViewModelValue = radioValue;
-    }
-  }
-}
-
-const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils$1.raise();
-
-class Checkbox extends BindInfo {
-  updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
-    const checkbox = toHTMLInputElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        checkbox.checked = value.find(value => value === checkbox.value);
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = bind;
-    const checkbox = toHTMLInputElement(node);
-    const checkboxValue = Filter.applyForInput(checkbox.value, filters);
-    const setOfValue = new Set(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes));
-    (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
-    const value = Array.from(setOfValue);
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
-    this.lastViewModelValue = value;
-  }
-}
-
-class Event extends BindInfo {
-  #eventType;
+class UpdateSlot {
   /**
-   * @type {string}
+   * @type {ViewModelUpdator}
    */
-  get eventType() {
-    return this.#eventType;
+  #viewModelUpdator;
+  get viewModelUpdator() {
+    return this.#viewModelUpdator;
   }
-  set eventType(value) {
-    this.#eventType = value;
+  /**
+   * @type {NotifyReceiver}
+   */
+  #notifyReceiver;
+  get notifyReceiver() {
+    return this.#notifyReceiver;
   }
+  /**
+   * @type {NodeUpdator}
+   */
+  #nodeUpdator;
+  get nodeUpdator() {
+    return this.#nodeUpdator;
+  }
+  /**
+   * @type {()=>{}}
+   */
+  #callback;
+  /**
+   * @type {Promise<void>}
+   */
+  #waitPromise;
+  /**
+   * @type {Promise<void>}
+   */
+  #alivePromise;
+
+  /**
+   * @type {(value) => {}}
+   */
+  #waitResolve;
+  /**
+   * @type {() => {}}
+   */
+  #waitReject;
+  /**
+   * @type {(value) => {}}
+   */
+  #aliveResolve;
+  /**
+   * @type {() => {}}
+   */
+  #aliveReject;
+  
   /**
    * 
+   * @param {import("../component/Component.js").Component} component
+   * @param {()=>{}?} callback
+   * @param {UpdateSlotStatusCallback?} statusCallback
    */
-  addEventListener() {
-    const {component, element, eventType, viewModel, viewModelProperty} = this;
-    element.addEventListener(eventType, (event) => {
-      event.stopPropagation();
-      const contextIndexes = this.contextIndexes;
-      const process = new ProcessData(
-        viewModel[SYM_CALL_DIRECT_CALL], viewModel, [viewModelProperty, contextIndexes, event]
-      );
-      component.updateSlot.addProcess(process);
+  constructor(component, callback = null, statusCallback = null) {
+    this.#viewModelUpdator = new ViewModelUpdator(statusCallback);
+    this.#notifyReceiver = new NotifyReceiver(component, statusCallback);
+    this.#nodeUpdator = new NodeUpdator(statusCallback);
+    this.#callback = callback;
+    this.#waitPromise = new Promise((resolve, reject) => {
+      this.#waitResolve = resolve;
+      this.#waitReject = reject;
+    });
+    this.#alivePromise = new Promise((resolve, reject) => {
+      this.#aliveResolve = resolve;
+      this.#aliveReject = reject;
     });
   }
-}
 
-class PropertyInfo {
-
-  name;
-  elements;
-  loopLevel;
-  parentName;
-  lastElement;
-  regexp;
-  isPrimitive;
-  privateName;
-  isObject;
-  isLoop;
-  isNotPrimitive;
-
-  constructor(name) {
-    this.name = name;
-    this.elements = name.split(".");
-    this.loopLevel = this.elements.reduce((count, element) => count + ((element === "*") ? 1 : 0), 0);
-    this.parentName = this.elements.slice(0, -1).join(".");
-    this.lastElement = this.elements.at(-1) ?? null;
-    this.regexp = (this.loopLevel > 0) ? new RegExp("^" + name.replaceAll("*", "(\\w+)").replaceAll(".", "\\.") + "$") : null;
-    this.isPrimitive = this.elements.length === 1 && this.loopLevel === 0;
-    this.privateName = this.isPrimitive ? ("_" + name) : null;
-    this.isObject = this.elements.length > 1 && this.loopLevel === 0;
-    this.isLoop = this.elements.length > 1 && this.loopLevel > 0;
-    this.isNotPrimitive = ! this.isPrimitive ;
+  /**
+   * 
+   * @returns {Promise<void>}
+   */
+  async waiting() {
+    return this.#waitPromise;
   }
-  get parentProperty() {
-    return PropertyInfo.create(this.parentName);
+
+  waitResolve(value) {
+    this.#waitResolve(value);
+  }
+  waitReject() {
+    this.#waitReject();
   }
 
   /**
    * 
-   * @param {ViewModel} viewModel 
-   * @returns 
+   * @returns {Promise<void>}
    */
-  primitiveGetter(viewModel) {
-    return viewModel[this.privateName];
+  async alive() {
+    return this.#alivePromise;
   }
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @param {any} value 
-   * @returns 
-   */
-  primitiveSetter(viewModel, value) {
-    viewModel[this.privateName] = value;
-    return true;
-  }
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @returns 
-   */
-  nonPrimitiveGetter(viewModel) {
-    const { parentName, loopLevel, lastElement } = this;
-    const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
-    return viewModel[parentName][index];
-  }
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @param {any} value 
-   * @returns 
-   */
-  nonPrimitiveSetter(viewModel, value) {
-    const { parentName, loopLevel, lastElement } = this;
-    const index = (lastElement === "*") ? viewModel[SYM_GET_INDEXES][loopLevel - 1] : lastElement;
-    viewModel[parentName][index] = value;
-    return true;
-  }
-  /**
-   * 
-   * @param {Component} component 
-   * @returns {PropertyDescriptor}
-   */
-  createPropertyDescriptor(component) {
-    return {
-      get : this.isPrimitive ?
-        () => Reflect.apply(this.primitiveGetter, this, [component.viewModel]) : 
-        () => Reflect.apply(this.nonPrimitiveGetter, this, [component.viewModel]),
-      set : this.isPrimitive ?
-        value => Reflect.apply(this.primitiveSetter, this, [component.viewModel, value]) : 
-        value => Reflect.apply(this.nonPrimitiveSetter, this, [component.viewModel, value]),
-      enumerable: true, 
-      configurable: true,
-    }
+
+  async exec() {
+    do {
+      await this.#viewModelUpdator.exec();
+      await this.#notifyReceiver.exec();
+      await this.#nodeUpdator.exec();
+    } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty || !this.#nodeUpdator.isEmpty);
+    this.#aliveResolve();
   }
 
   /**
    * 
-   * @param {ViewModel} viewModel 
-   * @param {number[]} indexes 
-   * @returns {number[][]}
+   * @param {ProcessData} processData 
    */
-  expand(viewModel, indexes) {
-    if (this.loopLevel === indexes.length) {
-      return [ indexes ];
-    } else if (this.loopLevel < indexes.length) {
-      return [ indexes.slice(0, this.loopLevel) ];
-    } else {
-      /**
-       * 
-       * @param {string} parentName 
-       * @param {number} elementIndex 
-       * @param {number[]} loopIndexes 
-       * @returns {number[][]}
-       */
-      const traverse = (parentName, elementIndex, loopIndexes) => {
-        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
-        const element = this.elements[elementIndex];
-        const isTerminate = (this.elements.length - 1) === elementIndex;
-        let retValues;
-        if (element === "*") {
-          if (loopIndexes.length < indexes.length) {
-            retValues = isTerminate ? [ indexes.slice(0, loopIndexes.length + 1) ] :
-              traverse(parentNameDot + element, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
-          } else {
-            retValues = (viewModel[SYM_CALL_DIRECT_GET](parentName, loopIndexes, undefined) ?? []).flatMap((value, index) => {
-              return isTerminate ? [ loopIndexes.concat(index) ] :
-                traverse(parentNameDot + element, elementIndex + 1, loopIndexes.concat(index));
-            });
-          }
-        } else {
-          retValues = isTerminate ? [ loopIndexes ] : 
-           traverse(parentNameDot + element, elementIndex + 1, loopIndexes);
-        }
-        return retValues;
-
-      };
-      const listOfIndexes = traverse("", 0, []);
-      return listOfIndexes;
-
-    }
-
-  }
-
-  /**
-   * @type {Map<string,PropertyInfo>}
-   */
-  static #propertyInfoByProp = new Map;
-  static create(prop) {
-    if (prop === "") return undefined;
-    let propertyInfo = this.#propertyInfoByProp.get(prop);
-    if (typeof propertyInfo === "undefined") {
-      propertyInfo = new PropertyInfo(prop);
-      this.#propertyInfoByProp.set(prop, propertyInfo);
-    }
-    return propertyInfo;
+  async addProcess(processData) {
+    this.#viewModelUpdator.queue.push(processData);
+    this.#waitResolve(true); // waitingを解除する
   }
   
-}
+  /**
+   * 
+   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} notifyData 
+   */
+  async addNotify(notifyData) {
+    this.#notifyReceiver.queue.push(notifyData);
+    this.#waitResolve(true); // waitingを解除する
+  }
 
-const toComponent = node => (node instanceof Component) ? node : undefined;
-
-class ComponentBind extends BindInfo {
   /**
-   * @type {Node}
+   * 
+   * @param {NodeUpdateData} nodeUpdateData 
    */
-  get node() {
-    return super.node;
-  }
-  set node(node) {
-    super.node = node;
-    this.bindData();
-  }
-  /**
-   * @type {string}
-   */
-  get viewModelProperty() {
-    return super.viewModelProperty;
-  }
-  set viewModelProperty(value) {
-    super.viewModelProperty = value;
-    if (this.viewModelProperty && this.nodePropertyElements) {
-      this.bindProperty();
-    }
-  }
-  /**
-   * @type {string[]}
-   */
-  get nodePropertyElements() {
-    return super.nodePropertyElements;
-  }
-  set nodePropertyElements(value) {
-    super.nodePropertyElements = value;
-    if (this.viewModelProperty && this.nodePropertyElements) {
-      this.bindProperty();
-    }
-  }
-  /**
-   * @type {string}
-   */
-  get dataNameProperty() {
-    return this.nodePropertyElements[0];
-  }
-  /**
-   * @type {string}
-   */
-  get dataProperty() {
-    return this.nodePropertyElements[1];
+  async addNodeUpdate(nodeUpdateData) {
+    this.#nodeUpdator.queue.push(nodeUpdateData);
+    this.#waitResolve(true); // waitingを解除する
   }
 
   /**
    * 
    */
-  bindData() {
-    const component = toComponent(this.node);
-    component?.data[SYM_CALL_BIND_DATA](component);
+  callback() {
+    this.#callback && this.#callback();
   }
 
   /**
    * 
-   */
-  bindProperty() {
-    const component = toComponent(this.node);
-    component?.data[SYM_CALL_BIND_PROPERTY](this.dataProperty, this.viewModelProperty, this.indexes);
-  }
-
-  updateNode() {
-    const { node, dataProperty } = this;
-    const thisComponent = toComponent(node);
-    thisComponent.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${dataProperty}`, []);
-  }
-
-  updateViewModel() {
-  }
-
-}
-
-const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
-const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
-const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo, info);
-const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
-const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
-const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
-const createTemplate = (bindInfo, info) => Object.assign(new Template, bindInfo, info);
-const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
-const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
-
-const creatorByType = new Map();
-creatorByType.set(NodePropertyType.levelTop, createLevelTop);
-creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
-creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
-creatorByType.set(NodePropertyType.className, createClassName);
-creatorByType.set(NodePropertyType.radio, createRadio);
-creatorByType.set(NodePropertyType.checkbox, createCheckbox);
-creatorByType.set(NodePropertyType.template, createTemplate);
-creatorByType.set(NodePropertyType.event, createEvent);
-creatorByType.set(NodePropertyType.component, createComponent);
-
-class Factory {
-  /**
-   * 
-   * @param {{
-   * component:Component,
-   * node:Node,
-   * nodeProperty:string,
-   * viewModel:ViewModel,
-   * viewModelProperty:string,
-   * filters:Filter[],
-   * indexes:number[]
-   * }}  
-   */
-  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, indexes}) {
-    const bindInfo = {component, node, nodeProperty, viewModel, viewModelProperty, filters};
-    const propInfo = PropertyInfo.create(viewModelProperty);
-    bindInfo.indexes = indexes.slice(0, propInfo.loopLevel);
-    bindInfo.contextIndexes = indexes;
-    const info = PropertyType.getInfo(node, nodeProperty);
-    return creatorByType.get(info.type)(bindInfo, info);
-  }
-}
-
-const DATASET_BIND_PROPERTY$1 = "bind";
-
-/**
- * 
- * @param {Node} node 
- * @returns {HTMLTemplateElement}
- */
-const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils$1.raise("not HTMLTemplateElement");
-
-/**
- * @param {BindInfo} bind 
- * @returns {Template}
- */
-const toTemplate$1 = bind => (bind instanceof Template) ? bind : undefined;
-
-class BindToTemplate extends BindDomIf {
-  /**
-   * 
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {number[]} indexes
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, indexes) {
-    const viewModel = component.viewModel;
-    const template = toHTMLTemplateElement(node);
-    const bindText = template.dataset[DATASET_BIND_PROPERTY$1];
-    const binds = Parser
-      .parse(bindText, "")
-      .map(info => { 
-        const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));
-        return bind;
-      });
-    if (binds.length === 0) return [];
-    const templateBind = toTemplate$1(binds[0]);
-    if (templateBind) {
-      if (templateBind.nodeProperty !== "if" && templateBind.nodeProperty !== "loop") {
-        utils$1.raise(`unknown node property ${templateBind.nodeProperty}`);
-      }
-      templateBind.updateNode();
-      return [ templateBind ];
-    } else {
-      utils$1.raise(`not template bind`);
-    }
-  }
-}
-
-const DATASET_BIND_PROPERTY = "bind";
-const DEFAULT_EVENT = "oninput";
-const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
-const DEFAULT_PROPERTY$1 = "textContent";
-
-/**
- * 
- * @param {Node} node 
- * @returns {HTMLElement}
- */
-const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils$1.raise(`not HTMLElement`);
-
-/**
- * 
- * @param {HTMLElement} element 
- */
-const getDefaultProperty = element => {
-  return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
-  element instanceof HTMLInputElement ? ((element.type === "radio" || element.type === "checkbox") ? "checked" : "value") : 
-  DEFAULT_PROPERTY$1;
-};
-
-const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
-
-class BindToElement extends BindDomIf {
-  /**
-   * 
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {number[]} indexes
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, indexes) {
-    const viewModel = component.viewModel;
-    const element = toHTMLElement(node);
-    const bindText = element.dataset[DATASET_BIND_PROPERTY];
-    const defaultName = getDefaultProperty(element);
-
-    // パース
-    const binds = Parser
-        .parse(bindText, defaultName)
-        .map(info => {
-          const bind = Factory.create(Object.assign(info, {node, component, viewModel, indexes:indexes.slice()}));
-          bind.updateNode();
-          return bind;
-        });
-
-    // イベントハンドラ設定
-    let hasDefaultEvent = false;
-    /**
-     * @type {BindInfo}
-     */
-    let defaultBind = null;
-    binds.forEach(bind => {
-      hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
-      defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
-      const event = toEvent(bind);
-      event && event.addEventListener();
-    });
-
-    if (defaultBind && !hasDefaultEvent) {
-      element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
-        event.stopPropagation();
-        const process = new ProcessData(defaultBind.updateViewModel, defaultBind, []);
-        component.updateSlot.addProcess(process);
-      });
-    }
-
-    return binds;
-  }
-
-}
-
-const DEFAULT_PROPERTY = "textContent";
-
-/**
- * 
- * @param {Node} node 
- * @returns {Comment}
- */
-const toComment = node => (node instanceof Comment) ? node : utils$1.raise("not Comment");
-
-class BindToText extends BindDomIf {
-  /**
-   * 
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {number[]} indexes
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, indexes) {
-    // コメントノードをテキストノードに差し替える
-    const viewModel = component.viewModel;
-    const comment = toComment(node);
-    const bindText = comment.textContent.slice(2); // @@をスキップ
-    const textNode = document.createTextNode("");
-    comment.parentNode.replaceChild(textNode, comment);
-    // パース
-    const binds = Parser
-      .parse(bindText, DEFAULT_PROPERTY)
-      .map(info => {
-        const bind = Factory.create(Object.assign(info, {node:textNode, component, viewModel, indexes:indexes.slice()}));
-        bind.updateNode();
-        return bind;
-      });
-    return binds;
-  }
-
-}
-
-class Binder {
-  /**
-   * 
-   * @param {HTMLTemplateElement} template 
-   * @param {HTMLElement} rootElement 
-   * @param {Component} component
-   * @param {number[]?} indexes
-   * @returns {BindInfo[]}
-   */
-  static bind(template, rootElement, component, indexes = []) {
-    const nodes = Selector.getTargetNodes(template, rootElement);
-    return nodes.flatMap(node => 
-      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, indexes) :
-      (node instanceof HTMLElement) ? BindToElement.bind(node, component, indexes) :
-      (node instanceof Comment) ? BindToText.bind(node, component, indexes) : 
-      utils$1.raise(`unknown node type`)
-    );
-  }
-
-}
-
-const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
-
-class Binds {
-  /**
-   * @type {BindInfo[]}
-   */
-  #binds;
-  /**
-   * @type {Map<string,BindInfo[]>}
-   */
-  #bindsByKey = new Map;
-  constructor(binds) {
-    this.#binds = binds;
-    this.buildMap();
-  }
-
-  buildMap() {
-    /**
-     * 
-     * @param {BindInfo[]} binds 
-     */
-    const buildMap = (binds) => {
-      binds.forEach(bind => {
-        this.#bindsByKey.get(bind.viewModelPropertyKey)?.push(bind) ?? this.#bindsByKey.set(bind.viewModelPropertyKey, [ bind ]);
-        (toTemplate(bind)?.templateChildren ?? []).forEach(templateChild => buildMap(templateChild.binds));
-      });
-    };
-    this.#bindsByKey.clear();
-    buildMap(this.#binds);
-  }
-  /**
-   * 
-   * @param {Set<string>} setOfKey 
-   * @returns {Template[]}
-   */
-  getTemplateBinds(setOfKey) {
-    const templateBinds = [];
-    const stack = [ { binds:this.#binds, children:null, index:-1 } ];
-    while(stack.length > 0) {
-      const info = stack[stack.length - 1];
-      info.index++;
-      if (info.binds) {
-        if (info.index < info.binds.length) {
-          const template = toTemplate(info.binds[info.index]);
-          if (template) {
-            if (setOfKey.has(template.viewModelPropertyKey)) {
-              templateBinds.push(template);
-            } else {
-              if (template.templateChildren.length > 0) {
-                stack.push({ binds:null, children:template.templateChildren, index:-1 });
-              }
-            }
-          }
-        } else {
-          stack.pop();
-        }
-      } else {
-        if (info.index < info.children.length) {
-          const child = info.children[info.index];
-          if (child.binds.length > 0) {
-            stack.push({ binds:child.binds, children:null, index:-1 });
-          }
-        } else {
-          stack.pop();
-        }
-      }
-    }
-
-    return templateBinds;
-  }
-  /**
-   * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
-   * @param {Set<string>} setOfKey 
-   */
-  updateViewModel(setOfKey) {
-    // templateを先に展開する
-    /**
-     * @type {Set<Template>}
-     */
-    const templateBinds = new Set(this.getTemplateBinds(setOfKey));
-    if (templateBinds.size > 0) {
-      for(const templateBind of templateBinds) {
-        templateBind.updateNode();
-      }
-      this.buildMap();
-    }
-
-    /**
-     * 
-     * @param {BindInfo[]} binds 
-     */
-    const updateViewModelProperty = (binds) => {
-      binds.forEach(bind => {
-        if (!templateBinds.has(bind) && setOfKey.has(bind.viewModelPropertyKey)) {
-          bind.updateNode();
-        }
-        toTemplate(bind)?.templateChildren.forEach(templateChild => updateViewModelProperty(templateChild.binds));
-      });
-    };
-    updateViewModelProperty(this.#binds);
-  }
-
-}
-
-class View {
-  /**
-   * @type {HTMLTemplateElement}
-   */
-  template;
-  /**
-   * @type {HTMLElement}
-   */
-  rootElement;
-
-  /**
-   * 
-   * @param {HTMLTemplateElement} template 
-   * @param {HTMLElement} rootElement 
-   */
-  constructor(template, rootElement) {
-    this.template = template;
-    this.rootElement = rootElement;
-  }
-
-  /**
-   * @param {Component} component
-   * @returns {Binds}
-   */
-  render(component) {
-    const content = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const binds = new Binds(Binder.bind(this.template, content, component));
-    this.rootElement.appendChild(content);
-    return binds;
-  }
-
-}
-
-const notPrivate = property => property[0] !== "_";
-const DEPENDENT_PROP = "$dependentProps";
-
-/**
- * 
- * @param {{prop:string,refProps:string[]}[]} dependentProps
- * @returns 
- */
-function createDependentMap(dependentProps) {
-  const map = new Map();
-  Object.entries(dependentProps).forEach(([prop, refProps]) => {
-    refProps.forEach(refProp => {
-      map.get(refProp)?.push(prop) ?? map.set(refProp, [ prop ]);
-    }); 
-  });
-  return map;
-}
-
-class Accessor {
-  /**
-   * 
-   * @param {Component} component
-   * @param {ViewModel} viewModel 
-   * @returns {{viewmodel:ViewModel, definedProperties:PropertyInfo[], dependentMap:Map<string,string[]>, cachablePropertyNames:string[]}}
-   */
-  static convert(component, viewModel) {
-    let dependentMap = new Map;
-    // $dependentPropsを取得
-    if (DEPENDENT_PROP in viewModel) {
-      const desc = Object.getOwnPropertyDescriptor(viewModel, DEPENDENT_PROP);
-      desc.enumerable = false;
-      Object.defineProperty(viewModel, DEPENDENT_PROP, desc);
-      dependentMap = createDependentMap(desc.value);
-    }
-    // プライベートプロパティを列挙不可にする
-    for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(viewModel))) {
-      if (notPrivate(prop)) continue;
-      desc.enumerable = false;
-      Object.defineProperty(viewModel, prop, desc);
-    }
-
-    // 普通のプロパティをgetter/setter化する
-    const accessorProperties = 
-      Object.keys(viewModel).filter(notPrivate).map(property => PropertyInfo.create(property));
-
-    accessorProperties.forEach(property => {
-      const value = viewModel[property.name];
-      delete viewModel[property.name];
-      const desc = property.createPropertyDescriptor(component);
-      Object.defineProperty(viewModel, property.name, desc);
-
-      if (!(property.privateName in viewModel)) {
-        const privateDesc = {
-          value,
-          writable: true, 
-          enumerable: false, 
-          configurable: true,
-        };
-        Object.defineProperty(viewModel, property.privateName, privateDesc);
-      }
-    });
-
-    // getterを列挙可にする
-    const cachablePropertyNames = [];
-    for(const [prop, desc] of Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(viewModel)))) {
-      if (prop === "constructor") continue;
-      if (utils$1.isFunction(desc.value)) continue;
-      desc.enumerable = true;
-      Object.defineProperty(viewModel, prop, desc);
-      cachablePropertyNames.push(prop);
-    }
-    const definedProperties = Object.keys(viewModel).map(prop => PropertyInfo.create(prop));
-
-    // definedPropertiesからdependentMapに追加
-    definedProperties.forEach(property => {
-      if (property.isPrimitive) return;
-      const props = dependentMap.get(property.parentName)?.concat(property.name) ?? [ property.name ];
-      dependentMap.set(property.parentName, props);
-    });
-
-    return { viewModel, definedProperties, dependentMap, cachablePropertyNames };
-
-  }
-}
-
-/**
- * キャッシュのキーは、プロパティとインデックス
- */
-
-class CacheValue {
-  /**
-   * @type { boolean }
-   */
-  dirty = false;
-  /**
-   * @type { any }
-   */
-  value;
-
-  /**
-   * 
-   * @param {any} value 
-   */
-  constructor(value) {
-    this.value = value;
-  }
-}
-
-
-class Cache {
-  /**
-   * @type {Map<PropertyInfo,Map<string,CacheValue>>}
-   */
-  #cacheValueByIndexesByProp = new Map();
-  /**
-   * @type {PropertyInfo[]}
-   */
-  #definedProperties;
-  /**
-   * @type {Map<string,PropertyInfo[]>}
-   */
-  #definedPropertiesByParentName;
-  /**
-   * @type {Map<string,PropertyInfo[]>}
-   */
-  #dependentPropsByName;
-
-  /**
-   * 
-   * @param {PropertyInfo[]} definedProperties 
-   */
-  constructor(definedProperties) {
-    this.#definedProperties = definedProperties;
-    this.#definedPropertiesByParentName = definedProperties
-    .filter(definedProperty => definedProperty.parentName !== "")
-    .reduce((map, definedProperty) => {
-      map.get(definedProperty.parentName)?.push(definedProperty) ??
-      map.set(definedProperty.parentName, [ definedProperty ]);
-      return map;
-    }, new Map);
-    const getDependentProps = (properties, propertyName) => {
-      (this.#definedPropertiesByParentName.get(propertyName) ?? []).forEach(definedProperty => {
-        properties.push(definedProperty);
-        getDependentProps(properties, definedProperty.name);
-      });
-      return properties;
-    };
-    this.#dependentPropsByName = 
-      new Map(definedProperties.map(property => [ property.name, getDependentProps(new Array, property.name) ]));
-  }
-
-  /**
-   * 
-   * @param {PropertyInfo} property 
-   * @param {number[]} indexes 
-   * @returns {any}
-   */
-  get(property, indexes) {
-    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());
-    return cacheValue ? (!cacheValue.dirty ? cacheValue.value : undefined) : undefined;
-  }
-
-  /**
-   * 
-   * @param {PropertyInfo} property 
-   * @param {number[]} indexes 
-   * @param {any} value 
-   */
-  set(property, indexes, value) {
-    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
-    if (typeof cacheValueByIndexes === "undefined") {
-      cacheValueByIndexes = new Map();
-      this.#cacheValueByIndexesByProp.set(property, cacheValueByIndexes);
-    }
-    cacheValueByIndexes.set(indexes.toString(), new CacheValue(value));
-  }
-
-  /**
-   * 
-   * @param {PropertyInfo} property 
-   * @param {number[]} indexes 
-   * @returns {boolean}
-   */
-  has(property, indexes) {
-    const cacheValue = this.#cacheValueByIndexesByProp.get(property)?.get(indexes.toString());
-    return cacheValue ? (!cacheValue.dirty) : false;
-  }
-
-  /**
-   * 
-   * @param {PropertyInfo} property 
-   * @param {number[]} indexes 
-   */
-  delete(property, indexes) {
-    const indexesString = indexes.slice(0, property.loopLevel).toString();
-    const indexesStarts = indexesString + ",";
-    let cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
-    if (cacheValueByIndexes) {
-      for(const indexes of cacheValueByIndexes.keys()) {
-        if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
-          cacheValueByIndexes.get(indexes).dirty = true;
-        }
-      }
-    }
-    const dependentProps = this.#dependentPropsByName.get(property.name) ?? [];
-    dependentProps.forEach(property => {
-      const cacheValueByIndexes = this.#cacheValueByIndexesByProp.get(property);
-      if (typeof cacheValueByIndexes === "undefined") return;
-      for(const indexes of cacheValueByIndexes.keys()) {
-        if (indexesString === "" || indexes === indexesString || indexes.startsWith(indexesStarts)) {
-          cacheValueByIndexes.get(indexes).dirty = true;        }
-      }
-    });
-  }
-
-  clear() {
-    this.#cacheValueByIndexesByProp.clear();
-  }
-}
-
-/**
- * 配列プロキシ
- * 更新（追加・削除）があった場合、更新通知を送る機能を付加する
- */
-class ArrayHandler {
-  /**
-   * @type {Component}
-   */
-  #component;
-  /**
-   * @type {PropertyInfo}
-   */
-  #prop;
-  /**
-   * ループインデックス
-   * @type {number[]}
-   */
-  #indexes;
-  /**
-   * コンストラクタ
-   * @param {Component} component 
-   * @param {string} prop 
-   * @param {number[]} indexes
-   */
-  constructor(component, prop, indexes) {
-    this.#component = component;
-    this.#prop = prop;
-    this.#indexes = indexes;
-  }
-
-  /**
-   * getter
-   * SymIsProxyはtrueを返す
-   * SymRawは元の配列を返す
-   * @param {Array} target Array
-   * @param {string} prop プロパティ
-   * @param {Proxy} receiver 配列プロキシ
+   * @param {import("../component/Component.js").Component} component
+   * @param {()=>{}} callback 
+   * @param {UpdateSlotStatusCallback} statusCallback 
    * @returns 
    */
-  get(target, prop, receiver) {
-    if (prop === SYM_GET_IS_PROXY) return true;
-    if (prop === SYM_GET_RAW) return target;
-    return Reflect.get(target, prop, receiver);
+  static create(component, callback, statusCallback) {
+    return new UpdateSlot(component, callback, statusCallback);
   }
 
-  /**
-   * setter
-   * lengthプロパティの場合、変更通知を送信する
-   * $onwriteを呼び出したいので、viewModelのプロパティに値をセットする
-   * @param {Object} target Array
-   * @param {string} prop プロパティ
-   * @param {Any} value 
-   * @param {Proxy} receiver 配列プロキシ
-   * @returns 
-   */
-  set(target, prop, value, receiver) {
-    Reflect.set(target, prop, value, receiver);
-    if (prop === "length") {
-      const component = this.#component;
-      const viewModel = component.viewModel;
-      const propName = this.#prop.name;
-      component.updateSlot.addProcess(new ProcessData(() => {
-        viewModel[propName] = target;
-      }, viewModel, []));
-    }
-    return true;
-  }
-}
-
-/**
- * 
- * @param {Array<any>} array 
- * @param {Component} component 
- * @param {PropertyInfo} prop 
- * @param {number[]} indexes 
- * @returns 
- */
-function create$1(array, component, prop, indexes) {
-  return new Proxy(array, new ArrayHandler(component, prop, indexes))
-}
-
-let Handler$2 = class Handler {
-  /**
-   * @type {Component}
-   */
-  component;
-  /**
-   * 
-   * @param {Component} component 
-   */
-  constructor(component) {
-    this.component = component;
-  }
-
-  /**
-   * @type {Set<string>}
-   */
-  setOfBindParams = new Set;
-
-  boundFromComponent(globalProperty) {
-    GlobalData.globalBoundFromComponent(this.component, globalProperty);
-    this.setOfBindParams.add(globalProperty);
-
-  }
-  get(target, prop, receiver) {
-    if (!this.setOfBindParams.has(prop)) {
-      this.boundFromComponent(prop);
-    }
-    return Reflect.get(target, prop, target);
-  }
-
-  set(target, prop, value, receiver) {
-    if (!this.setOfBindParams.has(prop)) {
-      this.boundFromComponent(prop);
-    }
-    Reflect.set(target, prop, value, target);
-    return true;
-  }
-};
-
-class Globals {
-  /**
-   * 
-   * @param {Component} component 
-   * @returns 
-   */
-  static create(component) {
-    return new Proxy(GlobalData.data, new Handler$2(component))
-  }
-
-}
-
-const MAX_INDEXES_LEVEL = 8;
-const CONTEXT_INDEXES = [...Array(MAX_INDEXES_LEVEL)].map((content,index) => "$" + (index + 1));
-const SET_OF_CONTEXT_INDEXES = new Set(CONTEXT_INDEXES);
-const CONTEXT_COMPONENT = "$component";
-const CONTEXT_DATA = "$data";
-const CONTEXT_OPEN_DIALOG = "$openDialog";
-const CONTEXT_CLOSE_DIALOG = "$closeDialog";
-const CONTEXT_NOTIFY = "$notify";
-const CONTEXT_GLOBALS = "$globals";
-const CONTEXT_PARAMS = [CONTEXT_COMPONENT, CONTEXT_DATA, CONTEXT_OPEN_DIALOG, CONTEXT_CLOSE_DIALOG, CONTEXT_NOTIFY, CONTEXT_GLOBALS];
-const SET_OF_CONTEXT_ALL_PARAMS = new Set(CONTEXT_INDEXES.concat(CONTEXT_PARAMS));
-
-/**
- * 配列プロキシを取得
- * 配列プロキシのプロキシといった重複をさけるため、
- * いったん元の配列を求めてからプロキシにする
- * @param {Component} component 
- * @param {PropertyInfo} prop 
- * @param {number[]} indexes
- * @param {any} value 
- * @returns 
- */
-const wrapArray = (component, prop, indexes, value) => {
-  value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
-  return (value instanceof Array) ? create$1(value, component, prop, indexes) : value;
-};
-
-let Handler$1 = class Handler {
-  /**
-   * @type {Cache}
-   */
-  cache;
-  /**
-   * @type {Map<string,{indexes:number[],propertyInfo:PropertyInfo}>}
-   */
-  propertyInfoAndIndexesByProp = new Map();
-  /**
-   * @type {number[][]}
-   */
-  stackIndexes = [];
-  /**
-   * @type {Component}
-   */
-  component;
-  /**
-   * @type {Map<string,PropertyInfo>}
-   */
-  definedPropertyByProp = new Map;
-  /**
-   * @type {PropertyInfo[]}
-   */
-  loopProperties = [];
-
-  /**
-   * @type {Map<string,string[]>}
-   */
-  dependentMap;
-  /**
-   * @type {Map<string,Set<string>>}
-   */
-  setOfDependentPropNamesByPropName = new Map;
-  /**
-   * @type {string[]}
-   */
-  cachablePropertyNames = [];
-  setOfCachablePropertyNames = new Set;
-  /**
-   * 
-   */
-  globals;
-  /**
-   * 
-   * @param {Component} component 
-   * @param {PropertyInfo[]} definedProperties
-   * @param {Map<string,string[]>} dependentMap
-   * @param {string[]} cachablePropertyNames
-   */
-  constructor(component, definedProperties, dependentMap, cachablePropertyNames) {
-    this.component = component;
-    this.definedPropertyByProp = new Map(definedProperties.map(property => ([property.name, property])));
-    this.loopProperties = definedProperties.filter(property => property.isLoop);
-    this.dependentMap = dependentMap;
-    this.cachablePropertyNames = cachablePropertyNames;
-    this.setOfCachablePropertyNames = new Set(cachablePropertyNames);
-    this.cache = new Cache(definedProperties);
-    const getDependentProps = (setOfPropertyNames, propertyName) => {
-      (dependentMap.get(propertyName) ?? []).forEach(refPropertyName => {
-        if (!setOfPropertyNames.has(refPropertyName)) {
-          setOfPropertyNames.add(refPropertyName);
-          getDependentProps(setOfPropertyNames, refPropertyName);
-        }
-      });
-      return setOfPropertyNames;
-    };
-    this.setOfDependentPropNamesByPropName = 
-      new Map(Array.from(dependentMap.keys()).map(propertyName => [propertyName, getDependentProps(new Set, propertyName)]));
-    this.globals = Globals.create(component);
-
-  }
-
-  get lastIndexes() {
-    return this.stackIndexes[this.stackIndexes.length - 1] ?? [];
-  }
-
-  async [SYM_CALL_INIT](target, receiver) {
-    if (!("$oninit" in target)) return;
-    return await Reflect.apply(target["$oninit"], receiver, []);
-  }
-
-  async [SYM_CALL_CONNECT](target, receiver) {
-    if (!("$onconnect" in target)) return;
-    return await Reflect.apply(target["$onconnect"], receiver, []);
-  }
-
-  /**
-   * 
-   * @param {string} prop 
-   * @param {number[]} indexes 
-   * @param {*} target 
-   * @param {*} receiver 
-   */
-  [SYM_CALL_WRITE](prop, indexes, target, receiver) {
-    if ("$onwrite" in target) {
-      const { component } = this;
-      const process = new ProcessData(target["$onwrite"], receiver, [ prop, indexes ]);
-      component.updateSlot.addProcess(process);
-    }
-  }
-
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {PropertyInfo} prop 
-   * @param {Proxy<ViewModel>} receiver 
-   */
-  #getDefinedPropertyValue(target, prop, receiver) {
-    const { component, lastIndexes, cache, setOfCachablePropertyNames } = this;
-    const indexes = lastIndexes.slice(0, prop.loopLevel);
-    let value;
-    if (setOfCachablePropertyNames.has(prop.name)) {
-      const cacheValue = cache.get(prop, indexes);
-      if (typeof cacheValue === "undefined") {
-        value = Reflect.get(target, prop.name, receiver);
-        cache.set(prop, indexes, value);
-      } else {
-        value = cacheValue;
-      }
-    } else {
-      value = Reflect.get(target, prop.name, receiver);
-    }
-    return wrapArray(component, prop, indexes, value);
-  }
-
-  [SYM_CALL_DIRECT_GET](prop, indexes, contextIndexes, target, receiver) {
-    let value;
-    if (SET_OF_CONTEXT_INDEXES.has(prop)) {
-      return contextIndexes[Number(prop.slice(1)) - 1];
-    }
-    this.stackIndexes.push(indexes);
-    try {
-      value = receiver[prop];
-    } finally {
-      this.stackIndexes.pop();
-    }
-    return value;
-  }
-
-  [SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](propertyName, indexes, target, receiver) {
-    const { dependentMap, setOfDependentPropNamesByPropName, component } = this;
-    if (dependentMap.has(propertyName)) {
-      const dependentPropNames = setOfDependentPropNamesByPropName.get(propertyName) ?? new Set;
-      dependentPropNames.forEach(definedPropertyName => {
-        
-        if (definedPropertyName.startsWith("$data")) {
-          component.updateSlot.addNotify(new NotifyData(component, definedPropertyName, []));
-        } else {
-          const definedProperty = PropertyInfo.create(definedPropertyName);
-          if (indexes.length < definedProperty.loopLevel) {
-            const listOfIndexes = definedProperty.expand(receiver, indexes);
-            listOfIndexes.forEach(depIndexes => {
-              component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
-            });
-          } else {
-            const depIndexes = indexes.slice(0, definedProperty.loopLevel);
-            component.updateSlot.addNotify(new NotifyData(component, definedProperty.name, depIndexes));
-          }
-  
-        }
-      });
-    }
-  }
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {PropertyInfo} prop 
-   * @param {any} value 
-   * @param {Proxy<ViewModel>} receiver 
-   */
-  #setDefinedPropertyValue(target, prop, value, receiver) {
-    const { component, lastIndexes, cache } = this;
-    value = value?.[SYM_GET_IS_PROXY] ? value[SYM_GET_RAW] : value;
-    const indexes = lastIndexes.slice(0, prop.loopLevel);
-    Reflect.set(target, prop.name, value, receiver);
-
-    component.updateSlot.addNotify(new NotifyData(component, prop.name, indexes));
-
-    this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](prop.name, indexes, target, receiver);
-
-    this[SYM_CALL_WRITE](prop.name, lastIndexes, target, receiver);
-
-    return true;
-  }
-
-  [SYM_CALL_DIRECT_SET](prop, indexes, value, target, receiver) {
-    this.stackIndexes.push(indexes);
-    try {
-      receiver[prop] = value;
-    } finally {
-      this.stackIndexes.pop();
-    }
-    return true;
-  }
-
-  async [SYM_CALL_DIRECT_CALL](prop, indexes, event, target, receiver) {
-    this.stackIndexes.push(indexes);
-    try {
-      await Reflect.apply(target[prop], receiver, [event, ...indexes]);
-    } finally {
-      this.stackIndexes.pop();
-    }
-  }
-
-  [SYM_CALL_CLEAR_CACHE](target, receiver) {
-    this.cache.clear();
-  }
-
-  /**
-   * 
-   * @param {string} prop 
-   * @returns {{loopProperty:PropertyInfo,indexes:number[]}}
-   */
-  #getLoopPropertyAndIndexesFromPropertyName(prop) {
-    let { loopProperty, indexes } = this.propertyInfoAndIndexesByProp.get(prop) ?? {};
-    if (typeof loopProperty === "undefined") {
-      for(const property of this.loopProperties) {
-        const result = property.regexp.exec(prop);
-        if (result) {
-          indexes = result.slice(1).map(Number);
-          loopProperty = property;
-          this.propertyInfoAndIndexesByProp.set(prop, { loopProperty, indexes });
-          break;
-        }
-      }
-    }
-    return { loopProperty, indexes };
-  }
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {string} prop 
-   * @param {Proxy<ViewModel>} receiver 
-   * @returns 
-   */
-  get(target, prop, receiver) {
-    if (typeof prop === "symbol") {
-      const { lastIndexes, dependentMap } = this;
-      switch(prop) {
-        case SYM_CALL_DIRECT_GET:
-          return (prop, indexes, contextIndexes) => 
-            Reflect.apply(this[SYM_CALL_DIRECT_GET], this, [prop, indexes, contextIndexes, target, receiver]);
-        case SYM_CALL_DIRECT_SET:
-          return (prop, indexes, value) => 
-            Reflect.apply(this[SYM_CALL_DIRECT_SET], this, [prop, indexes, value, target, receiver]);
-        case SYM_GET_INDEXES:
-          return lastIndexes;
-        case SYM_CALL_DIRECT_CALL:
-          return (prop, indexes, event) => 
-            Reflect.apply(this[SYM_CALL_DIRECT_CALL], this, [prop, indexes, event, target, receiver]);
-        case SYM_CALL_INIT:
-          return () => 
-            Reflect.apply(this[SYM_CALL_INIT], this, [target, receiver]);
-        case SYM_CALL_WRITE:
-          return (prop, indexes) => 
-            Reflect.apply(this[SYM_CALL_WRITE], this, [prop, indexes, target, receiver]);
-        case SYM_CALL_CONNECT:
-          return () => 
-            Reflect.apply(this[SYM_CALL_CONNECT], this, [target, receiver]);
-        case SYM_CALL_CLEAR_CACHE:
-          return () => 
-            Reflect.apply(this[SYM_CALL_CLEAR_CACHE], this, [target, receiver]);
-        case SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS:
-          return (prop, indexes) => 
-            Reflect.apply(this[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS], this, [prop, indexes, target, receiver]);
-        case SYM_GET_TARGET:
-          return target;
-        case SYM_GET_DEPENDENT_MAP:
-          return dependentMap;
-      }
-    }
-    if (SET_OF_CONTEXT_ALL_PARAMS.has(prop)) {
-      const { lastIndexes, component } = this;
-      if (SET_OF_CONTEXT_INDEXES.has(prop)) {
-        return lastIndexes[Number(prop.slice(1)) - 1];
-      } else {
-        switch(prop) {
-          case CONTEXT_COMPONENT:
-            return component;
-          case CONTEXT_DATA:
-            return component.data;
-          case CONTEXT_OPEN_DIALOG:
-            return async (name, data, attributes) => {
-              const tagName = utils$1.toKebabCase(name);
-              const dialog = document.createElement(tagName);
-              Object.entries(attributes ?? {}).forEach(([key, value]) => {
-                dialog.setAttribute(key, value);
-              });
-              dialog.data[SYM_CALL_BIND_DATA](data ?? {});
-              document.body.appendChild(dialog);
-              return dialog.alivePromise;
-            };
-          case CONTEXT_CLOSE_DIALOG:
-            return (data) => {
-              Object.assign(component.data, data);
-              component.parentNode.removeChild(component);
-            };
-          case CONTEXT_NOTIFY:
-            return (prop, indexes) => {
-              component.updateSlot.addNotify(new NotifyData(component, prop, indexes));
-            };
-          case CONTEXT_GLOBALS:
-            return this.globals;
-        }
-      }
-    }
-
-    const defindedProperty = this.definedPropertyByProp.get(prop);
-    if (defindedProperty) {
-      // すでに、indexesはセットされている
-      return this.#getDefinedPropertyValue(target, defindedProperty, receiver);
-    } else {
-      if (prop[0] === "@") {
-        const propName = prop.slice(1);
-        const defindedProperty = this.definedPropertyByProp.get(propName);
-        if (defindedProperty) {
-          return defindedProperty.expand(receiver, []).map(indexes => {
-            const value = this[SYM_CALL_DIRECT_GET](propName, indexes, undefined, target, receiver);
-            return [ value, indexes];
-          });
-        }
-      }
-      if (prop[0] !== "_") {
-        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
-        if (loopProperty && indexes) {
-          return this[SYM_CALL_DIRECT_GET](loopProperty.name, indexes, undefined, target, receiver);
-        }
-      }
-      return Reflect.get(target, prop, receiver);
-    }
-  }
-
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {string} prop 
-   * @param {any} value 
-   * @param {Proxy<ViewModel>} receiver 
-   */
-  set(target, prop, value, receiver) {
-    const defindedProperty = this.definedPropertyByProp.get(prop);
-    if (defindedProperty) {
-      return this.#setDefinedPropertyValue(target, defindedProperty, value, receiver);
-    } else {
-      if (prop[0] === "@") {
-        const propName = prop.slice(1);
-        const defindedProperty = this.definedPropertyByProp.get(propName);
-        if (defindedProperty) {
-          defindedProperty.expand(receiver, []).forEach(indexes => {
-            this[SYM_CALL_DIRECT_SET](propName, indexes, value, target, receiver);
-          });
-          return true;
-        }
-      }
-      if (prop[0] !== "_") {
-        const {loopProperty, indexes} = this.#getLoopPropertyAndIndexesFromPropertyName(prop);
-        if (loopProperty && indexes) {
-          this[SYM_CALL_DIRECT_SET](loopProperty.name, indexes, value, target, receiver);
-          return true;
-        }
-      }
-      Reflect.set(target, prop, value, receiver);
-      return true;
-    }
-  }
-};
-
-/**
- * 
- * @param {Component} component
- * @param {ViewModel} origViewModel 
- * @returns {Proxy<ViewModel>}
- */
-function create(component, origViewModel) {
-  const { viewModel, definedProperties, dependentMap, cachablePropertyNames } = Accessor.convert(component, origViewModel);
-  return new Proxy(viewModel, new Handler$1(component, definedProperties, dependentMap, cachablePropertyNames));
-
-}
-
-function getPath(pattern, indexes) {
-  let i = 0;
-  return pattern.replaceAll("*", () => indexes[i++] ?? "*");
-}
-  
-class Handler {
-  /**
-   * @type {{key:string,value:any}} 
-   */
-  #data = {};
-  /**
-   * @type {Component}
-   */
-  #component;
-  /**
-   * @type {Map<string,{bindProp:string,bindIndexes:number[]}>}
-   */
-  #bindPropByThisProp = new Map();
-
-  /**
-   * @type {{key:string,value:any}|ViewModel}
-   */
-  get data() {
-    return (this.#component ? this.#component?.parentComponent?.viewModel : this.#data) ?? {};
-  }
-
-  /**
-   * 
-   * @param {{key:string,value:any}|Component} data 
-   */
-  [SYM_CALL_BIND_DATA](data) {
-    if (data instanceof Component) {
-      this.#component = data;
-    } else {
-      this.#data = data;
-    }
-  }
-
-  /**
-   * 
-   * @param {string} thisProp 
-   * @param {string} bindProp 
-   * @param {number[]} bindIndexes 
-   */
-  [SYM_CALL_BIND_PROPERTY](thisProp, bindProp, bindIndexes) {
-    this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
-  }
-
-  /**
-   * 
-   * @param {any} target 
-   * @param {string} prop 
-   * @param {Proxy<Handler>} receiver 
-   * @returns 
-   */
-  get(target, prop, receiver) {
-    if (prop === SYM_CALL_BIND_DATA) {
-      return (data) => Reflect.apply(this[SYM_CALL_BIND_DATA], this, [data]);
-    }
-    if (prop === SYM_CALL_BIND_PROPERTY) {
-      return (thisProp, bindProp, bindIndexes) => Reflect.apply(this[SYM_CALL_BIND_PROPERTY], this, [thisProp, bindProp, bindIndexes]);
-    }
-    const { data } = this;
-    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, bindIndexes:[] };
-    const bindPath = getPath(bindProp, bindIndexes);
-    return Reflect.get(data, bindPath, data);
-  }
-
-  /**
-   * 
-   * @param {any} target 
-   * @param {string} prop 
-   * @param {any} value 
-   * @param {Prooxy<Handler>} receiver 
-   * @returns 
-   */
-  set(target, prop, value, receiver) {
-    const { data } = this;
-    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? { bindProp:prop, bindIndexes:[] };
-    const bindPath = getPath(bindProp, bindIndexes);
-    return Reflect.set(data, bindPath, value, data);
-  }
-}
-
-/**
- * 
- * @returns {Proxy<Handler>}
- */
-function createData() {
-  return new Proxy({}, new Handler());
 }
 
 /**
@@ -3034,56 +3451,14 @@ const getParentComponent = (node) => {
   } while(true);
 };
 
-/**
- * HTMLの変換
- * {{loop:}}{{if:}}{{else:}}を<template>へ置換
- * {{end:}}を</template>へ置換
- * {{...}}を<!--@@...-->へ置換
- * @param {string} html 
- * @returns {string}
- */
-const replaceTag = (html) => {
-  const stack = [];
-  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
-    expr = expr.trim();
-    if (expr.startsWith("loop:") || expr.startsWith("if:")) {
-      stack.push(expr);
-      return `<template data-bind="${expr}">`;
-    } else if (expr.startsWith("else:")){
-      const saveExpr = stack.at(-1);
-      return `</template><template data-bind="${saveExpr}|not">`;
-    } else if (expr.startsWith("end:")){
-      stack.pop();
-      return `</template>`;
-    } else {
-      return `<!--@@${expr}-->`;
-    }
-  });
-};
-
-/**
- * @param {string?} html
- * @param {string?} css
- * @returns {HTMLTemplateElement}
- */
-const htmlToTemplate = (html, css) => {
-  const template = document.createElement("template");
-  template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? replaceTag(html) : "");
-  return template;
-};
-
 class Component extends HTMLElement {
   /**
-   * @type {string}
-   * @static
-   */
-  static html;
-  /**
    * @type {HTMLTemplateElement}
+   * @static
    */
   static template;
   /**
-   * @type {class}
+   * @type {class<typeof ViewModel>}
    * @static
    */
   static ViewModel;
@@ -3092,31 +3467,37 @@ class Component extends HTMLElement {
    */
   viewModel;
   /**
-   * @type {View}
-   */
-  #view;
-  /**
-   * @type {Binds}
+   * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
   #binds;
+  get binds() {
+    return this.#binds;
+  }
   /**
    * @type {Thread}
    */
   #thread;
+  get thread() {
+    return this.#thread;
+  }
+  set thread(value) {
+    this.#thread = value;
+  }
   /**
    * @type {UpdateSlot}
    */
   #updateSlot;
   get updateSlot() {
     if (typeof this.#updateSlot === "undefined") {
-      this.#updateSlot = UpdateSlot.create(() => {
+      this.#updateSlot = UpdateSlot.create(this, () => {
         this.#updateSlot = undefined;
       }, (updateSlotStatus) => {
-        if (updateSlotStatus === UpdateSlotStatus.beginProcess) {
-          this.viewModel[SYM_CALL_CLEAR_CACHE]();
-        }
-        if (updateSlotStatus === UpdateSlotStatus.beginNotify) {
-          this.viewModel[SYM_CALL_CLEAR_CACHE]();
+        if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
+          this.viewModel[Symbols.beUncacheable]();
+        } else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
+          this.viewModel[Symbols.beUncacheable]();
+        } else if (updateSlotStatus === UpdateSlotStatus.beginNodeUpdate) {
+          this.viewModel[Symbols.beCacheable]();
         }
       });
       this.#thread.wakeup(this.#updateSlot);
@@ -3124,11 +3505,24 @@ class Component extends HTMLElement {
     return this.#updateSlot;
   }
   /**
+   * 単体テストのモック用
+   */
+  set updateSlot(value) {
+    this.#updateSlot = value;
+  }
+  /**
    * @type {Object<string,any>}
    */
-  #data = createData();
-  get data() {
-    return this.#data;
+  #props = createProps(this);
+  get props() {
+    return this.#props;
+  }
+  /**
+   * @type {Object<string,any>}
+   */
+  #globals = createGlobals();
+  get globals() {
+    return this.#globals;
   }
 
   constructor() {
@@ -3142,10 +3536,10 @@ class Component extends HTMLElement {
   /**
    * @type {string[]}
    */
-  static get observedAttributes() {
-    return [/* 変更を監視する属性名の配列 */];
-  }
-  
+//  static get observedAttributes() {
+//    return [/* 変更を監視する属性名の配列 */];
+//  }
+
   /**
    * shadowRootを使ってカプセル化をしない(true)
    * @type {boolean}
@@ -3167,15 +3561,16 @@ class Component extends HTMLElement {
     this.noShadowRoot || this.attachShadow({mode: 'open'});
     this.#thread = new Thread;
 
-    this.#view = new View(template, this.viewRootElement);
-    const rawViewModel = Reflect.construct(ViewModel, []);
-    this.viewModel = create(this, rawViewModel);
-    await this.viewModel[SYM_CALL_INIT]();
+    this.viewModel = createViewModel(this, ViewModel);
+    await this.viewModel[Symbols.initCallback]();
 
-    this.updateSlot.addProcess(new ProcessData(async () => {
-      this.#binds = this.#view.render(this);
-      await this.viewModel[SYM_CALL_CONNECT]();
-    }, this, []));
+    const initProc = async () => {
+      this.#binds = View.render(this.viewRootElement, this, template);
+      return this.viewModel[Symbols.connectedCallback]();
+    };
+    const updateSlot = this.updateSlot;
+    updateSlot.addProcess(new ProcessData(initProc, this, []));
+    await updateSlot.alive();
   }
 
   /**
@@ -3216,15 +3611,6 @@ class Component extends HTMLElement {
     return this.#parentComponent;
   }
 
-  bindGlobalData(bindText) {
-    const binds = Parser.parse(bindText, "");
-    if (binds.length > 0) {
-      GlobalData.boundFromComponent(this);
-      binds.forEach(({ nodeProperty, viewModelProperty }) => {
-        GlobalData.boundPropertyFromComponent(viewModelProperty, this, nodeProperty);
-      });
-    }
-  }
   /**
    * DOMツリーへ追加
    */
@@ -3233,7 +3619,6 @@ class Component extends HTMLElement {
       if (this.parentComponent) {
         await this.parentComponent.initialPromise;
       } else {
-        this.bindGlobalData(this.dataset.bind ?? "");
       }
       this.#alivePromise = new Promise((resolve, reject) => {
         this.#aliveResolve = resolve;
@@ -3249,15 +3634,17 @@ class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this.#aliveResolve && this.#aliveResolve(this.data);
+    this.#aliveResolve && this.#aliveResolve(this.props);
   }
 
   /**
    * 移動時
    */
+/*
   adoptedCallback() {
     
   }
+*/
 
   /**
    * 属性値更新
@@ -3265,17 +3652,18 @@ class Component extends HTMLElement {
    * @param {any} oldValue 
    * @param {any} newValue 
    */
+/*
   attributeChangedCallback(name, oldValue, newValue) {
     
   }
+*/
 
   /**
    * 
-   * @param {Set<string>} setOfKey 
-   * @param {number[]} indexes 
+   * @param {Set<string>} setOfViewModelPropertyKeys 
    */
-  notify(setOfKey) {
-    this.#binds?.updateViewModel(setOfKey);
+  applyToNode(setOfViewModelPropertyKeys) {
+    this.#binds && Binds.applyToNodeValue(this.#binds, setOfViewModelPropertyKeys);
   }
 
   /**
@@ -3284,11 +3672,11 @@ class Component extends HTMLElement {
    * @returns {class<HTMLElement>}
    */
   static getClass(componentModule) {
-    const template = htmlToTemplate(componentModule.html, componentModule.css);
+    const module = Object.assign(new Module, componentModule);
     // 同じクラスを登録できないため
     const componentClass = class extends Component {
-      static template = template;
-      static ViewModel = componentModule.ViewModel;
+      static template = module.template;
+      static ViewModel = module.ViewModel;
     };
     return componentClass;
   }

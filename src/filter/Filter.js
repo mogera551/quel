@@ -1,10 +1,11 @@
-import utils from "../utils.js";
+import "../types.js";
+import  { utils } from "../utils.js";
 import {inputFilters, outputFilters} from "./Builtin.js";
 
 // "property:vmProperty|toFix,2|toLocaleString;"
 // => toFix,2|toLocaleString
 
-export default class Filter {
+export class Filter {
   /**
    * @type {string}
    */

@@ -1,13 +1,15 @@
 import "../types.js";
-import View from "../view/View.js";
-import createViewModel from "../viewModel/Proxy.js";
-import { SYM_CALL_CLEAR_CACHE, SYM_CALL_CONNECT, SYM_CALL_INIT } from "../viewModel/Symbols.js";
-import Thread, { UpdateSlot, UpdateSlotStatus } from "../thread/Thread.js";
-import { ProcessData } from "../thread/Processor.js";
-import Binds from "../bind/Binds.js";
-import createData from "./Data.js";
-import Parser from "../bind/Parser.js";
-import GlobalData from "../global/Data.js";
+import { View } from "../view/View.js";
+import { createViewModel } from "../newViewModel/Proxy.js";
+import { Symbols } from "../newViewModel/Symbols.js";
+import { ProcessData } from "../thread/ViewModelUpdator.js";
+import { Binds } from "../bindInfo/Binds.js";
+import { createProps } from "./Props.js";
+import { createGlobals } from "./Globals.js";
+import { Module } from "./Module.js";
+import { Thread } from "../thread/Thread.js";
+import { UpdateSlotStatus } from "../thread/UpdateSLotStatus.js";
+import { UpdateSlot } from "../thread/UpdateSlot.js";
 
 /**
  * 
@@ -26,56 +28,14 @@ const getParentComponent = (node) => {
   } while(true);
 };
 
-/**
- * HTMLの変換
- * {{loop:}}{{if:}}{{else:}}を<template>へ置換
- * {{end:}}を</template>へ置換
- * {{...}}を<!--@@...-->へ置換
- * @param {string} html 
- * @returns {string}
- */
-const replaceTag = (html) => {
-  const stack = [];
-  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
-    expr = expr.trim();
-    if (expr.startsWith("loop:") || expr.startsWith("if:")) {
-      stack.push(expr);
-      return `<template data-bind="${expr}">`;
-    } else if (expr.startsWith("else:")){
-      const saveExpr = stack.at(-1);
-      return `</template><template data-bind="${saveExpr}|not">`;
-    } else if (expr.startsWith("end:")){
-      stack.pop();
-      return `</template>`;
-    } else {
-      return `<!--@@${expr}-->`;
-    }
-  });
-}
-
-/**
- * @param {string?} html
- * @param {string?} css
- * @returns {HTMLTemplateElement}
- */
-const htmlToTemplate = (html, css) => {
-  const template = document.createElement("template");
-  template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? replaceTag(html) : "");
-  return template;
-}
-
-export default class Component extends HTMLElement {
-  /**
-   * @type {string}
-   * @static
-   */
-  static html;
+export class Component extends HTMLElement {
   /**
    * @type {HTMLTemplateElement}
+   * @static
    */
   static template;
   /**
-   * @type {class}
+   * @type {class<typeof ViewModel>}
    * @static
    */
   static ViewModel;
@@ -84,31 +44,37 @@ export default class Component extends HTMLElement {
    */
   viewModel;
   /**
-   * @type {View}
-   */
-  #view;
-  /**
-   * @type {Binds}
+   * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
   #binds;
+  get binds() {
+    return this.#binds;
+  }
   /**
    * @type {Thread}
    */
   #thread;
+  get thread() {
+    return this.#thread;
+  }
+  set thread(value) {
+    this.#thread = value;
+  }
   /**
    * @type {UpdateSlot}
    */
   #updateSlot;
   get updateSlot() {
     if (typeof this.#updateSlot === "undefined") {
-      this.#updateSlot = UpdateSlot.create(() => {
+      this.#updateSlot = UpdateSlot.create(this, () => {
         this.#updateSlot = undefined;
       }, (updateSlotStatus) => {
-        if (updateSlotStatus === UpdateSlotStatus.beginProcess) {
-          this.viewModel[SYM_CALL_CLEAR_CACHE]();
-        }
-        if (updateSlotStatus === UpdateSlotStatus.beginNotify) {
-          this.viewModel[SYM_CALL_CLEAR_CACHE]();
+        if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
+          this.viewModel[Symbols.beUncacheable]();
+        } else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
+          this.viewModel[Symbols.beUncacheable]();
+        } else if (updateSlotStatus === UpdateSlotStatus.beginNodeUpdate) {
+          this.viewModel[Symbols.beCacheable]();
         }
       });
       this.#thread.wakeup(this.#updateSlot);
@@ -116,11 +82,24 @@ export default class Component extends HTMLElement {
     return this.#updateSlot;
   }
   /**
+   * 単体テストのモック用
+   */
+  set updateSlot(value) {
+    this.#updateSlot = value;
+  }
+  /**
    * @type {Object<string,any>}
    */
-  #data = createData();
-  get data() {
-    return this.#data;
+  #props = createProps(this);
+  get props() {
+    return this.#props;
+  }
+  /**
+   * @type {Object<string,any>}
+   */
+  #globals = createGlobals();
+  get globals() {
+    return this.#globals;
   }
 
   constructor() {
@@ -134,10 +113,10 @@ export default class Component extends HTMLElement {
   /**
    * @type {string[]}
    */
-  static get observedAttributes() {
-    return [/* 変更を監視する属性名の配列 */];
-  }
-  
+//  static get observedAttributes() {
+//    return [/* 変更を監視する属性名の配列 */];
+//  }
+
   /**
    * shadowRootを使ってカプセル化をしない(true)
    * @type {boolean}
@@ -159,15 +138,16 @@ export default class Component extends HTMLElement {
     this.noShadowRoot || this.attachShadow({mode: 'open'});
     this.#thread = new Thread;
 
-    this.#view = new View(template, this.viewRootElement);
-    const rawViewModel = Reflect.construct(ViewModel, []);
-    this.viewModel = createViewModel(this, rawViewModel);
-    await this.viewModel[SYM_CALL_INIT]();
+    this.viewModel = createViewModel(this, ViewModel);
+    await this.viewModel[Symbols.initCallback]();
 
-    this.updateSlot.addProcess(new ProcessData(async () => {
-      this.#binds = this.#view.render(this);
-      await this.viewModel[SYM_CALL_CONNECT]();
-    }, this, []));
+    const initProc = async () => {
+      this.#binds = View.render(this.viewRootElement, this, template);
+      return this.viewModel[Symbols.connectedCallback]();
+    };
+    const updateSlot = this.updateSlot;
+    updateSlot.addProcess(new ProcessData(initProc, this, []));
+    await updateSlot.alive();
   }
 
   /**
@@ -208,15 +188,6 @@ export default class Component extends HTMLElement {
     return this.#parentComponent;
   }
 
-  bindGlobalData(bindText) {
-    const binds = Parser.parse(bindText, "");
-    if (binds.length > 0) {
-      GlobalData.boundFromComponent(this);
-      binds.forEach(({ nodeProperty, viewModelProperty }) => {
-        GlobalData.boundPropertyFromComponent(viewModelProperty, this, nodeProperty);
-      })
-    }
-  }
   /**
    * DOMツリーへ追加
    */
@@ -225,7 +196,6 @@ export default class Component extends HTMLElement {
       if (this.parentComponent) {
         await this.parentComponent.initialPromise;
       } else {
-        this.bindGlobalData(this.dataset.bind ?? "");
       }
       this.#alivePromise = new Promise((resolve, reject) => {
         this.#aliveResolve = resolve;
@@ -241,15 +211,17 @@ export default class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this.#aliveResolve && this.#aliveResolve(this.data);
+    this.#aliveResolve && this.#aliveResolve(this.props);
   }
 
   /**
    * 移動時
    */
+/*
   adoptedCallback() {
     
   }
+*/
 
   /**
    * 属性値更新
@@ -257,17 +229,18 @@ export default class Component extends HTMLElement {
    * @param {any} oldValue 
    * @param {any} newValue 
    */
+/*
   attributeChangedCallback(name, oldValue, newValue) {
     
   }
+*/
 
   /**
    * 
-   * @param {Set<string>} setOfKey 
-   * @param {number[]} indexes 
+   * @param {Set<string>} setOfViewModelPropertyKeys 
    */
-  notify(setOfKey) {
-    this.#binds?.updateViewModel(setOfKey);
+  applyToNode(setOfViewModelPropertyKeys) {
+    this.#binds && Binds.applyToNodeValue(this.#binds, setOfViewModelPropertyKeys);
   }
 
   /**
@@ -276,11 +249,11 @@ export default class Component extends HTMLElement {
    * @returns {class<HTMLElement>}
    */
   static getClass(componentModule) {
-    const template = htmlToTemplate(componentModule.html, componentModule.css);
+    const module = Object.assign(new Module, componentModule);
     // 同じクラスを登録できないため
     const componentClass = class extends Component {
-      static template = template;
-      static ViewModel = componentModule.ViewModel;
+      static template = module.template;
+      static ViewModel = module.ViewModel;
     };
     return componentClass;
   }

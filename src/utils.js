@@ -1,10 +1,10 @@
-export default class {
+export class utils {
   /**
    * 
    * @param {string} message 
    */
   static raise(message) {
-    throw message;
+    throw new Error(message);
   }
 
   /**

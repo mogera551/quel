@@ -1,8 +1,8 @@
 import "./types.js";
-import Component from "./component/Component.js";
-import Filter from "./filter/Filter.js";
-import GlobalData from "./global/Data.js";
-import utils from "./utils.js";
+import { Component } from "./component/Component.js";
+import { Filter } from "./filter/Filter.js";
+import { GlobalData } from "./global/Data.js";
+import  { utils } from "./utils.js";
 
 export class Main {
   /**

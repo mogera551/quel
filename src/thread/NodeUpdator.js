@@ -1,4 +1,4 @@
-import { UpdateSlotStatus } from "./Thread.js";
+import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NodeUpdateData {
   /**
@@ -31,38 +31,21 @@ export class NodeUpdateData {
   }
 }
 
-export default class {
+export class NodeUpdator {
   /**
    * @type {NodeUpdateData[]}
    */
   queue = [];
 
   /**
-   * @type {import("./Thread.js").UpdateSlotStatusCallback}
+   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
    */
   #statusCallback;
   /**
-   * @param {import("./Thread.js").UpdateSlotStatusCallback} statusCallback
+   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
    */
   constructor(statusCallback) {
     this.#statusCallback = statusCallback;
-  }
-
-  /**
-   * @type {Map<Node,Map<string,NodeUpdateData>>}
-   */
-  nodeUpdateDataByPropertyByNode = new Map();
-  /**
-   * 
-   * @param {NodeUpdateData} nodeUpdateData 
-   */
-  add(nodeUpdateData) {
-    let nodeUpdateDataByProperty = this.nodeUpdateDataByPropertyByNode.get(nodeUpdateData.node);
-    if (nodeUpdateDataByProperty == null) {
-      nodeUpdateDataByProperty = new Map;
-      this.nodeUpdateDataByPropertyByNode.set(nodeUpdateData.node, nodeUpdateDataByProperty);
-    }
-    nodeUpdateDataByProperty.set(nodeUpdateData.property, nodeUpdateData);
   }
 
   /**
@@ -71,9 +54,13 @@ export default class {
    */
   reorder(updates) {
     updates.sort((update1, update2) => {
+      if (update1.node instanceof HTMLTemplateElement && update2.node instanceof HTMLTemplateElement) return 0;
       if (update2.node instanceof HTMLTemplateElement) return 1;
+      if (update1.node instanceof HTMLTemplateElement) return -1;
+      if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
       if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
-      return -1;
+      if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;
+      return 0;
     });
     return updates;
   }
@@ -83,13 +70,12 @@ export default class {
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
     try {
-      while(this.nodeUpdateDataByPropertyByNode.size > 0) {
-        const updates = Array.from(this.nodeUpdateDataByPropertyByNode.entries()).flatMap(([ node, nodeUpdateDataByProperty ]) => {
-          return Array.from(nodeUpdateDataByProperty.entries()).map(([property, nodeUpdateData]) => nodeUpdateData)
-        });
-        this.nodeUpdateDataByPropertyByNode.clear();
-        const orderedUpdates = this.reorder(updates.splice(0));
-        orderedUpdates.forEach(update => Reflect.apply(update.updateFunc, update, []));
+      while(this.queue.length > 0) {
+        const updates = this.queue.splice(0);
+        const orderedUpdates = this.reorder(updates);
+        for(const update of orderedUpdates) {
+          Reflect.apply(update.updateFunc, update, []);
+        }
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);

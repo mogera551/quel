@@ -1,10 +1,12 @@
-import BindInfo from "./BindInfo.js";
-import { SYM_CALL_BIND_DATA, SYM_CALL_BIND_PROPERTY, SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS } from "../viewModel/Symbols.js";
-import Component from "../component/Component.js";
+import "../types.js";
+import  { utils } from "../utils.js";
+import { BindInfo } from "./BindInfo.js";
+import { Symbols } from "../newViewModel/Symbols.js";
+import { Component } from "../component/Component.js";
 
-const toComponent = node => (node instanceof Component) ? node : undefined;
+const toComponent = node => (node instanceof Component) ? node : utils.raise('not Component');
 
-export default class ComponentBind extends BindInfo {
+export class ComponentBind extends BindInfo {
   /**
    * @type {Node}
    */
@@ -12,8 +14,11 @@ export default class ComponentBind extends BindInfo {
     return super.node;
   }
   set node(node) {
+    this.thisComponent = toComponent(node);
     super.node = node;
-    this.bindData();
+  }
+  #isSetProperty() {
+    return (typeof this.viewModelProperty !== "undefined" && typeof this.nodePropertyElements !== "undefined");
   }
   /**
    * @type {string}
@@ -23,7 +28,7 @@ export default class ComponentBind extends BindInfo {
   }
   set viewModelProperty(value) {
     super.viewModelProperty = value;
-    if (this.viewModelProperty && this.nodePropertyElements) {
+    if (this.#isSetProperty()) {
       this.bindProperty();
     }
   }
@@ -35,7 +40,7 @@ export default class ComponentBind extends BindInfo {
   }
   set nodePropertyElements(value) {
     super.nodePropertyElements = value;
-    if (this.viewModelProperty && this.nodePropertyElements) {
+    if (this.#isSetProperty()) {
       this.bindProperty();
     }
   }
@@ -52,26 +57,27 @@ export default class ComponentBind extends BindInfo {
     return this.nodePropertyElements[1];
   }
 
-  /**
-   * 
-   */
-  bindData() {
-    const component = toComponent(this.node);
-    component?.data[SYM_CALL_BIND_DATA](component);
+  #thisComponent;
+  get thisComponent() {
+    return this.#thisComponent;
+  }
+  set thisComponent(value) {
+    this.#thisComponent = value;
   }
 
   /**
    * 
    */
   bindProperty() {
-    const component = toComponent(this.node);
-    component?.data[SYM_CALL_BIND_PROPERTY](this.dataProperty, this.viewModelProperty, this.indexes)
+    this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes)
   }
 
+  /**
+   * 
+   */
   updateNode() {
     const { node, dataProperty } = this;
-    const thisComponent = toComponent(node);
-    thisComponent.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${dataProperty}`, []);
+    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}`, []);
   }
 
   updateViewModel() {

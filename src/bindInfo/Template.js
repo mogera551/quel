@@ -1,7 +1,10 @@
-import Binder from "../bind/Binder.js";
-import Filter from "../filter/Filter.js";
-import { SYM_CALL_DIRECT_GET } from "../viewModel/Symbols.js";
-import BindInfo from "./BindInfo.js";
+import "../types.js";
+import  { utils } from "../utils.js";
+import { Filter } from "../filter/Filter.js";
+import { BindInfo } from "./BindInfo.js";
+import { Binder } from "../binder/Binder.js";
+import { Selector } from "../binder/Selector.js";
+import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
 
 /**
  * 
@@ -35,12 +38,6 @@ export class TemplateChild {
   get nodesForAppend() {
     return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
   }
-  /**
-   * @type {Set<Node>}
-   */
-  get setOfNodes() {
-    return new Set(this.childNodes);
-  }
 
   /**
    * 
@@ -61,11 +58,11 @@ export class TemplateChild {
 
   /**
    * 
-   * @param {number} index 
+   * @param {BindInfo} target 
    * @param {number} diff 
    */
-  changeIndex(index, diff) {
-    this.binds.forEach(bind => bind.changeIndexes(index, diff));
+  changeIndexes(target, diff) {
+    this.binds.forEach(bind => bind.changeIndexes(target, diff));
   }
 
   /**
@@ -77,13 +74,14 @@ export class TemplateChild {
   static create(templateBind, indexes) {
     const {component, template} = templateBind;
     const rootElement = document.importNode(template.content, true);
-    const binds = Binder.bind(template, rootElement, component, indexes);
+    const nodes = Selector.getTargetNodes(template, rootElement);
+    const binds = Binder.bind(nodes, component, templateBind, indexes);
     const childNodes = Array.from(rootElement.childNodes);
     return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement });
   }
 }
 
-export default class Template extends BindInfo {
+export class Template extends BindInfo {
   get node() {
     return super.node;
   }
@@ -94,6 +92,13 @@ export default class Template extends BindInfo {
     super.node = comment;
     this.template = template;
   }
+  get nodeProperty() {
+    return super.nodeProperty;
+  }
+  set nodeProperty(value) {
+    super.nodeProperty = value;
+  }
+
   /**
    * @type {TemplateChild[]}
    */
@@ -110,7 +115,8 @@ export default class Template extends BindInfo {
   }
 
   updateNode() {
-    const newValue = (this.nodeProperty === "loop") ? this.expandLoop() : this.expandIf();
+    const newValue = (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
+      (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
     this.lastViewModelValue = (newValue instanceof Array) ? newValue.slice() : newValue;
   }
   
@@ -119,16 +125,6 @@ export default class Template extends BindInfo {
    */
   removeFromParent() {
     this.templateChildren.forEach(child => child.removeFromParent());
-/*
-    const nodes = this.templateChildren.flatMap(child => child.childNodes);
-    if (nodes.length > 0) {
-      const oldParentNode = nodes[0].parentNode;
-      const newParentNode = oldParentNode.cloneNode(false);
-      oldParentNode.parentNode.replaceChild(newParentNode, oldParentNode)
-      nodes.forEach(node => node.parentNode.removeChild(node));
-      newParentNode.parentNode.replaceChild(oldParentNode, newParentNode);
-    }
-*/
   }
 
   /**
@@ -146,15 +142,9 @@ export default class Template extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
-    /**
-     * @type {any}
-     */
+    const { contextIndexes, filters } = this;
     const lastValue = this.lastViewModelValue;
-    /**
-     * @type {any}
-     */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
@@ -175,7 +165,7 @@ export default class Template extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { viewModel, viewModelProperty, indexes, contextIndexes, filters } = this;
+    const { contextIndexes, filters, templateChildren } = this;
     /**
      * @type {any[]}
      */
@@ -183,7 +173,7 @@ export default class Template extends BindInfo {
     /**
      * @type {any[]}
      */
-    const newValue = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters) ?? [];
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters) ?? [];
 
     /**
      * @type {Map<any,number[]>}
@@ -203,18 +193,18 @@ export default class Template extends BindInfo {
      */
     const newTemplateChildren = newValue.map((value, newIndex) => {
       const lastIndexes = indexesByLastValue.get(value);
-      if (typeof lastIndexes === "undefined") {
+      if (typeof lastIndexes === "undefined" || lastIndexes.length === 0) {
         // 元のインデックスがない場合、新規
         lastIndexByNewIndex.set(newIndex, undefined);
         moveOrCreateIndexes.push(newIndex);
-        return TemplateChild.create(this, indexes.concat(newIndex));
+        return TemplateChild.create(this, contextIndexes.concat(newIndex));
       } else {
         // 元のインデックスがある場合、子要素のループインデックスを書き換え
         // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素
         const lastIndex = lastIndexes.shift();
         lastIndexByNewIndex.set(newIndex, lastIndex);
-        const templateChild = this.templateChildren[lastIndex];
-        (newIndex !== lastIndex) && templateChild.changeIndex(indexes.length, newIndex - lastIndex);
+        const templateChild = templateChildren[lastIndex];
+        (newIndex !== lastIndex) && templateChild.changeIndexes(this, newIndex - lastIndex);
         const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
         if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
           moveOrCreateIndexes.push(newIndex);
@@ -222,10 +212,10 @@ export default class Template extends BindInfo {
         return templateChild;
       }
     });
-    // 削除対象、追加・移動対象のインデックスを取得
+    // 削除対象、追加・移動対象のインデックスを取得し、ノードを削除
     for(const indexes of indexesByLastValue.values()) {
       for(const index of indexes) {
-        this.templateChildren[index].removeFromParent();
+        templateChildren[index].removeFromParent();
       }
     }
 
@@ -245,11 +235,11 @@ export default class Template extends BindInfo {
 
   /**
    * 
-   * @param {number} index 
+   * @param {BindInfo} target 
    * @param {number} diff 
    */
-  changeIndexes(index, diff) {
-    this.indexes[index] = this.indexes[index] + diff;
-    this.templateChildren.forEach(templateChild => templateChild.changeIndex(index, diff));
+  changeIndexes(target, diff) {
+    super.changeIndexes(target, diff);
+    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(target, diff));
   }
 }

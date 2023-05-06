@@ -1,9 +1,9 @@
 import "../types.js";
-import utils from "../utils.js";
-import Filter from "../filter/Filter.js";
-import Component from "../component/Component.js";
+import  { utils } from "../utils.js";
+import { Symbols } from "../newViewModel/Symbols.js";
+import { dotNotation } from "../../modules/imports.js";
 
-export default class BindInfo {
+export class BindInfo {
   /**
    * @type {Node}
    */
@@ -20,6 +20,14 @@ export default class BindInfo {
   get element() {
     return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
   }
+  /**
+   * @type {BindInfo}
+   */
+  contextBind;
+  /**
+   * @type {BindInfo}
+   */
+  parentContextBind;
   /**
    * @type {string}
    */
@@ -43,7 +51,7 @@ export default class BindInfo {
   }
 
   /**
-   * @type {Component}
+   * @type {import("../component/Component.js").Component} 
    */
   component;
   /**
@@ -59,9 +67,35 @@ export default class BindInfo {
   }
   set viewModelProperty(value) {
     this.#viewModelProperty = value;
+    this.#viewModelPropertyName = dotNotation.PropertyName.create(value);
+    if (dotNotation.RE_CONTEXT_INDEX.exec(value)) {
+      this.#contextIndex = Number(value.slice(1)) - 1;
+    } else {
+      this.#contextIndex = undefined;
+    }
   }
   /**
-   * @type {Filter[]}
+   * @type {import("../../modules/dot-notation/dot-notation.js").PropertyName}
+   */
+  #viewModelPropertyName;
+  get viewModelPropertyName() {
+    return this.#viewModelPropertyName;
+  }
+  /**
+   * @type {number}
+   */
+  #contextIndex;
+  get contextIndex() {
+    return this.#contextIndex;
+  }
+  /**
+   * @type {boolean}
+   */
+  get isContextIndex() {
+    return (typeof this.#contextIndex !== "undefined");
+  }
+  /**
+   * @type {import("../filter/Filter.js").Filter[]}
    */
   filters;
 
@@ -75,7 +109,7 @@ export default class BindInfo {
   set indexes(value) {
     this.#indexes = value;
     this.#indexesString = value.toString();
-    this.#viewModelPropertyKey = this.viewModelProperty + "\t" + this.#indexesString;
+    this.#viewModelPropertyKey = this.#viewModelProperty + "\t" + this.#indexesString;
   }
   /**
    * @type {string}
@@ -95,36 +129,62 @@ export default class BindInfo {
    * @type {number[]}
    */
   contextIndexes;
+  /**
+   * @type {number}
+   */
+  positionContextIndexes = -1;
   
   /**
    * @type {any}
    */
   lastNodeValue;
   /**
-   * @type
+   * @type {any}
    */
   lastViewModelValue;
 
   /**
-   * Nodeのプロパティを更新する
+   * 
+   * @returns {any}
+   */
+  getViewModelValue() {
+    return (this.isContextIndex) ?
+      this.contextIndexes[this.contextIndex] :
+      this.viewModel[Symbols.directlyGet](this.viewModelProperty, this.indexes);
+  }
+
+  /**
+   * 
+   * @param {any} value
+   */
+  setViewModelValue(value) {
+    if (!this.isContextIndex) {
+      this.viewModel[Symbols.directlySet](this.viewModelProperty, this.indexes, value);
+    }
+  }
+
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {}
 
   /**
-   * ViewModelのプロパティを更新する
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {}
 
   /**
    * 
-   * @param {number} index 
+   * @param {BindInfo} target 
    * @param {number} diff 
    */
-  changeIndexes(index, diff) {
+  changeIndexes(target, diff) {
     const { indexes, contextIndexes } = this;
-    indexes[index] = indexes[index] + diff;
-    contextIndexes[index] = contextIndexes[index] + diff;
-    this.indexes = indexes;
+    if (this.viewModelPropertyName.setOfParentPaths.has(target.viewModelProperty)) {
+      indexes[target.indexes.length] = indexes[target.indexes.length] + diff;
+    }
+    contextIndexes[target.contextIndexes.length] = contextIndexes[target.contextIndexes.length] + diff;
+    
  }
 
   /**

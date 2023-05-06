@@ -1,12 +1,15 @@
-import BindInfo from "./BindInfo.js";
-import Filter from "../filter/Filter.js";
-import { SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET } from "../viewModel/Symbols.js";
+import "../types.js";
+import { BindInfo } from "./BindInfo.js";
+import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
-export default class LevelTop extends BindInfo {
+export class LevelTop extends BindInfo {
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, indexes, contextIndexes), filters);
+    const {component, node, nodeProperty, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         node[nodeProperty] = value ?? "";
@@ -15,10 +18,13 @@ export default class LevelTop extends BindInfo {
     }
   }
 
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
   updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {node, nodeProperty, filters} = this;
     const value = Filter.applyForInput(node[nodeProperty], filters);
-    viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, value);
+    this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
 

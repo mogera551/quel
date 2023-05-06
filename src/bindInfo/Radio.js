@@ -1,16 +1,19 @@
-import BindInfo from "./BindInfo.js";
-import Filter from "../filter/Filter.js";
-import { SYM_CALL_DIRECT_GET, SYM_CALL_DIRECT_SET } from "../viewModel/Symbols.js";
-import utils from "../utils.js";
+import "../types.js";
+import  { utils } from "../utils.js";
+import { BindInfo } from "./BindInfo.js";
+import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise();
 
-export default class Radio extends BindInfo {
+export class Radio extends BindInfo {
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
   updateNode() {
-    const {component, node, nodeProperty, viewModel, viewModelProperty, indexes, contextIndexes, filters} = this;
+    const {component, node, nodeProperty, viewModelProperty, filters} = this;
     const radio = toHTMLInputElement(node);
-    const value = Filter.applyForOutput(viewModel[SYM_CALL_DIRECT_GET](viewModelProperty, contextIndexes, indexes), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         radio.checked = value === radio.value;
@@ -19,12 +22,15 @@ export default class Radio extends BindInfo {
     }
   }
 
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
   updateViewModel() {
-    const {node, nodeProperty, viewModel, viewModelProperty, indexes, filters} = this;
+    const {node, filters} = this;
     const radio = toHTMLInputElement(node);
     const radioValue = Filter.applyForInput(radio.value, filters);
     if (radio.checked) {
-      viewModel[SYM_CALL_DIRECT_SET](viewModelProperty, indexes, radioValue);
+      this.setViewModelValue(radioValue);
       this.lastViewModelValue = radioValue;
     }
   }

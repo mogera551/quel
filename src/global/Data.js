@@ -1,64 +1,62 @@
-import { SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS, SYM_CALL_BIND_DATA, SYM_CALL_BIND_PROPERTY } from "../viewModel/Symbols.js";
-import Component from "../component/Component.js";
+import "../types.js";
+import { Symbols } from "../newViewModel/Symbols.js";
+import { dotNotation } from "../../modules/imports.js";
 
-class Handler {
-  set(target, prop, value, receiver) {
-    Reflect.set(target, prop, value, receiver);
-    GlobalData.binds
-    .filter(bind => prop === bind.globalProperty)
-    .forEach(bind => {
-      const [dataProp, nameProp] = bind.componentProperty.split(".");
-      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$data.${nameProp}`, []);
-    });
-    GlobalData.globalBinds
-    .filter(bind => prop === bind.globalProperty)
-    .forEach(bind => {
-      bind.component.viewModel?.[SYM_CALL_NOTIFY_FOR_DEPENDENT_PROPS](`$globals.${prop}`, []);
-    });
-    return true;
+class GlobalDataHandler extends dotNotation.Handler {
+  /**
+   * @type {Map<string,Set<import("../component/Component.js").Component[]>>}
+   */
+  #setOfComponentByProp = new Map;
+  /**
+   * 
+   * @param {any} target 
+   * @param {string|Symbol} prop 
+   * @param {any} receiver 
+   * @returns 
+   */
+  get(target, prop, receiver) {
+    if (prop === Symbols.boundByComponent) {
+      return (component, prop) => {
+        let setOfComponent = this.#setOfComponentByProp.get(prop);
+        if (setOfComponent == null) {
+          this.#setOfComponentByProp.set(prop, new Set([ component ]));
+        } else {
+          setOfComponent.add(component);
+        }
+      }
+    }
+    return super.get(target, prop, receiver);
   }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {string|Symbol} prop 
+   * @param {any} value 
+   * @param {Proxy} receiver 
+   * @returns 
+   */
+  set(target, prop, value, receiver) {
+    const { propName, indexes } = dotNotation.PropertyName.parse(prop);
+    const result = receiver[Symbols.directlySet](propName.name, indexes, value);
+    let setOfComponent = this.#setOfComponentByProp.get(propName.name);
+    if (setOfComponent) {
+      for(const component of setOfComponent) {
+        component.viewModel[Symbols.notifyForDependentProps]("$globals." + propName.name, indexes);
+      }
+    }
+    return result;
+  }
+
 }
 
-export default class GlobalData {
-  /**
-   * @type {{globalProperty:string,component:Component,componentProperty:string}[]}
-   */
-  static binds = [];
-  /**
-   * @type {{globalProperty:string,component:Component}[]}
-   */
-  static globalBinds = [];
-  /**
-   * 
-   * @param {Component} component 
-   */
-  static boundFromComponent(component) {
-    component.data[SYM_CALL_BIND_DATA](this.data);
-  }
-  /**
-   * 
-   * @param {string} globalProperty 
-   * @param {Component} component 
-   * @param {string} componentProperty 
-   */
-  static boundPropertyFromComponent(globalProperty, component, componentProperty) {
-    this.binds.push({ globalProperty, component, componentProperty });
-    component.data[SYM_CALL_BIND_PROPERTY](componentProperty, globalProperty);
-  }
-  /**
-   * 
-   * @param {Component} component 
-   * @param {string} globalProperty
-   */
-  static globalBoundFromComponent(component, globalProperty) {
-    this.globalBinds.push({ component, globalProperty });
-  }
+export class GlobalData {
   /**
    * 
    * @returns 
    */
   static create() {
-    return new Proxy({}, new Handler);
+    return new Proxy({}, new GlobalDataHandler);
   }
   /**
    * @type {Object<string,any>}

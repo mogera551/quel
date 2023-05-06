@@ -1,8 +1,9 @@
-import BindInfo from "./BindInfo.js";
-import { SYM_CALL_DIRECT_CALL } from "../viewModel/Symbols.js";
-import { ProcessData } from "../thread/Processor.js";
+import "../types.js";
+import { BindInfo } from "./BindInfo.js";
+import { Symbols } from "../newViewModel/Symbols.js";
+import { ProcessData } from "../thread/ViewModelUpdator.js";
 
-export default class Event extends BindInfo {
+export class Event extends BindInfo {
   #eventType;
   /**
    * @type {string}
@@ -22,7 +23,7 @@ export default class Event extends BindInfo {
       event.stopPropagation();
       const contextIndexes = this.contextIndexes;
       const process = new ProcessData(
-        viewModel[SYM_CALL_DIRECT_CALL], viewModel, [viewModelProperty, contextIndexes, event]
+        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, contextIndexes, event]
       );
       component.updateSlot.addProcess(process);
     });
