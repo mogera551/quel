@@ -25,13 +25,34 @@ class Handler {
    */
   #data = new Proxy({}, new dotNotation.Handler);
 
+  get hasParent() {
+    return this.#component?.parentComponent?.viewModel != null;
+  }
   /**
    * @type {{key:string,value:any}|ViewModel}
    */
   get data() {
-    const data = this.#component?.parentComponent?.viewModel ?? this.#data;
+    const data = this.hasParent ? this.#component.parentComponent.viewModel : this.#data;
 //    (data[Symbols.isSupportDotNotation]) || utils.raise(`data is not support dot-notation`);
     return data;
+  }
+  /**
+   * 
+   */
+  get object() {
+    const retObject = {};
+    if (this.hasParent) {
+      const viewModel = this.#component.parentComponent.viewModel;
+      for(const [key, bindAccess] of this.#bindPropByThisProp.entries()) {
+        const { bindProp, bindIndexes } = bindAccess;
+        retObject[key] = viewModel[Symbols.directlyGet](bindProp, bindIndexes);;
+      }
+    } else {
+      for(const [key, value] of Object.entries(this.#data)) {
+        retObject[key] = value;
+      }
+    }
+    return retObject;
   }
 
   /**
@@ -53,14 +74,20 @@ class Handler {
     if (prop === Symbols.bindProperty) {
       return (thisProp, bindProp, bindIndexes) => 
         this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
+    } else if (prop === Symbols.toObject) {
+      return () => this.object;
     }
     const { data } = this;
-    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-    if (bindProp) {
-      return data[Symbols.directlyGet](bindProp, bindIndexes);
+    if (this.hasParent) {
+      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (bindProp) {
+        return data[Symbols.directlyGet](bindProp, bindIndexes);
+      } else {
+        console.error(`undefined property ${prop}`);
+        return undefined;
+      }
     } else {
-      console.log(`undefined property ${prop}`);
-      return undefined;
+      return Reflect.get(data, prop);
     }
   }
 
@@ -74,12 +101,16 @@ class Handler {
    */
   set(target, prop, value, receiver) {
     const { data } = this;
-    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-    if (bindProp) {
-      return data[Symbols.directlySet](bindProp, bindIndexes, value);
+    if (this.hasParent) {
+      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (bindProp) {
+        return data[Symbols.directlySet](bindProp, bindIndexes, value);
+      } else {
+        console.error(`undefined property ${prop}`);
+        return false;
+      }
     } else {
-      console.log(`undefined property ${prop}`);
-      return false;
+      return Reflect.set(data, prop, value);
     }
   }
 }

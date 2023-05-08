@@ -1,4 +1,5 @@
 import "../types.js";
+import { utils } from "../utils.js";
 import { dotNotation } from "../../modules/imports.js";
 import { Cache } from "./Cache.js"
 import { ViewModelize } from "./ViewModelize.js";
@@ -47,6 +48,8 @@ const setOfApiFunctions = new Set([
 const PROPS_PROPERTY = "$props";
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
+const OPEN_DIALOG_METHOD = "$openDialog";
+const CLOSE_DIALOG_METHOD = "$closeDialog";
 
 /**
  * @type {Set<string>}
@@ -55,6 +58,8 @@ const setOfProperties = new Set([
   PROPS_PROPERTY,
   GLOBALS_PROPERTY,
   DEPENDENT_PROPS_PROPERTY,
+  OPEN_DIALOG_METHOD,
+  CLOSE_DIALOG_METHOD,
 ]);
 
 /**
@@ -165,9 +170,13 @@ export class ViewModelHandler extends dotNotation.Handler {
         return this.component.props;
       } else if (propName.name === GLOBALS_PROPERTY) {
         return this.component.globals;
-//      } else if (propName.name === DEPENDENT_PROPS_PROPERTY) {
-      } else {
+      } else if (propName.name === DEPENDENT_PROPS_PROPERTY) {
         return Reflect.get(target, DEPENDENT_PROPS_PROPERTY, receiver);
+      } else if (propName.name === OPEN_DIALOG_METHOD) {
+        return (name, data = {}, attributes = {}) => Reflect.apply(this.#openDialog, this, [target, {name, data, attributes}, receiver])
+//      } else if (propName.name === CLOSE_DIALOG_METHOD) {
+      } else {
+        return (data = {}) => Reflect.apply(this.#closeDialog, this, [target, data, receiver]);
       }
     } else {
       if (this.#setOfAccessorProperties.has(propName.name) && this.#cacheable) {
@@ -216,6 +225,34 @@ export class ViewModelHandler extends dotNotation.Handler {
    */
   #addNotify(target, propertyAccess, receiver) {
     this.#component.updateSlot.addNotify(propertyAccess);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{name:string,data:object,attributes:any}} param1 
+   * @param {Proxy} receiver 
+   */
+  async #openDialog(target, {name, data, attributes}, receiver) {
+    const tagName = utils.toKebabCase(name);
+    const dialog = document.createElement(tagName);
+    Object.entries(attributes).forEach(([key, value]) => {
+      dialog.setAttribute(key, value);
+    });
+    Object.entries(data).forEach(([key, value]) => {
+      dialog.props[Symbols.bindProperty](key, key, []);
+      dialog.props[key] = value;
+    });
+    document.body.appendChild(dialog);
+    return dialog.alivePromise;
+  }
+
+  #closeDialog(target, data, receiver) {
+    const component = this.#component;
+    Object.entries(data).forEach(([key, value]) => {
+      component.props[key] = value;
+    });
+    component.parentNode.removeChild(component);
   }
 
   /**

@@ -211,7 +211,7 @@ export class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this.#aliveResolve && this.#aliveResolve(this.props);
+    this.#aliveResolve && this.#aliveResolve(this.props[Symbols.toObject]());
   }
 
   /**

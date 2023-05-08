@@ -127,7 +127,6 @@ test("Component parentComponent", async () => {
   <parent-tag no-shadow-root></parent-tag>
   `;
   const parentComponent = root.querySelector("parent-tag");
-  console.log(parentComponent);
 
   let connectedCallbacked = false;
   setTimeout(async () => {
@@ -168,7 +167,6 @@ test("Component parentComponent shadow-root", async () => {
   <parent-tag2></parent-tag2>
   `;
   const parentComponent = root.shadowRoot.querySelector("parent-tag2");
-  console.log(parentComponent);
 
   let connectedCallbacked = false;
   setTimeout(async () => {

@@ -23,6 +23,8 @@ export const Symbols = Object.assign({
 
   directlyCall: Symbol.for(`${myname}:viewModel.directCall`),
   bindTo: Symbol.for(`${myname}:componentModule.bindTo`),
-  bindProperty: Symbol.for(`${myname}:componentModule.bindProperty`),
   notifyForDependentProps: Symbol.for(`${myname}:viewModel.notifyForDependentProps`),
+
+  bindProperty: Symbol.for(`${myname}:props.bindProperty`),
+  toObject: Symbol.for(`${myname}:props.toObject`),
 }, DotNotationSymbols);

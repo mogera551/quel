@@ -47,5 +47,24 @@ test("Props component", () => {
   expect(viewModel.aaa[2]).toBe(120);
   props["BBB"] = false;
   expect(viewModel["bbb"]).toBe(false);
+
+  expect(props[Symbols.toObject]()).toEqual({
+    "AAA0": 40,
+    "AAA1": 80,
+    "AAA2": 120,
+    "BBB": false,
+  })
 });
 
+test("Props component", () => {
+  const props = createProps();
+  props["aaa"] = 100;
+  props["bbb"] = 200;
+  expect(props["aaa"]).toBe(100);
+  expect(props["bbb"]).toBe(200);
+  expect(props[Symbols.toObject]()).toEqual({
+    "aaa": 100,
+    "bbb": 200,
+  });
+
+});

@@ -1,4 +1,4 @@
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { dotNotation } from "../../modules/imports.js";
 import { Cache } from "../../src/viewModel/Cache.js";
 import { ViewModelHandler, createViewModel } from "../../src/viewModel/Proxy.js";
@@ -663,4 +663,72 @@ test('Proxy Cache', () => {
   expect(proxyViewModel["ddd.*"]).toBe(250);
   expect(calledCache).toBe(true);
   handler.stackIndexes.pop();
+});
+
+test('Proxy dialog', async () => {
+  const html = `<button type="button" data-bind="onclick:open">open</div>`;
+  class ViewModel {
+    async open() {
+      return await this.$openDialog("custom-dialog", { test:100 }, {"no-shadow-root":""});
+    }
+    async open2() {
+      return await this.$openDialog("custom-dialog", { test:150 });
+    }
+    async open3() {
+      return await this.$openDialog("custom-dialog");
+    }
+
+  }
+  customElements.define("custom-comp", generateComponentClass({html, ViewModel}));
+
+  const dialogHtml = `<button type="button" data-bind="onclick:close">close</div>`;
+  class DialogViewModel {
+    get data() {
+      return this.$props;
+    }
+    close() {
+      this.$closeDialog({test:200});
+    }
+    close2() {
+      this.$closeDialog();
+    }
+  }
+  customElements.define("custom-dialog", generateComponentClass({html:dialogHtml, ViewModel:DialogViewModel}));
+
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-comp no-shadow-root></custom-comp>
+  `;
+  const component = root.querySelector("custom-comp");
+  const openButton = component.querySelector("button");
+  document.body.appendChild(root);
+  await component.initialPromise;
+
+  setTimeout(async () => {
+    const dialog = document.body.querySelector("custom-dialog");
+    await dialog.initialPromise;
+    expect(dialog.hasAttribute("no-shadow-root")).toBe(true);
+    expect(dialog.props[Symbols.toObject]()).toEqual({test:100});
+    dialog.viewModel.close();
+  }, 10);
+  const retValue = await component.viewModel.open();
+  expect(retValue).toEqual({ test:200 });
+
+  setTimeout(async () => {
+    const dialog = document.body.querySelector("custom-dialog");
+    await dialog.initialPromise;
+    expect(dialog.props[Symbols.toObject]()).toEqual({test:150});
+    dialog.viewModel.close2();
+  }, 10);
+  const retValue2 = await component.viewModel.open2();
+  expect(retValue2).toEqual({test:150});
+
+  setTimeout(async () => {
+    const dialog = document.body.querySelector("custom-dialog");
+    await dialog.initialPromise;
+    expect(dialog.props[Symbols.toObject]()).toEqual({});
+    dialog.viewModel.close2();
+  }, 10);
+  const retValue3 = await component.viewModel.open3();
+  expect(retValue3).toEqual({});
 });
