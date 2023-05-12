@@ -9,15 +9,14 @@ export class Binder {
    * 
    * @param {Node[]} nodes
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
-   * @param {number[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static bind(nodes, component, contextBind, contextIndexes) {
+  static bind(nodes, component, context) {
     return nodes.flatMap(node => 
-      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, contextBind, contextIndexes) :
-      (node instanceof HTMLElement) ? BindToElement.bind(node, component, contextBind, contextIndexes) :
-      (node instanceof Comment) ? BindToText.bind(node, component, contextBind, contextIndexes) : 
+      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, context) :
+      (node instanceof HTMLElement) ? BindToElement.bind(node, component, context) :
+      (node instanceof Comment) ? BindToText.bind(node, component, context) : 
       utils.raise(`unknown node type`)
     );
   }

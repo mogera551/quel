@@ -6,25 +6,23 @@ export class BindToDom {
    * 
    * @param {Node} node
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
-   * @param {string[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]} 
    */
-  static bind(node, component, contextBind, contextIndexes) { }
+  static bind(node, component, context) { }
 
   /**
    * 
    * @param {Node} node 
    * @param {import("../component/Component.js").Component} component
    * @param {Object<string,any>} viewModel 
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
-   * @param {number[]} contextIndexes 
+   * @param {ContextInfo} context
    * @returns {(text:string, defaultName:string)=> import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static parseBindText = (node, component, viewModel, contextBind, contextIndexes) => 
+  static parseBindText = (node, component, viewModel, context) => 
     (text, defaultName) => 
       Parser.parse(text, defaultName)
-        .map(info => Factory.create(Object.assign(info, {node, component, viewModel, contextBind, contextIndexes:contextIndexes.slice()})));
+        .map(info => Factory.create(Object.assign(info, {node, component, viewModel, context})));
 
   /**
    * 

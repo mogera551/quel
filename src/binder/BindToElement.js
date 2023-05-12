@@ -49,18 +49,17 @@ export class BindToElement extends BindToDom {
    * 
    * @param {Node} node 
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
-   * @param {number[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static bind(node, component, contextBind, contextIndexes) {
+  static bind(node, component, context) {
     const viewModel = component.viewModel;
     const element = toHTMLElement(node);
     const bindText = element.dataset[DATASET_BIND_PROPERTY];
     const defaultName = getDefaultProperty(element);
 
     // パース
-    const parseBindText = this.parseBindText(node, component, viewModel, contextBind, contextIndexes);
+    const parseBindText = this.parseBindText(node, component, viewModel, context);
     const binds = parseBindText(bindText, defaultName);
     binds.forEach(this.applyUpdateNode);
 

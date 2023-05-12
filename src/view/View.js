@@ -13,7 +13,7 @@ export class View {
   static render(rootElement, component, template) {
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
     const nodes = Selector.getTargetNodes(template, content);
-    const binds = Binder.bind(nodes, component, null, []);
+    const binds = Binder.bind(nodes, component, { indexes:[], stack:[] });
     rootElement.appendChild(content);
     return binds;
   }

@@ -8,7 +8,7 @@ export class Context {
   static create() {
     return {
       indexes: [],
-      params: {},
+      stack: [],
     }
   }
   /**
@@ -19,21 +19,17 @@ export class Context {
     /**
      * @type {ContextInfo}
      */
-    const dst = {};
+    const dst = this.create();
     dst.indexes = src.indexes.slice();
-    dst.params = {};
-    for(const [ name, stacks ] of Object.entries(src.params)) {
-      dst.params[name] = [];
-      for(const srcParam of stacks) {
-        /**
-         * @type {ContextParam}
-         */
-        const dstParam = {};
-        dstParam.indexes = srcParam.indexes.slice();
-        dstParam.pos = srcParam.pos;
-        dstParam.propName = srcParam.propName;
-        dst.params[name].push(dstParam);
-      }
+    for(const srcParam of src.stack) {
+      /**
+       * @type {ContextParam}
+       */
+      const dstParam = {};
+      dstParam.indexes = srcParam.indexes.slice();
+      dstParam.pos = srcParam.pos;
+      dstParam.propName = srcParam.propName;
+      dst.stack.push(dstParam);
     }
     return dst;
   }

@@ -4,6 +4,7 @@ import { Symbols } from "../../src/viewModel/Symbols.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { Template } from "../../src/bindInfo/Template.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 test("BindToTemplate", () => {
   const parentNode = document.createElement("div");
@@ -28,14 +29,29 @@ test("BindToTemplate", () => {
       }
     }
   };
-  const binds = BindToTemplate.bind(node, component, null, []);
-  expect(binds).toEqual([
-    Object.assign(new Template, { 
-      component, viewModel, filters:[], contextIndexes:[], indexes:[], eventType:undefined, type:NodePropertyType.template,
-      lastViewModelValue:[], lastNodeValue:undefined,
-      contextBind:null, parentContextBind:null, positionContextIndexes:-1,
-     }),
-  ]);
+  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+  expect(binds.length).toBe(1);
+  expect(binds[0] instanceof Template).toBe(true);
+  expect(binds[0].node instanceof Comment).toBe(true);
+  expect(() => binds[0].element).toThrow("not HTMLElement");
+  expect(binds[0].nodeProperty).toBe("loop");
+  expect(binds[0].nodePropertyElements).toEqual(["loop"]);
+  expect(binds[0].component).toBe(component);
+  expect(binds[0].viewModel).toBe(viewModel);
+  expect(binds[0].viewModelProperty).toBe("aaa");
+  expect(binds[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
+  expect(binds[0].contextIndex).toBe(undefined);
+  expect(binds[0].isContextIndex).toBe(false);
+  expect(binds[0].filters).toEqual([]);
+  expect(binds[0].contextParam).toBe(undefined);
+  expect(binds[0].indexes).toEqual([]);
+  expect(binds[0].indexesString).toBe("");
+  expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
+  expect(binds[0].contextIndexes).toEqual([]);
+  expect(binds[0].lastNodeValue).toBe(undefined);
+  expect(binds[0].lastViewModelValue).toEqual([]);
+  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
+
 });
 
 test("BindToTemplate empty", () => {
@@ -61,7 +77,7 @@ test("BindToTemplate empty", () => {
       }
     }
   };
-  const binds = BindToTemplate.bind(node, component, null, []);
+  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   expect(binds).toEqual([])
 });
 
@@ -89,7 +105,7 @@ test("BindToTemplate throw", () => {
     }
   };
   expect(() => {
-    const binds = BindToTemplate.bind(node, component, null, []);
+    const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   }).toThrow();
 });
 

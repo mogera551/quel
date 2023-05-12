@@ -597,8 +597,10 @@ const Symbols = Object.assign({
 
   directlyCall: Symbol.for(`${name}:viewModel.directCall`),
   bindTo: Symbol.for(`${name}:componentModule.bindTo`),
-  bindProperty: Symbol.for(`${name}:componentModule.bindProperty`),
   notifyForDependentProps: Symbol.for(`${name}:viewModel.notifyForDependentProps`),
+
+  bindProperty: Symbol.for(`${name}:props.bindProperty`),
+  toObject: Symbol.for(`${name}:props.toObject`),
 }, DotNotationSymbols);
 
 class BindInfo {
@@ -618,14 +620,6 @@ class BindInfo {
   get element() {
     return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
   }
-  /**
-   * @type {BindInfo}
-   */
-  contextBind;
-  /**
-   * @type {BindInfo}
-   */
-  parentContextBind;
   /**
    * @type {string}
    */
@@ -665,18 +659,23 @@ class BindInfo {
   }
   set viewModelProperty(value) {
     this.#viewModelProperty = value;
-    this.#viewModelPropertyName = dotNotation.PropertyName.create(value);
-    if (dotNotation.RE_CONTEXT_INDEX.exec(value)) {
-      this.#contextIndex = Number(value.slice(1)) - 1;
-    } else {
-      this.#contextIndex = undefined;
-    }
+
+    this.#viewModelPropertyName = undefined;
+    this.#isContextIndex = undefined;
+    this.#contextIndex = undefined;
+    this.#contextParam = undefined;
+    this.#indexes = undefined;
+    this.#indexesString = undefined;
+    this.#viewModelPropertyKey = undefined;
   }
   /**
    * @type {import("../../modules/dot-notation/dot-notation.js").PropertyName}
    */
   #viewModelPropertyName;
   get viewModelPropertyName() {
+    if (typeof this.#viewModelPropertyName === "undefined") {
+      this.#viewModelPropertyName = PropertyName.create(this.#viewModelProperty);
+    }
     return this.#viewModelPropertyName;
   }
   /**
@@ -684,36 +683,63 @@ class BindInfo {
    */
   #contextIndex;
   get contextIndex() {
+    if (typeof this.#contextIndex === "undefined") {
+      if (this.isContextIndex === true) {
+        this.#contextIndex = Number(this.viewModelProperty.slice(1)) - 1;
+      }
+    }
     return this.#contextIndex;
   }
   /**
    * @type {boolean}
    */
+  #isContextIndex;
   get isContextIndex() {
-    return (typeof this.#contextIndex !== "undefined");
+    if (typeof this.#isContextIndex === "undefined") {
+      this.#isContextIndex = (dotNotation.RE_CONTEXT_INDEX.exec(this.viewModelProperty)) ? true : false;
+    }
+    return this.#isContextIndex;
   }
   /**
    * @type {import("../filter/Filter.js").Filter[]}
    */
   filters;
 
+  #contextParam;
+  get contextParam() {
+    if (typeof this.#contextParam === "undefined") {
+      const propName = this.viewModelPropertyName;
+      if (propName.level > 0) {
+        const wildcardProp = PropertyName.findNearestWildcard(propName);
+        this.#contextParam = wildcardProp ? this.context.stack.find(param => param.propName.name === wildcardProp.parentPath) : undefined;
+      }
+    }
+    return this.#contextParam;
+  }
+
   /**
    * @type {number[]}
    */
   #indexes;
   get indexes() {
+    if (typeof this.#indexes === "undefined") {
+      this.#indexes = this.contextParam?.indexes ?? [];
+    }
     return this.#indexes;
   }
   set indexes(value) {
-    this.#indexes = value;
-    this.#indexesString = value.toString();
-    this.#viewModelPropertyKey = this.#viewModelProperty + "\t" + this.#indexesString;
+//    this.#indexes = value;
+//    this.#indexesString = value.toString();
+//    this.#viewModelPropertyKey = this.#viewModelProperty + "\t" + this.#indexesString;
   }
   /**
    * @type {string}
    */
   #indexesString;
   get indexesString() {
+    if (typeof this.#indexesString === "undefined") {
+      this.#indexesString = this.indexes.toString();
+    }
     return this.#indexesString;
   }
   /**
@@ -721,16 +747,17 @@ class BindInfo {
    */
   #viewModelPropertyKey;
   get viewModelPropertyKey() {
+    if (typeof this.#viewModelPropertyKey === "undefined") {
+      this.#viewModelPropertyKey = this.viewModelProperty + "\t" + this.indexesString;
+    }
     return this.#viewModelPropertyKey;
   }
   /**
    * @type {number[]}
    */
-  contextIndexes;
-  /**
-   * @type {number}
-   */
-  positionContextIndexes = -1;
+  get contextIndexes() {
+    return this.context.indexes;
+  }
   
   /**
    * @type {any}
@@ -740,6 +767,11 @@ class BindInfo {
    * @type {any}
    */
   lastViewModelValue;
+
+  /**
+   * @type {ContextInfo}
+   */
+  context;
 
   /**
    * 
@@ -773,17 +805,11 @@ class BindInfo {
 
   /**
    * 
-   * @param {BindInfo} target 
+   * @param {PropertyName} propName 
    * @param {number} diff 
    */
-  changeIndexes(target, diff) {
-    const { indexes, contextIndexes } = this;
-    if (this.viewModelPropertyName.setOfParentPaths.has(target.viewModelProperty)) {
-      indexes[target.indexes.length] = indexes[target.indexes.length] + diff;
-    }
-    contextIndexes[target.contextIndexes.length] = contextIndexes[target.contextIndexes.length] + diff;
-    
- }
+  changeIndexes(propName, diff) {
+  }
 
   /**
    * 
@@ -1169,6 +1195,41 @@ class Selector {
 
 }
 
+class Context {
+
+  /**
+   * @returns {ContextInfo}
+   */
+  static create() {
+    return {
+      indexes: [],
+      stack: [],
+    }
+  }
+  /**
+   * 
+   * @param {ContextInfo} src 
+   */
+  static clone(src) {
+    /**
+     * @type {ContextInfo}
+     */
+    const dst = this.create();
+    dst.indexes = src.indexes.slice();
+    for(const srcParam of src.stack) {
+      /**
+       * @type {ContextParam}
+       */
+      const dstParam = {};
+      dstParam.indexes = srcParam.indexes.slice();
+      dstParam.pos = srcParam.pos;
+      dstParam.propName = srcParam.propName;
+      dst.stack.push(dstParam);
+    }
+    return dst;
+  }
+}
+
 /**
  * 
  * @param {Node} node 
@@ -1189,6 +1250,11 @@ class TemplateChild {
    * @type {DocumentFragment}
    */
   fragment;
+
+  /**
+   * @type {ContextInfo}
+   */
+  context;
   /**
    * @type {Node}
    */
@@ -1221,26 +1287,35 @@ class TemplateChild {
 
   /**
    * 
-   * @param {BindInfo} target 
+   * @param {PropertyName} propName 
    * @param {number} diff 
    */
-  changeIndexes(target, diff) {
-    this.binds.forEach(bind => bind.changeIndexes(target, diff));
+  changeIndexes(propName, diff) {
+    const changedParam = this.context.stack.find(param => param.propName.name === propName.name);
+    if (changedParam) {
+      this.context.indexes[changedParam.pos] += diff;
+      const paramPos = changedParam.indexes.length - 1;
+      changedParam.indexes[paramPos] += diff;
+      this.context.stack.filter(param => param.propName.setOfParentPaths.has(propName.name)).forEach(param => {
+        param.indexes[paramPos] += diff;
+      });
+    }
+    this.binds.forEach(bind => bind.changeIndexes(propName, diff));
   }
 
   /**
    * 
    * @param {Template} templateBind 
-   * @param {number[]} indexes 
+   * @param {ContextInfo} context
    * @returns {TemplateChild}
    */
-  static create(templateBind, indexes) {
+  static create(templateBind, context) {
     const {component, template} = templateBind;
     const rootElement = document.importNode(template.content, true);
     const nodes = Selector.getTargetNodes(template, rootElement);
-    const binds = Binder.bind(nodes, component, templateBind, indexes);
+    const binds = Binder.bind(nodes, component, context);
     const childNodes = Array.from(rootElement.childNodes);
-    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement });
+    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement, context });
   }
 }
 
@@ -1305,13 +1380,13 @@ class Template extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { contextIndexes, filters } = this;
+    const { filters, context } = this;
     const lastValue = this.lastViewModelValue;
     const newValue = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
-        this.templateChildren = [TemplateChild.create(this, contextIndexes)];
+        this.templateChildren = [TemplateChild.create(this, context)];
         this.appendToParent();
       } else {
         this.templateChildren = [];
@@ -1328,7 +1403,7 @@ class Template extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { contextIndexes, filters, templateChildren } = this;
+    const { filters, templateChildren, context } = this;
     /**
      * @type {any[]}
      */
@@ -1350,6 +1425,14 @@ class Template extends BindInfo {
      */
     const lastIndexByNewIndex = new Map;
     const moveOrCreateIndexes = [];
+
+    // コンテキスト用のデータ
+    const pos = context.indexes.length;
+    const propName = this.viewModelPropertyName;
+    const parentProp = PropertyName.findNearestWildcard(propName)?.parentPath;
+    const parentContext = parentProp ? context.stack.find(context => context.propName.name === parentProp) : undefined;
+    const parentIndexes = parentContext?.indexes ?? [];
+
     // 新しくテンプレート子要素のリストを作成する
     /**
      * @type {TemplateChild[]}
@@ -1360,14 +1443,17 @@ class Template extends BindInfo {
         // 元のインデックスがない場合、新規
         lastIndexByNewIndex.set(newIndex, undefined);
         moveOrCreateIndexes.push(newIndex);
-        return TemplateChild.create(this, contextIndexes.concat(newIndex));
+        const newContext = Context.clone(context);
+        newContext.indexes.push(newIndex);
+        newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
+        return TemplateChild.create(this, newContext);
       } else {
         // 元のインデックスがある場合、子要素のループインデックスを書き換え
         // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素
         const lastIndex = lastIndexes.shift();
         lastIndexByNewIndex.set(newIndex, lastIndex);
         const templateChild = templateChildren[lastIndex];
-        (newIndex !== lastIndex) && templateChild.changeIndexes(this, newIndex - lastIndex);
+        (newIndex !== lastIndex) && templateChild.changeIndexes(this.viewModelPropertyName, newIndex - lastIndex);
         const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
         if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
           moveOrCreateIndexes.push(newIndex);
@@ -1398,12 +1484,12 @@ class Template extends BindInfo {
 
   /**
    * 
-   * @param {BindInfo} target 
+   * @param {PropertyName} propName 
    * @param {number} diff 
    */
-  changeIndexes(target, diff) {
-    super.changeIndexes(target, diff);
-    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(target, diff));
+  changeIndexes(propName, diff) {
+    super.changeIndexes(propName, diff);
+    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(propName, diff));
   }
 }
 
@@ -1494,7 +1580,7 @@ class Event extends BindInfo {
     const {component, element, eventType, viewModel, viewModelProperty} = this;
     element.addEventListener(eventType, (event) => {
       event.stopPropagation();
-      const contextIndexes = this.contextIndexes;
+      const contextIndexes = this.context.indexes;
       const process = new ProcessData(
         viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, contextIndexes, event]
       );
@@ -1615,35 +1701,23 @@ class Factory {
    * viewModel:ViewModel,
    * viewModelProperty:string,
    * filters:Filter[],
-   * contextBind:import("../bindInfo/BindInfo.js").BindInfo,
-   * contextIndexes:number[],
+   * context:ContextInfo
    * }}
    * @returns {import("../bindInfo/BindInfo.js").BindInfo}
    */
-  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, contextBind, contextIndexes}) {
-    const bindInfo = {
-      component, node, nodeProperty, viewModel, viewModelProperty, filters, 
-      contextBind, parentContextBind:null, contextIndexes, positionContextIndexes:-1
+  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, context}) {
+    const bindData = {
+      component, node, nodeProperty, viewModel, viewModelProperty, filters, context
     };
-    const propName = dotNotation.PropertyName.create(viewModelProperty);
-    if (propName.level > 0) {
-      let parentContextBind = contextBind;
-      while(parentContextBind != null) {
-        const parentPropName = dotNotation.PropertyName.create(parentContextBind.viewModelProperty);
-        if ((parentPropName.level + 1) === propName.level
-         && propName.setOfParentPaths.has(parentContextBind.viewModelProperty)) break;
-        parentContextBind = parentContextBind.contextBind;
-      }
-      if (parentContextBind === null) utils.raise(`not found parent contextBind, viewModelProperty = ${viewModelProperty}`);
-      const positionContextIndexes = parentContextBind.contextIndexes.length;
-      bindInfo.indexes = parentContextBind.indexes.concat(contextIndexes[positionContextIndexes]);
-      bindInfo.positionContextIndexes = positionContextIndexes;
-      bindInfo.parentContextBind = parentContextBind;
-    } else {
-      bindInfo.indexes = [];
-    }
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
-    return creatorByType.get(nodeInfo.type)(bindInfo, nodeInfo);
+    /**
+     * @type {import("../bindInfo/BindInfo.js").BindInfo}
+     */
+    const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
+    if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {
+      utils.raise(`${bindInfo.viewModelPropertyName.name} be outside loop`);
+    }
+    return bindInfo;
   }
 }
 
@@ -1760,25 +1834,23 @@ class BindToDom {
    * 
    * @param {Node} node
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
-   * @param {string[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]} 
    */
-  static bind(node, component, contextBind, contextIndexes) { }
+  static bind(node, component, context) { }
 
   /**
    * 
    * @param {Node} node 
    * @param {import("../component/Component.js").Component} component
    * @param {Object<string,any>} viewModel 
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
-   * @param {number[]} contextIndexes 
+   * @param {ContextInfo} context
    * @returns {(text:string, defaultName:string)=> import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static parseBindText = (node, component, viewModel, contextBind, contextIndexes) => 
+  static parseBindText = (node, component, viewModel, context) => 
     (text, defaultName) => 
       Parser.parse(text, defaultName)
-        .map(info => Factory.create(Object.assign(info, {node, component, viewModel, contextBind, contextIndexes:contextIndexes.slice()})));
+        .map(info => Factory.create(Object.assign(info, {node, component, viewModel, context})));
 
   /**
    * 
@@ -1802,17 +1874,16 @@ class BindToTemplate extends BindToDom {
    * 
    * @param {Node} node 
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
-   * @param {number[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static bind(node, component, contextBind, contextIndexes) {
+  static bind(node, component, context) {
     const viewModel = component.viewModel;
     const template = toHTMLTemplateElement(node);
     const bindText = template.dataset[DATASET_BIND_PROPERTY$1];
 
     // パース
-    const parseBindText = this.parseBindText(node, component, viewModel, contextBind, contextIndexes);
+    const parseBindText = this.parseBindText(node, component, viewModel, context);
     let binds = parseBindText(bindText, "");
     binds = binds.length > 0 ? [ binds[0] ] : [];
     binds.forEach(this.applyUpdateNode);
@@ -1866,18 +1937,17 @@ class BindToElement extends BindToDom {
    * 
    * @param {Node} node 
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
-   * @param {number[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static bind(node, component, contextBind, contextIndexes) {
+  static bind(node, component, context) {
     const viewModel = component.viewModel;
     const element = toHTMLElement(node);
     const bindText = element.dataset[DATASET_BIND_PROPERTY];
     const defaultName = getDefaultProperty(element);
 
     // パース
-    const parseBindText = this.parseBindText(node, component, viewModel, contextBind, contextIndexes);
+    const parseBindText = this.parseBindText(node, component, viewModel, context);
     const binds = parseBindText(bindText, defaultName);
     binds.forEach(this.applyUpdateNode);
 
@@ -1924,11 +1994,10 @@ class BindToText extends BindToDom {
    * 
    * @param {Node} node 
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
-   * @param {number[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static bind(node, component, contextBind, contextIndexes) {
+  static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
     const viewModel = component.viewModel;
     const comment = toComment(node);
@@ -1937,7 +2006,7 @@ class BindToText extends BindToDom {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    const parseBindText = this.parseBindText(textNode, component, viewModel, contextBind, contextIndexes);
+    const parseBindText = this.parseBindText(textNode, component, viewModel, context);
     const binds = parseBindText(bindText, DEFAULT_PROPERTY);
     binds.forEach(this.applyUpdateNode);
 
@@ -1951,15 +2020,14 @@ class Binder {
    * 
    * @param {Node[]} nodes
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind
-   * @param {number[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static bind(nodes, component, contextBind, contextIndexes) {
+  static bind(nodes, component, context) {
     return nodes.flatMap(node => 
-      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, contextBind, contextIndexes) :
-      (node instanceof HTMLElement) ? BindToElement.bind(node, component, contextBind, contextIndexes) :
-      (node instanceof Comment) ? BindToText.bind(node, component, contextBind, contextIndexes) : 
+      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, context) :
+      (node instanceof HTMLElement) ? BindToElement.bind(node, component, context) :
+      (node instanceof Comment) ? BindToText.bind(node, component, context) : 
       utils.raise(`unknown node type`)
     );
   }
@@ -1977,7 +2045,7 @@ class View {
   static render(rootElement, component, template) {
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
     const nodes = Selector.getTargetNodes(template, content);
-    const binds = Binder.bind(nodes, component, null, []);
+    const binds = Binder.bind(nodes, component, { indexes:[], stack:[] });
     rootElement.appendChild(content);
     return binds;
   }
@@ -2267,6 +2335,8 @@ const setOfApiFunctions = new Set([
 const PROPS_PROPERTY = "$props";
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
+const OPEN_DIALOG_METHOD = "$openDialog";
+const CLOSE_DIALOG_METHOD = "$closeDialog";
 
 /**
  * @type {Set<string>}
@@ -2275,6 +2345,8 @@ const setOfProperties = new Set([
   PROPS_PROPERTY,
   GLOBALS_PROPERTY,
   DEPENDENT_PROPS_PROPERTY,
+  OPEN_DIALOG_METHOD,
+  CLOSE_DIALOG_METHOD,
 ]);
 
 /**
@@ -2385,9 +2457,13 @@ class ViewModelHandler extends dotNotation.Handler {
         return this.component.props;
       } else if (propName.name === GLOBALS_PROPERTY) {
         return this.component.globals;
-//      } else if (propName.name === DEPENDENT_PROPS_PROPERTY) {
-      } else {
+      } else if (propName.name === DEPENDENT_PROPS_PROPERTY) {
         return Reflect.get(target, DEPENDENT_PROPS_PROPERTY, receiver);
+      } else if (propName.name === OPEN_DIALOG_METHOD) {
+        return (name, data = {}, attributes = {}) => Reflect.apply(this.#openDialog, this, [target, {name, data, attributes}, receiver])
+//      } else if (propName.name === CLOSE_DIALOG_METHOD) {
+      } else {
+        return (data = {}) => Reflect.apply(this.#closeDialog, this, [target, data, receiver]);
       }
     } else {
       if (this.#setOfAccessorProperties.has(propName.name) && this.#cacheable) {
@@ -2436,6 +2512,34 @@ class ViewModelHandler extends dotNotation.Handler {
    */
   #addNotify(target, propertyAccess, receiver) {
     this.#component.updateSlot.addNotify(propertyAccess);
+  }
+
+  /**
+   * 
+   * @param {any} target 
+   * @param {{name:string,data:object,attributes:any}} param1 
+   * @param {Proxy} receiver 
+   */
+  async #openDialog(target, {name, data, attributes}, receiver) {
+    const tagName = utils.toKebabCase(name);
+    const dialog = document.createElement(tagName);
+    Object.entries(attributes).forEach(([key, value]) => {
+      dialog.setAttribute(key, value);
+    });
+    Object.entries(data).forEach(([key, value]) => {
+      dialog.props[Symbols.bindProperty](key, key, []);
+      dialog.props[key] = value;
+    });
+    document.body.appendChild(dialog);
+    return dialog.alivePromise;
+  }
+
+  #closeDialog(target, data, receiver) {
+    const component = this.#component;
+    Object.entries(data).forEach(([key, value]) => {
+      component.props[key] = value;
+    });
+    component.parentNode.removeChild(component);
   }
 
   /**
@@ -2764,13 +2868,33 @@ let Handler$1 = class Handler {
    */
   #data = new Proxy({}, new dotNotation.Handler);
 
+  get hasParent() {
+    return this.#component?.parentComponent?.viewModel != null;
+  }
   /**
    * @type {{key:string,value:any}|ViewModel}
    */
   get data() {
-    const data = this.#component?.parentComponent?.viewModel ?? this.#data;
+    const data = this.hasParent ? this.#component.parentComponent.viewModel : this.#data;
 //    (data[Symbols.isSupportDotNotation]) || utils.raise(`data is not support dot-notation`);
     return data;
+  }
+  /**
+   * 
+   */
+  get object() {
+    const retObject = {};
+    if (this.hasParent) {
+      const viewModel = this.#component.parentComponent.viewModel;
+      for(const [key, bindAccess] of this.#bindPropByThisProp.entries()) {
+        const { bindProp, bindIndexes } = bindAccess;
+        retObject[key] = viewModel[Symbols.directlyGet](bindProp, bindIndexes);      }
+    } else {
+      for(const [key, value] of Object.entries(this.#data)) {
+        retObject[key] = value;
+      }
+    }
+    return retObject;
   }
 
   /**
@@ -2792,14 +2916,20 @@ let Handler$1 = class Handler {
     if (prop === Symbols.bindProperty) {
       return (thisProp, bindProp, bindIndexes) => 
         this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
+    } else if (prop === Symbols.toObject) {
+      return () => this.object;
     }
     const { data } = this;
-    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-    if (bindProp) {
-      return data[Symbols.directlyGet](bindProp, bindIndexes);
+    if (this.hasParent) {
+      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (bindProp) {
+        return data[Symbols.directlyGet](bindProp, bindIndexes);
+      } else {
+        console.error(`undefined property ${prop}`);
+        return undefined;
+      }
     } else {
-      console.log(`undefined property ${prop}`);
-      return undefined;
+      return Reflect.get(data, prop);
     }
   }
 
@@ -2813,12 +2943,16 @@ let Handler$1 = class Handler {
    */
   set(target, prop, value, receiver) {
     const { data } = this;
-    const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-    if (bindProp) {
-      return data[Symbols.directlySet](bindProp, bindIndexes, value);
+    if (this.hasParent) {
+      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (bindProp) {
+        return data[Symbols.directlySet](bindProp, bindIndexes, value);
+      } else {
+        console.error(`undefined property ${prop}`);
+        return false;
+      }
     } else {
-      console.log(`undefined property ${prop}`);
-      return false;
+      return Reflect.set(data, prop, value);
     }
   }
 };
@@ -3639,7 +3773,7 @@ class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this.#aliveResolve && this.#aliveResolve(this.props);
+    this.#aliveResolve && this.#aliveResolve(this.props[Symbols.toObject]());
   }
 
   /**

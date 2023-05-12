@@ -7,11 +7,13 @@
  * 
  * @typedef {Object<string,any>} ViewModel 
  * 
+ * @typedef {import("../modules/dot-notation/dot-notation.js").PropertyName} PropertyName
+ * 
  * @typedef {{
- *   propName:import("../modules/dot-notation/dot-notation.js").PropertyName,
+ *   propName:PropertyName,
  *   indexes:number[],
  *   pos:number,
  * }} ContextParam
  * 
- * @typedef {{indexes:number[],params:Object<string,ContextParam[]>}} ContextInfo
+ * @typedef {{indexes:number[],stack:ContextParam[]}} ContextInfo
  */

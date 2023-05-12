@@ -5,6 +5,8 @@ import { BindInfo } from "./BindInfo.js";
 import { Binder } from "../binder/Binder.js";
 import { Selector } from "../binder/Selector.js";
 import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
+import { Context } from "../context/Context.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /**
  * 
@@ -26,6 +28,11 @@ export class TemplateChild {
    * @type {DocumentFragment}
    */
   fragment;
+
+  /**
+   * @type {ContextInfo}
+   */
+  context;
   /**
    * @type {Node}
    */
@@ -58,26 +65,35 @@ export class TemplateChild {
 
   /**
    * 
-   * @param {BindInfo} target 
+   * @param {PropertyName} propName 
    * @param {number} diff 
    */
-  changeIndexes(target, diff) {
-    this.binds.forEach(bind => bind.changeIndexes(target, diff));
+  changeIndexes(propName, diff) {
+    const changedParam = this.context.stack.find(param => param.propName.name === propName.name);
+    if (changedParam) {
+      this.context.indexes[changedParam.pos] += diff;
+      const paramPos = changedParam.indexes.length - 1;
+      changedParam.indexes[paramPos] += diff;
+      this.context.stack.filter(param => param.propName.setOfParentPaths.has(propName.name)).forEach(param => {
+        param.indexes[paramPos] += diff;
+      });
+    }
+    this.binds.forEach(bind => bind.changeIndexes(propName, diff));
   }
 
   /**
    * 
    * @param {Template} templateBind 
-   * @param {number[]} indexes 
+   * @param {ContextInfo} context
    * @returns {TemplateChild}
    */
-  static create(templateBind, indexes) {
+  static create(templateBind, context) {
     const {component, template} = templateBind;
     const rootElement = document.importNode(template.content, true);
     const nodes = Selector.getTargetNodes(template, rootElement);
-    const binds = Binder.bind(nodes, component, templateBind, indexes);
+    const binds = Binder.bind(nodes, component, context);
     const childNodes = Array.from(rootElement.childNodes);
-    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement });
+    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement, context });
   }
 }
 
@@ -142,13 +158,13 @@ export class Template extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { contextIndexes, filters } = this;
+    const { filters, context } = this;
     const lastValue = this.lastViewModelValue;
     const newValue = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
-        this.templateChildren = [TemplateChild.create(this, contextIndexes)];
+        this.templateChildren = [TemplateChild.create(this, context)];
         this.appendToParent();
       } else {
         this.templateChildren = [];
@@ -165,7 +181,7 @@ export class Template extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { contextIndexes, filters, templateChildren } = this;
+    const { filters, templateChildren, context } = this;
     /**
      * @type {any[]}
      */
@@ -187,6 +203,14 @@ export class Template extends BindInfo {
      */
     const lastIndexByNewIndex = new Map;
     const moveOrCreateIndexes = [];
+
+    // コンテキスト用のデータ
+    const pos = context.indexes.length;
+    const propName = this.viewModelPropertyName;
+    const parentProp = PropertyName.findNearestWildcard(propName)?.parentPath;
+    const parentContext = parentProp ? context.stack.find(context => context.propName.name === parentProp) : undefined;
+    const parentIndexes = parentContext?.indexes ?? [];
+
     // 新しくテンプレート子要素のリストを作成する
     /**
      * @type {TemplateChild[]}
@@ -197,14 +221,17 @@ export class Template extends BindInfo {
         // 元のインデックスがない場合、新規
         lastIndexByNewIndex.set(newIndex, undefined);
         moveOrCreateIndexes.push(newIndex);
-        return TemplateChild.create(this, contextIndexes.concat(newIndex));
+        const newContext = Context.clone(context);
+        newContext.indexes.push(newIndex);
+        newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos})
+        return TemplateChild.create(this, newContext);
       } else {
         // 元のインデックスがある場合、子要素のループインデックスを書き換え
         // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素
         const lastIndex = lastIndexes.shift();
         lastIndexByNewIndex.set(newIndex, lastIndex);
         const templateChild = templateChildren[lastIndex];
-        (newIndex !== lastIndex) && templateChild.changeIndexes(this, newIndex - lastIndex);
+        (newIndex !== lastIndex) && templateChild.changeIndexes(this.viewModelPropertyName, newIndex - lastIndex);
         const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
         if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
           moveOrCreateIndexes.push(newIndex);
@@ -235,11 +262,11 @@ export class Template extends BindInfo {
 
   /**
    * 
-   * @param {BindInfo} target 
+   * @param {PropertyName} propName 
    * @param {number} diff 
    */
-  changeIndexes(target, diff) {
-    super.changeIndexes(target, diff);
-    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(target, diff));
+  changeIndexes(propName, diff) {
+    super.changeIndexes(propName, diff);
+    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(propName, diff));
   }
 }

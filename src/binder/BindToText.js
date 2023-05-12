@@ -16,11 +16,10 @@ export class BindToText extends BindToDom {
    * 
    * @param {Node} node 
    * @param {import("../component/Component.js").Component} component
-   * @param {import("../bindInfo/BindInfo.js").BindInfo?} contextBind 
-   * @param {number[]} contextIndexes
+   * @param {ContextInfo} context
    * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  static bind(node, component, contextBind, contextIndexes) {
+  static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
     const viewModel = component.viewModel;
     const comment = toComment(node);
@@ -29,7 +28,7 @@ export class BindToText extends BindToDom {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    const parseBindText = this.parseBindText(textNode, component, viewModel, contextBind, contextIndexes);
+    const parseBindText = this.parseBindText(textNode, component, viewModel, context);
     const binds = parseBindText(bindText, DEFAULT_PROPERTY);
     binds.forEach(this.applyUpdateNode);
 

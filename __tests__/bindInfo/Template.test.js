@@ -2,6 +2,7 @@ import { Template, TemplateChild } from "../../src/bindInfo/Template.js";
 import { Symbols } from "../../src/viewModel/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 const viewModel = {
   "aaa": [10,20,30],
@@ -60,8 +61,7 @@ test("Template if", () => {
   template.viewModel = viewModel;
   template.viewModelProperty = "bbb";
   template.filters = [];
-  template.indexes = [];
-  template.contextIndexes = [];
+  template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
 
   template.updateNode();
@@ -94,8 +94,7 @@ test("Template loop no binds", () => {
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
-  template.indexes = [];
-  template.contextIndexes = [];
+  template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
 
   template.updateNode();
@@ -129,8 +128,7 @@ test("Template loop binds", () => {
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
-  template.indexes = [];
-  template.contextIndexes = [];
+  template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
 
   template.updateNode();
@@ -209,8 +207,7 @@ test("Template loop loop binds", () => {
   template.viewModel = viewModel;
   template.viewModelProperty = "ccc";
   template.filters = [];
-  template.indexes = [];
-  template.contextIndexes = [];
+  template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
 
   template.updateNode();
@@ -344,8 +341,7 @@ test("Template loop in loop binds", () => {
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
-  template.indexes = [];
-  template.contextIndexes = [];
+  template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
 
   template.updateNode();
@@ -528,8 +524,7 @@ test("Template loop throw", () => {
     template.viewModel = viewModel;
     template.viewModelProperty = "aaa";
     template.filters = [];
-    template.indexes = [];
-    template.contextIndexes = [];
+    template.context = { indexes:[], stack:[] };
   }).toThrow();
 });
 
@@ -550,8 +545,7 @@ test("Template loop throw2", () => {
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
-  template.indexes = [];
-  template.contextIndexes = [];
+  template.context = { indexes:[], stack:[] };
 
   expect(() => {
     template.updateNode();
@@ -575,9 +569,410 @@ test("Template loop array undefined", () => {
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
-  template.indexes = [];
-  template.contextIndexes = [];
+  template.context = { indexes:[], stack:[] };
 
   template.updateNode();
   expect(template.templateChildren.length).toBe(0);
 });
+
+test("Template loop changeIndexes", () => {
+  const parentNode = document.createElement("div");
+  parentNode.innerHTML = `
+<template data-bind="loop:aaa">
+  <template data-bind="loop:ccc">
+    <template data-bind="loop:ccc.*">
+      <!--@@ccc.*.*-->
+    </template>  
+  </template>  
+</template>  
+  `;
+  const templateNode = parentNode.querySelector("template[data-bind='loop:aaa']");
+
+  viewModel.aaa = [10,20,30];
+  viewModel.ccc = [
+    [11,21],
+    [12,22],
+  ];
+
+  const template = new Template;
+  template.component = component;
+  template.node = templateNode;
+  template.nodeProperty = "loop";
+  template.viewModel = viewModel;
+  template.viewModelProperty = "aaa";
+  template.filters = [];
+  template.context = { indexes:[], stack:[] };
+
+  template.updateNode();
+  expect(template.templateChildren.length).toBe(3);
+  expect(template.templateChildren[0].context.indexes).toEqual([0]);
+  expect(template.templateChildren[0].context.stack).toEqual([
+    { indexes:[0], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[0].binds.length).toBe(1);
+  expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([0,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[0], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([0,0,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[0], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([0,0,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[0], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  expect(template.templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([0,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[0], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds.length).toBe(1);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([0,1,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[0], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([0,1,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[0], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  expect(template.templateChildren[1].context.indexes).toEqual([1]);
+  expect(template.templateChildren[1].context.stack).toEqual([
+    { indexes:[1], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([1,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[1], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds.length).toBe(1);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([1,0,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[1], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([1,0,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[1], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  expect(template.templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([1,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[1], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds.length).toBe(1);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([1,1,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[1], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([1,1,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[1], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  expect(template.templateChildren[2].context.indexes).toEqual([2]);
+  expect(template.templateChildren[2].context.stack).toEqual([
+    { indexes:[2], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].context.indexes).toEqual([2,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[2], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds.length).toBe(1);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([2,0,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[2], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([2,0,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[2], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  expect(template.templateChildren[2].binds[0].templateChildren[1].context.indexes).toEqual([2,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[2], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds.length).toBe(1);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren.length).toBe(2);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([2,1,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[2], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([2,1,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[2], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  template.changeIndexes(PropertyName.create("aaa"), 5);
+  expect(template.templateChildren[0].context.indexes).toEqual([5]);
+  expect(template.templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([5,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([5,0,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([5,0,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  expect(template.templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([5,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([5,1,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([5,1,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].context.indexes).toEqual([6]);
+  expect(template.templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([6,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([6,0,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([6,0,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([6,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([6,1,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([6,1,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].context.indexes).toEqual([7]);
+  expect(template.templateChildren[2].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].context.indexes).toEqual([7,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([7,0,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([7,0,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[0], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[0,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].context.indexes).toEqual([7,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([7,1,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([7,1,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[1], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[1,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+  template.changeIndexes(PropertyName.create("ccc"), 3);
+  expect(template.templateChildren[0].context.indexes).toEqual([5]);
+  expect(template.templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([5,3]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([5,3,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[3,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([5,3,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[3,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([5,4]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([5,4,0]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[4,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([5,4,1]);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[5], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[4,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].context.indexes).toEqual([6]);
+  expect(template.templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([6,3]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([6,3,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[3,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([6,3,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[3,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([6,4]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([6,4,0]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[4,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([6,4,1]);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[6], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[4,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].context.indexes).toEqual([7]);
+  expect(template.templateChildren[2].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") }
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].context.indexes).toEqual([7,3]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[0].context.indexes).toEqual([7,3,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[3,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[1].context.indexes).toEqual([7,3,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[3], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[3,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].context.indexes).toEqual([7,4]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[0].context.indexes).toEqual([7,4,0]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[0].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[4,0], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[1].context.indexes).toEqual([7,4,1]);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].templateChildren[1].context.stack).toEqual([
+    { indexes:[7], pos:0, propName:PropertyName.create("aaa") },
+    { indexes:[4], pos:1, propName:PropertyName.create("ccc") },
+    { indexes:[4,1], pos:2, propName:PropertyName.create("ccc.*") },
+  ]);
+
+});
+

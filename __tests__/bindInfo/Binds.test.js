@@ -3,6 +3,7 @@ import { Binds } from "../../src/bindInfo/Binds.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { Template, TemplateChild } from "../../src/bindInfo/Template.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 const viewModel = {
   "aaa": [10,20,30],
@@ -41,8 +42,9 @@ test("Binds getTemplateBinds", () => {
   rootBind.node = null;
   rootBind.nodeProperty = "value";
   rootBind.viewModel = viewModel;
-  rootBind.viewModelProperty = "aaa";
   rootBind.filters = [];
+  rootBind.context = { indexes:[], stack:[] };
+  rootBind.viewModelProperty = "aaa";
   binds.push(rootBind);
   const templateBinds = Binds.getTemplateBinds(binds, new Set());
   expect(templateBinds).toEqual([]);
@@ -59,9 +61,9 @@ test("Binds getTemplateBinds template", () => {
   templateBind.node = templateElement;
   templateBind.nodeProperty = "value";
   templateBind.viewModel = viewModel;
-  templateBind.viewModelProperty = "ccc";
-  templateBind.indexes = [];
   templateBind.filters = [];
+  templateBind.context = { indexes:[], stack:[] };
+  templateBind.viewModelProperty = "ccc";
   binds.push(templateBind);
 
   const templateBinds = Binds.getTemplateBinds(binds, new Set());
@@ -79,10 +81,9 @@ test("Binds getTemplateBinds template", () => {
   templateBind.node = templateElement;
   templateBind.nodeProperty = "loop";
   templateBind.viewModel = viewModel;
-  templateBind.viewModelProperty = "aaa";
-  templateBind.indexes = [];
-  templateBind.contextIndexes = [];
   templateBind.filters = [];
+  templateBind.context = { indexes:[], stack:[] };
+  templateBind.viewModelProperty = "aaa";
   templateBind.updateNode();
   binds.push(templateBind);
 
@@ -100,6 +101,7 @@ test("Binds getTemplateBinds tree", () => {
   rootBind.viewModel = viewModel;
   rootBind.viewModelProperty = "aaa";
   rootBind.filters = [];
+  rootBind.context = { indexes:[], stack:[] };
   binds.push(rootBind);
 
   const templateBind = new Template;
@@ -110,8 +112,7 @@ test("Binds getTemplateBinds tree", () => {
   templateBind.nodeProperty = "value";
   templateBind.viewModel = viewModel;
   templateBind.viewModelProperty = "aaa";
-  templateBind.indexes = [];
-  templateBind.filters = [];
+  templateBind.context = { indexes:[], stack:[] };
   binds.push(templateBind);
 
   const templateBind2 = new Template;
@@ -122,8 +123,7 @@ test("Binds getTemplateBinds tree", () => {
   templateBind2.nodeProperty = "value";
   templateBind2.viewModel = viewModel;
   templateBind2.viewModelProperty = "bbb";
-  templateBind2.indexes = [];
-  templateBind2.filters = [];
+  templateBind2.context = { indexes:[0], stack:[{ indexes:[0], pos:0, propName:PropertyName.create("aaa") }] };
   binds.push(templateBind2);
 
   const templateChild = new TemplateChild;
@@ -135,6 +135,14 @@ test("Binds getTemplateBinds tree", () => {
   templateBind3.nodeProperty = "value";
   templateBind3.viewModel = viewModel;
   templateBind3.viewModelProperty = "bbb.*";
+  templateBind3.context = { 
+    indexes:[0, 0], 
+    stack:[
+      { indexes:[0], pos:0, propName:PropertyName.create("aaa") },
+      { indexes:[0], pos:1, propName:PropertyName.create("bbb") },
+    ] 
+  };
+
   templateBind3.indexes = [0];
   templateBind3.filters = [];
   templateChild.binds = [templateBind3];
@@ -160,9 +168,8 @@ test("Binds applyToNode loop", () => {
   templateBind.nodeProperty = "loop";
   templateBind.viewModel = viewModel;
   templateBind.viewModelProperty = "aaa";
-  templateBind.indexes = [];
-  templateBind.contextIndexes = [];
   templateBind.filters = [];
+  templateBind.context = { indexes:[], stack:[] };
   templateBind.updateNode();
   expect(templateBind.templateChildren.length).toBe(3);
   binds.push(templateBind);
@@ -192,7 +199,7 @@ test("Binds applyToNode loop", () => {
   expect(templateBind.templateChildren[1].binds[0].contextIndexes).toEqual([1]);
 });
 
-test("Binds getTemplateBinds", () => {
+test("Binds applyToNode", () => {
   const binds = [];
   const element = document.createElement("div");
   const rootBind = new LevelTop;
@@ -201,9 +208,8 @@ test("Binds getTemplateBinds", () => {
   rootBind.nodeProperty = "textContent";
   rootBind.viewModel = viewModel;
   rootBind.viewModelProperty = "bbb";
-  rootBind.indexes = [];
-  rootBind.contextIndexes = [];
   rootBind.filters = [];
+  rootBind.context = { indexes:[], stack:[] };
   rootBind.updateNode();
   binds.push(rootBind);
   expect(element.textContent).toBe("100");

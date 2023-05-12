@@ -45,34 +45,22 @@ export class Factory {
    * viewModel:ViewModel,
    * viewModelProperty:string,
    * filters:Filter[],
-   * contextBind:import("../bindInfo/BindInfo.js").BindInfo,
-   * contextIndexes:number[],
+   * context:ContextInfo
    * }}
    * @returns {import("../bindInfo/BindInfo.js").BindInfo}
    */
-  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, contextBind, contextIndexes}) {
-    const bindInfo = {
-      component, node, nodeProperty, viewModel, viewModelProperty, filters, 
-      contextBind, parentContextBind:null, contextIndexes, positionContextIndexes:-1
+  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, context}) {
+    const bindData = {
+      component, node, nodeProperty, viewModel, viewModelProperty, filters, context
     };
-    const propName = dotNotation.PropertyName.create(viewModelProperty);
-    if (propName.level > 0) {
-      let parentContextBind = contextBind;
-      while(parentContextBind != null) {
-        const parentPropName = dotNotation.PropertyName.create(parentContextBind.viewModelProperty);
-        if ((parentPropName.level + 1) === propName.level
-         && propName.setOfParentPaths.has(parentContextBind.viewModelProperty)) break;
-        parentContextBind = parentContextBind.contextBind;
-      }
-      if (parentContextBind === null) utils.raise(`not found parent contextBind, viewModelProperty = ${viewModelProperty}`);
-      const positionContextIndexes = parentContextBind.contextIndexes.length;
-      bindInfo.indexes = parentContextBind.indexes.concat(contextIndexes[positionContextIndexes]);
-      bindInfo.positionContextIndexes = positionContextIndexes;
-      bindInfo.parentContextBind = parentContextBind;
-    } else {
-      bindInfo.indexes = [];
-    }
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
-    return creatorByType.get(nodeInfo.type)(bindInfo, nodeInfo);
+    /**
+     * @type {import("../bindInfo/BindInfo.js").BindInfo}
+     */
+    const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
+    if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {
+      utils.raise(`${bindInfo.viewModelPropertyName.name} be outside loop`);
+    }
+    return bindInfo;
   }
 }
