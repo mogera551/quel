@@ -273,9 +273,12 @@ class PropertyName {
    * @returns {PropertyName}
    */
   static findNearestWildcard(propName) {
-    if (propName.lastPathName === WILDCARD) return propName;
-    if (propName.parentPath === "") return undefined;
-    return this.findNearestWildcard(PropertyName.create(propName.parentPath));
+    let curProp = propName;
+    while(true) {
+      if (curProp.lastPathName === WILDCARD) return curProp;
+      if (curProp.parentPath === "") return undefined;
+      curProp = PropertyName.create(curProp.parentPath);
+    }
   }
 
   /**
@@ -2045,7 +2048,7 @@ class View {
   static render(rootElement, component, template) {
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
     const nodes = Selector.getTargetNodes(template, content);
-    const binds = Binder.bind(nodes, component, { indexes:[], stack:[] });
+    const binds = Binder.bind(nodes, component, Context.create());
     rootElement.appendChild(content);
     return binds;
   }
