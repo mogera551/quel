@@ -11,7 +11,6 @@ import { Radio } from "./Radio.js";
 import { Checkbox } from "./Checkbox.js";
 import { Template } from "./Template.js";
 import { Event } from "./Event.js";
-import { dotNotation } from "../../modules/imports.js";
 import { ComponentBind } from "./Component.js";
 
 const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);

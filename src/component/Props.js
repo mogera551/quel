@@ -1,7 +1,6 @@
 import "../types.js";
-import  { utils } from "../utils.js";
 import { Symbols } from "../viewModel/Symbols.js";
-import { dotNotation } from "../../modules/imports.js";
+import { Handler as DotNotationHandler } from "../../modules/dot-notation/dot-notation.js";
 
 /**
  * @typedef { {prop:string,value:any} } PropsAccessor
@@ -23,7 +22,7 @@ class Handler {
   /**
    * @type {Proxy<typeof ViewModel>}
    */
-  #data = new Proxy({}, new dotNotation.Handler);
+  #data = new Proxy({}, new DotNotationHandler);
 
   get hasParent() {
     return this.#component?.parentComponent?.viewModel != null;

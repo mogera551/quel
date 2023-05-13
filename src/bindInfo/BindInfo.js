@@ -1,8 +1,7 @@
 import "../types.js";
 import  { utils } from "../utils.js";
 import { Symbols } from "../viewModel/Symbols.js";
-import { dotNotation } from "../../modules/imports.js";
-import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
 
 export class BindInfo {
   /**
@@ -97,7 +96,7 @@ export class BindInfo {
   #isContextIndex;
   get isContextIndex() {
     if (typeof this.#isContextIndex === "undefined") {
-      this.#isContextIndex = (dotNotation.RE_CONTEXT_INDEX.exec(this.viewModelProperty)) ? true : false;
+      this.#isContextIndex = (RE_CONTEXT_INDEX.exec(this.viewModelProperty)) ? true : false;
     }
     return this.#isContextIndex;
   }

@@ -1,9 +1,9 @@
 import { Component } from "../../src/component/Component.js";
 import { createProps } from "../../src/component/Props.js";
 import { Symbols } from "../../src/viewModel/Symbols.js";
-import { dotNotation } from "../../modules/imports.js";
+import { Handler } from "../../modules/dot-notation/dot-notation.js";
 
-class ViewModelHandler extends dotNotation.Handler {
+class ViewModelHandler extends Handler {
 }
 
 class ViewModel {
@@ -19,7 +19,7 @@ const component = document.createElement("custom-tag");
 parentComponent.appendChild(component);
 
 const dataViewModel = new ViewModel;
-const viewModel = new Proxy(dataViewModel, new dotNotation.Handler());
+const viewModel = new Proxy(dataViewModel, new Handler());
 
 parentComponent.viewModel = viewModel;
 

@@ -1,5 +1,5 @@
 import "../types.js";
-import { dotNotation } from "../../modules/imports.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 export class DependentProps {
   #setOfDefaultProps = new Set;
@@ -23,9 +23,9 @@ export class DependentProps {
    * @param {string} prop 
    */
   addDefaultProp(prop) {
-    let currentName = dotNotation.PropertyName.create(prop);
+    let currentName = PropertyName.create(prop);
     while(currentName.parentPath !== "") {
-      const parentName = dotNotation.PropertyName.create(currentName.parentPath);
+      const parentName = PropertyName.create(currentName.parentPath);
       if (!this.#setOfDefaultProps.has(currentName.name)) {
         this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]))
         this.#setOfDefaultProps.add(currentName.name);

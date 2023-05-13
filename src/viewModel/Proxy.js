@@ -1,12 +1,12 @@
 import "../types.js";
 import { utils } from "../utils.js";
-import { dotNotation } from "../../modules/imports.js";
 import { Cache } from "./Cache.js"
 import { ViewModelize } from "./ViewModelize.js";
 import { Symbols } from "./Symbols.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { create as createArrayProxy } from "./ArrayProxy.js";
 import { DependentProps } from "./DependentProps.js";
+import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 const INIT_CALLBACK = "$initCallback";
 const WRITE_CALLBACK = "$writeCallback";
@@ -81,7 +81,7 @@ const setOfProperties = new Set([
 /**
  * @type {ProxyHandler<ViewModel>}
  */
-export class ViewModelHandler extends dotNotation.Handler {
+export class ViewModelHandler extends Handler {
   /**
    * @type {import("../component/Component.js").Component}
    */
@@ -265,7 +265,7 @@ export class ViewModelHandler extends dotNotation.Handler {
   [Symbols.directlyGet](target, {prop, indexes}, receiver) {
     let value =  super[Symbols.directlyGet](target, {prop, indexes}, receiver);
     if (value instanceof Array) {
-      const propName = dotNotation.PropertyName.create(prop);
+      const propName = PropertyName.create(prop);
       value = createArrayProxy(value, () => {
         this.#updateArray(target, { propName, indexes }, receiver);
       });
@@ -314,7 +314,7 @@ export class ViewModelHandler extends dotNotation.Handler {
     if (value instanceof Array) {
       const lastIndexes = this.lastIndexes;
       value = createArrayProxy(value, () => {
-        let { propName, indexes } = dotNotation.PropertyName.parse(prop);
+        let { propName, indexes } = PropertyName.parse(prop);
         if (!propName.isPrimitive) {
           if (propName.level > indexes.length) {
             indexes = lastIndexes.slice(0, propName.level);
@@ -345,10 +345,10 @@ export class ViewModelHandler extends dotNotation.Handler {
     } else if (setOfApiFunctions.has(prop)) {
       if (prop === Symbols.directlyCall) {
         return async (prop, indexes, event) => 
-          this.#directryCall(target, { propName:dotNotation.PropertyName.create(prop), indexes, event }, receiver);
+          this.#directryCall(target, { propName:PropertyName.create(prop), indexes, event }, receiver);
       } else if (prop === Symbols.notifyForDependentProps) {
         return (prop, indexes) => {
-          const propertyAccess = { propName:dotNotation.PropertyName.create(prop), indexes };
+          const propertyAccess = { propName:PropertyName.create(prop), indexes };
           this.#addNotify(target, propertyAccess, receiver);
         }
       } else if (prop === Symbols.getDependentProps) {
@@ -398,7 +398,7 @@ export class ViewModelHandler extends dotNotation.Handler {
     const propertyAccesses = [];
     if (typeof setOfProps === "undefined") return [];
     for(const prop of setOfProps) {
-      const curPropName = dotNotation.PropertyName.create(prop);
+      const curPropName = PropertyName.create(prop);
       if (indexes.length < curPropName.level) {
         const listOfIndexes = ViewModelHandler.expandIndexes(viewModel, { propName:curPropName, indexes });
         propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));

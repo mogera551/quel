@@ -1,7 +1,7 @@
 import { Component } from "../../src/component/Component.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { Symbols } from "../../src/viewModel/Symbols.js";
-import { dotNotation } from "../../modules/imports.js";
+import { Handler } from "../../modules/dot-notation/dot-notation.js";
 
 customElements.define("custom-tag", Component);
 
@@ -28,7 +28,7 @@ test("ComponentBind", () => {
   }
   parentComponent.appendChild(targetComponent);
   let calledNotifyForDependentProps = undefined;
-  class ViewModelHandler extends dotNotation.Handler {
+  class ViewModelHandler extends Handler {
     get(target, prop, receiver) {
       if (prop === Symbols.notifyForDependentProps) {
         return (prop, indexes) => {

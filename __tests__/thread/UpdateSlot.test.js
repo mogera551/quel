@@ -1,10 +1,10 @@
-import { dotNotation } from "../../modules/imports";
 import { Component } from "../../src/component/Component";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { NodeUpdateData, NodeUpdator } from "../../src/thread/NodeUpdator";
 import { NotifyReceiver } from "../../src/thread/NotifyReceiver.js";
 import { UpdateSlot } from "../../src/thread/UpdateSlot.js";
 import { ProcessData, ViewModelUpdator } from "../../src/thread/ViewModelUpdator";
+import { PropertyName } from "../../modules/dot-notation/dot-notation";
 
 customElements.define("custom-tag", Component);
 const component = document.createElement("custom-tag");
@@ -91,9 +91,9 @@ test("UpdateSlot waiting queue notifyReceive", async () => {
   let waiting = true;
   setTimeout(() => {
     waiting = false;
-    slot.addNotify({ propName:dotNotation.PropertyName.create("aaa"), indexes:[] });
-    slot.addNotify({ propName:dotNotation.PropertyName.create("aaa"), indexes:[] });
-    slot.addNotify({ propName:dotNotation.PropertyName.create("aaa"), indexes:[] });
+    slot.addNotify({ propName:PropertyName.create("aaa"), indexes:[] });
+    slot.addNotify({ propName:PropertyName.create("aaa"), indexes:[] });
+    slot.addNotify({ propName:PropertyName.create("aaa"), indexes:[] });
   }, 100);
   const result = await slot.waiting();
   expect(waiting).toBe(false);
@@ -153,8 +153,8 @@ test("UpdateSlot waiting queue exec notifyReceiver", async () => {
   let waiting = true;
   setTimeout(() => {
     waiting = false;
-    slot.addNotify({ propName:dotNotation.PropertyName.create("aaa"), indexes:[] });
-    slot.addNotify({ propName:dotNotation.PropertyName.create("bbb"), indexes:[] });
+    slot.addNotify({ propName:PropertyName.create("aaa"), indexes:[] });
+    slot.addNotify({ propName:PropertyName.create("bbb"), indexes:[] });
   }, 100);
   await slot.waiting();
   await slot.exec();

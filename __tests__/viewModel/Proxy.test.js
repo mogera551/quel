@@ -1,11 +1,10 @@
 import { Component, generateComponentClass } from "../../src/component/Component.js";
-import { dotNotation } from "../../modules/imports.js";
 import { Cache } from "../../src/viewModel/Cache.js";
 import { ViewModelHandler, createViewModel } from "../../src/viewModel/Proxy.js";
 import { Symbols } from "../../src/viewModel/Symbols.js";
 import { GlobalData } from "../../src/global/Data.js";
 import { DependentProps } from "../../src/viewModel/DependentProps.js";
-import { ViewModelize } from "../../src/viewModel/ViewModelize.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 class ViewModel {
   "aaa" = [10,20,30];
@@ -83,20 +82,20 @@ test('Handler getByPropertyName', () => {
   const target = new targetClass;
   const handler = new ViewModelHandler({name:"component"}, ["bbb", "list.*.double"], ["method"]);
   const proxy = new Proxy(target, handler);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("aaa") }, proxy)).toBe(100);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("bbb") }, proxy)).toBe(200);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("bbb") }, proxy)).toBe(200);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("ccc") }, proxy)).toBe(undefined);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("list") }, proxy)).toEqual(
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("aaa") }, proxy)).toBe(100);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("bbb") }, proxy)).toBe(200);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("bbb") }, proxy)).toBe(200);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("ccc") }, proxy)).toBe(undefined);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("list") }, proxy)).toEqual(
     [ { value:10 }, { value:20 }, { value:30 } ]
   );
   handler.stackIndexes.push([0]);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("list.*.value") }, proxy)).toBe(10);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("list.*.double") }, proxy)).toBe(20);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("list.*.value") }, proxy)).toBe(10);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("list.*.double") }, proxy)).toBe(20);
   handler.stackIndexes.pop();
   handler.stackIndexes.push([1]);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("list.*.value") }, proxy)).toBe(20);
-  expect(handler.getByPropertyName(target, { propName:dotNotation.PropertyName.create("list.*.double") }, proxy)).toBe(40);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("list.*.value") }, proxy)).toBe(20);
+  expect(handler.getByPropertyName(target, { propName:PropertyName.create("list.*.double") }, proxy)).toBe(40);
   handler.stackIndexes.pop();
   expect(handler.methods).toEqual(["method"]);
   expect(handler.accessorProperties).toEqual(["bbb", "list.*.double"]);
@@ -402,13 +401,13 @@ test("Handler ", () => {
   const proxyViewModel = createViewModel(component, ViewModel);
   component.viewModel = proxyViewModel;
 
-  const listOfIndexes1 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:dotNotation.PropertyName.create("aaa"), indexes:[] });
+  const listOfIndexes1 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:PropertyName.create("aaa"), indexes:[] });
   expect(listOfIndexes1).toEqual([[]]);
 
-  const listOfIndexes4 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[1, 1] });
+  const listOfIndexes4 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:PropertyName.create("bbb.*.*"), indexes:[1, 1] });
   expect(listOfIndexes4).toEqual([[1,1]]);
 
-  const listOfIndexes2 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[] });
+  const listOfIndexes2 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:PropertyName.create("bbb.*.*"), indexes:[] });
   expect(listOfIndexes2).toEqual([
     [0,0],
     [0,1],
@@ -424,13 +423,13 @@ test("Handler ", () => {
     [2,3],
   ]);
 
-  const listOfIndexes3 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[1] } );
+  const listOfIndexes3 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:PropertyName.create("bbb.*.*"), indexes:[1] } );
   expect(listOfIndexes3).toEqual([[1,0] ,[1,1], [1,2], [1,3]]);
 
-  const listOfIndexes5 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[1,2,3] } );
+  const listOfIndexes5 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:PropertyName.create("bbb.*.*"), indexes:[1,2,3] } );
   expect(listOfIndexes5).toEqual([[1,2]]);
 
-  const listOfIndexes6 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:dotNotation.PropertyName.create("ccc.*.vaue"), indexes:[] } );
+  const listOfIndexes6 = ViewModelHandler.expandIndexes(proxyViewModel, { propName:PropertyName.create("ccc.*.vaue"), indexes:[] } );
   expect(listOfIndexes6).toEqual([[0]]);
 });
 
@@ -467,40 +466,40 @@ test('Handler makeNotifyForDependentProps', () => {
 
   calledAddNotify = [];
   
-  const notifies = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:dotNotation.PropertyName.create("aaa"), indexes:[] });
+  const notifies = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:PropertyName.create("aaa"), indexes:[] });
   expect(notifies).toEqual([
-    { propName:dotNotation.PropertyName.create("ccc"), indexes:[] }
+    { propName:PropertyName.create("ccc"), indexes:[] }
   ])
 
-  const notifies2 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:dotNotation.PropertyName.create("bbb"), indexes:[] });
+  const notifies2 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:PropertyName.create("bbb"), indexes:[] });
   expect(notifies2).toEqual([
-    { propName:dotNotation.PropertyName.create("bbb.*"), indexes:[0] },
-    { propName:dotNotation.PropertyName.create("bbb.*"), indexes:[1] },
-    { propName:dotNotation.PropertyName.create("bbb.*"), indexes:[2] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[0,0] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[0,1] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[0,2] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[0,3] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[1,0] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[1,1] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[1,2] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[1,3] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[2,0] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[2,1] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[2,2] },
-    { propName:dotNotation.PropertyName.create("bbb.*.*"), indexes:[2,3] },
+    { propName:PropertyName.create("bbb.*"), indexes:[0] },
+    { propName:PropertyName.create("bbb.*"), indexes:[1] },
+    { propName:PropertyName.create("bbb.*"), indexes:[2] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[0,0] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[0,1] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[0,2] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[0,3] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[1,0] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[1,1] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[1,2] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[1,3] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[2,0] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[2,1] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[2,2] },
+    { propName:PropertyName.create("bbb.*.*"), indexes:[2,3] },
   ])
 
-  const notifies3 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:dotNotation.PropertyName.create("eee"), indexes:[] });
+  const notifies3 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:PropertyName.create("eee"), indexes:[] });
   expect(notifies3).toEqual([
-    { propName:dotNotation.PropertyName.create("fff"), indexes:[] },
-    { propName:dotNotation.PropertyName.create("eee"), indexes:[] },
+    { propName:PropertyName.create("fff"), indexes:[] },
+    { propName:PropertyName.create("eee"), indexes:[] },
   ]);
 
-  const notifies4 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:dotNotation.PropertyName.create("fff"), indexes:[] });
+  const notifies4 = ViewModelHandler.makeNotifyForDependentProps(proxyViewModel, { propName:PropertyName.create("fff"), indexes:[] });
   expect(notifies4).toEqual([
-    { propName:dotNotation.PropertyName.create("eee"), indexes:[] },
-    { propName:dotNotation.PropertyName.create("fff"), indexes:[] },
+    { propName:PropertyName.create("eee"), indexes:[] },
+    { propName:PropertyName.create("fff"), indexes:[] },
   ]);
   //console.log(notifies2);
 });
@@ -520,14 +519,14 @@ test('Proxy Array', () => {
   array.push(400);
   expect(array[Symbols.isProxy]).toBe(true);
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("aaa"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
   expect(array).toEqual([100, 200, 300, 400]);
 
   calledAddNotify = [];
   const value1 = array.pop();
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("aaa"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
   expect(array).toEqual([100, 200, 300]);
   expect(value1).toBe(400);
@@ -535,14 +534,14 @@ test('Proxy Array', () => {
   calledAddNotify = [];
   array.unshift(0);
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("aaa"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
   expect(array).toEqual([0, 100, 200, 300]);
 
   calledAddNotify = [];
   const value2 = array.shift();
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("aaa"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
   expect(array).toEqual([100, 200, 300]);
   expect(value2).toBe(0);
@@ -550,7 +549,7 @@ test('Proxy Array', () => {
   calledAddNotify = [];
   const value3 = array.splice(1, 1);
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("aaa"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
   expect(array).toEqual([100, 300]);
   expect(value3).toEqual([200]);
@@ -558,7 +557,7 @@ test('Proxy Array', () => {
   calledAddNotify = [];
   const value4 = array.splice(1, 1, 400, 500);
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("aaa"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
   expect(array).toEqual([100, 400, 500]);
   expect(value4).toEqual([300]);
@@ -567,7 +566,7 @@ test('Proxy Array', () => {
   const bbb0 = proxyViewModel["bbb.0"];
   bbb0.push(3);
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("bbb.*"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("bbb.*"));
   expect(calledAddNotify[0].indexes).toEqual([0]);
   expect(bbb0).toEqual([1,2,3]);
   expect(proxyViewModel["bbb.0"]).toEqual([1,2,3]);
@@ -577,7 +576,7 @@ test('Proxy Array', () => {
   expect(bbb0_[Symbols.isProxy]).toBe(true);
   bbb0_.push(4);
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("bbb.*"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("bbb.*"));
   expect(calledAddNotify[0].indexes).toEqual([0]);
   expect(bbb0_).toEqual([1,2,3,4]);
   expect(proxyViewModel["bbb.0"]).toEqual([1,2,3,4]);
@@ -590,7 +589,7 @@ test('Proxy Array', () => {
   expect(proxyViewModel["bbb.*"]).toEqual([1,2,3,4,5]);
   $handler.stackIndexes.pop();
   expect(calledAddNotify.length).toBe(1);
-  expect(calledAddNotify[0].propName).toEqual(dotNotation.PropertyName.create("bbb.*"));
+  expect(calledAddNotify[0].propName).toEqual(PropertyName.create("bbb.*"));
   expect(calledAddNotify[0].indexes).toEqual([0]);
 
   //proxyViewModel.

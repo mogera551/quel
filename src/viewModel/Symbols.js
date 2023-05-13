@@ -1,6 +1,5 @@
 import myname from "../myname.js";
-import { dotNotation } from "../../modules/imports.js";
-const DotNotationSymbols = dotNotation.Symbols;
+import { Symbols as DotNotationSymbols } from "../../modules/dot-notation/dot-notation.js";
 
 /**
  * @enum {Symbol}

@@ -1,7 +1,7 @@
 import "../types.js";
 import { Symbols } from "../viewModel/Symbols.js";
 import { GlobalData } from "../global/Data.js";
-import { dotNotation } from "../../modules/imports.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /**
  * @typedef {{prop:string,value:any}} GlobalDataAccessor
@@ -78,7 +78,7 @@ class Handler {
     } else if (prop === Symbols.isSupportDotNotation) {
       return true;
     }
-    const { propName, indexes } = dotNotation.PropertyName.parse(prop);
+    const { propName, indexes } = PropertyName.parse(prop);
     return this.directGet(propName.name, indexes);
   }
 
@@ -91,7 +91,7 @@ class Handler {
    * @returns 
    */
   set(target, prop, value, receiver) {
-    const { propName, indexes } = dotNotation.PropertyName.parse(prop);
+    const { propName, indexes } = PropertyName.parse(prop);
     return this.directSet(propName.name, indexes, value);
   }
 }

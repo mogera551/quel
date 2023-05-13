@@ -1,8 +1,8 @@
 import { NotifyReceiver } from "../../src/thread/NotifyReceiver.js";
 import { Component } from "../../src/component/Component.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
-import { dotNotation } from "../../modules/imports.js";
 import { UpdateSlotStatus } from "../../src/thread/UpdateSLotStatus.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 customElements.define("custom-tag", Component);
 const component = document.createElement("custom-tag");
@@ -23,8 +23,8 @@ test("NotifyReceiver", async () => {
   const receiver = new NotifyReceiver(component);
   expect(receiver.isEmpty).toBe(true);
   receiver.queue.push(...[
-    { propName:dotNotation.PropertyName.create("aaa"), indexes:[] },
-    { propName:dotNotation.PropertyName.create("bbb.*"), indexes:[1] },
+    { propName:PropertyName.create("aaa"), indexes:[] },
+    { propName:PropertyName.create("bbb.*"), indexes:[1] },
   ]);
   expect(receiver.isEmpty).toBe(false);
 
@@ -37,7 +37,7 @@ test("NotifyReceiver", async () => {
 
   calledApplyToNode = [];
   receiver.queue.push(...[
-    { propName:dotNotation.PropertyName.create("bbb"), indexes:[] },
+    { propName:PropertyName.create("bbb"), indexes:[] },
   ]);
   await receiver.exec();
   expect(calledApplyToNode).toEqual([
@@ -55,8 +55,8 @@ test("NotifyReceiver callback", async () => {
   calledTest = [];
   calledApplyToNode = [];
   receiver.queue.push(...[
-    { propName:dotNotation.PropertyName.create("aaa"), indexes:[] },
-    { propName:dotNotation.PropertyName.create("bbb"), indexes:[] },
+    { propName:PropertyName.create("aaa"), indexes:[] },
+    { propName:PropertyName.create("bbb"), indexes:[] },
   ]);
   await receiver.exec();
   expect(calledTest).toEqual([

@@ -1,8 +1,8 @@
 import "../types.js";
 import { Symbols } from "../viewModel/Symbols.js";
-import { dotNotation } from "../../modules/imports.js";
+import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
-class GlobalDataHandler extends dotNotation.Handler {
+class GlobalDataHandler extends Handler {
   /**
    * @type {Map<string,Set<import("../component/Component.js").Component[]>>}
    */
@@ -37,7 +37,7 @@ class GlobalDataHandler extends dotNotation.Handler {
    * @returns 
    */
   set(target, prop, value, receiver) {
-    const { propName, indexes } = dotNotation.PropertyName.parse(prop);
+    const { propName, indexes } = PropertyName.parse(prop);
     const result = receiver[Symbols.directlySet](propName.name, indexes, value);
     let setOfComponent = this.#setOfComponentByProp.get(propName.name);
     if (setOfComponent) {
