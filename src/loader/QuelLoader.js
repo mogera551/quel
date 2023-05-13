@@ -1,5 +1,5 @@
 import "../types.js";
-import { Loader, Registrar } from "./vanilla_module_loader.min.js";
+import { Loader, Registrar } from "../../modules/vanilla-module-loader/vanilla_module_loader.js";
 import { Filter } from "../filter/Filter";
 import { Component } from "../component/Component.js";
 

@@ -3830,9 +3830,448 @@ function generateComponentClass(componentModule) {
   return Component.getClass(componentModule);
 }
 
-class e{static regist(e,t){}}class t{static toKebabCase=e=>"string"==typeof e?e.replaceAll(/[\._]/g,"-").replaceAll(/([A-Z])/g,((e,t,i)=>(i>0?"-":"")+t.toLowerCase())):e}const i="kebab",a="snake",r="uppercamel",s="lowercamel",o="dotted";class l{static getNames(e){const l=t.toKebabCase(e),n=l.replaceAll("-","_"),c=l.replaceAll("-","."),p=l.split("-").map(((e,t)=>(void 0!==e[0]&&(e=e[0].toUpperCase()+e.slice(1)),e))).join(""),f=p.length>0?p[0].toLowerCase()+p.slice(1):p;return {[i]:l,[a]:n,[r]:p,[s]:f,[o]:c}}}const n=s;class c{defaultNameType=n;defaultPath="./";loadNames=[];prefixMap}class p{prefix;path;get matchPrefix(){return `${this.prefix}-`}isMatch(e){return e.startsWith(this.matchPrefix)}getNames(e){const{prefix:t,path:i}=this;if(e.startsWith(this.matchPrefix)){return {prefixName:t,subName:e.slice(this.matchPrefix.length),path:i}}}}const f=l.getNames("prefix-name"),h=l.getNames("sub-name");class g{static getPathInfo(e,t,n,c){const[p,g]=e.split("#");let m=p,x=g;const d=l.getNames(t),u=l.getNames(n);return m=m.replaceAll(`{${f[i]}}`,d[i]),m=m.replaceAll(`{${f[a]}}`,d[a]),m=m.replaceAll(`{${f[s]}}`,d[s]),m=m.replaceAll(`{${f[r]}}`,d[r]),m=m.replaceAll(`{${f[o]}}`,d[o]),m=m.replaceAll(`{${h[i]}}`,u[i]),m=m.replaceAll(`{${h[a]}}`,u[a]),m=m.replaceAll(`{${h[s]}}`,u[s]),m=m.replaceAll(`{${h[r]}}`,u[r]),m=m.replaceAll(`{${h[o]}}`,u[o]),p===m&&".js"!==m.slice(-3)&&(m=m+("/"!==e.slice(-1)?"/":"")+u[c]+".js"),x&&(x=x.replaceAll(`{${h[i]}}`,u[i]),x=x.replaceAll(`{${h[a]}}`,u[a]),x=x.replaceAll(`{${h[s]}}`,u[s]),x=x.replaceAll(`{${h[r]}}`,u[r]),x=x.replaceAll(`{${h[o]}}`,u[o])),{filePath:m,exportName:x}}}class m{#e;#t;#i;#a;#r;constructor(e){this.#a=e,this.#r=window.location,this.setConfig(new c);}setConfig(e){this.#t=Object.assign(new c,e),"prefixMap"in e&&void 0!==e.prefixMap&&this.setPrefixMap(e.prefixMap);}getConfig(){return this.#t}setPrefixMap(e){this.#i=new Map(Object.entries(e).map((([e,i])=>[e=t.toKebabCase(e),Object.assign(new p,{prefix:e,path:i})])));}getPrefixMap(){return this.#i}configFile(e){return this.#e=e,this}config(e){return this.setConfig(e),this}prefixMap(e){return this.setPrefixMap(e),this}get registrar(){return this.#a}async loadConfig(e){const t=this.#r.pathname.split("/");t[t.length-1]=e;const i=this.#r.origin+t.join("/");try{const e=await fetch(i),t=await e.json();return Object.assign(new c,t)}catch(e){throw new Error(e)}}async load(...e){if(void 0!==this.#e){const e=await this.loadConfig(this.#e);this.setConfig(e);}if(void 0===this.#i)throw new Error("prefixMap is not defined");if(void 0===this.#a)throw new Error("registrar is not defined");const i=Array.from(this.#i.values()),{defaultNameType:a,defaultPath:r}=this.#t;e=e.length>0?e:this.#t.loadNames;for(let s of e){let e;s=t.toKebabCase(s);const o=i.find((e=>e.isMatch(s)));if(void 0!==o){const t=o.getNames(s);e=g.getPathInfo(t.path,t.prefixName,t.subName,a);}if(void 0===e&&void 0!==r&&(e=g.getPathInfo(r,"",s,a)),void 0===e)throw new Error(`unmatch prefix and no defaultPath (loadName:${s})`);const l=this.#r.pathname.split("/");l[l.length-1]=e.filePath;const n=this.#r.origin+l.join("/");let c,p;try{c=await import(n);}catch(e){throw new Error(e)}if(void 0!==e.exportName){if(!(e.exportName in c))throw new Error(`${e.exportName} not found in module (exportName:${e.exportName}, ${e.filePath})`);p=c[e.exportName];}else p=c.default;this.#a.regist(s,p);}return this}static create(e){return new m(e)}}
+class Registrar {
+  /**
+   * 
+   * @param {string} name 
+   * @param {any} module 
+   * @static
+   */
+  static regist(name, module) {
 
-class QuelModuleRegistrar extends e {
+  }
+}
+
+class Util {
+  /**
+   * to kebab case (upper camel, lower camel, snakeを想定)
+   * @param {string} text 
+   * @returns {string}
+   */
+  static toKebabCase = text => (typeof text === "string") ? text.replaceAll(/[\._]/g, "-").replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase()) : text;
+
+
+}
+
+/**
+ * @enum {string}
+ */
+const NameType = {
+  kebab: "kebab",
+  snake: "snake",
+  upperCamel: "uppercamel",
+  lowerCamel: "lowercamel",
+  dotted: "dotted",
+};
+
+class NameTypes {
+  /**
+   * 
+   * @param {string} name 
+   * @returns {{
+   *  [NameType.kebab]:string,
+   *  [NameType.snake]:string,
+   *  [NameType.upperCamel]:string,
+   *  [NameType.lowerCamel]:string,
+   *  [NameType.dotted]:string,
+   * }}
+   */
+  static getNames(name) {
+    const kebabName = Util.toKebabCase(name);
+    const snakeName = kebabName.replaceAll("-", "_");
+    const dottedName = kebabName.replaceAll("-", ".");
+    const upperCamelName = kebabName.split("-").map((text, index) => {
+      if (typeof text[0] !== "undefined") {
+        text = text[0].toUpperCase() + text.slice(1);
+      }
+      return text;
+    }).join("");
+    const lowerCamelName = (upperCamelName.length > 0) ? upperCamelName[0].toLowerCase() + upperCamelName.slice(1) : upperCamelName;
+    return {
+      [NameType.kebab]: kebabName,
+      [NameType.snake]: snakeName,
+      [NameType.upperCamel]: upperCamelName,
+      [NameType.lowerCamel]: lowerCamelName,
+      [NameType.dotted]: dottedName,
+    }
+  }
+
+}
+
+/**
+ * @type {NameType}
+ */
+const DEFAULT_NAME_TYPE = NameType.lowerCamel;
+/**
+ * @type {string}
+ */
+const DEAFULT_PATH = "./";
+
+class Config {
+  /**
+   * @type {NameType} ファイル名に使用するデフォルトの名前の形式（kebab,snake,upperCamel,lowerCamel,dotted）
+   * @static
+   */
+  defaultNameType = DEFAULT_NAME_TYPE;
+  /**
+   * @type {string} プレフィックスに一致しない場合のパス名、undefinedの場合、ロードせずエラーとする
+   * @static
+   */
+  defaultPath = DEAFULT_PATH;
+  /**
+   * @type {string[]} ロードする名前の一覧
+   * @static
+   */
+  loadNames = [];
+  /**
+   * @type {Object<string,string>|undefined} プレフィックスのマップ、キー：名前、値：パス
+   * @static
+   */
+  prefixMap;
+}
+
+/**
+ * example:
+ * myapp-components-main-selector
+ * 
+ * prefix:
+ * myapp-components: ./components/{subName}.js
+ *  
+ * prefix-name: myapp-components
+ * prefix_name: myapp_components
+ * PrefixName: MyappComponents
+ * prefixName: myappComponents
+ * prefix.name: myapp.components
+ * 
+ * sub-name: main-selector
+ * sub_name: main_selector
+ * SubName: MainSelector
+ * subName: mainSelector
+ * sub.name: main.selector
+ * 
+ * load file:
+ * import default from ./components/mainSelector.js
+ * 
+ * example:
+ * myapp-components-main-selector
+ * 
+ * prefix:
+ * myapp-components: ./{PrefixName}.js#{subName}
+ *  
+ * prefix-name: myapp-components
+ * prefix_name: myapp_components
+ * PrefixName: MyappComponents
+ * prefixName: myappComponents
+ * prefix.name: myapp.components
+ * 
+ * sub-name: main-selector
+ * sub_name: main_selector
+ * SubName: MainSelector
+ * subName: mainSelector
+ * sub.name: main.selector
+ * 
+ * load file:
+ * import { mainSelector } from ./components/MyappComponents.js
+ */
+
+class Prefix {
+  prefix;
+  path;
+  get matchPrefix() {
+    return `${this.prefix}-`;
+  }
+
+  /**
+   * 
+   * @param {string} name
+   * @returns {boolean}
+   */
+  isMatch(name) {
+    return name.startsWith(this.matchPrefix);
+  }
+  
+  /**
+   * 
+   * @param {string} name 名前、kebabケース
+   * @returns {{
+   * prefixName:string,
+   * subName:string,
+   * path:string
+   * }}
+   */
+  getNames(name) {
+    const {prefix, path} = this;
+    if (name.startsWith(this.matchPrefix)) {
+      const subName = name.slice(this.matchPrefix.length);
+      return { prefixName:prefix, subName, path };
+    }
+    return;
+  }
+}
+
+const REPLACE_PREFIX = "prefix-name";
+const REPLACE_SUB = "sub-name";
+
+const replacePrefixNames = NameTypes.getNames(REPLACE_PREFIX);
+const replaceSubNames = NameTypes.getNames(REPLACE_SUB);
+
+class Path {
+  /**
+   * 
+   * @param {string} path 
+   * @param {string} prefixName 
+   * @param {string} subName 
+   * @param {NameType} defaultNameType
+   * @returns {{
+   * filePath:string,
+   * exportName:string
+   * }}
+   */
+  static getPathInfo(path, prefixName, subName, defaultNameType) {
+    const [ filePath, exportName ] = path.split("#");
+    let replaceFilePath = filePath;
+    let replaceExportName = exportName;
+    const prefixNames = NameTypes.getNames(prefixName);
+    const subNames = NameTypes.getNames(subName);
+
+    replaceFilePath = replaceFilePath.replaceAll(`{${replacePrefixNames[NameType.kebab]}}`, prefixNames[NameType.kebab]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replacePrefixNames[NameType.snake]}}`, prefixNames[NameType.snake]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replacePrefixNames[NameType.lowerCamel]}}`, prefixNames[NameType.lowerCamel]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replacePrefixNames[NameType.upperCamel]}}`, prefixNames[NameType.upperCamel]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replacePrefixNames[NameType.dotted]}}`, prefixNames[NameType.dotted]);
+
+    replaceFilePath = replaceFilePath.replaceAll(`{${replaceSubNames[NameType.kebab]}}`, subNames[NameType.kebab]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replaceSubNames[NameType.snake]}}`, subNames[NameType.snake]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replaceSubNames[NameType.lowerCamel]}}`, subNames[NameType.lowerCamel]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replaceSubNames[NameType.upperCamel]}}`, subNames[NameType.upperCamel]);
+    replaceFilePath = replaceFilePath.replaceAll(`{${replaceSubNames[NameType.dotted]}}`, subNames[NameType.dotted]);
+
+    if (filePath === replaceFilePath && replaceFilePath.slice(-3) !== ".js") {
+      // 変換されなかった場合、パスにファイル名を付加する
+      replaceFilePath = replaceFilePath + (path.slice(-1) !== "/" ? "/" : "") + subNames[defaultNameType] + ".js";
+    }
+
+    if (replaceExportName) {
+      replaceExportName = replaceExportName.replaceAll(`{${replaceSubNames[NameType.kebab]}}`, subNames[NameType.kebab]);
+      replaceExportName = replaceExportName.replaceAll(`{${replaceSubNames[NameType.snake]}}`, subNames[NameType.snake]);
+      replaceExportName = replaceExportName.replaceAll(`{${replaceSubNames[NameType.lowerCamel]}}`, subNames[NameType.lowerCamel]);
+      replaceExportName = replaceExportName.replaceAll(`{${replaceSubNames[NameType.upperCamel]}}`, subNames[NameType.upperCamel]);
+      replaceExportName = replaceExportName.replaceAll(`{${replaceSubNames[NameType.dotted]}}`, subNames[NameType.dotted]);
+    }
+    return {
+      filePath: replaceFilePath,
+      exportName: replaceExportName
+    };
+
+  }
+}
+
+/**
+ * @typedef {class<Registrar>} RegistrarClass
+ */
+
+class Loader {
+  /**
+   * @type {string}
+   */
+  #configFile;
+  /**
+   * @type {Config}
+   */
+  #config;
+  /**
+   * @type {Map<string,Prefix>}
+   */
+  #prefixMap;
+  /**
+   * @type {RegistrarClass}
+   */
+  #registrar;
+
+  /**
+   * @type {string}
+   */
+  #location;
+
+  /**
+   * 
+   * @param {RegistrarClass} registrar 
+   */
+  constructor(registrar) {
+    this.#registrar = registrar;
+    this.#location = window.location;
+    this.setConfig(new Config);
+  }
+
+  /**
+   * configの設定
+   * @param {Object<string,string>} config 
+   */
+  setConfig(config) {
+    this.#config = Object.assign(new Config, config);
+    if ("prefixMap" in config && typeof config.prefixMap !== "undefined") {
+      this.setPrefixMap(config.prefixMap);
+    }
+  }
+
+  /**
+   * configの取得
+   * @returns {Config}
+   */
+  getConfig() {
+    return this.#config;
+  }
+
+  /**
+   * prefixMapの設定
+   * @param {Object<string,string>} prefixMap 
+   * @returns {Loader}
+   */
+  setPrefixMap(prefixMap) {
+    this.#prefixMap = new Map(Object.entries(prefixMap).map(
+      ([prefix, path]) => {
+        prefix = Util.toKebabCase(prefix);
+        return [prefix, Object.assign(new Prefix, {prefix, path})];
+      }
+    ));
+  }
+
+  /**
+   * prefixMapの取得
+   * @returns {Map<string,string>}
+   */
+  getPrefixMap() {
+    return this.#prefixMap;
+  }
+
+  /**
+   * configファイルの設定
+   * メソッドチェーン
+   * @param {string} configFile 
+   * @returns {Loader}
+   */
+  configFile(configFile) {
+    this.#configFile = configFile;
+    return this;
+  }
+
+  /**
+   * configの設定
+   * メソッドチェーン
+   * @param {Object<string,string>} config 
+   * @returns {Main}
+   */
+  config(config) {
+    this.setConfig(config);
+    return this;
+  }
+
+  /**
+   * prefixMapの設定
+   * メソッドチェーン
+   * @param {Object<string,string>} prefixMap 
+   * @returns {Loader}
+   */
+  prefixMap(prefixMap) {
+    this.setPrefixMap(prefixMap);
+    return this;
+  }
+
+  /**
+   * @type {Registrar}
+   */
+  get registrar() {
+    return this.#registrar;
+  }
+
+  /**
+   * 
+   * @param {string} configFile 
+   * @returns 
+   */
+  async loadConfig(configFile) {
+    // コンフィグをファイルから読み込む
+    const paths = this.#location.pathname.split("/");
+    paths[paths.length - 1] = configFile;
+    const fullPath = this.#location.origin + paths.join("/");
+
+    try {
+      const response = await fetch(fullPath);
+      const config = await response.json();
+      return Object.assign(new Config, config);
+    } catch(e) {
+      throw new Error(e);
+    }
+  }
+  /**
+   * 
+   * @param  {...string} loadNames 
+   */
+  async load(...loadNames) {
+    if (typeof this.#configFile !== "undefined") {
+      const config = await this.loadConfig(this.#configFile);
+      this.setConfig(config);
+    }
+    if (typeof this.#prefixMap === "undefined") {
+      throw new Error(`prefixMap is not defined`);
+    }
+    if (typeof this.#registrar === "undefined") {
+      throw new Error(`registrar is not defined`);
+    }
+    const prefixes = Array.from(this.#prefixMap.values());
+    const { defaultNameType, defaultPath } = this.#config;
+    loadNames = (loadNames.length > 0) ? loadNames : this.#config.loadNames;
+    for(let loadName of loadNames) {
+      loadName = Util.toKebabCase(loadName);
+      let loadPaths;
+      const prefix = prefixes.find(prefix => prefix.isMatch(loadName));
+      if (typeof prefix !== "undefined") {
+        const names = prefix.getNames(loadName);
+        loadPaths = Path.getPathInfo(names.path, names.prefixName, names.subName, defaultNameType);
+      }
+      if (typeof loadPaths === "undefined" && typeof defaultPath !== "undefined") {
+        loadPaths = Path.getPathInfo(defaultPath, "", loadName, defaultNameType);
+      }
+      if (typeof loadPaths === "undefined") {
+        throw new Error(`unmatch prefix and no defaultPath (loadName:${loadName})`);
+      }
+
+      const paths = this.#location.pathname.split("/");
+      paths[paths.length - 1] = loadPaths.filePath;
+      const importPath = this.#location.origin + paths.join("/");
+
+      let module;
+      try {
+        module = await import(importPath);
+      } catch(e) {
+        throw new Error(e);
+      }
+      let moduleData;
+      if (typeof loadPaths.exportName !== "undefined") {
+        if (!(loadPaths.exportName in module)) {
+          throw new Error(`${loadPaths.exportName} not found in module (exportName:${loadPaths.exportName}, ${loadPaths.filePath})`);
+        }
+        moduleData = module[loadPaths.exportName];
+      } else {
+        moduleData = module.default;
+      }
+      this.#registrar.regist(loadName, moduleData);
+    }
+    return this;
+  }
+
+  /**
+   * 
+   * @param {RegistrarClass} registrar 
+   * @returns {Loader}
+   */
+  static create(registrar) {
+    return new Loader(registrar);
+  }
+
+}
+
+class QuelModuleRegistrar extends Registrar {
   static regist(name, module) {
     if (name.startsWith("filter-")) {
       const filterName = name.slice("filter-".length);
@@ -3849,6 +4288,6 @@ class QuelModuleRegistrar extends e {
   }
 }
 
-const loader = m.create(QuelModuleRegistrar);
+const loader = Loader.create(QuelModuleRegistrar);
 
 export { Main as default, generateComponentClass, loader };
