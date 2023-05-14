@@ -110,8 +110,7 @@ export class BindInfo {
     if (typeof this.#contextParam === "undefined") {
       const propName = this.viewModelPropertyName;
       if (propName.level > 0) {
-        const wildcardProp = PropertyName.findNearestWildcard(propName);
-        this.#contextParam = wildcardProp ? this.context.stack.find(param => param.propName.name === wildcardProp.parentPath) : undefined;
+        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
       }
     }
     return this.#contextParam;

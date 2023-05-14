@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1684018299629" clover="3.2.0">
-  <project timestamp="1684018299629" name="All files">
-    <metrics statements="1009" coveredstatements="1009" conditionals="510" coveredconditionals="510" methods="349" coveredmethods="349" elements="1868" coveredelements="1868" complexity="0" loc="1009" ncloc="1009" packages="11" files="47" classes="47"/>
+<coverage generated="1684023223248" clover="3.2.0">
+  <project timestamp="1684023223248" name="All files">
+    <metrics statements="1006" coveredstatements="1006" conditionals="506" coveredconditionals="506" methods="348" coveredmethods="348" elements="1860" coveredelements="1860" complexity="0" loc="1006" ncloc="1006" packages="11" files="47" classes="47"/>
     <package name="src">
       <metrics statements="29" coveredstatements="29" conditionals="11" coveredconditionals="11" methods="14" coveredmethods="14"/>
       <file name="Const.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\Const.js">
@@ -50,9 +50,9 @@
       </file>
     </package>
     <package name="src.bindInfo">
-      <metrics statements="304" coveredstatements="304" conditionals="132" coveredconditionals="132" methods="122" coveredmethods="122"/>
+      <metrics statements="301" coveredstatements="301" conditionals="128" coveredconditionals="128" methods="121" coveredmethods="121"/>
       <file name="BindInfo.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\BindInfo.js">
-        <metrics statements="45" coveredstatements="45" conditionals="30" coveredconditionals="30" methods="25" coveredmethods="25"/>
+        <metrics statements="44" coveredstatements="44" conditionals="28" coveredconditionals="28" methods="25" coveredmethods="25"/>
         <line num="12" count="490" type="stmt"/>
         <line num="15" count="165" type="stmt"/>
         <line num="21" count="49" type="cond" truecount="2" falsecount="0"/>
@@ -69,9 +69,9 @@
         <line num="67" count="178" type="stmt"/>
         <line num="68" count="178" type="stmt"/>
         <line num="69" count="178" type="stmt"/>
-        <line num="76" count="453" type="cond" truecount="2" falsecount="0"/>
+        <line num="76" count="485" type="cond" truecount="2" falsecount="0"/>
         <line num="77" count="169" type="stmt"/>
-        <line num="79" count="453" type="stmt"/>
+        <line num="79" count="485" type="stmt"/>
         <line num="86" count="72" type="cond" truecount="2" falsecount="0"/>
         <line num="87" count="71" type="cond" truecount="2" falsecount="0"/>
         <line num="88" count="6" type="stmt"/>
@@ -79,25 +79,24 @@
         <line num="98" count="419" type="cond" truecount="2" falsecount="0"/>
         <line num="99" count="158" type="cond" truecount="2" falsecount="0"/>
         <line num="101" count="419" type="stmt"/>
-        <line num="110" count="214" type="cond" truecount="2" falsecount="0"/>
-        <line num="111" count="206" type="stmt"/>
-        <line num="112" count="206" type="cond" truecount="2" falsecount="0"/>
-        <line num="113" count="70" type="stmt"/>
-        <line num="114" count="129" type="cond" truecount="2" falsecount="0"/>
-        <line num="117" count="214" type="stmt"/>
-        <line num="125" count="518" type="cond" truecount="2" falsecount="0"/>
-        <line num="126" count="163" type="cond" truecount="2" falsecount="0"/>
-        <line num="128" count="518" type="stmt"/>
-        <line num="140" count="143" type="cond" truecount="2" falsecount="0"/>
-        <line num="141" count="76" type="stmt"/>
-        <line num="143" count="143" type="stmt"/>
-        <line num="150" count="77" type="cond" truecount="2" falsecount="0"/>
-        <line num="151" count="76" type="stmt"/>
-        <line num="153" count="77" type="stmt"/>
-        <line num="159" count="108" type="stmt"/>
-        <line num="181" count="259" type="cond" truecount="2" falsecount="0"/>
-        <line num="191" count="22" type="cond" truecount="2" falsecount="0"/>
-        <line num="192" count="21" type="stmt"/>
+        <line num="110" count="270" type="cond" truecount="2" falsecount="0"/>
+        <line num="111" count="238" type="stmt"/>
+        <line num="112" count="238" type="cond" truecount="2" falsecount="0"/>
+        <line num="113" count="135" type="stmt"/>
+        <line num="116" count="270" type="stmt"/>
+        <line num="124" count="518" type="cond" truecount="2" falsecount="0"/>
+        <line num="125" count="163" type="cond" truecount="2" falsecount="0"/>
+        <line num="127" count="518" type="stmt"/>
+        <line num="139" count="143" type="cond" truecount="2" falsecount="0"/>
+        <line num="140" count="76" type="stmt"/>
+        <line num="142" count="143" type="stmt"/>
+        <line num="149" count="77" type="cond" truecount="2" falsecount="0"/>
+        <line num="150" count="76" type="stmt"/>
+        <line num="152" count="77" type="stmt"/>
+        <line num="158" count="108" type="stmt"/>
+        <line num="180" count="259" type="cond" truecount="2" falsecount="0"/>
+        <line num="190" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="191" count="21" type="stmt"/>
       </file>
       <file name="Binds.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Binds.js">
         <metrics statements="31" coveredstatements="31" conditionals="22" coveredconditionals="22" methods="6" coveredmethods="6"/>
@@ -297,7 +296,7 @@
         <line num="34" count="2" type="stmt"/>
       </file>
       <file name="Template.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Template.js">
-        <metrics statements="92" coveredstatements="92" conditionals="38" coveredconditionals="38" methods="35" coveredmethods="35"/>
+        <metrics statements="90" coveredstatements="90" conditionals="36" coveredconditionals="36" methods="34" coveredmethods="34"/>
         <line num="16" count="43" type="cond" truecount="2" falsecount="0"/>
         <line num="40" count="40" type="stmt"/>
         <line num="46" count="95" type="cond" truecount="2" falsecount="0"/>
@@ -358,38 +357,36 @@
         <line num="205" count="56" type="stmt"/>
         <line num="208" count="56" type="stmt"/>
         <line num="209" count="56" type="stmt"/>
-        <line num="210" count="56" type="stmt"/>
-        <line num="211" count="56" type="cond" truecount="2" falsecount="0"/>
-        <line num="212" count="56" type="cond" truecount="2" falsecount="0"/>
-        <line num="218" count="56" type="stmt"/>
-        <line num="219" count="118" type="stmt"/>
-        <line num="220" count="118" type="cond" truecount="4" falsecount="0"/>
+        <line num="210" count="56" type="cond" truecount="2" falsecount="0"/>
+        <line num="216" count="56" type="stmt"/>
+        <line num="217" count="118" type="stmt"/>
+        <line num="218" count="118" type="cond" truecount="4" falsecount="0"/>
+        <line num="220" count="66" type="stmt"/>
+        <line num="221" count="66" type="stmt"/>
         <line num="222" count="66" type="stmt"/>
         <line num="223" count="66" type="stmt"/>
         <line num="224" count="66" type="stmt"/>
         <line num="225" count="66" type="stmt"/>
-        <line num="226" count="66" type="stmt"/>
-        <line num="227" count="66" type="stmt"/>
+        <line num="229" count="52" type="stmt"/>
+        <line num="230" count="52" type="stmt"/>
         <line num="231" count="52" type="stmt"/>
-        <line num="232" count="52" type="stmt"/>
+        <line num="232" count="52" type="cond" truecount="2" falsecount="0"/>
         <line num="233" count="52" type="stmt"/>
-        <line num="234" count="52" type="cond" truecount="2" falsecount="0"/>
-        <line num="235" count="52" type="stmt"/>
-        <line num="236" count="52" type="cond" truecount="4" falsecount="0"/>
-        <line num="237" count="28" type="stmt"/>
-        <line num="239" count="52" type="stmt"/>
-        <line num="243" count="56" type="stmt"/>
-        <line num="244" count="60" type="stmt"/>
-        <line num="245" count="8" type="stmt"/>
-        <line num="249" count="56" type="stmt"/>
+        <line num="234" count="52" type="cond" truecount="4" falsecount="0"/>
+        <line num="235" count="28" type="stmt"/>
+        <line num="237" count="52" type="stmt"/>
+        <line num="241" count="56" type="stmt"/>
+        <line num="242" count="60" type="stmt"/>
+        <line num="243" count="8" type="stmt"/>
+        <line num="247" count="56" type="stmt"/>
+        <line num="248" count="94" type="stmt"/>
+        <line num="249" count="94" type="cond" truecount="2" falsecount="0"/>
         <line num="250" count="94" type="stmt"/>
-        <line num="251" count="94" type="cond" truecount="2" falsecount="0"/>
-        <line num="252" count="94" type="stmt"/>
-        <line num="256" count="118" type="stmt"/>
+        <line num="254" count="118" type="stmt"/>
+        <line num="256" count="56" type="stmt"/>
         <line num="258" count="56" type="stmt"/>
-        <line num="260" count="56" type="stmt"/>
-        <line num="269" count="22" type="stmt"/>
-        <line num="270" count="46" type="stmt"/>
+        <line num="267" count="22" type="stmt"/>
+        <line num="268" count="46" type="stmt"/>
       </file>
     </package>
     <package name="src.binder">

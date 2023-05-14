@@ -261,23 +261,16 @@ class PropertyName {
     this.regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
     this.level = this.pathNames.filter(pathName => pathName === WILDCARD).length;
     this.isPrimitive = (this.pathNames.length === 1);
-  }
-
-  findNearestWildcard() {
-    return PropertyName.findNearestWildcard(this);
-  }
-
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @returns {PropertyName}
-   */
-  static findNearestWildcard(propName) {
-    let curProp = propName;
-    while(true) {
-      if (curProp.lastPathName === WILDCARD) return curProp;
-      if (curProp.parentPath === "") return undefined;
-      curProp = PropertyName.create(curProp.parentPath);
+    this.nearestWildcardName = undefined;
+    this.nearestWildcardParentName = undefined;
+    if (this.level > 0) {
+      for(let i = this.pathNames.length - 1; i >= 0; i--) {
+        if (this.pathNames[i] === WILDCARD) {
+          this.nearestWildcardName = this.pathNames.slice(0, i + 1).join(".");
+          this.nearestWildcardParentName = this.pathNames.slice(0, i).join(".");
+          break;
+        }
+      }
     }
   }
 
@@ -439,9 +432,8 @@ let Handler$3 = class Handler {
    */
   getExpandLastLevel(target, { propName, indexes }, receiver) {
     const getFunc = this.getFunc(target, receiver);
-    const wildcardProp = propName.findNearestWildcard();
-    if (!wildcardProp) throw new Error(`not found wildcard path of '${propName.name}'`);
-    const listProp = PropertyName.create(wildcardProp.parentPath);
+    if (typeof propName.nearestWildcardName === "undefined") throw new Error(`not found wildcard path of '${propName.name}'`);
+    const listProp = PropertyName.create(propName.nearestWildcardParentName);
     return getFunc({propName:listProp, indexes}).map((value, index) => getFunc({propName, indexes:indexes.concat(index)}));
   }
 
@@ -455,15 +447,14 @@ let Handler$3 = class Handler {
   setExpandLastLevel(target, { propName, indexes, values }, receiver) {
     const getFunc = this.getFunc(target, receiver);
     const setFunc = this.setFunc(target, receiver);
-    const wildcardProp = propName.findNearestWildcard();
-    if (!wildcardProp) throw new Error(`not found wildcard path of '${propName.name}'`);
-    const listProp = PropertyName.create(wildcardProp.parentPath);
+    if (typeof propName.nearestWildcardName === "undefined") throw new Error(`not found wildcard path of '${propName.name}'`);
+    const listProp = PropertyName.create(propName.nearestWildcardParentName);
     const listValues = getFunc({propName:listProp, indexes});
-    if (wildcardProp.name === propName.name) {
+    if (propName.nearestWildcardName === propName.name) {
       // propName末尾が*の場合
       setFunc({propName:listProp, indexes}, values);
     } else {
-      if (values.length !== listValues.length) throw new Error(`not match value count '${propName.name}'`);
+      if (values.length !== listValues.length) throw new Error(`not match array count '${propName.name}'`);
       for(let i in listValues) {
         setFunc({propName, indexes:indexes.concat(Number(i))}, values[i]);
       }
@@ -709,8 +700,7 @@ class BindInfo {
     if (typeof this.#contextParam === "undefined") {
       const propName = this.viewModelPropertyName;
       if (propName.level > 0) {
-        const wildcardProp = PropertyName.findNearestWildcard(propName);
-        this.#contextParam = wildcardProp ? this.context.stack.find(param => param.propName.name === wildcardProp.parentPath) : undefined;
+        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
       }
     }
     return this.#contextParam;
@@ -1428,9 +1418,7 @@ class Template extends BindInfo {
     // コンテキスト用のデータ
     const pos = context.indexes.length;
     const propName = this.viewModelPropertyName;
-    const parentProp = PropertyName.findNearestWildcard(propName)?.parentPath;
-    const parentContext = parentProp ? context.stack.find(context => context.propName.name === parentProp) : undefined;
-    const parentIndexes = parentContext?.indexes ?? [];
+    const parentIndexes = this.contextParam?.indexes ?? [];
 
     // 新しくテンプレート子要素のリストを作成する
     /**

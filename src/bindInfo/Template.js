@@ -207,9 +207,7 @@ export class Template extends BindInfo {
     // コンテキスト用のデータ
     const pos = context.indexes.length;
     const propName = this.viewModelPropertyName;
-    const parentProp = PropertyName.findNearestWildcard(propName)?.parentPath;
-    const parentContext = parentProp ? context.stack.find(context => context.propName.name === parentProp) : undefined;
-    const parentIndexes = parentContext?.indexes ?? [];
+    const parentIndexes = this.contextParam?.indexes ?? [];
 
     // 新しくテンプレート子要素のリストを作成する
     /**
