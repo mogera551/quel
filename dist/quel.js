@@ -494,7 +494,8 @@ let Handler$3 = class Handler {
    * @returns {any}
    */
   get(target, prop, receiver) {
-    if (typeof prop === "string" && (prop.startsWith("@@__") || prop === "constructor")) {
+    const isPropString = typeof prop === "string";
+    if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) {
       return Reflect.get(target, prop, receiver);
     }
     const getFunc = this.getFunc(target, receiver);
@@ -510,27 +511,31 @@ let Handler$3 = class Handler {
         Reflect.apply(this[Symbols$1.directlySet], this, [target, { prop, indexes, value }, receiver]);
     } else if (prop === Symbols$1.isSupportDotNotation) {
       return true;
-    } else if (match = RE_CONTEXT_INDEX.exec(prop)) {
-      // $数字のプロパティ
-      // indexesへのアクセス
-      return lastIndexes?.[Number(match[1]) - 1] ?? undefined;
-    //} else if (prop.at(0) === "@" && prop.at(1) === "@") {
-    } else if (prop.at(0) === "@") {
-      const name = prop.slice(1);
-      const propName = PropertyName.create(name);
-      if (((lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
-      const baseIndexes = lastIndexes?.slice(0, propName.level - 1) ?? [];
-      return this.getExpandLastLevel(target, { propName, indexes:baseIndexes }, receiver);
+    } else if (isPropString) {
+      if (match = RE_CONTEXT_INDEX.exec(prop)) {
+        // $数字のプロパティ
+        // indexesへのアクセス
+        return lastIndexes?.[Number(match[1]) - 1] ?? undefined;
+      //} else if (prop.at(0) === "@" && prop.at(1) === "@") {
+      } else if (prop.at(0) === "@") {
+        const name = prop.slice(1);
+        const propName = PropertyName.create(name);
+        if (((lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
+        const baseIndexes = lastIndexes?.slice(0, propName.level - 1) ?? [];
+        return this.getExpandLastLevel(target, { propName, indexes:baseIndexes }, receiver);
+      }
+      if (this.#matchByName.has(prop)) {
+        return getFunc(this.#matchByName.get(prop));
+      }
+      const propAccess = PropertyName.parse(prop);
+      if (propAccess.propName.level === propAccess.indexes.length) {
+        this.#matchByName.set(prop, propAccess);
+      }
+      propAccess.indexes.push(...lastIndexes?.slice(propAccess.indexes.length) ?? []);
+      return getFunc(propAccess);
+    } else {
+      return Reflect.get(target, prop, receiver);
     }
-    if (this.#matchByName.has(prop)) {
-      return getFunc(this.#matchByName.get(prop));
-    }
-    const propAccess = PropertyName.parse(prop);
-    if (propAccess.propName.level === propAccess.indexes.length) {
-      this.#matchByName.set(prop, propAccess);
-    }
-    propAccess.indexes.push(...lastIndexes?.slice(propAccess.indexes.length) ?? []);
-    return getFunc(propAccess);
   }
 
   /**
@@ -541,29 +546,34 @@ let Handler$3 = class Handler {
    * @param {Proxy} receiver 
    */
   set(target, prop, value, receiver) {
-    if (typeof prop === "string" && (prop.startsWith("@@__") || prop === "constructor")) {
+    const isPropString = typeof prop === "string";
+    if (isPropString) {
+      if (prop.startsWith("@@__") || prop === "constructor") {
+        return Reflect.set(target, prop, value, receiver);
+      }
+      const setFunc = this.setFunc(target, receiver);
+      const lastIndexes = this.lastIndexes;
+      if (prop.at(0) === "@") {
+        const name = prop.slice(1);
+        const propName = PropertyName.create(name);
+        if (((this.lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
+        const baseIndexes = this.lastIndexes?.slice(0, propName.level - 1) ?? [];
+        return this.setExpandLastLevel(target, { propName, indexes:baseIndexes, values:value }, receiver);
+      }
+      if (this.#matchByName.has(prop)) {
+        return setFunc(this.#matchByName.get(prop), value);
+      }
+      const propAccess = PropertyName.parse(prop);
+      if (propAccess.propName.level === propAccess.indexes.length) {
+        this.#matchByName.set(prop, propAccess);
+      }
+      this.#matchByName.set(prop, propAccess);
+      propAccess.indexes.push(...lastIndexes?.slice(propAccess.indexes.length) ?? []);
+      return setFunc(propAccess, value);
+    } else {
       return Reflect.set(target, prop, value, receiver);
     }
-    const setFunc = this.setFunc(target, receiver);
-    const lastIndexes = this.lastIndexes;
-    if (prop.at(0) === "@") {
-      const name = prop.slice(1);
-      const propName = PropertyName.create(name);
-      if (((this.lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
-      const baseIndexes = this.lastIndexes?.slice(0, propName.level - 1) ?? [];
-      return this.setExpandLastLevel(target, { propName, indexes:baseIndexes, values:value }, receiver);
-    }
-    if (this.#matchByName.has(prop)) {
-      return setFunc(this.#matchByName.get(prop), value);
-    }
-    const propAccess = PropertyName.parse(prop);
-    if (propAccess.propName.level === propAccess.indexes.length) {
-      this.#matchByName.set(prop, propAccess);
-    }
-    this.#matchByName.set(prop, propAccess);
-    propAccess.indexes.push(...lastIndexes?.slice(propAccess.indexes.length) ?? []);
-    return setFunc(propAccess, value);
-  }
+ }
 };
 
 /**
@@ -1567,9 +1577,9 @@ class Event extends BindInfo {
     const {component, element, eventType, viewModel, viewModelProperty} = this;
     element.addEventListener(eventType, (event) => {
       event.stopPropagation();
-      const contextIndexes = this.context.indexes;
+      const context = this.context;
       const process = new ProcessData(
-        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, contextIndexes, event]
+        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, context, event]
       );
       component.updateSlot.addProcess(process);
     });
@@ -2407,6 +2417,16 @@ class ViewModelHandler extends Handler$3 {
   set cacheable(value) {
     this.#cacheable = value;
   }
+  /**
+   * @type {ContextInfo}
+   */
+  #context;
+  get context() {
+    return this.#context;
+  }
+  set context(value) {
+    this.#context = value;
+  }
 
   /**
    * 
@@ -2572,15 +2592,18 @@ class ViewModelHandler extends Handler$3 {
   /**
    * 
    * @param {any} target 
-   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,indexes:number[],event:Event}} param1 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,context:ContextInfo,event:Event}} param1 
    * @param {Proxy} receiver 
    */
-  async #directryCall(target, { propName, indexes, event }, receiver) {
-    this.stackIndexes.push(indexes);
+  async #directryCall(target, { propName, context, event }, receiver) {
+    if (typeof this.context !== "undefined") utils.raise("directCall already called");
+    this.context = context;
+    this.stackIndexes.push(undefined);
     try {
-      return await Reflect.apply(target[propName.name], receiver, [event, ...indexes]);
+      return await Reflect.apply(target[propName.name], receiver, [event, ...context.indexes]);
     } finally {
       this.stackIndexes.pop();
+      this.context = undefined;
     }
   }
 
@@ -2618,8 +2641,8 @@ class ViewModelHandler extends Handler$3 {
       }
     } else if (setOfApiFunctions.has(prop)) {
       if (prop === Symbols.directlyCall) {
-        return async (prop, indexes, event) => 
-          this.#directryCall(target, { propName:PropertyName.create(prop), indexes, event }, receiver);
+        return async (prop, context, event) => 
+          this.#directryCall(target, { propName:PropertyName.create(prop), context, event }, receiver);
       } else if (prop === Symbols.notifyForDependentProps) {
         return (prop, indexes) => {
           const propertyAccess = { propName:PropertyName.create(prop), indexes };
@@ -2636,7 +2659,19 @@ class ViewModelHandler extends Handler$3 {
         return () => Reflect.apply(this[Symbols.beUncacheable], this, [target, receiver]);
       }
     } else {
-      const value = super.get(target, prop, receiver);
+      let value;
+      do {
+        if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {
+          const propName = PropertyName.create(prop);
+          if (typeof this.context !== "undefined" && propName.level > 0) {
+            const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+            if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
+            value = this[Symbols.directlyGet](target, { prop, indexes:param.indexes}, receiver);
+            break;
+          }
+        }
+        value = super.get(target, prop, receiver);
+      } while(false);
       return this.wrapArray(target, { prop, value }, receiver);
     }
   }
@@ -2651,7 +2686,20 @@ class ViewModelHandler extends Handler$3 {
    */
   set(target, prop, value, receiver) {
     value = (value?.[Symbols.isProxy]) ? value[Symbols.getRaw] : value;
-    return super.set(target, prop, value, receiver);
+    let result;
+    do {
+      if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {
+        const propName = PropertyName.create(prop);
+        if (typeof this.context !== "undefined" && propName.level > 0) {
+          const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+          if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
+          result = this[Symbols.directlySet](target, { prop, indexes:param.indexes, value}, receiver);
+          break;
+        }
+      }
+      result = super.set(target, prop, value, receiver);
+    } while(false);
+    return result;
   }
 
   /**

@@ -16,8 +16,18 @@ test("Event", async () => {
 
   let calledMthod = undefined;
   const viewModel = {
-    async [Symbols.directlyCall](prop, indexes, event) {
-      return Reflect.apply(this[prop], this, [event, ...indexes])
+    [Symbols.directlyCall](prop, context, event) {
+      if (typeof context !== "undefined") {
+        try {
+          return Reflect.apply(this[prop], this, [event, ...context.indexes]);
+        } finally {
+        }
+      } else {
+        try {
+          return Reflect.apply(this[prop], this, [event]);
+        } finally {
+        }
+      }
     },
     method(event, $1, $2, $3) {
       calledMthod = {event, $1, $2, $3};

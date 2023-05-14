@@ -284,8 +284,18 @@ test("BindToElement input defaultEvent", () => {
     [Symbols.directlySet](viewModelProperty, indexes, value) {
       this[viewModelProperty] = value;
     },
-    [Symbols.directlyCall](viewModelProperty, indexes, event) {
-      Reflect.apply(this[viewModelProperty], this, [event, ...indexes]);
+    [Symbols.directlyCall](viewModelProperty, context, event) {
+      if (typeof context !== "undefined") {
+        try {
+          return Reflect.apply(this[viewModelProperty], this, [event, ...context.indexes]);
+        } finally {
+        }
+      } else {
+        try {
+          return Reflect.apply(this[viewModelProperty], this, [event]);
+        } finally {
+        }
+      }
     },
   }
   const component = { 

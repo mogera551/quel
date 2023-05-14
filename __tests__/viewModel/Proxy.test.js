@@ -6,6 +6,12 @@ import { GlobalData } from "../../src/global/Data.js";
 import { DependentProps } from "../../src/viewModel/DependentProps.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
+async function sleepX(timeout) {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), timeout);
+  });
+}
+
 class ViewModel {
   "aaa" = [10,20,30];
   "bbb" = true;
@@ -260,9 +266,9 @@ test('Handler drectlyCall', async () => {
   const proxy = new Proxy(target, handler);
 
   calledMethod = undefined;
-  await proxy[Symbols.directlyCall]("method", [1,2,3], {name:"event"});
+  await proxy[Symbols.directlyCall]("method", {indexes:[1,2,3], stack:[]}, {name:"event"});
   expect(calledMethod).toEqual({ event:{name:"event"}, $1:1, $2:2, $3:3 });
-  await proxy[Symbols.directlyCall]("method", [4,5,6], {name:"event"});
+  await proxy[Symbols.directlyCall]("method", {indexes:[4,5,6], stack:[]}, {name:"event"});
   expect(calledMethod).toEqual({ event:{name:"event"}, $1:4, $2:5, $3:6 });
 });
 
@@ -664,6 +670,455 @@ test('Proxy Cache', () => {
   handler.stackIndexes.pop();
 });
 
+test('Proxy event handler normal', async() => {
+  let calledEventHandler = undefined;
+  const html = `
+  <button type="button" data-bind="onclick:eventHandler">click</button>
+  `;
+
+  class ViewModel {
+    eventHandler(event, $1, $2, $3) {
+      calledEventHandler = { event, $1, $2, $3 };
+    }
+  }
+  customElements.define("custom-event1", generateComponentClass({html, ViewModel}));
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-event1 no-shadow-root></custom-event1>
+  `;
+  const component = root.querySelector("custom-event1");
+  document.body.appendChild(root);
+  await component.initialPromise;
+  const button = component.querySelector("button");
+
+  calledEventHandler = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: undefined,
+      $2: undefined,
+      $3: undefined,
+    });
+  }, 10);
+  const event = new Event("click");
+  button.dispatchEvent(event);
+});
+
+test('Proxy event handler loop', async() => {
+  let calledEventHandler = undefined;
+  let calledParam = undefined;
+  const html = `
+{{loop:list}}
+  <button type="button" data-bind="onclick:eventHandler">click</button>
+{{end:}}
+  `;
+
+  class ViewModel {
+    list = [ 10, 20, 30 ];
+    eventHandler(event, $1, $2, $3) {
+      calledEventHandler = { event, $1, $2, $3 };
+      calledParam = this["list.*"];
+    }
+  }
+  customElements.define("custom-event2", generateComponentClass({html, ViewModel}));
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-event2 no-shadow-root></custom-event2>
+  `;
+  const component = root.querySelector("custom-event2");
+  document.body.appendChild(root);
+  await component.initialPromise;
+  const buttons = component.querySelectorAll("button");
+
+  calledEventHandler = undefined;
+  calledParam = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 0,
+      $2: undefined,
+      $3: undefined,
+    });
+    expect(calledParam).toEqual(10);
+  }, 10);
+  buttons[0].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 1,
+      $2: undefined,
+      $3: undefined,
+    });
+    expect(calledParam).toEqual(20);
+  }, 10);
+  buttons[1].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 2,
+      $2: undefined,
+      $3: undefined,
+    });
+    expect(calledParam).toEqual(30);
+  }, 10);
+  buttons[2].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+});
+
+test('Proxy event handler multi loop', async() => {
+  let calledEventHandler = undefined;
+  let calledParam = undefined;
+  const html = `
+{{loop:list}}
+  {{loop:list.*}}
+  <button type="button" data-bind="onclick:eventHandler">click</button>
+  {{end:}}
+{{end:}}
+  `;
+
+  class ViewModel {
+    list = [ 
+      [ 11,22 ],
+      [ 33,44 ],
+    ];
+    eventHandler(event, $1, $2, $3) {
+      calledEventHandler = { event, $1, $2, $3 };
+      calledParam = this["list.*.*"];
+    }
+  }
+  customElements.define("custom-event3", generateComponentClass({html, ViewModel}));
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-event3 no-shadow-root></custom-event3>
+  `;
+  const component = root.querySelector("custom-event3");
+  document.body.appendChild(root);
+  await component.initialPromise;
+  const buttons = component.querySelectorAll("button");
+
+  calledEventHandler = undefined;
+  calledParam = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 0,
+      $2: 0,
+      $3: undefined,
+    });
+    expect(calledParam).toEqual(11);
+  }, 10);
+  buttons[0].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 0,
+      $2: 1,
+      $3: undefined,
+    });
+    expect(calledParam).toEqual(22);
+  }, 10);
+  buttons[1].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 1,
+      $2: 0,
+      $3: undefined,
+    });
+    expect(calledParam).toEqual(33);
+  }, 10);
+  buttons[2].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 1,
+      $2: 1,
+      $3: undefined,
+    });
+    expect(calledParam).toEqual(44);
+  }, 10);
+  buttons[3].dispatchEvent(new Event("click"));
+  await sleepX(100);
+});
+
+test('Proxy event handler multi loop2', async() => {
+  let calledEventHandler = undefined;
+  let calledParam1 = undefined;
+  let calledParam2 = undefined;
+  const html = `
+{{loop:list1}}
+  {{loop:list2}}
+  <button type="button" data-bind="onclick:eventHandler">click</button>
+  {{end:}}
+{{end:}}
+  `;
+
+  class ViewModel {
+    list1 = [ 111, 222 ]; 
+    list2 = [ 333, 444 ]; 
+    eventHandler(event, $1, $2, $3) {
+      calledEventHandler = { event, $1, $2, $3 };
+      calledParam1 = this["list1.*"];
+      calledParam2 = this["list2.*"];
+    }
+  }
+  customElements.define("custom-event4", generateComponentClass({html, ViewModel}));
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-event4 no-shadow-root></custom-event4>
+  `;
+  const component = root.querySelector("custom-event4");
+  document.body.appendChild(root);
+  await component.initialPromise;
+  const buttons = component.querySelectorAll("button");
+
+  calledEventHandler = undefined;
+  calledParam1 = undefined;
+  calledParam2 = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 0,
+      $2: 0,
+      $3: undefined,
+    });
+    expect(calledParam1).toEqual(111);
+    expect(calledParam2).toEqual(333);
+  }, 10);
+  buttons[0].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam1 = undefined;
+  calledParam2 = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 0,
+      $2: 1,
+      $3: undefined,
+    });
+    expect(calledParam1).toEqual(111);
+    expect(calledParam2).toEqual(444);
+  }, 10);
+  buttons[1].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam1 = undefined;
+  calledParam2 = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 1,
+      $2: 0,
+      $3: undefined,
+    });
+    expect(calledParam1).toEqual(222);
+    expect(calledParam2).toEqual(333);
+  }, 10);
+  buttons[2].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  calledEventHandler = undefined;
+  calledParam1 = undefined;
+  calledParam2 = undefined;
+  setTimeout(() => {
+    expect(calledEventHandler).toEqual({ 
+      event:new Event("click"),
+      $1: 1,
+      $2: 1,
+      $3: undefined,
+    });
+    expect(calledParam1).toEqual(222);
+    expect(calledParam2).toEqual(444);
+  }, 10);
+  buttons[3].dispatchEvent(new Event("click"));
+  await sleepX(100);
+});
+
+test('Proxy event handler multi loop2 set', async() => {
+  const html = `
+{{loop:list1}}
+  {{loop:list2}}
+  <button type="button" data-bind="onclick:eventHandler">click</button>
+  {{end:}}
+{{end:}}
+  `;
+
+  class ViewModel {
+    list1 = [ 111, 222 ]; 
+    list2 = [ 333, 444 ]; 
+    eventHandler(event, $1, $2, $3) {
+      this["list1.*"] += 1000;
+      this["list2.*"] += 1000;
+    }
+  }
+  customElements.define("custom-event5", generateComponentClass({html, ViewModel}));
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-event5 no-shadow-root></custom-event5>
+  `;
+  const component = root.querySelector("custom-event5");
+  document.body.appendChild(root);
+  await component.initialPromise;
+  const buttons = component.querySelectorAll("button");
+
+  expect(component.viewModel["list1.0"]).toBe(111);
+  expect(component.viewModel["list1.1"]).toBe(222);
+  expect(component.viewModel["list2.0"]).toBe(333);
+  expect(component.viewModel["list2.1"]).toBe(444);
+  setTimeout(() => {
+    expect(component.viewModel["list1.0"]).toBe(1111);
+    expect(component.viewModel["list1.1"]).toBe(222);
+    expect(component.viewModel["list2.0"]).toBe(1333);
+    expect(component.viewModel["list2.1"]).toBe(444);
+  }, 10);
+  buttons[0].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  component.viewModel["list1.0"] = 111;
+  component.viewModel["list1.1"] = 222;
+  component.viewModel["list2.0"] = 333;
+  component.viewModel["list2.1"] = 444;
+  expect(component.viewModel["list1.0"]).toBe(111);
+  expect(component.viewModel["list1.1"]).toBe(222);
+  expect(component.viewModel["list2.0"]).toBe(333);
+  expect(component.viewModel["list2.1"]).toBe(444);
+  setTimeout(() => {
+    expect(component.viewModel["list1.0"]).toBe(1111);
+    expect(component.viewModel["list1.1"]).toBe(222);
+    expect(component.viewModel["list2.0"]).toBe(333);
+    expect(component.viewModel["list2.1"]).toBe(1444);
+  }, 10);
+  buttons[1].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  component.viewModel["list1.0"] = 111;
+  component.viewModel["list1.1"] = 222;
+  component.viewModel["list2.0"] = 333;
+  component.viewModel["list2.1"] = 444;
+  expect(component.viewModel["list1.0"]).toBe(111);
+  expect(component.viewModel["list1.1"]).toBe(222);
+  expect(component.viewModel["list2.0"]).toBe(333);
+  expect(component.viewModel["list2.1"]).toBe(444);
+  setTimeout(() => {
+    expect(component.viewModel["list1.0"]).toBe(111);
+    expect(component.viewModel["list1.1"]).toBe(1222);
+    expect(component.viewModel["list2.0"]).toBe(1333);
+    expect(component.viewModel["list2.1"]).toBe(444);
+  }, 10);
+  buttons[2].dispatchEvent(new Event("click"));
+  await sleepX(100);
+
+  component.viewModel["list1.0"] = 111;
+  component.viewModel["list1.1"] = 222;
+  component.viewModel["list2.0"] = 333;
+  component.viewModel["list2.1"] = 444;
+  expect(component.viewModel["list1.0"]).toBe(111);
+  expect(component.viewModel["list1.1"]).toBe(222);
+  expect(component.viewModel["list2.0"]).toBe(333);
+  expect(component.viewModel["list2.1"]).toBe(444);
+  setTimeout(() => {
+    expect(component.viewModel["list1.0"]).toBe(111);
+    expect(component.viewModel["list1.1"]).toBe(1222);
+    expect(component.viewModel["list2.0"]).toBe(333);
+    expect(component.viewModel["list2.1"]).toBe(1444);
+  }, 10);
+  buttons[3].dispatchEvent(new Event("click"));
+  await sleepX(100);
+});
+
+test('Proxy event handler multi loop2 throw', async() => {
+  const html = `
+{{loop:list1}}
+  {{loop:list2}}
+  <button type="button" data-bind="onclick:eventHandler">click</button>
+  {{end:}}
+{{end:}}
+  `;
+
+  let occurThrow1 = false;
+  let occurThrow2 = false;
+  let occurThrow3 = false;
+  let occurThrow4 = false;
+  class ViewModel {
+    list1 = [ 111, 222 ]; 
+    list2 = [ 333, 444 ]; 
+    list3 = [ 555, 666 ]; 
+    eventHandler(event, $1, $2, $3) {
+      let value;
+      try {
+        value = this["list3.*"];
+      } catch(e) {
+        occurThrow1 = true;
+      }
+      try {
+        this["list3.*"] = 100;
+      } catch(e) {
+        occurThrow2 = true;
+      }
+      try {
+        value = this["list2.*"];
+      } catch(e) {
+        occurThrow3 = true;
+      }
+      try {
+        this["list2.*"] = 100;
+      } catch(e) {
+        occurThrow4 = true;
+      }
+    }
+  }
+  customElements.define("custom-event6", generateComponentClass({html, ViewModel}));
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-event6 no-shadow-root></custom-event6>
+  `;
+  const component = root.querySelector("custom-event6");
+  document.body.appendChild(root);
+  await component.initialPromise;
+  const buttons = component.querySelectorAll("button");
+
+  occurThrow1 = false;
+  occurThrow2 = false;
+  occurThrow3 = false;
+  occurThrow4 = false;
+  setTimeout(() => {
+    expect(occurThrow1).toBe(true);
+    expect(occurThrow2).toBe(true);
+    expect(occurThrow3).toBe(false);
+    expect(occurThrow4).toBe(false);
+    expect(component.viewModel["list1.0"]).toBe(111);
+    expect(component.viewModel["list1.1"]).toBe(222);
+    expect(component.viewModel["list2.0"]).toBe(100);
+    expect(component.viewModel["list2.1"]).toBe(444);
+  }, 10);
+  buttons[0].dispatchEvent(new Event("click"));
+  await sleepX(100);
+});
+
 test('Proxy dialog', async () => {
   const html = `<button type="button" data-bind="onclick:open">open</div>`;
   class ViewModel {
@@ -730,4 +1185,52 @@ test('Proxy dialog', async () => {
   }, 10);
   const retValue3 = await component.viewModel.open3();
   expect(retValue3).toEqual({});
+});
+
+test('Proxy special property', async() => {
+  const sym = Symbol.for("hogehogehohe")
+  const html = `
+<button class="button1" type="button" data-bind="onclick:eventHandler1">click</button>
+<button class="button2" type="button" data-bind="onclick:eventHandler2">click</button>
+  `;
+
+  let button1, button2, component, calledThrow;
+  class ViewModel {
+    aaa = 100;
+    [sym] = 200;
+    async eventHandler1(event) {
+      await component.viewModel[Symbols.directlyCall]("eventHandler2", {indexes:[], stack:[]}, event);
+    }
+    async eventHandler2() {
+    }
+  }
+  customElements.define("custom-special-char", generateComponentClass({html, ViewModel}));
+  const root = document.createElement("div");
+  root.innerHTML = `
+  <custom-special-char no-shadow-root></custom-special-char>
+  `;
+  component = root.querySelector("custom-special-char");
+  document.body.appendChild(root);
+  await component.initialPromise;
+  button1 = component.querySelector(".button1");
+  button2 = component.querySelector(".button2");
+
+  expect(component.viewModel["constructor"]).toBe(ViewModel);
+  expect(component.viewModel["@@__"]).toBe(undefined);
+  expect(component.viewModel[sym]).toBe(200);
+
+  component.viewModel["@@__"] = 500;
+  expect(component.viewModel["@@__"]).toBe(500);
+  component.viewModel[sym] = 600;
+  expect(component.viewModel[sym]).toBe(600);
+
+  calledThrow = undefined;
+  try {
+    const event = new Event("click");
+    await component.viewModel[Symbols.directlyCall]("eventHandler1", {indexes:[], stack:[]}, event);
+
+  } catch(e) {
+    calledThrow = e;
+  }
+  expect(calledThrow).toEqual(new Error("directCall already called"));
 });

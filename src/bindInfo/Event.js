@@ -21,9 +21,9 @@ export class Event extends BindInfo {
     const {component, element, eventType, viewModel, viewModelProperty} = this;
     element.addEventListener(eventType, (event) => {
       event.stopPropagation();
-      const contextIndexes = this.context.indexes;
+      const context = this.context;
       const process = new ProcessData(
-        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, contextIndexes, event]
+        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, context, event]
       );
       component.updateSlot.addProcess(process);
     });
