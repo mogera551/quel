@@ -1,4 +1,4 @@
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { Binds } from "../../src/bindInfo/Binds.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";

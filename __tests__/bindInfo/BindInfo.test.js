@@ -1,6 +1,6 @@
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { BindInfo } from "../../src/bindInfo/BindInfo.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 
 test('BindInfo', () => {
   const info = new BindInfo();

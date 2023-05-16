@@ -1,5 +1,5 @@
 import { Level3rd } from "../../src/bindInfo/Level3rd.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 
 class CustomTag extends HTMLElement {
   aaa = {

@@ -1,5 +1,5 @@
-import myname from "../myname.js";
-import { Symbols as DotNotationSymbols } from "../../modules/dot-notation/dot-notation.js";
+import myname from "./myname.js";
+import { Symbols as DotNotationSymbols } from "../modules/dot-notation/dot-notation.js";
 
 /**
  * @enum {Symbol}

@@ -1,5 +1,5 @@
 import { Checkbox } from "../../src/bindInfo/Checkbox.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 
 test('Checkbox', () => {

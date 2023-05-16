@@ -1,5 +1,5 @@
 import { Binder } from "../../src/binder/Binder.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";

@@ -1,5 +1,5 @@
 import { Level2nd } from "../../src/bindInfo/Level2nd.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 
 test("Level2nd", async () => {
   const viewModel = {

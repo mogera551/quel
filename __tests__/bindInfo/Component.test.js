@@ -1,6 +1,6 @@
 import { Component } from "../../src/component/Component.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { Handler } from "../../modules/dot-notation/dot-notation.js";
 
 customElements.define("custom-tag", Component);

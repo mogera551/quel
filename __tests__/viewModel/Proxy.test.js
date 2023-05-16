@@ -1,7 +1,7 @@
 import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { Cache } from "../../src/viewModel/Cache.js";
 import { ViewModelHandler, createViewModel } from "../../src/viewModel/Proxy.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { GlobalData } from "../../src/global/Data.js";
 import { DependentProps } from "../../src/viewModel/DependentProps.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";

@@ -1,6 +1,6 @@
 import "../types.js";
 import  { utils } from "../utils.js";
-import { Symbols } from "../viewModel/Symbols.js";
+import { Symbols } from "../Symbols.js";
 import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
 
 export class BindInfo {

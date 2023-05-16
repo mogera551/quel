@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">95.12% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>31/31</span>
+                <span class='fraction'>39/41</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">88.23% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>26/26</span>
+                <span class='fraction'>30/34</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">94.73% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>28/28</span>
+                <span class='fraction'>36/38</span>
             </div>
         
             
@@ -155,7 +155,22 @@
 <a name='L90'></a><a href='#L90'>90</a>
 <a name='L91'></a><a href='#L91'>91</a>
 <a name='L92'></a><a href='#L92'>92</a>
-<a name='L93'></a><a href='#L93'>93</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -227,21 +242,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">65x</span>
 <span class="cline-any cline-yes">65x</span>
+<span class="cline-any cline-yes">65x</span>
+<span class="cline-any cline-yes">65x</span>
+<span class="cline-any cline-yes">68x</span>
+<span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">65x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">65x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">65x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">65x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">65x</span>
@@ -252,6 +278,8 @@ import  { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { Event } from "../bindInfo/Event.js";
+import { Radio } from "../bindInfo/Radio.js";
+import { Checkbox } from "../bindInfo/Checkbox.js";
 &nbsp;
 const DATASET_BIND_PROPERTY = "bind";
 const DEFAULT_EVENT = "oninput";
@@ -318,22 +346,33 @@ export class BindToElement extends BindToDom {
      * @type {import("../bindInfo/BindInfo.js").BindInfo}
      */
     let defaultBind = null;
+    let radioBind = null;
+    let checkboxBind = null;
     binds.forEach(bind =&gt; {
       hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
+      radioBind = (bind instanceof Radio) ? <span class="branch-0 cbranch-no" title="branch not covered" >bind </span>: radioBind;
+      checkboxBind = (bind instanceof Checkbox) ? <span class="branch-0 cbranch-no" title="branch not covered" >bind </span>: checkboxBind;
       defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
       toEvent(bind)?.addEventListener();
     });
 &nbsp;
-    if (defaultBind &amp;&amp; !hasDefaultEvent &amp;&amp; isInputableElement(node)) {
+    const setDefaultEventHandler = (bind) =&gt; {
+      element.addEventListener(DEFAULT_EVENT_TYPE, (event) =&gt; {
+        event.stopPropagation();
+        const process = new ProcessData(bind.updateViewModel, bind, []);
+        component.updateSlot.addProcess(process);
+      });
+    }
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (radioBind) {
+<span class="cstat-no" title="statement not covered" >      setDefaultEventHandler(radioBind);</span>
+    } else <span class="missing-if-branch" title="if path not taken" >I</span>if (checkboxBind) {
+<span class="cstat-no" title="statement not covered" >      setDefaultEventHandler(checkboxBind);</span>
+    } else if (defaultBind &amp;&amp; !hasDefaultEvent &amp;&amp; isInputableElement(node)) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
       // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
       // ・nodeが入力系（input, textarea, select） → 入力系に限定
-      element.addEventListener(DEFAULT_EVENT_TYPE, (event) =&gt; {
-        event.stopPropagation();
-        const process = new ProcessData(defaultBind.updateViewModel, defaultBind, []);
-        component.updateSlot.addProcess(process);
-      });
+      setDefaultEventHandler(defaultBind);
     }
 &nbsp;
     return binds;
@@ -346,7 +385,7 @@ export class BindToElement extends BindToDom {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-14T09:53:41.141Z
+                at 2023-05-16T02:14:51.131Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,5 +1,5 @@
 import { Template, TemplateChild } from "../../src/bindInfo/Template.js"; 
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";

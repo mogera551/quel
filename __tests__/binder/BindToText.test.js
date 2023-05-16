@@ -1,7 +1,7 @@
 import { Component } from "../../src/component/Component.js";
 import { BindToText } from "../../src/binder/BindToText.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";

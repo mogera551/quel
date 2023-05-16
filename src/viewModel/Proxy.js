@@ -2,7 +2,7 @@ import "../types.js";
 import { utils } from "../utils.js";
 import { Cache } from "./Cache.js"
 import { ViewModelize } from "./ViewModelize.js";
-import { Symbols } from "./Symbols.js";
+import { Symbols } from "../Symbols.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { create as createArrayProxy } from "./ArrayProxy.js";
 import { DependentProps } from "./DependentProps.js";

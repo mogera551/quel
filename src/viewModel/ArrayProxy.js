@@ -1,5 +1,5 @@
 import "../types.js";
-import { Symbols } from "./Symbols.js";
+import { Symbols } from "../Symbols.js";
 
 /**
  * 配列プロキシ

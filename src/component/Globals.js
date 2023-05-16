@@ -1,5 +1,5 @@
 import "../types.js";
-import { Symbols } from "../viewModel/Symbols.js";
+import { Symbols } from "../Symbols.js";
 import { GlobalData } from "../global/Data.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 

@@ -1,6 +1,6 @@
 import { Component } from "../../src/component/Component.js";
 import { BindToTemplate } from "../../src/binder/BindToTemplate.js";
-import { Symbols } from "../../src/viewModel/Symbols.js";
+import { Symbols } from "../../src/Symbols.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { Template } from "../../src/bindInfo/Template.js";
