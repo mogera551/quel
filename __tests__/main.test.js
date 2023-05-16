@@ -1,3 +1,4 @@
+import { Symbols } from "../src/Symbols.js";
 import { Component } from "../src/component/Component.js";
 import { outputFilters } from "../src/filter/Builtin";
 import { Filter } from "../src/filter/Filter.js";
@@ -31,7 +32,7 @@ test("Main.componentModules", () => {
   };
   Main.componentModules(componentModules);
   const costomComponent = document.createElement("cus-tag");
-  expect(costomComponent instanceof Component).toBe(true);
+  expect(costomComponent[Symbols.isComponent]).toBe(true);
 
 });
 

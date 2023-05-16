@@ -125,66 +125,6 @@ const NodePropertyType = {
 const TEMPLATE_BRANCH = "if"; // 条件分岐
 const TEMPLATE_REPEAT = "loop"; // 繰り返し
 
-const PREFIX_EVENT = "on";
-
-class NodePropertyInfo {
-  /**
-   * @type {NodePropertyType}
-   */
-  type;
-  /**
-   * @type {string[]}
-   */
-  nodePropertyElements = [];
-  /**
-   * @type {string}
-   */
-  eventType;
-
-  /**
-   * 
-   * @param {Node} node
-   * @param {string} nodeProperty 
-   * @returns {NodePropertyInfo}
-   */
-  static get(node, nodeProperty) {
-    const result = new NodePropertyInfo;
-    result.nodePropertyElements = nodeProperty.split(".");
-    if (node instanceof HTMLTemplateElement) {
-      if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-        result.type = NodePropertyType.template;
-        return result;
-      }
-    }
-    if (node instanceof Component && result.nodePropertyElements[0] === "$props") { 
-      result.type = NodePropertyType.component;
-      return result;
-    }    if (result.nodePropertyElements.length === 1) {
-      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
-        result.type = NodePropertyType.event;
-        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
-      } else if (result.nodePropertyElements[0] === "radio") {
-        result.type = NodePropertyType.radio;
-      } else if (result.nodePropertyElements[0] === "checkbox") {
-        result.type = NodePropertyType.checkbox;
-      } else {
-        result.type = NodePropertyType.levelTop;
-      }
-    } else if (result.nodePropertyElements.length === 2) {
-      if (result.nodePropertyElements[0] === "className") {
-        result.type = NodePropertyType.className;
-      } else {
-        result.type = NodePropertyType.level2nd;
-      }
-    } else if (result.nodePropertyElements.length === 3) {
-      result.type = NodePropertyType.level3rd;
-    } else {
-      utils.raise(`unknown property ${nodeProperty}`);
-    }
-    return result;
-  }
-}
-
 const name = "quel";
 
 const WILDCARD = "*";
@@ -601,7 +541,69 @@ const Symbols = Object.assign({
 
   bindProperty: Symbol.for(`${name}:props.bindProperty`),
   toObject: Symbol.for(`${name}:props.toObject`),
+
+  isComponent: Symbol.for(`${name}:component.isComponent`),
 }, Symbols$1);
+
+const PREFIX_EVENT = "on";
+
+class NodePropertyInfo {
+  /**
+   * @type {NodePropertyType}
+   */
+  type;
+  /**
+   * @type {string[]}
+   */
+  nodePropertyElements = [];
+  /**
+   * @type {string}
+   */
+  eventType;
+
+  /**
+   * 
+   * @param {Node} node
+   * @param {string} nodeProperty 
+   * @returns {NodePropertyInfo}
+   */
+  static get(node, nodeProperty) {
+    const result = new NodePropertyInfo;
+    result.nodePropertyElements = nodeProperty.split(".");
+    if (node instanceof HTMLTemplateElement) {
+      if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
+        result.type = NodePropertyType.template;
+        return result;
+      }
+    }    
+    if (node[Symbols.isComponent] && result.nodePropertyElements[0] === "$props") { 
+      result.type = NodePropertyType.component;
+      return result;
+    }    if (result.nodePropertyElements.length === 1) {
+      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
+        result.type = NodePropertyType.event;
+        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+      } else if (result.nodePropertyElements[0] === "radio") {
+        result.type = NodePropertyType.radio;
+      } else if (result.nodePropertyElements[0] === "checkbox") {
+        result.type = NodePropertyType.checkbox;
+      } else {
+        result.type = NodePropertyType.levelTop;
+      }
+    } else if (result.nodePropertyElements.length === 2) {
+      if (result.nodePropertyElements[0] === "className") {
+        result.type = NodePropertyType.className;
+      } else {
+        result.type = NodePropertyType.level2nd;
+      }
+    } else if (result.nodePropertyElements.length === 3) {
+      result.type = NodePropertyType.level3rd;
+    } else {
+      utils.raise(`unknown property ${nodeProperty}`);
+    }
+    return result;
+  }
+}
 
 class BindInfo {
   /**
@@ -1586,7 +1588,12 @@ class Event extends BindInfo {
   }
 }
 
-const toComponent = node => (node instanceof Component) ? node : utils.raise('not Component');
+/**
+ * 
+ * @param {Node} node 
+ * @returns { import("../component/Component.js").Component }
+ */
+const toComponent = node => (node[Symbols.isComponent]) ? node : utils.raise('not Component');
 
 class ComponentBind extends BindInfo {
   /**
@@ -3628,9 +3635,9 @@ const getParentComponent = (node) => {
   do {
     node = node.parentNode;
     if (node == null) return null;
-    if (node instanceof Component) return node;
+    if (node[Symbols.isComponent]) return node;
     if (node instanceof ShadowRoot) {
-      if (node.host instanceof Component) return node.host;
+      if (node.host[Symbols.isComponent]) return node.host;
       node = node.host;
     }
   } while(true);
@@ -3647,6 +3654,12 @@ class Component extends HTMLElement {
    * @static
    */
   static ViewModel;
+  /**
+   * @type {boolean}
+   */
+  get [Symbols.isComponent] () {
+    return true;
+  }
   /**
    * @type {Proxy<ViewModel>}
    */

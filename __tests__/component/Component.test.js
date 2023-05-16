@@ -1,3 +1,4 @@
+import { Symbols } from "../../src/Symbols.js";
 import { Component, generateComponentClass } from "../../src/component/Component.js";
 
 test("Component generateComponentClass", () => {
@@ -11,9 +12,8 @@ test("Component generateComponentClass", () => {
   customElements.define("a-b", ComponentEx);
   const aa = document.createElement("a-a");
   const ab = document.createElement("a-b");
-  expect(ab instanceof ComponentEx).toBe(true);
-  expect(ab instanceof Component).toBe(true);
-  expect(aa instanceof Component).toBe(true);
+  expect(ab[Symbols.isComponent]).toBe(true);
+  expect(aa[Symbols.isComponent]).toBe(true);
 
   const template = document.createElement("template");
   template.innerHTML = html;
@@ -46,7 +46,7 @@ test("Component ", async () => {
    * @type {Component}
    */
   const component = root.querySelector("aaa-bbb");
-  expect(component instanceof Component).toBe(true);
+  expect(component[Symbols.isComponent]).toBe(true);
   setTimeout(async () => {
     await component.connectedCallback();
   }, 100);
@@ -81,7 +81,7 @@ test("Component ", async () => {
    * @type {Component}
    */
   const component = root.querySelector("aaa-ccc");
-  expect(component instanceof Component).toBe(true);
+  expect(component[Symbols.isComponent]).toBe(true);
   setTimeout(async () => {
     await component.connectedCallback();
   }, 100);

@@ -20,9 +20,9 @@ const getParentComponent = (node) => {
   do {
     node = node.parentNode;
     if (node == null) return null;
-    if (node instanceof Component) return node;
+    if (node[Symbols.isComponent]) return node;
     if (node instanceof ShadowRoot) {
-      if (node.host instanceof Component) return node.host;
+      if (node.host[Symbols.isComponent]) return node.host;
       node = node.host;
     }
   } while(true);
@@ -39,6 +39,12 @@ export class Component extends HTMLElement {
    * @static
    */
   static ViewModel;
+  /**
+   * @type {boolean}
+   */
+  get [Symbols.isComponent] () {
+    return true;
+  }
   /**
    * @type {Proxy<ViewModel>}
    */

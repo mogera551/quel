@@ -1,8 +1,8 @@
 import "../types.js";
 import  { utils } from "../utils.js";
-import { Component } from "../component/Component.js";
 import { NodePropertyType } from "./PropertyType.js";
 import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
+import { Symbols } from "../Symbols.js";
 
 const PREFIX_EVENT = "on";
 
@@ -35,8 +35,8 @@ export class NodePropertyInfo {
         return result;
       }
     };
-
-    if (node instanceof Component && result.nodePropertyElements[0] === "$props") { 
+    
+    if (node[Symbols.isComponent] && result.nodePropertyElements[0] === "$props") { 
       result.type = NodePropertyType.component;
       return result;
     };

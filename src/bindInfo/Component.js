@@ -2,9 +2,13 @@ import "../types.js";
 import  { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
 import { Symbols } from "../Symbols.js";
-import { Component } from "../component/Component.js";
 
-const toComponent = node => (node instanceof Component) ? node : utils.raise('not Component');
+/**
+ * 
+ * @param {Node} node 
+ * @returns { import("../component/Component.js").Component }
+ */
+const toComponent = node => (node[Symbols.isComponent]) ? node : utils.raise('not Component');
 
 export class ComponentBind extends BindInfo {
   /**
