@@ -16,4 +16,9 @@
  * }} ContextParam
  * 
  * @typedef {{indexes:number[],stack:ContextParam[]}} ContextInfo
+ * 
+ * @typedef {{
+ *   method:() => {}
+ * }} Comp
  */
+

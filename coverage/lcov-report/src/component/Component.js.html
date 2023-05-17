@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>69/69</span>
+                <span class='fraction'>70/70</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>26/26</span>
+                <span class='fraction'>27/27</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>66/66</span>
+                <span class='fraction'>67/67</span>
             </div>
         
             
@@ -338,7 +338,14 @@
 <a name='L273'></a><a href='#L273'>273</a>
 <a name='L274'></a><a href='#L274'>274</a>
 <a name='L275'></a><a href='#L275'>275</a>
-<a name='L276'></a><a href='#L276'>276</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -436,14 +443,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -451,6 +458,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">37x</span>
 <span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">37x</span>
 <span class="cline-any cline-yes">37x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -667,28 +681,28 @@ export class Component extends HTMLElement {
   /**
    * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  #binds;
+  _binds;
   get binds() {
-    return this.#binds;
+    return this._binds;
   }
   /**
    * @type {Thread}
    */
-  #thread;
+  _thread;
   get thread() {
-    return this.#thread;
+    return this._thread;
   }
   set thread(value) {
-    this.#thread = value;
+    this._thread = value;
   }
   /**
    * @type {UpdateSlot}
    */
-  #updateSlot;
+  _updateSlot;
   get updateSlot() {
-    if (typeof this.#updateSlot === "undefined") {
-      this.#updateSlot = UpdateSlot.create(this, () =&gt; {
-        this.#updateSlot = undefined;
+    if (typeof this._updateSlot === "undefined") {
+      this._updateSlot = UpdateSlot.create(this, () =&gt; {
+        this._updateSlot = undefined;
       }, (updateSlotStatus) =&gt; {
         if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
           this.viewModel[Symbols.beUncacheable]();
@@ -698,37 +712,44 @@ export class Component extends HTMLElement {
           this.viewModel[Symbols.beCacheable]();
         }
       });
-      this.#thread.wakeup(this.#updateSlot);
+      this._thread.wakeup(this._updateSlot);
     }
-    return this.#updateSlot;
+    return this._updateSlot;
   }
   /**
    * 単体テストのモック用
    */
   set updateSlot(value) {
-    this.#updateSlot = value;
+    this._updateSlot = value;
   }
   /**
    * @type {Object&lt;string,any&gt;}
    */
-  #props = createProps(this);
+  _props;
   get props() {
-    return this.#props;
+    return this._props;
   }
   /**
    * @type {Object&lt;string,any&gt;}
    */
-  #globals = createGlobals();
+  _globals;
   get globals() {
-    return this.#globals;
+    return this._globals;
   }
 &nbsp;
   constructor() {
     super();
-    this.#initialPromise = new Promise((resolve, reject) =&gt; {
-      this.#initialResolve = resolve;
-      this.#initialReject = reject;
+    this.initialize();
+  }
+&nbsp;
+  initialize() {
+    this._initialPromise = new Promise((resolve, reject) =&gt; {
+      this._initialResolve = resolve;
+      this._initialReject = reject;
     });
+    this._props = createProps(this);
+    this._globals = createGlobals();
+&nbsp;
   }
 &nbsp;
   /**
@@ -757,13 +778,13 @@ export class Component extends HTMLElement {
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
     this.noShadowRoot || this.attachShadow({mode: 'open'});
-    this.#thread = new Thread;
+    this._thread = new Thread;
 &nbsp;
     this.viewModel = createViewModel(this, ViewModel);
     await this.viewModel[Symbols.initCallback]();
 &nbsp;
     const initProc = async () =&gt; {
-      this.#binds = View.render(this.viewRootElement, this, template);
+      this._binds = View.render(this.viewRootElement, this, template);
       return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
@@ -774,39 +795,39 @@ export class Component extends HTMLElement {
   /**
    * @type {Promise}
    */
-  #initialPromise;
+  _initialPromise;
   /**
    * @type {() =&gt; {}}
    */
-  #initialResolve;
-  #initialReject;
+  _initialResolve;
+  _initialReject;
   get initialPromise() {
-    return this.#initialPromise;
+    return this._initialPromise;
   }
 &nbsp;
   /**
    * @type {Promise}
    */
-  #alivePromise;
+  _alivePromise;
   /**
    * @type {() =&gt; {}}
    */
-  #aliveResolve;
-  #aliveReject;
+  _aliveResolve;
+  _aliveReject;
   get alivePromise() {
-    return this.#alivePromise;
+    return this._alivePromise;
   }
 &nbsp;
   /**
    * 親コンポーネント
    * @type {Component}
    */
-  #parentComponent;
+  _parentComponent;
   get parentComponent() {
-    if (typeof this.#parentComponent === "undefined") {
-      this.#parentComponent = getParentComponent(this);
+    if (typeof this._parentComponent === "undefined") {
+      this._parentComponent = getParentComponent(this);
     }
-    return this.#parentComponent;
+    return this._parentComponent;
   }
 &nbsp;
   /**
@@ -818,13 +839,13 @@ export class Component extends HTMLElement {
         await this.parentComponent.initialPromise;
       } else {
       }
-      this.#alivePromise = new Promise((resolve, reject) =&gt; {
-        this.#aliveResolve = resolve;
-        this.#aliveReject = reject;
+      this._alivePromise = new Promise((resolve, reject) =&gt; {
+        this._aliveResolve = resolve;
+        this._aliveReject = reject;
       });
       await this.build();
     } finally {
-      this.#initialResolve &amp;&amp; this.#initialResolve();
+      this._initialResolve &amp;&amp; this._initialResolve();
     }
   }
 &nbsp;
@@ -832,7 +853,7 @@ export class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this.#aliveResolve &amp;&amp; this.#aliveResolve(this.props[Symbols.toObject]());
+    this._aliveResolve &amp;&amp; this._aliveResolve(this.props[Symbols.toObject]());
   }
 &nbsp;
   /**
@@ -861,7 +882,7 @@ export class Component extends HTMLElement {
    * @param {Set&lt;string&gt;} setOfViewModelPropertyKeys 
    */
   applyToNode(setOfViewModelPropertyKeys) {
-    this.#binds &amp;&amp; Binds.applyToNode(this.#binds, setOfViewModelPropertyKeys);
+    this._binds &amp;&amp; Binds.applyToNode(this._binds, setOfViewModelPropertyKeys);
   }
 &nbsp;
   /**
@@ -895,7 +916,7 @@ export function generateComponentClass(componentModule) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-16T03:13:55.542Z
+                at 2023-05-16T14:39:38.694Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

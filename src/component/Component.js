@@ -52,28 +52,28 @@ export class Component extends HTMLElement {
   /**
    * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  #binds;
+  _binds;
   get binds() {
-    return this.#binds;
+    return this._binds;
   }
   /**
    * @type {Thread}
    */
-  #thread;
+  _thread;
   get thread() {
-    return this.#thread;
+    return this._thread;
   }
   set thread(value) {
-    this.#thread = value;
+    this._thread = value;
   }
   /**
    * @type {UpdateSlot}
    */
-  #updateSlot;
+  _updateSlot;
   get updateSlot() {
-    if (typeof this.#updateSlot === "undefined") {
-      this.#updateSlot = UpdateSlot.create(this, () => {
-        this.#updateSlot = undefined;
+    if (typeof this._updateSlot === "undefined") {
+      this._updateSlot = UpdateSlot.create(this, () => {
+        this._updateSlot = undefined;
       }, (updateSlotStatus) => {
         if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
           this.viewModel[Symbols.beUncacheable]();
@@ -83,37 +83,44 @@ export class Component extends HTMLElement {
           this.viewModel[Symbols.beCacheable]();
         }
       });
-      this.#thread.wakeup(this.#updateSlot);
+      this._thread.wakeup(this._updateSlot);
     }
-    return this.#updateSlot;
+    return this._updateSlot;
   }
   /**
    * 単体テストのモック用
    */
   set updateSlot(value) {
-    this.#updateSlot = value;
+    this._updateSlot = value;
   }
   /**
    * @type {Object<string,any>}
    */
-  #props = createProps(this);
+  _props;
   get props() {
-    return this.#props;
+    return this._props;
   }
   /**
    * @type {Object<string,any>}
    */
-  #globals = createGlobals();
+  _globals;
   get globals() {
-    return this.#globals;
+    return this._globals;
   }
 
   constructor() {
     super();
-    this.#initialPromise = new Promise((resolve, reject) => {
-      this.#initialResolve = resolve;
-      this.#initialReject = reject;
+    this.initialize();
+  }
+
+  initialize() {
+    this._initialPromise = new Promise((resolve, reject) => {
+      this._initialResolve = resolve;
+      this._initialReject = reject;
     });
+    this._props = createProps(this);
+    this._globals = createGlobals();
+
   }
 
   /**
@@ -142,13 +149,13 @@ export class Component extends HTMLElement {
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
     this.noShadowRoot || this.attachShadow({mode: 'open'});
-    this.#thread = new Thread;
+    this._thread = new Thread;
 
     this.viewModel = createViewModel(this, ViewModel);
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.#binds = View.render(this.viewRootElement, this, template);
+      this._binds = View.render(this.viewRootElement, this, template);
       return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
@@ -159,39 +166,39 @@ export class Component extends HTMLElement {
   /**
    * @type {Promise}
    */
-  #initialPromise;
+  _initialPromise;
   /**
    * @type {() => {}}
    */
-  #initialResolve;
-  #initialReject;
+  _initialResolve;
+  _initialReject;
   get initialPromise() {
-    return this.#initialPromise;
+    return this._initialPromise;
   }
 
   /**
    * @type {Promise}
    */
-  #alivePromise;
+  _alivePromise;
   /**
    * @type {() => {}}
    */
-  #aliveResolve;
-  #aliveReject;
+  _aliveResolve;
+  _aliveReject;
   get alivePromise() {
-    return this.#alivePromise;
+    return this._alivePromise;
   }
 
   /**
    * 親コンポーネント
    * @type {Component}
    */
-  #parentComponent;
+  _parentComponent;
   get parentComponent() {
-    if (typeof this.#parentComponent === "undefined") {
-      this.#parentComponent = getParentComponent(this);
+    if (typeof this._parentComponent === "undefined") {
+      this._parentComponent = getParentComponent(this);
     }
-    return this.#parentComponent;
+    return this._parentComponent;
   }
 
   /**
@@ -203,13 +210,13 @@ export class Component extends HTMLElement {
         await this.parentComponent.initialPromise;
       } else {
       }
-      this.#alivePromise = new Promise((resolve, reject) => {
-        this.#aliveResolve = resolve;
-        this.#aliveReject = reject;
+      this._alivePromise = new Promise((resolve, reject) => {
+        this._aliveResolve = resolve;
+        this._aliveReject = reject;
       });
       await this.build();
     } finally {
-      this.#initialResolve && this.#initialResolve();
+      this._initialResolve && this._initialResolve();
     }
   }
 
@@ -217,7 +224,7 @@ export class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this.#aliveResolve && this.#aliveResolve(this.props[Symbols.toObject]());
+    this._aliveResolve && this._aliveResolve(this.props[Symbols.toObject]());
   }
 
   /**
@@ -246,7 +253,7 @@ export class Component extends HTMLElement {
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   applyToNode(setOfViewModelPropertyKeys) {
-    this.#binds && Binds.applyToNode(this.#binds, setOfViewModelPropertyKeys);
+    this._binds && Binds.applyToNode(this._binds, setOfViewModelPropertyKeys);
   }
 
   /**
