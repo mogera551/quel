@@ -39,37 +39,49 @@ export class Component extends HTMLElement {
    * @static
    */
   static ViewModel;
+
   /**
    * @type {boolean}
    */
   get [Symbols.isComponent] () {
     return true;
   }
+
   /**
-   * @type {Proxy<ViewModel>}
+   * @type {ViewModelProxy}
    */
-  viewModel;
+  get viewModel() {
+    return this._viewModel;
+  }
+  set viewModel(value) {
+    this._viewModel = value;
+  }
   /**
+   * バインドリスト
    * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  _binds;
   get binds() {
     return this._binds;
   }
+  set binds(value) {
+    this._binds = value;
+  }
+
   /**
+   * 更新スレッド
    * @type {Thread}
    */
-  _thread;
   get thread() {
     return this._thread;
   }
   set thread(value) {
     this._thread = value;
   }
+
   /**
+   * 更新処理用スロット
    * @type {UpdateSlot}
    */
-  _updateSlot;
   get updateSlot() {
     if (typeof this._updateSlot === "undefined") {
       this._updateSlot = UpdateSlot.create(this, () => {
@@ -83,7 +95,7 @@ export class Component extends HTMLElement {
           this.viewModel[Symbols.beCacheable]();
         }
       });
-      this._thread.wakeup(this._updateSlot);
+      this.thread.wakeup(this._updateSlot);
     }
     return this._updateSlot;
   }
@@ -96,39 +108,84 @@ export class Component extends HTMLElement {
   /**
    * @type {Object<string,any>}
    */
-  _props;
   get props() {
     return this._props;
   }
   /**
    * @type {Object<string,any>}
    */
-  _globals;
   get globals() {
     return this._globals;
   }
 
-  constructor() {
-    super();
-    this.initialize();
+  /**
+   * @type {(...args) => {}}
+   */
+  get initialResolve() {
+    return this._initialResolve;
   }
-
-  initialize() {
-    this._initialPromise = new Promise((resolve, reject) => {
-      this._initialResolve = resolve;
-      this._initialReject = reject;
-    });
-    this._props = createProps(this);
-    this._globals = createGlobals();
-
+  set initialResolve(value) {
+    this._initialResolve = value;
+  }
+  /**
+   * @type {() => {}}
+   */
+  get initialReject() {
+    return this._initialReject;
+  }
+  set initialReject(value) {
+    this._initialReject = value;
+  }
+  /**
+   * 初期化確認用プロミス
+   * @type {Promise}
+   */
+  get initialPromise() {
+    return this._initialPromise;
+  }
+  set initialPromise(value) {
+    this._initialPromise = value;
   }
 
   /**
-   * @type {string[]}
+   * @type {(...args) => {}}
    */
-//  static get observedAttributes() {
-//    return [/* 変更を監視する属性名の配列 */];
-//  }
+  get aliveResolve() {
+    return this._aliveResolve;
+  }
+  set aliveResolve(value) {
+    this._aliveResolve = value;
+  }
+  /**
+   * @type {() => {}}
+   */
+  get aliveReject() {
+    return this._aliveReject;
+  }
+  set aliveReject(value) {
+    this._aliveReject = value;
+  }
+  /**
+   * 生存確認用プロミス
+   * @type {Promise}
+   */
+  get alivePromise() {
+    return this._alivePromise;
+  }
+  set alivePromise(value) {
+    this._alivePromise = value;
+  }
+
+  /**
+   * 親コンポーネント
+   * @type {Component}
+   */
+  get parentComponent() {
+    if (typeof this._parentComponent === "undefined") {
+      this._parentComponent = getParentComponent(this);
+    }
+    return this._parentComponent;
+  }
 
   /**
    * shadowRootを使ってカプセル化をしない(true)
@@ -146,59 +203,62 @@ export class Component extends HTMLElement {
     return this.shadowRoot ?? this;
   }
 
+  /**
+   * 
+   */
+  constructor() {
+    super();
+    this.initialize();
+  }
+
+  /**
+   * 
+   */
+  initialize() {
+    this._viewModel = undefined;
+    this._binds = undefined;
+    this._thread = undefined;
+    this._updateSlot = undefined;
+    this._props = createProps(this);
+    this._globals = createGlobals();
+    this._initialPromise = undefined;
+    this._initialResolve = undefined;
+    this._initialReject = undefined;
+
+    this._alivePromise = undefined;
+    this._aliveResolve = undefined;
+    this._aliveReject = undefined;
+
+    this._parentComponent = undefined;
+
+    this.initialPromise = new Promise((resolve, reject) => {
+      this.initialResolve = resolve;
+      this.initialReject = reject;
+    });
+  }
+
+  /**
+   * @type {string[]}
+   */
+//  static get observedAttributes() {
+//    return [/* 変更を監視する属性名の配列 */];
+//  }
+
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
     this.noShadowRoot || this.attachShadow({mode: 'open'});
-    this._thread = new Thread;
+    this.thread = new Thread;
 
     this.viewModel = createViewModel(this, ViewModel);
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this._binds = View.render(this.viewRootElement, this, template);
+      this.binds = View.render(this.viewRootElement, this, template);
       return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
     updateSlot.addProcess(new ProcessData(initProc, this, []));
     await updateSlot.alive();
-  }
-
-  /**
-   * @type {Promise}
-   */
-  _initialPromise;
-  /**
-   * @type {() => {}}
-   */
-  _initialResolve;
-  _initialReject;
-  get initialPromise() {
-    return this._initialPromise;
-  }
-
-  /**
-   * @type {Promise}
-   */
-  _alivePromise;
-  /**
-   * @type {() => {}}
-   */
-  _aliveResolve;
-  _aliveReject;
-  get alivePromise() {
-    return this._alivePromise;
-  }
-
-  /**
-   * 親コンポーネント
-   * @type {Component}
-   */
-  _parentComponent;
-  get parentComponent() {
-    if (typeof this._parentComponent === "undefined") {
-      this._parentComponent = getParentComponent(this);
-    }
-    return this._parentComponent;
   }
 
   /**
@@ -210,13 +270,13 @@ export class Component extends HTMLElement {
         await this.parentComponent.initialPromise;
       } else {
       }
-      this._alivePromise = new Promise((resolve, reject) => {
-        this._aliveResolve = resolve;
-        this._aliveReject = reject;
+      this.alivePromise = new Promise((resolve, reject) => {
+        this.aliveResolve = resolve;
+        this.aliveReject = reject;
       });
       await this.build();
     } finally {
-      this._initialResolve && this._initialResolve();
+      this.initialResolve && this.initialResolve();
     }
   }
 
@@ -224,7 +284,7 @@ export class Component extends HTMLElement {
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this._aliveResolve && this._aliveResolve(this.props[Symbols.toObject]());
+    this.aliveResolve && this.aliveResolve(this.props[Symbols.toObject]());
   }
 
   /**
@@ -253,7 +313,7 @@ export class Component extends HTMLElement {
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   applyToNode(setOfViewModelPropertyKeys) {
-    this._binds && Binds.applyToNode(this._binds, setOfViewModelPropertyKeys);
+    this.binds && Binds.applyToNode(this.binds, setOfViewModelPropertyKeys);
   }
 
   /**
