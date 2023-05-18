@@ -1,8 +1,9 @@
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodePropertyInfo } from "../../src/node/PropertyInfo.js";
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 
 test('PropertyType Template', () => {
   const template = document.createElement("template");

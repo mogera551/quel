@@ -1,9 +1,10 @@
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { Symbols } from "../../src/Symbols.js";
 import { Handler } from "../../modules/dot-notation/dot-notation.js";
 
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 
 test("ComponentBind", () => {
   const parentComponent = document.createElement("custom-tag");

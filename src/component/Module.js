@@ -13,6 +13,14 @@ export class Module {
    * @type {class<ViewModel>}
    */
   ViewModel;
+  /**
+   * @type {class<HTMLElement>}
+   */
+  extendClass;
+  /**
+   * @type {string}
+   */
+  extendTag;
 
   /**
    * @type {HTMLTemplateElement}

@@ -28,44 +28,26 @@ const getParentComponent = (node) => {
   } while(true);
 };
 
-export class Component extends HTMLElement {
-  /**
-   * @type {HTMLTemplateElement}
-   * @static
-   */
-  static template;
-  /**
-   * @type {class<typeof ViewModel>}
-   * @static
-   */
-  static ViewModel;
-
-  /**
-   * @type {boolean}
-   */
-  get [Symbols.isComponent] () {
-    return true;
-  }
-
+const mixInComponent = {
   /**
    * @type {ViewModelProxy}
    */
   get viewModel() {
     return this._viewModel;
-  }
+  },
   set viewModel(value) {
     this._viewModel = value;
-  }
+  },
   /**
    * バインドリスト
    * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
   get binds() {
     return this._binds;
-  }
+  },
   set binds(value) {
     this._binds = value;
-  }
+  },
 
   /**
    * 更新スレッド
@@ -73,10 +55,10 @@ export class Component extends HTMLElement {
    */
   get thread() {
     return this._thread;
-  }
+  },
   set thread(value) {
     this._thread = value;
-  }
+  },
 
   /**
    * 更新処理用スロット
@@ -98,83 +80,83 @@ export class Component extends HTMLElement {
       this.thread.wakeup(this._updateSlot);
     }
     return this._updateSlot;
-  }
+  },
   /**
    * 単体テストのモック用
    */
   set updateSlot(value) {
     this._updateSlot = value;
-  }
+  },
   /**
    * @type {Object<string,any>}
    */
   get props() {
     return this._props;
-  }
+  },
   /**
    * @type {Object<string,any>}
    */
   get globals() {
     return this._globals;
-  }
+  },
 
   /**
    * @type {(...args) => {}}
    */
   get initialResolve() {
     return this._initialResolve;
-  }
+  },
   set initialResolve(value) {
     this._initialResolve = value;
-  }
+  },
   /**
    * @type {() => {}}
    */
   get initialReject() {
     return this._initialReject;
-  }
+  },
   set initialReject(value) {
     this._initialReject = value;
-  }
+  },
   /**
    * 初期化確認用プロミス
    * @type {Promise}
    */
   get initialPromise() {
     return this._initialPromise;
-  }
+  },
   set initialPromise(value) {
     this._initialPromise = value;
-  }
+  },
 
   /**
    * @type {(...args) => {}}
    */
   get aliveResolve() {
     return this._aliveResolve;
-  }
+  },
   set aliveResolve(value) {
     this._aliveResolve = value;
-  }
+  },
   /**
    * @type {() => {}}
    */
   get aliveReject() {
     return this._aliveReject;
-  }
+  },
   set aliveReject(value) {
     this._aliveReject = value;
-  }
+  },
   /**
    * 生存確認用プロミス
    * @type {Promise}
    */
   get alivePromise() {
     return this._alivePromise;
-  }
+  },
   set alivePromise(value) {
     this._alivePromise = value;
-  }
+  },
 
   /**
    * 親コンポーネント
@@ -185,7 +167,7 @@ export class Component extends HTMLElement {
       this._parentComponent = getParentComponent(this);
     }
     return this._parentComponent;
-  }
+  },
 
   /**
    * shadowRootを使ってカプセル化をしない(true)
@@ -193,7 +175,7 @@ export class Component extends HTMLElement {
    */
   get noShadowRoot() {
     return this.hasAttribute("no-shadow-root");
-  }
+  },
 
   /**
    * viewのルートとなる要素
@@ -201,15 +183,7 @@ export class Component extends HTMLElement {
    */
   get viewRootElement() {
     return this.shadowRoot ?? this;
-  }
-
-  /**
-   * 
-   */
-  constructor() {
-    super();
-    this.initialize();
-  }
+  },
 
   /**
    * 
@@ -235,7 +209,7 @@ export class Component extends HTMLElement {
       this.initialResolve = resolve;
       this.initialReject = reject;
     });
-  }
+  },
 
   /**
    * @type {string[]}
@@ -259,7 +233,7 @@ export class Component extends HTMLElement {
     const updateSlot = this.updateSlot;
     updateSlot.addProcess(new ProcessData(initProc, this, []));
     await updateSlot.alive();
-  }
+  },
 
   /**
    * DOMツリーへ追加
@@ -278,14 +252,14 @@ export class Component extends HTMLElement {
     } finally {
       this.initialResolve && this.initialResolve();
     }
-  }
+  },
 
   /**
    * DOMツリーから削除
    */
   disconnectedCallback() {
     this.aliveResolve && this.aliveResolve(this.props[Symbols.toObject]());
-  }
+  },
 
   /**
    * 移動時
@@ -314,25 +288,69 @@ export class Component extends HTMLElement {
    */
   applyToNode(setOfViewModelPropertyKeys) {
     this.binds && Binds.applyToNode(this.binds, setOfViewModelPropertyKeys);
-  }
+  },
+}
 
+
+export class Component {
   /**
    * 
    * @param {UserComponentModule} componentModule 
    * @returns {class<HTMLElement>}
    */
   static getClass(componentModule) {
-    const module = Object.assign(new Module, componentModule);
-    // 同じクラスを登録できないため
-    const componentClass = class extends Component {
-      static template = module.template;
-      static ViewModel = module.ViewModel;
+    const getBaseClass = function (module) {
+      return class extends HTMLElement {
+        /**
+         * @type {HTMLTemplateElement}
+         * @static
+         */
+        static template = module.template;
+        /**
+         * @type {class<typeof ViewModel>}
+         * @static
+         */
+        static ViewModel = module.ViewModel;
+        /**
+         * @type {boolean}
+         */
+        get [Symbols.isComponent] () {
+          return true;
+        }
+        /**
+         * 
+         */
+        constructor() {
+          super();
+          this.initialize();
+        }
+        /**
+         * 
+         */
+        initialize() {
+        }
+      };
     };
+  
+    const module = Object.assign(new Module, componentModule);
+    // 同じクラスを登録できないため新しいクラスを生成する
+    const componentClass = getBaseClass(module);
+    if (typeof module.extendClass === "undefined") {
+      // 自律型カスタム要素
+    } else {
+      // カスタマイズされた組み込み要素
+      // extendsを書き換える
+      // See http://var.blog.jp/archives/75174484.html
+      componentClass.prototype.__proto__ = module.extendClass.prototype;
+      componentClass.__proto__ = module.extendClass;
+    }
+  
+    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
+      Object.defineProperty(componentClass.prototype, key, desc);
+    }
     return componentClass;
   }
-
 }
-
 /**
  * 
  * @param {UserComponentModule} componentModule 

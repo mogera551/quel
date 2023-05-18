@@ -1,4 +1,4 @@
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { Factory } from "../../src/bindInfo/Factory.js";
 import { Template } from "../../src/bindInfo/Template.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
@@ -11,7 +11,8 @@ import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { Event } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 
 const component = { name:"component" };
 const viewModel = { 

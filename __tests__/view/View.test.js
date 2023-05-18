@@ -1,9 +1,10 @@
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { View } from "../../src/view/View.js";
 
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 
 test ("View render", () => {
   const component = document.createElement("custom-tag");

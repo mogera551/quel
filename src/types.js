@@ -1,5 +1,5 @@
 /**
- * @typedef {{html?:string,css?:string,ViewModel:class,template?:HTMLTemplateElement}} UserComponentModule
+ * @typedef {{html?:string,css?:string,ViewModel:class,template?:HTMLTemplateElement,extendClass?:class<HTMLElement>,extendTag?:string}} UserComponentModule
  * 
  * @typedef {(value:any,options:string[])=>{return:any}} FilterFunc
  * 

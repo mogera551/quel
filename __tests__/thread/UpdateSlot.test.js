@@ -1,4 +1,4 @@
-import { Component } from "../../src/component/Component";
+import { Component, generateComponentClass } from "../../src/component/Component";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { NodeUpdateData, NodeUpdator } from "../../src/thread/NodeUpdator";
 import { NotifyReceiver } from "../../src/thread/NotifyReceiver.js";
@@ -6,7 +6,8 @@ import { UpdateSlot } from "../../src/thread/UpdateSlot.js";
 import { ProcessData, ViewModelUpdator } from "../../src/thread/ViewModelUpdator";
 import { PropertyName } from "../../modules/dot-notation/dot-notation";
 
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 const component = document.createElement("custom-tag");
 class ViewModel {
   "aaa" = 100;

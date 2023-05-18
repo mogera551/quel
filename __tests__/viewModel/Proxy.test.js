@@ -56,7 +56,8 @@ const updateSlot = {
     calledAddNodeUpdate.push(...nodeUpdateData);
   }
 }
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 const parentComponent = document.createElement("custom-tag");
 const component = document.createElement("custom-tag");
 parentComponent.appendChild(component);

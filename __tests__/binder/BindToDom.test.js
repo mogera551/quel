@@ -1,4 +1,4 @@
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { BindToDom } from "../../src/binder/BindToDom.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
@@ -22,8 +22,8 @@ class CustomTag extends HTMLElement {
   }
 }
 customElements.define("custom-tag", CustomTag);
-customElements.define("my-component", Component);
-
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("my-component", generateComponentClass(minimumModule));
 
 test("BindToDom parseBindText single levelTop default", () => {
   const node = document.createElement("div");

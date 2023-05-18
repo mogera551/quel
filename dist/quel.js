@@ -3197,6 +3197,14 @@ class Module {
    * @type {class<ViewModel>}
    */
   ViewModel;
+  /**
+   * @type {class<HTMLElement>}
+   */
+  extendClass;
+  /**
+   * @type {string}
+   */
+  extendTag;
 
   /**
    * @type {HTMLTemplateElement}
@@ -3281,7 +3289,13 @@ class Main {
     Object.entries(components).forEach(([name, componentModule]) => {
       const componentName = utils.toKebabCase(name);
       const componentClass = Component.getClass(componentModule);
-      customElements.define(componentName, componentClass);
+      if (componentModule.extendClass && componentModule.extendTag) {
+        customElements.define(componentName, componentClass, { extends:componentModule.extendTag });
+      } else if (typeof componentModule?.extendClass === "undefined" && typeof componentModule?.extendTag === "undefined") {
+        customElements.define(componentName, componentClass);
+      } else {
+        utils.raise("extendClass and extendTag should be both set, or unset");
+      }
     });
     return this;
   }
@@ -3643,52 +3657,46 @@ const getParentComponent = (node) => {
   } while(true);
 };
 
-class Component extends HTMLElement {
+const mixInComponent = {
   /**
-   * @type {HTMLTemplateElement}
-   * @static
+   * @type {ViewModelProxy}
    */
-  static template;
+  get viewModel() {
+    return this._viewModel;
+  },
+  set viewModel(value) {
+    this._viewModel = value;
+  },
   /**
-   * @type {class<typeof ViewModel>}
-   * @static
-   */
-  static ViewModel;
-  /**
-   * @type {boolean}
-   */
-  get [Symbols.isComponent] () {
-    return true;
-  }
-  /**
-   * @type {Proxy<ViewModel>}
-   */
-  viewModel;
-  /**
+   * バインドリスト
    * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
    */
-  #binds;
   get binds() {
-    return this.#binds;
-  }
+    return this._binds;
+  },
+  set binds(value) {
+    this._binds = value;
+  },
+
   /**
+   * 更新スレッド
    * @type {Thread}
    */
-  #thread;
   get thread() {
-    return this.#thread;
-  }
+    return this._thread;
+  },
   set thread(value) {
-    this.#thread = value;
-  }
+    this._thread = value;
+  },
+
   /**
+   * 更新処理用スロット
    * @type {UpdateSlot}
    */
-  #updateSlot;
   get updateSlot() {
-    if (typeof this.#updateSlot === "undefined") {
-      this.#updateSlot = UpdateSlot.create(this, () => {
-        this.#updateSlot = undefined;
+    if (typeof this._updateSlot === "undefined") {
+      this._updateSlot = UpdateSlot.create(this, () => {
+        this._updateSlot = undefined;
       }, (updateSlotStatus) => {
         if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
           this.viewModel[Symbols.beUncacheable]();
@@ -3698,38 +3706,139 @@ class Component extends HTMLElement {
           this.viewModel[Symbols.beCacheable]();
         }
       });
-      this.#thread.wakeup(this.#updateSlot);
+      this.thread.wakeup(this._updateSlot);
     }
-    return this.#updateSlot;
-  }
+    return this._updateSlot;
+  },
   /**
    * 単体テストのモック用
    */
   set updateSlot(value) {
-    this.#updateSlot = value;
-  }
+    this._updateSlot = value;
+  },
   /**
    * @type {Object<string,any>}
    */
-  #props = createProps(this);
   get props() {
-    return this.#props;
-  }
+    return this._props;
+  },
   /**
    * @type {Object<string,any>}
    */
-  #globals = createGlobals();
   get globals() {
-    return this.#globals;
-  }
+    return this._globals;
+  },
 
-  constructor() {
-    super();
-    this.#initialPromise = new Promise((resolve, reject) => {
-      this.#initialResolve = resolve;
-      this.#initialReject = reject;
+  /**
+   * @type {(...args) => {}}
+   */
+  get initialResolve() {
+    return this._initialResolve;
+  },
+  set initialResolve(value) {
+    this._initialResolve = value;
+  },
+  /**
+   * @type {() => {}}
+   */
+  get initialReject() {
+    return this._initialReject;
+  },
+  set initialReject(value) {
+    this._initialReject = value;
+  },
+  /**
+   * 初期化確認用プロミス
+   * @type {Promise}
+   */
+  get initialPromise() {
+    return this._initialPromise;
+  },
+  set initialPromise(value) {
+    this._initialPromise = value;
+  },
+
+  /**
+   * @type {(...args) => {}}
+   */
+  get aliveResolve() {
+    return this._aliveResolve;
+  },
+  set aliveResolve(value) {
+    this._aliveResolve = value;
+  },
+  /**
+   * @type {() => {}}
+   */
+  get aliveReject() {
+    return this._aliveReject;
+  },
+  set aliveReject(value) {
+    this._aliveReject = value;
+  },
+  /**
+   * 生存確認用プロミス
+   * @type {Promise}
+   */
+  get alivePromise() {
+    return this._alivePromise;
+  },
+  set alivePromise(value) {
+    this._alivePromise = value;
+  },
+
+  /**
+   * 親コンポーネント
+   * @type {Component}
+   */
+  get parentComponent() {
+    if (typeof this._parentComponent === "undefined") {
+      this._parentComponent = getParentComponent(this);
+    }
+    return this._parentComponent;
+  },
+
+  /**
+   * shadowRootを使ってカプセル化をしない(true)
+   * @type {boolean}
+   */
+  get noShadowRoot() {
+    return this.hasAttribute("no-shadow-root");
+  },
+
+  /**
+   * viewのルートとなる要素
+   * @type {ShadowRoot|HTMLElement}
+   */
+  get viewRootElement() {
+    return this.shadowRoot ?? this;
+  },
+
+  /**
+   * 
+   */
+  initialize() {
+    this._viewModel = undefined;
+    this._binds = undefined;
+    this._thread = undefined;
+    this._updateSlot = undefined;
+    this._props = createProps(this);
+    this._globals = createGlobals();
+    this._initialPromise = undefined;
+    this._initialResolve = undefined;
+    this._initialReject = undefined;
+
+    this._alivePromise = undefined;
+    this._aliveResolve = undefined;
+    this._aliveReject = undefined;
+
+    this._parentComponent = undefined;
+
+    this.initialPromise = new Promise((resolve, reject) => {
+      this.initialResolve = resolve;
+      this.initialReject = reject;
     });
-  }
+  },
 
   /**
    * @type {string[]}
@@ -3738,76 +3847,22 @@ class Component extends HTMLElement {
 //    return [/* 変更を監視する属性名の配列 */];
 //  }
 
-  /**
-   * shadowRootを使ってカプセル化をしない(true)
-   * @type {boolean}
-   */
-  get noShadowRoot() {
-    return this.hasAttribute("no-shadow-root");
-  }
-
-  /**
-   * viewのルートとなる要素
-   * @type {ShadowRoot|HTMLElement}
-   */
-  get viewRootElement() {
-    return this.shadowRoot ?? this;
-  }
-
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
     this.noShadowRoot || this.attachShadow({mode: 'open'});
-    this.#thread = new Thread;
+    this.thread = new Thread;
 
     this.viewModel = createViewModel(this, ViewModel);
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.#binds = View.render(this.viewRootElement, this, template);
+      this.binds = View.render(this.viewRootElement, this, template);
       return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
     updateSlot.addProcess(new ProcessData(initProc, this, []));
     await updateSlot.alive();
-  }
-
-  /**
-   * @type {Promise}
-   */
-  #initialPromise;
-  /**
-   * @type {() => {}}
-   */
-  #initialResolve;
-  #initialReject;
-  get initialPromise() {
-    return this.#initialPromise;
-  }
-
-  /**
-   * @type {Promise}
-   */
-  #alivePromise;
-  /**
-   * @type {() => {}}
-   */
-  #aliveResolve;
-  #aliveReject;
-  get alivePromise() {
-    return this.#alivePromise;
-  }
-
-  /**
-   * 親コンポーネント
-   * @type {Component}
-   */
-  #parentComponent;
-  get parentComponent() {
-    if (typeof this.#parentComponent === "undefined") {
-      this.#parentComponent = getParentComponent(this);
-    }
-    return this.#parentComponent;
-  }
+  },
 
   /**
    * DOMツリーへ追加
@@ -3818,22 +3873,22 @@ class Component extends HTMLElement {
         await this.parentComponent.initialPromise;
       } else {
       }
-      this.#alivePromise = new Promise((resolve, reject) => {
-        this.#aliveResolve = resolve;
-        this.#aliveReject = reject;
+      this.alivePromise = new Promise((resolve, reject) => {
+        this.aliveResolve = resolve;
+        this.aliveReject = reject;
       });
       await this.build();
     } finally {
-      this.#initialResolve && this.#initialResolve();
+      this.initialResolve && this.initialResolve();
     }
-  }
+  },
 
   /**
    * DOMツリーから削除
    */
   disconnectedCallback() {
-    this.#aliveResolve && this.#aliveResolve(this.props[Symbols.toObject]());
-  }
+    this.aliveResolve && this.aliveResolve(this.props[Symbols.toObject]());
+  },
 
   /**
    * 移動時
@@ -3861,26 +3916,68 @@ class Component extends HTMLElement {
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   applyToNode(setOfViewModelPropertyKeys) {
-    this.#binds && Binds.applyToNode(this.#binds, setOfViewModelPropertyKeys);
-  }
+    this.binds && Binds.applyToNode(this.binds, setOfViewModelPropertyKeys);
+  },
+};
 
+
+class Component {
   /**
    * 
    * @param {UserComponentModule} componentModule 
    * @returns {class<HTMLElement>}
    */
   static getClass(componentModule) {
-    const module = Object.assign(new Module, componentModule);
-    // 同じクラスを登録できないため
-    const componentClass = class extends Component {
-      static template = module.template;
-      static ViewModel = module.ViewModel;
+    const getBaseClass = function (module) {
+      return class extends HTMLElement {
+        /**
+         * @type {HTMLTemplateElement}
+         * @static
+         */
+        static template = module.template;
+        /**
+         * @type {class<typeof ViewModel>}
+         * @static
+         */
+        static ViewModel = module.ViewModel;
+        /**
+         * @type {boolean}
+         */
+        get [Symbols.isComponent] () {
+          return true;
+        }
+        /**
+         * 
+         */
+        constructor() {
+          super();
+          this.initialize();
+        }
+        /**
+         * 
+         */
+        initialize() {
+        }
+      };
     };
+  
+    const module = Object.assign(new Module, componentModule);
+    // 同じクラスを登録できないため新しいクラスを生成する
+    const componentClass = getBaseClass(module);
+    if (typeof module.extendClass === "undefined") ; else {
+      // カスタマイズされた組み込み要素
+      // extendsを書き換える
+      // See http://var.blog.jp/archives/75174484.html
+      componentClass.prototype.__proto__ = module.extendClass.prototype;
+      componentClass.__proto__ = module.extendClass;
+    }
+  
+    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
+      Object.defineProperty(componentClass.prototype, key, desc);
+    }
     return componentClass;
   }
-
 }
-
 /**
  * 
  * @param {UserComponentModule} componentModule 

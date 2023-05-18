@@ -1,10 +1,11 @@
 import { NotifyReceiver } from "../../src/thread/NotifyReceiver.js";
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { UpdateSlotStatus } from "../../src/thread/UpdateSLotStatus.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 const component = document.createElement("custom-tag");
 class ViewModel {
   "aaa" = 100;

@@ -8,12 +8,9 @@ test("Component generateComponentClass", () => {
   }
   const ComponentEx = generateComponentClass({ html, ViewModel });
   expect(Component !== ComponentEx).toBe(true);
-  customElements.define("a-a", Component);
   customElements.define("a-b", ComponentEx);
-  const aa = document.createElement("a-a");
   const ab = document.createElement("a-b");
   expect(ab[Symbols.isComponent]).toBe(true);
-  expect(aa[Symbols.isComponent]).toBe(true);
 
   const template = document.createElement("template");
   template.innerHTML = html;
@@ -184,5 +181,24 @@ test("Component parentComponent shadow-root", async () => {
   }, 1);
   await childComponent.initialPromise;
   expect(connectedCallbacked).toBe(true);
+
+});
+
+test("Component customized builtin", () => {
+  const extendModule = {html:"", ViewModel:class {}, extendClass:HTMLDivElement, extendTag:"div"};
+  const extendClass = generateComponentClass(extendModule);
+
+//  const autoModule = {html:"", ViewModel:class {}};
+//  const autoClass = generateComponentClass(autoModule);
+
+  customElements.define("extend-div", extendClass, { extends:extendModule.extendTag });
+
+  const root = document.createElement("div");
+  root.innerHTML = "<div class='a' is='extend-div'></div>";
+//  document.body.appendChild(root);
+  const extendDiv = root.querySelector("div.a");
+//  console.log(extendDiv.disconnectedCallback);
+  expect(extendDiv[Symbols.isComponent]).toBe(true);
+  expect(extendDiv instanceof HTMLDivElement).toBe(true);
 
 });

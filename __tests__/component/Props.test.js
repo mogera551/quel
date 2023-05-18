@@ -1,4 +1,4 @@
-import { Component } from "../../src/component/Component.js";
+import { Component, generateComponentClass } from "../../src/component/Component.js";
 import { createProps } from "../../src/component/Props.js";
 import { Symbols } from "../../src/Symbols.js";
 import { Handler } from "../../modules/dot-notation/dot-notation.js";
@@ -13,7 +13,8 @@ class ViewModel {
   "ddd" = 200;
 }
 
-customElements.define("custom-tag", Component);
+const minimumModule = {html:"", ViewModel:class {}};
+customElements.define("custom-tag", generateComponentClass(minimumModule));
 const parentComponent = document.createElement("custom-tag");
 const component = document.createElement("custom-tag");
 parentComponent.appendChild(component);

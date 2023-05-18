@@ -36,8 +36,14 @@ export class Main {
   static componentModules(components) {
     Object.entries(components).forEach(([name, componentModule]) => {
       const componentName = utils.toKebabCase(name);
-      const componentClass = Component.getClass(componentModule)
-      customElements.define(componentName, componentClass);
+      const componentClass = Component.getClass(componentModule);
+      if (componentModule.extendClass && componentModule.extendTag) {
+        customElements.define(componentName, componentClass, { extends:componentModule.extendTag });
+      } else if (typeof componentModule?.extendClass === "undefined" && typeof componentModule?.extendTag === "undefined") {
+        customElements.define(componentName, componentClass);
+      } else {
+        utils.raise("extendClass and extendTag should be both set, or unset");
+      }
     });
     return this;
   }
