@@ -36,7 +36,7 @@ test("Component ", async () => {
   const ComponentEx = generateComponentClass({ html, ViewModel });
   customElements.define("aaa-bbb", ComponentEx);
   const template = document.createElement("template");
-  template.innerHTML = "<aaa-bbb no-shadow-root></aaa-bbb>";
+  template.innerHTML = "<aaa-bbb></aaa-bbb>";
   const root = document.createElement("div");
   root.appendChild(document.importNode(template.content, true));
   /**
@@ -71,7 +71,7 @@ test("Component ", async () => {
   const ComponentEx = generateComponentClass({ html, ViewModel });
   customElements.define("aaa-ccc", ComponentEx);
   const template = document.createElement("template");
-  template.innerHTML = "<aaa-ccc no-shadow-root></aaa-bbb>";
+  template.innerHTML = "<aaa-ccc></aaa-bbb>";
   const root = document.createElement("div");
   root.appendChild(document.importNode(template.content, true));
   /**
@@ -106,7 +106,7 @@ test("Component ", async () => {
 });
 
 test("Component parentComponent", async () => {
-  const parentHtml = `<div data-bind="aaa" class="aaa"></div><child-tag no-shadow-root></child-tag>`;
+  const parentHtml = `<div data-bind="aaa" class="aaa"></div><child-tag></child-tag>`;
   class ParentViewModel {
     "aaa" = "1000";
 
@@ -121,7 +121,7 @@ test("Component parentComponent", async () => {
 
   const root = document.createElement("div");
   root.innerHTML = `
-  <parent-tag no-shadow-root></parent-tag>
+  <parent-tag></parent-tag>
   `;
   const parentComponent = root.querySelector("parent-tag");
 
@@ -184,21 +184,42 @@ test("Component parentComponent shadow-root", async () => {
 
 });
 
-test("Component customized builtin", () => {
-  const extendModule = {html:"", ViewModel:class {}, extendClass:HTMLDivElement, extendTag:"div"};
+test("Component customized builtin", async () => {
+  const extendModule = {html:"{{aaa}}", ViewModel:class { aaa = 100; }, extendClass:HTMLDivElement, extendTag:"div"};
   const extendClass = generateComponentClass(extendModule);
-
-//  const autoModule = {html:"", ViewModel:class {}};
-//  const autoClass = generateComponentClass(autoModule);
 
   customElements.define("extend-div", extendClass, { extends:extendModule.extendTag });
 
   const root = document.createElement("div");
   root.innerHTML = "<div class='a' is='extend-div'></div>";
-//  document.body.appendChild(root);
+  document.body.appendChild(root);
   const extendDiv = root.querySelector("div.a");
-//  console.log(extendDiv.disconnectedCallback);
+  await extendDiv.initialPromise;
   expect(extendDiv[Symbols.isComponent]).toBe(true);
   expect(extendDiv instanceof HTMLDivElement).toBe(true);
+  expect(extendDiv.withShadowRoot).toBe(false);
+  expect(extendDiv.textContent).toBe("100");
+  expect(extendDiv.shadowRoot == null).toBe(true);
+  expect(extendDiv.viewRootElement === extendDiv).toBe(true);
+
+});
+
+test("Component customized builtin with-hadow-root", async () => {
+  const extendModule = {html:"{{aaa}}", ViewModel:class { aaa = 100; }, extendClass:HTMLDivElement, extendTag:"div"};
+  const extendClass = generateComponentClass(extendModule);
+
+  customElements.define("extend-div2", extendClass, { extends:extendModule.extendTag });
+
+  const root = document.createElement("div");
+  root.innerHTML = "<div class='a' is='extend-div2' with-shadow-root></div>";
+  document.body.appendChild(root);
+  const extendDiv = root.querySelector("div.a");
+  await extendDiv.initialPromise;
+  expect(extendDiv[Symbols.isComponent]).toBe(true);
+  expect(extendDiv instanceof HTMLDivElement).toBe(true);
+  expect(extendDiv.withShadowRoot).toBe(true);
+  expect(extendDiv.shadowRoot != null).toBe(true);
+  expect(extendDiv.shadowRoot.host === extendDiv).toBe(true);
+  expect(extendDiv.viewRootElement !== extendDiv).toBe(true);
 
 });

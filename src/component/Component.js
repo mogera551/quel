@@ -10,6 +10,7 @@ import { Module } from "./Module.js";
 import { Thread } from "../thread/Thread.js";
 import { UpdateSlotStatus } from "../thread/UpdateSLotStatus.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";
+import { AttachableShadow } from "./AttachableShadow.js";
 
 /**
  * 
@@ -170,11 +171,11 @@ const mixInComponent = {
   },
 
   /**
-   * shadowRootを使ってカプセル化をしない(true)
+   * shadowRootを使ってカプセル化をする(true)
    * @type {boolean}
    */
-  get noShadowRoot() {
-    return this.hasAttribute("no-shadow-root");
+  get withShadowRoot() {
+    return this.hasAttribute("with-shadow-root");
   },
 
   /**
@@ -220,7 +221,9 @@ const mixInComponent = {
 
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
-    this.noShadowRoot || this.attachShadow({mode: 'open'});
+    if (AttachableShadow.isAttachableShadow(this.tagName.toLowerCase()) && this.withShadowRoot) {
+      this.attachShadow({mode: 'open'});
+    }
     this.thread = new Thread;
 
     this.viewModel = createViewModel(this, ViewModel);

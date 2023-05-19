@@ -32,7 +32,7 @@ test("Main.componentModules", async () => {
   };
   Main.componentModules(componentModules);
   const root = document.createElement("div");
-  root.innerHTML = `<cus-tag no-shadow-root></cus-tag>`;
+  root.innerHTML = `<cus-tag></cus-tag>`;
   document.body.appendChild(root);
   const customComponent = root.querySelector("cus-tag"); 
   await customComponent.initialPromise;
@@ -52,7 +52,7 @@ test("Main.componentModules customized built-in", async () => {
   };
   Main.componentModules(componentModules);
   const root = document.createElement("div");
-  root.innerHTML = `<div is="cus-tag2" no-shadow-root></div>`;
+  root.innerHTML = `<div is="cus-tag2"></div>`;
   document.body.appendChild(root);
   const customComponent = root.querySelector("div"); 
   await customComponent.initialPromise;

@@ -685,7 +685,7 @@ test('Proxy event handler normal', async() => {
   customElements.define("custom-event1", generateComponentClass({html, ViewModel}));
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-event1 no-shadow-root></custom-event1>
+  <custom-event1></custom-event1>
   `;
   const component = root.querySelector("custom-event1");
   document.body.appendChild(root);
@@ -724,7 +724,7 @@ test('Proxy event handler loop', async() => {
   customElements.define("custom-event2", generateComponentClass({html, ViewModel}));
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-event2 no-shadow-root></custom-event2>
+  <custom-event2></custom-event2>
   `;
   const component = root.querySelector("custom-event2");
   document.body.appendChild(root);
@@ -799,7 +799,7 @@ test('Proxy event handler multi loop', async() => {
   customElements.define("custom-event3", generateComponentClass({html, ViewModel}));
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-event3 no-shadow-root></custom-event3>
+  <custom-event3></custom-event3>
   `;
   const component = root.querySelector("custom-event3");
   document.body.appendChild(root);
@@ -887,7 +887,7 @@ test('Proxy event handler multi loop2', async() => {
   customElements.define("custom-event4", generateComponentClass({html, ViewModel}));
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-event4 no-shadow-root></custom-event4>
+  <custom-event4></custom-event4>
   `;
   const component = root.querySelector("custom-event4");
   document.body.appendChild(root);
@@ -979,7 +979,7 @@ test('Proxy event handler multi loop2 set', async() => {
   customElements.define("custom-event5", generateComponentClass({html, ViewModel}));
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-event5 no-shadow-root></custom-event5>
+  <custom-event5></custom-event5>
   `;
   const component = root.querySelector("custom-event5");
   document.body.appendChild(root);
@@ -1095,7 +1095,7 @@ test('Proxy event handler multi loop2 throw', async() => {
   customElements.define("custom-event6", generateComponentClass({html, ViewModel}));
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-event6 no-shadow-root></custom-event6>
+  <custom-event6></custom-event6>
   `;
   const component = root.querySelector("custom-event6");
   document.body.appendChild(root);
@@ -1124,7 +1124,7 @@ test('Proxy dialog', async () => {
   const html = `<button type="button" data-bind="onclick:open">open</div>`;
   class ViewModel {
     async open() {
-      return await this.$openDialog("custom-dialog", { test:100 }, {"no-shadow-root":""});
+      return await this.$openDialog("custom-dialog", { test:100 }, {"with-shadow-root":""});
     }
     async open2() {
       return await this.$openDialog("custom-dialog", { test:150 });
@@ -1152,7 +1152,7 @@ test('Proxy dialog', async () => {
 
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-comp no-shadow-root></custom-comp>
+  <custom-comp></custom-comp>
   `;
   const component = root.querySelector("custom-comp");
   const openButton = component.querySelector("button");
@@ -1162,7 +1162,7 @@ test('Proxy dialog', async () => {
   setTimeout(async () => {
     const dialog = document.body.querySelector("custom-dialog");
     await dialog.initialPromise;
-    expect(dialog.hasAttribute("no-shadow-root")).toBe(true);
+    expect(dialog.hasAttribute("with-shadow-root")).toBe(true);
     expect(dialog.props[Symbols.toObject]()).toEqual({test:100});
     dialog.viewModel.close();
   }, 10);
@@ -1172,6 +1172,7 @@ test('Proxy dialog', async () => {
   setTimeout(async () => {
     const dialog = document.body.querySelector("custom-dialog");
     await dialog.initialPromise;
+    expect(dialog.hasAttribute("with-shadow-root")).toBe(false);
     expect(dialog.props[Symbols.toObject]()).toEqual({test:150});
     dialog.viewModel.close2();
   }, 10);
@@ -1181,6 +1182,7 @@ test('Proxy dialog', async () => {
   setTimeout(async () => {
     const dialog = document.body.querySelector("custom-dialog");
     await dialog.initialPromise;
+    expect(dialog.hasAttribute("with-shadow-root")).toBe(false);
     expect(dialog.props[Symbols.toObject]()).toEqual({});
     dialog.viewModel.close2();
   }, 10);
@@ -1208,7 +1210,7 @@ test('Proxy special property', async() => {
   customElements.define("custom-special-char", generateComponentClass({html, ViewModel}));
   const root = document.createElement("div");
   root.innerHTML = `
-  <custom-special-char no-shadow-root></custom-special-char>
+  <custom-special-char></custom-special-char>
   `;
   component = root.querySelector("custom-special-char");
   document.body.appendChild(root);
