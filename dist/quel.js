@@ -3643,6 +3643,43 @@ class UpdateSlot {
 
 }
 
+class AttachableShadow {
+  static setOfTags = new Set([
+    // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
+    "articles",
+    "aside",
+    "blockquote",
+    "body",
+    "div",
+    "footer",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "header",
+    "main",
+    "nav",
+    "p",
+    "section",
+    "span",
+  ]);
+
+  /**
+   * 
+   * @param {string} tagName 
+   * @returns {boolean}
+   */
+  static isCustomTag(tagName) {
+    return tagName.indexOf("-") !== -1;
+  }
+
+  static isAttachableShadow(tagName) {
+    return this.isCustomTag(tagName) || this.setOfTags.has(tagName);
+  }
+}
+
 /**
  * 
  * @param {Node} node 
@@ -3802,11 +3839,11 @@ const mixInComponent = {
   },
 
   /**
-   * shadowRootを使ってカプセル化をしない(true)
+   * shadowRootを使ってカプセル化をする(true)
    * @type {boolean}
    */
-  get noShadowRoot() {
-    return this.hasAttribute("no-shadow-root");
+  get withShadowRoot() {
+    return this.hasAttribute("with-shadow-root");
   },
 
   /**
@@ -3852,7 +3889,9 @@ const mixInComponent = {
 
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
-    this.noShadowRoot || this.attachShadow({mode: 'open'});
+    if (AttachableShadow.isAttachableShadow(this.tagName.toLowerCase()) && this.withShadowRoot) {
+      this.attachShadow({mode: 'open'});
+    }
     this.thread = new Thread;
 
     this.viewModel = createViewModel(this, ViewModel);
