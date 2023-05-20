@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { Symbols } from "../Symbols.js";
 import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
 
@@ -43,7 +43,7 @@ export class BindInfo {
   }
 
   /**
-   * @type {import("../component/Component.js").Component} 
+   * @type {Component} 
    */
   component;
   /**
@@ -69,7 +69,7 @@ export class BindInfo {
     this.#viewModelPropertyKey = undefined;
   }
   /**
-   * @type {import("../../modules/dot-notation/dot-notation.js").PropertyName}
+   * @type {PropertyName}
    */
   #viewModelPropertyName;
   get viewModelPropertyName() {
@@ -101,7 +101,7 @@ export class BindInfo {
     return this.#isContextIndex;
   }
   /**
-   * @type {import("../filter/Filter.js").Filter[]}
+   * @type {Filter[]}
    */
   filters;
 

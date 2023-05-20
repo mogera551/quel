@@ -1,4 +1,4 @@
-import { Component } from "../../src/component/Component.js";
+//import { Component } from "../../src/component/Component.js";
 import { BindToTemplate } from "../../src/binder/BindToTemplate.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";

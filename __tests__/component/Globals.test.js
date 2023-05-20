@@ -1,4 +1,4 @@
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 import { createGlobals } from "../../src/component/Globals.js";
 import { GlobalData } from "../../src/global/Data.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";

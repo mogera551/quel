@@ -1,3 +1,4 @@
+import "../types.js";
 import { Main } from "../main.js";
 
 class ThreadStop extends Error {
@@ -30,7 +31,7 @@ export class Thread {
 
   /**
    * 
-   * @returns {Promise<import("./UpdateSlot.js").UpdateSlot>}
+   * @returns {Promise<UpdateSlot>}
    */
   async #sleep() {
     return new Promise((resolve, reject) => {
@@ -48,7 +49,7 @@ export class Thread {
 
   /**
    * 
-   * @param {import("./UpdateSlot.js").UpdateSlot} slot 
+   * @param {UpdateSlot} slot 
    */
   wakeup(slot) {
     this.#resolve(slot);

@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { Event } from "../bindInfo/Event.js";
@@ -31,8 +31,8 @@ const getDefaultProperty = element => {
 
 /**
  * 
- * @param { import("../bindInfo/BindInfo.js").BindInfo } bind 
- * @returns { Event | undefined }
+ * @param {BindInfo} bind 
+ * @returns {Event|undefined}
  */
 const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
 
@@ -46,13 +46,13 @@ const isInputableElement = node => node instanceof HTMLElement &&
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
 
 
-export class BindToElement extends BindToDom {
+export class BindToElement {
   /**
    * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
     const viewModel = component.viewModel;
@@ -61,14 +61,14 @@ export class BindToElement extends BindToDom {
     const defaultName = getDefaultProperty(element);
 
     // パース
-    const parseBindText = this.parseBindText(node, component, viewModel, context);
+    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
     const binds = parseBindText(bindText, defaultName);
-    binds.forEach(this.applyUpdateNode);
+    binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
     let hasDefaultEvent = false;
     /**
-     * @type {import("../bindInfo/BindInfo.js").BindInfo}
+     * @type {BindInfo}
      */
     let defaultBind = null;
     let radioBind = null;

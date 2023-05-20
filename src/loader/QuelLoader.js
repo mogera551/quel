@@ -1,7 +1,7 @@
 import "../types.js";
 import { Loader, Registrar } from "../../modules/vanilla-module-loader/vanilla_module_loader.js";
 import { Filter } from "../filter/Filter";
-import { Component } from "../component/Component.js";
+import { ComponentClassGenerator } from "../component/Component.js";
 
 class QuelModuleRegistrar extends Registrar {
   static regist(name, module) {
@@ -14,7 +14,7 @@ class QuelModuleRegistrar extends Registrar {
       if (module instanceof HTMLElement) {
         window.customElements.define(tagName, module);
       } else {
-        window.customElements.define(tagName, Component.getClass(module));
+        window.customElements.define(tagName, ComponentClassGenerator.generate(module));
       }
     }
   }

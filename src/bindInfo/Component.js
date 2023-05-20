@@ -1,12 +1,12 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
 import { Symbols } from "../Symbols.js";
 
 /**
  * 
  * @param {Node} node 
- * @returns { import("../component/Component.js").Component }
+ * @returns {Component}
  */
 const toComponent = node => (node[Symbols.isComponent]) ? node : utils.raise('not Component');
 

@@ -1,5 +1,5 @@
 import { NotifyReceiver } from "../../src/thread/NotifyReceiver.js";
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { UpdateSlotStatus } from "../../src/thread/UpdateSLotStatus.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";

@@ -41,7 +41,7 @@ const mixInComponent = {
   },
   /**
    * バインドリスト
-   * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @type {BindInfo[]}
    */
   get binds() {
     return this._binds;
@@ -295,13 +295,13 @@ const mixInComponent = {
 }
 
 
-export class Component {
+export class ComponentClassGenerator {
   /**
    * 
    * @param {UserComponentModule} componentModule 
    * @returns {class<HTMLElement>}
    */
-  static getClass(componentModule) {
+  static generate(componentModule) {
     const getBaseClass = function (module) {
       return class extends HTMLElement {
         /**
@@ -357,8 +357,8 @@ export class Component {
 /**
  * 
  * @param {UserComponentModule} componentModule 
- * @returns {class<HTMLElement>}
+ * @returns {Component}
  */
 export function generateComponentClass(componentModule) {
-  return Component.getClass(componentModule);
+  return ComponentClassGenerator.generate(componentModule);
 }

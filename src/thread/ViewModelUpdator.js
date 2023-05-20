@@ -1,3 +1,4 @@
+import "../types.js";
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class ProcessData {
@@ -34,11 +35,11 @@ export class ViewModelUpdator {
   queue = [];
 
   /**
-   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
+   * @type {UpdateSlotStatusCallback}
    */
   #statusCallback;
   /**
-   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   * @param {UpdateSlotStatusCallback} statusCallback
    */
   constructor(statusCallback) {
     this.#statusCallback = statusCallback;

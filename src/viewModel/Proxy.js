@@ -83,7 +83,7 @@ const setOfProperties = new Set([
  */
 export class ViewModelHandler extends Handler {
   /**
-   * @type {import("../component/Component.js").Component}
+   * @type {Component}
    */
   #component;
   get component() {
@@ -146,7 +146,7 @@ export class ViewModelHandler extends Handler {
 
   /**
    * 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {string[]} accessorProperties
    * @param {string[]} methods
    * @param {{prop:string,refProps:string[]}|undefined}
@@ -230,7 +230,7 @@ export class ViewModelHandler extends Handler {
   /**
    * 
    * @param {ViewModel} target 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess 
+   * @param {PropertyAccess} propertyAccess 
    * @param {Proxy} receiver 
    */
   #addNotify(target, propertyAccess, receiver) {
@@ -421,10 +421,10 @@ export class ViewModelHandler extends Handler {
   /**
    * 
    * @param {ViewModel} viewModel 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess
+   * @param {PropertyAccess} propertyAccess
    * @param {string} prop 
    * @param {number[]} indexes 
-   * @returns {import("../../modules/dot-notation/dot-notation.js").PropertyAccess[]}
+   * @returns {PropertyAccess[]}
    */
   static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
     const { propName, indexes } = propertyAccess;
@@ -452,7 +452,7 @@ export class ViewModelHandler extends Handler {
   /**
    * 
    * @param {ViewModel} viewModel 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess
+   * @param {PropertyAccess} propertyAccess
    * @param {number[]} indexes 
    * @returns {number[][]}
    */
@@ -508,7 +508,7 @@ export class ViewModelHandler extends Handler {
 
 /**
  * 
- * @param {import("../component/Component.js").Component} component 
+ * @param {Component} component 
  * @param {class<ViewModel>} viewModelClass 
  * @returns {Proxy<ViewModel>}
  */

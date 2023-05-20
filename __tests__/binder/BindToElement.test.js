@@ -1,4 +1,4 @@
-import { Component } from "../../src/component/Component.js";
+//import { Component } from "../../src/component/Component.js";
 import { BindToElement } from "../../src/binder/BindToElement.js";
 import { Symbols } from "../../src/Symbols.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";

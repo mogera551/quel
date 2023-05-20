@@ -1,4 +1,4 @@
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 import { createProps } from "../../src/component/Props.js";
 import { Symbols } from "../../src/Symbols.js";
 import { Handler } from "../../modules/dot-notation/dot-notation.js";

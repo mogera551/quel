@@ -11,7 +11,7 @@ import { Handler as DotNotationHandler } from "../../modules/dot-notation/dot-no
  */
 class Handler {
   /**
-   * @type {import("./Component.js").Component}
+   * @type {Component}
    */
   #component;
   /**
@@ -56,7 +56,7 @@ class Handler {
 
   /**
    * 
-   * @param {import("./Component.js").Component} component 
+   * @param {Component} component 
    */
   constructor(component) {
     this.#component = component;
@@ -116,7 +116,7 @@ class Handler {
 
 /**
  * 
- * @type {import("./Component.js").Component} component
+ * @type {Component} component
  * @returns {Proxy<Handler>}
  */
 export function createProps(component) {

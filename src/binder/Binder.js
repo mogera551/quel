@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { BindToTemplate } from "./BindToTemplate.js";
 import { BindToElement } from "./BindToElement.js";
 import { BindToText } from "./BindToText.js";
@@ -8,9 +8,9 @@ export class Binder {
   /**
    * 
    * @param {Node[]} nodes
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(nodes, component, context) {
     return nodes.flatMap(node => 

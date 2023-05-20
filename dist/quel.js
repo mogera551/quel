@@ -648,7 +648,7 @@ class BindInfo {
   }
 
   /**
-   * @type {import("../component/Component.js").Component} 
+   * @type {Component} 
    */
   component;
   /**
@@ -674,7 +674,7 @@ class BindInfo {
     this.#viewModelPropertyKey = undefined;
   }
   /**
-   * @type {import("../../modules/dot-notation/dot-notation.js").PropertyName}
+   * @type {PropertyName}
    */
   #viewModelPropertyName;
   get viewModelPropertyName() {
@@ -706,7 +706,7 @@ class BindInfo {
     return this.#isContextIndex;
   }
   /**
-   * @type {import("../filter/Filter.js").Filter[]}
+   * @type {Filter[]}
    */
   filters;
 
@@ -871,11 +871,11 @@ class NodeUpdator {
   queue = [];
 
   /**
-   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
+   * @type {UpdateSlotStatusCallback}
    */
   #statusCallback;
   /**
-   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   * @param {UpdateSlotStatusCallback} statusCallback
    */
   constructor(statusCallback) {
     this.#statusCallback = statusCallback;
@@ -1529,11 +1529,11 @@ class ViewModelUpdator {
   queue = [];
 
   /**
-   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
+   * @type {UpdateSlotStatusCallback}
    */
   #statusCallback;
   /**
-   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   * @param {UpdateSlotStatusCallback} statusCallback
    */
   constructor(statusCallback) {
     this.#statusCallback = statusCallback;
@@ -1594,7 +1594,7 @@ class Event extends BindInfo {
 /**
  * 
  * @param {Node} node 
- * @returns { import("../component/Component.js").Component }
+ * @returns {Component}
  */
 const toComponent = node => (node[Symbols.isComponent]) ? node : utils.raise('not Component');
 
@@ -1702,7 +1702,7 @@ class Factory {
   /**
    * 
    * @param {{
-   * component:import("../component/Component.js").Component,
+   * component:Component,
    * node:Node,
    * nodeProperty:string,
    * viewModel:ViewModel,
@@ -1710,7 +1710,7 @@ class Factory {
    * filters:Filter[],
    * context:ContextInfo
    * }}
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo}
+   * @returns {BindInfo}
    */
   static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, context}) {
     const bindData = {
@@ -1718,7 +1718,7 @@ class Factory {
     };
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
     /**
-     * @type {import("../bindInfo/BindInfo.js").BindInfo}
+     * @type {BindInfo}
      */
     const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
     if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {
@@ -1839,20 +1839,11 @@ class Parser {
 class BindToDom {
   /**
    * 
-   * @param {Node} node
-   * @param {import("../component/Component.js").Component} component
-   * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]} 
-   */
-  static bind(node, component, context) { }
-
-  /**
-   * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {Object<string,any>} viewModel 
    * @param {ContextInfo} context
-   * @returns {(text:string, defaultName:string)=> import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {(text:string, defaultName:string)=> BindInfo[]}
    */
   static parseBindText = (node, component, viewModel, context) => 
     (text, defaultName) => 
@@ -1861,7 +1852,7 @@ class BindToDom {
 
   /**
    * 
-   * @param {import("../bindInfo/BindInfo.js").BindInfo} bind 
+   * @param {BindInfo} bind 
    * @returns {void}
    */
   static applyUpdateNode = bind => bind.updateNode();
@@ -1876,13 +1867,13 @@ const DATASET_BIND_PROPERTY$1 = "bind";
  */
 const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
 
-class BindToTemplate extends BindToDom {
+class BindToTemplate {
   /**
    * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
     const viewModel = component.viewModel;
@@ -1890,10 +1881,10 @@ class BindToTemplate extends BindToDom {
     const bindText = template.dataset[DATASET_BIND_PROPERTY$1];
 
     // パース
-    const parseBindText = this.parseBindText(node, component, viewModel, context);
+    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
     let binds = parseBindText(bindText, "");
     binds = binds.length > 0 ? [ binds[0] ] : [];
-    binds.forEach(this.applyUpdateNode);
+    binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
   }
@@ -1924,8 +1915,8 @@ const getDefaultProperty = element => {
 
 /**
  * 
- * @param { import("../bindInfo/BindInfo.js").BindInfo } bind 
- * @returns { Event | undefined }
+ * @param {BindInfo} bind 
+ * @returns {Event|undefined}
  */
 const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
 
@@ -1939,13 +1930,13 @@ const isInputableElement = node => node instanceof HTMLElement &&
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
 
 
-class BindToElement extends BindToDom {
+class BindToElement {
   /**
    * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
     const viewModel = component.viewModel;
@@ -1954,14 +1945,14 @@ class BindToElement extends BindToDom {
     const defaultName = getDefaultProperty(element);
 
     // パース
-    const parseBindText = this.parseBindText(node, component, viewModel, context);
+    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
     const binds = parseBindText(bindText, defaultName);
-    binds.forEach(this.applyUpdateNode);
+    binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
     let hasDefaultEvent = false;
     /**
-     * @type {import("../bindInfo/BindInfo.js").BindInfo}
+     * @type {BindInfo}
      */
     let defaultBind = null;
     let radioBind = null;
@@ -2007,13 +1998,13 @@ const DEFAULT_PROPERTY = "textContent";
  */
 const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
 
-class BindToText extends BindToDom {
+class BindToText {
   /**
    * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
@@ -2024,9 +2015,9 @@ class BindToText extends BindToDom {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    const parseBindText = this.parseBindText(textNode, component, viewModel, context);
+    const parseBindText = BindToDom.parseBindText(textNode, component, viewModel, context);
     const binds = parseBindText(bindText, DEFAULT_PROPERTY);
-    binds.forEach(this.applyUpdateNode);
+    binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
   }
@@ -2037,9 +2028,9 @@ class Binder {
   /**
    * 
    * @param {Node[]} nodes
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(nodes, component, context) {
     return nodes.flatMap(node => 
@@ -2056,7 +2047,7 @@ class View {
   /**
    * 
    * @param {HTMLElement} rootElement 
-   * @param {import("../component/Component.js").Component} component 
+   * @param {Component} component 
    * @param {HTMLTemplateElement} template 
    * @returns 
    */
@@ -2074,7 +2065,7 @@ class Cache {
   
   /**
    * 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyName} propName 
+   * @param {PropertyName} propName 
    * @param {number[]} indexes 
    * @returns {any}
    */
@@ -2085,7 +2076,7 @@ class Cache {
 
   /**
    * 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyName} propName 
+   * @param {PropertyName} propName 
    * @param {number[]} indexes 
    * @param {any} value
    * @returns {any}
@@ -2388,7 +2379,7 @@ const setOfProperties = new Set([
  */
 class ViewModelHandler extends Handler$3 {
   /**
-   * @type {import("../component/Component.js").Component}
+   * @type {Component}
    */
   #component;
   get component() {
@@ -2451,7 +2442,7 @@ class ViewModelHandler extends Handler$3 {
 
   /**
    * 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {string[]} accessorProperties
    * @param {string[]} methods
    * @param {{prop:string,refProps:string[]}|undefined}
@@ -2535,7 +2526,7 @@ class ViewModelHandler extends Handler$3 {
   /**
    * 
    * @param {ViewModel} target 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess 
+   * @param {PropertyAccess} propertyAccess 
    * @param {Proxy} receiver 
    */
   #addNotify(target, propertyAccess, receiver) {
@@ -2726,10 +2717,10 @@ class ViewModelHandler extends Handler$3 {
   /**
    * 
    * @param {ViewModel} viewModel 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess
+   * @param {PropertyAccess} propertyAccess
    * @param {string} prop 
    * @param {number[]} indexes 
-   * @returns {import("../../modules/dot-notation/dot-notation.js").PropertyAccess[]}
+   * @returns {PropertyAccess[]}
    */
   static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
     const { propName, indexes } = propertyAccess;
@@ -2757,7 +2748,7 @@ class ViewModelHandler extends Handler$3 {
   /**
    * 
    * @param {ViewModel} viewModel 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} propertyAccess
+   * @param {PropertyAccess} propertyAccess
    * @param {number[]} indexes 
    * @returns {number[][]}
    */
@@ -2813,7 +2804,7 @@ class ViewModelHandler extends Handler$3 {
 
 /**
  * 
- * @param {import("../component/Component.js").Component} component 
+ * @param {Component} component 
  * @param {class<ViewModel>} viewModelClass 
  * @returns {Proxy<ViewModel>}
  */
@@ -2828,7 +2819,7 @@ const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
 class Binds {
   /**
    * 
-   * @param {import("./BindInfo.js").BindInfo[]} binds
+   * @param {BindInfo[]} binds
    * @param {Set<string>} setOfKey 
    * @returns {Template[]}
    */
@@ -2870,7 +2861,7 @@ class Binds {
 
   /**
    * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
-   * @param {import("./BindInfo.js").BindInfo[]} binds
+   * @param {BindInfo[]} binds
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   static applyToNode(binds, setOfUpdatedViewModelPropertyKeys) {
@@ -2887,7 +2878,7 @@ class Binds {
 
     /**
      * 
-     * @param {import("./BindInfo.js").BindInfo[]} binds 
+     * @param {BindInfo[]} binds 
      */
     const updateNode = (binds) => {
       binds.forEach(bind => {
@@ -2911,7 +2902,7 @@ class Binds {
  */
 let Handler$1 = class Handler {
   /**
-   * @type {import("./Component.js").Component}
+   * @type {Component}
    */
   #component;
   /**
@@ -2955,7 +2946,7 @@ let Handler$1 = class Handler {
 
   /**
    * 
-   * @param {import("./Component.js").Component} component 
+   * @param {Component} component 
    */
   constructor(component) {
     this.#component = component;
@@ -3015,7 +3006,7 @@ let Handler$1 = class Handler {
 
 /**
  * 
- * @type {import("./Component.js").Component} component
+ * @type {Component} component
  * @returns {Proxy<Handler>}
  */
 function createProps(component) {
@@ -3024,7 +3015,7 @@ function createProps(component) {
 
 class GlobalDataHandler extends Handler$3 {
   /**
-   * @type {Map<string,Set<import("../component/Component.js").Component[]>>}
+   * @type {Map<string,Set<Component>>}
    */
   #setOfComponentByProp = new Map;
   /**
@@ -3093,7 +3084,7 @@ class GlobalData {
  */
 class Handler {
   /**
-   * @type {import("./Component.js").Component}
+   * @type {Component}
    */
   #component;
   /**
@@ -3103,7 +3094,7 @@ class Handler {
 
   /**
    * 
-   * @param {import("./Component.js").Component} component 
+   * @param {Component} component 
    */
   constructor(component) {
     this.#component = component;
@@ -3180,7 +3171,7 @@ class Handler {
 
 /**
  * 
- * @param {import("./Component.js").Component} component
+ * @param {Component} component
  * @returns {Proxy<Handler>}
  */
 function createGlobals(component) {
@@ -3291,7 +3282,7 @@ class Main {
   static componentModules(components) {
     Object.entries(components).forEach(([name, componentModule]) => {
       const componentName = utils.toKebabCase(name);
-      const componentClass = Component.getClass(componentModule);
+      const componentClass = ComponentClassGenerator.generate(componentModule);
       if (componentModule.extendClass && componentModule.extendTag) {
         customElements.define(componentName, componentClass, { extends:componentModule.extendTag });
       } else if (typeof componentModule?.extendClass === "undefined" && typeof componentModule?.extendTag === "undefined") {
@@ -3374,7 +3365,7 @@ class Thread {
 
   /**
    * 
-   * @returns {Promise<import("./UpdateSlot.js").UpdateSlot>}
+   * @returns {Promise<UpdateSlot>}
    */
   async #sleep() {
     return new Promise((resolve, reject) => {
@@ -3392,7 +3383,7 @@ class Thread {
 
   /**
    * 
-   * @param {import("./UpdateSlot.js").UpdateSlot} slot 
+   * @param {UpdateSlot} slot 
    */
   wakeup(slot) {
     this.#resolve(slot);
@@ -3435,23 +3426,23 @@ class Thread {
 
 class NotifyReceiver {
   /**
-   * @type {import("../../modules/dot-notation/dot-notation.js").PropertyAccess[]}
+   * @type {PropertyAccess[]}
    */
   queue = [];
 
   /**
-   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
+   * @type {UpdateSlotStatusCallback}
    */
   #statusCallback;
 
   /**
-   * @type {import("../component/Component.js").Component}
+   * @type {Component}
    */
   #component;
 
   /**
-   * @param {import("../component/Component.js").Component} component
-   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   * @param {Component} component
+   * @param {UpdateSlotStatusCallback} statusCallback
    */
   constructor(component, statusCallback) {
     this.#component = component;
@@ -3545,7 +3536,7 @@ class UpdateSlot {
   
   /**
    * 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {()=>{}?} callback
    * @param {UpdateSlotStatusCallback?} statusCallback
    */
@@ -3607,7 +3598,7 @@ class UpdateSlot {
   
   /**
    * 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} notifyData 
+   * @param {PropertyAccess} notifyData 
    */
   async addNotify(notifyData) {
     this.#notifyReceiver.queue.push(notifyData);
@@ -3632,7 +3623,7 @@ class UpdateSlot {
 
   /**
    * 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {()=>{}} callback 
    * @param {UpdateSlotStatusCallback} statusCallback 
    * @returns 
@@ -3709,7 +3700,7 @@ const mixInComponent = {
   },
   /**
    * バインドリスト
-   * @type {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @type {BindInfo[]}
    */
   get binds() {
     return this._binds;
@@ -3963,13 +3954,13 @@ const mixInComponent = {
 };
 
 
-class Component {
+class ComponentClassGenerator {
   /**
    * 
    * @param {UserComponentModule} componentModule 
    * @returns {class<HTMLElement>}
    */
-  static getClass(componentModule) {
+  static generate(componentModule) {
     const getBaseClass = function (module) {
       return class extends HTMLElement {
         /**
@@ -4023,10 +4014,10 @@ class Component {
 /**
  * 
  * @param {UserComponentModule} componentModule 
- * @returns {class<HTMLElement>}
+ * @returns {Component}
  */
 function generateComponentClass(componentModule) {
-  return Component.getClass(componentModule);
+  return ComponentClassGenerator.generate(componentModule);
 }
 
 class Registrar {
@@ -4481,7 +4472,7 @@ class QuelModuleRegistrar extends Registrar {
       if (module instanceof HTMLElement) {
         window.customElements.define(tagName, module);
       } else {
-        window.customElements.define(tagName, Component.getClass(module));
+        window.customElements.define(tagName, ComponentClassGenerator.generate(module));
       }
     }
   }

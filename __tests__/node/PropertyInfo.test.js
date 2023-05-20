@@ -1,6 +1,6 @@
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodePropertyInfo } from "../../src/node/PropertyInfo.js";
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 
 const minimumModule = {html:"", ViewModel:class {}};
 customElements.define("custom-tag", generateComponentClass(minimumModule));

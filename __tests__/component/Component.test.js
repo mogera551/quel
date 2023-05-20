@@ -1,5 +1,5 @@
 import { Symbols } from "../../src/Symbols.js";
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 
 test("Component generateComponentClass", () => {
   const html = ``;
@@ -7,7 +7,6 @@ test("Component generateComponentClass", () => {
 
   }
   const ComponentEx = generateComponentClass({ html, ViewModel });
-  expect(Component !== ComponentEx).toBe(true);
   customElements.define("a-b", ComponentEx);
   const ab = document.createElement("a-b");
   expect(ab[Symbols.isComponent]).toBe(true);

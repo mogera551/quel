@@ -1,25 +1,26 @@
+import "../types.js";
 import { ViewModelHandler } from "../viewModel/Proxy.js";
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NotifyReceiver {
   /**
-   * @type {import("../../modules/dot-notation/dot-notation.js").PropertyAccess[]}
+   * @type {PropertyAccess[]}
    */
   queue = [];
 
   /**
-   * @type {import("./UpdateSlot.js").UpdateSlotStatusCallback}
+   * @type {UpdateSlotStatusCallback}
    */
   #statusCallback;
 
   /**
-   * @type {import("../component/Component.js").Component}
+   * @type {Component}
    */
   #component;
 
   /**
-   * @param {import("../component/Component.js").Component} component
-   * @param {import("./UpdateSlot.js").UpdateSlotStatusCallback} statusCallback
+   * @param {Component} component
+   * @param {UpdateSlotStatusCallback} statusCallback
    */
   constructor(component, statusCallback) {
     this.#component = component;

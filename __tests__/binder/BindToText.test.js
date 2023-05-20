@@ -1,4 +1,3 @@
-import { Component } from "../../src/component/Component.js";
 import { BindToText } from "../../src/binder/BindToText.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { Symbols } from "../../src/Symbols.js";

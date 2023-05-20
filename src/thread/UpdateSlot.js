@@ -1,3 +1,4 @@
+import "../types.js";
 import { NodeUpdator, NodeUpdateData } from "./NodeUpdator.js";
 import { NotifyReceiver } from "./NotifyReceiver.js";
 import { ViewModelUpdator, ProcessData } from "./ViewModelUpdator.js";
@@ -59,7 +60,7 @@ export class UpdateSlot {
   
   /**
    * 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {()=>{}?} callback
    * @param {UpdateSlotStatusCallback?} statusCallback
    */
@@ -121,7 +122,7 @@ export class UpdateSlot {
   
   /**
    * 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} notifyData 
+   * @param {PropertyAccess} notifyData 
    */
   async addNotify(notifyData) {
     this.#notifyReceiver.queue.push(notifyData);
@@ -146,7 +147,7 @@ export class UpdateSlot {
 
   /**
    * 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {()=>{}} callback 
    * @param {UpdateSlotStatusCallback} statusCallback 
    * @returns 

@@ -7,7 +7,7 @@ export class View {
   /**
    * 
    * @param {HTMLElement} rootElement 
-   * @param {import("../component/Component.js").Component} component 
+   * @param {Component} component 
    * @param {HTMLTemplateElement} template 
    * @returns 
    */

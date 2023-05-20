@@ -1,4 +1,4 @@
-import { Component, generateComponentClass } from "../../src/component/Component";
+import { generateComponentClass } from "../../src/component/Component";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { NodeUpdateData, NodeUpdator } from "../../src/thread/NodeUpdator";
 import { NotifyReceiver } from "../../src/thread/NotifyReceiver.js";

@@ -1,3 +1,4 @@
+import "../types.js";
 import { Template } from "./Template.js";
 
 const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
@@ -5,7 +6,7 @@ const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
 export class Binds {
   /**
    * 
-   * @param {import("./BindInfo.js").BindInfo[]} binds
+   * @param {BindInfo[]} binds
    * @param {Set<string>} setOfKey 
    * @returns {Template[]}
    */
@@ -47,7 +48,7 @@ export class Binds {
 
   /**
    * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
-   * @param {import("./BindInfo.js").BindInfo[]} binds
+   * @param {BindInfo[]} binds
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   static applyToNode(binds, setOfUpdatedViewModelPropertyKeys) {
@@ -64,7 +65,7 @@ export class Binds {
 
     /**
      * 
-     * @param {import("./BindInfo.js").BindInfo[]} binds 
+     * @param {BindInfo[]} binds 
      */
     const updateNode = (binds) => {
       binds.forEach(bind => {

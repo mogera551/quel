@@ -1,23 +1,15 @@
+import "../types.js";
 import { Factory } from "../bindInfo/Factory.js";
 import { Parser } from "./Parser.js";
 
 export class BindToDom {
   /**
    * 
-   * @param {Node} node
-   * @param {import("../component/Component.js").Component} component
-   * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]} 
-   */
-  static bind(node, component, context) { }
-
-  /**
-   * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {Object<string,any>} viewModel 
    * @param {ContextInfo} context
-   * @returns {(text:string, defaultName:string)=> import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {(text:string, defaultName:string)=> BindInfo[]}
    */
   static parseBindText = (node, component, viewModel, context) => 
     (text, defaultName) => 
@@ -26,7 +18,7 @@ export class BindToDom {
 
   /**
    * 
-   * @param {import("../bindInfo/BindInfo.js").BindInfo} bind 
+   * @param {BindInfo} bind 
    * @returns {void}
    */
   static applyUpdateNode = bind => bind.updateNode();

@@ -4,7 +4,7 @@ import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.j
 
 class GlobalDataHandler extends Handler {
   /**
-   * @type {Map<string,Set<import("../component/Component.js").Component[]>>}
+   * @type {Map<string,Set<Component>>}
    */
   #setOfComponentByProp = new Map;
   /**

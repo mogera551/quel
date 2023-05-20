@@ -1,4 +1,5 @@
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import "../../src/types.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { View } from "../../src/view/View.js";

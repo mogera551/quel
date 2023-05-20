@@ -1,4 +1,4 @@
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 import { BindToDom } from "../../src/binder/BindToDom.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";

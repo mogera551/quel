@@ -1,4 +1,5 @@
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import "../../src/types.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 import { Cache } from "../../src/viewModel/Cache.js";
 import { ViewModelHandler, createViewModel } from "../../src/viewModel/Proxy.js";
 import { Symbols } from "../../src/Symbols.js";
@@ -25,7 +26,7 @@ let calledAddNodeUpdate = [];
 const updateSlot = {
   /**
    * 
-   * @param {import("../../src/thread/ViewModelUpdator.js").ProcessData} processData 
+   * @param {ProcessData} processData 
    */
   addProcess: function(processData) {
     calledAddProcess = true;
@@ -36,7 +37,7 @@ const updateSlot = {
   
   /**
    * 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyAccess} notifyData 
+   * @param {PropertyAccess} notifyData 
    */
   addNotify: function(notifyData) {
     calledAddNotify.push(notifyData);
@@ -159,7 +160,7 @@ test('Handler callback', () => {
     updateSlot: {
       /**
        * 
-       * @param {import("../../src/thread/ViewModelUpdator.js").ProcessData} proc 
+       * @param {ProcessData} proc 
        */
       addProcess: (proc) => {
         Reflect.apply(proc.target, proc.thisArgument, proc.argumentsList);

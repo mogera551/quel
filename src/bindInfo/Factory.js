@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { Filter } from "../filter/Filter.js";
 import { NodePropertyType } from "../node/PropertyType.js";
 import { NodePropertyInfo } from "../node/PropertyInfo.js";
@@ -38,7 +38,7 @@ export class Factory {
   /**
    * 
    * @param {{
-   * component:import("../component/Component.js").Component,
+   * component:Component,
    * node:Node,
    * nodeProperty:string,
    * viewModel:ViewModel,
@@ -46,7 +46,7 @@ export class Factory {
    * filters:Filter[],
    * context:ContextInfo
    * }}
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo}
+   * @returns {BindInfo}
    */
   static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, context}) {
     const bindData = {
@@ -54,7 +54,7 @@ export class Factory {
     };
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
     /**
-     * @type {import("../bindInfo/BindInfo.js").BindInfo}
+     * @type {BindInfo}
      */
     const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
     if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {

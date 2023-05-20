@@ -1,4 +1,4 @@
-import { Component, generateComponentClass } from "../../src/component/Component.js";
+import { generateComponentClass } from "../../src/component/Component.js";
 import { Factory } from "../../src/bindInfo/Factory.js";
 import { Template } from "../../src/bindInfo/Template.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";

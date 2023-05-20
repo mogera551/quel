@@ -1,5 +1,5 @@
 import "./types.js";
-import { Component } from "./component/Component.js";
+import { ComponentClassGenerator } from "./component/Component.js";
 import { Filter } from "./filter/Filter.js";
 import { GlobalData } from "./global/Data.js";
 import  { utils } from "./utils.js";
@@ -36,7 +36,7 @@ export class Main {
   static componentModules(components) {
     Object.entries(components).forEach(([name, componentModule]) => {
       const componentName = utils.toKebabCase(name);
-      const componentClass = Component.getClass(componentModule);
+      const componentClass = ComponentClassGenerator.generate(componentModule);
       if (componentModule.extendClass && componentModule.extendTag) {
         customElements.define(componentName, componentClass, { extends:componentModule.extendTag });
       } else if (typeof componentModule?.extendClass === "undefined" && typeof componentModule?.extendTag === "undefined") {

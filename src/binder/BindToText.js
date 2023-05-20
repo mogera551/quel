@@ -11,13 +11,13 @@ const DEFAULT_PROPERTY = "textContent";
  */
 const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
 
-export class BindToText extends BindToDom {
+export class BindToText {
   /**
    * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
@@ -28,9 +28,9 @@ export class BindToText extends BindToDom {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    const parseBindText = this.parseBindText(textNode, component, viewModel, context);
+    const parseBindText = BindToDom.parseBindText(textNode, component, viewModel, context);
     const binds = parseBindText(bindText, DEFAULT_PROPERTY);
-    binds.forEach(this.applyUpdateNode);
+    binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
   }

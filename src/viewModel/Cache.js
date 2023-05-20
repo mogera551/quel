@@ -5,7 +5,7 @@ export class Cache {
   
   /**
    * 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyName} propName 
+   * @param {PropertyName} propName 
    * @param {number[]} indexes 
    * @returns {any}
    */
@@ -16,7 +16,7 @@ export class Cache {
 
   /**
    * 
-   * @param {import("../../modules/dot-notation/dot-notation.js").PropertyName} propName 
+   * @param {PropertyName} propName 
    * @param {number[]} indexes 
    * @param {any} value
    * @returns {any}

@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
 
 const DATASET_BIND_PROPERTY = "bind";
@@ -11,13 +11,13 @@ const DATASET_BIND_PROPERTY = "bind";
  */
 const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
 
-export class BindToTemplate extends BindToDom {
+export class BindToTemplate {
   /**
    * 
    * @param {Node} node 
-   * @param {import("../component/Component.js").Component} component
+   * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {import("../bindInfo/BindInfo.js").BindInfo[]}
+   * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
     const viewModel = component.viewModel;
@@ -25,10 +25,10 @@ export class BindToTemplate extends BindToDom {
     const bindText = template.dataset[DATASET_BIND_PROPERTY];
 
     // パース
-    const parseBindText = this.parseBindText(node, component, viewModel, context);
+    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
     let binds = parseBindText(bindText, "");
     binds = binds.length > 0 ? [ binds[0] ] : [];
-    binds.forEach(this.applyUpdateNode);
+    binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
   }

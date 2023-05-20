@@ -1,5 +1,5 @@
 import { Symbols } from "../src/Symbols.js";
-import { Component } from "../src/component/Component.js";
+//import { Component } from "../src/component/Component.js";
 import { outputFilters } from "../src/filter/Builtin";
 import { Filter } from "../src/filter/Filter.js";
 import { GlobalData } from "../src/global/Data.js";
