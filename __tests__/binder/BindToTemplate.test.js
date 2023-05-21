@@ -1,9 +1,9 @@
 //import { Component } from "../../src/component/Component.js";
-import { BindToNewTemplate } from "../../src/binder/BindToNewTemplate.js";
+import { BindToTemplate } from "../../src/binder/BindToTemplate.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
-import { NewTemplateBind } from "../../src/bindInfo/NewTemplate.js";
+import { TemplateBind } from "../../src/bindInfo/Template.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
 
@@ -15,7 +15,7 @@ Object.defineProperty(window, 'crypto', {
   value: { randomUUID: fn_randomeUUID },
 });
 
-test("BindToNewTemplate", () => {
+test("BindToTemplate", () => {
   const parentNode = document.createElement("div");
   const template = document.createElement("template");
   template.dataset.uuid = crypto.randomUUID();
@@ -41,9 +41,9 @@ test("BindToNewTemplate", () => {
       }
     }
   };
-  const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof NewTemplateBind).toBe(true);
+  expect(binds[0] instanceof TemplateBind).toBe(true);
   expect(binds[0].node instanceof Comment).toBe(true);
   expect(() => binds[0].element).toThrow("not HTMLElement");
   expect(binds[0].nodeProperty).toBe("loop");
@@ -66,7 +66,7 @@ test("BindToNewTemplate", () => {
 
 });
 
-test("BindToNewTemplate empty", () => {
+test("BindToTemplate empty", () => {
   const parentNode = document.createElement("div");
   const template = document.createElement("template");
   template.dataset.uuid = crypto.randomUUID();
@@ -92,11 +92,11 @@ test("BindToNewTemplate empty", () => {
       }
     }
   };
-  const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   expect(binds).toEqual([])
 });
 
-test("BindToNewTemplate throw", () => {
+test("BindToTemplate throw", () => {
   const parentNode = document.createElement("div");
   const node = document.createElement("div");
   node.dataset.bind = "";
@@ -120,11 +120,11 @@ test("BindToNewTemplate throw", () => {
     }
   };
   expect(() => {
-    const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
+    const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   }).toThrow();
 });
 
-test("BindToNewTemplate throw", () => {
+test("BindToTemplate throw", () => {
   const parentNode = document.createElement("div");
   const template = document.createElement("template");
   template.dataset.uuid = crypto.randomUUID();
@@ -151,7 +151,7 @@ test("BindToNewTemplate throw", () => {
     }
   };
   expect(() => {
-    const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
+    const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   }).toThrow("default property undefined");
 });
 

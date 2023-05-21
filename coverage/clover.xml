@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1684698286049" clover="3.2.0">
-  <project timestamp="1684698286049" name="All files">
+<coverage generated="1684698887243" clover="3.2.0">
+  <project timestamp="1684698887243" name="All files">
     <metrics statements="1115" coveredstatements="1097" conditionals="573" coveredconditionals="562" methods="373" coveredmethods="365" elements="2061" coveredelements="2024" complexity="0" loc="1115" ncloc="1115" packages="11" files="50" classes="50"/>
     <package name="src">
       <metrics statements="37" coveredstatements="37" conditionals="23" coveredconditionals="23" methods="16" coveredmethods="16"/>
@@ -289,7 +289,24 @@
         <line num="27" count="9" type="stmt"/>
         <line num="28" count="9" type="stmt"/>
       </file>
-      <file name="NewTemplate.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\NewTemplate.js">
+      <file name="Radio.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Radio.js">
+        <metrics statements="14" coveredstatements="14" conditionals="6" coveredconditionals="6" methods="4" coveredmethods="4"/>
+        <line num="7" count="20" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="7" type="stmt"/>
+        <line num="15" count="7" type="stmt"/>
+        <line num="16" count="6" type="stmt"/>
+        <line num="17" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="19" count="4" type="stmt"/>
+        <line num="21" count="4" type="stmt"/>
+        <line num="29" count="5" type="stmt"/>
+        <line num="30" count="5" type="stmt"/>
+        <line num="31" count="4" type="stmt"/>
+        <line num="32" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="34" count="2" type="stmt"/>
+      </file>
+      <file name="Template.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Template.js">
         <metrics statements="85" coveredstatements="85" conditionals="38" coveredconditionals="38" methods="29" coveredmethods="29"/>
         <line num="34" count="54" type="stmt"/>
         <line num="40" count="130" type="cond" truecount="2" falsecount="0"/>
@@ -377,23 +394,6 @@
         <line num="254" count="22" type="stmt"/>
         <line num="255" count="46" type="stmt"/>
       </file>
-      <file name="Radio.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Radio.js">
-        <metrics statements="14" coveredstatements="14" conditionals="6" coveredconditionals="6" methods="4" coveredmethods="4"/>
-        <line num="7" count="20" type="cond" truecount="2" falsecount="0"/>
-        <line num="14" count="7" type="stmt"/>
-        <line num="15" count="7" type="stmt"/>
-        <line num="16" count="6" type="stmt"/>
-        <line num="17" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="18" count="4" type="stmt"/>
-        <line num="19" count="4" type="stmt"/>
-        <line num="21" count="4" type="stmt"/>
-        <line num="29" count="5" type="stmt"/>
-        <line num="30" count="5" type="stmt"/>
-        <line num="31" count="4" type="stmt"/>
-        <line num="32" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="33" count="2" type="stmt"/>
-        <line num="34" count="2" type="stmt"/>
-      </file>
     </package>
     <package name="src.binder">
       <metrics statements="127" coveredstatements="115" conditionals="71" coveredconditionals="62" methods="41" coveredmethods="37"/>
@@ -446,20 +446,6 @@
         <line num="100" count="7" type="stmt"/>
         <line num="103" count="65" type="stmt"/>
       </file>
-      <file name="BindToNewTemplate.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\binder\BindToNewTemplate.js">
-        <metrics statements="11" coveredstatements="11" conditionals="4" coveredconditionals="4" methods="2" coveredmethods="2"/>
-        <line num="11" count="36" type="cond" truecount="2" falsecount="0"/>
-        <line num="22" count="36" type="stmt"/>
-        <line num="23" count="36" type="stmt"/>
-        <line num="24" count="35" type="stmt"/>
-        <line num="25" count="35" type="stmt"/>
-        <line num="26" count="35" type="stmt"/>
-        <line num="29" count="35" type="stmt"/>
-        <line num="30" count="35" type="stmt"/>
-        <line num="31" count="34" type="cond" truecount="2" falsecount="0"/>
-        <line num="32" count="34" type="stmt"/>
-        <line num="34" count="34" type="stmt"/>
-      </file>
       <file name="BindToSVGElement.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\binder\BindToSVGElement.js">
         <metrics statements="16" coveredstatements="6" conditionals="4" coveredconditionals="0" methods="4" coveredmethods="0"/>
         <line num="9" count="19" type="stmt"/>
@@ -478,6 +464,20 @@
         <line num="51" count="0" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
         <line num="55" count="0" type="stmt"/>
+      </file>
+      <file name="BindToTemplate.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\binder\BindToTemplate.js">
+        <metrics statements="11" coveredstatements="11" conditionals="4" coveredconditionals="4" methods="2" coveredmethods="2"/>
+        <line num="11" count="36" type="cond" truecount="2" falsecount="0"/>
+        <line num="22" count="36" type="stmt"/>
+        <line num="23" count="36" type="stmt"/>
+        <line num="24" count="35" type="stmt"/>
+        <line num="25" count="35" type="stmt"/>
+        <line num="26" count="35" type="stmt"/>
+        <line num="29" count="35" type="stmt"/>
+        <line num="30" count="35" type="stmt"/>
+        <line num="31" count="34" type="cond" truecount="2" falsecount="0"/>
+        <line num="32" count="34" type="stmt"/>
+        <line num="34" count="34" type="stmt"/>
       </file>
       <file name="BindToText.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\binder\BindToText.js">
         <metrics statements="11" coveredstatements="11" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>

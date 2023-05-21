@@ -3,7 +3,7 @@ import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
-import { NewTemplateBind } from "../../src/bindInfo/NewTemplate.js";
+import { TemplateBind } from "../../src/bindInfo/Template.js";
 import { BindInfo } from "../../src/bindInfo/BindInfo.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
@@ -138,7 +138,7 @@ test("Binder", () => {
   expect(binds[2].lastViewModelValue).toBe("300");
   expect(binds[2].context).toEqual({ indexes:[], stack:[] });
 
-  expect(binds[3] instanceof NewTemplateBind).toBe(true);
+  expect(binds[3] instanceof TemplateBind).toBe(true);
   expect(binds[3].node instanceof Comment).toBe(true);
   expect(() => binds[3].element).toThrow();
   expect(binds[3].nodeProperty).toBe("loop");
@@ -407,7 +407,7 @@ test("Binder context", () => {
     ]
   });
 
-  expect(binds[3] instanceof NewTemplateBind).toBe(true);
+  expect(binds[3] instanceof TemplateBind).toBe(true);
   expect(binds[3].node instanceof Comment).toBe(true);
   expect(() => binds[3].element).toThrow();
   expect(binds[3].nodeProperty).toBe("loop");

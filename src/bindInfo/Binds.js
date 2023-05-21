@@ -1,7 +1,7 @@
 import "../types.js";
-import { NewTemplateBind } from "./NewTemplate.js";
+import { TemplateBind } from "./Template.js";
 
-const toTemplateBind = bind => (bind instanceof NewTemplateBind) ? bind : undefined;
+const toTemplateBind = bind => (bind instanceof TemplateBind) ? bind : undefined;
 
 export class Binds {
   /**

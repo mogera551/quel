@@ -129,7 +129,7 @@ const NodePropertyType = {
   checkbox: 30,
   event: 91,
   component: 92,
-  newtemplate: 95,
+  template: 95,
 };
 
 const TEMPLATE_BRANCH = "if"; // 条件分岐
@@ -585,7 +585,7 @@ class NodePropertyInfo {
     result.nodePropertyElements = nodeProperty.split(".");
     if (node instanceof Comment && node.textContent[2] === "|") {
       if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-        result.type = NodePropertyType.newtemplate;
+        result.type = NodePropertyType.template;
         return result;
       }
     }    
@@ -1334,7 +1334,7 @@ class TemplateChild {
   }
 }
 
-class NewTemplateBind extends BindInfo {
+class TemplateBind extends BindInfo {
   /**
    * @type {TemplateChild[]}
    */
@@ -1687,7 +1687,7 @@ const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo,
 const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
 const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
 const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
-const createNewTemplate = (bindInfo, info) => Object.assign(new NewTemplateBind, bindInfo, info);
+const createTemplate = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
 
@@ -1698,7 +1698,7 @@ creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
 creatorByType.set(NodePropertyType.className, createClassName);
 creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
-creatorByType.set(NodePropertyType.newtemplate, createNewTemplate);
+creatorByType.set(NodePropertyType.template, createTemplate);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
 
@@ -2052,7 +2052,7 @@ class BindToText {
  */
 const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
 
-class BindToNewTemplate {
+class BindToTemplate {
   /**
    * 
    * @param {Node} node 
@@ -2087,7 +2087,7 @@ class Binder {
    */
   static bind(nodes, component, context) {
     return nodes.flatMap(node => 
-      (node instanceof Comment && node.textContent[2] == "|") ? BindToNewTemplate.bind(node, component, context) : 
+      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(node, component, context) : 
       (node instanceof HTMLElement) ? BindToHTMLElement.bind(node, component, context) :
       (node instanceof SVGElement) ? BindToSVGElement.bind(node, component, context) :
       (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(node, component, context) : 
@@ -2868,7 +2868,7 @@ function createViewModel(component, viewModelClass) {
   return new Proxy(viewModel, new ViewModelHandler(component, accessorProps, methods, viewModel[DEPENDENT_PROPS_PROPERTY]));
 }
 
-const toTemplateBind = bind => (bind instanceof NewTemplateBind) ? bind : undefined;
+const toTemplateBind = bind => (bind instanceof TemplateBind) ? bind : undefined;
 
 class Binds {
   /**

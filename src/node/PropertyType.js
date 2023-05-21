@@ -10,5 +10,5 @@ export const NodePropertyType = {
   checkbox: 30,
   event: 91,
   component: 92,
-  newtemplate: 95,
+  template: 95,
 };

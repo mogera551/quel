@@ -9,7 +9,7 @@ import { Level3rd } from "./Level3rd.js";
 import { ClassName } from "./ClassName.js";
 import { Radio } from "./Radio.js";
 import { Checkbox } from "./Checkbox.js";
-import { NewTemplateBind } from "./NewTemplate.js";
+import { TemplateBind } from "./Template.js";
 import { Event } from "./Event.js";
 import { ComponentBind } from "./Component.js";
 
@@ -19,7 +19,7 @@ const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo,
 const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
 const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
 const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
-const createNewTemplate = (bindInfo, info) => Object.assign(new NewTemplateBind, bindInfo, info);
+const createTemplate = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
 
@@ -30,7 +30,7 @@ creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
 creatorByType.set(NodePropertyType.className, createClassName);
 creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
-creatorByType.set(NodePropertyType.newtemplate, createNewTemplate);
+creatorByType.set(NodePropertyType.template, createTemplate);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
 

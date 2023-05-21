@@ -10,7 +10,7 @@ import { BindToDom } from "./BindToDom.js";
  */
 const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
 
-export class BindToNewTemplate {
+export class BindToTemplate {
   /**
    * 
    * @param {Node} node 

@@ -31,7 +31,7 @@ export class NodePropertyInfo {
     result.nodePropertyElements = nodeProperty.split(".");
     if (node instanceof Comment && node.textContent[2] === "|") {
       if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-        result.type = NodePropertyType.newtemplate;
+        result.type = NodePropertyType.template;
         return result;
       }
     };

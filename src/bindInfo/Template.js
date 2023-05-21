@@ -91,7 +91,7 @@ export class TemplateChild {
   }
 }
 
-export class NewTemplateBind extends BindInfo {
+export class TemplateBind extends BindInfo {
   /**
    * @type {TemplateChild[]}
    */

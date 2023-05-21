@@ -158,7 +158,7 @@ test ("View render", async () => {
   expect(binds[0].lastViewModelValue).toEqual([10, 20]);
 //  expect(binds[0].parentContextBind).toBe(null);
 //  expect(binds[0].positionContextIndexes).toBe(-1);
-  expect(binds[0].type).toBe(NodePropertyType.newtemplate);
+  expect(binds[0].type).toBe(NodePropertyType.template);
   expect(binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].viewModelProperty).toBe("aaa");
