@@ -46,7 +46,7 @@ const isInputableElement = node => node instanceof HTMLElement &&
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
 
 
-export class BindToElement {
+export class BindToHTMLElement {
   /**
    * 
    * @param {Node} node 

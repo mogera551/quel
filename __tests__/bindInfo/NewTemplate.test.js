@@ -1,8 +1,17 @@
-import { Template, TemplateChild } from "../../src/bindInfo/Template.js"; 
+import { NewTemplateBind, TemplateChild } from "../../src/bindInfo/NewTemplate.js"; 
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { Templates } from "../../src/view/Templates.js";
+
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+Object.defineProperty(window, 'crypto', {
+  value: { randomUUID: fn_randomeUUID },
+});
 
 const viewModel = {
   "aaa": [10,20,30],
@@ -48,21 +57,27 @@ const component = {
 };
 
 test("Template if", () => {
-  const parentNode = document.createElement("div");
   const templateNode = document.createElement("template");
-  parentNode.appendChild(templateNode);
+  templateNode.dataset.uuid = crypto.randomUUID();
   templateNode.dataset.bind = "if:bbb";
   templateNode.innerHTML = "<div class='bbb_is_true'>bbb is true</div>";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
 
-  const template = new Template;
+  const parentNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
+
+  const template = new NewTemplateBind;
   template.component = component;
-  template.node = templateNode;
+  template.node = commentNode;
   template.nodeProperty = "if";
   template.viewModel = viewModel;
   template.viewModelProperty = "bbb";
   template.filters = [];
   template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
+  expect(template.template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.uuid).toBe("xxxx-xxxx-xxxx-xxxx-0");
 
   template.updateNode();
   expect(template.templateChildren.length).toBe(1);
@@ -81,21 +96,27 @@ test("Template if", () => {
 });
 
 test("Template loop no binds", () => {
-  const parentNode = document.createElement("div");
   const templateNode = document.createElement("template");
-  parentNode.appendChild(templateNode);
+  templateNode.dataset.uuid = crypto.randomUUID();
   templateNode.dataset.bind = "loop:aaa";
   templateNode.innerHTML = "<div class='aaa__is_exists'>aaa.* is true</div>";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
 
-  const template = new Template;
+  const parentNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
+
+  const template = new NewTemplateBind;
   template.component = component;
-  template.node = templateNode;
+  template.node = commentNode;
   template.nodeProperty = "loop";
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
   template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
+  expect(template.template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.uuid).toBe("xxxx-xxxx-xxxx-xxxx-1");
 
   template.updateNode();
   expect(template.templateChildren.length).toBe(3);
@@ -113,23 +134,29 @@ test("Template loop no binds", () => {
 });
 
 test("Template loop binds", () => {
-  const parentNode = document.createElement("div");
   const templateNode = document.createElement("template");
-  parentNode.appendChild(templateNode);
+  templateNode.dataset.uuid = crypto.randomUUID();
   templateNode.dataset.bind = "loop:aaa";
-  templateNode.innerHTML = "<div class='aaa__is_exists'><!--@@aaa.*--></div>";
+  templateNode.innerHTML = "<div class='aaa__is_exists'><!--@@:aaa.*--></div>";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
+  const parentNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
 
   viewModel.aaa = [10,20,30];
 
-  const template = new Template;
+  const template = new NewTemplateBind;
   template.component = component;
-  template.node = templateNode;
+  template.node = commentNode;
   template.nodeProperty = "loop";
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
   template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
+  expect(template.template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.uuid).toBe("xxxx-xxxx-xxxx-xxxx-2");
 
   template.updateNode();
   expect(template.templateChildren.length).toBe(3);
@@ -188,32 +215,44 @@ test("Template loop binds", () => {
 });
 
 test("Template loop loop binds", () => {
-  const parentNode = document.createElement("div");
+  const templateNode2 = document.createElement("template");
+  templateNode2.dataset.uuid = crypto.randomUUID();
+  templateNode2.dataset.bind = "loop:ccc.*";
+  templateNode2.innerHTML = `
+  <div class='ccc___is_exists'><!--@@:ccc.*.*--></div>
+`;
+  Templates.templateByUUID.set(templateNode2.dataset.uuid, templateNode2);
+
   const templateNode = document.createElement("template");
-  parentNode.appendChild(templateNode);
+  templateNode.dataset.uuid = crypto.randomUUID();
   templateNode.dataset.bind = "loop:ccc";
   templateNode.innerHTML = `
-<template data-bind="loop:ccc.*">
-  <div class='ccc___is_exists'><!--@@ccc.*.*--></div>
-</template>
+<!--@@|${templateNode2.dataset.uuid}-->
 `;
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
+  const parentNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
 
   viewModel.ccc = [[11,22],[111,222]];
 
-  const template = new Template;
+  const template = new NewTemplateBind;
   template.component = component;
-  template.node = templateNode;
+  template.node = commentNode;
   template.nodeProperty = "loop";
   template.viewModel = viewModel;
   template.viewModelProperty = "ccc";
   template.filters = [];
   template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
+  expect(template.template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.uuid).toBe("xxxx-xxxx-xxxx-xxxx-4");
 
   template.updateNode();
   expect(template.templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -221,6 +260,8 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[0].binds[0].viewModelProperty).toBe("ccc.*");
   expect(template.templateChildren[0].binds[0].indexes).toEqual([0]);
   expect(template.templateChildren[0].binds[0].contextIndexes).toEqual([0]);
+  expect(template.templateChildren[0].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[0].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-3");
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -243,7 +284,7 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([0, 1]);
 
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("loop");
@@ -251,6 +292,8 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[1].binds[0].viewModelProperty).toBe("ccc.*");
   expect(template.templateChildren[1].binds[0].indexes).toEqual([1]);
   expect(template.templateChildren[1].binds[0].contextIndexes).toEqual([1]);
+  expect(template.templateChildren[1].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[1].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-3");
 
   expect(template.templateChildren[1].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -279,7 +322,7 @@ test("Template loop loop binds", () => {
   template.updateNode();
   expect(template.templateChildren.length).toBe(1);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -287,6 +330,8 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[0].binds[0].viewModelProperty).toBe("ccc.*");
   expect(template.templateChildren[0].binds[0].indexes).toEqual([0]);
   expect(template.templateChildren[0].binds[0].contextIndexes).toEqual([0]);
+  expect(template.templateChildren[0].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[0].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-3");
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(3);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -321,33 +366,45 @@ test("Template loop loop binds", () => {
 });
 
 test("Template loop in loop binds", () => {
-  const parentNode = document.createElement("div");
+  const templateNode2 = document.createElement("template");
+  templateNode2.dataset.uuid = crypto.randomUUID();
+  templateNode2.dataset.bind = "loop:ddd";
+  templateNode2.innerHTML = `
+  <div class='aaa___is_exists'><!--@@:aaa.*--></div>
+`;
+  Templates.templateByUUID.set(templateNode2.dataset.uuid, templateNode2);
+
   const templateNode = document.createElement("template");
-  parentNode.appendChild(templateNode);
+  templateNode.dataset.uuid = crypto.randomUUID();
   templateNode.dataset.bind = "loop:aaa";
   templateNode.innerHTML = `
-<template data-bind="loop:ddd">
-  <div class='aaa___is_exists'><!--@@aaa.*--></div>
-</template>
+<!--@@|${templateNode2.dataset.uuid}-->
 `;
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
+  const parentNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
 
   viewModel.aaa = [10,20];
   viewModel.ddd = [30,40];
 
-  const template = new Template;
+  const template = new NewTemplateBind;
   template.component = component;
-  template.node = templateNode;
+  template.node = commentNode;
   template.nodeProperty = "loop";
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
   template.context = { indexes:[], stack:[] };
   expect(template.node instanceof Comment).toBe(true);
+  expect(template.template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.uuid).toBe("xxxx-xxxx-xxxx-xxxx-6");
 
   template.updateNode();
   expect(template.templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -355,6 +412,8 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].viewModelProperty).toBe("ddd");
   expect(template.templateChildren[0].binds[0].indexes).toEqual([]);
   expect(template.templateChildren[0].binds[0].contextIndexes).toEqual([0]);
+  expect(template.templateChildren[0].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[0].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-5");
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -377,7 +436,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([0, 1]);
 
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("loop");
@@ -385,6 +444,8 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[1].binds[0].viewModelProperty).toBe("ddd");
   expect(template.templateChildren[1].binds[0].indexes).toEqual([]);
   expect(template.templateChildren[1].binds[0].contextIndexes).toEqual([1]);
+  expect(template.templateChildren[1].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[1].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-5");
 
   expect(template.templateChildren[1].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -414,7 +475,7 @@ test("Template loop in loop binds", () => {
 
   expect(template.templateChildren.length).toBe(3);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -422,6 +483,8 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].viewModelProperty).toBe("ddd");
   expect(template.templateChildren[0].binds[0].indexes).toEqual([]);
   expect(template.templateChildren[0].binds[0].contextIndexes).toEqual([0]);
+  expect(template.templateChildren[0].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[0].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-5");
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -444,7 +507,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([0, 1]);
 
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("loop");
@@ -452,6 +515,8 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[1].binds[0].viewModelProperty).toBe("ddd");
   expect(template.templateChildren[1].binds[0].indexes).toEqual([]);
   expect(template.templateChildren[1].binds[0].contextIndexes).toEqual([1]);
+  expect(template.templateChildren[1].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[1].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-5");
 
   expect(template.templateChildren[1].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -474,7 +539,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([1, 1]);
 
   expect(template.templateChildren[2].binds.length).toBe(1);
-  expect(template.templateChildren[2].binds[0] instanceof Template).toBe(true);
+  expect(template.templateChildren[2].binds[0] instanceof NewTemplateBind).toBe(true);
   expect(template.templateChildren[2].binds[0].component).toBe(component);
   expect(template.templateChildren[2].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[2].binds[0].nodeProperty).toBe("loop");
@@ -482,6 +547,8 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[2].binds[0].viewModelProperty).toBe("ddd");
   expect(template.templateChildren[2].binds[0].indexes).toEqual([]);
   expect(template.templateChildren[2].binds[0].contextIndexes).toEqual([2]);
+  expect(template.templateChildren[2].binds[0].template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.templateChildren[2].binds[0].uuid).toBe("xxxx-xxxx-xxxx-xxxx-5");
 
   expect(template.templateChildren[2].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[2].binds[0].templateChildren[0].binds.length).toBe(1);
@@ -507,64 +574,49 @@ test("Template loop in loop binds", () => {
 });
 
 test("Template loop throw", () => {
-  const parentNode = document.createElement("div");
-  const templateNode = document.createElement("div");
-  parentNode.appendChild(templateNode);
-  templateNode.dataset.bind = "loop:aaa";
-  templateNode.innerHTML = "<div class='aaa__is_exists'><!--@@aaa.*--></div>";
-
-  viewModel.aaa = [10,20,30];
-
-  const template = new Template;
-
-  expect(() => {
-    template.component = component;
-    template.node = templateNode;
-    template.nodeProperty = "loop";
-    template.viewModel = viewModel;
-    template.viewModelProperty = "aaa";
-    template.filters = [];
-    template.context = { indexes:[], stack:[] };
-  }).toThrow();
-});
-
-test("Template loop throw2", () => {
-  const parentNode = document.createElement("div");
   const templateNode = document.createElement("template");
-  parentNode.appendChild(templateNode);
+  templateNode.dataset.uuid = crypto.randomUUID();
   templateNode.dataset.bind = "loop:aaa";
-  templateNode.innerHTML = "<div class='aaa__is_exists'><!--@@aaa.*--></div>";
+  templateNode.innerHTML = "<div class='aaa__is_exists'><!--@@:aaa.*--></div>";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
+  const parentNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
 
   viewModel.aaa = [10,20,30];
 
-  const template = new Template;
+  const template = new NewTemplateBind;
 
   template.component = component;
-  template.node = templateNode;
-  template.nodeProperty = "notloop";
+  template.node = commentNode;
+  template.nodeProperty = "loopp";
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
   template.filters = [];
   template.context = { indexes:[], stack:[] };
-
   expect(() => {
     template.updateNode();
   }).toThrow();
 });
 
 test("Template loop array undefined", () => {
-  const parentNode = document.createElement("div");
   const templateNode = document.createElement("template");
-  parentNode.appendChild(templateNode);
+  templateNode.dataset.uuid = crypto.randomUUID();
   templateNode.dataset.bind = "loop:aaa";
-  templateNode.innerHTML = "<div class='aaa__is_exists'><!--@@aaa.*--></div>";
+  templateNode.innerHTML = "<div class='aaa__is_exists'><!--@@:aaa.*--></div>";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
+  const parentNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
 
   viewModel.aaa = undefined;
 
-  const template = new Template;
+  const template = new NewTemplateBind;
 
   template.component = component;
-  template.node = templateNode;
+  template.node = commentNode;
   template.nodeProperty = "loop";
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";
@@ -576,17 +628,28 @@ test("Template loop array undefined", () => {
 });
 
 test("Template loop changeIndexes", () => {
+  const templateNode3 = document.createElement("template");
+  templateNode3.dataset.uuid = crypto.randomUUID();
+  templateNode3.dataset.bind = "loop:ccc.*";
+  templateNode3.innerHTML = "<!--@@:ccc.*.*-->";
+  Templates.templateByUUID.set(templateNode3.dataset.uuid, templateNode3);
+
+  const templateNode2 = document.createElement("template");
+  templateNode2.dataset.uuid = crypto.randomUUID();
+  templateNode2.dataset.bind = "loop:ccc";
+  templateNode2.innerHTML = `<!--@@|${templateNode3.dataset.uuid}-->`;
+  Templates.templateByUUID.set(templateNode2.dataset.uuid, templateNode2);
+
+  const templateNode = document.createElement("template");
+  templateNode.dataset.uuid = crypto.randomUUID();
+  templateNode.dataset.bind = "loop:aaa";
+  templateNode.innerHTML = `<!--@@|${templateNode2.dataset.uuid}-->`;
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
   const parentNode = document.createElement("div");
-  parentNode.innerHTML = `
-<template data-bind="loop:aaa">
-  <template data-bind="loop:ccc">
-    <template data-bind="loop:ccc.*">
-      <!--@@ccc.*.*-->
-    </template>  
-  </template>  
-</template>  
-  `;
-  const templateNode = parentNode.querySelector("template[data-bind='loop:aaa']");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  parentNode.appendChild(commentNode);
+
 
   viewModel.aaa = [10,20,30];
   viewModel.ccc = [
@@ -594,9 +657,9 @@ test("Template loop changeIndexes", () => {
     [12,22],
   ];
 
-  const template = new Template;
+  const template = new NewTemplateBind;
   template.component = component;
-  template.node = templateNode;
+  template.node = commentNode;
   template.nodeProperty = "loop";
   template.viewModel = viewModel;
   template.viewModelProperty = "aaa";

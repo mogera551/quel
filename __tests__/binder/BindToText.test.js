@@ -7,7 +7,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 test("BindToText", () => {
   const parentNode = document.createElement("div");
-  const node = document.createComment("@@aaa");
+  const node = document.createComment("@@:aaa");
   parentNode.appendChild(node);
   const viewModel = {
     "aaa": 100,
@@ -55,7 +55,7 @@ test("BindToText", () => {
 
 test("BindToText throw", () => {
   const parentNode = document.createElement("div");
-  const node = document.createTextNode("@@aaa");
+  const node = document.createTextNode("@@:aaa");
   parentNode.appendChild(node);
   const viewModel = {
     "aaa": 100,

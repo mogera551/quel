@@ -23,7 +23,7 @@ const getNodeRoute = node => {
  * @param {Node} node 
  * @returns 
  */
-const isCommentNode = node => node instanceof Comment && node.textContent[0] === "@" && node.textContent[1] === "@" && node.textContent[2] !== "@";
+const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
 /**
  * 
  * @param {Node} node 

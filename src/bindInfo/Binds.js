@@ -1,7 +1,7 @@
 import "../types.js";
-import { Template } from "./Template.js";
+import { NewTemplateBind } from "./NewTemplate.js";
 
-const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
+const toTemplateBind = bind => (bind instanceof NewTemplateBind) ? bind : undefined;
 
 export class Binds {
   /**
@@ -18,7 +18,7 @@ export class Binds {
       info.index++;
       if (info.binds) {
         if (info.index < info.binds.length) {
-          const template = toTemplate(info.binds[info.index]);
+          const template = toTemplateBind(info.binds[info.index]);
           if (template) {
             if (setOfKey.has(template.viewModelPropertyKey)) {
               templateBinds.push(template);
@@ -72,7 +72,7 @@ export class Binds {
         if (!templateBinds.has(bind) && setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
           bind.updateNode();
         }
-        toTemplate(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds))
+        toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds))
       });
     }
     updateNode(binds);

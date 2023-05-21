@@ -35,6 +35,16 @@ class utils {
    */
   static toKebabCase = text => (typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase()) : text;
 
+  /**
+   * @returns {string}
+   */
+  static createUUID() {
+    return window?.crypto?.randomUUID ? window.crypto.randomUUID()
+     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(a) {
+        let r = (new Date().getTime() + Math.random() * 16)%16 | 0, v = a == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+  }
 }
 
 class outputFilters {
@@ -117,9 +127,9 @@ const NodePropertyType = {
   className: 10,
   radio: 20,
   checkbox: 30,
-  template: 90,
   event: 91,
   component: 92,
+  newtemplate: 95,
 };
 
 const TEMPLATE_BRANCH = "if"; // 条件分岐
@@ -573,9 +583,9 @@ class NodePropertyInfo {
   static get(node, nodeProperty) {
     const result = new NodePropertyInfo;
     result.nodePropertyElements = nodeProperty.split(".");
-    if (node instanceof HTMLTemplateElement) {
+    if (node instanceof Comment && node.textContent[2] === "|") {
       if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-        result.type = NodePropertyType.template;
+        result.type = NodePropertyType.newtemplate;
         return result;
       }
     }    
@@ -1156,7 +1166,7 @@ const getNodeRoute = node => {
  * @param {Node} node 
  * @returns 
  */
-const isCommentNode = node => node instanceof Comment && node.textContent[0] === "@" && node.textContent[1] === "@" && node.textContent[2] !== "@";
+const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
 /**
  * 
  * @param {Node} node 
@@ -1234,12 +1244,13 @@ class Context {
   }
 }
 
-/**
- * 
- * @param {Node} node 
- * @returns {HTMLTemplateElement}
- */
-const toHTMLTemplateElement$1 = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
+class Templates {
+  /**
+   * @type {Map<string,HTMLTemplateElement>}
+   */
+  static templateByUUID = new Map;
+
+}
 
 class TemplateChild {
   /**
@@ -1323,24 +1334,7 @@ class TemplateChild {
   }
 }
 
-class Template extends BindInfo {
-  get node() {
-    return super.node;
-  }
-  set node(node) {
-    const template = toHTMLTemplateElement$1(node);
-    const comment = document.createComment(`template ${template.dataset["bind"]}`);
-    template.parentNode.replaceChild(comment, template);
-    super.node = comment;
-    this.template = template;
-  }
-  get nodeProperty() {
-    return super.nodeProperty;
-  }
-  set nodeProperty(value) {
-    super.nodeProperty = value;
-  }
-
+class NewTemplateBind extends BindInfo {
   /**
    * @type {TemplateChild[]}
    */
@@ -1350,10 +1344,20 @@ class Template extends BindInfo {
    */
   #template;
   get template() {
+    if (typeof this.#template === "undefined") {
+      this.#template = Templates.templateByUUID.get(this.uuid);
+    }
     return this.#template;
   }
-  set template(value) {
-    this.#template = value;
+  /**
+   * @type {string}
+   */
+  #uuid;
+  get uuid() {
+    if (typeof this.#uuid === "undefined") {
+      this.#uuid = this.node.textContent.slice(3);
+    }
+    return this.#uuid;
   }
 
   updateNode() {
@@ -1683,7 +1687,7 @@ const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo,
 const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
 const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
 const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
-const createTemplate = (bindInfo, info) => Object.assign(new Template, bindInfo, info);
+const createNewTemplate = (bindInfo, info) => Object.assign(new NewTemplateBind, bindInfo, info);
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
 
@@ -1694,7 +1698,7 @@ creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
 creatorByType.set(NodePropertyType.className, createClassName);
 creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
-creatorByType.set(NodePropertyType.template, createTemplate);
+creatorByType.set(NodePropertyType.newtemplate, createNewTemplate);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
 
@@ -1806,6 +1810,7 @@ const parseBindText = (text, defaultName) => {
     let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
     viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
+    typeof nodeProperty === "undefined" && utils.raise("default property undefined");
     return { nodeProperty, viewModelProperty, filters };
   });
 };
@@ -1859,38 +1864,6 @@ class BindToDom {
 }
 
 const DATASET_BIND_PROPERTY$1 = "bind";
-
-/**
- * 
- * @param {Node} node 
- * @returns {HTMLTemplateElement}
- */
-const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
-
-class BindToTemplate {
-  /**
-   * 
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, context) {
-    const viewModel = component.viewModel;
-    const template = toHTMLTemplateElement(node);
-    const bindText = template.dataset[DATASET_BIND_PROPERTY$1];
-
-    // パース
-    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    let binds = parseBindText(bindText, "");
-    binds = binds.length > 0 ? [ binds[0] ] : [];
-    binds.forEach(BindToDom.applyUpdateNode);
-
-    return binds;
-  }
-}
-
-const DATASET_BIND_PROPERTY = "bind";
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
 const DEFAULT_PROPERTY$1 = "textContent";
@@ -1918,7 +1891,7 @@ const getDefaultProperty = element => {
  * @param {BindInfo} bind 
  * @returns {Event|undefined}
  */
-const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
+const toEvent$1 = bind => (bind instanceof Event) ? bind : undefined; 
 
 /**
  * ユーザー操作によりデフォルト値が変わるかどうか
@@ -1930,7 +1903,7 @@ const isInputableElement = node => node instanceof HTMLElement &&
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
 
 
-class BindToElement {
+class BindToHTMLElement {
   /**
    * 
    * @param {Node} node 
@@ -1941,7 +1914,7 @@ class BindToElement {
   static bind(node, component, context) {
     const viewModel = component.viewModel;
     const element = toHTMLElement(node);
-    const bindText = element.dataset[DATASET_BIND_PROPERTY];
+    const bindText = element.dataset[DATASET_BIND_PROPERTY$1];
     const defaultName = getDefaultProperty(element);
 
     // パース
@@ -1962,7 +1935,7 @@ class BindToElement {
       radioBind = (bind instanceof Radio) ? bind : radioBind;
       checkboxBind = (bind instanceof Checkbox) ? bind : checkboxBind;
       defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
-      toEvent(bind)?.addEventListener();
+      toEvent$1(bind)?.addEventListener();
     });
 
     const setDefaultEventHandler = (bind) => {
@@ -1989,6 +1962,54 @@ class BindToElement {
 
 }
 
+const DATASET_BIND_PROPERTY = "bind";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {SVGElement}
+ */
+const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`not SVGElement`);
+
+/**
+ * 
+ * @param {BindInfo} bind 
+ * @returns {Event|undefined}
+ */
+const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
+
+class BindToSVGElement {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {ContextInfo} context
+   * @returns {BindInfo[]}
+   */
+  static bind(node, component, context) {
+    const viewModel = component.viewModel;
+    const element = toSVGElement(node);
+    const bindText = element.dataset[DATASET_BIND_PROPERTY];
+    const defaultName = undefined;
+
+    // パース
+    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
+    const binds = parseBindText(bindText, defaultName);
+    binds.forEach(BindToDom.applyUpdateNode);
+
+    // イベントハンドラ設定
+    /**
+     * @type {BindInfo}
+     */
+    binds.forEach(bind => {
+      toEvent(bind)?.addEventListener();
+    });
+
+    return binds;
+  }
+
+}
+
 const DEFAULT_PROPERTY = "textContent";
 
 /**
@@ -1996,7 +2017,7 @@ const DEFAULT_PROPERTY = "textContent";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("not Comment");
 
 class BindToText {
   /**
@@ -2009,8 +2030,8 @@ class BindToText {
   static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
     const viewModel = component.viewModel;
-    const comment = toComment(node);
-    const bindText = comment.textContent.slice(2); // @@をスキップ
+    const comment = toComment$1(node);
+    const bindText = comment.textContent.slice(3); // @@:をスキップ
     const textNode = document.createTextNode("");
     comment.parentNode.replaceChild(textNode, comment);
 
@@ -2024,6 +2045,38 @@ class BindToText {
 
 }
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Comment}
+ */
+const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+
+class BindToNewTemplate {
+  /**
+   * 
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {ContextInfo} context
+   * @returns {BindInfo[]}
+   */
+  static bind(node, component, context) {
+    const viewModel = component.viewModel;
+    const comment = toComment(node);
+    const uuid = comment.textContent.slice(3);
+    const template = Templates.templateByUUID.get(uuid);
+    const bindText = template.dataset.bind;
+
+    // パース
+    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
+    let binds = parseBindText(bindText, undefined);
+    binds = binds.length > 0 ? [ binds[0] ] : [];
+    binds.forEach(BindToDom.applyUpdateNode);
+
+    return binds;
+  }
+}
+
 class Binder {
   /**
    * 
@@ -2034,9 +2087,10 @@ class Binder {
    */
   static bind(nodes, component, context) {
     return nodes.flatMap(node => 
-      (node instanceof HTMLTemplateElement) ? BindToTemplate.bind(node, component, context) :
-      (node instanceof HTMLElement) ? BindToElement.bind(node, component, context) :
-      (node instanceof Comment) ? BindToText.bind(node, component, context) : 
+      (node instanceof Comment && node.textContent[2] == "|") ? BindToNewTemplate.bind(node, component, context) : 
+      (node instanceof HTMLElement) ? BindToHTMLElement.bind(node, component, context) :
+      (node instanceof SVGElement) ? BindToSVGElement.bind(node, component, context) :
+      (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(node, component, context) : 
       utils.raise(`unknown node type`)
     );
   }
@@ -2814,7 +2868,7 @@ function createViewModel(component, viewModelClass) {
   return new Proxy(viewModel, new ViewModelHandler(component, accessorProps, methods, viewModel[DEPENDENT_PROPS_PROPERTY]));
 }
 
-const toTemplate = bind => (bind instanceof Template) ? bind : undefined;
+const toTemplateBind = bind => (bind instanceof NewTemplateBind) ? bind : undefined;
 
 class Binds {
   /**
@@ -2831,7 +2885,7 @@ class Binds {
       info.index++;
       if (info.binds) {
         if (info.index < info.binds.length) {
-          const template = toTemplate(info.binds[info.index]);
+          const template = toTemplateBind(info.binds[info.index]);
           if (template) {
             if (setOfKey.has(template.viewModelPropertyKey)) {
               templateBinds.push(template);
@@ -2885,7 +2939,7 @@ class Binds {
         if (!templateBinds.has(bind) && setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
           bind.updateNode();
         }
-        toTemplate(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds));
+        toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds));
       });
     };
     updateNode(binds);
@@ -3215,13 +3269,13 @@ class Module {
    * HTMLの変換
    * {{loop:}}{{if:}}{{else:}}を<template>へ置換
    * {{end:}}を</template>へ置換
-   * {{...}}を<!--@@...-->へ置換
+   * {{...}}を<!--@@:...-->へ置換
    * @param {string} html 
    * @returns {string}
    */
   static replaceTag(html) {
     const stack = [];
-    return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+    const replacedHtml =  html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
       expr = expr.trim();
       if (expr.startsWith("loop:") || expr.startsWith("if:")) {
         stack.push(expr);
@@ -3233,9 +3287,38 @@ class Module {
         stack.pop();
         return `</template>`;
       } else {
-        return `<!--@@${expr}-->`;
+        return `<!--@@:${expr}-->`;
       }
     });
+    // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
+    const root = document.createElement("template"); // 仮のルート
+    root.innerHTML = replacedHtml;
+    const replaceTemplate = (element) => {
+      /**
+       * @type {Node}
+       */
+      let template;
+      while(template = element.querySelector("template")) {
+        const uuid =  utils.createUUID();
+        const comment = document.createComment(`@@|${uuid}`);
+        template.parentNode.replaceChild(comment, template);
+        if (!(template instanceof HTMLTemplateElement)) {
+          // SVGタグ内のtemplateタグを想定
+          const newTemplate = document.createElement("template");
+          for(let childNode of Array.from(template.childNodes)) {
+            newTemplate.content.appendChild(childNode);
+          }
+          template = newTemplate;
+        }
+        template.dataset.uuid = uuid;
+        template.dataset.bind = template.dataset.bind;
+        replaceTemplate(template.content);
+        Templates.templateByUUID.set(uuid, template);
+      }
+    };
+    replaceTemplate(root.content);
+
+    return root.innerHTML;
   }
 
   /**
@@ -3245,7 +3328,7 @@ class Module {
    */
   static htmlToTemplate(html, css) {
     const template = document.createElement("template");
-    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ?　Module.replaceTag(html) : "");
+    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? Module.replaceTag(html) : "");
     return template;
   }
 }

@@ -8,7 +8,7 @@ export const NodePropertyType = {
   className: 10,
   radio: 20,
   checkbox: 30,
-  template: 90,
   event: 91,
   component: 92,
+  newtemplate: 95,
 };

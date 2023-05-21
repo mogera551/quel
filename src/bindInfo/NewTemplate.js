@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { Filter } from "../filter/Filter.js";
 import { BindInfo } from "./BindInfo.js";
 import { Binder } from "../binder/Binder.js";
@@ -7,13 +7,7 @@ import { Selector } from "../binder/Selector.js";
 import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
 import { Context } from "../context/Context.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-
-/**
- * 
- * @param {Node} node 
- * @returns {HTMLTemplateElement}
- */
-const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
+import { Templates } from "../view/Templates.js";
 
 export class TemplateChild {
   /**
@@ -97,24 +91,7 @@ export class TemplateChild {
   }
 }
 
-export class Template extends BindInfo {
-  get node() {
-    return super.node;
-  }
-  set node(node) {
-    const template = toHTMLTemplateElement(node);
-    const comment = document.createComment(`template ${template.dataset["bind"]}`);
-    template.parentNode.replaceChild(comment, template);
-    super.node = comment;
-    this.template = template;
-  }
-  get nodeProperty() {
-    return super.nodeProperty;
-  }
-  set nodeProperty(value) {
-    super.nodeProperty = value;
-  }
-
+export class NewTemplateBind extends BindInfo {
   /**
    * @type {TemplateChild[]}
    */
@@ -124,10 +101,20 @@ export class Template extends BindInfo {
    */
   #template;
   get template() {
+    if (typeof this.#template === "undefined") {
+      this.#template = Templates.templateByUUID.get(this.uuid);
+    }
     return this.#template;
   }
-  set template(value) {
-    this.#template = value;
+  /**
+   * @type {string}
+   */
+  #uuid;
+  get uuid() {
+    if (typeof this.#uuid === "undefined") {
+      this.#uuid = this.node.textContent.slice(3);
+    }
+    return this.#uuid;
   }
 
   updateNode() {

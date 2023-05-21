@@ -3,6 +3,15 @@ import { generateComponentClass } from "../../src/component/Component.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { View } from "../../src/view/View.js";
+import { Module } from "../../src/component/Module.js";
+
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+Object.defineProperty(window, 'crypto', {
+  value: { randomUUID: fn_randomeUUID },
+});
 
 const minimumModule = {html:"", ViewModel:class {}};
 customElements.define("custom-tag", generateComponentClass(minimumModule));
@@ -129,9 +138,14 @@ test ("View render", async () => {
 
     }
   };
+
+  const template = Module.htmlToTemplate(`
+{{ loop:aaa }}
+  {{ aaa.* }}
+{{ end: }}
+  `);
+
   const root = document.createElement("div");
-  const template = document.createElement("template");
-  template.innerHTML = `<template data-bind="loop:aaa"><!--@@aaa.*--></template>`;
 
   const binds = View.render(root, component, template);
   expect(binds.length).toBe(1);
@@ -144,7 +158,7 @@ test ("View render", async () => {
   expect(binds[0].lastViewModelValue).toEqual([10, 20]);
 //  expect(binds[0].parentContextBind).toBe(null);
 //  expect(binds[0].positionContextIndexes).toBe(-1);
-  expect(binds[0].type).toBe(NodePropertyType.template);
+  expect(binds[0].type).toBe(NodePropertyType.newtemplate);
   expect(binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].viewModelProperty).toBe("aaa");
@@ -178,7 +192,7 @@ test ("View render", async () => {
   expect(binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].templateChildren[1].binds[0].viewModelProperty).toBe("aaa.*");
 
-  expect(root.innerHTML).toEqual(`<!--template loop:aaa-->`);
+  expect(root.innerHTML.trim()).toEqual(`<!--@@|xxxx-xxxx-xxxx-xxxx-0-->`);
   expect(component.updateSlot.nodeUpdator.queue.length).toBe(2);
   expect(component.updateSlot.nodeUpdator.queue[0].property).toBe("textContent");
   expect(component.updateSlot.nodeUpdator.queue[0].viewModelProperty).toBe("aaa.*");

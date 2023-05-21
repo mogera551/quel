@@ -23,7 +23,7 @@ export class BindToText {
     // コメントノードをテキストノードに差し替える
     const viewModel = component.viewModel;
     const comment = toComment(node);
-    const bindText = comment.textContent.slice(2); // @@をスキップ
+    const bindText = comment.textContent.slice(3); // @@:をスキップ
     const textNode = document.createTextNode("");
     comment.parentNode.replaceChild(textNode, comment);
 

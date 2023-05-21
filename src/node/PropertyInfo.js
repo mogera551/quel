@@ -29,9 +29,9 @@ export class NodePropertyInfo {
   static get(node, nodeProperty) {
     const result = new NodePropertyInfo;
     result.nodePropertyElements = nodeProperty.split(".");
-    if (node instanceof HTMLTemplateElement) {
+    if (node instanceof Comment && node.textContent[2] === "|") {
       if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-        result.type = NodePropertyType.template;
+        result.type = NodePropertyType.newtemplate;
         return result;
       }
     };

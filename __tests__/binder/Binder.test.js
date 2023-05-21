@@ -3,22 +3,32 @@ import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
-import { Template as TemplateBind } from "../../src/bindInfo/Template.js";
+import { NewTemplateBind } from "../../src/bindInfo/NewTemplate.js";
 import { BindInfo } from "../../src/bindInfo/BindInfo.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { Module } from "../../src/component/Module.js";
+
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+Object.defineProperty(window, 'crypto', {
+  value: { randomUUID: fn_randomeUUID },
+});
 
 test("Binder", () => {
-  const div = document.createElement("div");
-  div.innerHTML = `
+  const html = `
 <div data-bind="aaa"></div>
 <div data-bind="bbb"></div>
 <div data-bind="ccc"></div>
-<template data-bind="loop:ddd">
+{{ loop:ddd }}
   <div data-bind="ddd.*"></div>
-</template>
-<!--@@eee-->
+{{ end: }}
+{{ eee }}
   `;
-  const elements = Array.from(div.querySelectorAll("[data-bind]"));
+  const root = Module.htmlToTemplate(html);
+
+  const elements = Array.from(root.content.querySelectorAll("[data-bind]"));
   const comments = [];
   const traverse = (node, list) => {
     if (node instanceof Comment) list.push(node);
@@ -26,7 +36,7 @@ test("Binder", () => {
       traverse(childNode, list);
     }
   };
-  traverse(div, comments);
+  traverse(root.content, comments);
 
   const nodes = elements.concat(comments);
   const viewModel = {
@@ -128,7 +138,7 @@ test("Binder", () => {
   expect(binds[2].lastViewModelValue).toBe("300");
   expect(binds[2].context).toEqual({ indexes:[], stack:[] });
 
-  expect(binds[3] instanceof TemplateBind).toBe(true);
+  expect(binds[3] instanceof NewTemplateBind).toBe(true);
   expect(binds[3].node instanceof Comment).toBe(true);
   expect(() => binds[3].element).toThrow();
   expect(binds[3].nodeProperty).toBe("loop");
@@ -260,17 +270,18 @@ test("Binder", () => {
 });
 
 test("Binder context", () => {
-  const div = document.createElement("div");
-  div.innerHTML = `
+  const html = `
 <div data-bind="aaa"></div>
 <div data-bind="bbb"></div>
 <div data-bind="ccc"></div>
-<template data-bind="loop:ddd">
+{{ loop:ddd }}
   <div data-bind="ddd.*"></div>
-</template>
-<!--@@eee-->
+{{ end: }}
+{{ eee }}
   `;
-  const elements = Array.from(div.querySelectorAll("[data-bind]"));
+  const root = Module.htmlToTemplate(html);
+
+  const elements = Array.from(root.content.querySelectorAll("[data-bind]"));
   const comments = [];
   const traverse = (node, list) => {
     if (node instanceof Comment) list.push(node);
@@ -278,7 +289,7 @@ test("Binder context", () => {
       traverse(childNode, list);
     }
   };
-  traverse(div, comments);
+  traverse(root.content, comments);
 
   const nodes = elements.concat(comments);
   const viewModel = {
@@ -396,7 +407,7 @@ test("Binder context", () => {
     ]
   });
 
-  expect(binds[3] instanceof TemplateBind).toBe(true);
+  expect(binds[3] instanceof NewTemplateBind).toBe(true);
   expect(binds[3].node instanceof Comment).toBe(true);
   expect(() => binds[3].element).toThrow();
   expect(binds[3].nodeProperty).toBe("loop");
@@ -554,17 +565,17 @@ test("Binder context", () => {
 });
 
 test("Binder indexes fail", () => {
-  const div = document.createElement("div");
-  div.innerHTML = `
+  const html = `
 <div data-bind="aaa"></div>
 <div data-bind="bbb"></div>
 <div data-bind="ccc"></div>
-<template data-bind="loop:ddd">
+{{ loop:ddd }}
   <div data-bind="ddd.*"></div>
-</template>
-<!--@@eee-->
+{{ end: }}
+{{ eee }}
   `;
-  const elements = Array.from(div.querySelectorAll("[data-bind]"));
+  const root = Module.htmlToTemplate(html);
+  const elements = Array.from(root.content.querySelectorAll("[data-bind]"));
   const comments = [];
   const traverse = (node, list) => {
     if (node instanceof Comment) list.push(node);
@@ -572,7 +583,7 @@ test("Binder indexes fail", () => {
       traverse(childNode, list);
     }
   };
-  traverse(div, comments);
+  traverse(root.content, comments);
   const failNode = document.createDocumentFragment();
 
   const nodes = elements.concat(comments).concat(failNode);

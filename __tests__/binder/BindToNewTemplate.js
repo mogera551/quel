@@ -1,15 +1,27 @@
 //import { Component } from "../../src/component/Component.js";
-import { BindToTemplate } from "../../src/binder/BindToTemplate.js";
+import { BindToNewTemplate } from "../../src/binder/BindToNewTemplate.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
-import { Template } from "../../src/bindInfo/Template.js";
+import { NewTemplateBind } from "../../src/bindInfo/NewTemplate.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { Templates } from "../../src/view/Templates.js";
 
-test("BindToTemplate", () => {
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+Object.defineProperty(window, 'crypto', {
+  value: { randomUUID: fn_randomeUUID },
+});
+
+test("BindToNewTemplate", () => {
   const parentNode = document.createElement("div");
-  const node = document.createElement("template");
-  node.dataset.bind = "loop:aaa";
+  const template = document.createElement("template");
+  template.dataset.uuid = crypto.randomUUID();
+  template.dataset.bind = "loop:aaa";
+  Templates.templateByUUID.set(template.dataset.uuid, template);
+  const node = document.createComment("@@|" + template.dataset.uuid);
   parentNode.appendChild(node);
   const viewModel = {
     "aaa": [],
@@ -29,9 +41,9 @@ test("BindToTemplate", () => {
       }
     }
   };
-  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof Template).toBe(true);
+  expect(binds[0] instanceof NewTemplateBind).toBe(true);
   expect(binds[0].node instanceof Comment).toBe(true);
   expect(() => binds[0].element).toThrow("not HTMLElement");
   expect(binds[0].nodeProperty).toBe("loop");
@@ -54,10 +66,13 @@ test("BindToTemplate", () => {
 
 });
 
-test("BindToTemplate empty", () => {
+test("BindToNewTemplate empty", () => {
   const parentNode = document.createElement("div");
-  const node = document.createElement("template");
-  node.dataset.bind = "";
+  const template = document.createElement("template");
+  template.dataset.uuid = crypto.randomUUID();
+  template.dataset.bind = "";
+  Templates.templateByUUID.set(template.dataset.uuid, template);
+  const node = document.createComment("@@|" + template.dataset.uuid);
   parentNode.appendChild(node);
   const viewModel = {
     "aaa": [],
@@ -77,11 +92,11 @@ test("BindToTemplate empty", () => {
       }
     }
   };
-  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
   expect(binds).toEqual([])
 });
 
-test("BindToTemplate throw", () => {
+test("BindToNewTemplate throw", () => {
   const parentNode = document.createElement("div");
   const node = document.createElement("div");
   node.dataset.bind = "";
@@ -105,8 +120,39 @@ test("BindToTemplate throw", () => {
     }
   };
   expect(() => {
-    const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+    const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
   }).toThrow();
+});
+
+test("BindToNewTemplate throw", () => {
+  const parentNode = document.createElement("div");
+  const template = document.createElement("template");
+  template.dataset.uuid = crypto.randomUUID();
+  template.dataset.bind = "aaa";
+  Templates.templateByUUID.set(template.dataset.uuid, template);
+  const node = document.createComment("@@|" + template.dataset.uuid);
+  parentNode.appendChild(node);
+  const viewModel = {
+    "aaa": [],
+    [Symbols.directlyGet](viewModelProperty, indexes) {
+      return this[viewModelProperty];
+    }
+  }
+  const component = { 
+    viewModel,
+    updateSlot: {
+      /**
+       * 
+       * @param {NodeUpdateData} nodeUpdateData 
+       */
+      addNodeUpdate(nodeUpdateData) {
+        nodeUpdateData.updateFunc();
+      }
+    }
+  };
+  expect(() => {
+    const binds = BindToNewTemplate.bind(node, component, { indexes:[], stack:[] });
+  }).toThrow("default property undefined");
 });
 
 /**

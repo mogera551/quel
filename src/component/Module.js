@@ -1,4 +1,6 @@
 import "../types.js";
+import { utils } from "../utils.js";
+import { Templates } from "../view/Templates.js";
 
 export class Module {
   /**
@@ -37,13 +39,13 @@ export class Module {
    * HTMLの変換
    * {{loop:}}{{if:}}{{else:}}を<template>へ置換
    * {{end:}}を</template>へ置換
-   * {{...}}を<!--@@...-->へ置換
+   * {{...}}を<!--@@:...-->へ置換
    * @param {string} html 
    * @returns {string}
    */
   static replaceTag(html) {
     const stack = [];
-    return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+    const replacedHtml =  html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
       expr = expr.trim();
       if (expr.startsWith("loop:") || expr.startsWith("if:")) {
         stack.push(expr);
@@ -55,9 +57,38 @@ export class Module {
         stack.pop();
         return `</template>`;
       } else {
-        return `<!--@@${expr}-->`;
+        return `<!--@@:${expr}-->`;
       }
     });
+    // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
+    const root = document.createElement("template"); // 仮のルート
+    root.innerHTML = replacedHtml;
+    const replaceTemplate = (element) => {
+      /**
+       * @type {Node}
+       */
+      let template;
+      while(template = element.querySelector("template")) {
+        const uuid =  utils.createUUID();
+        const comment = document.createComment(`@@|${uuid}`);
+        template.parentNode.replaceChild(comment, template);
+        if (!(template instanceof HTMLTemplateElement)) {
+          // SVGタグ内のtemplateタグを想定
+          const newTemplate = document.createElement("template");
+          for(let childNode of Array.from(template.childNodes)) {
+            newTemplate.content.appendChild(childNode);
+          }
+          template = newTemplate;
+        }
+        template.dataset.uuid = uuid;
+        template.dataset.bind = template.dataset.bind;
+        replaceTemplate(template.content);
+        Templates.templateByUUID.set(uuid, template);
+      }
+    };
+    replaceTemplate(root.content);
+
+    return root.innerHTML;
   }
 
   /**
@@ -67,7 +98,7 @@ export class Module {
    */
   static htmlToTemplate(html, css) {
     const template = document.createElement("template");
-    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ?　Module.replaceTag(html) : "");
+    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? Module.replaceTag(html) : "");
     return template;
   }
 }

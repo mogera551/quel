@@ -7,6 +7,14 @@ import { GlobalData } from "../../src/global/Data.js";
 import { DependentProps } from "../../src/viewModel/DependentProps.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+Object.defineProperty(window, 'crypto', {
+  value: { randomUUID: fn_randomeUUID },
+});
+
 async function sleepX(timeout) {
   return new Promise((resolve) => {
     setTimeout(() => resolve(), timeout);

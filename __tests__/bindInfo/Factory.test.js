@@ -1,6 +1,6 @@
 import { generateComponentClass } from "../../src/component/Component.js";
 import { Factory } from "../../src/bindInfo/Factory.js";
-import { Template } from "../../src/bindInfo/Template.js";
+import { NewTemplateBind } from "../../src/bindInfo/NewTemplate.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { Level2nd } from "../../src/bindInfo/Level2nd.js";
 import { Level3rd } from "../../src/bindInfo/Level3rd.js";
@@ -10,6 +10,15 @@ import { ClassName } from "../../src/bindInfo/ClassName.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { Event } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { Templates } from "../../src/view/Templates.js";
+
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+Object.defineProperty(window, 'crypto', {
+  value: { randomUUID: fn_randomeUUID },
+});
 
 const minimumModule = {html:"", ViewModel:class {}};
 customElements.define("custom-tag", generateComponentClass(minimumModule));
@@ -25,21 +34,28 @@ const viewModel = {
 const filters = [];
 
 test("Factory template loop", () => {
+  const templateNode = document.createElement("template");
+  templateNode.dataset.uuid = crypto.randomUUID();
+  templateNode.dataset.bind = "loop:aaa";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
   const rootNode = document.createElement("div");
-  const node = document.createElement("template");
-  rootNode.appendChild(node);
-  node.dataset["bind"] = "loop:aaa";
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  rootNode.appendChild(commentNode);
+
   const bindInfo = Factory.create({
-    component, node, 
+    component, 
+    node: commentNode, 
     nodeProperty: "loop",
     viewModel, 
     viewModelProperty: "aaa",
     filters, 
     context: { indexes:[], stack:[] }
   });
-  expect(bindInfo instanceof Template).toBe(true);
-  expect(bindInfo.node instanceof Comment).toBe(true); // Commentにリプレースされている
-  expect(bindInfo.template).toBe(node);
+  expect(bindInfo instanceof NewTemplateBind).toBe(true);
+  expect(bindInfo.node instanceof Comment).toBe(true);
+  expect(bindInfo.template).toBe(templateNode);
+  expect(bindInfo.uuid).toBe("xxxx-xxxx-xxxx-xxxx-0");
   expect(bindInfo.nodeProperty).toBe("loop");
   expect(bindInfo.nodePropertyElements).toEqual(["loop"]);
   expect(bindInfo.component).toBe(component);
@@ -58,21 +74,28 @@ test("Factory template loop", () => {
 });
 
 test("Factory template if", () => {
-  const parentNode = document.createElement("div");
-  const node = document.createElement("template");
-  parentNode.appendChild(node);
-  node.dataset["bind"] = "if:aaa";
+  const templateNode = document.createElement("template");
+  templateNode.dataset.uuid = crypto.randomUUID();
+  templateNode.dataset.bind = "if:aaa";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
+  const rootNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  rootNode.appendChild(commentNode);
+
   const bindInfo = Factory.create({
-    component, node, 
+    component, 
+    node: commentNode, 
     nodeProperty: "if",
     viewModel, 
     viewModelProperty: "aaa",
     filters, 
     context: { indexes:[], stack:[] }
   });
-  expect(bindInfo instanceof Template).toBe(true);
+  expect(bindInfo instanceof NewTemplateBind).toBe(true);
   expect(bindInfo.node instanceof Comment).toBe(true); // Commentにリプレースされている
-  expect(bindInfo.template).toBe(node);
+  expect(bindInfo.template).toBe(templateNode);
+  expect(bindInfo.uuid).toBe("xxxx-xxxx-xxxx-xxxx-1");
   expect(bindInfo.nodeProperty).toBe("if");
   expect(bindInfo.nodePropertyElements).toEqual(["if"]);
   expect(bindInfo.component).toBe(component);
@@ -91,12 +114,18 @@ test("Factory template if", () => {
 });
 
 test("Factory template other", () => {
-  const parentNode = document.createElement("div");
-  const node = document.createElement("template");
-  parentNode.appendChild(node);
-  node.dataset["bind"] = "aaa";
+  const templateNode = document.createElement("template");
+  templateNode.dataset.uuid = crypto.randomUUID();
+  templateNode.dataset.bind = "textContent:aaa";
+  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
+
+  const rootNode = document.createElement("div");
+  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
+  rootNode.appendChild(commentNode);
+
   const bindInfo = Factory.create({
-    component, node, 
+    component, 
+    node: commentNode, 
     nodeProperty: "textContent",
     viewModel, 
     viewModelProperty: "aaa",
@@ -104,8 +133,9 @@ test("Factory template other", () => {
     context: { indexes:[], stack:[] }
   });
   expect(bindInfo instanceof LevelTop).toBe(true);
-  expect(bindInfo.node instanceof HTMLTemplateElement).toBe(true);
+  expect(bindInfo.node instanceof Comment).toBe(true);
   expect(bindInfo.template).toBe(undefined);
+  expect(bindInfo.uuid).toBe(undefined);
   expect(bindInfo.nodeProperty).toBe("textContent");
   expect(bindInfo.nodePropertyElements).toEqual(["textContent"]);
   expect(bindInfo.component).toBe(component);

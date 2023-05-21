@@ -1,18 +1,16 @@
 import { generateComponentClass } from "../../src/component/Component.js";
 import { BindToDom } from "../../src/binder/BindToDom.js";
-import { LevelTop } from "../../src/bindInfo/LevelTop.js";
-import { NodePropertyType } from "../../src/node/PropertyType.js";
-import { Level2nd } from "../../src/bindInfo/Level2nd.js";
-import { Level3rd } from "../../src/bindInfo/Level3rd.js";
-import { Checkbox } from "../../src/bindInfo/Checkbox.js";
-import { Radio } from "../../src/bindInfo/Radio.js";
-import { ClassName } from "../../src/bindInfo/ClassName.js";
-import { ComponentBind } from "../../src/bindInfo/Component.js";
-import { Event } from "../../src/bindInfo/Event.js";
-import { Template } from "../../src/bindInfo/Template.js";
 import { Filter } from "../../src/filter/Filter.js";
-import { BindInfo } from "../../src/bindInfo/BindInfo.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { Templates } from "../../src/view/Templates.js";
+
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+Object.defineProperty(window, 'crypto', {
+  value: { randomUUID: fn_randomeUUID },
+});
 
 class CustomTag extends HTMLElement {
   aaa = {
@@ -423,11 +421,12 @@ test("BindToDom parseBindText single Event", () => {
 
 test("BindToDom parseBindText single Template if", () => {
   const parentNode = document.createElement("div");
-  const node = document.createElement("template");
-  node.dataset.bind = "if:bbb";
-  node.innerHTML = `
-<div>hoge</div>
-  `;
+  const template = document.createElement("template");
+  template.dataset.uuid = crypto.randomUUID();
+  template.dataset.bind = "if:bbb";
+  Templates.templateByUUID.set(template.dataset.uuid, template);
+
+  const node = document.createComment("@@|" + template.dataset.uuid);
   parentNode.appendChild(node);
   const viewModel = {
     "aaa": 100,
@@ -436,11 +435,11 @@ test("BindToDom parseBindText single Template if", () => {
   const component = { viewModel };
   const context = { indexes:[], stack:[] };
   const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-  const binds = parseBindText(node.dataset.bind, "");
+  const binds = parseBindText(template.dataset.bind, "");
 
   expect(binds.length).toBe(1);
   expect(binds[0].node instanceof Comment).toBe(true);
-  expect(binds[0].node.textContent).toBe("template if:bbb");
+  expect(binds[0].node.textContent).toBe("@@|xxxx-xxxx-xxxx-xxxx-0");
   expect(() => binds[0].element).toThrow("not HTMLElement");
   expect(binds[0].nodeProperty).toBe("if");
   expect(binds[0].nodePropertyElements).toEqual(["if"]);
@@ -463,11 +462,12 @@ test("BindToDom parseBindText single Template if", () => {
 
 test("BindToDom parseBindText single Template loop", () => {
   const parentNode = document.createElement("div");
-  const node = document.createElement("template");
-  node.dataset.bind = "loop:bbb";
-  node.innerHTML = `
-<div>hoge</div>
-  `;
+  const template = document.createElement("template");
+  template.dataset.uuid = crypto.randomUUID();
+  template.dataset.bind = "loop:bbb";
+  Templates.templateByUUID.set(template.dataset.uuid, template);
+
+  const node = document.createComment("@@|" + template.dataset.uuid);
   parentNode.appendChild(node);
   const viewModel = {
     "aaa": 100,
@@ -476,11 +476,11 @@ test("BindToDom parseBindText single Template loop", () => {
   const component = { viewModel };
   const context = { indexes:[], stack:[] };
   const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-  const binds = parseBindText(node.dataset.bind, "");
+  const binds = parseBindText(template.dataset.bind, "");
 
   expect(binds.length).toBe(1);
   expect(binds[0].node instanceof Comment).toBe(true);
-  expect(binds[0].node.textContent).toBe("template loop:bbb");
+  expect(binds[0].node.textContent).toBe("@@|xxxx-xxxx-xxxx-xxxx-1");
   expect(() => binds[0].element).toThrow("not HTMLElement");
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].nodePropertyElements).toEqual(["loop"]);
@@ -517,17 +517,18 @@ test("BindToDom applyUpdateNode", () => {
   [bind1, bind2].forEach(BindToDom.applyUpdateNode);
   expect(calledUpdateNode1).toBe(true);
   expect(calledUpdateNode2).toBe(true);
-
-  BindToDom.bind();
 });
 
 test("BindToDom indexes", () => {
   const parentNode = document.createElement("div");
-  const node = document.createElement("template");
-  node.dataset.bind = "loop:bbb";
-  node.innerHTML = `
-<div>hoge</div>
-  `;
+  const template = document.createElement("template");
+  template.dataset.uuid = crypto.randomUUID();
+  template.dataset.bind = "loop:bbb";
+  template.dataset.innerHTML = "<div>hoge</div>";
+  Templates.templateByUUID.set(template.dataset.uuid, template);
+
+  const node = document.createComment("@@|" + template.dataset.uuid);
+
   parentNode.appendChild(node);
   const viewModel = {
     "aaa": 100,
@@ -536,11 +537,11 @@ test("BindToDom indexes", () => {
   const context =  { indexes:[100], stack:[{ indexes:[100], pos:0, propName:PropertyName.create("ccc") }] };
   const component = { viewModel };
   const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-  const binds = parseBindText(node.dataset.bind, "");
+  const binds = parseBindText(template.dataset.bind, "");
 
   expect(binds.length).toBe(1);
   expect(binds[0].node instanceof Comment).toBe(true);
-  expect(binds[0].node.textContent).toBe("template loop:bbb");
+  expect(binds[0].node.textContent).toBe("@@|xxxx-xxxx-xxxx-xxxx-2");
   expect(() => binds[0].element).toThrow("not HTMLElement");
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].nodePropertyElements).toEqual(["loop"]);

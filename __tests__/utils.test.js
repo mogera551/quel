@@ -55,3 +55,18 @@ test("utils.toKebabCase", () => {
   expect(utils.toKebabCase("AaaBbb")).toBe("aaa-bbb");
   expect(utils.toKebabCase(123)).toBe(123);
 });
+
+let uuid_counter = 0;
+function fn_randomeUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
+}
+test("utils.createUUID", () => {
+  Object.defineProperty(window, 'crypto', {
+    value: { randomUUID: fn_randomeUUID },
+  });
+  expect(utils.createUUID()).toBe("xxxx-xxxx-xxxx-xxxx-0");
+  expect(utils.createUUID()).toBe("xxxx-xxxx-xxxx-xxxx-1");
+  expect(utils.createUUID()).toBe("xxxx-xxxx-xxxx-xxxx-2");
+  delete window.crypto;
+  expect(utils.createUUID().match(/[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[a-f0-9]{4}/) !== null).toBe(true);
+})

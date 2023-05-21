@@ -1,5 +1,5 @@
 //import { Component } from "../../src/component/Component.js";
-import { BindToElement } from "../../src/binder/BindToElement.js";
+import { BindToHTMLElement } from "../../src/binder/BindToHTMLElement.js";
 import { Symbols } from "../../src/Symbols.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
@@ -9,7 +9,7 @@ import { Event as EventBind } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Radio } from "../../src/bindInfo/Radio.js";
 
-test("BindToElement div", () => {
+test("BindToHTMLElement div", () => {
   const node = document.createElement("div");
   node.dataset.bind = "aaa";
   const viewModel = {
@@ -41,7 +41,7 @@ test("BindToElement div", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -72,7 +72,7 @@ test("BindToElement div", () => {
   expect(viewModel["aaa"]).toBe("100");
 });
 
-test("BindToElement input ", () => {
+test("BindToHTMLElement input ", () => {
   const node = document.createElement("input");
   node.dataset.bind = "aaa";
   const viewModel = {
@@ -104,7 +104,7 @@ test("BindToElement input ", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -135,7 +135,7 @@ test("BindToElement input ", () => {
   expect(viewModel["aaa"]).toBe("200");
 });
 
-test("BindToElement select ", () => {
+test("BindToHTMLElement select ", () => {
   const node = document.createElement("select");
   const option1 = document.createElement("option");
   option1.value = "100";
@@ -175,7 +175,7 @@ test("BindToElement select ", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -206,7 +206,7 @@ test("BindToElement select ", () => {
   expect(viewModel["aaa"]).toBe("200");
 });
 
-test("BindToElement textarea ", () => {
+test("BindToHTMLElement textarea ", () => {
   const node = document.createElement("textarea");
   node.dataset.bind = "aaa";
   const viewModel = {
@@ -238,7 +238,7 @@ test("BindToElement textarea ", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -269,7 +269,7 @@ test("BindToElement textarea ", () => {
   expect(viewModel["aaa"]).toBe("200");
 });
 
-test("BindToElement input defaultEvent", () => {
+test("BindToHTMLElement input defaultEvent", () => {
   const node = document.createElement("input");
   node.dataset.bind = "aaa; oninput:change";
   let calledChange = false;
@@ -317,7 +317,7 @@ test("BindToElement input defaultEvent", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(2);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -372,7 +372,7 @@ test("BindToElement input defaultEvent", () => {
   expect(calledChange).toBe(true);
 });
 
-test("BindToElement input no defaultEvent", () => {
+test("BindToHTMLElement input no defaultEvent", () => {
   const node = document.createElement("input");
   node.dataset.bind = "aaa; onclick:change";
   let calledChange = false;
@@ -410,7 +410,7 @@ test("BindToElement input no defaultEvent", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(2);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -465,7 +465,7 @@ test("BindToElement input no defaultEvent", () => {
   expect(calledChange).toBe(false);
 });
 
-test("BindToElement input radio", () => {
+test("BindToHTMLElement input radio", () => {
   const node = document.createElement("input");
   node.type = "radio";
   node.value = "100";
@@ -499,7 +499,7 @@ test("BindToElement input radio", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -531,7 +531,7 @@ test("BindToElement input radio", () => {
   expect(viewModel["aaa"]).toBe(false);
 });
 
-test("BindToElement input checkbox", () => {
+test("BindToHTMLElement input checkbox", () => {
   const node = document.createElement("input");
   node.type = "checkbox";
   node.value = "100";
@@ -565,7 +565,7 @@ test("BindToElement input checkbox", () => {
       },
     }
   };
-  const binds = BindToElement.bind(node, component, { indexes:[], stack:[] });
+  const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node).toBe(node);
@@ -597,7 +597,7 @@ test("BindToElement input checkbox", () => {
   expect(viewModel["aaa"]).toBe(false);
 });
 
-test("BindToElement not element", () => {
+test("BindToHTMLElement not element", () => {
   const node = document.createTextNode("aaaa");
   const viewModel = {
     "aaa": "100",
@@ -628,7 +628,7 @@ test("BindToElement not element", () => {
       },
     }
   };
-  expect(() => {const binds = BindToElement.bind(node, component, null, [])}).toThrow();
+  expect(() => {const binds = BindToHTMLElement.bind(node, component, null, [])}).toThrow();
 });
 
 /**

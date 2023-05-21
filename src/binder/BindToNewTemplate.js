@@ -1,17 +1,16 @@
 import "../types.js";
 import { utils } from "../utils.js";
+import { Templates } from "../view/Templates.js";
 import { BindToDom } from "./BindToDom.js";
-
-const DATASET_BIND_PROPERTY = "bind";
 
 /**
  * 
  * @param {Node} node 
- * @returns {HTMLTemplateElement}
+ * @returns {Comment}
  */
-const toHTMLTemplateElement = node => (node instanceof HTMLTemplateElement) ? node : utils.raise("not HTMLTemplateElement");
+const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
 
-export class BindToTemplate {
+export class BindToNewTemplate {
   /**
    * 
    * @param {Node} node 
@@ -21,12 +20,14 @@ export class BindToTemplate {
    */
   static bind(node, component, context) {
     const viewModel = component.viewModel;
-    const template = toHTMLTemplateElement(node);
-    const bindText = template.dataset[DATASET_BIND_PROPERTY];
+    const comment = toComment(node);
+    const uuid = comment.textContent.slice(3);
+    const template = Templates.templateByUUID.get(uuid);
+    const bindText = template.dataset.bind;
 
     // パース
     const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    let binds = parseBindText(bindText, "");
+    let binds = parseBindText(bindText, undefined);
     binds = binds.length > 0 ? [ binds[0] ] : [];
     binds.forEach(BindToDom.applyUpdateNode);
 

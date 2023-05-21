@@ -6,18 +6,19 @@ const minimumModule = {html:"", ViewModel:class {}};
 customElements.define("custom-tag", generateComponentClass(minimumModule));
 
 test('PropertyType Template', () => {
-  const template = document.createElement("template");
-  expect(NodePropertyInfo.get(template, "if")).toEqual({
-    type:NodePropertyType.template,
+
+  const templateNode = document.createComment("@@|xxxx-xxxx-xxxx-xxxx-0");
+  expect(NodePropertyInfo.get(templateNode, "if")).toEqual({
+    type:NodePropertyType.newtemplate,
     nodePropertyElements:["if"],
     eventType:undefined,
   });
-  expect(NodePropertyInfo.get(template, "loop")).toEqual({
-    type:NodePropertyType.template,
+  expect(NodePropertyInfo.get(templateNode, "loop")).toEqual({
+    type:NodePropertyType.newtemplate,
     nodePropertyElements:["loop"],
     eventType:undefined,
   });
-  expect(NodePropertyInfo.get(template, "value")).toEqual({
+  expect(NodePropertyInfo.get(templateNode, "value")).toEqual({
     type:NodePropertyType.levelTop,
     nodePropertyElements:["value"],
     eventType:undefined,
