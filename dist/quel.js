@@ -3308,10 +3308,10 @@ class Module {
           for(let childNode of Array.from(template.childNodes)) {
             newTemplate.content.appendChild(childNode);
           }
+          newTemplate.dataset.bind = template.datase.bind;
           template = newTemplate;
         }
         template.dataset.uuid = uuid;
-        template.dataset.bind = template.dataset.bind;
         replaceTemplate(template.content);
         Templates.templateByUUID.set(uuid, template);
       }
