@@ -633,10 +633,10 @@ class BindInfo {
     this.#node = node;
   }
   /**
-   * @type {HTMLElement}
+   * @type {Element}
    */
   get element() {
-    return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
+    return (this.node instanceof Element) ? this.node : utils.raise("not Element");
   }
   /**
    * @type {string}
@@ -1071,13 +1071,6 @@ class AttributeBind extends BindInfo {
 
 }
 
-/**
- * 
- * @param {Node} node 
- * @returns {HTMLElement}
- */
-const toHTMLElement$1 = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
-
 class ClassName extends BindInfo {
   /**
    * @type {string}
@@ -1090,8 +1083,7 @@ class ClassName extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, nodeProperty, viewModelProperty, filters, className} = this;
-    const element = toHTMLElement$1(node);
+    const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
     const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
@@ -1105,8 +1097,7 @@ class ClassName extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, filters, className} = this;
-    const element = toHTMLElement$1(node);
+    const {node, element, filters, className} = this;
     const value = Filter.applyForInput(element.classList.contains(className), filters);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
@@ -1707,10 +1698,26 @@ class ComponentBind extends BindInfo {
 
   /**
    * 
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  applyToNode(setOfUpdatedViewModelPropertyKeys) {
+    const { viewModelProperty, dataProperty } = this;
+    for(const key of setOfUpdatedViewModelPropertyKeys) {
+      const [ name, indexesString ] = key.split("\t");
+      const propName = PropertyName.create(name);
+      if (name === viewModelProperty || propName.setOfParentPaths.has(viewModelProperty)) {
+        const remain = name.slice(viewModelProperty.length);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
+      }
+    }
+  }
+
+  /**
+   * 
    */
   updateNode() {
-    const { node, dataProperty } = this;
-    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}`, []);
+//    const { node, dataProperty } = this;
+//    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}`, []);
   }
 
   updateViewModel() {
@@ -2975,8 +2982,15 @@ class Binds {
      */
     const updateNode = (binds) => {
       binds.forEach(bind => {
-        if (!templateBinds.has(bind) && setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
-          bind.updateNode();
+        if (!templateBinds.has(bind)) {
+          if (bind instanceof ComponentBind) {
+            // コンポーネントの場合
+            bind.applyToNode(setOfUpdatedViewModelPropertyKeys);
+          } else {
+            if (setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
+              bind.updateNode();
+            }
+          }
         }
         toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds));
       });

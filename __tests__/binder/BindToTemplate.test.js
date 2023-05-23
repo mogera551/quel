@@ -45,7 +45,7 @@ test("BindToTemplate", () => {
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof TemplateBind).toBe(true);
   expect(binds[0].node instanceof Comment).toBe(true);
-  expect(() => binds[0].element).toThrow("not HTMLElement");
+  expect(() => binds[0].element).toThrow("not Element");
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].nodePropertyElements).toEqual(["loop"]);
   expect(binds[0].component).toBe(component);

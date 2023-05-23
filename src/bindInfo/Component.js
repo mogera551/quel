@@ -2,6 +2,7 @@ import "../types.js";
 import { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
 import { Symbols } from "../Symbols.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /**
  * 
@@ -78,10 +79,26 @@ export class ComponentBind extends BindInfo {
 
   /**
    * 
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  applyToNode(setOfUpdatedViewModelPropertyKeys) {
+    const { viewModelProperty, dataProperty } = this;
+    for(const key of setOfUpdatedViewModelPropertyKeys) {
+      const [ name, indexesString ] = key.split("\t");
+      const propName = PropertyName.create(name);
+      if (name === viewModelProperty || propName.setOfParentPaths.has(viewModelProperty)) {
+        const remain = name.slice(viewModelProperty.length);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
+      }
+    }
+  }
+
+  /**
+   * 
    */
   updateNode() {
-    const { node, dataProperty } = this;
-    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}`, []);
+//    const { node, dataProperty } = this;
+//    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}`, []);
   }
 
   updateViewModel() {

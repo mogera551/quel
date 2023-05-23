@@ -5,6 +5,7 @@ import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { TemplateBind,TemplateChild } from "../../src/bindInfo/Template.js";
 import { Templates } from "../../src/view/Templates.js";
+import { ComponentBind } from "../../src/bindInfo/Component.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -42,6 +43,35 @@ const component = {
       Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
     }
   }
+};
+
+let callbackNotifyForDependentProps = undefined;
+const component2 = {
+  viewModel: {
+    [Symbols.notifyForDependentProps](prop, indexes) {
+      callbackNotifyForDependentProps = {prop, indexes};
+    }
+
+  },
+  updateSlot: {
+    /**
+     * 
+     * @param {NodeUpdateData} nodeUpdateData 
+     */
+    addNodeUpdate(nodeUpdateData) {
+      Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
+    }
+  },
+  applyToNode() {
+
+  },
+  [Symbols.isComponent]: true,
+  props: {
+    [Symbols.bindProperty](dataProperty, viewModelProperty, indexes) {
+
+    }
+
+  } 
 };
 
 test("Binds getTemplateBinds", () => {
@@ -254,9 +284,24 @@ test("Binds applyToNode", () => {
   rootBind.context = { indexes:[], stack:[] };
   rootBind.updateNode();
   binds.push(rootBind);
+
+  const componentBind = new ComponentBind;
+  componentBind.component = component;
+  componentBind.node = component2;
+  componentBind.nodeProperty = "$props.ccc";
+  componentBind.nodePropertyElements = componentBind.nodeProperty.split(".");
+  componentBind.viewModel = viewModel;
+  componentBind.viewModelProperty = "bbb";
+  componentBind.filters = [];
+  componentBind.context = { indexes:[], stack:[] };
+  componentBind.updateNode();
+  binds.push(componentBind);
+  
   expect(element.textContent).toBe("100");
 
+  callbackNotifyForDependentProps = undefined;
   viewModel.bbb = "200";
   Binds.applyToNode(binds, new Set(["bbb\t"]));
   expect(element.textContent).toBe("200");
+  expect(callbackNotifyForDependentProps).toEqual({ prop:"$props.ccc", indexes: [] });
 });

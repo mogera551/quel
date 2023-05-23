@@ -440,7 +440,7 @@ test("BindToDom parseBindText single Template if", () => {
   expect(binds.length).toBe(1);
   expect(binds[0].node instanceof Comment).toBe(true);
   expect(binds[0].node.textContent).toBe("@@|xxxx-xxxx-xxxx-xxxx-0");
-  expect(() => binds[0].element).toThrow("not HTMLElement");
+  expect(() => binds[0].element).toThrow("not Element");
   expect(binds[0].nodeProperty).toBe("if");
   expect(binds[0].nodePropertyElements).toEqual(["if"]);
   expect(binds[0].component).toBe(component);
@@ -481,7 +481,7 @@ test("BindToDom parseBindText single Template loop", () => {
   expect(binds.length).toBe(1);
   expect(binds[0].node instanceof Comment).toBe(true);
   expect(binds[0].node.textContent).toBe("@@|xxxx-xxxx-xxxx-xxxx-1");
-  expect(() => binds[0].element).toThrow("not HTMLElement");
+  expect(() => binds[0].element).toThrow("not Element");
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].nodePropertyElements).toEqual(["loop"]);
   expect(binds[0].component).toBe(component);
@@ -542,7 +542,7 @@ test("BindToDom indexes", () => {
   expect(binds.length).toBe(1);
   expect(binds[0].node instanceof Comment).toBe(true);
   expect(binds[0].node.textContent).toBe("@@|xxxx-xxxx-xxxx-xxxx-2");
-  expect(() => binds[0].element).toThrow("not HTMLElement");
+  expect(() => binds[0].element).toThrow("not Element");
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].nodePropertyElements).toEqual(["loop"]);
   expect(binds[0].component).toBe(component);

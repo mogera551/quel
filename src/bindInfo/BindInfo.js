@@ -15,10 +15,10 @@ export class BindInfo {
     this.#node = node;
   }
   /**
-   * @type {HTMLElement}
+   * @type {Element}
    */
   get element() {
-    return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
+    return (this.node instanceof Element) ? this.node : utils.raise("not Element");
   }
   /**
    * @type {string}

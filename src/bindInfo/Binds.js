@@ -1,4 +1,6 @@
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import "../types.js";
+import { ComponentBind } from "./Component.js";
 import { TemplateBind } from "./Template.js";
 
 const toTemplateBind = bind => (bind instanceof TemplateBind) ? bind : undefined;
@@ -69,8 +71,15 @@ export class Binds {
      */
     const updateNode = (binds) => {
       binds.forEach(bind => {
-        if (!templateBinds.has(bind) && setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
-          bind.updateNode();
+        if (!templateBinds.has(bind)) {
+          if (bind instanceof ComponentBind) {
+            // コンポーネントの場合
+            bind.applyToNode(setOfUpdatedViewModelPropertyKeys);
+          } else {
+            if (setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
+              bind.updateNode();
+            }
+          }
         }
         toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds))
       });

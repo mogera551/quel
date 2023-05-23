@@ -32,7 +32,7 @@ test("BindToText", () => {
   expect(binds[0] instanceof LevelTop).toBe(true);
   expect(binds[0].node instanceof Text).toBe(true);
   expect(binds[0].node.textContent).toBe("100");
-  expect(() => binds[0].element).toThrow("not HTMLElement");
+  expect(() => binds[0].element).toThrow("not Element");
   expect(binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].nodePropertyElements).toEqual(["textContent"]);
   expect(binds[0].component).toBe(component);

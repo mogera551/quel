@@ -39,8 +39,8 @@ test("ComponentBind", () => {
       return super.get(target, prop, receiver);
     }
   }
-  parentComponent.viewModel = new Proxy({ aaa:100 }, new ViewModelHandler(["aaa"]));
-  targetComponent.viewModel = new Proxy({}, new ViewModelHandler([]));
+  parentComponent.viewModel = new Proxy({ aaa:100, zzz:[10,20] }, new ViewModelHandler());
+  targetComponent.viewModel = new Proxy({}, new ViewModelHandler());
 
   const componentBind = new ComponentBind;
   componentBind.component = parentComponent;
@@ -55,11 +55,34 @@ test("ComponentBind", () => {
   expect(targetComponent.props.bbb).toBe(100);
   calledNotifyForDependentProps = undefined;
   componentBind.viewModel.aaa = 200;
-  componentBind.updateNode();
+  componentBind.applyToNode(new Set(["aaa\t"]));
   expect(calledNotifyForDependentProps).toEqual({prop:"$props.bbb", indexes:[]});
   expect(targetComponent.props.bbb).toBe(200);
 
   componentBind.updateViewModel();
 
   expect(() => componentBind.node = document.createElement("div")).toThrow();
+
+  const componentBind2 = new ComponentBind;
+  componentBind2.component = parentComponent;
+  componentBind2.node = targetComponent;
+  componentBind2.nodeProperty = "$props.ccc";
+  componentBind2.nodePropertyElements = componentBind2.nodeProperty.split(".");
+  componentBind2.viewModel = parentComponent.viewModel;
+  componentBind2.viewModelProperty = "zzz";
+  componentBind2.filters = [];
+
+  expect(targetComponent.parentComponent).toBe(parentComponent);
+  expect(parentComponent.viewModel.zzz).toEqual([10,20]);
+  expect(targetComponent.props.ccc).toEqual([10,20]);
+  calledNotifyForDependentProps = undefined;
+  componentBind2.viewModel.zzz[1] = 22;
+  componentBind2.applyToNode(new Set(["zzz.*\t1"]));
+  expect(calledNotifyForDependentProps).toEqual({prop:"$props.ccc.*", indexes:[1]});
+  expect(targetComponent.props.ccc[1]).toBe(22);
+
+  calledNotifyForDependentProps = undefined;
+  componentBind2.applyToNode(new Set(["yyy.*\t1"]));
+  expect(calledNotifyForDependentProps).toBe(undefined);
+  expect(targetComponent.props.ccc).toEqual([10,22]);
 });
