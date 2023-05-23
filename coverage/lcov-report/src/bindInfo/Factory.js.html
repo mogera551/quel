@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>34/34</span>
+                <span class='fraction'>37/37</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>25/25</span>
+                <span class='fraction'>27/27</span>
             </div>
         
             
@@ -127,7 +127,11 @@
 <a name='L62'></a><a href='#L62'>62</a>
 <a name='L63'></a><a href='#L63'>63</a>
 <a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -148,6 +152,7 @@
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-yes">19x</span>
@@ -162,6 +167,7 @@
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,18 +184,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">173x</span>
+<span class="cline-any cline-yes">174x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">173x</span>
+<span class="cline-any cline-yes">174x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">173x</span>
-<span class="cline-any cline-yes">173x</span>
+<span class="cline-any cline-yes">174x</span>
+<span class="cline-any cline-yes">174x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">172x</span>
+<span class="cline-any cline-yes">173x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
 import { utils } from "../utils.js";
@@ -199,6 +205,7 @@ import { NodePropertyInfo } from "../node/PropertyInfo.js";
 import { LevelTop } from "./LevelTop.js";
 import { Level2nd } from "./Level2nd.js";
 import { Level3rd } from "./Level3rd.js";
+import { AttributeBind } from "./Attribute.js";
 import { ClassName } from "./ClassName.js";
 import { Radio } from "./Radio.js";
 import { Checkbox } from "./Checkbox.js";
@@ -209,10 +216,11 @@ import { ComponentBind } from "./Component.js";
 const createLevelTop = (bindInfo, info) =&gt; Object.assign(new LevelTop, bindInfo, info);
 const createLevel2nd = (bindInfo, info) =&gt; Object.assign(new Level2nd, bindInfo, info);
 const createLevel3rd = (bindInfo, info) =&gt; Object.assign(new Level3rd, bindInfo, info);
+const createAttributeBind = (bindInfo, info) =&gt; Object.assign(new AttributeBind, bindInfo, info);
 const createClassName = (bindInfo, info) =&gt; Object.assign(new ClassName, bindInfo, info);
 const createRadio = (bindInfo, info) =&gt; Object.assign(new Radio, bindInfo, info);
 const createCheckbox = (bindInfo, info) =&gt; Object.assign(new Checkbox, bindInfo, info);
-const createTemplate = (bindInfo, info) =&gt; Object.assign(new TemplateBind, bindInfo, info);
+const createTemplateBind = (bindInfo, info) =&gt; Object.assign(new TemplateBind, bindInfo, info);
 const createEvent = (bindInfo, info) =&gt; Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) =&gt; Object.assign(new ComponentBind, bindInfo, info);
 &nbsp;
@@ -220,10 +228,11 @@ const creatorByType = new Map();
 creatorByType.set(NodePropertyType.levelTop, createLevelTop);
 creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
 creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
+creatorByType.set(NodePropertyType.attribute, createAttributeBind);
 creatorByType.set(NodePropertyType.className, createClassName);
 creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
-creatorByType.set(NodePropertyType.template, createTemplate);
+creatorByType.set(NodePropertyType.template, createTemplateBind);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
 &nbsp;
@@ -262,7 +271,7 @@ export class Factory {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-22T22:38:06.575Z
+                at 2023-05-23T01:32:06.455Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

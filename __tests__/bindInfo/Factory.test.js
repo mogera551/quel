@@ -4,6 +4,7 @@ import { TemplateBind } from "../../src/bindInfo/Template.js";
 import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { Level2nd } from "../../src/bindInfo/Level2nd.js";
 import { Level3rd } from "../../src/bindInfo/Level3rd.js";
+import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { Checkbox } from "../../src/bindInfo/Checkbox.js";
 import { Radio } from "../../src/bindInfo/Radio.js";
 import { ClassName } from "../../src/bindInfo/ClassName.js";
@@ -227,6 +228,36 @@ test("Factory level2nd element", () => {
   expect(bindInfo.nodePropertyElements).toEqual(["style", "display"]);
   expect(bindInfo.nodeProperty1).toBe("style");
   expect(bindInfo.nodeProperty2).toBe("display");
+  expect(bindInfo.component).toBe(component);
+  expect(bindInfo.viewModel).toBe(viewModel);
+  expect(bindInfo.viewModelProperty).toBe("aaa");
+  expect(bindInfo.contextIndex).toBe(undefined);
+  expect(bindInfo.isContextIndex).toBe(false);
+  expect(bindInfo.filters).toEqual([]);
+  expect(bindInfo.indexes).toEqual([]);
+  expect(bindInfo.indexesString).toBe("");
+  expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
+  expect(bindInfo.contextIndexes).toEqual([]);
+  expect(bindInfo.lastNodeValue).toBe(undefined);
+  expect(bindInfo.lastViewModelValue).toBe(undefined);
+  expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
+});
+
+test("Factory AttributeBind element", () => {
+  const node = document.createElement("div");
+  const bindInfo = Factory.create({
+    component, node, 
+    nodeProperty: "attr.title",
+    viewModel, 
+    viewModelProperty: "aaa",
+    filters, 
+    context: { indexes:[], stack:[] }
+  });
+  expect(bindInfo instanceof AttributeBind).toBe(true);
+  expect(bindInfo.node).toBe(node);
+  expect(bindInfo.nodeProperty).toBe("attr.title");
+  expect(bindInfo.nodePropertyElements).toEqual(["attr", "title"]);
+  expect(bindInfo.attrName).toBe("title");
   expect(bindInfo.component).toBe(component);
   expect(bindInfo.viewModel).toBe(viewModel);
   expect(bindInfo.viewModelProperty).toBe("aaa");

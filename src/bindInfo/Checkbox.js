@@ -3,7 +3,7 @@ import { BindInfo } from "./BindInfo.js";
 import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
-const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise();
+const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');
 
 export class Checkbox extends BindInfo {
   /**

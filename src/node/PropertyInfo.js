@@ -54,6 +54,8 @@ export class NodePropertyInfo {
     } else if (result.nodePropertyElements.length === 2) {
       if (result.nodePropertyElements[0] === "className") {
         result.type = NodePropertyType.className;
+      } else if (result.nodePropertyElements[0] === "attr") {
+        result.type = NodePropertyType.attribute;
       } else {
         result.type = NodePropertyType.level2nd;
       }
