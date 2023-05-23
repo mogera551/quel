@@ -124,6 +124,7 @@ const NodePropertyType = {
   levelTop: 1,
   level2nd: 2,
   level3rd: 3,
+  attribute: 5,
   className: 10,
   radio: 20,
   checkbox: 30,
@@ -606,6 +607,8 @@ class NodePropertyInfo {
     } else if (result.nodePropertyElements.length === 2) {
       if (result.nodePropertyElements[0] === "className") {
         result.type = NodePropertyType.className;
+      } else if (result.nodePropertyElements[0] === "attr") {
+        result.type = NodePropertyType.attribute;
       } else {
         result.type = NodePropertyType.level2nd;
       }
@@ -1034,6 +1037,40 @@ class Level3rd extends BindInfo {
 
 }
 
+class AttributeBind extends BindInfo {
+  /**
+   * @type {string}
+   */
+  get attrName() {
+    return this.nodePropertyElements[1];
+  }
+
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, element, attrName, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, value, () => {
+        element.setAttribute(attrName, value ?? "");
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {element, attrName, filters} = this;
+    const value = Filter.applyForInput(element.getAttribute(attrName), filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
 /**
  * 
  * @param {Node} node 
@@ -1108,7 +1145,7 @@ class Radio extends BindInfo {
   }
 }
 
-const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise();
+const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');
 
 class Checkbox extends BindInfo {
   /**
@@ -1684,10 +1721,11 @@ class ComponentBind extends BindInfo {
 const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
 const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
 const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo, info);
+const createAttributeBind = (bindInfo, info) => Object.assign(new AttributeBind, bindInfo, info);
 const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
 const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
 const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
-const createTemplate = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
+const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
 
@@ -1695,10 +1733,11 @@ const creatorByType = new Map();
 creatorByType.set(NodePropertyType.levelTop, createLevelTop);
 creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
 creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
+creatorByType.set(NodePropertyType.attribute, createAttributeBind);
 creatorByType.set(NodePropertyType.className, createClassName);
 creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
-creatorByType.set(NodePropertyType.template, createTemplate);
+creatorByType.set(NodePropertyType.template, createTemplateBind);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
 
