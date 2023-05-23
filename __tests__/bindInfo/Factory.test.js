@@ -7,7 +7,7 @@ import { Level3rd } from "../../src/bindInfo/Level3rd.js";
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { Checkbox } from "../../src/bindInfo/Checkbox.js";
 import { Radio } from "../../src/bindInfo/Radio.js";
-import { ClassListBind } from "../../src/bindInfo/ClassList2.js/index.js";
+import { ClassListBind } from "../../src/bindInfo/Classlist.js/index.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { Event } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";

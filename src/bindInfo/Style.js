@@ -6,7 +6,7 @@ import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 const STYLE_PROPERTY = "style";
 
-export class ClassListBind extends BindInfo {
+export class StyleBind extends BindInfo {
   /**
    * @type {string}
    */

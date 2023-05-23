@@ -7,13 +7,14 @@ import { LevelTop } from "./LevelTop.js";
 import { Level2nd } from "./Level2nd.js";
 import { Level3rd } from "./Level3rd.js";
 import { AttributeBind } from "./Attribute.js";
-import { ClassListBind } from "./ClassList2.js";
+import { ClassListBind } from "./Classlist.js";
 import { ClassNameBind } from "./ClassName.js";
 import { Radio } from "./Radio.js";
 import { Checkbox } from "./Checkbox.js";
 import { TemplateBind } from "./Template.js";
 import { Event } from "./Event.js";
 import { ComponentBind } from "./Component.js";
+import { StyleBind } from "./Style.js";
 
 const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
 const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
@@ -26,6 +27,7 @@ const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo,
 const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
+const createStyleBind = (bindInfo, info) => Object.assign(new StyleBind, bindInfo, info);
 
 const creatorByType = new Map();
 creatorByType.set(NodePropertyType.levelTop, createLevelTop);
@@ -39,6 +41,7 @@ creatorByType.set(NodePropertyType.checkbox, createCheckbox);
 creatorByType.set(NodePropertyType.template, createTemplateBind);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
+creatorByType.set(NodePropertyType.style, createStyleBind);
 
 export class Factory {
   /**

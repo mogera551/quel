@@ -44,6 +44,8 @@ export class NodePropertyInfo {
       if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
         result.type = NodePropertyType.event;
         result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+      } else if (result.nodePropertyElements[0] === "class") {
+        result.type = NodePropertyType.className;
       } else if (result.nodePropertyElements[0] === "radio") {
         result.type = NodePropertyType.radio;
       } else if (result.nodePropertyElements[0] === "checkbox") {
@@ -54,8 +56,8 @@ export class NodePropertyInfo {
     } else if (result.nodePropertyElements.length === 2) {
       if (result.nodePropertyElements[0] === "class") {
         result.type = NodePropertyType.classList;
-      } else if (result.nodePropertyElements[0] === "className") {
-        result.type = NodePropertyType.className;
+      } else if (result.nodePropertyElements[0] === "style") {
+        result.type = NodePropertyType.style;
       } else if (result.nodePropertyElements[0] === "attr") {
         result.type = NodePropertyType.attribute;
       } else {

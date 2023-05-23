@@ -6,6 +6,7 @@ export const NodePropertyType = {
   level2nd: 2,
   level3rd: 3,
   attribute: 5,
+  style: 8,
   classList: 10,
   className: 11,
   radio: 20,
