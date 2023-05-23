@@ -7,7 +7,8 @@ import { LevelTop } from "./LevelTop.js";
 import { Level2nd } from "./Level2nd.js";
 import { Level3rd } from "./Level3rd.js";
 import { AttributeBind } from "./Attribute.js";
-import { ClassName } from "./ClassName.js";
+import { ClassListBind } from "./ClassList2.js";
+import { ClassNameBind } from "./ClassName.js";
 import { Radio } from "./Radio.js";
 import { Checkbox } from "./Checkbox.js";
 import { TemplateBind } from "./Template.js";
@@ -18,7 +19,8 @@ const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo,
 const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
 const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo, info);
 const createAttributeBind = (bindInfo, info) => Object.assign(new AttributeBind, bindInfo, info);
-const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
+const createClassListBind = (bindInfo, info) => Object.assign(new ClassListBind, bindInfo, info);
+const createClassNameBind = (bindInfo, info) => Object.assign(new ClassNameBind, bindInfo, info);
 const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
 const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
 const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
@@ -30,7 +32,8 @@ creatorByType.set(NodePropertyType.levelTop, createLevelTop);
 creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
 creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
 creatorByType.set(NodePropertyType.attribute, createAttributeBind);
-creatorByType.set(NodePropertyType.className, createClassName);
+creatorByType.set(NodePropertyType.classList, createClassListBind);
+creatorByType.set(NodePropertyType.className, createClassNameBind);
 creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
 creatorByType.set(NodePropertyType.template, createTemplateBind);
@@ -61,7 +64,7 @@ export class Factory {
      */
     const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
     if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {
-      utils.raise(`${bindInfo.viewModelPropertyName.name} be outside loop`);
+      utils.raise(`${bindInfo.viewModelPropertyName.name} is outside loop`);
     }
     return bindInfo;
   }

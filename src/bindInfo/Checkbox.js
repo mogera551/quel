@@ -6,12 +6,15 @@ import { NodeUpdateData } from "../thread/NodeUpdator.js";
 const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');
 
 export class Checkbox extends BindInfo {
+  get checkbox() {
+    const input = toHTMLInputElement(this.element);
+    return input["type"] === "checkbox" ? input : utils.raise('not checkbox');
+  }
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, nodeProperty, viewModelProperty, filters} = this;
-    const checkbox = toHTMLInputElement(node);
+    const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
     const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
@@ -25,8 +28,7 @@ export class Checkbox extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, filters} = this;
-    const checkbox = toHTMLInputElement(node);
+    const {node, filters, checkbox} = this;
     const checkboxValue = Filter.applyForInput(checkbox.value, filters);
     const setOfValue = new Set(this.getViewModelValue());
     (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);

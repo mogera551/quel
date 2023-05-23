@@ -1,4 +1,4 @@
-import { ClassName } from "../../src/bindInfo/ClassName.js";
+import { ClassListBind } from "../../src/bindInfo/ClassList2.js/index.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 
@@ -28,7 +28,7 @@ test('Checkbox', () => {
   const div = document.createElement("div");
   div.classList.add("class1");
 
-  const className = new ClassName;
+  const className = new ClassListBind;
   className.component = component;
   className.node = div;
   className.nodeProperty = "className.class2";

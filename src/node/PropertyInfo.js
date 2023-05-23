@@ -52,7 +52,9 @@ export class NodePropertyInfo {
         result.type = NodePropertyType.levelTop;
       }
     } else if (result.nodePropertyElements.length === 2) {
-      if (result.nodePropertyElements[0] === "className") {
+      if (result.nodePropertyElements[0] === "class") {
+        result.type = NodePropertyType.classList;
+      } else if (result.nodePropertyElements[0] === "className") {
         result.type = NodePropertyType.className;
       } else if (result.nodePropertyElements[0] === "attr") {
         result.type = NodePropertyType.attribute;

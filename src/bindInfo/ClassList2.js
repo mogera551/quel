@@ -1,25 +1,26 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
 import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
-const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise();
-
-export class Radio extends BindInfo {
-  get radio() {
-    const input = toHTMLInputElement(this.element);
-    return input["type"] === "radio" ? input : utils.raise('not radio');
+export class ClassListBind extends BindInfo {
+  /**
+   * @type {string}
+   */
+  get className() {
+    return this.nodePropertyElements[1];
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, radio, nodeProperty, viewModelProperty, filters} = this;
+    const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
     const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        radio.checked = value === radio.value;
+        value ? element.classList.add(className) : element.classList.remove(className);
       }));
       this.lastViewModelValue = value;
     }
@@ -29,11 +30,9 @@ export class Radio extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {filters, radio} = this;
-    if (radio.checked) {
-      const radioValue = Filter.applyForInput(radio.value, filters);
-      this.setViewModelValue(radioValue);
-      this.lastViewModelValue = radioValue;
-    }
+    const {node, element, filters, className} = this;
+    const value = Filter.applyForInput(element.classList.contains(className), filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
   }
 }

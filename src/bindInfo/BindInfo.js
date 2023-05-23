@@ -21,6 +21,18 @@ export class BindInfo {
     return (this.node instanceof Element) ? this.node : utils.raise("not Element");
   }
   /**
+   * @type {HTMLElement}
+   */
+  get htmlElement() {
+    return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
+  }
+  /**
+   * @type {SVGElement}
+   */
+  get svgElement() {
+    return (this.node instanceof SVGElement) ? this.node : utils.raise("not SVGElement");
+  }
+  /**
    * @type {string}
    */
   #nodeProperty;

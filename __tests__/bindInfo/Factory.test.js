@@ -7,7 +7,7 @@ import { Level3rd } from "../../src/bindInfo/Level3rd.js";
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { Checkbox } from "../../src/bindInfo/Checkbox.js";
 import { Radio } from "../../src/bindInfo/Radio.js";
-import { ClassName } from "../../src/bindInfo/ClassName.js";
+import { ClassListBind } from "../../src/bindInfo/ClassList2.js/index.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { Event } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
@@ -375,7 +375,7 @@ test("Factory className", () => {
     filters, 
     context: { indexes:[], stack:[] }
   });
-  expect(bindInfo instanceof ClassName).toBe(true);
+  expect(bindInfo instanceof ClassListBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("className.completed");
   expect(bindInfo.nodePropertyElements).toEqual(["className", "completed"]);

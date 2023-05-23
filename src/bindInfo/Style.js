@@ -1,21 +1,28 @@
-import  { utils } from "../utils.js";
+import "../types.js";
+import { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
 import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
-const CLASS_PROPERTY = "className";
-const DELIMITER = " ";
+const STYLE_PROPERTY = "style";
 
-export class ClassNameBind extends BindInfo {
+export class ClassListBind extends BindInfo {
+  /**
+   * @type {string}
+   */
+  get styleName() {
+    return this.nodePropertyElements[1];
+  }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, element, viewModelProperty, filters} = this;
+    const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
     const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, value, () => {
-        element[CLASS_PROPERTY] = value.join(DELIMITER);
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, value, () => {
+        htmlElement[STYLE_PROPERTY][styleName] = value;
       }));
       this.lastViewModelValue = value;
     }
@@ -25,8 +32,8 @@ export class ClassNameBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, element, filters, className} = this;
-    const value = Filter.applyForInput(element[CLASS_PROPERTY].split(DELIMITER), filters);
+    const {htmlElement, filters} = this;
+    const value = Filter.applyForInput(htmlElement[STYLE_PROPERTY][styleName], filters);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
