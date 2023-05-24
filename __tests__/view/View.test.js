@@ -174,7 +174,7 @@ test ("View render", async () => {
   expect(binds[0].templateChildren[0].binds[0].lastViewModelValue).toEqual(10);
 //  expect(binds[0].templateChildren[0].binds[0].parentContextBind).toBe(binds[0]);
 //  expect(binds[0].templateChildren[0].binds[0].positionContextIndexes).toBe(0);
-  expect(binds[0].templateChildren[0].binds[0].type).toBe(NodePropertyType.property);
+  expect(binds[0].templateChildren[0].binds[0].type).toBe(NodePropertyType.text);
   expect(binds[0].templateChildren[0].binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].templateChildren[0].binds[0].viewModelProperty).toBe("aaa.*");
@@ -188,7 +188,7 @@ test ("View render", async () => {
   expect(binds[0].templateChildren[1].binds[0].lastViewModelValue).toEqual(20);
 //  expect(binds[0].templateChildren[1].binds[0].parentContextBind).toBe(binds[0]);
 //  expect(binds[0].templateChildren[1].binds[0].positionContextIndexes).toBe(0);
-  expect(binds[0].templateChildren[1].binds[0].type).toBe(NodePropertyType.property);
+  expect(binds[0].templateChildren[1].binds[0].type).toBe(NodePropertyType.text);
   expect(binds[0].templateChildren[1].binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].templateChildren[1].binds[0].viewModelProperty).toBe("aaa.*");

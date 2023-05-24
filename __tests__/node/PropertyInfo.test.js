@@ -18,18 +18,15 @@ test('PropertyType Template', () => {
     nodePropertyElements:["loop"],
     eventType:undefined,
   });
-  expect(NodePropertyInfo.get(templateNode, "value")).toEqual({
-    type:NodePropertyType.property,
-    nodePropertyElements:["value"],
-    eventType:undefined,
-  });
+  expect(() => NodePropertyInfo.get(templateNode, "value")).toThrow("template illegal property value");
 
   const textNode = document.createTextNode("text-node");
   expect(NodePropertyInfo.get(textNode, "textContent")).toEqual({
-    type:NodePropertyType.property,
+    type:NodePropertyType.text,
     nodePropertyElements:["textContent"],
     eventType:undefined,
   });
+  expect(() => NodePropertyInfo.get(textNode, "text")).toThrow("unknown node text or property text");
 
   const component = document.createElement("custom-tag");
   expect(NodePropertyInfo.get(component, "$props.value")).toEqual({
@@ -74,7 +71,8 @@ test('PropertyType Template', () => {
     nodePropertyElements:["onclick"],
     eventType:"click",
   });
-  expect(() => NodePropertyInfo.get(div, "aaa.bbb.ccc.ddd")).toThrow();
+  expect(() => NodePropertyInfo.get(div, "aaa.bbb")).toThrow("unknown property aaa.bbb");
+  expect(() => NodePropertyInfo.get(div, "aaa.bbb.ccc.ddd")).toThrow("unknown property aaa.bbb.ccc.ddd");
 
   const radio = document.createElement("input");
   radio.type = "radio";

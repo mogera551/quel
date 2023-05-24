@@ -26,7 +26,7 @@ export class ClassNameBind extends BindInfo {
    */
   updateViewModel() {
     const {node, element, filters, className} = this;
-    const value = Filter.applyForInput(element[CLASS_PROPERTY].split(DELIMITER), filters);
+    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }

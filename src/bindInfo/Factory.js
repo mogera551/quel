@@ -38,7 +38,7 @@ creatorByType.set(NodePropertyType.template, createTemplateBind);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
 creatorByType.set(NodePropertyType.style, createStyleBind);
-creatorByType.set(NodePropertyType.style, createTextBind);
+creatorByType.set(NodePropertyType.text, createTextBind);
 
 export class Factory {
   /**

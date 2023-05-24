@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { NodePropertyType } from "./PropertyType.js";
 import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
 import { Symbols } from "../Symbols.js";
@@ -34,6 +34,8 @@ export class NodePropertyInfo {
       if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
         result.type = NodePropertyType.template;
         return result;
+      } else {
+        utils.raise(`template illegal property ${nodeProperty}`);
       }
     };
     
@@ -71,8 +73,11 @@ export class NodePropertyInfo {
     } else {
       if (result.nodePropertyElements.length === 1 && result.nodePropertyElements[0] === DEFAULT_TEXT_PROPERTY) {
         result.type = NodePropertyType.text;
+      } else {
+        const toString = Object.prototype.toString;
+        const nodeType = toString.call(node).slice(8, -1).toLowerCase();
+        utils.raise(`unknown node ${nodeType} or property ${nodeProperty}`);
       }
-      utils.raise(`unknown node`, node);
     }
     return result;
   }

@@ -12,6 +12,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { StyleBind } from "../../src/bindInfo/Style.js";
+import { TextBind } from "../../src/bindInfo/Text.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -124,37 +125,20 @@ test("Factory template other", () => {
   const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
   rootNode.appendChild(commentNode);
 
-  const bindInfo = Factory.create({
-    component, 
-    node: commentNode, 
-    nodeProperty: "textContent",
-    viewModel, 
-    viewModelProperty: "aaa",
-    filters, 
-    context: { indexes:[], stack:[] }
-  });
-  expect(bindInfo instanceof PropertyBind).toBe(true);
-  expect(bindInfo.node instanceof Comment).toBe(true);
-  expect(bindInfo.template).toBe(undefined);
-  expect(bindInfo.uuid).toBe(undefined);
-  expect(bindInfo.nodeProperty).toBe("textContent");
-  expect(bindInfo.nodePropertyElements).toEqual(["textContent"]);
-  expect(bindInfo.component).toBe(component);
-  expect(bindInfo.viewModel).toBe(viewModel);
-  expect(bindInfo.viewModelProperty).toBe("aaa");
-  expect(bindInfo.contextIndex).toBe(undefined);
-  expect(bindInfo.isContextIndex).toBe(false);
-  expect(bindInfo.filters).toEqual([]);
-  expect(bindInfo.indexes).toEqual([]);
-  expect(bindInfo.indexesString).toBe("");
-  expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
-  expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
-  expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
+  expect(() => {
+    const bindInfo = Factory.create({
+      component, 
+      node: commentNode, 
+      nodeProperty: "textContent",
+      viewModel, 
+      viewModelProperty: "aaa",
+      filters, 
+      context: { indexes:[], stack:[] }
+    });
+  }).toThrow("template illegal property textContent");
 });
 
-test("Factory PropertyBind text", () => {
+test("Factory TextBind text", () => {
   const node = document.createTextNode("");
   const bindInfo = Factory.create({
     component, node, 
@@ -164,7 +148,7 @@ test("Factory PropertyBind text", () => {
     filters, 
     context: { indexes:[], stack:[] }
   });
-  expect(bindInfo instanceof PropertyBind).toBe(true);
+  expect(bindInfo instanceof TextBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("textContent");
   expect(bindInfo.nodePropertyElements).toEqual(["textContent"]);

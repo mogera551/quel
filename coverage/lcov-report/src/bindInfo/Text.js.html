@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.09% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.09% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -100,31 +100,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">116x</span>
+<span class="cline-any cline-yes">116x</span>
+<span class="cline-any cline-yes">116x</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">40x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">42x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
@@ -138,25 +138,25 @@ export class TextBind extends BindInfo {
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
-<span class="fstat-no" title="function not covered" >  up</span>dateNode() {
-    const {component, node, viewModelProperty, filters} = <span class="cstat-no" title="statement not covered" >this;</span>
-    const value = <span class="cstat-no" title="statement not covered" >Filter.applyForOutput(this.getViewModelValue(), filters);</span>
-<span class="cstat-no" title="statement not covered" >    if (this.lastViewModelValue !== value) {</span>
-<span class="cstat-no" title="statement not covered" >      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY, viewModelProperty, value, <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        node[DEFAULT_PROPERTY] = value ?? "";</span>
+  updateNode() {
+    const {component, node, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY, viewModelProperty, value, () =&gt; {
+        node[DEFAULT_PROPERTY] = value ?? "";
       }));
-<span class="cstat-no" title="statement not covered" >      this.lastViewModelValue = value;</span>
+      this.lastViewModelValue = value;
     }
   }
 &nbsp;
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
-<span class="fstat-no" title="function not covered" >  up</span>dateViewModel() {
-    const {node, filters} = <span class="cstat-no" title="statement not covered" >this;</span>
-    const value = <span class="cstat-no" title="statement not covered" >Filter.applyForInput(node[DEFAULT_PROPERTY], filters);</span>
-<span class="cstat-no" title="statement not covered" >    this.setViewModelValue(value);</span>
-<span class="cstat-no" title="statement not covered" >    this.lastViewModelValue = value;</span>
+  updateViewModel() {
+    const {node, filters} = this;
+    const value = Filter.applyForInput(node[DEFAULT_PROPERTY], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
   }
 &nbsp;
 }</pre></td></tr></table></pre>
@@ -166,7 +166,7 @@ export class TextBind extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-24T08:59:04.219Z
+                at 2023-05-24T21:45:02.251Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

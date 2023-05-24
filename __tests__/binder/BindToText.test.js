@@ -4,6 +4,7 @@ import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
+import { TextBind } from "../../src/bindInfo/Text.js";
 
 test("BindToText", () => {
   const parentNode = document.createElement("div");
@@ -30,7 +31,7 @@ test("BindToText", () => {
   
   const binds = BindToText.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof PropertyBind).toBe(true);
+  expect(binds[0] instanceof TextBind).toBe(true);
   expect(binds[0].node instanceof Text).toBe(true);
   expect(binds[0].node.textContent).toBe("100");
   expect(() => binds[0].element).toThrow("not Element");
@@ -76,5 +77,5 @@ test("BindToText throw", () => {
       }
     }
   };
-  expect(() => { const binds = BindToText.bind(node, component, { indexes:[], stack:[] }) }).toThrow();
+  expect(() => { const binds = BindToText.bind(node, component, { indexes:[], stack:[] }) }).toThrow("not Comment");
 });

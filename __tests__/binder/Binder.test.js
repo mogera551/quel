@@ -7,6 +7,7 @@ import { BindInfo } from "../../src/bindInfo/BindInfo.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
+import { TextBind } from "../../src/bindInfo/Text.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -247,7 +248,7 @@ test("Binder", () => {
   expect(binds[3].templateChildren[2].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[2].binds[0].context).toEqual({ indexes:[2], stack:[{indexes:[2], pos:0, propName:PropertyName.create("ddd")}] });
 
-  expect(binds[4] instanceof PropertyBind).toBe(true);
+  expect(binds[4] instanceof TextBind).toBe(true);
   expect(binds[4].node instanceof Text).toBe(true);
   expect(() => binds[4].element).toThrow();
   expect(binds[4].nodeProperty).toBe("textContent");
@@ -537,7 +538,7 @@ test("Binder context", () => {
     ]
   });
 
-  expect(binds[4] instanceof PropertyBind).toBe(true);
+  expect(binds[4] instanceof TextBind).toBe(true);
   expect(binds[4].node instanceof Text).toBe(true);
   expect(() => binds[4].element).toThrow();
   expect(binds[4].nodeProperty).toBe("textContent");

@@ -32,9 +32,15 @@ export class StyleBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {htmlElement, filters} = this;
+    const {htmlElement, styleName, filters} = this;
     const value = Filter.applyForInput(htmlElement[STYLE_PROPERTY][styleName], filters);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
 }
+
+
+// ToDo: ViewModelのプロパティの値とstyleの属性値が合わない場合をどうするか
+// たとえば、
+//   間違ったcolorをViewModelのプロパティを指定すると、styleのcolor属性には値は入らない
+//   colorを#fffで、ViewModelのプロパティに指定すると、styleのcolor属性にはrgb(255,255,255)で入っている
