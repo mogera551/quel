@@ -121,13 +121,17 @@ class Filter {
  * @enum {number}
  */
 const NodePropertyType = {
-  levelTop: 1,
-  level2nd: 2,
-  level3rd: 3,
-  attribute: 5,
-  className: 10,
-  radio: 20,
-  checkbox: 30,
+//  levelTop: 1,
+//  level2nd: 2,
+//  level3rd: 3,
+  text: 1,
+  property: 10,
+  attribute: 20,
+  style: 21,
+  classList: 22,
+  className: 23,
+  radio: 30,
+  checkbox: 40,
   event: 91,
   component: 92,
   template: 95,
@@ -139,7 +143,7 @@ const TEMPLATE_REPEAT = "loop"; // 繰り返し
 const name = "quel";
 
 const WILDCARD = "*";
-const DELIMITER = ".";
+const DELIMITER$1 = ".";
 const SYM_PREFIX = "dot-notation"; // + Math.trunc(Math.random() * 9999_9999);
 const SYM_DIRECT_GET = Symbol.for(SYM_PREFIX + ".direct_get");
 const SYM_DIRECT_SET = Symbol.for(SYM_PREFIX + ".direct_set");
@@ -200,14 +204,14 @@ class PropertyName {
    */
   constructor(name) {
     this.name = name;
-    this.pathNames = name.split(DELIMITER);
+    this.pathNames = name.split(DELIMITER$1);
     this.parentPathNames = this.pathNames.slice(0, -1);
     this.parentPaths = this.parentPathNames.reduce((paths, pathName) => { 
       paths.push(paths.at(-1)?.concat(pathName) ?? [pathName]);
       return paths;
     }, []).map(paths => paths.join("."));
     this.setOfParentPaths = new Set(this.parentPaths);
-    this.parentPath = this.parentPathNames.join(DELIMITER);
+    this.parentPath = this.parentPathNames.join(DELIMITER$1);
     this.lastPathName = this.pathNames.at(-1);
     this.regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
     this.level = this.pathNames.filter(pathName => pathName === WILDCARD).length;
@@ -560,6 +564,7 @@ const Symbols = Object.assign({
 }, Symbols$1);
 
 const PREFIX_EVENT = "on";
+const DEFAULT_TEXT_PROPERTY = "textContent";
 
 class NodePropertyInfo {
   /**
@@ -588,34 +593,48 @@ class NodePropertyInfo {
       if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
         result.type = NodePropertyType.template;
         return result;
+      } else {
+        utils.raise(`template illegal property ${nodeProperty}`);
       }
     }    
     if (node[Symbols.isComponent] && result.nodePropertyElements[0] === "$props") { 
       result.type = NodePropertyType.component;
       return result;
-    }    if (result.nodePropertyElements.length === 1) {
-      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
-        result.type = NodePropertyType.event;
-        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
-      } else if (result.nodePropertyElements[0] === "radio") {
-        result.type = NodePropertyType.radio;
-      } else if (result.nodePropertyElements[0] === "checkbox") {
-        result.type = NodePropertyType.checkbox;
+    }    if ((node instanceof HTMLElement) || (node instanceof SVGElement)) {
+      if (result.nodePropertyElements.length === 1) {
+        if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
+          result.type = NodePropertyType.event;
+          result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+        } else if (result.nodePropertyElements[0] === "class") {
+          result.type = NodePropertyType.className;
+        } else if (result.nodePropertyElements[0] === "radio") {
+          result.type = NodePropertyType.radio;
+        } else if (result.nodePropertyElements[0] === "checkbox") {
+          result.type = NodePropertyType.checkbox;
+        } else {
+          result.type = NodePropertyType.property;
+        }
+      } else if (result.nodePropertyElements.length === 2) {
+        if (result.nodePropertyElements[0] === "class") {
+          result.type = NodePropertyType.classList;
+        } else if (result.nodePropertyElements[0] === "style") {
+          result.type = NodePropertyType.style;
+        } else if (result.nodePropertyElements[0] === "attr") {
+          result.type = NodePropertyType.attribute;
+        } else {
+          utils.raise(`unknown property ${nodeProperty}`);
+        }
       } else {
-        result.type = NodePropertyType.levelTop;
+        utils.raise(`unknown property ${nodeProperty}`);
       }
-    } else if (result.nodePropertyElements.length === 2) {
-      if (result.nodePropertyElements[0] === "className") {
-        result.type = NodePropertyType.className;
-      } else if (result.nodePropertyElements[0] === "attr") {
-        result.type = NodePropertyType.attribute;
-      } else {
-        result.type = NodePropertyType.level2nd;
-      }
-    } else if (result.nodePropertyElements.length === 3) {
-      result.type = NodePropertyType.level3rd;
     } else {
-      utils.raise(`unknown property ${nodeProperty}`);
+      if (result.nodePropertyElements.length === 1 && result.nodePropertyElements[0] === DEFAULT_TEXT_PROPERTY) {
+        result.type = NodePropertyType.text;
+      } else {
+        const toString = Object.prototype.toString;
+        const nodeType = toString.call(node).slice(8, -1).toLowerCase();
+        utils.raise(`unknown node ${nodeType} or property ${nodeProperty}`);
+      }
     }
     return result;
   }
@@ -637,6 +656,18 @@ class BindInfo {
    */
   get element() {
     return (this.node instanceof Element) ? this.node : utils.raise("not Element");
+  }
+  /**
+   * @type {HTMLElement}
+   */
+  get htmlElement() {
+    return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
+  }
+  /**
+   * @type {SVGElement}
+   */
+  get svgElement() {
+    return (this.node instanceof SVGElement) ? this.node : utils.raise("not SVGElement");
   }
   /**
    * @type {string}
@@ -936,107 +967,6 @@ class NodeUpdator {
   }
 }
 
-class LevelTop extends BindInfo {
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, nodeProperty, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        node[nodeProperty] = value ?? "";
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    const {node, nodeProperty, filters} = this;
-    const value = Filter.applyForInput(node[nodeProperty], filters);
-    this.setViewModelValue(value);
-    this.lastViewModelValue = value;
-  }
-
-}
-
-class Level2nd extends BindInfo {
-  get nodeProperty1() {
-    return this.nodePropertyElements[0];
-  }
-  get nodeProperty2() {
-    return this.nodePropertyElements[1];
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, nodeProperty, viewModelProperty, filters} = this;
-    const {nodeProperty1, nodeProperty2} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        node[nodeProperty1][nodeProperty2] = value ?? "";
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    const {node, filters} = this;
-    const {nodeProperty1, nodeProperty2} = this;
-    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2], filters);
-    this.setViewModelValue(value);
-    this.lastViewModelValue = value;
-  }
-
-}
-
-class Level3rd extends BindInfo {
-  get nodeProperty1() {
-    return this.nodePropertyElements[0];
-  }
-  get nodeProperty2() {
-    return this.nodePropertyElements[1];
-  }
-  get nodeProperty3() {
-    return this.nodePropertyElements[2];
-  }
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, nodeProperty, viewModelProperty, filters} = this;
-    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
-    if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        node[nodeProperty1][nodeProperty2][nodeProperty3] = value ?? "";
-      }));
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    const {node, filters} = this;
-    const { nodeProperty1, nodeProperty2, nodeProperty3 } = this;
-    const value = Filter.applyForInput(node[nodeProperty1][nodeProperty2][nodeProperty3], filters);
-    this.setViewModelValue(value);
-    this.lastViewModelValue = value;
-  }
-
-}
-
 class AttributeBind extends BindInfo {
   /**
    * @type {string}
@@ -1071,7 +1001,7 @@ class AttributeBind extends BindInfo {
 
 }
 
-class ClassName extends BindInfo {
+class ClassListBind extends BindInfo {
   /**
    * @type {string}
    */
@@ -1104,15 +1034,47 @@ class ClassName extends BindInfo {
   }
 }
 
-const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node : utils.raise();
+const CLASS_PROPERTY = "className";
+const DELIMITER = " ";
 
-class Radio extends BindInfo {
+class ClassNameBind extends BindInfo {
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, nodeProperty, viewModelProperty, filters} = this;
-    const radio = toHTMLInputElement$1(node);
+    const {component, node, element, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, value, () => {
+        element[CLASS_PROPERTY] = value.join(DELIMITER);
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, element, filters, className} = this;
+    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+}
+
+const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node : utils.raise();
+
+class Radio extends BindInfo {
+  get radio() {
+    const input = toHTMLInputElement$1(this.element);
+    return input["type"] === "radio" ? input : utils.raise('not radio');
+  }
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, radio, nodeProperty, viewModelProperty, filters} = this;
     const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
@@ -1126,10 +1088,9 @@ class Radio extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, filters} = this;
-    const radio = toHTMLInputElement$1(node);
-    const radioValue = Filter.applyForInput(radio.value, filters);
+    const {filters, radio} = this;
     if (radio.checked) {
+      const radioValue = Filter.applyForInput(radio.value, filters);
       this.setViewModelValue(radioValue);
       this.lastViewModelValue = radioValue;
     }
@@ -1139,12 +1100,15 @@ class Radio extends BindInfo {
 const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');
 
 class Checkbox extends BindInfo {
+  get checkbox() {
+    const input = toHTMLInputElement(this.element);
+    return input["type"] === "checkbox" ? input : utils.raise('not checkbox');
+  }
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, nodeProperty, viewModelProperty, filters} = this;
-    const checkbox = toHTMLInputElement(node);
+    const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
     const value = Filter.applyForOutput(this.getViewModelValue(), filters);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
@@ -1158,8 +1122,7 @@ class Checkbox extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, filters} = this;
-    const checkbox = toHTMLInputElement(node);
+    const {node, filters, checkbox} = this;
     const checkboxValue = Filter.applyForInput(checkbox.value, filters);
     const setOfValue = new Set(this.getViewModelValue());
     (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
@@ -1725,28 +1688,134 @@ class ComponentBind extends BindInfo {
 
 }
 
-const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
-const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
-const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo, info);
+const STYLE_PROPERTY = "style";
+
+class StyleBind extends BindInfo {
+  /**
+   * @type {string}
+   */
+  get styleName() {
+    return this.nodePropertyElements[1];
+  }
+
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, value, () => {
+        htmlElement[STYLE_PROPERTY][styleName] = value;
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {htmlElement, styleName, filters} = this;
+    const value = Filter.applyForInput(htmlElement[STYLE_PROPERTY][styleName], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+}
+
+
+// ToDo: ViewModelのプロパティの値とstyleの属性値が合わない場合をどうするか
+// たとえば、
+//   間違ったcolorをViewModelのプロパティを指定すると、styleのcolor属性には値は入らない
+//   colorを#fffで、ViewModelのプロパティに指定すると、styleのcolor属性にはrgb(255,255,255)で入っている
+
+class PropertyBind extends BindInfo {
+  /**
+   * @type {string}
+   */
+  get propName() {
+    return this.nodePropertyElements[0];
+  }
+
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, propName, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, value, () => {
+        node[propName] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, propName, filters} = this;
+    const value = Filter.applyForInput(node[propName], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+const DEFAULT_PROPERTY$2 = "textContent";
+
+class TextBind extends BindInfo {
+  /**
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   */
+  updateNode() {
+    const {component, node, viewModelProperty, filters} = this;
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    if (this.lastViewModelValue !== value) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, value, () => {
+        node[DEFAULT_PROPERTY$2] = value ?? "";
+      }));
+      this.lastViewModelValue = value;
+    }
+  }
+
+  /**
+   * nodeのプロパティの値をViewModelのプロパティへ反映する
+   */
+  updateViewModel() {
+    const {node, filters} = this;
+    const value = Filter.applyForInput(node[DEFAULT_PROPERTY$2], filters);
+    this.setViewModelValue(value);
+    this.lastViewModelValue = value;
+  }
+
+}
+
+const createPropertyBind = (bindInfo, info) => Object.assign(new PropertyBind, bindInfo, info);
 const createAttributeBind = (bindInfo, info) => Object.assign(new AttributeBind, bindInfo, info);
-const createClassName = (bindInfo, info) => Object.assign(new ClassName, bindInfo, info);
+const createClassListBind = (bindInfo, info) => Object.assign(new ClassListBind, bindInfo, info);
+const createClassNameBind = (bindInfo, info) => Object.assign(new ClassNameBind, bindInfo, info);
 const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
 const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
 const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
+const createStyleBind = (bindInfo, info) => Object.assign(new StyleBind, bindInfo, info);
+const createTextBind = (bindInfo, info) => Object.assign(new TextBind, bindInfo, info);
 
 const creatorByType = new Map();
-creatorByType.set(NodePropertyType.levelTop, createLevelTop);
-creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
-creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
+creatorByType.set(NodePropertyType.property, createPropertyBind);
 creatorByType.set(NodePropertyType.attribute, createAttributeBind);
-creatorByType.set(NodePropertyType.className, createClassName);
+creatorByType.set(NodePropertyType.classList, createClassListBind);
+creatorByType.set(NodePropertyType.className, createClassNameBind);
 creatorByType.set(NodePropertyType.radio, createRadio);
 creatorByType.set(NodePropertyType.checkbox, createCheckbox);
 creatorByType.set(NodePropertyType.template, createTemplateBind);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
+creatorByType.set(NodePropertyType.style, createStyleBind);
+creatorByType.set(NodePropertyType.text, createTextBind);
 
 class Factory {
   /**
@@ -1772,7 +1841,7 @@ class Factory {
      */
     const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
     if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {
-      utils.raise(`${bindInfo.viewModelPropertyName.name} be outside loop`);
+      utils.raise(`${bindInfo.viewModelPropertyName.name} is outside loop`);
     }
     return bindInfo;
   }
