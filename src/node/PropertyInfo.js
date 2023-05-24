@@ -5,6 +5,7 @@ import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
 import { Symbols } from "../Symbols.js";
 
 const PREFIX_EVENT = "on";
+const DEFAULT_TEXT_PROPERTY = "textContent";
 
 export class NodePropertyInfo {
   /**
@@ -40,33 +41,38 @@ export class NodePropertyInfo {
       result.type = NodePropertyType.component;
       return result;
     };
-    if (result.nodePropertyElements.length === 1) {
-      if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
-        result.type = NodePropertyType.event;
-        result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
-      } else if (result.nodePropertyElements[0] === "class") {
-        result.type = NodePropertyType.className;
-      } else if (result.nodePropertyElements[0] === "radio") {
-        result.type = NodePropertyType.radio;
-      } else if (result.nodePropertyElements[0] === "checkbox") {
-        result.type = NodePropertyType.checkbox;
+    if ((node instanceof HTMLElement) || (node instanceof SVGElement)) {
+      if (result.nodePropertyElements.length === 1) {
+        if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
+          result.type = NodePropertyType.event;
+          result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+        } else if (result.nodePropertyElements[0] === "class") {
+          result.type = NodePropertyType.className;
+        } else if (result.nodePropertyElements[0] === "radio") {
+          result.type = NodePropertyType.radio;
+        } else if (result.nodePropertyElements[0] === "checkbox") {
+          result.type = NodePropertyType.checkbox;
+        } else {
+          result.type = NodePropertyType.property;
+        }
+      } else if (result.nodePropertyElements.length === 2) {
+        if (result.nodePropertyElements[0] === "class") {
+          result.type = NodePropertyType.classList;
+        } else if (result.nodePropertyElements[0] === "style") {
+          result.type = NodePropertyType.style;
+        } else if (result.nodePropertyElements[0] === "attr") {
+          result.type = NodePropertyType.attribute;
+        } else {
+          utils.raise(`unknown property ${nodeProperty}`);
+        }
       } else {
-        result.type = NodePropertyType.levelTop;
+        utils.raise(`unknown property ${nodeProperty}`);
       }
-    } else if (result.nodePropertyElements.length === 2) {
-      if (result.nodePropertyElements[0] === "class") {
-        result.type = NodePropertyType.classList;
-      } else if (result.nodePropertyElements[0] === "style") {
-        result.type = NodePropertyType.style;
-      } else if (result.nodePropertyElements[0] === "attr") {
-        result.type = NodePropertyType.attribute;
-      } else {
-        result.type = NodePropertyType.level2nd;
-      }
-    } else if (result.nodePropertyElements.length === 3) {
-      result.type = NodePropertyType.level3rd;
     } else {
-      utils.raise(`unknown property ${nodeProperty}`);
+      if (result.nodePropertyElements.length === 1 && result.nodePropertyElements[0] === DEFAULT_TEXT_PROPERTY) {
+        result.type = NodePropertyType.text;
+      }
+      utils.raise(`unknown node`, node);
     }
     return result;
   }

@@ -1,13 +1,11 @@
 //import { Component } from "../../src/component/Component.js";
 import { BindToHTMLElement } from "../../src/binder/BindToHTMLElement.js";
 import { Symbols } from "../../src/Symbols.js";
-import { LevelTop } from "../../src/bindInfo/LevelTop.js";
-import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
 import { Event as EventBind } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { Radio } from "../../src/bindInfo/Radio.js";
+import { PropertyBind } from "../../src/bindInfo/Property.js";
 
 test("BindToHTMLElement div", () => {
   const node = document.createElement("div");
@@ -43,7 +41,7 @@ test("BindToHTMLElement div", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(binds[0].node.textContent).toBe("100");
@@ -106,7 +104,7 @@ test("BindToHTMLElement input ", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLInputElement).toBe(true);
   expect(binds[0].node.value).toBe("100");
@@ -177,7 +175,7 @@ test("BindToHTMLElement select ", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLSelectElement).toBe(true);
   expect(binds[0].node.value).toBe("100");
@@ -240,7 +238,7 @@ test("BindToHTMLElement textarea ", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLTextAreaElement).toBe(true);
   expect(binds[0].node.value).toBe("100");
@@ -319,7 +317,7 @@ test("BindToHTMLElement input defaultEvent", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(2);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLInputElement).toBe(true);
   expect(binds[0].node.value).toBe("100");
@@ -412,7 +410,7 @@ test("BindToHTMLElement input no defaultEvent", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(2);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLInputElement).toBe(true);
   expect(binds[0].node.value).toBe("100");
@@ -501,7 +499,7 @@ test("BindToHTMLElement input radio", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLInputElement).toBe(true);
   expect(binds[0].node.value).toBe("100");
@@ -567,7 +565,7 @@ test("BindToHTMLElement input checkbox", () => {
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(node);
   expect(binds[0].node instanceof HTMLInputElement).toBe(true);
   expect(binds[0].node.value).toBe("100");

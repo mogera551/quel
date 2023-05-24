@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>6/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>2/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>6/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -103,24 +103,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">173x</span>
-<span class="cline-any cline-yes">173x</span>
-<span class="cline-any cline-yes">173x</span>
-<span class="cline-any cline-yes">75x</span>
-<span class="cline-any cline-yes">70x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">75x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
@@ -135,9 +135,9 @@ export class LevelTop extends BindInfo {
   updateNode() {
     const {component, node, nodeProperty, viewModelProperty, filters} = this;
     const value = Filter.applyForOutput(this.getViewModelValue(), filters);
-    if (this.lastViewModelValue !== value) {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () =&gt; {
-        node[nodeProperty] = value ?? "";
+        node[nodeProperty] = value ?? <span class="branch-1 cbranch-no" title="branch not covered" >"";</span>
       }));
       this.lastViewModelValue = value;
     }
@@ -146,11 +146,11 @@ export class LevelTop extends BindInfo {
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
-  updateViewModel() {
-    const {node, nodeProperty, filters} = this;
-    const value = Filter.applyForInput(node[nodeProperty], filters);
-    this.setViewModelValue(value);
-    this.lastViewModelValue = value;
+<span class="fstat-no" title="function not covered" >  up</span>dateViewModel() {
+    const {node, nodeProperty, filters} = <span class="cstat-no" title="statement not covered" >this;</span>
+    const value = <span class="cstat-no" title="statement not covered" >Filter.applyForInput(node[nodeProperty], filters);</span>
+<span class="cstat-no" title="statement not covered" >    this.setViewModelValue(value);</span>
+<span class="cstat-no" title="statement not covered" >    this.lastViewModelValue = value;</span>
   }
 &nbsp;
 }</pre></td></tr></table></pre>
@@ -160,7 +160,7 @@ export class LevelTop extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-23T08:46:05.962Z
+                at 2023-05-24T08:14:21.018Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

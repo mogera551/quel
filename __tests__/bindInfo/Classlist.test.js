@@ -1,4 +1,4 @@
-import { ClassListBind } from "../../src/bindInfo/Classlist.js/index.js";
+import { ClassListBind } from "../../src/bindInfo/Classlist.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 

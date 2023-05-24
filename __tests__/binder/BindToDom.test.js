@@ -23,7 +23,7 @@ customElements.define("custom-tag", CustomTag);
 const minimumModule = {html:"", ViewModel:class {}};
 customElements.define("my-component", generateComponentClass(minimumModule));
 
-test("BindToDom parseBindText single levelTop default", () => {
+test("BindToDom parseBindText single property default", () => {
   const node = document.createElement("div");
   const viewModel = {
     "aaa": 100,
@@ -55,7 +55,7 @@ test("BindToDom parseBindText single levelTop default", () => {
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 });
 
-test("BindToDom parseBindText single levelTop default filters", () => {
+test("BindToDom parseBindText single property default filters", () => {
   const node = document.createElement("div");
   const viewModel = {
     "aaa": 100,
@@ -92,7 +92,7 @@ test("BindToDom parseBindText single levelTop default filters", () => {
 
 });
 
-test("BindToDom parseBindText single LevelTop", () => {
+test("BindToDom parseBindText single property", () => {
   const node = document.createElement("div");
   const viewModel = {
     "aaa": 100,
@@ -125,7 +125,7 @@ test("BindToDom parseBindText single LevelTop", () => {
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 });
 
-test("BindToDom parseBindText multi LevelTop", () => {
+test("BindToDom parseBindText multi property", () => {
   const node = document.createElement("div");
   const viewModel = {
     "aaa": 100,
@@ -178,7 +178,7 @@ test("BindToDom parseBindText multi LevelTop", () => {
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 });
 
-test("BindToDom parseBindText single Level2nd", () => {
+test("BindToDom parseBindText single style", () => {
   const node = document.createElement("div");
   const viewModel = {
     "aaa": 100,
@@ -194,39 +194,7 @@ test("BindToDom parseBindText single Level2nd", () => {
   expect(binds[0].element).toBe(node);
   expect(binds[0].nodeProperty).toBe("style.display");
   expect(binds[0].nodePropertyElements).toEqual(["style", "display"]);
-  expect(binds[0].component).toBe(component);
-  expect(binds[0].viewModel).toBe(viewModel);
-  expect(binds[0].viewModelProperty).toBe("bbb");
-  expect(binds[0].viewModelPropertyName).toBe(PropertyName.create("bbb"));
-  expect(binds[0].contextIndex).toBe(undefined);
-  expect(binds[0].isContextIndex).toBe(false);
-  expect(binds[0].filters).toEqual([]);
-  expect(binds[0].contextParam).toBe(undefined);
-  expect(binds[0].indexes).toEqual([]);
-  expect(binds[0].indexesString).toBe("");
-  expect(binds[0].viewModelPropertyKey).toBe("bbb\t");
-  expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe(undefined);
-  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
-});
-
-test("BindToDom parseBindText single Level3rd", () => {
-  const node = document.createElement("custom-tag");
-  const viewModel = {
-    "aaa": 100,
-    "bbb": true,
-  }
-  const component = { viewModel };
-  const context = { indexes:[], stack:[] };
-  const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-  const binds = parseBindText("aaa.bbb.ccc:bbb;", "textContent");
-
-  expect(binds.length).toBe(1);
-  expect(binds[0].node).toBe(node);
-  expect(binds[0].element).toBe(node);
-  expect(binds[0].nodeProperty).toBe("aaa.bbb.ccc");
-  expect(binds[0].nodePropertyElements).toEqual(["aaa", "bbb", "ccc"]);
+  expect(binds[0].styleName).toEqual("display");
   expect(binds[0].component).toBe(component);
   expect(binds[0].viewModel).toBe(viewModel);
   expect(binds[0].viewModelProperty).toBe("bbb");
@@ -314,6 +282,40 @@ test("BindToDom parseBindText single Radio", () => {
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 });
 
+test("BindToDom parseBindText single ClassList", () => {
+  const node = document.createElement("div");
+  const viewModel = {
+    "aaa": [],
+    "bbb": true,
+  }
+  const component = { viewModel };
+  const context = { indexes:[], stack:[] };
+  const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
+  const binds = parseBindText("class.zzz:aaa;", "textContent");
+
+  expect(binds.length).toBe(1);
+  expect(binds[0].node).toBe(node);
+  expect(binds[0].element).toBe(node);
+  expect(binds[0].nodeProperty).toBe("class.zzz");
+  expect(binds[0].nodePropertyElements).toEqual(["class", "zzz"]);
+  expect(binds[0].className).toBe("zzz");
+  expect(binds[0].component).toBe(component);
+  expect(binds[0].viewModel).toBe(viewModel);
+  expect(binds[0].viewModelProperty).toBe("aaa");
+  expect(binds[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
+  expect(binds[0].contextIndex).toBe(undefined);
+  expect(binds[0].isContextIndex).toBe(false);
+  expect(binds[0].filters).toEqual([]);
+  expect(binds[0].contextParam).toBe(undefined);
+  expect(binds[0].indexes).toEqual([]);
+  expect(binds[0].indexesString).toBe("");
+  expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
+  expect(binds[0].contextIndexes).toEqual([]);
+  expect(binds[0].lastNodeValue).toBe(undefined);
+  expect(binds[0].lastViewModelValue).toBe(undefined);
+  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
+});
+
 test("BindToDom parseBindText single ClassName", () => {
   const node = document.createElement("div");
   const viewModel = {
@@ -323,13 +325,13 @@ test("BindToDom parseBindText single ClassName", () => {
   const component = { viewModel };
   const context = { indexes:[], stack:[] };
   const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-  const binds = parseBindText("className.zzz:aaa;", "textContent");
+  const binds = parseBindText("class:aaa;", "textContent");
 
   expect(binds.length).toBe(1);
   expect(binds[0].node).toBe(node);
   expect(binds[0].element).toBe(node);
-  expect(binds[0].nodeProperty).toBe("className.zzz");
-  expect(binds[0].nodePropertyElements).toEqual(["className", "zzz"]);
+  expect(binds[0].nodeProperty).toBe("class");
+  expect(binds[0].nodePropertyElements).toEqual(["class"]);
   expect(binds[0].component).toBe(component);
   expect(binds[0].viewModel).toBe(viewModel);
   expect(binds[0].viewModelProperty).toBe("aaa");

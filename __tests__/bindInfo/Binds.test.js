@@ -1,11 +1,11 @@
 import { Symbols } from "../../src/Symbols.js";
 import { Binds } from "../../src/bindInfo/Binds.js";
-import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { TemplateBind,TemplateChild } from "../../src/bindInfo/Template.js";
 import { Templates } from "../../src/view/Templates.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
+import { PropertyBind } from "../../src/bindInfo/Property.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -76,7 +76,7 @@ const component2 = {
 
 test("Binds getTemplateBinds", () => {
   const binds = [];
-  const rootBind = new LevelTop;
+  const rootBind = new PropertyBind;
   rootBind.component = component;
   rootBind.node = null;
   rootBind.nodeProperty = "value";
@@ -163,7 +163,7 @@ test("Binds getTemplateBinds tree", () => {
 
   const binds = [];
 
-  const rootBind = new LevelTop;
+  const rootBind = new PropertyBind;
   rootBind.component = component;
   rootBind.node = null;
   rootBind.nodeProperty = "value";
@@ -250,7 +250,7 @@ test("Binds applyToNode loop", () => {
   Binds.applyToNode(binds, new Set(["aaa\t"]));
   expect(templateBind.templateChildren.length).toBe(2);
   expect(templateBind.templateChildren[0].binds.length).toBe(1);
-  expect(templateBind.templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(templateBind.templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(templateBind.templateChildren[0].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(templateBind.templateChildren[0].binds[0].node.dataset.bind).toBe("aaa.*");
   expect(templateBind.templateChildren[0].binds[0].component).toBe(component);
@@ -260,7 +260,7 @@ test("Binds applyToNode loop", () => {
   expect(templateBind.templateChildren[0].binds[0].indexes).toEqual([0]);
   expect(templateBind.templateChildren[0].binds[0].contextIndexes).toEqual([0]);
   expect(templateBind.templateChildren[1].binds.length).toBe(1);
-  expect(templateBind.templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(templateBind.templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(templateBind.templateChildren[1].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(templateBind.templateChildren[1].binds[0].node.dataset.bind).toBe("aaa.*");
   expect(templateBind.templateChildren[1].binds[0].component).toBe(component);
@@ -274,10 +274,11 @@ test("Binds applyToNode loop", () => {
 test("Binds applyToNode", () => {
   const binds = [];
   const element = document.createElement("div");
-  const rootBind = new LevelTop;
+  const rootBind = new PropertyBind;
   rootBind.component = component;
   rootBind.node = element;
   rootBind.nodeProperty = "textContent";
+  rootBind.nodePropertyElements = rootBind.nodeProperty.split(".");
   rootBind.viewModel = viewModel;
   rootBind.viewModelProperty = "bbb";
   rootBind.filters = [];

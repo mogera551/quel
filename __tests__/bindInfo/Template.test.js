@@ -1,9 +1,9 @@
 import { TemplateBind, TemplateChild } from "../../src/bindInfo/Template.js"; 
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
-import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
+import { PropertyBind } from "../../src/bindInfo/Property.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -161,7 +161,7 @@ test("Template loop binds", () => {
   template.updateNode();
   expect(template.templateChildren.length).toBe(3);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -170,7 +170,7 @@ test("Template loop binds", () => {
   expect(template.templateChildren[0].binds[0].indexes).toEqual([0]);
   expect(template.templateChildren[0].binds[0].contextIndexes).toEqual([0]);
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -179,7 +179,7 @@ test("Template loop binds", () => {
   expect(template.templateChildren[1].binds[0].indexes).toEqual([1]);
   expect(template.templateChildren[1].binds[0].contextIndexes).toEqual([1]);
   expect(template.templateChildren[2].binds.length).toBe(1);
-  expect(template.templateChildren[2].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[2].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[2].binds[0].component).toBe(component);
   expect(template.templateChildren[2].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[2].binds[0].nodeProperty).toBe("textContent");
@@ -194,7 +194,7 @@ test("Template loop binds", () => {
   expect(template.templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds.length).toBe(1);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -203,7 +203,7 @@ test("Template loop binds", () => {
   expect(template.templateChildren[0].binds[0].indexes).toEqual([0]);
   expect(template.templateChildren[0].binds[0].contextIndexes).toEqual([0]);
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -265,7 +265,7 @@ test("Template loop loop binds", () => {
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -274,7 +274,7 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].indexes).toEqual([0, 0]);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([0, 0]);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -297,7 +297,7 @@ test("Template loop loop binds", () => {
 
   expect(template.templateChildren[1].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -306,7 +306,7 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].indexes).toEqual([1, 0]);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([1, 0]);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -335,7 +335,7 @@ test("Template loop loop binds", () => {
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(3);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -344,7 +344,7 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].indexes).toEqual([0, 0]);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([0, 0]);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -353,7 +353,7 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].indexes).toEqual([0, 1]);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([0, 1]);
   expect(template.templateChildren[0].binds[0].templateChildren[2].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[2].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[2].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[2].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[2].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[2].binds[0].nodeProperty).toBe("textContent");
@@ -417,7 +417,7 @@ test("Template loop in loop binds", () => {
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -426,7 +426,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].indexes).toEqual([0]);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([0, 0]);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -449,7 +449,7 @@ test("Template loop in loop binds", () => {
 
   expect(template.templateChildren[1].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -458,7 +458,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].indexes).toEqual([1]);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([1, 0]);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -488,7 +488,7 @@ test("Template loop in loop binds", () => {
 
   expect(template.templateChildren[0].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -497,7 +497,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].indexes).toEqual([0]);
   expect(template.templateChildren[0].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([0, 0]);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -520,7 +520,7 @@ test("Template loop in loop binds", () => {
 
   expect(template.templateChildren[1].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -529,7 +529,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].indexes).toEqual([1]);
   expect(template.templateChildren[1].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([1, 0]);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
@@ -552,7 +552,7 @@ test("Template loop in loop binds", () => {
 
   expect(template.templateChildren[2].binds[0].templateChildren.length).toBe(2);
   expect(template.templateChildren[2].binds[0].templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
@@ -561,7 +561,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].indexes).toEqual([2]);
   expect(template.templateChildren[2].binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([2, 0]);
   expect(template.templateChildren[2].binds[0].templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].node instanceof Text).toBe(true);
   expect(template.templateChildren[2].binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");

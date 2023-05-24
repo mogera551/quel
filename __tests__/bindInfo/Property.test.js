@@ -1,7 +1,7 @@
-import { LevelTop } from "../../src/bindInfo/LevelTop.js";
+import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { Symbols } from "../../src/Symbols.js";
 
-test("LevelTop", async () => {
+test("PropertyBind", async () => {
   const viewModel = {
     "aaa": false,
     [Symbols.directlyGet](prop, indexes) {
@@ -25,35 +25,36 @@ test("LevelTop", async () => {
   const input = document.createElement("input");
   input.type = "text";
 
-  const levelTop = new LevelTop;
-  levelTop.component = component;
-  levelTop.node = input;
-  levelTop.nodeProperty = "value";
-  levelTop.viewModel = viewModel;
-  levelTop.viewModelProperty = "aaa";
-  levelTop.filters = [];
+  const propertyBind = new PropertyBind;
+  propertyBind.component = component;
+  propertyBind.node = input;
+  propertyBind.nodeProperty = "value";
+  propertyBind.nodePropertyElements = "value".split(".");
+  propertyBind.viewModel = viewModel;
+  propertyBind.viewModelProperty = "aaa";
+  propertyBind.filters = [];
 
   input.value = "100";
   viewModel["aaa"] = "200";
-  levelTop.updateNode();
+  propertyBind.updateNode();
   expect(input.value).toBe("200");
   viewModel["aaa"] = 300;
-  levelTop.updateNode();
+  propertyBind.updateNode();
   expect(input.value).toBe("300");
-  levelTop.updateNode();
+  propertyBind.updateNode();
   expect(input.value).toBe("300");
   viewModel["aaa"] = undefined;
-  levelTop.updateNode();
+  propertyBind.updateNode();
   expect(input.value).toBe("");
   viewModel["aaa"] = null;
-  levelTop.updateNode();
+  propertyBind.updateNode();
   expect(input.value).toBe("");
 
   input.value = "500";
-  levelTop.updateViewModel();
+  propertyBind.updateViewModel();
   expect(viewModel["aaa"]).toEqual("500");
   input.value = "600";
-  levelTop.updateViewModel();
+  propertyBind.updateViewModel();
   expect(viewModel["aaa"]).toEqual("600");
 
 });

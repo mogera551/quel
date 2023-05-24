@@ -3,9 +3,6 @@ import { utils } from "../utils.js";
 import { Filter } from "../filter/Filter.js";
 import { NodePropertyType } from "../node/PropertyType.js";
 import { NodePropertyInfo } from "../node/PropertyInfo.js";
-import { LevelTop } from "./LevelTop.js";
-import { Level2nd } from "./Level2nd.js";
-import { Level3rd } from "./Level3rd.js";
 import { AttributeBind } from "./Attribute.js";
 import { ClassListBind } from "./Classlist.js";
 import { ClassNameBind } from "./ClassName.js";
@@ -15,10 +12,10 @@ import { TemplateBind } from "./Template.js";
 import { Event } from "./Event.js";
 import { ComponentBind } from "./Component.js";
 import { StyleBind } from "./Style.js";
+import { PropertyBind } from "./Property.js";
+import { TextBind } from "./Text.js";
 
-const createLevelTop = (bindInfo, info) => Object.assign(new LevelTop, bindInfo, info);
-const createLevel2nd = (bindInfo, info) => Object.assign(new Level2nd, bindInfo, info);
-const createLevel3rd = (bindInfo, info) => Object.assign(new Level3rd, bindInfo, info);
+const createPropertyBind = (bindInfo, info) => Object.assign(new PropertyBind, bindInfo, info);
 const createAttributeBind = (bindInfo, info) => Object.assign(new AttributeBind, bindInfo, info);
 const createClassListBind = (bindInfo, info) => Object.assign(new ClassListBind, bindInfo, info);
 const createClassNameBind = (bindInfo, info) => Object.assign(new ClassNameBind, bindInfo, info);
@@ -28,11 +25,10 @@ const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, b
 const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
 const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
 const createStyleBind = (bindInfo, info) => Object.assign(new StyleBind, bindInfo, info);
+const createTextBind = (bindInfo, info) => Object.assign(new TextBind, bindInfo, info);
 
 const creatorByType = new Map();
-creatorByType.set(NodePropertyType.levelTop, createLevelTop);
-creatorByType.set(NodePropertyType.level2nd, createLevel2nd);
-creatorByType.set(NodePropertyType.level3rd, createLevel3rd);
+creatorByType.set(NodePropertyType.property, createPropertyBind);
 creatorByType.set(NodePropertyType.attribute, createAttributeBind);
 creatorByType.set(NodePropertyType.classList, createClassListBind);
 creatorByType.set(NodePropertyType.className, createClassNameBind);
@@ -42,6 +38,7 @@ creatorByType.set(NodePropertyType.template, createTemplateBind);
 creatorByType.set(NodePropertyType.event, createEvent);
 creatorByType.set(NodePropertyType.component, createComponent);
 creatorByType.set(NodePropertyType.style, createStyleBind);
+creatorByType.set(NodePropertyType.style, createTextBind);
 
 export class Factory {
   /**

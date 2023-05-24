@@ -2,11 +2,11 @@ import { Binder } from "../../src/binder/Binder.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
-import { LevelTop } from "../../src/bindInfo/LevelTop.js";
 import { TemplateBind } from "../../src/bindInfo/Template.js";
 import { BindInfo } from "../../src/bindInfo/BindInfo.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
+import { PropertyBind } from "../../src/bindInfo/Property.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -75,7 +75,7 @@ test("Binder", () => {
   const binds = Binder.bind(nodes, component, { 
     indexes:[], stack:[]
   });
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(nodes[0]);
   expect(binds[0].element).toBe(nodes[0]);
   expect(binds[0].nodeProperty).toBe("textContent");
@@ -96,7 +96,7 @@ test("Binder", () => {
   expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
-  expect(binds[1] instanceof LevelTop).toBe(true);
+  expect(binds[1] instanceof PropertyBind).toBe(true);
   expect(binds[1].node).toBe(nodes[1]);
   expect(binds[1].element).toBe(nodes[1]);
   expect(binds[1].nodeProperty).toBe("textContent");
@@ -117,7 +117,7 @@ test("Binder", () => {
   expect(binds[1].lastViewModelValue).toBe("200");
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 
-  expect(binds[2] instanceof LevelTop).toBe(true);
+  expect(binds[2] instanceof PropertyBind).toBe(true);
   expect(binds[2].node).toBe(nodes[2]);
   expect(binds[2].element).toBe(nodes[2]);
   expect(binds[2].nodeProperty).toBe("textContent");
@@ -169,7 +169,7 @@ test("Binder", () => {
     ]
   });
   expect(binds[3].templateChildren[0].binds.length).toBe(1);
-  expect(binds[3].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[3].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[3].templateChildren[0].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(binds[3].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
   expect(binds[3].templateChildren[0].binds[0].nodePropertyElements).toEqual(["textContent"]);
@@ -198,7 +198,7 @@ test("Binder", () => {
     ]
   });
   expect(binds[3].templateChildren[1].binds.length).toBe(1);
-  expect(binds[3].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[3].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[3].templateChildren[1].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(binds[3].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
   expect(binds[3].templateChildren[1].binds[0].nodePropertyElements).toEqual(["textContent"]);
@@ -227,7 +227,7 @@ test("Binder", () => {
     ]
   });
   expect(binds[3].templateChildren[2].binds.length).toBe(1);
-  expect(binds[3].templateChildren[2].binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[3].templateChildren[2].binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[3].templateChildren[2].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(binds[3].templateChildren[2].binds[0].nodeProperty).toBe("textContent");
   expect(binds[3].templateChildren[2].binds[0].nodePropertyElements).toEqual(["textContent"]);
@@ -247,7 +247,7 @@ test("Binder", () => {
   expect(binds[3].templateChildren[2].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[2].binds[0].context).toEqual({ indexes:[2], stack:[{indexes:[2], pos:0, propName:PropertyName.create("ddd")}] });
 
-  expect(binds[4] instanceof LevelTop).toBe(true);
+  expect(binds[4] instanceof PropertyBind).toBe(true);
   expect(binds[4].node instanceof Text).toBe(true);
   expect(() => binds[4].element).toThrow();
   expect(binds[4].nodeProperty).toBe("textContent");
@@ -332,7 +332,7 @@ test("Binder context", () => {
       { indexes:[1], pos:0, propName:PropertyName.create("fff") }
     ]
   });
-  expect(binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[0].node).toBe(nodes[0]);
   expect(binds[0].element).toBe(nodes[0]);
   expect(binds[0].nodeProperty).toBe("textContent");
@@ -357,7 +357,7 @@ test("Binder context", () => {
     ]
   });
 
-  expect(binds[1] instanceof LevelTop).toBe(true);
+  expect(binds[1] instanceof PropertyBind).toBe(true);
   expect(binds[1].node).toBe(nodes[1]);
   expect(binds[1].element).toBe(nodes[1]);
   expect(binds[1].nodeProperty).toBe("textContent");
@@ -382,7 +382,7 @@ test("Binder context", () => {
     ]
   });
 
-  expect(binds[2] instanceof LevelTop).toBe(true);
+  expect(binds[2] instanceof PropertyBind).toBe(true);
   expect(binds[2].node).toBe(nodes[2]);
   expect(binds[2].element).toBe(nodes[2]);
   expect(binds[2].nodeProperty).toBe("textContent");
@@ -441,7 +441,7 @@ test("Binder context", () => {
     ]
   });
   expect(binds[3].templateChildren[0].binds.length).toBe(1);
-  expect(binds[3].templateChildren[0].binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[3].templateChildren[0].binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[3].templateChildren[0].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(binds[3].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
   expect(binds[3].templateChildren[0].binds[0].nodePropertyElements).toEqual(["textContent"]);
@@ -476,7 +476,7 @@ test("Binder context", () => {
     ]
   });
   expect(binds[3].templateChildren[1].binds.length).toBe(1);
-  expect(binds[3].templateChildren[1].binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[3].templateChildren[1].binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[3].templateChildren[1].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(binds[3].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
   expect(binds[3].templateChildren[1].binds[0].nodePropertyElements).toEqual(["textContent"]);
@@ -511,7 +511,7 @@ test("Binder context", () => {
     ]
   });
   expect(binds[3].templateChildren[2].binds.length).toBe(1);
-  expect(binds[3].templateChildren[2].binds[0] instanceof LevelTop).toBe(true);
+  expect(binds[3].templateChildren[2].binds[0] instanceof PropertyBind).toBe(true);
   expect(binds[3].templateChildren[2].binds[0].node instanceof HTMLDivElement).toBe(true);
   expect(binds[3].templateChildren[2].binds[0].nodeProperty).toBe("textContent");
   expect(binds[3].templateChildren[2].binds[0].nodePropertyElements).toEqual(["textContent"]);
@@ -537,7 +537,7 @@ test("Binder context", () => {
     ]
   });
 
-  expect(binds[4] instanceof LevelTop).toBe(true);
+  expect(binds[4] instanceof PropertyBind).toBe(true);
   expect(binds[4].node instanceof Text).toBe(true);
   expect(() => binds[4].element).toThrow();
   expect(binds[4].nodeProperty).toBe("textContent");
