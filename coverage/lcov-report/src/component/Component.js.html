@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.08% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>100/103</span>
+                <span class='fraction'>103/103</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.05% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>33/34</span>
+                <span class='fraction'>34/34</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.85% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>39/42</span>
+                <span class='fraction'>41/41</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>98/100</span>
+                <span class='fraction'>100/100</span>
             </div>
         
             
@@ -450,8 +450,8 @@
 <span class="cline-any cline-yes">79x</span>
 <span class="cline-any cline-yes">79x</span>
 <span class="cline-any cline-yes">60x</span>
-<span class="cline-any cline-yes">55x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -533,7 +533,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">43x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">39x</span>
@@ -542,7 +542,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">39x</span>
@@ -562,7 +562,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
@@ -571,7 +571,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
@@ -650,7 +650,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -814,7 +814,7 @@ const getParentComponent = (node) =&gt; {
     if (node == null) return null;
     if (node[Symbols.isComponent]) return node;
     if (node instanceof ShadowRoot) {
-      <span class="missing-if-branch" title="if path not taken" >I</span>if (node.host[Symbols.isComponent]) <span class="cstat-no" title="statement not covered" >return node.host;</span>
+      if (node.host[Symbols.isComponent]) return node.host;
       node = node.host;
     }
   } while(true);
@@ -904,8 +904,8 @@ const mixInComponent = {
   /**
    * @type {() =&gt; {}}
    */
-<span class="fstat-no" title="function not covered" >  ge</span>t initialReject() {
-<span class="cstat-no" title="statement not covered" >    return this._initialReject;</span>
+  get initialReject() {
+    return this._initialReject;
   },
   set initialReject(value) {
     this._initialReject = value;
@@ -933,8 +933,8 @@ const mixInComponent = {
   /**
    * @type {() =&gt; {}}
    */
-<span class="fstat-no" title="function not covered" >  ge</span>t aliveReject() {
-<span class="cstat-no" title="statement not covered" >    return this._aliveReject;</span>
+  get aliveReject() {
+    return this._aliveReject;
   },
   set aliveReject(value) {
     this._aliveReject = value;
@@ -1121,8 +1121,8 @@ export class ComponentClassGenerator {
         /**
          * 
          */
-<span class="fstat-no" title="function not covered" >        in</span>itialize() {
-        }
+//        initialize() {
+//        }
       };
     };
   
@@ -1159,7 +1159,7 @@ export function generateComponentClass(componentModule) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-24T21:47:15.727Z
+                at 2023-05-25T20:38:16.359Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

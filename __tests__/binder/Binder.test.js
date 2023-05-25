@@ -8,6 +8,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { TextBind } from "../../src/bindInfo/Text.js";
+import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -629,4 +630,178 @@ test("Binder indexes fail", () => {
     }
     const binds = Binder.bind(nodes, component, context);
   }).toThrow("unknown node type");
+});
+
+test("Binder svg", () => {
+  const html = `
+<svg>
+{{ loop:ddd }}
+<text data-bind="attr.x:ddd.*.x">{{ ddd.*.name }}</text>
+{{ end: }}
+</svg>
+  `;
+  const root = Module.htmlToTemplate(html);
+
+  const elements = Array.from(root.content.querySelectorAll("[data-bind]"));
+  const comments = [];
+  const traverse = (node, list) => {
+    if (node instanceof Comment) list.push(node);
+    for(const childNode of Array.from(node.childNodes)) {
+      traverse(childNode, list);
+    }
+  };
+  traverse(root.content, comments);
+
+  const nodes = elements.concat(comments);
+  const viewModel = {
+    "ddd": [{ name:"aaa", x:"10" }, { name:"bbb", x:"20" }],
+    [Symbols.directlyGet](viewModelProperty, indexes) {
+      return this[viewModelProperty];
+    },
+    [Symbols.directlySet](viewModelProperty, indexes, value) {
+      this[viewModelProperty] = value;
+    }
+  }
+  const component = { 
+    viewModel,
+    updateSlot: {
+      /**
+       * 
+       * @param {NodeUpdateData} nodeUpdateData 
+       */
+      addNodeUpdate(nodeUpdateData) {
+        nodeUpdateData.updateFunc();
+      },
+      /**
+       * 
+       * @param {ProcessData} processData 
+       */
+      addProcess(processData) {
+        Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
+
+      },
+    }
+  };
+  const binds = Binder.bind(nodes, component, { 
+    indexes:[], stack:[]
+  });
+  expect(binds[0] instanceof TemplateBind).toBe(true);
+  expect(binds[0].node instanceof Comment).toBe(true);
+  expect(() => binds[0].element).toThrow();
+  expect(binds[0].nodeProperty).toBe("loop");
+  expect(binds[0].nodePropertyElements).toEqual(["loop"]);
+  expect(binds[0].component).toBe(component);
+  expect(binds[0].viewModel).toBe(viewModel);
+  expect(binds[0].viewModelProperty).toBe("ddd");
+  expect(binds[0].viewModelPropertyName).toEqual(PropertyName.create("ddd"));
+  expect(binds[0].contextIndex).toBe(undefined);
+  expect(binds[0].isContextIndex).toBe(false);
+  expect(binds[0].filters).toEqual([]);
+  expect(binds[0].contextParam).toBe(undefined);
+  expect(binds[0].indexes).toEqual([]);
+  expect(binds[0].indexesString).toBe("");
+  expect(binds[0].viewModelPropertyKey).toBe("ddd\t");
+  expect(binds[0].contextIndexes).toEqual([]);
+  expect(binds[0].lastNodeValue).toBe(undefined);
+  expect(binds[0].lastViewModelValue).toEqual([{ name:"aaa", x:"10" }, { name:"bbb", x:"20" }]);
+  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
+
+  expect(binds[0].templateChildren.length).toBe(2);
+  expect(binds[0].templateChildren[0].context).toEqual({
+    indexes:[0],
+    stack:[
+      {
+        indexes:[0], pos:0, propName:PropertyName.create("ddd")
+      }
+    ]
+  });
+  expect(binds[0].templateChildren[0].binds.length).toBe(2);
+  expect(binds[0].templateChildren[0].binds[0] instanceof AttributeBind).toBe(true);
+  expect(binds[0].templateChildren[0].binds[0].node instanceof SVGElement).toBe(true); // ToDo:should be SVGTextElement
+  expect(binds[0].templateChildren[0].binds[0].nodeProperty).toBe("attr.x");
+  expect(binds[0].templateChildren[0].binds[0].nodePropertyElements).toEqual(["attr", "x"]);
+  expect(binds[0].templateChildren[0].binds[0].component).toBe(component);
+  expect(binds[0].templateChildren[0].binds[0].viewModel).toBe(viewModel);
+  expect(binds[0].templateChildren[0].binds[0].viewModelProperty).toBe("ddd.*.x");
+  expect(binds[0].templateChildren[0].binds[0].viewModelPropertyName).toEqual(PropertyName.create("ddd.*.x"));
+  expect(binds[0].templateChildren[0].binds[0].contextIndex).toBe(undefined);
+  expect(binds[0].templateChildren[0].binds[0].isContextIndex).toBe(false);
+  expect(binds[0].templateChildren[0].binds[0].filters).toEqual([]);
+  expect(binds[0].templateChildren[0].binds[0].contextParam).toEqual({indexes:[0], pos:0, propName:PropertyName.create("ddd")});
+  expect(binds[0].templateChildren[0].binds[0].indexes).toEqual([0]);
+  expect(binds[0].templateChildren[0].binds[0].indexesString).toBe("0");
+  expect(binds[0].templateChildren[0].binds[0].viewModelPropertyKey).toBe("ddd.*.x\t0");
+  expect(binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([0]);
+  expect(binds[0].templateChildren[0].binds[0].lastNodeValue).toBe(undefined);
+  expect(binds[0].templateChildren[0].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
+  expect(binds[0].templateChildren[0].binds[0].context).toEqual({ indexes:[0], stack:[{indexes:[0], pos:0, propName:PropertyName.create("ddd")}] });
+
+  expect(binds[0].templateChildren[0].binds[1] instanceof TextBind).toBe(true);
+  expect(binds[0].templateChildren[0].binds[1].node instanceof Node).toBe(true);
+  expect(binds[0].templateChildren[0].binds[1].nodeProperty).toBe("textContent");
+  expect(binds[0].templateChildren[0].binds[1].nodePropertyElements).toEqual(["textContent"]);
+  expect(binds[0].templateChildren[0].binds[1].component).toBe(component);
+  expect(binds[0].templateChildren[0].binds[1].viewModel).toBe(viewModel);
+  expect(binds[0].templateChildren[0].binds[1].viewModelProperty).toBe("ddd.*.name");
+  expect(binds[0].templateChildren[0].binds[1].viewModelPropertyName).toEqual(PropertyName.create("ddd.*.name"));
+  expect(binds[0].templateChildren[0].binds[1].contextIndex).toBe(undefined);
+  expect(binds[0].templateChildren[0].binds[1].isContextIndex).toBe(false);
+  expect(binds[0].templateChildren[0].binds[1].filters).toEqual([]);
+  expect(binds[0].templateChildren[0].binds[1].contextParam).toEqual({indexes:[0], pos:0, propName:PropertyName.create("ddd")});
+  expect(binds[0].templateChildren[0].binds[1].indexes).toEqual([0]);
+  expect(binds[0].templateChildren[0].binds[1].indexesString).toBe("0");
+  expect(binds[0].templateChildren[0].binds[1].viewModelPropertyKey).toBe("ddd.*.name\t0");
+  expect(binds[0].templateChildren[0].binds[1].contextIndexes).toEqual([0]);
+  expect(binds[0].templateChildren[0].binds[1].lastNodeValue).toBe(undefined);
+  expect(binds[0].templateChildren[0].binds[1].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
+  expect(binds[0].templateChildren[0].binds[1].context).toEqual({ indexes:[0], stack:[{indexes:[0], pos:0, propName:PropertyName.create("ddd")}] });
+
+  expect(binds[0].templateChildren[1].context).toEqual({
+    indexes:[1],
+    stack:[
+      {
+        indexes:[1], pos:0, propName:PropertyName.create("ddd")
+      }
+    ]
+  });
+  expect(binds[0].templateChildren[1].binds.length).toBe(2);
+  expect(binds[0].templateChildren[1].binds[0] instanceof AttributeBind).toBe(true);
+  expect(binds[0].templateChildren[1].binds[0].node instanceof SVGElement).toBe(true); // ToDo:should be SVGTextElement
+  expect(binds[0].templateChildren[1].binds[0].nodeProperty).toBe("attr.x");
+  expect(binds[0].templateChildren[1].binds[0].nodePropertyElements).toEqual(["attr", "x"]);
+  expect(binds[0].templateChildren[1].binds[0].component).toBe(component);
+  expect(binds[0].templateChildren[1].binds[0].viewModel).toBe(viewModel);
+  expect(binds[0].templateChildren[1].binds[0].viewModelProperty).toBe("ddd.*.x");
+  expect(binds[0].templateChildren[1].binds[0].viewModelPropertyName).toEqual(PropertyName.create("ddd.*.x"));
+  expect(binds[0].templateChildren[1].binds[0].contextIndex).toBe(undefined);
+  expect(binds[0].templateChildren[1].binds[0].isContextIndex).toBe(false);
+  expect(binds[0].templateChildren[1].binds[0].filters).toEqual([]);
+  expect(binds[0].templateChildren[1].binds[0].contextParam).toEqual({indexes:[1], pos:0, propName:PropertyName.create("ddd")});
+  expect(binds[0].templateChildren[1].binds[0].indexes).toEqual([1]);
+  expect(binds[0].templateChildren[1].binds[0].indexesString).toBe("1");
+  expect(binds[0].templateChildren[1].binds[0].viewModelPropertyKey).toBe("ddd.*.x\t1");
+  expect(binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([1]);
+  expect(binds[0].templateChildren[1].binds[0].lastNodeValue).toBe(undefined);
+  expect(binds[0].templateChildren[1].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
+  expect(binds[0].templateChildren[1].binds[0].context).toEqual({ indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("ddd")}] });
+
+  expect(binds[0].templateChildren[1].binds[1] instanceof TextBind).toBe(true);
+  expect(binds[0].templateChildren[1].binds[1].node instanceof Node).toBe(true);
+  expect(binds[0].templateChildren[1].binds[1].nodeProperty).toBe("textContent");
+  expect(binds[0].templateChildren[1].binds[1].nodePropertyElements).toEqual(["textContent"]);
+  expect(binds[0].templateChildren[1].binds[1].component).toBe(component);
+  expect(binds[0].templateChildren[1].binds[1].viewModel).toBe(viewModel);
+  expect(binds[0].templateChildren[1].binds[1].viewModelProperty).toBe("ddd.*.name");
+  expect(binds[0].templateChildren[1].binds[1].viewModelPropertyName).toEqual(PropertyName.create("ddd.*.name"));
+  expect(binds[0].templateChildren[1].binds[1].contextIndex).toBe(undefined);
+  expect(binds[0].templateChildren[1].binds[1].isContextIndex).toBe(false);
+  expect(binds[0].templateChildren[1].binds[1].filters).toEqual([]);
+  expect(binds[0].templateChildren[1].binds[1].contextParam).toEqual({indexes:[1], pos:0, propName:PropertyName.create("ddd")});
+  expect(binds[0].templateChildren[1].binds[1].indexes).toEqual([1]);
+  expect(binds[0].templateChildren[1].binds[1].indexesString).toBe("1");
+  expect(binds[0].templateChildren[1].binds[1].viewModelPropertyKey).toBe("ddd.*.name\t1");
+  expect(binds[0].templateChildren[1].binds[1].contextIndexes).toEqual([1]);
+  expect(binds[0].templateChildren[1].binds[1].lastNodeValue).toBe(undefined);
+  expect(binds[0].templateChildren[1].binds[1].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
+  expect(binds[0].templateChildren[1].binds[1].context).toEqual({ indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("ddd")}] });
 });

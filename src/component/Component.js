@@ -330,8 +330,8 @@ export class ComponentClassGenerator {
         /**
          * 
          */
-        initialize() {
-        }
+//        initialize() {
+//        }
       };
     };
   

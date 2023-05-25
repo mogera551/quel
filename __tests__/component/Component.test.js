@@ -46,6 +46,8 @@ test("Component ", async () => {
   setTimeout(async () => {
     await component.connectedCallback();
   }, 100);
+  expect(typeof component.initialReject).toBe("function");
+  expect(typeof component.initialResolve).toBe("function");
   await component.initialPromise;
   expect(component.viewModel != null).toBe(true);
   expect(component.binds != null).toBe(true);
@@ -57,6 +59,8 @@ test("Component ", async () => {
     disconnected = true;
     component.disconnectedCallback();
   }, 10);
+  expect(typeof component.aliveReject).toBe("function");
+  expect(typeof component.aliveResolve).toBe("function");
   await component.alivePromise;
   expect(disconnected).toBe(true);
 
@@ -144,7 +148,7 @@ test("Component parentComponent", async () => {
 });
 
 test("Component parentComponent shadow-root", async () => {
-  const parentHtml = `<div data-bind="aaa" class="aaa"></div><child-tag2></child-tag2>`;
+  const parentHtml = `<div data-bind="aaa" class="aaa"></div><child-tag2 with-shadow-root></child-tag2>`;
   class ParentViewModel {
     "aaa" = "1000";
 
@@ -160,7 +164,7 @@ test("Component parentComponent shadow-root", async () => {
   const root = document.createElement("div");
   root.attachShadow({mode:'open'});
   root.shadowRoot.innerHTML = `
-  <parent-tag2></parent-tag2>
+  <parent-tag2 with-shadow-root></parent-tag2>
   `;
   const parentComponent = root.shadowRoot.querySelector("parent-tag2");
 

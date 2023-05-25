@@ -775,11 +775,6 @@ class BindInfo {
     }
     return this.#indexes;
   }
-  set indexes(value) {
-//    this.#indexes = value;
-//    this.#indexesString = value.toString();
-//    this.#viewModelPropertyKey = this.#viewModelProperty + "\t" + this.#indexesString;
-  }
   /**
    * @type {string}
    */
@@ -4194,8 +4189,8 @@ class ComponentClassGenerator {
         /**
          * 
          */
-        initialize() {
-        }
+//        initialize() {
+//        }
       };
     };
   

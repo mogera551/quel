@@ -256,3 +256,27 @@ div {
   `);
 });
 
+test("Module replaceTag", () => {
+  const html = `
+<svg>
+{{loop:aaa}}
+<text>{{aaa.*}}</text>
+{{end:}}
+</svg>
+`;
+  expect(Module.replaceTag(html)).toBe(`
+<svg>
+<!--@@|xxxx-xxxx-xxxx-xxxx-12-->
+</svg>
+`);
+  expect(Templates.templateByUUID.has("xxxx-xxxx-xxxx-xxxx-12")).toBe(true);
+  const template = Templates.templateByUUID.get("xxxx-xxxx-xxxx-xxxx-12");
+  expect(template instanceof HTMLTemplateElement).toBe(true);
+  expect(template.dataset.uuid).toBe("xxxx-xxxx-xxxx-xxxx-12");
+  expect(template.dataset.bind).toBe("loop:aaa");
+  expect(template.innerHTML).toBe(`
+<text><!--@@:aaa.*--></text>
+`);
+
+});
+
