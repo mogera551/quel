@@ -1352,7 +1352,7 @@ BRF:7
 BRH:7
 end_of_record
 TN:
-SF:src\component\AttachableShadow.js
+SF:src\component\AttachShadow.js
 FN:30,(anonymous_0)
 FN:34,(anonymous_1)
 FNF:2

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1685047096427" clover="3.2.0">
-  <project timestamp="1685047096428" name="All files">
+<coverage generated="1685047521807" clover="3.2.0">
+  <project timestamp="1685047521807" name="All files">
     <metrics statements="1156" coveredstatements="1156" conditionals="607" coveredconditionals="607" methods="382" coveredmethods="382" elements="2145" coveredelements="2145" complexity="0" loc="1156" ncloc="1156" packages="11" files="52" classes="52"/>
     <package name="src">
       <metrics statements="37" coveredstatements="37" conditionals="23" coveredconditionals="23" methods="16" coveredmethods="16"/>
@@ -586,7 +586,7 @@
     </package>
     <package name="src.component">
       <metrics statements="200" coveredstatements="200" conditionals="82" coveredconditionals="82" methods="64" coveredmethods="64"/>
-      <file name="AttachableShadow.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\component\AttachableShadow.js">
+      <file name="AttachShadow.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\component\AttachShadow.js">
         <metrics statements="3" coveredstatements="3" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
         <line num="3" count="14" type="stmt"/>
         <line num="31" count="63" type="stmt"/>

@@ -10,7 +10,7 @@ import { Module } from "./Module.js";
 import { Thread } from "../thread/Thread.js";
 import { UpdateSlotStatus } from "../thread/UpdateSLotStatus.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";
-import { AttachableShadow } from "./AttachableShadow.js";
+import { AttachShadow } from "./AttachShadow.js";
 
 /**
  * 
@@ -221,7 +221,7 @@ const mixInComponent = {
 
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
-    if (AttachableShadow.isAttachableShadow(this.tagName.toLowerCase()) && this.withShadowRoot) {
+    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
     this.thread = new Thread;

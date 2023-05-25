@@ -1,6 +1,6 @@
 
-export class AttachableShadow {
-  static setOfTags = new Set([
+export class AttachShadow {
+  static setOfAttachableTags = new Set([
     // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
     "articles",
     "aside",
@@ -31,7 +31,7 @@ export class AttachableShadow {
     return tagName.indexOf("-") !== -1;
   }
 
-  static isAttachableShadow(tagName) {
-    return this.isCustomTag(tagName) || this.setOfTags.has(tagName);
+  static isAttachable(tagName) {
+    return this.isCustomTag(tagName) || this.setOfAttachableTags.has(tagName);
   }
 }
