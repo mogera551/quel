@@ -3834,8 +3834,8 @@ class UpdateSlot {
 
 }
 
-class AttachableShadow {
-  static setOfTags = new Set([
+class AttachShadow {
+  static setOfAttachableTags = new Set([
     // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
     "articles",
     "aside",
@@ -3866,8 +3866,8 @@ class AttachableShadow {
     return tagName.indexOf("-") !== -1;
   }
 
-  static isAttachableShadow(tagName) {
-    return this.isCustomTag(tagName) || this.setOfTags.has(tagName);
+  static isAttachable(tagName) {
+    return this.isCustomTag(tagName) || this.setOfAttachableTags.has(tagName);
   }
 }
 
@@ -4080,7 +4080,7 @@ const mixInComponent = {
 
   async build() {
     const { template, ViewModel } = this.constructor; // staticから取得
-    if (AttachableShadow.isAttachableShadow(this.tagName.toLowerCase()) && this.withShadowRoot) {
+    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
     this.thread = new Thread;
