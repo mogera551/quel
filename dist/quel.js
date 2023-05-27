@@ -3493,12 +3493,12 @@ class Main {
     Object.entries(components).forEach(([name, componentModule]) => {
       const componentName = utils.toKebabCase(name);
       const componentClass = ComponentClassGenerator.generate(componentModule);
-      if (componentModule.extendClass && componentModule.extendTag) {
+      if (componentModule.extendTag) {
         customElements.define(componentName, componentClass, { extends:componentModule.extendTag });
-      } else if (typeof componentModule?.extendClass === "undefined" && typeof componentModule?.extendTag === "undefined") {
+      } else if (typeof componentModule?.extendClass === "undefined") {
         customElements.define(componentName, componentClass);
       } else {
-        utils.raise("extendClass and extendTag should be both set, or unset");
+        utils.raise("extendTag should be set");
       }
     });
     return this;
@@ -3882,122 +3882,6 @@ class AttachShadow {
 }
 
 /**
- * @type {Object<string,HTMLElement>}
- */
-const tagToElement = {
-  html: HTMLHtmlElement,
-  head: HTMLHeadElement,
-  title: HTMLTitleElement,
-  link: HTMLLinkElement,
-  meta: HTMLMetaElement,
-  style: HTMLStyleElement,
-  script: HTMLScriptElement,
-  noscript: HTMLElement,
-  body: HTMLBodyElement,
-  h1: HTMLHeadingElement,
-  h2: HTMLHeadingElement,
-  p: HTMLParagraphElement,
-  hr: HTMLHRElement,
-  blockquote: HTMLQuoteElement,
-  ol: HTMLOListElement,
-  ul: HTMLUListElement,
-  li: HTMLLIElement,
-  dl: HTMLDListElement,
-  dt: HTMLElement,
-  dd: HTMLElement,
-  div: HTMLDivElement,
-  a: HTMLAnchorElement,
-  strong: HTMLElement,
-  span: HTMLSpanElement,
-  br: HTMLBRElement,
-  img: HTMLImageElement,
-  table: HTMLTableElement,
-  tr: HTMLTableRowElement,
-  td: HTMLTableCellElement,
-  th: HTMLTableCellElement,
-  form: HTMLFormElement,
-  label: HTMLLabelElement,
-  input: HTMLInputElement,
-  select: HTMLSelectElement,
-  option: HTMLOptionElement,
-  textarea: HTMLTextAreaElement,
-
-  base: HTMLBaseElement,
-  section: HTMLElement,
-  nav: HTMLElement,
-  article: HTMLElement,
-  aside: HTMLElement,
-  h3: HTMLHeadingElement,
-  h4: HTMLHeadingElement,
-  hgroup: HTMLElement,
-  header: HTMLElement,
-  footer: HTMLElement,
-  address: HTMLElement,
-  pre: HTMLPreElement,
-  figure: HTMLElement,
-  figcaption: HTMLElement,
-  em: HTMLElement,
-  small: HTMLElement,
-  cite: HTMLElement,
-  q: HTMLQuoteElement,
-  abbr: HTMLElement,
-  time: HTMLTimeElement,
-  code: HTMLElement,
-  ins: HTMLModElement,
-  del: HTMLModElement,
-  iframe: HTMLIFrameElement,
-  embed: HTMLEmbedElement,
-  object: HTMLObjectElement,
-  param: HTMLParamElement,
-  video: HTMLVideoElement,
-  audio: HTMLAudioElement,
-  canvas: HTMLCanvasElement,
-  caption: HTMLTableCaptionElement,
-  tbody: HTMLTableSectionElement,
-  thead: HTMLTableSectionElement,
-  tfoot: HTMLTableSectionElement,
-  fieldset: HTMLFieldSetElement,
-  legend: HTMLLegendElement,
-
-  h5: HTMLHeadingElement,
-  h6: HTMLHeadingElement,
-  s: HTMLElement,
-  dfn: HTMLElement,
-  var: HTMLElement,
-  samp: HTMLElement,
-  kbd: HTMLElement,
-  sub: HTMLElement,
-  sup: HTMLElement,
-  i: HTMLElement,
-  b: HTMLElement,
-  u: HTMLElement,
-  mark: HTMLElement,
-  ruby: HTMLElement,
-  rt: HTMLElement,
-  rp: HTMLElement,
-  bdi: HTMLElement,
-  bdo: HTMLElement,
-  wbr: HTMLElement,
-  source: HTMLSourceElement,
-  track: HTMLTrackElement,
-  map: HTMLMapElement,
-  area: HTMLAreaElement,
-  colgroup: HTMLTableColElement,
-  col: HTMLTableColElement,
-  button: HTMLButtonElement,
-  datalist: HTMLDataListElement,
-  optgroup: HTMLOptGroupElement,
-  keygen: HTMLUnknownElement,
-  output: HTMLOutputElement,
-  progress: HTMLProgressElement,
-  meter: HTMLMeterElement,
-  detail: HTMLUnknownElement,
-  summary: HTMLElement,
-  command: HTMLUnknownElement,
-  menu: HTMLMenuElement,
-};
-
-/**
  * 
  * @param {Node} node 
  * @returns {Component}
@@ -4358,7 +4242,7 @@ class ComponentClassGenerator {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
-      const extendClass = module.extendClass ?? tagToElement[module.extendTag];
+      const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
     }

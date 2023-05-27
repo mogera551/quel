@@ -13,7 +13,6 @@ import { UpdateSlot } from "../thread/UpdateSlot.js";
 import { AttachShadow } from "./AttachShadow.js";
 import { inputFilters, outputFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
-import { tagToElement } from "./TagToElement.js";
 
 /**
  * 
@@ -378,7 +377,7 @@ export class ComponentClassGenerator {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
-      const extendClass = module.extendClass ?? tagToElement[module.extendTag];
+      const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
     }

@@ -69,11 +69,11 @@ test("Main.componentModules fail", () => {
   const componentModules1 = {
     "cus-tag3": {html, ViewModel, extendClass:HTMLDivElement},
   };
-  expect(() => Main.componentModules(componentModules1)).toThrow("extendClass and extendTag should be both set, or unset");
+  expect(() => Main.componentModules(componentModules1)).toThrow("extendTag should be set");
   const componentModules2 = {
     "cus-tag4": {html, ViewModel, extendTag:"div"},
   };
-  expect(() => Main.componentModules(componentModules2)).toThrow("extendClass and extendTag should be both set, or unset");
+  expect(Main.componentModules(componentModules2)).toBe(Main);
 });
 
 test("Main.filters", () => {
