@@ -11,7 +11,7 @@ export class TextBind extends BindInfo {
    */
   updateNode() {
     const {component, node, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY, viewModelProperty, value, () => {
         node[DEFAULT_PROPERTY] = value ?? "";
@@ -24,8 +24,8 @@ export class TextBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, filters} = this;
-    const value = Filter.applyForInput(node[DEFAULT_PROPERTY], filters);
+    const {component, node, filters} = this;
+    const value = Filter.applyForInput(node[DEFAULT_PROPERTY], filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }

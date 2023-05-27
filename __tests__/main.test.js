@@ -1,6 +1,6 @@
 import { Symbols } from "../src/Symbols.js";
 //import { Component } from "../src/component/Component.js";
-import { outputFilters } from "../src/filter/Builtin";
+import { inputFilters, outputFilters } from "../src/filter/Builtin";
 import { Filter } from "../src/filter/Filter.js";
 import { GlobalData } from "../src/global/Data.js";
 import { Main } from "../src/main.js";
@@ -82,8 +82,9 @@ test("Main.filters", () => {
   };
   Main.filters(registers);
   expect("double" in outputFilters).toBe(true);
-  expect(Filter.applyForOutput(100, [ Object.assign(new Filter, { name:"double", options:[] }) ])).toBe(200);
-  expect(Filter.applyForInput(250, [ Object.assign(new Filter, { name:"double", options:[] }) ])).toBe(125);
+  expect("double" in inputFilters).toBe(true);
+  expect(Filter.applyForOutput(100, [ Object.assign(new Filter, { name:"double", options:[] }) ], outputFilters)).toBe(200);
+  expect(Filter.applyForInput(250, [ Object.assign(new Filter, { name:"double", options:[] }) ], inputFilters)).toBe(125);
 
 });
 

@@ -1,5 +1,6 @@
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { StyleBind } from "../../src/bindInfo/Style.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Symbols } from "../../src/Symbols.js";
 
 test("StyleBind", async () => {
@@ -21,6 +22,10 @@ test("StyleBind", async () => {
       addNodeUpdate(nodeUpdateData) {
         Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const div = document.createElement("div");

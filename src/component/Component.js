@@ -11,6 +11,9 @@ import { Thread } from "../thread/Thread.js";
 import { UpdateSlotStatus } from "../thread/UpdateSLotStatus.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";
 import { AttachShadow } from "./AttachShadow.js";
+import { inputFilters, outputFilters } from "../filter/Builtin.js";
+import { utils } from "../utils.js";
+import { tagToElement } from "./TagToElement.js";
 
 /**
  * 
@@ -187,6 +190,13 @@ const mixInComponent = {
   },
 
   /**
+   * @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}}
+   */
+  get filters() {
+    return this._filters;
+  },
+
+  /**
    * 
    */
   initialize() {
@@ -205,6 +215,10 @@ const mixInComponent = {
     this._aliveReject = undefined;
 
     this._parentComponent = undefined;
+    this._filters = {
+      in:Object.assign({}, inputFilters), 
+      out:Object.assign({}, outputFilters),
+    };
 
     this.initialPromise = new Promise((resolve, reject) => {
       this.initialResolve = resolve;
@@ -220,7 +234,19 @@ const mixInComponent = {
 //  }
 
   async build() {
-    const { template, ViewModel } = this.constructor; // staticから取得
+    const { template, ViewModel, inputFilters, outputFilters } = this.constructor; // staticから取得
+    if (typeof inputFilters !== "undefined") {
+      for(const [name, filterFunc] of Object.entries(inputFilters)) {
+        if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
+        this.filters.in[name] = filterFunc;
+      }
+    }
+    if (typeof outputFilters !== "undefined") {
+      for(const [name, filterFunc] of Object.entries(outputFilters)) {
+        if (name in this.filters.out) utils.raise(`already exists filter ${name}`);
+        this.filters.out[name] = filterFunc;
+      }
+    }
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
@@ -315,6 +341,14 @@ export class ComponentClassGenerator {
          */
         static ViewModel = module.ViewModel;
         /**
+         * @type {Object<string,FilterFunc>}
+         */
+        static inputFilters = module.inputFilters;
+        /**
+         * @type {Object<string,FilterFunc>}
+         */
+        static outputFilters = module.inputFilters;
+        /**
          * @type {boolean}
          */
         get [Symbols.isComponent] () {
@@ -338,16 +372,18 @@ export class ComponentClassGenerator {
     const module = Object.assign(new Module, componentModule);
     // 同じクラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
-    if (typeof module.extendClass === "undefined") {
+    if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") {
       // 自律型カスタム要素
     } else {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
-      componentClass.prototype.__proto__ = module.extendClass.prototype;
-      componentClass.__proto__ = module.extendClass;
+      const extendClass = module.extendClass ?? tagToElement[module.extendTag];
+      componentClass.prototype.__proto__ = extendClass.prototype;
+      componentClass.__proto__ = extendClass;
     }
   
+    // mix in 
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }

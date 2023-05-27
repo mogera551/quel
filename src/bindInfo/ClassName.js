@@ -12,7 +12,7 @@ export class ClassNameBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, value, () => {
         element[CLASS_PROPERTY] = value.join(DELIMITER);
@@ -25,8 +25,8 @@ export class ClassNameBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, element, filters, className} = this;
-    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters);
+    const {component, node, element, filters, className} = this;
+    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }

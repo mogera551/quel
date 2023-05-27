@@ -145,9 +145,9 @@ export class TemplateBind extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { filters, context } = this;
+    const { component, filters, context } = this;
     const lastValue = this.lastViewModelValue;
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
@@ -168,7 +168,7 @@ export class TemplateBind extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { filters, templateChildren, context } = this;
+    const { component, filters, templateChildren, context } = this;
     /**
      * @type {any[]}
      */
@@ -176,7 +176,7 @@ export class TemplateBind extends BindInfo {
     /**
      * @type {any[]}
      */
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters) ?? [];
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out) ?? [];
 
     /**
      * @type {Map<any,number[]>}

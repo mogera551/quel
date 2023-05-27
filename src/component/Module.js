@@ -23,6 +23,14 @@ export class Module {
    * @type {string}
    */
   extendTag;
+  /**
+   * @type {Object<string,FilterFunc>}
+   */
+  inputFilters;
+  /**
+   * @type {Object<string,FilterFunc>}
+   */
+  outputFilters;
 
   /**
    * @type {HTMLTemplateElement}

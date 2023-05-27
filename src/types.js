@@ -54,6 +54,16 @@
  *   disconnectedCallback:()=>{},
  *   applyToNode:(setOfViewModelPropertyKeys:Set<String>)=>{},
  *   initialize:()=>{},
+ *   filters:{
+ *     in:Object<string,FilterFunc>,
+ *     out:Object<string,FilterFunc>,
+ *   },
+ *   static ViewModel:class<ViewModel>,
+ *   static template:HTMLTemplateElement,
+ *   static extendClass:class<HTMLElement>,
+ *   static extendTag:string,
+ *   static inputFilters:Object<string,FilterFunc>,
+ *   static outputFilters:Object<string,FilterFunc>,
  * }} Component
  * 
  */

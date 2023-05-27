@@ -6,6 +6,7 @@ import { TemplateBind,TemplateChild } from "../../src/bindInfo/Template.js";
 import { Templates } from "../../src/view/Templates.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -42,6 +43,10 @@ const component = {
     addNodeUpdate(nodeUpdateData) {
       Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
     }
+  },
+  filters: {
+    in:inputFilters,
+    out:outputFilters,
   }
 };
 

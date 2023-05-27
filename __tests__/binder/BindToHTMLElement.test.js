@@ -8,6 +8,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { Radio } from "../../src/bindInfo/Radio.js";
 import { Checkbox } from "../../src/bindInfo/Checkbox.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 test("BindToHTMLElement div", () => {
   const node = document.createElement("div");
@@ -39,8 +40,12 @@ test("BindToHTMLElement div", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
-  };
+    };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof PropertyBind).toBe(true);
@@ -104,8 +109,12 @@ test("BindToHTMLElement input ", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
-  };
+    };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof PropertyBind).toBe(true);
@@ -177,8 +186,12 @@ test("BindToHTMLElement select ", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
-  };
+    };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof PropertyBind).toBe(true);
@@ -242,8 +255,12 @@ test("BindToHTMLElement textarea ", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
-  };
+    };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
   expect(binds[0] instanceof PropertyBind).toBe(true);
@@ -323,8 +340,12 @@ test("BindToHTMLElement input defaultEvent", () => {
       addProcess(processData) {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
-  };
+    };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(2);
   expect(binds[0] instanceof PropertyBind).toBe(true);
@@ -420,8 +441,12 @@ test("BindToHTMLElement input no defaultEvent", () => {
       addProcess(processData) {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
-  };
+    };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(2);
   expect(binds[0] instanceof PropertyBind).toBe(true);
@@ -513,6 +538,10 @@ test("BindToHTMLElement input radio", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
@@ -581,6 +610,10 @@ test("BindToHTMLElement input checkbox", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
@@ -687,6 +720,10 @@ test("BindToHTMLElement input radio", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = [];
@@ -794,6 +831,10 @@ test("BindToHTMLElement input checkbox", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = [];

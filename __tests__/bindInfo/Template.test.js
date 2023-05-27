@@ -5,6 +5,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { TextBind } from "../../src/bindInfo/Text.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -54,6 +55,10 @@ const component = {
     addNodeUpdate(nodeUpdateData) {
       Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
     }
+  },
+  filters: {
+    in:inputFilters,
+    out:outputFilters,
   }
 };
 

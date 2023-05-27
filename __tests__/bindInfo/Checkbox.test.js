@@ -1,4 +1,5 @@
 import { Checkbox } from "../../src/bindInfo/Checkbox.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 
@@ -23,6 +24,10 @@ test('Checkbox', () => {
       addNodeUpdate(nodeUpdateData) {
         Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   }
   const input = document.createElement("input");

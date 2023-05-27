@@ -16,7 +16,7 @@ export class AttributeBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, attrName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, value, () => {
         element.setAttribute(attrName, value ?? "");
@@ -29,8 +29,8 @@ export class AttributeBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {element, attrName, filters} = this;
-    const value = Filter.applyForInput(element.getAttribute(attrName), filters);
+    const {component, element, attrName, filters} = this;
+    const value = Filter.applyForInput(element.getAttribute(attrName), filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }

@@ -17,7 +17,7 @@ export class ClassListBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         value ? element.classList.add(className) : element.classList.remove(className);
@@ -30,8 +30,8 @@ export class ClassListBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, element, filters, className} = this;
-    const value = Filter.applyForInput(element.classList.contains(className), filters);
+    const {component, node, element, filters, className} = this;
+    const value = Filter.applyForInput(element.classList.contains(className), filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }

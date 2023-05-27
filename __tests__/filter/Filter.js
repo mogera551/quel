@@ -1,10 +1,11 @@
 import { Filter } from "../../src/filter/Filter.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 test("Filter applyForOutput", () => {
   const filters = [
     Object.assign(new Filter, {name:"le", options:[101]}),
   ];
-  expect(Filter.applyForOutput(100, filters)).toBe(true);
+  expect(Filter.applyForOutput(100, filters, outputFilters)).toBe(true);
 });
 
 test("Filter applyForOutput", () => {
@@ -12,7 +13,7 @@ test("Filter applyForOutput", () => {
     Object.assign(new Filter, {name:"le", options:[101]}),
     Object.assign(new Filter, {name:"styleDisplay", options:[]}),
   ];
-  expect(Filter.applyForOutput(100, filters)).toBe("");
+  expect(Filter.applyForOutput(100, filters, outputFilters)).toBe("");
 });
 
 test("Filter applyForOutput", () => {
@@ -20,7 +21,7 @@ test("Filter applyForOutput", () => {
     Object.assign(new Filter, {name:"le", options:[99]}),
     Object.assign(new Filter, {name:"styleDisplay", options:[]}),
   ];
-  expect(Filter.applyForOutput(100, filters)).toBe("none");
+  expect(Filter.applyForOutput(100, filters, outputFilters)).toBe("none");
 });
 
 test("Filter applyForOutput", () => {
@@ -29,40 +30,40 @@ test("Filter applyForOutput", () => {
     Object.assign(new Filter, {name:"LE", options:[99]}),
     Object.assign(new Filter, {name:"styleDisplay", options:[]}),
   ];
-  expect(Filter.applyForOutput(100, filters)).toBe("none");
+  expect(Filter.applyForOutput(100, filters, outputFilters)).toBe("none");
 });
 
 test("Filter applyForOutput", () => {
   const filters = [
   ];
-  expect(Filter.applyForOutput(100, filters)).toBe(100);
+  expect(Filter.applyForOutput(100, filters, outputFilters)).toBe(100);
 });
 
 test("Filter applyForOutput", () => {
   const filters = [
     Object.assign(new Filter, {name:"LE", options:[99]}),
   ];
-  expect(Filter.applyForOutput(100, filters)).toBe(100);
+  expect(Filter.applyForOutput(100, filters, outputFilters)).toBe(100);
 });
 
 test("Filter applyForInput", () => {
   const filters = [
     Object.assign(new Filter, {name:"number", options:[]}),
   ];
-  expect(Filter.applyForInput("101", filters)).toBe(101);
+  expect(Filter.applyForInput("101", filters, inputFilters)).toBe(101);
 });
 
 test("Filter applyForInput", () => {
   const filters = [
     Object.assign(new Filter, {name:"NUMBER", options:[]}),
   ];
-  expect(Filter.applyForInput("101", filters)).toBe("101");
+  expect(Filter.applyForInput("101", filters, inputFilters)).toBe("101");
 });
 
 test("Filter applyForInput", () => {
   const filters = [
   ];
-  expect(Filter.applyForInput("101", filters)).toBe("101");
+  expect(Filter.applyForInput("101", filters, inputFilters)).toBe("101");
 });
 
 test("Filter regist", () => {
@@ -75,7 +76,7 @@ test("Filter regist", () => {
   const filters = [
     Object.assign(new Filter, {name:"double", options:[]}),
   ];
-  expect(Filter.applyForOutput("100", filters)).toBe(200);
+  expect(Filter.applyForOutput("100", filters, outputFilters)).toBe(200);
 });
 
 test("Filter regist", () => {
@@ -83,5 +84,5 @@ test("Filter regist", () => {
   const filters = [
     Object.assign(new Filter, {name:"double2", options:[]}),
   ];
-  expect(Filter.applyForInput("100", filters)).toBe(200);
+  expect(Filter.applyForInput("100", filters, inputFilters)).toBe(200);
 });

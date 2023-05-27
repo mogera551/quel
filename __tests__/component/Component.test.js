@@ -207,14 +207,34 @@ test("Component customized builtin", async () => {
 
 });
 
-test("Component customized builtin with-hadow-root", async () => {
-  const extendModule = {html:"{{aaa}}", ViewModel:class { aaa = 100; }, extendClass:HTMLDivElement, extendTag:"div"};
+test("Component customized builtin only extend tag", async () => {
+  const extendModule = {html:"{{aaa}}", ViewModel:class { aaa = 100; }, extendTag:"div"};
   const extendClass = generateComponentClass(extendModule);
 
   customElements.define("extend-div2", extendClass, { extends:extendModule.extendTag });
 
   const root = document.createElement("div");
-  root.innerHTML = "<div class='a' is='extend-div2' with-shadow-root></div>";
+  root.innerHTML = "<div class='a' is='extend-div2'></div>";
+  document.body.appendChild(root);
+  const extendDiv = root.querySelector("div.a");
+  await extendDiv.initialPromise;
+  expect(extendDiv[Symbols.isComponent]).toBe(true);
+  expect(extendDiv instanceof HTMLDivElement).toBe(true);
+  expect(extendDiv.withShadowRoot).toBe(false);
+  expect(extendDiv.textContent).toBe("100");
+  expect(extendDiv.shadowRoot == null).toBe(true);
+  expect(extendDiv.viewRootElement === extendDiv).toBe(true);
+
+});
+
+test("Component customized builtin with-shadow-root", async () => {
+  const extendModule = {html:"{{aaa}}", ViewModel:class { aaa = 100; }, extendClass:HTMLDivElement, extendTag:"div"};
+  const extendClass = generateComponentClass(extendModule);
+
+  customElements.define("extend-div3", extendClass, { extends:extendModule.extendTag });
+
+  const root = document.createElement("div");
+  root.innerHTML = "<div class='a' is='extend-div3' with-shadow-root></div>";
   document.body.appendChild(root);
   const extendDiv = root.querySelector("div.a");
   await extendDiv.initialPromise;

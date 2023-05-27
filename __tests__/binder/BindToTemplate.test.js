@@ -6,6 +6,7 @@ import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { TemplateBind } from "../../src/bindInfo/Template.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -39,6 +40,10 @@ test("BindToTemplate", () => {
       addNodeUpdate(nodeUpdateData) {
         nodeUpdateData.updateFunc();
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });

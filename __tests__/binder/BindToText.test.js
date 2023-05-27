@@ -5,6 +5,7 @@ import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { TextBind } from "../../src/bindInfo/Text.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 test("BindToText", () => {
   const parentNode = document.createElement("div");
@@ -26,6 +27,10 @@ test("BindToText", () => {
       addNodeUpdate(nodeUpdateData) {
         nodeUpdateData.updateFunc();
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   

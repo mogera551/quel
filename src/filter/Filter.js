@@ -19,19 +19,21 @@ export class Filter {
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
    * @returns {any}
    */
-  static applyForInput(value, filters) {
-    return filters.reduceRight((v, f) => (f.name in inputFilters) ? inputFilters[f.name](v, f.options) : v, value);
+  static applyForInput(value, filters, inputFilterFuncs) {
+    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
   }
   /**
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} outputFilterFuncs
    * @returns {any}
    */
-  static applyForOutput(value, filters) {
-    return filters.reduce((v, f) => (f.name in outputFilters) ? outputFilters[f.name](v, f.options) : v, value);
+  static applyForOutput(value, filters, outputFilterFuncs) {
+    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
   }
   /**
    * 

@@ -1,4 +1,5 @@
 import { PropertyBind } from "../../src/bindInfo/Property.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Symbols } from "../../src/Symbols.js";
 
 test("PropertyBind", async () => {
@@ -20,11 +21,14 @@ test("PropertyBind", async () => {
       addNodeUpdate(nodeUpdateData) {
         Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const input = document.createElement("input");
   input.type = "text";
-
   const propertyBind = new PropertyBind;
   propertyBind.component = component;
   propertyBind.node = input;

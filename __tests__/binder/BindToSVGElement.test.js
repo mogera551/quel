@@ -7,6 +7,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { BindToSVGElement } from "../../src/binder/BindToSVGElement.js";
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 
 test("BindToSVGElement text attribute", () => {
@@ -39,6 +40,10 @@ test("BindToSVGElement text attribute", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
@@ -100,6 +105,10 @@ test("BindToSVGElement text property ", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
@@ -238,8 +247,12 @@ test("BindToSVGElement text property event", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
-  };
+    };
   const binds = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(2);
   expect(binds[0] instanceof AttributeBind).toBe(true);

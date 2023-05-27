@@ -1,4 +1,5 @@
 import { ClassNameBind } from "../../src/bindInfo/ClassName.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 
@@ -23,8 +24,13 @@ test('ClassNameBind', () => {
       addNodeUpdate(nodeUpdateData) {
         Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   }
+
   const div = document.createElement("div");
   div.classList.add("class1");
 

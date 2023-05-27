@@ -9,6 +9,7 @@ import { Module } from "../../src/component/Module.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { TextBind } from "../../src/bindInfo/Text.js";
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -72,6 +73,10 @@ test("Binder", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = Binder.bind(nodes, component, { 
@@ -326,6 +331,10 @@ test("Binder context", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const contextBind = new BindInfo();
@@ -621,6 +630,10 @@ test("Binder indexes fail", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const contextBind = new BindInfo();
@@ -680,6 +693,10 @@ test("Binder svg", () => {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const binds = Binder.bind(nodes, component, { 

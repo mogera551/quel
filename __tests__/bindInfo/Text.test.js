@@ -1,5 +1,6 @@
 import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { TextBind } from "../../src/bindInfo/Text.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Symbols } from "../../src/Symbols.js";
 
 test("TextBind", async () => {
@@ -21,6 +22,10 @@ test("TextBind", async () => {
       addNodeUpdate(nodeUpdateData) {
         Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
   const text = document.createTextNode("");

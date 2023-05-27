@@ -1,4 +1,5 @@
 import { Radio } from "../../src/bindInfo/Radio.js";
+import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 
@@ -21,9 +22,12 @@ test('Radio', () => {
       addNodeUpdate(nodeUpdateData) {
         Reflect.apply(nodeUpdateData.updateFunc, nodeUpdateData, []);
       }
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
     }
   };
-
   const input1 = document.createElement("input");
   input1.type = "radio";
   input1.value = 100;

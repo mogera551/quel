@@ -89,19 +89,21 @@ class Filter {
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
    * @returns {any}
    */
-  static applyForInput(value, filters) {
-    return filters.reduceRight((v, f) => (f.name in inputFilters) ? inputFilters[f.name](v, f.options) : v, value);
+  static applyForInput(value, filters, inputFilterFuncs) {
+    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
   }
   /**
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} outputFilterFuncs
    * @returns {any}
    */
-  static applyForOutput(value, filters) {
-    return filters.reduce((v, f) => (f.name in outputFilters) ? outputFilters[f.name](v, f.options) : v, value);
+  static applyForOutput(value, filters, outputFilterFuncs) {
+    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
   }
   /**
    * 
@@ -975,7 +977,7 @@ class AttributeBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, attrName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, value, () => {
         element.setAttribute(attrName, value ?? "");
@@ -988,8 +990,8 @@ class AttributeBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {element, attrName, filters} = this;
-    const value = Filter.applyForInput(element.getAttribute(attrName), filters);
+    const {component, element, attrName, filters} = this;
+    const value = Filter.applyForInput(element.getAttribute(attrName), filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
@@ -1009,7 +1011,7 @@ class ClassListBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         value ? element.classList.add(className) : element.classList.remove(className);
@@ -1022,8 +1024,8 @@ class ClassListBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, element, filters, className} = this;
-    const value = Filter.applyForInput(element.classList.contains(className), filters);
+    const {component, node, element, filters, className} = this;
+    const value = Filter.applyForInput(element.classList.contains(className), filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
@@ -1038,7 +1040,7 @@ class ClassNameBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, value, () => {
         element[CLASS_PROPERTY] = value.join(DELIMITER);
@@ -1051,8 +1053,8 @@ class ClassNameBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, element, filters, className} = this;
-    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters);
+    const {component, node, element, filters, className} = this;
+    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
@@ -1070,7 +1072,7 @@ class Radio extends BindInfo {
    */
   updateNode() {
     const {component, node, radio, nodeProperty, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         radio.checked = value === radio.value;
@@ -1083,9 +1085,9 @@ class Radio extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {filters, radio} = this;
+    const {component, filters, radio} = this;
     if (radio.checked) {
-      const radioValue = Filter.applyForInput(radio.value, filters);
+      const radioValue = Filter.applyForInput(radio.value, filters, component.filters.in);
       this.setViewModelValue(radioValue);
       this.lastViewModelValue = radioValue;
     }
@@ -1104,7 +1106,7 @@ class Checkbox extends BindInfo {
    */
   updateNode() {
     const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
         checkbox.checked = value.find(value => value === checkbox.value);
@@ -1117,8 +1119,8 @@ class Checkbox extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, filters, checkbox} = this;
-    const checkboxValue = Filter.applyForInput(checkbox.value, filters);
+    const {component, node, filters, checkbox} = this;
+    const checkboxValue = Filter.applyForInput(checkbox.value, filters, component.filters.in);
     const setOfValue = new Set(this.getViewModelValue());
     (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
     const value = Array.from(setOfValue);
@@ -1374,9 +1376,9 @@ class TemplateBind extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { filters, context } = this;
+    const { component, filters, context } = this;
     const lastValue = this.lastViewModelValue;
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
@@ -1397,7 +1399,7 @@ class TemplateBind extends BindInfo {
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { filters, templateChildren, context } = this;
+    const { component, filters, templateChildren, context } = this;
     /**
      * @type {any[]}
      */
@@ -1405,7 +1407,7 @@ class TemplateBind extends BindInfo {
     /**
      * @type {any[]}
      */
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters) ?? [];
+    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out) ?? [];
 
     /**
      * @type {Map<any,number[]>}
@@ -1698,7 +1700,7 @@ class StyleBind extends BindInfo {
    */
   updateNode() {
     const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, value, () => {
         htmlElement[STYLE_PROPERTY][styleName] = value;
@@ -1711,8 +1713,8 @@ class StyleBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {htmlElement, styleName, filters} = this;
-    const value = Filter.applyForInput(htmlElement[STYLE_PROPERTY][styleName], filters);
+    const {component, htmlElement, styleName, filters} = this;
+    const value = Filter.applyForInput(htmlElement[STYLE_PROPERTY][styleName], filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
@@ -1737,7 +1739,7 @@ class PropertyBind extends BindInfo {
    */
   updateNode() {
     const {component, node, propName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, value, () => {
         node[propName] = value ?? "";
@@ -1750,8 +1752,8 @@ class PropertyBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, propName, filters} = this;
-    const value = Filter.applyForInput(node[propName], filters);
+    const {component, node, propName, filters} = this;
+    const value = Filter.applyForInput(node[propName], filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
@@ -1766,7 +1768,7 @@ class TextBind extends BindInfo {
    */
   updateNode() {
     const {component, node, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters);
+    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
     if (this.lastViewModelValue !== value) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, value, () => {
         node[DEFAULT_PROPERTY$2] = value ?? "";
@@ -1779,8 +1781,8 @@ class TextBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {node, filters} = this;
-    const value = Filter.applyForInput(node[DEFAULT_PROPERTY$2], filters);
+    const {component, node, filters} = this;
+    const value = Filter.applyForInput(node[DEFAULT_PROPERTY$2], filters, component.filters.in);
     this.setViewModelValue(value);
     this.lastViewModelValue = value;
   }
@@ -3370,6 +3372,14 @@ class Module {
    * @type {string}
    */
   extendTag;
+  /**
+   * @type {Object<string,FilterFunc>}
+   */
+  inputFilters;
+  /**
+   * @type {Object<string,FilterFunc>}
+   */
+  outputFilters;
 
   /**
    * @type {HTMLTemplateElement}
@@ -3872,6 +3882,122 @@ class AttachShadow {
 }
 
 /**
+ * @type {Object<string,HTMLElement>}
+ */
+const tagToElement = {
+  html: HTMLHtmlElement,
+  head: HTMLHeadElement,
+  title: HTMLTitleElement,
+  link: HTMLLinkElement,
+  meta: HTMLMetaElement,
+  style: HTMLStyleElement,
+  script: HTMLScriptElement,
+  noscript: HTMLElement,
+  body: HTMLBodyElement,
+  h1: HTMLHeadingElement,
+  h2: HTMLHeadingElement,
+  p: HTMLParagraphElement,
+  hr: HTMLHRElement,
+  blockquote: HTMLQuoteElement,
+  ol: HTMLOListElement,
+  ul: HTMLUListElement,
+  li: HTMLLIElement,
+  dl: HTMLDListElement,
+  dt: HTMLElement,
+  dd: HTMLElement,
+  div: HTMLDivElement,
+  a: HTMLAnchorElement,
+  strong: HTMLElement,
+  span: HTMLSpanElement,
+  br: HTMLBRElement,
+  img: HTMLImageElement,
+  table: HTMLTableElement,
+  tr: HTMLTableRowElement,
+  td: HTMLTableCellElement,
+  th: HTMLTableCellElement,
+  form: HTMLFormElement,
+  label: HTMLLabelElement,
+  input: HTMLInputElement,
+  select: HTMLSelectElement,
+  option: HTMLOptionElement,
+  textarea: HTMLTextAreaElement,
+
+  base: HTMLBaseElement,
+  section: HTMLElement,
+  nav: HTMLElement,
+  article: HTMLElement,
+  aside: HTMLElement,
+  h3: HTMLHeadingElement,
+  h4: HTMLHeadingElement,
+  hgroup: HTMLElement,
+  header: HTMLElement,
+  footer: HTMLElement,
+  address: HTMLElement,
+  pre: HTMLPreElement,
+  figure: HTMLElement,
+  figcaption: HTMLElement,
+  em: HTMLElement,
+  small: HTMLElement,
+  cite: HTMLElement,
+  q: HTMLQuoteElement,
+  abbr: HTMLElement,
+  time: HTMLTimeElement,
+  code: HTMLElement,
+  ins: HTMLModElement,
+  del: HTMLModElement,
+  iframe: HTMLIFrameElement,
+  embed: HTMLEmbedElement,
+  object: HTMLObjectElement,
+  param: HTMLParamElement,
+  video: HTMLVideoElement,
+  audio: HTMLAudioElement,
+  canvas: HTMLCanvasElement,
+  caption: HTMLTableCaptionElement,
+  tbody: HTMLTableSectionElement,
+  thead: HTMLTableSectionElement,
+  tfoot: HTMLTableSectionElement,
+  fieldset: HTMLFieldSetElement,
+  legend: HTMLLegendElement,
+
+  h5: HTMLHeadingElement,
+  h6: HTMLHeadingElement,
+  s: HTMLElement,
+  dfn: HTMLElement,
+  var: HTMLElement,
+  samp: HTMLElement,
+  kbd: HTMLElement,
+  sub: HTMLElement,
+  sup: HTMLElement,
+  i: HTMLElement,
+  b: HTMLElement,
+  u: HTMLElement,
+  mark: HTMLElement,
+  ruby: HTMLElement,
+  rt: HTMLElement,
+  rp: HTMLElement,
+  bdi: HTMLElement,
+  bdo: HTMLElement,
+  wbr: HTMLElement,
+  source: HTMLSourceElement,
+  track: HTMLTrackElement,
+  map: HTMLMapElement,
+  area: HTMLAreaElement,
+  colgroup: HTMLTableColElement,
+  col: HTMLTableColElement,
+  button: HTMLButtonElement,
+  datalist: HTMLDataListElement,
+  optgroup: HTMLOptGroupElement,
+  keygen: HTMLUnknownElement,
+  output: HTMLOutputElement,
+  progress: HTMLProgressElement,
+  meter: HTMLMeterElement,
+  detail: HTMLUnknownElement,
+  summary: HTMLElement,
+  command: HTMLUnknownElement,
+  menu: HTMLMenuElement,
+};
+
+/**
  * 
  * @param {Node} node 
  * @returns {Component}
@@ -4046,6 +4172,13 @@ const mixInComponent = {
   },
 
   /**
+   * @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}}
+   */
+  get filters() {
+    return this._filters;
+  },
+
+  /**
    * 
    */
   initialize() {
@@ -4064,6 +4197,10 @@ const mixInComponent = {
     this._aliveReject = undefined;
 
     this._parentComponent = undefined;
+    this._filters = {
+      in:Object.assign({}, inputFilters), 
+      out:Object.assign({}, outputFilters),
+    };
 
     this.initialPromise = new Promise((resolve, reject) => {
       this.initialResolve = resolve;
@@ -4079,7 +4216,19 @@ const mixInComponent = {
 //  }
 
   async build() {
-    const { template, ViewModel } = this.constructor; // staticから取得
+    const { template, ViewModel, inputFilters, outputFilters } = this.constructor; // staticから取得
+    if (typeof inputFilters !== "undefined") {
+      for(const [name, filterFunc] of Object.entries(inputFilters)) {
+        if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
+        this.filters.in[name] = filterFunc;
+      }
+    }
+    if (typeof outputFilters !== "undefined") {
+      for(const [name, filterFunc] of Object.entries(outputFilters)) {
+        if (name in this.filters.out) utils.raise(`already exists filter ${name}`);
+        this.filters.out[name] = filterFunc;
+      }
+    }
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
@@ -4174,6 +4323,14 @@ class ComponentClassGenerator {
          */
         static ViewModel = module.ViewModel;
         /**
+         * @type {Object<string,FilterFunc>}
+         */
+        static inputFilters = module.inputFilters;
+        /**
+         * @type {Object<string,FilterFunc>}
+         */
+        static outputFilters = module.inputFilters;
+        /**
          * @type {boolean}
          */
         get [Symbols.isComponent] () {
@@ -4197,14 +4354,16 @@ class ComponentClassGenerator {
     const module = Object.assign(new Module, componentModule);
     // 同じクラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
-    if (typeof module.extendClass === "undefined") ; else {
+    if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") ; else {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
-      componentClass.prototype.__proto__ = module.extendClass.prototype;
-      componentClass.__proto__ = module.extendClass;
+      const extendClass = module.extendClass ?? tagToElement[module.extendTag];
+      componentClass.prototype.__proto__ = extendClass.prototype;
+      componentClass.__proto__ = extendClass;
     }
   
+    // mix in 
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
