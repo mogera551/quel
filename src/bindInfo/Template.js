@@ -218,7 +218,7 @@ export class TemplateBind extends BindInfo {
         const templateChild = templateChildren[lastIndex];
         (newIndex !== lastIndex) && templateChild.changeIndexes(this.viewModelPropertyName, newIndex - lastIndex);
         const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
-        if (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex) {
+        if (newIndex !== 0 && (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex)) {
           moveOrCreateIndexes.push(newIndex);
         }
         return templateChild;

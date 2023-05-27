@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1685148852009" clover="3.2.0">
-  <project timestamp="1685148852009" name="All files">
-    <metrics statements="1170" coveredstatements="1164" conditionals="619" coveredconditionals="613" methods="383" coveredmethods="383" elements="2172" coveredelements="2160" complexity="0" loc="1170" ncloc="1170" packages="11" files="53" classes="53"/>
+<coverage generated="1685151724852" clover="3.2.0">
+  <project timestamp="1685151724852" name="All files">
+    <metrics statements="1170" coveredstatements="1164" conditionals="620" coveredconditionals="614" methods="383" coveredmethods="383" elements="2173" coveredelements="2161" complexity="0" loc="1170" ncloc="1170" packages="11" files="53" classes="53"/>
     <package name="src">
       <metrics statements="37" coveredstatements="37" conditionals="23" coveredconditionals="23" methods="16" coveredmethods="16"/>
       <file name="Const.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\Const.js">
@@ -61,7 +61,7 @@
       </file>
     </package>
     <package name="src.bindInfo">
-      <metrics statements="325" coveredstatements="325" conditionals="152" coveredconditionals="152" methods="126" coveredmethods="126"/>
+      <metrics statements="325" coveredstatements="325" conditionals="153" coveredconditionals="153" methods="126" coveredmethods="126"/>
       <file name="Attribute.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Attribute.js">
         <metrics statements="11" coveredstatements="11" conditionals="4" coveredconditionals="4" methods="4" coveredmethods="4"/>
         <line num="11" count="14" type="stmt"/>
@@ -78,7 +78,7 @@
       </file>
       <file name="BindInfo.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\BindInfo.js">
         <metrics statements="46" coveredstatements="46" conditionals="32" coveredconditionals="32" methods="26" coveredmethods="26"/>
-        <line num="12" count="901" type="stmt"/>
+        <line num="12" count="867" type="stmt"/>
         <line num="15" count="229" type="stmt"/>
         <line num="21" count="152" type="cond" truecount="2" falsecount="0"/>
         <line num="27" count="28" type="cond" truecount="2" falsecount="0"/>
@@ -328,9 +328,9 @@
         <line num="38" count="2" type="stmt"/>
       </file>
       <file name="Template.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Template.js">
-        <metrics statements="85" coveredstatements="85" conditionals="38" coveredconditionals="38" methods="29" coveredmethods="29"/>
+        <metrics statements="85" coveredstatements="85" conditionals="39" coveredconditionals="39" methods="29" coveredmethods="29"/>
         <line num="34" count="55" type="stmt"/>
-        <line num="40" count="132" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="98" type="cond" truecount="2" falsecount="0"/>
         <line num="47" count="37" type="stmt"/>
         <line num="48" count="13" type="stmt"/>
         <line num="55" count="164" type="stmt"/>
@@ -399,16 +399,16 @@
         <line num="218" count="68" type="stmt"/>
         <line num="219" count="68" type="cond" truecount="2" falsecount="0"/>
         <line num="220" count="68" type="stmt"/>
-        <line num="221" count="68" type="cond" truecount="4" falsecount="0"/>
-        <line num="222" count="36" type="stmt"/>
+        <line num="221" count="68" type="cond" truecount="5" falsecount="0"/>
+        <line num="222" count="2" type="stmt"/>
         <line num="224" count="68" type="stmt"/>
         <line num="228" count="78" type="stmt"/>
         <line num="229" count="76" type="stmt"/>
         <line num="230" count="8" type="stmt"/>
         <line num="234" count="78" type="stmt"/>
-        <line num="235" count="131" type="stmt"/>
-        <line num="236" count="131" type="cond" truecount="2" falsecount="0"/>
-        <line num="237" count="131" type="stmt"/>
+        <line num="235" count="97" type="stmt"/>
+        <line num="236" count="97" type="cond" truecount="2" falsecount="0"/>
+        <line num="237" count="97" type="stmt"/>
         <line num="241" count="163" type="stmt"/>
         <line num="243" count="78" type="stmt"/>
         <line num="245" count="78" type="stmt"/>
