@@ -582,6 +582,7 @@ class NodePropertyInfo {
    */
   eventType;
 
+  static nodePropertyInfoByKey = new Map;
   /**
    * 
    * @param {Node} node
@@ -590,54 +591,66 @@ class NodePropertyInfo {
    */
   static get(node, nodeProperty) {
     const result = new NodePropertyInfo;
-    result.nodePropertyElements = nodeProperty.split(".");
-    if (node instanceof Comment && node.textContent[2] === "|") {
-      if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-        result.type = NodePropertyType.template;
-        return result;
-      } else {
-        utils.raise(`template illegal property ${nodeProperty}`);
-      }
-    }    
-    if (node[Symbols.isComponent] && result.nodePropertyElements[0] === "$props") { 
-      result.type = NodePropertyType.component;
+    const key = `${node.constructor.name}\t${node.textContent}\t${node[Symbols.isComponent]}\t${nodeProperty}`;
+    const nodePropertyInfo = this.nodePropertyInfoByKey.get(key);
+    if (nodePropertyInfo) {
+      result.type = nodePropertyInfo.type;
+      result.nodePropertyElements = nodePropertyInfo.nodePropertyElements.slice(0);
+      result.eventType = nodePropertyInfo.eventType;
       return result;
-    }    if ((node instanceof HTMLElement) || (node instanceof SVGElement)) {
-      if (result.nodePropertyElements.length === 1) {
-        if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
-          result.type = NodePropertyType.event;
-          result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
-        } else if (result.nodePropertyElements[0] === "class") {
-          result.type = NodePropertyType.className;
-        } else if (result.nodePropertyElements[0] === "radio") {
-          result.type = NodePropertyType.radio;
-        } else if (result.nodePropertyElements[0] === "checkbox") {
-          result.type = NodePropertyType.checkbox;
+    }
+    do {
+      result.nodePropertyElements = nodeProperty.split(".");
+      if (node instanceof Comment && node.textContent[2] === "|") {
+        if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
+          result.type = NodePropertyType.template;
+          break;
         } else {
-          result.type = NodePropertyType.property;
+          utils.raise(`template illegal property ${nodeProperty}`);
         }
-      } else if (result.nodePropertyElements.length === 2) {
-        if (result.nodePropertyElements[0] === "class") {
-          result.type = NodePropertyType.classList;
-        } else if (result.nodePropertyElements[0] === "style") {
-          result.type = NodePropertyType.style;
-        } else if (result.nodePropertyElements[0] === "attr") {
-          result.type = NodePropertyType.attribute;
+      }      
+      if (node[Symbols.isComponent] && result.nodePropertyElements[0] === "$props") { 
+        result.type = NodePropertyType.component;
+        break;
+      }      if ((node instanceof HTMLElement) || (node instanceof SVGElement)) {
+        if (result.nodePropertyElements.length === 1) {
+          if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
+            result.type = NodePropertyType.event;
+            result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
+          } else if (result.nodePropertyElements[0] === "class") {
+            result.type = NodePropertyType.className;
+          } else if (result.nodePropertyElements[0] === "radio") {
+            result.type = NodePropertyType.radio;
+          } else if (result.nodePropertyElements[0] === "checkbox") {
+            result.type = NodePropertyType.checkbox;
+          } else {
+            result.type = NodePropertyType.property;
+          }
+        } else if (result.nodePropertyElements.length === 2) {
+          if (result.nodePropertyElements[0] === "class") {
+            result.type = NodePropertyType.classList;
+          } else if (result.nodePropertyElements[0] === "style") {
+            result.type = NodePropertyType.style;
+          } else if (result.nodePropertyElements[0] === "attr") {
+            result.type = NodePropertyType.attribute;
+          } else {
+            utils.raise(`unknown property ${nodeProperty}`);
+          }
         } else {
           utils.raise(`unknown property ${nodeProperty}`);
         }
       } else {
-        utils.raise(`unknown property ${nodeProperty}`);
+        if (result.nodePropertyElements.length === 1 && result.nodePropertyElements[0] === DEFAULT_TEXT_PROPERTY) {
+          result.type = NodePropertyType.text;
+        } else {
+          const toString = Object.prototype.toString;
+          const nodeType = toString.call(node).slice(8, -1).toLowerCase();
+          utils.raise(`unknown node ${nodeType} or property ${nodeProperty}`);
+        }
       }
-    } else {
-      if (result.nodePropertyElements.length === 1 && result.nodePropertyElements[0] === DEFAULT_TEXT_PROPERTY) {
-        result.type = NodePropertyType.text;
-      } else {
-        const toString = Object.prototype.toString;
-        const nodeType = toString.call(node).slice(8, -1).toLowerCase();
-        utils.raise(`unknown node ${nodeType} or property ${nodeProperty}`);
-      }
-    }
+  
+    } while(false);
+    this.nodePropertyInfoByKey.set(key, result);
     return result;
   }
 }
