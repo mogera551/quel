@@ -30,7 +30,7 @@ export class NodePropertyInfo {
    */
   static get(node, nodeProperty) {
     const result = new NodePropertyInfo;
-    const key = `${node.constructor.name}\t${node.textContent}\t${node[Symbols.isComponent]}\t${nodeProperty}`;
+    const key = `${node.constructor.name}\t${node.textContent[2]}\t${node[Symbols.isComponent]}\t${nodeProperty}`;
     const nodePropertyInfo = this.nodePropertyInfoByKey.get(key);
     if (nodePropertyInfo) {
       result.type = nodePropertyInfo.type;
