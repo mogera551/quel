@@ -1327,11 +1327,9 @@ class TemplateChild {
    */
   static create(templateBind, context) {
     const {component, template} = templateBind;
-    const rootElement = document.importNode(template.content, true);
-    const nodes = Selector.getTargetNodes(template, rootElement);
-    const binds = Binder.bind(nodes, component, context);
-    const childNodes = Array.from(rootElement.childNodes);
-    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement, context });
+    const { binds, content } = ViewTemplate.render(component, template, context);
+    const childNodes = Array.from(content.childNodes);
+    return Object.assign(new TemplateChild, { binds, childNodes, fragment:content, context });
   }
 }
 
@@ -2222,6 +2220,22 @@ class Binder {
 
 }
 
+class ViewTemplate {
+  /**
+   * 
+   * @param {HTMLElement} rootElement 
+   * @param {Component} component 
+   * @param {ContextInfo} contextInfo
+   * @returns { binds:BindInfo[], content:DocumentFragment }
+   */
+  static render(component, template, context) {
+    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(template, content);
+    const binds = Binder.bind(nodes, component, context);
+    return { binds, content };
+  }
+}
+
 class View {
   /**
    * 
@@ -2231,9 +2245,7 @@ class View {
    * @returns 
    */
   static render(rootElement, component, template) {
-    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(template, content);
-    const binds = Binder.bind(nodes, component, Context.create());
+    const { binds, content } = ViewTemplate.render(component, template, Context.create());
     rootElement.appendChild(content);
     return binds;
   }

@@ -8,6 +8,7 @@ import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
 import { Context } from "../context/Context.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../view/Templates.js";
+import { ViewTemplate } from "../view/View.js";
 
 export class TemplateChild {
   /**
@@ -83,11 +84,9 @@ export class TemplateChild {
    */
   static create(templateBind, context) {
     const {component, template} = templateBind;
-    const rootElement = document.importNode(template.content, true);
-    const nodes = Selector.getTargetNodes(template, rootElement);
-    const binds = Binder.bind(nodes, component, context);
-    const childNodes = Array.from(rootElement.childNodes);
-    return Object.assign(new TemplateChild, { binds, childNodes, fragment:rootElement, context });
+    const { binds, content } = ViewTemplate.render(component, template, context);
+    const childNodes = Array.from(content.childNodes);
+    return Object.assign(new TemplateChild, { binds, childNodes, fragment:content, context });
   }
 }
 

@@ -2,6 +2,23 @@ import "../types.js";
 import { Binder } from "../binder/Binder.js";
 import { Selector } from "../binder/Selector.js";
 import { Context } from "../context/Context.js";
+import { BindInfo } from "../bindInfo/BindInfo.js";
+
+export class ViewTemplate {
+  /**
+   * 
+   * @param {HTMLElement} rootElement 
+   * @param {Component} component 
+   * @param {ContextInfo} contextInfo
+   * @returns { binds:BindInfo[], content:DocumentFragment }
+   */
+  static render(component, template, context) {
+    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(template, content);
+    const binds = Binder.bind(nodes, component, context);
+    return { binds, content };
+  }
+}
 
 export class View {
   /**
@@ -12,9 +29,7 @@ export class View {
    * @returns 
    */
   static render(rootElement, component, template) {
-    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(template, content);
-    const binds = Binder.bind(nodes, component, Context.create());
+    const { binds, content } = ViewTemplate.render(component, template, Context.create());
     rootElement.appendChild(content);
     return binds;
   }
