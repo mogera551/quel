@@ -246,3 +246,23 @@ test("Component customized builtin with-shadow-root", async () => {
   expect(extendDiv.viewRootElement !== extendDiv).toBe(true);
 
 });
+
+test("Component filters", async () => {
+  const inputFilters = {
+    "input": (value, option) => value
+  };
+  const outputFilters = {
+    "output": (value, option) => value
+  };
+  const extendModule = {html:"{{aaa}}", ViewModel:class { aaa = 100; }, inputFilters, outputFilters};
+  const extendClass = generateComponentClass(extendModule);
+
+  customElements.define("filter-test", extendClass);
+  const component = document.createElement("filter-test");
+  document.body.appendChild(component);
+  expect("input" in component.filters.in).toBe(true);
+  expect(component.filters.in["input"]).toBe(inputFilters.input);
+  expect("output" in component.filters.out).toBe(true);
+  expect(component.filters.out["output"]).toBe(outputFilters.output);
+
+});

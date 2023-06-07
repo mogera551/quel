@@ -4238,7 +4238,7 @@ class ComponentClassGenerator {
         /**
          * @type {Object<string,FilterFunc>}
          */
-        static outputFilters = module.inputFilters;
+        static outputFilters = module.outputFilters;
         /**
          * @type {boolean}
          */
