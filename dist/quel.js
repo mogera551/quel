@@ -1804,11 +1804,11 @@ const createPropertyBind = (bindInfo, info) => Object.assign(new PropertyBind, b
 const createAttributeBind = (bindInfo, info) => Object.assign(new AttributeBind, bindInfo, info);
 const createClassListBind = (bindInfo, info) => Object.assign(new ClassListBind, bindInfo, info);
 const createClassNameBind = (bindInfo, info) => Object.assign(new ClassNameBind, bindInfo, info);
-const createRadio = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
-const createCheckbox = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
+const createRadioBind = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
+const createCheckboxBind = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
 const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
-const createEvent = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
-const createComponent = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
+const createEventBind = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
+const createComponentBind = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
 const createStyleBind = (bindInfo, info) => Object.assign(new StyleBind, bindInfo, info);
 const createTextBind = (bindInfo, info) => Object.assign(new TextBind, bindInfo, info);
 
@@ -1817,11 +1817,11 @@ creatorByType.set(NodePropertyType.property, createPropertyBind);
 creatorByType.set(NodePropertyType.attribute, createAttributeBind);
 creatorByType.set(NodePropertyType.classList, createClassListBind);
 creatorByType.set(NodePropertyType.className, createClassNameBind);
-creatorByType.set(NodePropertyType.radio, createRadio);
-creatorByType.set(NodePropertyType.checkbox, createCheckbox);
+creatorByType.set(NodePropertyType.radio, createRadioBind);
+creatorByType.set(NodePropertyType.checkbox, createCheckboxBind);
 creatorByType.set(NodePropertyType.template, createTemplateBind);
-creatorByType.set(NodePropertyType.event, createEvent);
-creatorByType.set(NodePropertyType.component, createComponent);
+creatorByType.set(NodePropertyType.event, createEventBind);
+creatorByType.set(NodePropertyType.component, createComponentBind);
 creatorByType.set(NodePropertyType.style, createStyleBind);
 creatorByType.set(NodePropertyType.text, createTextBind);
 
