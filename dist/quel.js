@@ -1665,6 +1665,13 @@ class ComponentBind extends BindInfo {
    */
   bindProperty() {
     this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes);
+    const dataProperty = this.dataProperty;
+    console.log(Object.getOwnPropertyDescriptor(this.thisComponent.viewModel, dataProperty));
+    Object.defineProperty(this.thisComponent.viewModel, dataProperty, {
+      get: function () { return this.$props[dataProperty]; },
+      set: function (value) { this.$props[dataProperty] = value; },
+    });
+    
   }
 
   /**
@@ -1678,7 +1685,7 @@ class ComponentBind extends BindInfo {
       const propName = PropertyName.create(name);
       if (name === viewModelProperty || propName.setOfParentPaths.has(viewModelProperty)) {
         const remain = name.slice(viewModelProperty.length);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
       }
     }
   }
@@ -4091,7 +4098,7 @@ const mixInComponent = {
    * 
    */
   initialize() {
-    this._viewModel = undefined;
+    this._viewModel = createViewModel(this, this.constructor.ViewModel);
     this._binds = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
@@ -4143,7 +4150,7 @@ const mixInComponent = {
     }
     this.thread = new Thread;
 
-    this.viewModel = createViewModel(this, ViewModel);
+//    this.viewModel = createViewModel(this, ViewModel);
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {

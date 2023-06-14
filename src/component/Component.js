@@ -199,7 +199,7 @@ const mixInComponent = {
    * 
    */
   initialize() {
-    this._viewModel = undefined;
+    this._viewModel = createViewModel(this, this.constructor.ViewModel);
     this._binds = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
@@ -251,7 +251,7 @@ const mixInComponent = {
     }
     this.thread = new Thread;
 
-    this.viewModel = createViewModel(this, ViewModel);
+//    this.viewModel = createViewModel(this, ViewModel);
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
