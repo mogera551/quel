@@ -1666,7 +1666,6 @@ class ComponentBind extends BindInfo {
   bindProperty() {
     this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes);
     const dataProperty = this.dataProperty;
-    console.log(Object.getOwnPropertyDescriptor(this.thisComponent.viewModel, dataProperty));
     Object.defineProperty(this.thisComponent.viewModel, dataProperty, {
       get: function () { return this.$props[dataProperty]; },
       set: function (value) { this.$props[dataProperty] = value; },
@@ -1685,6 +1684,7 @@ class ComponentBind extends BindInfo {
       const propName = PropertyName.create(name);
       if (name === viewModelProperty || propName.setOfParentPaths.has(viewModelProperty)) {
         const remain = name.slice(viewModelProperty.length);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
         this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
       }
     }
