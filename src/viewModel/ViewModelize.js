@@ -81,7 +81,7 @@ export class ViewModelize {
         }
       });
       viewModelInfo = { removeProps, definedProps, methods, accessorProps };
-      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);0
+      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);
     }
     viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
     return {

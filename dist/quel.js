@@ -2379,7 +2379,8 @@ class ViewModelize {
         }
       });
       viewModelInfo = { removeProps, definedProps, methods, accessorProps };
-      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);    }
+      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);
+    }
     viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
     return {
       definedProps:viewModelInfo.definedProps, 
