@@ -360,13 +360,13 @@ test("BindToDom parseBindText single Component", () => {
   const viewModel = parentNode.viewModel;
   const context = { indexes:[], stack:[] };
   const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-  const binds = parseBindText("$props.bbb:aaa;", "textContent");
+  const binds = parseBindText("props.bbb:aaa;", "textContent");
 
   expect(binds.length).toBe(1);
   expect(binds[0].node).toBe(node);
   expect(binds[0].element).toBe(node);
-  expect(binds[0].nodeProperty).toBe("$props.bbb");
-  expect(binds[0].nodePropertyElements).toEqual(["$props", "bbb"]);
+  expect(binds[0].nodeProperty).toBe("props.bbb");
+  expect(binds[0].nodePropertyElements).toEqual(["props", "bbb"]);
   expect(binds[0].component).toBe(component);
   expect(binds[0].viewModel).toBe(viewModel);
   expect(binds[0].viewModelProperty).toBe("aaa");

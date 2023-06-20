@@ -381,7 +381,7 @@ test("Factory Component", () => {
   const node = document.createElement("custom-tag");
   const bindInfo = Factory.create({
     component, node, 
-    nodeProperty: "$props.bbb",
+    nodeProperty: "props.bbb",
     viewModel, 
     viewModelProperty: "aaa",
     filters, 
@@ -389,9 +389,9 @@ test("Factory Component", () => {
   });
   expect(bindInfo instanceof ComponentBind).toBe(true);
   expect(bindInfo.node).toBe(node);
-  expect(bindInfo.nodeProperty).toBe("$props.bbb");
-  expect(bindInfo.nodePropertyElements).toEqual(["$props", "bbb"]);
-  expect(bindInfo.dataNameProperty).toBe("$props");
+  expect(bindInfo.nodeProperty).toBe("props.bbb");
+  expect(bindInfo.nodePropertyElements).toEqual(["props", "bbb"]);
+  expect(bindInfo.dataNameProperty).toBe("props");
   expect(bindInfo.dataProperty).toBe("bbb");
   expect(bindInfo.component).toBe(component);
   expect(bindInfo.viewModel).toBe(viewModel);

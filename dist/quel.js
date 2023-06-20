@@ -567,6 +567,7 @@ const Symbols = Object.assign({
 
 const PREFIX_EVENT = "on";
 const DEFAULT_TEXT_PROPERTY = "textContent";
+const PROPS_PROPERTY$1 = "props";
 
 class NodePropertyInfo {
   /**
@@ -609,7 +610,7 @@ class NodePropertyInfo {
           utils.raise(`template illegal property ${nodeProperty}`);
         }
       }      
-      if (node[Symbols.isComponent] && result.nodePropertyElements[0] === "$props") { 
+      if (node[Symbols.isComponent] && result.nodePropertyElements[0] === PROPS_PROPERTY$1) { 
         result.type = NodePropertyType.component;
         break;
       }      if ((node instanceof HTMLElement) || (node instanceof SVGElement)) {

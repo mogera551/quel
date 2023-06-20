@@ -6,6 +6,7 @@ import { Symbols } from "../Symbols.js";
 
 const PREFIX_EVENT = "on";
 const DEFAULT_TEXT_PROPERTY = "textContent";
+const PROPS_PROPERTY = "props";
 
 export class NodePropertyInfo {
   /**
@@ -49,7 +50,7 @@ export class NodePropertyInfo {
         }
       };
       
-      if (node[Symbols.isComponent] && result.nodePropertyElements[0] === "$props") { 
+      if (node[Symbols.isComponent] && result.nodePropertyElements[0] === PROPS_PROPERTY) { 
         result.type = NodePropertyType.component;
         break;
       };

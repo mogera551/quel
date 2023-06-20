@@ -29,9 +29,9 @@ test('PropertyType Template', () => {
   expect(() => NodePropertyInfo.get(textNode, "text")).toThrow("unknown node text or property text");
 
   const component = document.createElement("custom-tag");
-  expect(NodePropertyInfo.get(component, "$props.value")).toEqual({
+  expect(NodePropertyInfo.get(component, "props.value")).toEqual({
     type:NodePropertyType.component,
-    nodePropertyElements:["$props", "value"],
+    nodePropertyElements:["props", "value"],
     eventType:undefined,
   });
   expect(NodePropertyInfo.get(component, "value")).toEqual({
