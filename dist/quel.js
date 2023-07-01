@@ -276,7 +276,7 @@ class PropertyName {
  * @typedef {{propName:PropertyName,indexes:number[]}} PropertyAccess
  */
 
-let Handler$3 = class Handler {
+let Handler$2 = class Handler {
   /**
    * @type {number[][]}
    */
@@ -540,8 +540,6 @@ let Handler$3 = class Handler {
  * @enum {Symbol}
  */
 const Symbols = Object.assign({
-  isProxy: Symbol.for(`${name}:arrayHandler.isProxy`),
-  getRaw: Symbol.for(`${name}:arrayHandler.raw`),
   connectedCallback: Symbol.for(`${name}:viewModel.connectedCallback`),
   disconnectedCallback: Symbol.for(`${name}:viewModel.disconnectedCallback`),
   initCallback: Symbol.for(`${name}:viewModel.initCallback`),
@@ -2397,66 +2395,6 @@ class ViewModelize {
   
 }
 
-/**
- * 配列プロキシ
- * 更新（追加・削除）があった場合、更新コールバックを呼び出す
- */
-let Handler$2 = class Handler {
-  #updateCallback;
-  get updateCallback() {
-    return this.#updateCallback;
-  }
-  /**
-   * コンストラクタ
-   * @param {()=>{}} updateCallback
-   */
-  constructor(updateCallback) {
-    this.#updateCallback = updateCallback;
-  }
-
-  /**
-   * getter
-   * SymIsProxyはtrueを返す
-   * SymRawは元の配列を返す
-   * @param {Array} target Array
-   * @param {string} prop プロパティ
-   * @param {Proxy} receiver 配列プロキシ
-   * @returns 
-   */
-  get(target, prop, receiver) {
-    if (prop === Symbols.isProxy) return true;
-    if (prop === Symbols.getRaw) return target;
-    return Reflect.get(target, prop, receiver);
-  }
-
-  /**
-   * setter
-   * 更新があった場合、lengthがsetされる
-   * @param {Object} target Array
-   * @param {string} prop プロパティ
-   * @param {Any} value 
-   * @param {Proxy} receiver 配列プロキシ
-   * @returns 
-   */
-  set(target, prop, value, receiver) {
-    Reflect.set(target, prop, value, receiver);
-    if (prop === "length") {
-      this.updateCallback();
-    }
-    return true;
-  }
-};
-
-/**
- * 
- * @param {any[]} array
- * @param {()=>{}} updateCallback
- * @returns 
- */
-function create(array, updateCallback) {
-  return new Proxy(array, new Handler$2(updateCallback))
-}
-
 class DependentProps {
   #setOfDefaultProps = new Set;
   /**
@@ -2577,7 +2515,7 @@ const setOfProperties = new Set([
 /**
  * @type {ProxyHandler<ViewModel>}
  */
-class ViewModelHandler extends Handler$3 {
+class ViewModelHandler extends Handler$2 {
   /**
    * @type {Component}
    */
@@ -2654,10 +2592,6 @@ class ViewModelHandler extends Handler$3 {
     this.#accessorProperties = accessorProperties;
     this.#setOfAccessorProperties = new Set(this.#accessorProperties);
     this.#dependentProps.setDependentProps(dependentProps ?? {});
-  }
-
-  #updateArray(target, propertyAccess, receiver) {
-    this.#addNotify(target, propertyAccess, receiver);
   }
 
   /**
@@ -2769,14 +2703,7 @@ class ViewModelHandler extends Handler$3 {
    * @returns {any}
    */
   [Symbols.directlyGet](target, {prop, indexes}, receiver) {
-    let value =  super[Symbols.directlyGet](target, {prop, indexes}, receiver);
-    if (value instanceof Array) {
-      const propName = PropertyName.create(prop);
-      value = create(value, () => {
-        this.#updateArray(target, { propName, indexes }, receiver);
-      });
-    }
-    return value;
+    return super[Symbols.directlyGet](target, {prop, indexes}, receiver);
   }
 
   /**
@@ -2817,22 +2744,6 @@ class ViewModelHandler extends Handler$3 {
       this.stackIndexes.pop();
       this.context = undefined;
     }
-  }
-
-  wrapArray(target, {prop, value}, receiver) {
-    if (value instanceof Array) {
-      const lastIndexes = this.lastIndexes;
-      value = create(value, () => {
-        let { propName, indexes } = PropertyName.parse(prop);
-        if (!propName.isPrimitive) {
-          if (propName.level > indexes.length) {
-            indexes = lastIndexes.slice(0, propName.level);
-          }
-        }
-        this.#updateArray(target, { propName, indexes }, receiver);
-      });
-    }
-    return value;
   }
 
   /**
@@ -2884,7 +2795,7 @@ class ViewModelHandler extends Handler$3 {
         }
         value = super.get(target, prop, receiver);
       } while(false);
-      return this.wrapArray(target, { prop, value }, receiver);
+      return value;
     }
   }
 
@@ -2897,7 +2808,6 @@ class ViewModelHandler extends Handler$3 {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    value = (value?.[Symbols.isProxy]) ? value[Symbols.getRaw] : value;
     let result;
     do {
       if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {
@@ -3120,7 +3030,7 @@ let Handler$1 = class Handler {
   /**
    * @type {Proxy<typeof ViewModel>}
    */
-  #data = new Proxy({}, new Handler$3);
+  #data = new Proxy({}, new Handler$2);
 
   get hasParent() {
     return this.#component?.parentComponent?.viewModel != null;
@@ -3220,7 +3130,7 @@ function createProps(component) {
   return new Proxy({}, new Handler$1(component));
 }
 
-class GlobalDataHandler extends Handler$3 {
+class GlobalDataHandler extends Handler$2 {
   /**
    * @type {Map<string,Set<Component>>}
    */

@@ -4,7 +4,6 @@ import { Cache } from "./Cache.js"
 import { ViewModelize } from "./ViewModelize.js";
 import { Symbols } from "../Symbols.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
-import { create as createArrayProxy } from "./ArrayProxy.js";
 import { DependentProps } from "./DependentProps.js";
 import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
@@ -160,10 +159,6 @@ export class ViewModelHandler extends Handler {
     this.#dependentProps.setDependentProps(dependentProps ?? {})
   }
 
-  #updateArray(target, propertyAccess, receiver) {
-    this.#addNotify(target, propertyAccess, receiver);
-  }
-
   /**
    * 
    * @param {any} target 
@@ -273,14 +268,7 @@ export class ViewModelHandler extends Handler {
    * @returns {any}
    */
   [Symbols.directlyGet](target, {prop, indexes}, receiver) {
-    let value =  super[Symbols.directlyGet](target, {prop, indexes}, receiver);
-    if (value instanceof Array) {
-      const propName = PropertyName.create(prop);
-      value = createArrayProxy(value, () => {
-        this.#updateArray(target, { propName, indexes }, receiver);
-      });
-    }
-    return value;
+    return super[Symbols.directlyGet](target, {prop, indexes}, receiver);
   }
 
   /**
@@ -321,22 +309,6 @@ export class ViewModelHandler extends Handler {
       this.stackIndexes.pop();
       this.context = undefined;
     }
-  }
-
-  wrapArray(target, {prop, value}, receiver) {
-    if (value instanceof Array) {
-      const lastIndexes = this.lastIndexes;
-      value = createArrayProxy(value, () => {
-        let { propName, indexes } = PropertyName.parse(prop);
-        if (!propName.isPrimitive) {
-          if (propName.level > indexes.length) {
-            indexes = lastIndexes.slice(0, propName.level);
-          }
-        }
-        this.#updateArray(target, { propName, indexes }, receiver);
-      });
-    }
-    return value;
   }
 
   /**
@@ -388,7 +360,7 @@ export class ViewModelHandler extends Handler {
         }
         value = super.get(target, prop, receiver);
       } while(false);
-      return this.wrapArray(target, { prop, value }, receiver);
+      return value;
     }
   }
 
@@ -401,7 +373,6 @@ export class ViewModelHandler extends Handler {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    value = (value?.[Symbols.isProxy]) ? value[Symbols.getRaw] : value;
     let result;
     do {
       if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {

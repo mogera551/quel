@@ -5,8 +5,6 @@ import { Symbols as DotNotationSymbols } from "../modules/dot-notation/dot-notat
  * @enum {Symbol}
  */
 export const Symbols = Object.assign({
-  isProxy: Symbol.for(`${myname}:arrayHandler.isProxy`),
-  getRaw: Symbol.for(`${myname}:arrayHandler.raw`),
   connectedCallback: Symbol.for(`${myname}:viewModel.connectedCallback`),
   disconnectedCallback: Symbol.for(`${myname}:viewModel.disconnectedCallback`),
   initCallback: Symbol.for(`${myname}:viewModel.initCallback`),

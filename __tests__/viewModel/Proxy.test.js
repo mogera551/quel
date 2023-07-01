@@ -7,6 +7,12 @@ import { GlobalData } from "../../src/global/Data.js";
 import { DependentProps } from "../../src/viewModel/DependentProps.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
+Array.prototype.toSpliced = function (...args) {
+  const copied = this.slice();  
+  Reflect.apply(Array.prototype.splice, copied, args);
+  return copied;  
+}
+
 let uuid_counter = 0;
 function fn_randomeUUID() {
   return 'xxxx-xxxx-xxxx-xxxx-' + (uuid_counter++);
@@ -119,47 +125,6 @@ test('Handler getByPropertyName', () => {
   expect(handler.component).toEqual({name:"component"});
   expect(handler.cache instanceof Cache).toBe(true);
 
-});
-
-test('Handler get ArrayProxy', () => {
-  class targetClass {
-    "list" = [ 
-      { value:10 }, { value:20 }, { value:30 }
-    ];
-  }
-  const target = new targetClass;
-  const handler = new ViewModelHandler(component, [], []);
-  const proxy = new Proxy(target, handler);
-  component.viewModel = proxy;
-
-  const list = proxy["list"];
-  expect(list?.[Symbols.isProxy]).toBe(true);
-  expect(list?.[Symbols.getRaw]).toEqual(list);
-  expect((list?.[Symbols.getRaw])?.[Symbols.isProxy]).toBe(undefined);
-//  list.push({value:40});
-});
-
-test('Handler set ArrayProxy', () => {
-  class targetClass {
-    "list" = [ 
-      { value:10 }, { value:20 }, { value:30 }
-    ];
-    "list2";
-  }
-  const target = new targetClass;
-  const handler = new ViewModelHandler(component, [], []);
-  const proxy = new Proxy(target, handler);
-  component.viewModel = proxy;
-
-  const list = proxy["list"];
-  proxy["list2"] = proxy["list"];
-  const list2 = proxy["list2"];
-  expect(list2?.[Symbols.isProxy]).toBe(true);
-  expect(list2?.[Symbols.getRaw]).toEqual(list2);
-  expect((list2?.[Symbols.getRaw])?.[Symbols.isProxy]).toBe(undefined);
-  expect(target.list2?.[Symbols.getRaw]).toBe(undefined);
-  expect(target.list2).toEqual(list);
-//  list.push({value:40});
 });
 
 test('Handler callback', () => {
@@ -530,78 +495,76 @@ test('Proxy Array', () => {
   const proxyViewModel = createViewModel(component, ViewModel);
   component.viewModel = proxyViewModel;
 
-  const array = proxyViewModel["aaa"];
   calledAddNotify = [];
-  array.push(400);
-  expect(array[Symbols.isProxy]).toBe(true);
+  proxyViewModel["aaa"] = proxyViewModel["aaa"].concat([400]);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
-  expect(array).toEqual([100, 200, 300, 400]);
+  expect(proxyViewModel["aaa"]).toEqual([100, 200, 300, 400]);
 
   calledAddNotify = [];
-  const value1 = array.pop();
+  const value1 = proxyViewModel["aaa"].at(-1);
+  proxyViewModel["aaa"] = proxyViewModel["aaa"].toSpliced(-1, 1);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
-  expect(array).toEqual([100, 200, 300]);
+  expect(proxyViewModel["aaa"]).toEqual([100, 200, 300]);
   expect(value1).toBe(400);
 
   calledAddNotify = [];
-  array.unshift(0);
+  proxyViewModel["aaa"] = proxyViewModel["aaa"].toSpliced(0, 0, 0);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
-  expect(array).toEqual([0, 100, 200, 300]);
+  expect(proxyViewModel["aaa"]).toEqual([0, 100, 200, 300]);
 
   calledAddNotify = [];
-  const value2 = array.shift();
+  const value2 = proxyViewModel["aaa"].at(0);
+  proxyViewModel["aaa"] = proxyViewModel["aaa"].toSpliced(0, 1);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
-  expect(array).toEqual([100, 200, 300]);
+  expect(proxyViewModel["aaa"]).toEqual([100, 200, 300]);
   expect(value2).toBe(0);
 
   calledAddNotify = [];
-  const value3 = array.splice(1, 1);
+  const value3 = proxyViewModel["aaa"].at(1);
+  proxyViewModel["aaa"] = proxyViewModel["aaa"].toSpliced(1, 1);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
-  expect(array).toEqual([100, 300]);
-  expect(value3).toEqual([200]);
+  expect(proxyViewModel["aaa"]).toEqual([100, 300]);
+  expect(value3).toEqual(200);
 
   calledAddNotify = [];
-  const value4 = array.splice(1, 1, 400, 500);
+  const value4 = proxyViewModel["aaa"].at(1);
+  proxyViewModel["aaa"] = proxyViewModel["aaa"].toSpliced(1, 1, 400, 500);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("aaa"));
   expect(calledAddNotify[0].indexes).toEqual([]);
-  expect(array).toEqual([100, 400, 500]);
-  expect(value4).toEqual([300]);
+  expect(proxyViewModel["aaa"]).toEqual([100, 400, 500]);
+  expect(value4).toEqual(300);
 
   calledAddNotify = [];
-  const bbb0 = proxyViewModel["bbb.0"];
-  bbb0.push(3);
+  proxyViewModel["bbb.0"] = proxyViewModel["bbb.0"].concat(3);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("bbb.*"));
   expect(calledAddNotify[0].indexes).toEqual([0]);
-  expect(bbb0).toEqual([1,2,3]);
   expect(proxyViewModel["bbb.0"]).toEqual([1,2,3]);
 
   calledAddNotify = [];
   const bbb0_ = proxyViewModel[Symbols.directlyGet]("bbb.*", [0]);
-  expect(bbb0_[Symbols.isProxy]).toBe(true);
-  bbb0_.push(4);
+  proxyViewModel["bbb.0"] = bbb0_.concat(4);
   expect(calledAddNotify.length).toBe(1);
   expect(calledAddNotify[0].propName).toEqual(PropertyName.create("bbb.*"));
   expect(calledAddNotify[0].indexes).toEqual([0]);
-  expect(bbb0_).toEqual([1,2,3,4]);
   expect(proxyViewModel["bbb.0"]).toEqual([1,2,3,4]);
 
   calledAddNotify = [];
   const $handler = proxyViewModel[Symbols.getHandler]();
   $handler.stackIndexes.push([0]);
   expect(proxyViewModel["bbb.*"]).toEqual([1,2,3,4]);
-  proxyViewModel["bbb.*"].push(5);
+  proxyViewModel["bbb.*"] = proxyViewModel["bbb.*"].concat(5);
   expect(proxyViewModel["bbb.*"]).toEqual([1,2,3,4,5]);
   $handler.stackIndexes.pop();
   expect(calledAddNotify.length).toBe(1);
