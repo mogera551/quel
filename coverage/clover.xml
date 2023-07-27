@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1688181380812" clover="3.2.0">
-  <project timestamp="1688181380812" name="All files">
+<coverage generated="1690495790467" clover="3.2.0">
+  <project timestamp="1690495790467" name="All files">
     <metrics statements="1158" coveredstatements="1156" conditionals="606" coveredconditionals="604" methods="379" coveredmethods="377" elements="2143" coveredelements="2137" complexity="0" loc="1158" ncloc="1158" packages="11" files="51" classes="51"/>
     <package name="src">
       <metrics statements="37" coveredstatements="37" conditionals="19" coveredconditionals="19" methods="16" coveredmethods="16"/>
@@ -821,16 +821,16 @@
       <metrics statements="10" coveredstatements="10" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
       <file name="Context.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\context\Context.js">
         <metrics statements="10" coveredstatements="10" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
-        <line num="9" count="125" type="stmt"/>
-        <line num="22" count="96" type="stmt"/>
-        <line num="23" count="96" type="stmt"/>
-        <line num="24" count="96" type="stmt"/>
+        <line num="9" count="126" type="stmt"/>
+        <line num="22" count="97" type="stmt"/>
+        <line num="23" count="97" type="stmt"/>
+        <line num="24" count="97" type="stmt"/>
         <line num="28" count="67" type="stmt"/>
         <line num="29" count="67" type="stmt"/>
         <line num="30" count="67" type="stmt"/>
         <line num="31" count="67" type="stmt"/>
         <line num="32" count="67" type="stmt"/>
-        <line num="34" count="96" type="stmt"/>
+        <line num="34" count="97" type="stmt"/>
       </file>
     </package>
     <package name="src.filter">

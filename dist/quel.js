@@ -1392,7 +1392,7 @@ class TemplateBind extends BindInfo {
     if (lastValue !== newValue) {
       this.removeFromParent();
       if (newValue) {
-        this.templateChildren = [TemplateChild.create(this, context)];
+        this.templateChildren = [TemplateChild.create(this, Context.clone(context))];
         this.appendToParent();
       } else {
         this.templateChildren = [];
