@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1690495790467" clover="3.2.0">
-  <project timestamp="1690495790467" name="All files">
-    <metrics statements="1158" coveredstatements="1156" conditionals="606" coveredconditionals="604" methods="379" coveredmethods="377" elements="2143" coveredelements="2137" complexity="0" loc="1158" ncloc="1158" packages="11" files="51" classes="51"/>
+<coverage generated="1690497166988" clover="3.2.0">
+  <project timestamp="1690497166989" name="All files">
+    <metrics statements="1158" coveredstatements="1156" conditionals="608" coveredconditionals="606" methods="379" coveredmethods="377" elements="2145" coveredelements="2139" complexity="0" loc="1158" ncloc="1158" packages="11" files="51" classes="51"/>
     <package name="src">
       <metrics statements="37" coveredstatements="37" conditionals="19" coveredconditionals="19" methods="16" coveredmethods="16"/>
       <file name="Const.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\Const.js">
@@ -1102,7 +1102,7 @@
       </file>
     </package>
     <package name="src.viewModel">
-      <metrics statements="230" coveredstatements="230" conditionals="124" coveredconditionals="124" methods="60" coveredmethods="60"/>
+      <metrics statements="230" coveredstatements="230" conditionals="126" coveredconditionals="126" methods="60" coveredmethods="60"/>
       <file name="Cache.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\viewModel\Cache.js">
         <metrics statements="10" coveredstatements="10" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
         <line num="4" count="61" type="stmt"/>
@@ -1134,7 +1134,7 @@
         <line num="44" count="8" type="cond" truecount="2" falsecount="0"/>
       </file>
       <file name="Proxy.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\viewModel\Proxy.js">
-        <metrics statements="173" coveredstatements="173" conditionals="96" coveredconditionals="96" methods="44" coveredmethods="44"/>
+        <metrics statements="173" coveredstatements="173" conditionals="98" coveredconditionals="98" methods="44" coveredmethods="44"/>
         <line num="10" count="13" type="stmt"/>
         <line num="11" count="13" type="stmt"/>
         <line num="12" count="13" type="stmt"/>
@@ -1247,7 +1247,7 @@
         <line num="351" count="223" type="stmt"/>
         <line num="352" count="223" type="cond" truecount="5" falsecount="0"/>
         <line num="353" count="152" type="stmt"/>
-        <line num="354" count="152" type="cond" truecount="4" falsecount="0"/>
+        <line num="354" count="152" type="cond" truecount="5" falsecount="0"/>
         <line num="355" count="39" type="stmt"/>
         <line num="356" count="25" type="cond" truecount="2" falsecount="0"/>
         <line num="357" count="24" type="stmt"/>
@@ -1257,7 +1257,7 @@
         <line num="377" count="44" type="stmt"/>
         <line num="378" count="44" type="cond" truecount="5" falsecount="0"/>
         <line num="379" count="42" type="stmt"/>
-        <line num="380" count="42" type="cond" truecount="4" falsecount="0"/>
+        <line num="380" count="42" type="cond" truecount="5" falsecount="0"/>
         <line num="381" count="16" type="stmt"/>
         <line num="382" count="10" type="cond" truecount="2" falsecount="0"/>
         <line num="383" count="9" type="stmt"/>

@@ -351,7 +351,7 @@ export class ViewModelHandler extends Handler {
       do {
         if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {
           const propName = PropertyName.create(prop);
-          if (typeof this.context !== "undefined" && propName.level > 0) {
+          if (typeof this.context !== "undefined" && propName.level > 0 && prop.at(0) !== "@") {
             const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
             if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
             value = this[Symbols.directlyGet](target, { prop, indexes:param.indexes}, receiver);
@@ -377,7 +377,7 @@ export class ViewModelHandler extends Handler {
     do {
       if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {
         const propName = PropertyName.create(prop);
-        if (typeof this.context !== "undefined" && propName.level > 0) {
+        if (typeof this.context !== "undefined" && propName.level > 0 && prop.at(0) !== "@") {
           const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
           if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
           result = this[Symbols.directlySet](target, { prop, indexes:param.indexes, value}, receiver);
