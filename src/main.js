@@ -43,6 +43,9 @@ export class Main {
     } else {
       utils.raise("extendTag should be set");
     }
+    if (componentModule.componentModules) {
+      this.componentModules(componentModule.componentModules);
+    }
   }
   /**
    * 

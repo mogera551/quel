@@ -31,6 +31,10 @@ export class Module {
    * @type {Object<string,FilterFunc>}
    */
   outputFilters;
+  /**
+   * @type {Object<string,Module>}
+   */
+  componentModules;
 
   /**
    * @type {HTMLTemplateElement}

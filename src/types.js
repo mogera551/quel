@@ -3,7 +3,7 @@
  * 
  * @typedef {import("../modules/dot-notation/dot-notation.js").PropertyAccess} PropertyAccess 
  * 
- * @typedef {{html?:string,css?:string,ViewModel:class,template?:HTMLTemplateElement,extendClass?:class<HTMLElement>,extendTag?:string}} UserComponentModule
+ * @typedef {{html?:string,css?:string,ViewModel:class,template?:HTMLTemplateElement,extendClass?:class<HTMLElement>,extendTag?:string,componentModules:Object<string,UserComponentModule>}} UserComponentModule
  * 
  * @typedef {(value:any,options:string[])=>{return:any}} FilterFunc
  * 

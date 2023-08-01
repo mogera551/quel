@@ -3328,6 +3328,10 @@ class Module {
    * @type {Object<string,FilterFunc>}
    */
   outputFilters;
+  /**
+   * @type {Object<string,Module>}
+   */
+  componentModules;
 
   /**
    * @type {HTMLTemplateElement}
@@ -3446,6 +3450,9 @@ class Main {
       customElements.define(customElementKebabName, componentClass);
     } else {
       utils.raise("extendTag should be set");
+    }
+    if (componentModule.componentModules) {
+      this.componentModules(componentModule.componentModules);
     }
   }
   /**
