@@ -3431,20 +3431,28 @@ class Main {
   }
   /**
    * 
-   * @param {Object<string,UserComponentModule} components 
+   * @param {string} customElementName 
+   * @param {UserComponentModule} componentModule 
+   */
+  static registComponentModule(customElementName, componentModule) {
+    const customElementKebabName = utils.toKebabCase(customElementName);
+    const componentClass = ComponentClassGenerator.generate(componentModule);
+    if (componentModule.extendTag) {
+      customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
+    } else if (typeof componentModule?.extendClass === "undefined") {
+      customElements.define(customElementKebabName, componentClass);
+    } else {
+      utils.raise("extendTag should be set");
+    }
+  }
+  /**
+   * 
+   * @param {Object<string,UserComponentModule>} components 
    * @returns {Main}
    */
   static componentModules(components) {
     Object.entries(components).forEach(([name, componentModule]) => {
-      const componentName = utils.toKebabCase(name);
-      const componentClass = ComponentClassGenerator.generate(componentModule);
-      if (componentModule.extendTag) {
-        customElements.define(componentName, componentClass, { extends:componentModule.extendTag });
-      } else if (typeof componentModule?.extendClass === "undefined") {
-        customElements.define(componentName, componentClass);
-      } else {
-        utils.raise("extendTag should be set");
-      }
+      this.registComponentModule(name, componentModule);
     });
     return this;
   }
@@ -4656,12 +4664,7 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input } = module;
       Filter.regist(filterName, output, input);
     } else {
-      const tagName = name;
-      if (module instanceof HTMLElement) {
-        window.customElements.define(tagName, module);
-      } else {
-        window.customElements.define(tagName, ComponentClassGenerator.generate(module));
-      }
+      Main.registComponentModule(name, module);
     }
   }
 }

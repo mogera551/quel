@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1690726597334" clover="3.2.0">
-  <project timestamp="1690726597334" name="All files">
-    <metrics statements="1158" coveredstatements="1156" conditionals="608" coveredconditionals="606" methods="379" coveredmethods="377" elements="2145" coveredelements="2139" complexity="0" loc="1158" ncloc="1158" packages="11" files="51" classes="51"/>
+<coverage generated="1690925518983" clover="3.2.0">
+  <project timestamp="1690925518984" name="All files">
+    <metrics statements="1159" coveredstatements="1157" conditionals="608" coveredconditionals="606" methods="380" coveredmethods="378" elements="2147" coveredelements="2141" complexity="0" loc="1159" ncloc="1159" packages="11" files="51" classes="51"/>
     <package name="src">
-      <metrics statements="37" coveredstatements="37" conditionals="19" coveredconditionals="19" methods="16" coveredmethods="16"/>
+      <metrics statements="38" coveredstatements="38" conditionals="19" coveredconditionals="19" methods="17" coveredmethods="17"/>
       <file name="Const.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\Const.js">
         <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="1" count="20" type="stmt"/>
@@ -15,7 +15,7 @@
         <line num="7" count="31" type="stmt"/>
       </file>
       <file name="main.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\main.js">
-        <metrics statements="22" coveredstatements="22" conditionals="5" coveredconditionals="5" methods="9" coveredmethods="9"/>
+        <metrics statements="23" coveredstatements="23" conditionals="5" coveredconditionals="5" methods="10" coveredmethods="10"/>
         <line num="13" count="13" type="stmt"/>
         <line num="25" count="2" type="stmt"/>
         <line num="26" count="2" type="stmt"/>
@@ -23,21 +23,22 @@
         <line num="29" count="1" type="stmt"/>
         <line num="37" count="4" type="stmt"/>
         <line num="38" count="4" type="stmt"/>
-        <line num="39" count="4" type="stmt"/>
-        <line num="40" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="41" count="2" type="stmt"/>
-        <line num="42" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="43" count="1" type="stmt"/>
-        <line num="45" count="1" type="stmt"/>
-        <line num="48" count="3" type="stmt"/>
-        <line num="56" count="1" type="stmt"/>
-        <line num="57" count="1" type="stmt"/>
-        <line num="58" count="1" type="stmt"/>
-        <line num="60" count="1" type="stmt"/>
+        <line num="39" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="2" type="stmt"/>
+        <line num="41" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="53" count="4" type="stmt"/>
+        <line num="54" count="4" type="stmt"/>
+        <line num="56" count="3" type="stmt"/>
+        <line num="64" count="1" type="stmt"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="66" count="1" type="stmt"/>
         <line num="68" count="1" type="stmt"/>
-        <line num="80" count="5" type="stmt"/>
-        <line num="81" count="5" type="stmt"/>
-        <line num="88" count="91" type="stmt"/>
+        <line num="76" count="1" type="stmt"/>
+        <line num="88" count="5" type="stmt"/>
+        <line num="89" count="5" type="stmt"/>
+        <line num="96" count="91" type="stmt"/>
       </file>
       <file name="myname.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\myname.js">
         <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
