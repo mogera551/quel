@@ -29,11 +29,17 @@ test("ComponentBind", () => {
   }
   parentComponent.appendChild(targetComponent);
   let calledNotifyForDependentProps = [];
+  let calledWriteCallback = [];
   class ViewModelHandler extends Handler {
     get(target, prop, receiver) {
       if (prop === Symbols.notifyForDependentProps) {
         return (prop, indexes) => {
           calledNotifyForDependentProps.push({prop, indexes});
+        }
+      }
+      if (prop === Symbols.writeCallback) {
+        return (prop, indexes) => {
+          calledWriteCallback.push({prop, indexes});
         }
       }
       return super.get(target, prop, receiver);
@@ -54,9 +60,11 @@ test("ComponentBind", () => {
   expect(targetComponent.parentComponent).toBe(parentComponent);
   expect(targetComponent.props.bbb).toBe(100);
   calledNotifyForDependentProps = [];
+  calledWriteCallback = [];
   componentBind.viewModel.aaa = 200;
   componentBind.applyToNode(new Set(["aaa\t"]));
   expect(calledNotifyForDependentProps).toEqual([{prop:"$props.bbb", indexes:[]}, {prop:"bbb", indexes:[]}]);
+  expect(calledWriteCallback).toEqual([{prop:"$props.bbb", indexes:[]}, {prop:"bbb", indexes:[]}]);
   expect(targetComponent.props.bbb).toBe(200);
 
   componentBind.updateViewModel();
@@ -76,13 +84,17 @@ test("ComponentBind", () => {
   expect(parentComponent.viewModel.zzz).toEqual([10,20]);
   expect(targetComponent.props.ccc).toEqual([10,20]);
   calledNotifyForDependentProps = [];
+  calledWriteCallback = [];
   componentBind2.viewModel.zzz[1] = 22;
   componentBind2.applyToNode(new Set(["zzz.*\t1"]));
   expect(calledNotifyForDependentProps).toEqual([{prop:"$props.ccc.*", indexes:[1]}, {prop:"ccc.*", indexes:[1]}]);
+  expect(calledWriteCallback).toEqual([{prop:"$props.ccc.*", indexes:[1]}, {prop:"ccc.*", indexes:[1]}]);
   expect(targetComponent.props.ccc[1]).toBe(22);
 
   calledNotifyForDependentProps = undefined;
+  calledWriteCallback = undefined;
   componentBind2.applyToNode(new Set(["yyy.*\t1"]));
   expect(calledNotifyForDependentProps).toBe(undefined);
+  expect(calledWriteCallback).toBe(undefined);
   expect(targetComponent.props.ccc).toEqual([10,22]);
 });

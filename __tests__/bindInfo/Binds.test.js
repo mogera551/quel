@@ -51,10 +51,14 @@ const component = {
 };
 
 let callbackNotifyForDependentProps = [];
+let callbackWriteCallback = [];
 const component2 = {
   viewModel: {
     [Symbols.notifyForDependentProps](prop, indexes) {
       callbackNotifyForDependentProps.push({prop, indexes});
+    },
+    [Symbols.writeCallback](prop, indexes) {
+      callbackWriteCallback.push({prop, indexes});
     }
 
   },
@@ -306,8 +310,10 @@ test("Binds applyToNode", () => {
   expect(element.textContent).toBe("100");
 
   callbackNotifyForDependentProps = [];
+  callbackWriteCallback = [];
   viewModel.bbb = "200";
   Binds.applyToNode(binds, new Set(["bbb\t"]));
   expect(element.textContent).toBe("200");
   expect(callbackNotifyForDependentProps).toEqual([{ prop:"$props.ccc", indexes: [] }, { prop:"ccc", indexes: [] }]);
+  expect(callbackWriteCallback).toEqual([{ prop:"$props.ccc", indexes: [] }, { prop:"ccc", indexes: [] }]);
 });

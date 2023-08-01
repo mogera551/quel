@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1690925976488" clover="3.2.0">
-  <project timestamp="1690925976488" name="All files">
-    <metrics statements="1159" coveredstatements="1157" conditionals="608" coveredconditionals="606" methods="380" coveredmethods="378" elements="2147" coveredelements="2141" complexity="0" loc="1159" ncloc="1159" packages="11" files="51" classes="51"/>
+<coverage generated="1690930148726" clover="3.2.0">
+  <project timestamp="1690930148726" name="All files">
+    <metrics statements="1162" coveredstatements="1160" conditionals="604" coveredconditionals="602" methods="379" coveredmethods="377" elements="2145" coveredelements="2139" complexity="0" loc="1162" ncloc="1162" packages="11" files="51" classes="51"/>
     <package name="src">
       <metrics statements="38" coveredstatements="38" conditionals="19" coveredconditionals="19" methods="17" coveredmethods="17"/>
       <file name="Const.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\Const.js">
@@ -62,7 +62,7 @@
       </file>
     </package>
     <package name="src.bindInfo">
-      <metrics statements="328" coveredstatements="326" conditionals="157" coveredconditionals="157" methods="129" coveredmethods="127"/>
+      <metrics statements="331" coveredstatements="329" conditionals="153" coveredconditionals="153" methods="128" coveredmethods="126"/>
       <file name="Attribute.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Attribute.js">
         <metrics statements="11" coveredstatements="11" conditionals="4" coveredconditionals="4" methods="4" coveredmethods="4"/>
         <line num="11" count="14" type="stmt"/>
@@ -212,7 +212,7 @@
         <line num="36" count="3" type="stmt"/>
       </file>
       <file name="Component.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Component.js">
-        <metrics statements="30" coveredstatements="28" conditionals="20" coveredconditionals="20" methods="19" coveredmethods="17"/>
+        <metrics statements="33" coveredstatements="31" conditionals="16" coveredconditionals="16" methods="18" coveredmethods="16"/>
         <line num="12" count="20" type="cond" truecount="2" falsecount="0"/>
         <line num="19" count="4" type="stmt"/>
         <line num="22" count="6" type="stmt"/>
@@ -228,7 +228,7 @@
         <line num="49" count="2" type="stmt"/>
         <line num="56" count="1" type="stmt"/>
         <line num="62" count="15" type="stmt"/>
-        <line num="67" count="16" type="stmt"/>
+        <line num="67" count="22" type="stmt"/>
         <line num="70" count="5" type="stmt"/>
         <line num="77" count="5" type="stmt"/>
         <line num="78" count="5" type="stmt"/>
@@ -242,7 +242,10 @@
         <line num="95" count="4" type="cond" truecount="4" falsecount="0"/>
         <line num="96" count="3" type="stmt"/>
         <line num="97" count="3" type="cond" truecount="4" falsecount="0"/>
-        <line num="98" count="3" type="cond" truecount="4" falsecount="0"/>
+        <line num="98" count="3" type="stmt"/>
+        <line num="99" count="3" type="stmt"/>
+        <line num="100" count="3" type="stmt"/>
+        <line num="101" count="3" type="stmt"/>
       </file>
       <file name="Event.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Event.js">
         <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
@@ -607,7 +610,7 @@
         <line num="28" count="2" type="cond" truecount="2" falsecount="0"/>
         <line num="29" count="1" type="stmt"/>
         <line num="34" count="13" type="stmt"/>
-        <line num="39" count="420" type="stmt"/>
+        <line num="39" count="424" type="stmt"/>
         <line num="42" count="20" type="stmt"/>
         <line num="49" count="14" type="stmt"/>
         <line num="52" count="23" type="stmt"/>

@@ -1684,8 +1684,11 @@ class ComponentBind extends BindInfo {
       const propName = PropertyName.create(name);
       if (name === viewModelProperty || propName.setOfParentPaths.has(viewModelProperty)) {
         const remain = name.slice(viewModelProperty.length);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${dataProperty}${remain}`, ((indexesString || null)?.split(",") ?? []).map(i => Number(i)));
+        const indexes = ((indexesString || null)?.split(",") ?? []).map(i => Number(i));
+        this.thisComponent.viewModel?.[Symbols.writeCallback](`$props.${dataProperty}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols.writeCallback](`${dataProperty}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${dataProperty}${remain}`, indexes);
       }
     }
   }
