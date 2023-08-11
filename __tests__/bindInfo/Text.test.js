@@ -57,9 +57,9 @@ test("TextBind", async () => {
 
   text.textContent = "500";
   textBind.updateViewModel();
-  expect(viewModel["aaa"]).toEqual("500");
+  expect(viewModel["aaa"]).toBe("500");
   text.textContent = "600";
   textBind.updateViewModel();
-  expect(viewModel["aaa"]).toEqual("600");
+  expect(viewModel["aaa"]).toBe("600");
 
 });

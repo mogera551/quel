@@ -63,7 +63,7 @@ test("BindToDom parseBindText single property default filters", () => {
   const component = { viewModel };
   const context = { indexes:[], stack:[] };
   const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-  const binds = parseBindText("aaa|falsey|not|fixed,2", "textContent");
+  const binds = parseBindText("aaa|falsey|not|toFixed,2", "textContent");
 
   expect(binds.length).toBe(1);
   expect(binds[0].node).toBe(node);
@@ -79,7 +79,7 @@ test("BindToDom parseBindText single property default filters", () => {
   expect(binds[0].filters).toEqual([
     Object.assign(new Filter, { name:"falsey", options:[] }),
     Object.assign(new Filter, { name:"not", options:[] }),
-    Object.assign(new Filter, { name:"fixed", options:["2"] }),
+    Object.assign(new Filter, { name:"toFixed", options:["2"] }),
   ]);
   expect(binds[0].contextParam).toBe(undefined);
   expect(binds[0].indexes).toEqual([]);

@@ -18,12 +18,12 @@ test("Parser", () => {
     Object.assign(new BindTextInfo, { nodeProperty:"value", viewModelProperty:"aaa", filters:[] }),
     Object.assign(new BindTextInfo, { nodeProperty:"disabled", viewModelProperty:"bbb", filters:[] }),
   ]);
-  expect(Parser.parse("value:aaa|falsey; disabled:bbb|localeString", "textContent")).toEqual([
+  expect(Parser.parse("value:aaa|falsey; disabled:bbb|toLocaleString", "textContent")).toEqual([
     Object.assign(new BindTextInfo, { nodeProperty:"value", viewModelProperty:"aaa", filters:[
       Object.assign(new Filter, { name:"falsey", options:[] }),
     ] }),
     Object.assign(new BindTextInfo, { nodeProperty:"disabled", viewModelProperty:"bbb", filters:[
-      Object.assign(new Filter, { name:"localeString", options:[] }),
+      Object.assign(new Filter, { name:"toLocaleString", options:[] }),
     ] }),
   ]);
   expect(Parser.parse("value:aaa|fixed,2", "textContent")).toEqual([
