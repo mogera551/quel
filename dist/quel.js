@@ -2948,7 +2948,7 @@ class ViewModelHandler extends Handler$2 {
   async #directryCall(target, { propName, context, event }, receiver) {
     if (typeof this.context !== "undefined") utils.raise("directCall already called");
     this.context = context;
-    this.stackIndexes.push(context.indexes);
+    this.stackIndexes.push(undefined);
     try {
       return await Reflect.apply(target[propName.name], receiver, [event, ...context.indexes]);
     } finally {
