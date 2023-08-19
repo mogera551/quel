@@ -56,14 +56,14 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
 
 ## チュートリアル
 ### 開発の流れ
+コンポーネントベースの開発になります。
 * カスタム要素をHTMLに記述
 * 対応するコンポーネントモジュールの作成
    * テンプレートとなるHTMLを定義
    * 状態を保存、操作するクラスを定義
 * カスタム要素とコンポーネントモジュールを対応付ける
-* コンポーネントモジュールは、ファイルで管理したほうがわかりやすい
 
-#### カスタムタグをHTMLに記述
+#### カスタム要素をHTMLに記述
 カスタム要素は自律カスタム要素(autonomous custom element)、
 カスタマイズドビルトイン要素(customized built-in element)が利用できます。
 カスタム要素名には、ダッシュ`-`を含める必要があります。
@@ -78,7 +78,105 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
 <!-- カスタマイズドビルトイン要素(customized built-in element) -->
 <div is="myapp-sub"></div>
 
+<script type="module">
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+</script>
+
 </html>
+```
+
+#### 対応するコンポーネントモジュールの作成
+コンポーネントモジュールは、テンプレートのHTMLと、状態を保存、操作するクラスで構成されます。
+１つのコンポーネントモジュールは、１つのファイルに記述したほうが管理しやすいです。
+
+##### テンプレートとなるHTMLを定義
+コンポーネントで使用するDOMのテンプレートとなるHTMLを定義します。
+埋め込み、DOM要素の属性値の関連付け、イベントの関連付け、条件分岐、繰り返しを記述できます。
+`html`という変数名で宣言すると、`export`するときに便利です。
+```js
+const html = `
+<!-- 埋め込み -->
+<div>{{ count }}</div>
+
+<!-- DOM要素の属性値の関連付け -->
+<input data-bind="name">
+
+<!-- イベントの関連付け -->
+<button data-bind="onclick:countUp">countUp</button>
+
+<!-- 条件分岐 -->
+{{ if:disp }}
+  <div>5回以上押されたよ</div>
+{{ end: }}
+
+<!-- 繰り返し -->
+<ul>
+  {{ loop:animals }}
+    <li>{{ animals.* }}</li>
+  {{ end: }}
+</ul>
+`;
+```
+
+##### 状態を保存、操作するクラスを定義
+コンポーネントの状態を保存、操作するクラスを定義します。
+状態を保存するメンバをクラスの中でフィールド宣言します。
+状態を操作するメソッドをクラスの中に作成します。
+`ViewModel`というクラス名で宣言すると、`export`するときに便利です。
+getterを使った、アクセサプロパティを利用することもできます。
+※アクセサプロパティを使う場合、依存関係の定義をすることが必要です。
+```js
+class ViewModel {
+  /* 状態の保存 */
+  count = 0;
+  name = "John Smith";
+  animals = [ "Cat", "Dog", "Rabit" ];
+  // getterを使った、アクセサプロパティ
+  get disp() {
+    return this.count >= 5;
+  }
+
+  /* 状態を操作するメソッド */
+  countUp() {
+    this.count++;
+  }
+
+  /* 依存関係を定義 */
+  #dependentProps = {
+    "disp": [ "count" ],
+  }
+}
+```
+
+##### エクスポート
+コンポーネントモジュールを１つのファイルに記述する場合、`export`します。
+カスタマイズドビルトイン要素の場合、拡張するタグ`extendTag`の指定が必要になります。
+
+```js
+// コンポーネントモジュールのexport
+export default { html, ViewModel };
+
+// カスタマイズドビルトイン要素の場合、拡張するタグ(extendTag)の指定が必要
+export default { html, ViewModel, extendTag:"div" };
+```
+#### カスタム要素とコンポーネントモジュールを対応付ける
+作成したコンポーネントモジュールを`import`する。
+コンポーネントモジュールとカスタム要素名と対応付ける。
+
+```js
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+// コンポーネントモジュールのimport
+import myappMain from "./main.js";
+
+// カスタム要素名とコンポーネントモジュールと対応付ける。
+quel.componentModules({ "myapp-main":myappMain });
+
+// カスタム要素名はキャメルケースでも大丈夫。
+quel.componentModules({ "myappMain":myappMain });
+
+// オブジェクトリテラルの省略記法でより簡単に記述できます。
+quel.componentModules({ myappMain });
+
 ```
 
 ### memo
