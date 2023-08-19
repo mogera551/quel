@@ -193,7 +193,10 @@ quel.componentModules({ myappMain });
 * `main`コンポーネントモジュールの`import`
 * コンポーネントモジュールとカスタム要素名と対応付け
 
-を行います。
+を行います。  
+断りがなければ、チュートリアルでは、下記の`index.html`の内容を使用することとします。
+
+`index.html`の内容
 ```html
 <!DOCTYPE html>
 <html lang="ja">
@@ -256,6 +259,25 @@ export default { html, ViewModel }
 <myapp-main>
   <div>welcome to quel</div>
 <myapp-main>
+```
+
+### Step.2 プロパティのバインド
+* `html`のDOM要素のプロパティと`ViewModel`クラスのプロパティを関連付ける（バインドする）
+* DOM要素の`data-bind`属性に`(DOM要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定する
+* 入力系DOM要素の場合、インタラクティブに`ViewModel`クラスのプロパティは更新される
+
+main.jsのソース
+```js
+const html = `
+<div>{{ message }}</div>
+<input type="text" data-bind="value:message">
+`;
+
+class ViewModel {
+  message = "welcome to quel";
+}
+
+export default { html, ViewModel }
 ```
 
 ### memo
