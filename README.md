@@ -3,11 +3,12 @@
 簡単に使えるJavaScriptフレームワークです。
 
 ## 主な特徴
-* ルール、作法を少なく
+* ルール、作法を少なく、なるべく直感的に
 * 宣言的なUIの記述
 * 他のライブラリ不要
 * トランスパイル不要
-* ドット記法によるプロパティ記述
+* コンポーネントベース
+* ドット記法によるプロパティ記述ができる！！！
 
 ## はじめよう
 Quelを使うには、import宣言で、CDNもしくはダウンロードしたファイルから読み込みます。
@@ -53,6 +54,32 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
 </html>
 ```
 
+## チュートリアル
+### 開発の流れ
+* カスタム要素をHTMLに記述
+* 対応するコンポーネントモジュールの作成
+   * テンプレートとなるHTMLを定義
+   * 状態を保存、操作するクラスを定義
+* カスタム要素とコンポーネントモジュールを対応付ける
+* コンポーネントモジュールは、ファイルで管理したほうがわかりやすい
+
+#### カスタムタグをHTMLに記述
+カスタム要素は自律カスタム要素(autonomous custom element)、
+カスタマイズドビルトイン要素(customized built-in element)が利用できます。
+カスタム要素名には、ダッシュ`-`を含める必要があります。
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<meta charset="utf-8">
+
+<!-- 自律カスタム要素(autonomous custom element) -->
+<myapp-main><myapp-main>
+
+<!-- カスタマイズドビルトイン要素(customized built-in element) -->
+<div is="myapp-sub"></div>
+
+</html>
+```
 
 ### memo
 
