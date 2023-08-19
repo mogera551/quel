@@ -276,6 +276,8 @@ class ViewModel {
 export default { html, ViewModel }
 ```
 
+[実行結果を見る](https://codepen.io/mogera551/pen/QWzWPzg)
+
 ### memo
 
 bundle
