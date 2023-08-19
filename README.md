@@ -254,12 +254,8 @@ class ViewModel {
 export default { html, ViewModel }
 ```
 
-`<myapp-main/>`の結果
-```html
-<myapp-main>
-  <div>welcome to quel</div>
-<myapp-main>
-```
+[実行結果を見る](https://codepen.io/mogera551/pen/KKrbPjJ)
+
 
 ### Step.2 プロパティのバインド
 * `html`のDOM要素のプロパティと`ViewModel`クラスのプロパティを関連付ける（バインドする）
@@ -279,12 +275,6 @@ class ViewModel {
 
 export default { html, ViewModel }
 ```
-
-<iframe height="300" style="width: 100%;" scrolling="no" title="Welcome to Quel" src="https://codepen.io/mogera551/embed/KKrbPjJ?default-tab=result" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true">
-  See the Pen <a href="https://codepen.io/mogera551/pen/KKrbPjJ">
-  Welcome to Quel</a> by mogera551 (<a href="https://codepen.io/mogera551">@mogera551</a>)
-  on <a href="https://codepen.io">CodePen</a>.
-</iframe>
 
 ### memo
 
