@@ -54,8 +54,7 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
 </html>
 ```
 
-## チュートリアル
-### 開発の流れ
+## 開発の流れ
 コンポーネントベースの開発になります。
 * カスタム要素をHTMLに記述
 * 対応するコンポーネントモジュールの作成
@@ -63,7 +62,7 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
    * 状態を保存、操作するクラスを定義
 * カスタム要素とコンポーネントモジュールを対応付ける
 
-#### カスタム要素をHTMLに記述
+### カスタム要素をHTMLに記述
 カスタム要素は自律カスタム要素(autonomous custom element)、
 カスタマイズドビルトイン要素(customized built-in element)が利用できます。
 カスタム要素名には、ダッシュ`-`を含める必要があります。
@@ -85,11 +84,11 @@ import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min
 </html>
 ```
 
-#### 対応するコンポーネントモジュールの作成
+### 対応するコンポーネントモジュールの作成
 コンポーネントモジュールは、テンプレートのHTMLと、状態を保存、操作するクラスで構成されます。
 １つのコンポーネントモジュールは、１つのファイルに記述したほうが管理しやすいです。
 
-##### テンプレートとなるHTMLを定義
+#### テンプレートとなるHTMLを定義
 コンポーネントで使用するDOMのテンプレートとなるHTMLを定義します。
 埋め込み、DOM要素の属性値の関連付け、イベントの関連付け、条件分岐、繰り返しを記述できます。
 `html`という変数名で宣言すると、`export`するときに便利です。
@@ -118,7 +117,7 @@ const html = `
 `;
 ```
 
-##### 状態を保存、操作するクラスを定義
+#### 状態を保存、操作するクラスを定義
 コンポーネントの状態を保存、操作するクラスを定義します。
 状態を保存するメンバをクラスの中でフィールド宣言します。
 状態を操作するメソッドをクラスの中に作成します。
@@ -148,7 +147,7 @@ class ViewModel {
 }
 ```
 
-##### エクスポート
+#### エクスポート
 コンポーネントモジュールを１つのファイルに記述する場合、`export`します。
 カスタマイズドビルトイン要素の場合、拡張するタグ`extendTag`の指定が必要になります。
 
@@ -159,7 +158,7 @@ export default { html, ViewModel };
 // カスタマイズドビルトイン要素の場合、拡張するタグ(extendTag)の指定が必要
 export default { html, ViewModel, extendTag:"div" };
 ```
-#### カスタム要素とコンポーネントモジュールを対応付ける
+### カスタム要素とコンポーネントモジュールを対応付ける
 作成したコンポーネントモジュールを`import`する。
 コンポーネントモジュールとカスタム要素名と対応付ける。
 
@@ -176,7 +175,87 @@ quel.componentModules({ "myappMain":myappMain });
 
 // オブジェクトリテラルの省略記法でより簡単に記述できます。
 quel.componentModules({ myappMain });
+```
 
+## チュートリアル
+### 前提
+チュートリアルで使うファイル構成は、
+```
+--+-- index.html
+  |
+  +-- main.js
+```
+とします。  
+
+`index.html`は、  
+* カスタム要素(`<myapp-main/>`)の記述
+* quelの`import`
+* `main`コンポーネントモジュールの`import`
+* コンポーネントモジュールとカスタム要素名と対応付け
+
+を行います。
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<meta charset="utf-8">
+
+<myapp-main></myapp-main>
+
+<script>
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+import myappMain from "./main.js";
+
+quel.componentModules({ myappMain });
+</script>
+</html>
+```
+
+`main.js`は、
+* `html`変数で、テンプレートとなるHTMLを定義
+* `ViewModel`クラスで、状態を保存、操作するクラスを定義
+* コンポーネントモジュールを`export`
+
+します。  
+チュートリアルでは、主に`main.js`について述べます。
+
+`main.js`の内容
+```js
+const html = `
+(テンプレートとなるHTMLの内容)
+`;
+
+class ViewModel {
+  // (状態を保存)
+
+  // (状態を操作する)
+
+}
+
+export default { html, ViewModel };
+```
+
+### Step.1 プロパティの埋め込み
+* `html`で、埋め込むプロパティ`message`を`{{ }}`で括る。→ `{{ message }}`
+* `ViewModel`クラスで、状態保存するプロパティ`message`をフィールド宣言し、初期値`welcome to quel`を与える。
+
+main.jsのソース
+```js
+const html = `
+<div>{{ message }}</div>
+`;
+
+class ViewModel {
+  message = "welcome to quel";
+}
+
+export default { html, ViewModel }
+```
+
+`<myapp-main/>`の結果
+```html
+<myapp-main>
+  <div>welcome to quel</div>
+<myapp-main>
 ```
 
 ### memo
