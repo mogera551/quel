@@ -278,6 +278,27 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/QWzWPzg)
 
+### Step.3 イベントのバインド
+* `html`のDOM要素のイベントプロパティと`ViewModel`クラスのメソッドを関連付ける
+* DOM要素の`data-bind`属性に`(DOM要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定する
+
+main.jsのソース
+```js
+const html = `
+<button type="button" data-bind="onclick:popup">popup</button>
+`;
+
+class ViewModel {
+  popup() {
+    alert("popup!!!");
+  }
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/ZEVYWER)
+
 ### memo
 
 bundle
