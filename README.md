@@ -309,7 +309,7 @@ const html = `
 <div>{{ counter }}</div>
 <div>{{ doubled }}</div>
 <button type="button" data-bind="onclick:countUp">count up</button>
-`
+`;
 
 class ViewModel {
   counter = 1;
