@@ -299,6 +299,37 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/ZEVYWER)
 
+### Step.4 アクセサプロパティ
+* `get`を使ったアクセサプロパティも埋め込んだり、バインドしたりできる。
+* アクセサプロパティを使う場合、`ViewModel`クラスの`$dependentProps`に依存関係を記述する必要がある。
+* 依存関係は、`(アクセサプロパティ名):[ (参照しているプロパティの列挙) ]`と記述する。
+
+```js
+const html = `
+<div>{{ counter }}</div>
+<div>{{ doubled }}</div>
+<button type="button" data-bind="onclick:countUp">count up</button>
+`
+
+class ViewModel {
+  counter = 1;
+  get doubled() {
+    return this.counter * 2;
+  }
+  countUp() {
+    this.counter++;
+  }
+
+  $dependentProps = {
+    "doubled": [ "counter" ],
+  };
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/abPzKwx)
+
 ### memo
 
 bundle
