@@ -238,8 +238,8 @@ export default { html, ViewModel };
 ```
 
 ### Step.1 プロパティの埋め込み
-* `html`で、埋め込むプロパティ`message`を`{{ }}`で括る。→ `{{ message }}`
-* `ViewModel`クラスで、状態保存するプロパティ`message`をフィールド宣言し、初期値`welcome to quel`を与える。
+* `html`で、埋め込むプロパティ`message`を`{{ }}`で括ります。→ `{{ message }}`
+* `ViewModel`クラスで、状態保存するプロパティ`message`をフィールド宣言し、初期値`welcome to quel`を与えます。
 
 main.jsのソース
 ```js
@@ -258,9 +258,9 @@ export default { html, ViewModel }
 
 
 ### Step.2 プロパティのバインド
-* `html`のDOM要素のプロパティと`ViewModel`クラスのプロパティを関連付ける（バインドする）
-* DOM要素の`data-bind`属性に`(DOM要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定する
-* 入力系DOM要素の場合、インタラクティブに`ViewModel`クラスのプロパティは更新される
+* `html`のDOM要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
+* DOM要素の`data-bind`属性に`(DOM要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
+* 入力系DOM要素の場合、インタラクティブに`ViewModel`クラスのプロパティは更新されます。
 
 main.jsのソース
 ```js
@@ -279,8 +279,8 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/QWzWPzg)
 
 ### Step.3 イベントのバインド
-* `html`のDOM要素のイベントプロパティと`ViewModel`クラスのメソッドを関連付ける
-* DOM要素の`data-bind`属性に`(DOM要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定する
+* `html`のDOM要素のイベントプロパティと`ViewModel`クラスのメソッドを関連付けます。
+* DOM要素の`data-bind`属性に`(DOM要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。
 
 main.jsのソース
 ```js
@@ -300,9 +300,9 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/ZEVYWER)
 
 ### Step.4 アクセサプロパティ
-* `get`を使ったアクセサプロパティも埋め込んだり、バインドしたりできる。
+* `get`を使ったアクセサプロパティも埋め込んだり、バインドしたりできます。
 * アクセサプロパティを使う場合、`ViewModel`クラスの`$dependentProps`に依存関係を記述する必要があります。
-* 依存関係は、`(アクセサプロパティ名):[ (参照しているプロパティの列挙) ]`と記述する。
+* 依存関係は、`(アクセサプロパティ名):[ (参照しているプロパティの列挙) ]`と記述します。
 * 依存関係を記述しないと、DOM要素の更新が行われません。
 
 ```js
