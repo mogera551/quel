@@ -331,6 +331,38 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/abPzKwx)
 
+### Step.5 フィルタ 
+* `ViewModel`プロパティに、出力フィルタを使うことができます。
+* プロパティの後ろにパイプ`|`、フィルタ名を記述します。
+* フィルタ名の後ろにカンマ`,`で区切ってオプションを指定できます。
+* フィルタはパイプ`|`を使って、複数指定できます。
+* フィルタは、`String``Number``Array`の非破壊系メソッドが用意されています。
+
+プロパティの加工という点ではアクセサプロパティと似ていますが、以下の点が異なります。
+
+フィルタの特徴（アクセサプロパティとの違い）
+* 依存関係を書く必要がありません。(`$dependentProps`を書かなくていい。)
+* 単一のプロパティの出力のみフィルタできます。→フィルタは、複数のプロパティを扱うことはできません。
+
+```js
+const html = `
+<div>{{ message }}</div>
+<div>{{ message|substring,4,15|toUpperCase }}</div>
+
+<div>{{ price }}</div>
+<div>{{ price|toLocaleString }}</div>
+`;
+
+class ViewModel {
+  message = "The quick brown fox jumps over the lazy dog";
+  price = 19800;
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
+
 ### memo
 
 bundle
