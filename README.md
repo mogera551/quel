@@ -17,7 +17,7 @@ Quelを使うには、import宣言で、CDNもしくはダウンロードした�
 CDNの例
 ```html
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 </script>
 ```
 
@@ -39,7 +39,7 @@ import quel from "./path/to/quel.min.js"; // ファイル
 <myapp-main></myapp-main>
 
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 
 const html = `
 <div>{{ message }}</div>
@@ -78,7 +78,7 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
 <div is="myapp-sub"></div>
 
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 </script>
 
 </html>
@@ -163,7 +163,7 @@ export default { html, ViewModel, extendTag:"div" };
 コンポーネントモジュールとカスタム要素名と対応付ける。
 
 ```js
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 // コンポーネントモジュールのimport
 import myappMain from "./main.js";
 
@@ -204,8 +204,8 @@ quel.componentModules({ myappMain });
 
 <myapp-main></myapp-main>
 
-<script>
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@0.9.7/dist/quel.min.js"; // CDN
+<script type="module">
+import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 import myappMain from "./main.js";
 
 quel.componentModules({ myappMain });
