@@ -4252,8 +4252,8 @@ const mixInComponent = {
 
     this._parentComponent = undefined;
     this._filters = {
-      in:Object.assign({}, inputFilters), 
-      out:Object.assign({}, outputFilters),
+      in: class extends inputFilters {},
+      out: class extends outputFilters {},
     };
 
     this.initialPromise = new Promise((resolve, reject) => {
