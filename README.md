@@ -241,7 +241,7 @@ export default { html, ViewModel };
 * `html`で、埋め込むプロパティ`message`を`{{ }}`で括ります。→ `{{ message }}`
 * `ViewModel`クラスで、状態保存するプロパティ`message`をフィールド宣言し、初期値`welcome to quel`を与えます。
 
-main.jsのソース
+`main.js`
 ```js
 const html = `
 <div>{{ message }}</div>
@@ -262,7 +262,7 @@ export default { html, ViewModel }
 * DOM要素の`data-bind`属性に`(DOM要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
 * 入力系DOM要素の場合、インタラクティブに`ViewModel`クラスのプロパティは更新されます。
 
-main.jsのソース
+`main.js`
 ```js
 const html = `
 <div>{{ message }}</div>
@@ -282,7 +282,7 @@ export default { html, ViewModel }
 * `html`のDOM要素のイベントプロパティと`ViewModel`クラスのメソッドを関連付けます。
 * DOM要素の`data-bind`属性に`(DOM要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。
 
-main.jsのソース
+`main.js`
 ```js
 const html = `
 <button type="button" data-bind="onclick:popup">popup</button>
@@ -305,6 +305,7 @@ export default { html, ViewModel }
 * 依存関係は、`(アクセサプロパティ名):[ (参照しているプロパティの列挙) ]`と記述します。
 * 依存関係を記述しないと、DOM要素の更新が行われません。
 
+`main.js`
 ```js
 const html = `
 <div>{{ counter }}</div>
@@ -344,6 +345,7 @@ export default { html, ViewModel }
 * 依存関係を書く必要がありません。(`$dependentProps`を書かなくていい。)
 * 単一のプロパティの出力のみフィルタできます。→フィルタは、複数のプロパティを扱うことはできません。
 
+`main.js`
 ```js
 const html = `
 <div>{{ message }}</div>
@@ -364,12 +366,13 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
 
 ### Step.6 ifブロック 
-* `ViewModel`のプロパティを条件にして、表示を制御できます。
+* `ViewModel`のプロパティを条件として、表示を制御できます。
 * 制御するブロック（要素の集合）を`{{ if:(条件とするViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
 * `{{ else }}`を使って、条件以外を表示できます。
 * `else if`はありません。
 * 単一のプロパティを条件とします。→条件は、複数のプロパティを扱うことはできません。
 
+`main.js`
 ```js
 const html = `
 <button type="button" data-bind="onclick:change">change!!!</button>
