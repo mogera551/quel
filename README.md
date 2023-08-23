@@ -21,7 +21,7 @@ import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.mi
 </script>
 ```
 
-ファイルの例
+ダウンロードしたファイルの例
 ```html
 <script type="module">
 import quel from "./path/to/quel.min.js"; // ファイル
@@ -60,7 +60,7 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
 * 対応するコンポーネントモジュールの作成
    * テンプレートとなるHTMLを定義
    * 状態を保存、操作するクラスを定義
-* カスタム要素とコンポーネントモジュールを対応付ける
+* カスタム要素とコンポーネントモジュールを対応付けます。
 
 ### カスタム要素をHTMLに記述
 カスタム要素は自律カスタム要素(autonomous custom element)、
@@ -332,7 +332,7 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/abPzKwx)
 
 ### Step.5 フィルタ 
-* `ViewModel`プロパティに、出力フィルタを使うことができます。
+* `ViewModel`のプロパティに、出力フィルタを使うことができます。
 * プロパティの後ろにパイプ`|`、フィルタ名を記述します。
 * フィルタ名の後ろにカンマ`,`で区切ってオプションを指定できます。
 * フィルタはパイプ`|`を使って、複数指定できます。
@@ -362,6 +362,35 @@ export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
+
+### Step.6 ifブロック 
+* `ViewModel`のプロパティを条件にして、表示を制御できます。
+* 制御するブロック（要素の集合）を`{{ if:(条件とするViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
+* `{{ else }}`を使って、条件以外を表示できます。
+* `else if`はありません。
+* 単一のプロパティを条件とします。→条件は、複数のプロパティを扱うことはできません。
+
+```js
+const html = `
+<button type="button" data-bind="onclick:change">change!!!</button>
+{{ if:val }}
+  <div>True</div>
+{{ else: }}
+  <div>False</div>
+{{ end: }}
+`;
+
+class ViewModel {
+  val = true;
+  change() {
+    this.val = !this.val;
+  }
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/xxmGadX)
 
 ### memo
 
