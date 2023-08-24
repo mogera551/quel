@@ -141,7 +141,7 @@ class ViewModel {
   }
 
   /* 依存関係を定義 */
-  #dependentProps = {
+  $dependentProps = {
     "disp": [ "count" ],
   }
 }
