@@ -366,8 +366,8 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
 
 ### Step.6 ifブロック 
-* `ViewModel`のプロパティを条件として、表示を制御できます。
-* 制御するブロック（要素の集合）を`{{ if:(条件とするViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
+* `ViewModel`のプロパティを条件として、表示を制御します。
+* 制御するブロック（要素の集合）を`{{ if:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
 * `{{ else }}`を使って、条件以外を表示できます。
 * `else if`はありません。
 * 単一のプロパティを条件とします。→条件は、複数のプロパティを扱うことはできません。
@@ -394,6 +394,30 @@ export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/xxmGadX)
+
+### Step.7 loopブロック 
+* `ViewModel`のプロパティを配列として、繰り返し表示をします。
+* 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
+* 繰り返すブロック内での配列要素はアスタリスクを用いたドット記法`(ViewModelのプロパティ).*`で記述します。
+
+`main.js`
+```js
+const html = `
+<ul>
+{{ loop:list }}
+  <li>{{ list.* }}</li>
+{{ end: }}
+</ul>
+`;
+
+class ViewModel {
+  list = [ "cat", "dog", "fox", "pig" ];
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/eYbpzMw)
 
 ### memo
 
