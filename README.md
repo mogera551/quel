@@ -214,9 +214,10 @@ quel.componentModules({ myappMain });
 ```
 
 `main.js`は、
-* `html`変数で、テンプレートとなるHTMLを定義
-* `ViewModel`クラスで、状態を保存、操作するクラスを定義
-* コンポーネントモジュールを`export`
+* `html`変数で、テンプレートとなるHTMLを定義します。
+* `ViewModel`クラスで、状態を保存、操作するクラスを定義します。
+* コンポーネントモジュールを`export`します。
+* `Quel`関連の機能は`import`しません。
 
 します。  
 チュートリアルでは、主に`main.js`について述べます。
@@ -366,7 +367,7 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
 
 ### Step.6 ifブロック 
-* `ViewModel`のプロパティを条件として、表示を制御します。
+* `ViewModel`のプロパティを条件として、表示を制御することができます。
 * 制御するブロック（要素の集合）を`{{ if:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
 * `{{ else }}`を使って、偽の条件を表示します。
 * `else if`はありません。
@@ -396,7 +397,7 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/xxmGadX)
 
 ### Step.7 loopブロック 
-* `ViewModel`のプロパティを配列として、表示を繰り返します。
+* `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
 * 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
 * 繰り返すブロック内では配列要素をアスタリスクを用いたドット記法`(ViewModelのプロパティ).*`で記述します。→ `{{ list.* }}`
 
@@ -418,6 +419,40 @@ export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/eYbpzMw)
+
+### Step.8 初期化イベントハンドラ
+* `ViewModel`に、初期化イベントハンドラであるコールバックメソッド`$initCallback`を設定できます。
+* 初期化イベントは、コンポーネント生成時に発生します。
+* コールバックメソッドに非同期`async`を指定することができます。
+* コールバックメソッドの引数は指定しません。
+
+`main.js`
+```js
+const html = `
+<ul>
+  {{ loop:commits }}
+  <li>
+    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.message }} by {{ commits.*.commit.author.name }}
+  </li>
+  {{ end: }}
+</ul>
+`;
+
+const apiURL = "https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main";
+
+class ViewModel {
+  commits = [];
+
+  async $initCallback() {
+    const response = await fetch(apiURL);
+    this.commits = await response.json();
+  }
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/vYvLQVX)
 
 ### memo
 
