@@ -438,13 +438,11 @@ const html = `
 </ul>
 `;
 
-const apiURL = "https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main";
-
 class ViewModel {
   commits = [];
 
   async $initCallback() {
-    const response = await fetch(apiURL);
+    const response = await fetch("https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main");
     this.commits = await response.json();
   }
 }
@@ -453,6 +451,51 @@ export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/vYvLQVX)
+
+### Step.9 書き込みイベントハンドラ
+* `ViewModel`に、書き込みイベントハンドラであるコールバックメソッド`$writeCallback`を設定できます。
+* 書き込みイベントは、`ViewModel`のプロパティに書き込みがあった場合に発生します。
+* コールバックメソッドに非同期`async`を指定することができます。
+* コールバックメソッドの引数には、プロパティ名とインデックス配列を指定します。
+* 通常、入力系DOMに関連付けられた`ViewModel`プロパティは自動的に値を更新されますが、更新後に他の処理を行いたいときに使用します。
+
+`main.js`
+```js
+const html = `
+<select data-bind="value:page">
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+</select>
+<ul>
+  {{ loop:commits }}
+  <li>
+    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.message }} by {{ commits.*.commit.author.name }}
+  </li>
+  {{ end: }}
+</ul>
+`;
+
+class ViewModel {
+  page = "3";
+  commits = [];
+
+  async getCommits(page) {
+    const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${page}&sha=main`);
+    return await response.json();
+  }
+  async $initCallback() {
+    this.commits = this.getCommits(this.page);
+  }
+  async $writeCallback(name, indexes) {
+    if (name === "page") {
+      this.commits = this.getCommits(this.page);
+    }
+  }
+}
+
+export default { html, ViewModel }
+```
 
 ### memo
 

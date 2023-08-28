@@ -8,13 +8,11 @@ const html = `
 </ul>
 `;
 
-const apiURL = "https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main";
-
 class ViewModel {
   commits = [];
 
   async $initCallback() {
-    const response = await fetch(apiURL);
+    const response = await fetch("https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main");
     this.commits = await response.json();
   }
 }
