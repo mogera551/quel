@@ -485,11 +485,11 @@ class ViewModel {
     return await response.json();
   }
   async $initCallback() {
-    this.commits = this.getCommits(this.page);
+    this.commits = await this.getCommits(this.page);
   }
   async $writeCallback(name, indexes) {
     if (name === "page") {
-      this.commits = this.getCommits(this.page);
+      this.commits = await this.getCommits(this.page);
     }
   }
 }
