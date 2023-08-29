@@ -1,13 +1,26 @@
 const html = `
 <div data-bind="text"></div>
-<input type="text" data-bind="text">
-<textarea data-bind="text"></textarea>
-<select data-bind="num|number">
-  <option value="1">1</option>
-  <option value="2">2</option>
-  <option value="3">3</option>
-</select>
-<div>{{ double }}</div>
+<div>
+  <input type="text" data-bind="text">
+</div>
+<div>
+  <textarea data-bind="text"></textarea>
+</div>
+<div>
+  <select data-bind="num|number">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+  </select>
+  {{ double }}
+</div>
 `;
 
 class ViewModel {
