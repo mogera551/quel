@@ -1,11 +1,9 @@
 const html = `
-<div>
-  Page:<select data-bind="value:page">
-    <option value="3">3</option>
-    <option value="4">4</option>
-    <option value="5">5</option>
-  </select>
-</div>
+<select data-bind="value:per_page">
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+</select>
 <ul>
   {{ loop:commits }}
   <li>
@@ -16,19 +14,19 @@ const html = `
 `;
 
 class ViewModel {
-  page = "3";
+  per_page = "3";
   commits = [];
 
-  async getCommits(page) {
-    const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${page}&sha=main`);
+  async getCommits(per_page) {
+    const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${per_page}&sha=main`);
     return await response.json();
   }
   async $initCallback() {
-    this.commits = await this.getCommits(this.page);
+    this.commits = await this.getCommits(this.per_page);
   }
   async $writeCallback(name, indexes) {
-    if (name === "page") {
-      this.commits = await this.getCommits(this.page);
+    if (name === "per_page") {
+      this.commits = await this.getCommits(this.per_page);
     }
   }
 }

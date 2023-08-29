@@ -90,14 +90,14 @@ import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.mi
 
 #### テンプレートとなるHTMLを定義
 コンポーネントで使用するDOMのテンプレートとなるHTMLを定義します。
-埋め込み、DOM要素の属性値の関連付け、イベントの関連付け、条件分岐、繰り返しを記述できます。
+埋め込み、`html`の要素の属性値の関連付け、イベントの関連付け、条件分岐、繰り返しを記述できます。
 `html`という変数名で宣言すると、`export`するときに便利です。
 ```js
 const html = `
 <!-- 埋め込み -->
 <div>{{ count }}</div>
 
-<!-- DOM要素の属性値の関連付け -->
+<!-- 要素の属性値の関連付け -->
 <input data-bind="name">
 
 <!-- イベントの関連付け -->
@@ -259,9 +259,9 @@ export default { html, ViewModel }
 
 
 ### Step.2 プロパティのバインド
-* `html`のDOM要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
-* DOM要素の`data-bind`属性に`(DOM要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
-* 入力系DOM要素の場合、インタラクティブに`ViewModel`クラスのプロパティは更新されます。
+* `html`の要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
+* 要素の`data-bind`属性に`(要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
+* 入力系要素の場合、インタラクティブに`ViewModel`クラスのプロパティは更新されます。（双方向バインドを参照）
 
 `main.js`
 ```js
@@ -291,8 +291,8 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/QWzWPzg)
 
 ### Step.3 イベントのバインド
-* `html`のDOM要素のイベントプロパティと`ViewModel`クラスのメソッドを関連付けます。
-* DOM要素の`data-bind`属性に`(DOM要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。
+* `html`の要素のイベントプロパティと`ViewModel`クラスのメソッドを関連付けます。
+* 要素の`data-bind`属性に`(要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。
 
 `main.js`
 ```js
@@ -315,7 +315,7 @@ export default { html, ViewModel }
 * `get`を使ったアクセサプロパティも埋め込んだり、バインドしたりできます。
 * アクセサプロパティを使う場合、`ViewModel`クラスの`$dependentProps`に依存関係を記述する必要があります。
 * 依存関係は、`(アクセサプロパティ名):[ (参照しているプロパティの列挙) ]`と記述します。
-* 依存関係を記述しないと、DOM要素の更新が行われません。
+* 依存関係を記述しないと、`html`の要素の更新が行われません。
 
 `main.js`
 ```js
@@ -473,7 +473,7 @@ export default { html, ViewModel }
 `main.js`
 ```js
 const html = `
-<select data-bind="value:page">
+<select data-bind="value:per_page">
   <option value="3">3</option>
   <option value="4">4</option>
   <option value="5">5</option>
@@ -488,19 +488,19 @@ const html = `
 `;
 
 class ViewModel {
-  page = "3";
+  per_page = "3";
   commits = [];
 
-  async getCommits(page) {
-    const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${page}&sha=main`);
+  async getCommits(per_page) {
+    const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${per_page}&sha=main`);
     return await response.json();
   }
   async $initCallback() {
-    this.commits = await this.getCommits(this.page);
+    this.commits = await this.getCommits(this.per_page);
   }
   async $writeCallback(name, indexes) {
-    if (name === "page") {
-      this.commits = await this.getCommits(this.page);
+    if (name === "per_page") {
+      this.commits = await this.getCommits(this.per_page);
     }
   }
 }
@@ -509,6 +509,64 @@ export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoxQEE)
+
+### Step.10 デフォルトプロパティ・双方向バインド
+* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。
+
+|タグ|type属性|プロパティ|
+|----|----|----|
+|input|radio|checked|
+|input|checkbox|checked|
+|input|上記以外|value|
+|select||value|
+|textarea||value|
+|上記以外||textContent|
+
+* `html`の入力系要素のデフォルトプロパティと`ViewModel`クラスのプロパティをバインドする場合、入力系DOMのプロパティが更新されると自動的に`ViewModel`クラスのプロパティも更新されます。（双方向バインド）
+* 対象となる入力系要素は、`input``select``textarea`
+* 双方向バインドの場合、出力のためのフィルタは指定しません。必要であれば型変換のための入力フィルタ`number`を指定します。
+* 入力フィルタの指定方法は、通常のフィルタと同じです。
+
+`main.js`
+```js
+const html = `
+<div data-bind="text"></div>
+<input type="text" data-bind="text">
+<textarea data-bind="text"></textarea>
+<select data-bind="num|number">
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+</select>
+<div>{{ double }}</div>
+`;
+
+class ViewModel {
+  num = 1;
+  text = "";
+  get double() {
+    return this.num + this.num;
+  }
+
+  $dependentProps = {
+    "double": ["num"]
+  }
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/ZEVWeEP)
+
+### Step.11 クラスバインド
+* `html`の要素のクラス属性と`ViewModel`クラスのプロパティをバインドする場合、`class.(クラス名):(ViewModelのプロパティ)`と記述します。
+* `ViewModel`クラスのプロパティが真の場合、要素のクラス属性にクラス名が追加されます。
+* `ViewModel`クラスのプロパティが偽の場合、要素のクラス属性にクラス名が削除されます。
+
+### Step.12 スタイルバインド
+* `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素の属性名):(ViewModelのプロパティ)`と記述します。
+
+
 
 ### memo
 
