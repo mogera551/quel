@@ -349,7 +349,7 @@ export default { html, ViewModel }
 * プロパティの後ろにパイプ`|`、フィルタ名を記述します。
 * フィルタ名の後ろにカンマ`,`で区切ってオプションを指定できます。
 * フィルタはパイプ`|`を使って、複数指定できます。
-* フィルタは、`String``Number``Array`の非破壊系メソッドが用意されています。
+* フィルタは、`String` `Number` `Array`の非破壊系メソッドが用意されています。
 
 プロパティの加工という点ではアクセサプロパティと似ていますが、以下の点が異なります。
 
@@ -511,7 +511,7 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoxQEE)
 
 ### Step.10 デフォルトプロパティ・双方向バインド
-* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。
+* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。`data-bind="message"`
 
 |タグ|type属性|プロパティ|
 |----|----|----|
@@ -523,19 +523,19 @@ export default { html, ViewModel }
 |上記以外||textContent|
 
 * `html`の入力系要素のデフォルトプロパティと`ViewModel`クラスのプロパティをバインドする場合、入力系DOMのプロパティが更新されると自動的に`ViewModel`クラスのプロパティも更新されます。（双方向バインド）
-* 対象となる入力系要素は、`input``select``textarea`
+* 対象となる入力系要素は、`input` `select` `textarea`
 * 双方向バインドの場合、出力のためのフィルタは指定しません。必要であれば型変換のための入力フィルタ`number`を指定します。
-* 入力フィルタの指定方法は、通常のフィルタと同じです。
+* 入力フィルタの指定方法は、通常のフィルタと同じです。`num|number`
 
 `main.js`
 ```js
 const html = `
-<div data-bind="text"></div>
+<div data-bind="message"></div>
 <div>
-  <input type="text" data-bind="text">
+  <input type="text" data-bind="message">
 </div>
 <div>
-  <textarea data-bind="text"></textarea>
+  <textarea data-bind="message"></textarea>
 </div>
 <div>
   <select data-bind="num|number">
@@ -556,7 +556,7 @@ const html = `
 
 class ViewModel {
   num = 1;
-  text = "";
+  message = "";
   get double() {
     return this.num + this.num;
   }
@@ -571,13 +571,65 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/ZEVWeEP)
 
-### Step.11 クラスバインド
+### Step.11 スタイルバインド
+* `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素のスタイル属性名):(ViewModelのプロパティ)`と記述します。
+
+`main.js`
+```js
+const html = `
+<input type="number" data-bind="num|number">
+<div data-bind="style.color:numberColor">{{ num }}</div>
+`;
+
+class ViewModel {
+  num = 5;
+  get numberColor() {
+    return this.num > 10 ? "red" : "black";
+  }
+
+  $dependentProps = {
+    "numberColor": ["num"]
+  }
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/mdaEmJx)
+
+### Step.12 クラスバインド
 * `html`の要素のクラス属性と`ViewModel`クラスのプロパティをバインドする場合、`class.(クラス名):(ViewModelのプロパティ)`と記述します。
 * `ViewModel`クラスのプロパティが真の場合、要素のクラス属性にクラス名が追加されます。
 * `ViewModel`クラスのプロパティが偽の場合、要素のクラス属性からクラス名が削除されます。
 
-### Step.12 スタイルバインド
-* `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素のスタイル属性名):(ViewModelのプロパティ)`と記述します。
+`main.js`
+```js
+const html = `
+<style>
+.over {
+  color:red;
+}
+</style>
+
+<input type="number" data-bind="num|number">
+<div data-bind="class.over:isOver">{{ num }}</div>
+`;
+
+class ViewModel {
+  num = 5;
+  get isOver() {
+    return this.num > 10;
+  }
+
+  $dependentProps = {
+    "isOver": ["num"]
+  }
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/LYMZypL)
 
 ### memo
 

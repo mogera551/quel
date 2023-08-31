@@ -1,10 +1,10 @@
 const html = `
-<div data-bind="text"></div>
+<div data-bind="message"></div>
 <div>
-  <input type="text" data-bind="text">
+  <input type="text" data-bind="message">
 </div>
 <div>
-  <textarea data-bind="text"></textarea>
+  <textarea data-bind="message"></textarea>
 </div>
 <div>
   <select data-bind="num|number">
@@ -25,7 +25,7 @@ const html = `
 
 class ViewModel {
   num = 1;
-  text = "";
+  message = "";
   get double() {
     return this.num + this.num;
   }
