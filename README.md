@@ -377,7 +377,7 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
 
-### Step.6 ifブロック 
+### Step.6 条件ブロック 
 * `ViewModel`のプロパティを条件として、表示を制御することができます。
 * 制御するブロック（要素の集合）を`{{ if:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
 * `{{ else }}`を使って、偽の条件を表示します。
@@ -407,10 +407,10 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/xxmGadX)
 
-### Step.7 loopブロック 
+### Step.7 ループブロック 
 * `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
 * 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
-* 繰り返すブロック内では配列要素をアスタリスクを用いたドット記法`(ViewModelのプロパティ).*`で記述します。→ `{{ list.* }}`
+* 繰り返すブロック内では配列要素をワイルドカードを用いたドット記法`(ViewModelのプロパティ).*`で記述します。→ `{{ list.* }}`
 
 `main.js`
 ```js
@@ -511,7 +511,7 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoxQEE)
 
 ### Step.10 デフォルトプロパティ・双方向バインド
-* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。`data-bind="message"`
+* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。`data-bind="value:message"`→`data-bind="message"`, `data-bind="textContent:message"`→`data-bind="message"` 
 
 |タグ|type属性|プロパティ|
 |----|----|----|
@@ -524,8 +524,8 @@ export default { html, ViewModel }
 
 * `html`の入力系要素のデフォルトプロパティと`ViewModel`クラスのプロパティをバインドする場合、入力系DOMのプロパティが更新されると自動的に`ViewModel`クラスのプロパティも更新されます。（双方向バインド）
 * 対象となる入力系要素は、`input` `select` `textarea`
-* 双方向バインドの場合、出力のためのフィルタは指定しません。必要であれば型変換のための入力フィルタ`number`を指定します。
-* 入力フィルタの指定方法は、通常のフィルタと同じです。`num|number`
+* 双方向バインドの場合、出力のためのフィルタは指定しません。必要であれば型変換のための入力フィルタ`number`を指定します。`data-bind="num|number"`
+* 入力フィルタの指定方法は、通常のフィルタと同じです。
 
 `main.js`
 ```js
@@ -571,7 +571,7 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/ZEVWeEP)
 
-### Step.11 スタイルバインド
+### Step.11 スタイルのバインド
 * `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素のスタイル属性名):(ViewModelのプロパティ)`と記述します。
 
 `main.js`
@@ -597,7 +597,7 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/mdaEmJx)
 
-### Step.12 クラスバインド
+### Step.12 クラスのバインド
 * `html`の要素のクラス属性と`ViewModel`クラスのプロパティをバインドする場合、`class.(クラス名):(ViewModelのプロパティ)`と記述します。
 * `ViewModel`クラスのプロパティが真の場合、要素のクラス属性にクラス名が追加されます。
 * `ViewModel`クラスのプロパティが偽の場合、要素のクラス属性からクラス名が削除されます。
@@ -630,6 +630,67 @@ export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/LYMZypL)
+
+### Step.13 ループブロック内のコンテキスト変数・ワイルドカードの使用
+* ループブロック内でワイルドーカードを使ったアクセサプロパティを宣言できます。`members.*.no` `members.*.isAdult`
+* ループブロック内のワイルドーカードを使ったアクセサプロパティでワイルドーカードを使ったプロパティにアクセスできます。`members.*.isAdult`でで`members.*.age`を参照している部分。
+* ループブロック内のワイルドーカードを使ったアクセサプロパティでコンテキスト変数（インデックス値）を利用することができます。
+  * プロパティ内でコンテキスト変数`this.$1`を参照します。
+* ループブロック内のイベントハンドラでインデックス値を利用することができます。
+  * インデックス値はイベントハンドラ第2引数で渡されます。(`popup(e, $1)`の`$1`)
+* ループブロック内で直接コンテキスト変数（インデックス値）を利用することができます。`$1|offset,1`
+
+```js
+const html = `
+<style>
+.adult {
+  color:red;
+}
+</style>
+
+{{ loop:members }}
+<div data-bind="class.adult:members.*.isAdult">
+  {{ members.*.no }} = {{ $1|offset,1 }}:{{ members.*.name }}, {{ members.*.age }}
+  <button type="button" data-bind="onclick:popup">popup</button>
+</div>
+{{ end: }}
+`;
+
+class ViewModel {
+  members = [
+    { name:"佐藤　一郎", age:20 },
+    { name:"鈴木　二郎", age:15 },
+    { name:"高橋　三郎", age:22 },
+    { name:"田中　四郎", age:18 },
+    { name:"伊藤　五郎", age:17 },
+  ];
+  get "members.*.no"() {
+    return this.$1 + 1;
+  }
+  get "members.*.isAdult"() {
+    return this["members.*.age"] >= 18;
+  }
+
+  popup(e, $1) {
+    alert(`選択したのは、${$1 + 1}行目です`);
+  }
+
+  $dependentProps = {
+    "members.*.isAdult": [ "members.*.age" ]
+
+    // "members.*.no": [ "$1" ], 
+    // コンテキスト変数$1に依存するが、コンテキスト変数$1は記述しない
+    // →記述するものがない
+    // →依存するものがない
+    // →省略
+  }
+}
+
+export default { html, ViewModel }
+
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/rNoLQWY)
 
 ### memo
 
