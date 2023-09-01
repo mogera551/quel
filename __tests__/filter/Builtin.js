@@ -94,6 +94,12 @@ test("Builtin outputFilters", () => {
   expect(outputFilters.null(null, [])).toBe(true);
   expect(outputFilters.null(true, [])).toBe(false);
 
+  expect(outputFilters.offset("101", ["100"])).toBe(201);
+  expect(outputFilters.offset(101, [100])).toBe(201);
+  expect(outputFilters.offset("101", [100])).toBe(201);
+  expect(outputFilters.offset(101, ["100"])).toBe(201);
+  expect(outputFilters.offset(100, [100])).toBe(200);
+  expect(outputFilters.offset(100, ["-1"])).toBe(99);
 });
 
 test("Builtin outputFilters string", () => {

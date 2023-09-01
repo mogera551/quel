@@ -75,6 +75,7 @@ class outputFilters {
   static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? "").replaceAll("%s", value)) : null;
   static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
   static null         = (value, options) => (value == null) ? true : false;
+  static offset       = (value, options) => Number(value) + Number(options[0])
 
   static "str.at"      = (value, options) => str(value, options, (s, o) => s.at(...o));
   static "str.charAt"  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
