@@ -687,10 +687,37 @@ class ViewModel {
 }
 
 export default { html, ViewModel }
-
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoLQWY)
+
+### Step.14 配列プロパティの操作
+* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、非破壊系メソッドで新たなリストを作成し代入します。`add()`
+* `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="list.*">`
+* `html`への反映は自動的に行われます。
+
+```JS
+const html = `
+{{ loop:list }}
+<div><input type="text" data-bind="list.*">{{ list.* }}</div>
+{{ end: }}
+<button type="button" data-bind="onclick:add">add grape</button>
+`;
+
+class ViewModel {
+  list = ["apple", "orange", "strawberry"];
+  add() {
+    // 非破壊系メソッドconcatで要素を追加して、listプロパティへ代入
+    // 破壊系メソッドであるpushは使わない
+    this.list = this.list.concat("grape");
+  }
+}
+
+export default { html, ViewModel }
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/yLGaNOm)
+
 
 ### memo
 
