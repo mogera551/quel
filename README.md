@@ -640,6 +640,7 @@ export default { html, ViewModel }
   * インデックス値はイベントハンドラ第2引数で渡されます。(`popup(e, $1)`の`$1`)
 * ループブロック内で直接コンテキスト変数（インデックス値）を利用することができます。`$1|offset,1`
 
+`main.js`
 ```js
 const html = `
 <style>
@@ -696,6 +697,7 @@ export default { html, ViewModel }
 * `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="list.*">`
 * `html`への反映は自動的に行われます。
 
+`main.js`
 ```JS
 const html = `
 {{ loop:list }}
