@@ -326,20 +326,9 @@ test("Builtin outputFilters array", () => {
   expect(outputFilters["arr.concat"]([5, 12, 8, 130, 44], [2])).toEqual([5, 12, 8, 130, 44, 2]);
   expect(outputFilters["arr.concat"]([5, 12, 8, 130, 44], [2, 3])).toEqual([5, 12, 8, 130, 44, 2, 3]);
 
-  expect(outputFilters["arr.copyWithin"](null, [])).toBe(null);
-  expect(outputFilters["arr.copyWithin"]([1, 2, 3, 4, 5], [-2])).toEqual([1, 2, 3, 1, 2]);
-  expect(outputFilters["arr.copyWithin"]([1, 2, 3, 4, 5], [0, 3])).toEqual([4, 5, 3, 4, 5]);
-  expect(outputFilters["arr.copyWithin"]([1, 2, 3, 4, 5], [0, 3, 4])).toEqual([4, 2, 3, 4, 5]);
-  expect(outputFilters["arr.copyWithin"]([1, 2, 3, 4, 5], [-2, -3, -1])).toEqual([1, 2, 3, 3, 4]);
-
   expect(outputFilters["arr.entries"](null, [])).toBe(null);
   expect(Array.from(outputFilters["arr.entries"](["a", "b", "c"], []))).toEqual([[0, "a"], [1, "b"], [2, "c"]]);
 
-  expect(outputFilters["arr.fill"](null, [])).toBe(null);
-  expect(outputFilters["arr.fill"]([1, 2, 3, 4], [0, 2, 4])).toEqual([1, 2, 0, 0]);
-  expect(outputFilters["arr.fill"]([1, 2, 3, 4], [5, 1])).toEqual([1, 5, 5, 5]);
-  expect(outputFilters["arr.fill"]([1, 2, 3, 4], [6])).toEqual([6, 6, 6, 6]);
-  
   expect(outputFilters["arr.flat"](null, [])).toBe(null);
   expect(outputFilters["arr.flat"]([0, 1, 2, [3, 4]], [])).toEqual([0, 1, 2, 3, 4]);
   expect(outputFilters["arr.flat"]([0, 1, 2, [[[3, 4]]]], [2])).toEqual([0, 1, 2, [3, 4]]);
@@ -429,12 +418,6 @@ test("Builtin outputFilters namespace", () => {
   expect(outputFilters.concat([5, 12, 8, 130, 44], [2])).toEqual([5, 12, 8, 130, 44, 2]);
   expect(outputFilters.concat([5, 12, 8, 130, 44], [2, 3])).toEqual([5, 12, 8, 130, 44, 2, 3]);
 
-  expect(outputFilters.copyWithin(null, [])).toBe(null);
-  expect(outputFilters.copyWithin([1, 2, 3, 4, 5], [-2])).toEqual([1, 2, 3, 1, 2]);
-  expect(outputFilters.copyWithin([1, 2, 3, 4, 5], [0, 3])).toEqual([4, 5, 3, 4, 5]);
-  expect(outputFilters.copyWithin([1, 2, 3, 4, 5], [0, 3, 4])).toEqual([4, 2, 3, 4, 5]);
-  expect(outputFilters.copyWithin([1, 2, 3, 4, 5], [-2, -3, -1])).toEqual([1, 2, 3, 3, 4]);
-
   expect(outputFilters.endsWith(null, [])).toBe(null);
   expect(outputFilters.endsWith("To be, or not to be, that is the question.", ["question."])).toBe(true);
   expect(outputFilters.endsWith("To be, or not to be, that is the question.", ["to be"])).toBe(false);
@@ -442,11 +425,6 @@ test("Builtin outputFilters namespace", () => {
 
   expect(outputFilters.entries(null, [])).toBe(null);
   expect(Array.from(outputFilters.entries(["a", "b", "c"], []))).toEqual([[0, "a"], [1, "b"], [2, "c"]]);
-
-  expect(outputFilters.fill(null, [])).toBe(null);
-  expect(outputFilters.fill([1, 2, 3, 4], [0, 2, 4])).toEqual([1, 2, 0, 0]);
-  expect(outputFilters.fill([1, 2, 3, 4], [5, 1])).toEqual([1, 5, 5, 5]);
-  expect(outputFilters.fill([1, 2, 3, 4], [6])).toEqual([6, 6, 6, 6]);
 
   expect(outputFilters.flat(null, [])).toBe(null);
   expect(outputFilters.flat([0, 1, 2, [3, 4]], [])).toEqual([0, 1, 2, 3, 4]);

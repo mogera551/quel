@@ -70,9 +70,7 @@ export class outputFilters {
   
   static "arr.at"       = (value, options) => arr(value, options, (a, o) => a.at(...o));
   static "arr.concat"   = (value, options) => arr(value, options, (a, o) => a.concat(...o));
-  static "arr.copyWithin"     = (value, options) => arr(value, options, (a, o) => a.copyWithin(...o));
   static "arr.entries"  = (value, options) => arr(value, options, (a, o) => a.entries(...o));
-  static "arr.fill"     = (value, options) => arr(value, options, (a, o) => a.fill(...o));
   static "arr.flat"     = (value, options) => arr(value, options, (a, o) => a.flat(...o));
   static "arr.includes" = (value, options) => arr(value, options, (a, o) => a.includes(...o));
   static "arr.indexOf"  = (value, options) => arr(value, options, (a, o) => a.indexOf(...o));
@@ -102,17 +100,11 @@ export class outputFilters {
   static get concat() {
     return (value, options) => (Array.isArray(value) ? this["arr.concat"] : this["str.concat"])(value, options);
   }
-  static get copyWithin() {
-    return this["arr.copyWithin"];
-  }
   static get endsWith() {
     return this["str.endsWith"];
   }
   static get entries() {
     return this["arr.entries"];
-  }
-  static get fill() {
-    return this["arr.fill"];
   }
   static get flat() {
     return this["arr.flat"];

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1693597380248" clover="3.2.0">
-  <project timestamp="1693597380248" name="All files">
-    <metrics statements="1264" coveredstatements="1261" conditionals="618" coveredconditionals="615" methods="532" coveredmethods="530" elements="2414" coveredelements="2406" complexity="0" loc="1264" ncloc="1264" packages="11" files="51" classes="51"/>
+<coverage generated="1693692521513" clover="3.2.0">
+  <project timestamp="1693692521513" name="All files">
+    <metrics statements="1260" coveredstatements="1257" conditionals="618" coveredconditionals="615" methods="526" coveredmethods="524" elements="2404" coveredelements="2396" complexity="0" loc="1260" ncloc="1260" packages="11" files="51" classes="51"/>
     <package name="src">
       <metrics statements="40" coveredstatements="39" conditionals="21" coveredconditionals="20" methods="17" coveredmethods="17"/>
       <file name="Const.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\Const.js">
@@ -840,9 +840,9 @@
       </file>
     </package>
     <package name="src.filter">
-      <metrics statements="125" coveredstatements="125" conditionals="58" coveredconditionals="58" methods="176" coveredmethods="176"/>
+      <metrics statements="121" coveredstatements="121" conditionals="58" coveredconditionals="58" methods="170" coveredmethods="170"/>
       <file name="Builtin.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\filter\Builtin.js">
-        <metrics statements="119" coveredstatements="119" conditionals="46" coveredconditionals="46" methods="171" coveredmethods="171"/>
+        <metrics statements="115" coveredstatements="115" conditionals="46" coveredconditionals="46" methods="165" coveredmethods="165"/>
         <line num="3" count="31" type="stmt"/>
         <line num="4" count="44" type="cond" truecount="2" falsecount="0"/>
         <line num="5" count="36" type="stmt"/>
@@ -850,7 +850,7 @@
         <line num="9" count="31" type="stmt"/>
         <line num="10" count="276" type="cond" truecount="2" falsecount="0"/>
         <line num="13" count="31" type="stmt"/>
-        <line num="14" count="109" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="91" type="cond" truecount="2" falsecount="0"/>
         <line num="18" count="31" type="cond" truecount="4" falsecount="0"/>
         <line num="19" count="31" type="cond" truecount="2" falsecount="0"/>
         <line num="20" count="31" type="cond" truecount="2" falsecount="0"/>
@@ -914,54 +914,50 @@
         <line num="84" count="31" type="stmt"/>
         <line num="85" count="31" type="stmt"/>
         <line num="86" count="31" type="stmt"/>
-        <line num="87" count="31" type="stmt"/>
-        <line num="88" count="31" type="stmt"/>
-        <line num="91" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="94" count="6" type="stmt"/>
-        <line num="97" count="6" type="stmt"/>
-        <line num="100" count="5" type="stmt"/>
-        <line num="103" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="106" count="5" type="stmt"/>
-        <line num="109" count="4" type="stmt"/>
-        <line num="112" count="2" type="stmt"/>
-        <line num="115" count="4" type="stmt"/>
-        <line num="118" count="3" type="stmt"/>
-        <line num="121" count="10" type="cond" truecount="2" falsecount="0"/>
-        <line num="124" count="15" type="cond" truecount="2" falsecount="0"/>
-        <line num="127" count="4" type="stmt"/>
-        <line num="130" count="2" type="stmt"/>
-        <line num="133" count="12" type="cond" truecount="2" falsecount="0"/>
-        <line num="136" count="3" type="stmt"/>
-        <line num="139" count="11" type="stmt"/>
-        <line num="145" count="3" type="stmt"/>
-        <line num="148" count="5" type="stmt"/>
-        <line num="151" count="6" type="stmt"/>
-        <line num="154" count="7" type="stmt"/>
-        <line num="157" count="3" type="stmt"/>
-        <line num="160" count="3" type="stmt"/>
-        <line num="163" count="2" type="stmt"/>
-        <line num="166" count="11" type="cond" truecount="2" falsecount="0"/>
-        <line num="169" count="4" type="stmt"/>
-        <line num="172" count="4" type="stmt"/>
-        <line num="175" count="9" type="stmt"/>
-        <line num="178" count="4" type="stmt"/>
-        <line num="181" count="4" type="stmt"/>
-        <line num="184" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="187" count="3" type="stmt"/>
-        <line num="190" count="3" type="stmt"/>
-        <line num="193" count="2" type="stmt"/>
-        <line num="196" count="10" type="stmt"/>
-        <line num="199" count="2" type="stmt"/>
-        <line num="202" count="2" type="stmt"/>
-        <line num="205" count="4" type="stmt"/>
-        <line num="208" count="2" type="stmt"/>
-        <line num="214" count="2" type="stmt"/>
-        <line num="217" count="2" type="stmt"/>
-        <line num="220" count="2" type="stmt"/>
-        <line num="223" count="2" type="stmt"/>
-        <line num="226" count="2" type="stmt"/>
-        <line num="232" count="31" type="cond" truecount="2" falsecount="0"/>
-        <line num="233" count="31" type="cond" truecount="2" falsecount="0"/>
+        <line num="89" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="92" count="6" type="stmt"/>
+        <line num="95" count="6" type="stmt"/>
+        <line num="98" count="5" type="stmt"/>
+        <line num="101" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="104" count="4" type="stmt"/>
+        <line num="107" count="2" type="stmt"/>
+        <line num="110" count="3" type="stmt"/>
+        <line num="113" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="116" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="119" count="4" type="stmt"/>
+        <line num="122" count="2" type="stmt"/>
+        <line num="125" count="12" type="cond" truecount="2" falsecount="0"/>
+        <line num="128" count="3" type="stmt"/>
+        <line num="131" count="11" type="stmt"/>
+        <line num="137" count="3" type="stmt"/>
+        <line num="140" count="5" type="stmt"/>
+        <line num="143" count="6" type="stmt"/>
+        <line num="146" count="7" type="stmt"/>
+        <line num="149" count="3" type="stmt"/>
+        <line num="152" count="3" type="stmt"/>
+        <line num="155" count="2" type="stmt"/>
+        <line num="158" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="161" count="4" type="stmt"/>
+        <line num="164" count="4" type="stmt"/>
+        <line num="167" count="9" type="stmt"/>
+        <line num="170" count="4" type="stmt"/>
+        <line num="173" count="4" type="stmt"/>
+        <line num="176" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="179" count="3" type="stmt"/>
+        <line num="182" count="3" type="stmt"/>
+        <line num="185" count="2" type="stmt"/>
+        <line num="188" count="10" type="stmt"/>
+        <line num="191" count="2" type="stmt"/>
+        <line num="194" count="2" type="stmt"/>
+        <line num="197" count="4" type="stmt"/>
+        <line num="200" count="2" type="stmt"/>
+        <line num="206" count="2" type="stmt"/>
+        <line num="209" count="2" type="stmt"/>
+        <line num="212" count="2" type="stmt"/>
+        <line num="215" count="2" type="stmt"/>
+        <line num="218" count="2" type="stmt"/>
+        <line num="224" count="31" type="cond" truecount="2" falsecount="0"/>
+        <line num="225" count="31" type="cond" truecount="2" falsecount="0"/>
       </file>
       <file name="Filter.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\filter\Filter.js">
         <metrics statements="6" coveredstatements="6" conditionals="12" coveredconditionals="12" methods="5" coveredmethods="5"/>
