@@ -349,7 +349,7 @@ export default { html, ViewModel }
 * プロパティの後ろにパイプ`|`、フィルタ名を記述します。
 * フィルタ名の後ろにカンマ`,`で区切ってオプションを指定できます。
 * フィルタはパイプ`|`を使って、複数指定できます。
-* フィルタは、`String` `Number` `Array`の非破壊系メソッドが用意されています。
+* フィルタは、`String` `Number` `Array`のイミュータブルなメソッドが用意されています。
 
 プロパティの加工という点ではアクセサプロパティと似ていますが、以下の点が異なります。
 
@@ -693,7 +693,7 @@ export default { html, ViewModel }
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoLQWY)
 
 ### Step.14 配列プロパティの操作
-* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、非破壊系メソッドで新たなリストを作成し代入します。`add()`
+* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たなリストを作成し代入します。`add()`
 * `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="list.*">`
 * `html`への反映は自動的に行われます。
 
@@ -709,8 +709,8 @@ const html = `
 class ViewModel {
   list = ["apple", "orange", "strawberry"];
   add() {
-    // 非破壊系メソッドconcatで要素を追加して、listプロパティへ代入
-    // 破壊系メソッドであるpushは使わない
+    // イミュータブルなconcatで要素を追加して、listプロパティへ代入
+    // ミュータブルなpushは使わない
     this.list = this.list.concat("grape");
   }
 }
@@ -720,6 +720,173 @@ export default { html, ViewModel }
 
 [実行結果を見る](https://codepen.io/mogera551/pen/yLGaNOm)
 
+### Step.15 ToDoリストを作ってみよう
+#### 仕様
+* チュートリアルの`index.html`を使用する
+* 入力欄と追加ボタンを用意する
+   * 追加ボタンを押すと入力欄の内容をToDoリストに追加し、入力欄をクリア
+   * 入力欄に入力がない場合追加ボタンは非活性化`disabled`
+* リスト部分
+   * `<ul>`でリスト表示する
+   * リスト要素毎に、チェックボックス、ToDoの内容、削除ボタンを表示
+   * チェックボックスをチェックすると、ToDoの内容を打消し線で装飾
+   * 削除ボタンを押すと当該行のToDoをリストから削除する
+#### `html`のモック
+```html
+<style>
+.completed {
+  text-decoration: line-through;
+}
+</style>
+<div>
+  <input type="text">
+  <button type="button">追加</button>
+</div>
+<ul>
+  <li>
+    <input type="checkbox">
+    <span>ToDoの内容</span>
+    <button type="button">削除</button>
+  </li>
+  <li>
+    <input type="checkbox" checked>
+    <span class="completed">ToDoの内容</span>
+    <button type="button">削除</button>
+  </li>
+</ul>
+```
+
+[モックを見る](https://codepen.io/mogera551/pen/LYMRWVK)
+
+#### ToDo情報を格納するクラス
+* ToDoの内容`content`
+* 完了フラグ`completed`
+```js
+class TodoItem {
+  content; // ToDoの内容
+  completed = false; // 完了フラグ
+  constructor(content) {
+    this.content = content;
+  }
+}
+```
+
+#### ViewModelクラスで保持する情報
+* 入力欄のテキスト`content`
+* ToDoリスト(TodoItemのリスト)`todoItems`
+   * 配列を保持する場合、初期値として空の配列を入れる
+```js
+class ViewModel {
+  content = ""; // 入力欄のテキスト
+  todoItems = []; // ToDoリスト、初期値には空の配列をセットする
+}
+```
+
+#### htmlの入力部分
+* モックの入力部分を元にして作成
+* 入力欄と`ViewModel`クラスの`content`をバインド。`data-bind="content"`
+* 追加ボタンを押すと`ViewModel`クラスの`add`メソッドを呼び出す。`data-bind="onclick:add"`
+* 入力欄に入力がない場合追加ボタンは非活性化`data-bind="disabled:content|falsey"`
+   * 追加ボタンの`disabled`プロパティを操作
+   * `content|falsey`はフィルタで、`!content`と同じ意味
+```html
+<div>
+  <input type="text" data-bind="content">
+  <button type="button" data-bind="onclick:add; disabled:content|falsey">追加</button>
+</div>
+```
+
+#### ViewModelのaddメソッド
+* 入力欄のテキストからToDoリストの要素を生成し、ToDoリストに追加
+   * ミュータブルな`push`ではなく`concat`を使う
+* 追加後、入力欄のテキストをクリア`this.content = ""`
+```js
+class ViewModel {
+  add() {
+    this.todoItems = this.todoItems.concat(new TodoItem(this.content));
+    this.content = "";
+  }
+}
+```
+
+#### htmlのリスト部分
+* モックのリスト部分を元にして作成
+* ToDoリストの繰り返すブロックを`{{ loop: }} ～ {{ end: }}`で括る
+* チェックボックスのチェック状態とToDoの完了フラグを連動するようにする。`data-bind="todoItems.*.completed"`
+* ToDoの内容の表示`{{ todoItems.*.content }}`
+* ToDoの完了フラグの状態によりクラス属性にcompletedを追加、削除する。`data-bind="class.completed:todoItems.*.completed"`
+* 削除ボタンを押すと`ViewModel`クラスの`delete`メソッドを呼び出す。`data-bind="onclick:delete"`
+   * リストのどの要素を削除するかは、`delete`メソッドの第2引数で渡されるインデックスで決定する
+```html
+<ul>
+  {{ loop:todoItems }}
+  <li>
+    <input type="checkbox" data-bind="todoItems.*.completed">
+    <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
+    <button type="button" data-bind="onclick:delete">削除</button>
+  </li>
+  {{ end: }}
+</ul>
+```
+
+#### ViewModelのdeleteメソッド
+* `delete`メソッドは、ループブロック内にあるため、第2引数にインデックスが渡る
+* ToDoリストからインデックスの指す要素を削除し、ToDoリストに代入する。
+   * ミュータブルな`splice`ではなく`toSpliced`を使う
+```js
+class ViewModel {
+  delete(e, $1) {
+    this.todoItems = this.todoItems.toSpliced($1, 1);
+  }
+}
+```
+
+#### 完成
+`main.js`
+```js
+const html = `
+<style>
+  .completed {
+    text-decoration: line-through;
+  }
+</style>
+<div>
+  <input type="text" data-bind="content">
+  <button type="button" data-bind="onclick:add; disabled:content|falsey">追加</button>
+</div>
+<ul>
+  {{ loop:todoItems }}
+  <li>
+    <input type="checkbox" data-bind="todoItems.*.completed">
+    <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
+    <button type="button" data-bind="onclick:delete">削除</button>
+  </li>
+  {{ end: }}
+</ul>
+`;
+
+class TodoItem {
+  content; // ToDoの内容
+  completed = false; // 完了フラグ
+  constructor(content) {
+    this.content = content;
+  }
+}
+
+class ViewModel {
+  content = ""; // 入力欄のテキスト
+  todoItems = []; // ToDoリスト、初期値には空の配列をセットする
+  add() {
+    this.todoItems = this.todoItems.concat(new TodoItem(this.content));
+    this.content = "";
+  }
+  delete(e, $1) {
+    this.todoItems = this.todoItems.toSpliced($1, 1);
+  }
+}
+```
+
+[実行結果を見る](https://codepen.io/mogera551/pen/JjwRWYV)
 
 ### memo
 
