@@ -100,6 +100,9 @@ test("Builtin outputFilters", () => {
   expect(outputFilters.offset(101, ["100"])).toBe(201);
   expect(outputFilters.offset(100, [100])).toBe(200);
   expect(outputFilters.offset(100, ["-1"])).toBe(99);
+
+  expect(outputFilters.unit("101", ["px"])).toBe("101px");
+  expect(outputFilters.unit(101, ["px"])).toBe("101px");
 });
 
 test("Builtin outputFilters string", () => {
