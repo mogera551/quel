@@ -787,8 +787,8 @@ class ViewModel {
 * 入力欄と`ViewModel`クラスの`content`をバインド。`data-bind="content"`
 * 追加ボタンを押すと`ViewModel`クラスの`add`メソッドを呼び出す。`data-bind="onclick:add"`
 * 入力欄に入力がない場合追加ボタンは非活性化`data-bind="disabled:content|falsey"`
-   * 追加ボタンの`disabled`プロパティを操作
-   * `content|falsey`はフィルタで、`!content`と同じ意味
+   * 追加ボタンの`disabled`プロパティと`ViewModel`クラスの`content|falsey`をバインド
+   * `content|falsey`は、`!content`と同じ意味
 ```html
 <div>
   <input type="text" data-bind="content">
@@ -797,7 +797,7 @@ class ViewModel {
 ```
 
 #### ViewModelのaddメソッド
-* 入力欄のテキストからToDoリストの要素を生成し、ToDoリストに追加
+* 入力欄のテキストからToDoリストの要素を生成し、ToDoリストに追加し、ToDoリストを更新
    * ミュータブルな`push`ではなく`concat`を使う
 * 追加後、入力欄のテキストをクリア`this.content = ""`
 ```js
@@ -812,7 +812,7 @@ class ViewModel {
 #### htmlのリスト部分
 * モックのリスト部分を元にして作成
 * ToDoリストの繰り返すブロックを`{{ loop: }} ～ {{ end: }}`で括る
-* チェックボックスのチェック状態とToDoの完了フラグを連動するようにする。`data-bind="todoItems.*.completed"`
+* チェックボックスのチェック状態とToDoの完了フラグをバインドする。`data-bind="todoItems.*.completed"`
 * ToDoの内容の表示`{{ todoItems.*.content }}`
 * ToDoの完了フラグの状態によりクラス属性にcompletedを追加、削除する。`data-bind="class.completed:todoItems.*.completed"`
 * 削除ボタンを押すと`ViewModel`クラスの`delete`メソッドを呼び出す。`data-bind="onclick:delete"`
