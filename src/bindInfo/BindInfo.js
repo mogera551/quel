@@ -76,9 +76,6 @@ export class BindInfo {
     this.#isContextIndex = undefined;
     this.#contextIndex = undefined;
     this.#contextParam = undefined;
-    this.#indexes = undefined;
-    this.#indexesString = undefined;
-    this.#viewModelPropertyKey = undefined;
   }
   /**
    * @type {PropertyName}
@@ -131,32 +128,20 @@ export class BindInfo {
   /**
    * @type {number[]}
    */
-  #indexes;
   get indexes() {
-    if (typeof this.#indexes === "undefined") {
-      this.#indexes = this.contextParam?.indexes ?? [];
-    }
-    return this.#indexes;
+    return this.contextParam?.indexes ?? [];
   }
   /**
    * @type {string}
    */
-  #indexesString;
   get indexesString() {
-    if (typeof this.#indexesString === "undefined") {
-      this.#indexesString = this.indexes.toString();
-    }
-    return this.#indexesString;
+    return this.indexes.toString();
   }
   /**
    * @type {string}
    */
-  #viewModelPropertyKey;
   get viewModelPropertyKey() {
-    if (typeof this.#viewModelPropertyKey === "undefined") {
-      this.#viewModelPropertyKey = this.viewModelProperty + "\t" + this.indexesString;
-    }
-    return this.#viewModelPropertyKey;
+    return this.viewModelProperty + "\t" + this.indexesString;
   }
   /**
    * @type {number[]}
