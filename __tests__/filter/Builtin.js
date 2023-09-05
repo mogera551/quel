@@ -103,6 +103,33 @@ test("Builtin outputFilters", () => {
 
   expect(outputFilters.unit("101", ["px"])).toBe("101px");
   expect(outputFilters.unit(101, ["px"])).toBe("101px");
+
+  expect(outputFilters.inc("101", ["100"])).toBe(201);
+  expect(outputFilters.inc(101, [100])).toBe(201);
+  expect(outputFilters.inc("101", [100])).toBe(201);
+  expect(outputFilters.inc(101, ["100"])).toBe(201);
+  expect(outputFilters.inc(100, [100])).toBe(200);
+  expect(outputFilters.inc(100, ["-1"])).toBe(99);
+
+  expect(outputFilters.mul("101", ["100"])).toBe(10100);
+  expect(outputFilters.mul(101, [100])).toBe(10100);
+  expect(outputFilters.mul("101", [100])).toBe(10100);
+  expect(outputFilters.mul(101, ["100"])).toBe(10100);
+  expect(outputFilters.mul(100, [100])).toBe(10000);
+  expect(outputFilters.mul(100, ["-1"])).toBe(-100);
+
+  expect(outputFilters.div("200", ["100"])).toBe(2);
+  expect(outputFilters.div(200, [100])).toBe(2);
+  expect(outputFilters.div("200", [100])).toBe(2);
+  expect(outputFilters.div(200, ["100"])).toBe(2);
+  expect(outputFilters.div(100, [100])).toBe(1);
+  expect(outputFilters.div(100, ["-1"])).toBe(-100);
+
+  expect(outputFilters.mod("200", ["3"])).toBe(2);
+  expect(outputFilters.mod(200, [3])).toBe(2);
+  expect(outputFilters.mod("200", [3])).toBe(2);
+  expect(outputFilters.mod(200, ["3"])).toBe(2);
+  expect(outputFilters.mod(100, [3])).toBe(1);
 });
 
 test("Builtin outputFilters string", () => {
