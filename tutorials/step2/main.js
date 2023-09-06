@@ -1,6 +1,7 @@
 const html = `
 <div>
   <div>{{ message }}</div>
+  <div data-bind="textContent:message"></div>
   <input type="text" data-bind="value:message">
 </div>
 <div>

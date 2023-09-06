@@ -4,11 +4,11 @@
 
 ## 主な特徴
 * ルール、作法を少なく、なるべく直感的に
-* 宣言的なUIの記述
+* 宣言的なViewの記述
 * 他のライブラリ不要
 * トランスパイル不要
 * コンポーネントベース
-* ドット記法によるプロパティ記述ができる！！！
+* ドット記法によるプロパティ記述
 
 ## はじめよう
 Quelを使うには、import宣言で、CDNもしくはダウンロードしたファイルから読み込みます。
@@ -235,6 +235,7 @@ class ViewModel {
 
 }
 
+// exportする
 export default { html, ViewModel };
 ```
 
@@ -242,17 +243,16 @@ export default { html, ViewModel };
 * `html`で、埋め込むプロパティ`message`を`{{ }}`で括ります。→ `{{ message }}`
 * `ViewModel`クラスで、状態保存するプロパティ`message`をフィールド宣言し、初期値`welcome to quel`を与えます。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <div>{{ message }}</div>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   message = "welcome to quel";
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/KKrbPjJ)
@@ -261,13 +261,17 @@ export default { html, ViewModel }
 ### Step.2 プロパティのバインド
 * `html`の要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
 * 要素の`data-bind`属性に`(要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
-* 入力系要素の場合、インタラクティブに`ViewModel`クラスのプロパティは更新されます。（双方向バインドを参照）
+   * `textContent:message`
+   * `value:message`
+   * `value:val`
+* `ViewModel`クラスのプロパティが更新されると、自動的に`html`の要素のプロパティへ更新が反映されます。
+* 入力系要素の場合、入力値に応じて`ViewModel`クラスのプロパティが更新されます。（双方向バインドを参照）
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <div>
   <div>{{ message }}</div>
+  <div data-bind="textContent:message"></div>
   <input type="text" data-bind="value:message">
 </div>
 <div>
@@ -278,35 +282,34 @@ const html = `
   </select>
   <div>{{ val }}</div>
 </div>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   message = "welcome to quel";
   val = "1";
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/QWzWPzg)
 
 ### Step.3 イベントのバインド
-* `html`の要素のイベントプロパティと`ViewModel`クラスのメソッドを関連付けます。
-* 要素の`data-bind`属性に`(要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。
+* `html`の要素のイベントプロパティ(on～)と`ViewModel`クラスのメソッドを関連付けます。
+* 要素の`data-bind`属性に`(要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。→`onclick:popup`
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <button type="button" data-bind="onclick:popup">popup</button>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   popup() {
     alert("popup!!!");
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/ZEVYWER)
@@ -314,17 +317,19 @@ export default { html, ViewModel }
 ### Step.4 アクセサプロパティ
 * `get`を使ったアクセサプロパティも埋め込んだり、バインドしたりできます。
 * アクセサプロパティを使う場合、`ViewModel`クラスの`$dependentProps`に依存関係を記述する必要があります。
-* 依存関係は、`(アクセサプロパティ名):[ (参照しているプロパティの列挙) ]`と記述します。
+* 依存関係は、`(アクセサプロパティ名):(参照しているプロパティの列挙)`と記述します。
+   * `"doubled": [ "counter" ]`
 * 依存関係を記述しないと、`html`の要素の更新が行われません。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <div>{{ counter }}</div>
 <div>{{ doubled }}</div>
 <button type="button" data-bind="onclick:countUp">count up</button>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   counter = 1;
   get doubled() {
@@ -333,13 +338,10 @@ class ViewModel {
   countUp() {
     this.counter++;
   }
-
   $dependentProps = {
     "doubled": [ "counter" ],
   };
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/abPzKwx)
@@ -357,76 +359,73 @@ export default { html, ViewModel }
 * 依存関係を書く必要がありません。(`$dependentProps`を書かなくていい。)
 * 単一のプロパティの出力のみフィルタできます。→フィルタは、複数のプロパティを扱うことはできません。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <div>{{ message }}</div>
 <div>{{ message|substring,4,15|toUpperCase }}</div>
 
 <div>{{ price }}</div>
 <div>{{ price|toLocaleString }}</div>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   message = "The quick brown fox jumps over the lazy dog";
   price = 19800;
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
 
 ### Step.6 条件ブロック 
 * `ViewModel`のプロパティを条件として、表示を制御することができます。
-* 制御するブロック（要素の集合）を`{{ if:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
+* 制御するブロック（要素の集合）を`{{ if:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。→`{{ if:val }}`～`{{ end: }}`
 * `{{ else }}`を使って、偽の条件を表示します。
 * `else if`はありません。
 * 単一のプロパティを条件とします。→条件は、複数のプロパティを扱うことはできません。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <button type="button" data-bind="onclick:change">change!!!</button>
 {{ if:val }}
   <div>True</div>
 {{ else: }}
   <div>False</div>
 {{ end: }}
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   val = true;
   change() {
     this.val = !this.val;
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/xxmGadX)
 
 ### Step.7 ループブロック 
 * `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
-* 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
+* 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。→`{{ loop:list }}`～`{{ end: }}`
 * 繰り返すブロック内では配列要素をワイルドカードを用いたドット記法`(ViewModelのプロパティ).*`で記述します。→ `{{ list.* }}`
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <ul>
 {{ loop:list }}
   <li>{{ list.* }}</li>
 {{ end: }}
 </ul>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   list = [ "cat", "dog", "fox", "pig" ];
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/eYbpzMw)
@@ -435,11 +434,10 @@ export default { html, ViewModel }
 * `ViewModel`に、初期化イベントハンドラであるコールバックメソッド`$initCallback`を設定できます。
 * 初期化イベントは、コンポーネント生成時に発生します。
 * コールバックメソッドに非同期`async`を指定することができます。
-* コールバックメソッドの引数は指定しません。
+* コールバックメソッドの引数はありません。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <ul>
   {{ loop:commits }}
   <li>
@@ -447,18 +445,17 @@ const html = `
   </li>
   {{ end: }}
 </ul>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   commits = [];
-
   async $initCallback() {
     const response = await fetch("https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main");
     this.commits = await response.json();
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/vYvLQVX)
@@ -467,12 +464,11 @@ export default { html, ViewModel }
 * `ViewModel`に、書き込みイベントハンドラであるコールバックメソッド`$writeCallback`を設定できます。
 * 書き込みイベントは、`ViewModel`のプロパティに書き込みがあった場合に発生します。
 * コールバックメソッドに非同期`async`を指定することができます。
-* コールバックメソッドの引数には、プロパティ名とインデックス配列を指定します。
-* 通常、入力系DOMに関連付けられた`ViewModel`プロパティは自動的に値を更新されますが、更新後に他の処理を行いたいときに使用します。
+* コールバックメソッドの引数には、書き込みしたプロパティ名とインデックス配列が渡されます。
+* 通常、入力系DOMに関連付けられた`ViewModel`プロパティは自動的に値を更新されますが、更新後に何か他の処理を行いたいときに使用します。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <select data-bind="value:per_page">
   <option value="3">3</option>
   <option value="4">4</option>
@@ -485,12 +481,13 @@ const html = `
   </li>
   {{ end: }}
 </ul>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   per_page = "3";
   commits = [];
-
   async getCommits(per_page) {
     const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${per_page}&sha=main`);
     return await response.json();
@@ -500,18 +497,19 @@ class ViewModel {
   }
   async $writeCallback(name, indexes) {
     if (name === "per_page") {
+      // per_pageに変更があったら、取得しなおす
       this.commits = await this.getCommits(this.per_page);
     }
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoxQEE)
 
 ### Step.10 デフォルトプロパティ・双方向バインド
-* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。`data-bind="value:message"`→`data-bind="message"`, `data-bind="textContent:message"`→`data-bind="message"` 
+* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。
+   * `data-bind="value:message"`→`data-bind="message"`
+   * `data-bind="textContent:message"`→`data-bind="message"` 
 
 |タグ|type属性|プロパティ|
 |----|----|----|
@@ -527,9 +525,8 @@ export default { html, ViewModel }
 * 双方向バインドの場合、出力のためのフィルタは指定しません。必要であれば型変換のための入力フィルタ`number`を指定します。`data-bind="num|number"`
 * 入力フィルタの指定方法は、通常のフィルタと同じです。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <div data-bind="message"></div>
 <div>
   <input type="text" data-bind="message">
@@ -552,81 +549,75 @@ const html = `
   </select>
   {{ double }}
 </div>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   num = 1;
   message = "";
   get double() {
     return this.num + this.num;
   }
-
   $dependentProps = {
     "double": ["num"]
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/ZEVWeEP)
 
 ### Step.11 スタイルのバインド
-* `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素のスタイル属性名):(ViewModelのプロパティ)`と記述します。
+* `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素のスタイル属性名):(ViewModelのプロパティ)`と記述します。→`style.color:numberColor`
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <input type="number" data-bind="num|number">
 <div data-bind="style.color:numberColor">{{ num }}</div>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   num = 5;
   get numberColor() {
     return this.num > 10 ? "red" : "black";
   }
-
   $dependentProps = {
     "numberColor": ["num"]
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/mdaEmJx)
 
 ### Step.12 クラスのバインド
-* `html`の要素のクラス属性と`ViewModel`クラスのプロパティをバインドする場合、`class.(クラス名):(ViewModelのプロパティ)`と記述します。
+* `html`の要素のクラス属性と`ViewModel`クラスのプロパティをバインドする場合、`class.(クラス名):(ViewModelのプロパティ)`と記述します。→`class.over:isOver`
 * `ViewModel`クラスのプロパティが真の場合、要素のクラス属性にクラス名が追加されます。
 * `ViewModel`クラスのプロパティが偽の場合、要素のクラス属性からクラス名が削除されます。
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <style>
 .over {
   color:red;
 }
 </style>
-
 <input type="number" data-bind="num|number">
 <div data-bind="class.over:isOver">{{ num }}</div>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   num = 5;
   get isOver() {
     return this.num > 10;
   }
-
   $dependentProps = {
     "isOver": ["num"]
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/LYMZypL)
@@ -637,26 +628,26 @@ export default { html, ViewModel }
 * ループブロック内のワイルドーカードを使ったアクセサプロパティでコンテキスト変数（インデックス値）を利用することができます。
   * プロパティ内でコンテキスト変数`this.$1`を参照します。
 * ループブロック内のイベントハンドラでインデックス値を利用することができます。
-  * インデックス値はイベントハンドラ第2引数で渡されます。(`popup(e, $1)`の`$1`)
+  * インデックス値はイベントハンドラ第2引数に渡されます。(`popup(e, $1)`の`$1`)
 * ループブロック内で直接コンテキスト変数（インデックス値）を利用することができます。`$1|offset,1`
 
-`main.js`
-```js
-const html = `
+`main.js`の変数`html`の内容
+```html
 <style>
 .adult {
   color:red;
 }
 </style>
-
 {{ loop:members }}
 <div data-bind="class.adult:members.*.isAdult">
   {{ members.*.no }} = {{ $1|offset,1 }}:{{ members.*.name }}, {{ members.*.age }}
   <button type="button" data-bind="onclick:popup">popup</button>
 </div>
 {{ end: }}
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   members = [
     { name:"佐藤　一郎", age:20 },
@@ -686,26 +677,25 @@ class ViewModel {
     // →省略
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoLQWY)
 
 ### Step.14 配列プロパティの操作
-* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たなリストを作成し代入します。`add()`
+* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たなリストを作成し代入します。`add()のconcat`
 * `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="list.*">`
 * `html`への反映は自動的に行われます。
 
-`main.js`
-```JS
-const html = `
+`main.js`の変数`html`の内容
+```html
 {{ loop:list }}
 <div><input type="text" data-bind="list.*">{{ list.* }}</div>
 {{ end: }}
 <button type="button" data-bind="onclick:add">add grape</button>
-`;
+```
 
+`main.js`の`ViewModel`クラス
+```js
 class ViewModel {
   list = ["apple", "orange", "strawberry"];
   add() {
@@ -714,8 +704,6 @@ class ViewModel {
     this.list = this.list.concat("grape");
   }
 }
-
-export default { html, ViewModel }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/yLGaNOm)
@@ -723,13 +711,15 @@ export default { html, ViewModel }
 ### Step.15 ToDoリストを作ってみよう
 #### 仕様
 * チュートリアルの`index.html`を使用する
-* 入力欄と追加ボタンを用意する
+* 入力部分
+   * 入力欄と追加ボタンを用意する
    * 追加ボタンを押すと入力欄の内容をToDoリストに追加し、入力欄をクリア
    * 入力欄に入力がない場合追加ボタンは非活性化`disabled`
 * リスト部分
    * `<ul>`でリスト表示する
    * リスト要素毎に、チェックボックス、ToDoの内容、削除ボタンを表示
    * チェックボックスをチェックすると、ToDoの内容を打消し線で装飾
+   * 打消し線はクラス属性(`completed`)で実現
    * 削除ボタンを押すと当該行のToDoをリストから削除する
 #### `html`のモック
 ```html
@@ -738,10 +728,12 @@ export default { html, ViewModel }
   text-decoration: line-through;
 }
 </style>
+<!-- 入力部分 -->
 <div>
   <input type="text">
   <button type="button">追加</button>
 </div>
+<!-- リスト部分 -->
 <ul>
   <li>
     <input type="checkbox">
@@ -816,7 +808,6 @@ class ViewModel {
 * ToDoの内容の表示`{{ todoItems.*.content }}`
 * ToDoの完了フラグの状態によりクラス属性にcompletedを追加、削除する。`data-bind="class.completed:todoItems.*.completed"`
 * 削除ボタンを押すと`ViewModel`クラスの`delete`メソッドを呼び出す。`data-bind="onclick:delete"`
-   * リストのどの要素を削除するかは、`delete`メソッドの第2引数で渡されるインデックスで決定する
 ```html
 <ul>
   {{ loop:todoItems }}
