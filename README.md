@@ -699,7 +699,7 @@ class ViewModel {
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoLQWY)
 
 ### Step.14 配列プロパティの操作
-* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たなリストを作成し代入します。`add()のconcat`
+* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たな配列を作成し代入します。`add()のconcat`
 * `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="fruits.*">`
    * `html`への反映は自動的に行われます。
 
