@@ -409,14 +409,24 @@ class ViewModel {
 
 ### Step.7 ループブロック 
 * `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
-* 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。→`{{ loop:list }}`～`{{ end: }}`
-* 繰り返すブロック内では配列要素をワイルドカードを用いたドット記法`(ViewModelのプロパティ).*`で記述します。→ `{{ list.* }}`
+* 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
+   * `{{ loop:animals }}`～`{{ end: }}`
+   * `{{ loop:members }}`～`{{ end: }}`
+* 繰り返すブロック内では配列要素をワイルドカードを用いたドット記法`(ViewModelのプロパティ).*`で記述します。
+   * `animals.*`
+   * `members.*.name`
+   * `members.*.age`
 
 `main.js`の変数`html`の内容
 ```html
 <ul>
-{{ loop:list }}
-  <li>{{ list.* }}</li>
+{{ loop:animals }}
+  <li>{{ animals.* }}</li>
+{{ end: }}
+</ul>
+<ul>
+{{ loop:members }}
+  <li>{{ members.*.name }}({{ members.*.age }})</li>
 {{ end: }}
 </ul>
 ```
@@ -424,7 +434,14 @@ class ViewModel {
 `main.js`の`ViewModel`クラス
 ```js
 class ViewModel {
-  list = [ "cat", "dog", "fox", "pig" ];
+  animals = [ "cat", "dog", "fox", "pig" ];
+  members = [
+    { name:"佐藤　一郎", age:20 },
+    { name:"鈴木　二郎", age:15 },
+    { name:"高橋　三郎", age:22 },
+    { name:"田中　四郎", age:18 },
+    { name:"伊藤　五郎", age:17 },
+  ];
 }
 ```
 
