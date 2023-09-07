@@ -507,7 +507,7 @@ class ViewModel {
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoxQEE)
 
 ### Step.10 デフォルトプロパティ・双方向バインド
-* `html`の要素の下表のプロパティをデフォルトプロパティとし、プロパティのバインドの指定を省略することができます。
+* `html`の要素の下表のプロパティをデフォルトプロパティとし、バインド時`html`の要素のプロパティの指定を省略することができます。
    * `data-bind="value:message"`→`data-bind="message"`
    * `data-bind="textContent:message"`→`data-bind="message"` 
 
@@ -623,13 +623,13 @@ class ViewModel {
 [実行結果を見る](https://codepen.io/mogera551/pen/LYMZypL)
 
 ### Step.13 ループブロック内のコンテキスト変数・ワイルドカードの使用
-* ループブロック内でワイルドーカードを使ったアクセサプロパティを宣言できます。`members.*.no` `members.*.isAdult`
-* ループブロック内のワイルドーカードを使ったアクセサプロパティでワイルドーカードを使ったプロパティにアクセスできます。`members.*.isAdult`でで`members.*.age`を参照している部分。
+* ループブロック内でワイルドーカードを使ったアクセサプロパティを宣言できます。→`members.*.no` `members.*.isAdult`
+* ループブロック内のワイルドーカードを使ったアクセサプロパティでワイルドーカードを使ったプロパティにアクセスできます。→`members.*.isAdult`内で`members.*.age`を参照している部分。
 * ループブロック内のワイルドーカードを使ったアクセサプロパティでコンテキスト変数（インデックス値）を利用することができます。
   * プロパティ内でコンテキスト変数`this.$1`を参照します。
 * ループブロック内のイベントハンドラでインデックス値を利用することができます。
-  * インデックス値はイベントハンドラ第2引数に渡されます。(`popup(e, $1)`の`$1`)
-* ループブロック内で直接コンテキスト変数（インデックス値）を利用することができます。`$1|offset,1`
+  * インデックス値はイベントハンドラ第2引数に渡されます。→`popup(e, $1)`の`$1`
+* ループブロック内で直接コンテキスト変数（インデックス値）を利用することができます。→`$1|offset,1`
 
 `main.js`の変数`html`の内容
 ```html
@@ -688,10 +688,10 @@ class ViewModel {
 
 `main.js`の変数`html`の内容
 ```html
+<button type="button" data-bind="onclick:add">add grape</button>
 {{ loop:list }}
 <div><input type="text" data-bind="list.*">{{ list.* }}</div>
 {{ end: }}
-<button type="button" data-bind="onclick:add">add grape</button>
 ```
 
 `main.js`の`ViewModel`クラス

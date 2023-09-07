@@ -1,8 +1,8 @@
 const html = `
+<button type="button" data-bind="onclick:add">add grape</button>
 {{ loop:list }}
 <div><input type="text" data-bind="list.*">{{ list.* }}</div>
 {{ end: }}
-<button type="button" data-bind="onclick:add">add grape</button>
 `;
 
 class ViewModel {
