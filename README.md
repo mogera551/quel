@@ -700,25 +700,25 @@ class ViewModel {
 
 ### Step.14 配列プロパティの操作
 * `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たなリストを作成し代入します。`add()のconcat`
-* `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="list.*">`
-* `html`への反映は自動的に行われます。
+* `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="fruits.*">`
+   * `html`への反映は自動的に行われます。
 
 `main.js`の変数`html`の内容
 ```html
 <button type="button" data-bind="onclick:add">add grape</button>
-{{ loop:list }}
-<div><input type="text" data-bind="list.*">{{ list.* }}</div>
+{{ loop:fruits }}
+<div><input type="text" data-bind="fruits.*">{{ fruits.* }}</div>
 {{ end: }}
 ```
 
 `main.js`の`ViewModel`クラス
 ```js
 class ViewModel {
-  list = ["apple", "orange", "strawberry"];
+  fruits = ["apple", "orange", "strawberry"];
   add() {
     // イミュータブルなconcatで要素を追加して、listプロパティへ代入
     // ミュータブルなpushは使わない
-    this.list = this.list.concat("grape");
+    this.fruits = this.fruits.concat("grape");
   }
 }
 ```
