@@ -716,7 +716,7 @@ class ViewModel {
 class ViewModel {
   fruits = ["apple", "orange", "strawberry"];
   add() {
-    // イミュータブルなconcatで要素を追加して、listプロパティへ代入
+    // イミュータブルなconcatで要素を追加して、fruitsプロパティへ代入
     // ミュータブルなpushは使わない
     this.fruits = this.fruits.concat("grape");
   }

@@ -8,7 +8,7 @@ const html = `
 class ViewModel {
   fruits = ["apple", "orange", "strawberry"];
   add() {
-    // 非破壊系メソッドconcatで要素を追加して、listプロパティへ代入
+    // 非破壊系メソッドconcatで要素を追加して、fruitsプロパティへ代入
     // 破壊系メソッドであるpushは使わない
     this.fruits = this.fruits.concat("grape");
   }
