@@ -6,7 +6,7 @@ test("AttachShadow isCustomTag", () => {
   expect(AttachShadow.isCustomTag("custom-tag-tag")).toBe(true);
 });
 
-test("AttachShadow isCustomTag", () => {
+test("AttachShadow isAttachable", () => {
   expect(AttachShadow.isAttachable("custom-tag")).toBe(true);
   expect(AttachShadow.isAttachable("customtag")).toBe(false);
   expect(AttachShadow.isAttachable("custom-tag-tag")).toBe(true);
