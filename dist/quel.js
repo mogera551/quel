@@ -3317,7 +3317,7 @@ let Handler$1 = class Handler {
 
 /**
  * 
- * @type {Component} component
+ * @param {Component} component
  * @returns {Proxy<Handler>}
  */
 function createProps(component) {

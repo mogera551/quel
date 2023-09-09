@@ -116,7 +116,7 @@ class Handler {
 
 /**
  * 
- * @type {Component} component
+ * @param {Component} component
  * @returns {Proxy<Handler>}
  */
 export function createProps(component) {
