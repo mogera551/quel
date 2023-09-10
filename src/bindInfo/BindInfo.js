@@ -158,6 +158,10 @@ export class BindInfo {
    * @type {any}
    */
   lastViewModelValue;
+  /**
+   * @type {any}
+   */
+  lastViewModelFilteredValue;
 
   /**
    * @type {ContextInfo}

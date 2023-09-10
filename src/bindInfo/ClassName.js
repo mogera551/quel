@@ -12,11 +12,15 @@ export class ClassNameBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, value, () => {
-        element[CLASS_PROPERTY] = value.join(DELIMITER);
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredValue, () => {
+          element[CLASS_PROPERTY] = filteredValue.join(DELIMITER);
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }

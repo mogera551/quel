@@ -16,11 +16,15 @@ export class Radio extends BindInfo {
    */
   updateNode() {
     const {component, node, radio, nodeProperty, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        radio.checked = value === radio.value;
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+          radio.checked = filteredValue === radio.value;
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }

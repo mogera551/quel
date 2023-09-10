@@ -1015,6 +1015,10 @@ class BindInfo {
    * @type {any}
    */
   lastViewModelValue;
+  /**
+   * @type {any}
+   */
+  lastViewModelFilteredValue;
 
   /**
    * @type {ContextInfo}
@@ -1180,11 +1184,15 @@ class AttributeBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, attrName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, value, () => {
-        element.setAttribute(attrName, value ?? "");
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, filteredValue, () => {
+          element.setAttribute(attrName, filteredValue ?? "");
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }
@@ -1214,11 +1222,15 @@ class ClassListBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        value ? element.classList.add(className) : element.classList.remove(className);
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+          filteredValue ? element.classList.add(className) : element.classList.remove(className);
+        }));
+        this.lastViewModelFilteredValue = value;
+      }
       this.lastViewModelValue = value;
     }
   }
@@ -1243,11 +1255,15 @@ class ClassNameBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, value, () => {
-        element[CLASS_PROPERTY] = value.join(DELIMITER);
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredValue, () => {
+          element[CLASS_PROPERTY] = filteredValue.join(DELIMITER);
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }
@@ -1275,11 +1291,15 @@ class Radio extends BindInfo {
    */
   updateNode() {
     const {component, node, radio, nodeProperty, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        radio.checked = value === radio.value;
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+          radio.checked = filteredValue === radio.value;
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }
@@ -1309,11 +1329,15 @@ class Checkbox extends BindInfo {
    */
   updateNode() {
     const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        checkbox.checked = value.find(value => value === checkbox.value);
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+          checkbox.checked = filteredValue.find(value => value === checkbox.value);
+        }));
+        this.lastViewModelFilteredValue = value;
+      }
       this.lastViewModelValue = value;
     }
   }
@@ -1550,9 +1574,8 @@ class TemplateBind extends BindInfo {
   }
 
   updateNode() {
-    const newValue = (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
+    (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
       (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
-    this.lastViewModelValue = (newValue instanceof Array) ? newValue.slice() : newValue;
   }
   
   /**
@@ -1578,22 +1601,24 @@ class TemplateBind extends BindInfo {
    */
   expandIf() {
     const { component, filters, context } = this;
-    const lastValue = this.lastViewModelValue;
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
-    if (lastValue !== newValue) {
-      this.removeFromParent();
-      if (newValue) {
-        this.templateChildren = [TemplateChild.create(this, Context.clone(context))];
-        this.appendToParent();
-      } else {
-        this.templateChildren = [];
+    const value = this.getViewModelValue();
+    if (this.lastViewModelValue !== value) {
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        this.removeFromParent();
+        if (filteredValue) {
+          this.templateChildren = [TemplateChild.create(this, Context.clone(context))];
+          this.appendToParent();
+        } else {
+          this.templateChildren = [];
+        }
+        this.lastViewModelFilteredValue = filteredValue;
       }
+      this.lastViewModelValue = value;
     }
 
     // 子要素の展開を実行
     this.templateChildren.forEach(templateChild => templateChild.updateNode());
-
-    return newValue;
   }
 
   /**
@@ -1674,7 +1699,7 @@ class TemplateBind extends BindInfo {
 
     this.templateChildren = newTemplateChildren;
 
-    return newValue;
+    this.lastViewModelValue = newValue.slice();
   }
 
   /**
@@ -1911,11 +1936,15 @@ class StyleBind extends BindInfo {
    */
   updateNode() {
     const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, value, () => {
-        htmlElement[STYLE_PROPERTY][styleName] = value;
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
+          htmlElement[STYLE_PROPERTY][styleName] = filteredValue;
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }
@@ -1950,11 +1979,15 @@ class PropertyBind extends BindInfo {
    */
   updateNode() {
     const {component, node, propName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, value, () => {
-        node[propName] = value ?? "";
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredValue, () => {
+          node[propName] = filteredValue ?? "";
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }
@@ -1979,11 +2012,15 @@ class TextBind extends BindInfo {
    */
   updateNode() {
     const {component, node, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, value, () => {
-        node[DEFAULT_PROPERTY$2] = value ?? "";
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, filteredValue, () => {
+          node[DEFAULT_PROPERTY$2] = filteredValue ?? "";
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }

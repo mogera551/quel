@@ -16,11 +16,15 @@ export class PropertyBind extends BindInfo {
    */
   updateNode() {
     const {component, node, propName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, value, () => {
-        node[propName] = value ?? "";
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredValue, () => {
+          node[propName] = filteredValue ?? "";
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }

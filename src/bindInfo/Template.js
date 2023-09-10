@@ -117,9 +117,8 @@ export class TemplateBind extends BindInfo {
   }
 
   updateNode() {
-    const newValue = (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
+    (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
       (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
-    this.lastViewModelValue = (newValue instanceof Array) ? newValue.slice() : newValue;
   }
   
   /**
@@ -145,22 +144,24 @@ export class TemplateBind extends BindInfo {
    */
   expandIf() {
     const { component, filters, context } = this;
-    const lastValue = this.lastViewModelValue;
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
-    if (lastValue !== newValue) {
-      this.removeFromParent();
-      if (newValue) {
-        this.templateChildren = [TemplateChild.create(this, Context.clone(context))];
-        this.appendToParent();
-      } else {
-        this.templateChildren = [];
+    const value = this.getViewModelValue();
+    if (this.lastViewModelValue !== value) {
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        this.removeFromParent();
+        if (filteredValue) {
+          this.templateChildren = [TemplateChild.create(this, Context.clone(context))];
+          this.appendToParent();
+        } else {
+          this.templateChildren = [];
+        }
+        this.lastViewModelFilteredValue = filteredValue;
       }
+      this.lastViewModelValue = value;
     }
 
     // 子要素の展開を実行
     this.templateChildren.forEach(templateChild => templateChild.updateNode());
-
-    return newValue;
   }
 
   /**
@@ -241,7 +242,7 @@ export class TemplateBind extends BindInfo {
 
     this.templateChildren = newTemplateChildren;
 
-    return newValue;
+    this.lastViewModelValue = newValue.slice();
   }
 
   /**

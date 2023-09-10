@@ -19,11 +19,15 @@ export class StyleBind extends BindInfo {
    */
   updateNode() {
     const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, value, () => {
-        htmlElement[STYLE_PROPERTY][styleName] = value;
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
+          htmlElement[STYLE_PROPERTY][styleName] = filteredValue;
+        }));
+        this.lastViewModelFilteredValue = filteredValue;
+      }
       this.lastViewModelValue = value;
     }
   }

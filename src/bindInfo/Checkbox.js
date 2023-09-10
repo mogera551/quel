@@ -15,11 +15,15 @@ export class Checkbox extends BindInfo {
    */
   updateNode() {
     const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        checkbox.checked = value.find(value => value === checkbox.value);
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+          checkbox.checked = filteredValue.find(value => value === checkbox.value);
+        }));
+        this.lastViewModelFilteredValue = value;
+      }
       this.lastViewModelValue = value;
     }
   }

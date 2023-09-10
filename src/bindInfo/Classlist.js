@@ -17,11 +17,15 @@ export class ClassListBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out);
+    const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, value, () => {
-        value ? element.classList.add(className) : element.classList.remove(className);
-      }));
+      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      if (this.lastViewModelFilteredValue !== filteredValue) {
+        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+          filteredValue ? element.classList.add(className) : element.classList.remove(className);
+        }));
+        this.lastViewModelFilteredValue = value;
+      }
       this.lastViewModelValue = value;
     }
   }
