@@ -78,7 +78,7 @@ export class TemplateChild {
 
   /**
    * 
-   * @param {Template} templateBind 
+   * @param {TemplateBind} templateBind 
    * @param {ContextInfo} context
    * @returns {TemplateChild}
    */
