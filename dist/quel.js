@@ -2447,10 +2447,10 @@ class Binder {
    */
   static bind(nodes, component, context) {
     return nodes.flatMap(node => 
-      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(node, component, context) : 
-      (node instanceof HTMLElement) ? BindToHTMLElement.bind(node, component, context) :
-      (node instanceof SVGElement) ? BindToSVGElement.bind(node, component, context) :
       (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(node, component, context) : 
+      (node instanceof HTMLElement) ? BindToHTMLElement.bind(node, component, context) :
+      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(node, component, context) : 
+      (node instanceof SVGElement) ? BindToSVGElement.bind(node, component, context) :
       utils.raise(`unknown node type`)
     );
   }
