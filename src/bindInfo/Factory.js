@@ -15,55 +15,46 @@ import { StyleBind } from "./Style.js";
 import { PropertyBind } from "./Property.js";
 import { TextBind } from "./Text.js";
 
-const createPropertyBind = (bindInfo, info) => Object.assign(new PropertyBind, bindInfo, info);
-const createAttributeBind = (bindInfo, info) => Object.assign(new AttributeBind, bindInfo, info);
-const createClassListBind = (bindInfo, info) => Object.assign(new ClassListBind, bindInfo, info);
-const createClassNameBind = (bindInfo, info) => Object.assign(new ClassNameBind, bindInfo, info);
-const createRadioBind = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
-const createCheckboxBind = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
-const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
-const createEventBind = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
-const createComponentBind = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
-const createStyleBind = (bindInfo, info) => Object.assign(new StyleBind, bindInfo, info);
-const createTextBind = (bindInfo, info) => Object.assign(new TextBind, bindInfo, info);
-
-const creatorByType = new Map();
-creatorByType.set(NodePropertyType.property, createPropertyBind);
-creatorByType.set(NodePropertyType.attribute, createAttributeBind);
-creatorByType.set(NodePropertyType.classList, createClassListBind);
-creatorByType.set(NodePropertyType.className, createClassNameBind);
-creatorByType.set(NodePropertyType.radio, createRadioBind);
-creatorByType.set(NodePropertyType.checkbox, createCheckboxBind);
-creatorByType.set(NodePropertyType.template, createTemplateBind);
-creatorByType.set(NodePropertyType.event, createEventBind);
-creatorByType.set(NodePropertyType.component, createComponentBind);
-creatorByType.set(NodePropertyType.style, createStyleBind);
-creatorByType.set(NodePropertyType.text, createTextBind);
+const classByType = {};
+classByType[NodePropertyType.property] = PropertyBind;
+classByType[NodePropertyType.attribute] = AttributeBind;
+classByType[NodePropertyType.classList] = ClassListBind;
+classByType[NodePropertyType.className] = ClassNameBind;
+classByType[NodePropertyType.radio] = Radio;
+classByType[NodePropertyType.checkbox] = Checkbox;
+classByType[NodePropertyType.template] = TemplateBind;
+classByType[NodePropertyType.event] = Event;
+classByType[NodePropertyType.component] = ComponentBind;
+classByType[NodePropertyType.style] = StyleBind;
+classByType[NodePropertyType.text] = TextBind;
 
 export class Factory {
   /**
-   * 
-   * @param {{
-   * component:Component,
-   * node:Node,
-   * nodeProperty:string,
-   * viewModel:ViewModel,
-   * viewModelProperty:string,
-   * filters:Filter[],
-   * context:ContextInfo
-   * }}
+   * @param {Component} component
+   * @param {Node} node
+   * @param {string} nodeProperty
+   * @param {ViewModel} viewModel
+   * @param {string} viewModelProperty
+   * @param {Filter[]} filters
+   * @param {ContextInfo} context
    * @returns {BindInfo}
    */
-  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, context}) {
-    const bindData = {
-      component, node, nodeProperty, viewModel, viewModelProperty, filters, context
-    };
+  static create(component, node, nodeProperty, viewModel, viewModelProperty, filters, context) {
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
     /**
      * @type {BindInfo}
      */
-    const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
-    if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {
+    const bindInfo = new classByType[nodeInfo.type];
+    bindInfo.component = component;
+    bindInfo.node = node;
+    bindInfo.nodeProperty = nodeProperty;
+    bindInfo.viewModel = viewModel;
+    bindInfo.viewModelProperty = viewModelProperty;
+    bindInfo.filters = filters;
+    bindInfo.context = context;
+    bindInfo.nodePropertyElements = nodeInfo.nodePropertyElements;
+    bindInfo.eventType = nodeInfo.eventType;
+    if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length === 0) {
       utils.raise(`${bindInfo.viewModelPropertyName.name} is outside loop`);
     }
     return bindInfo;

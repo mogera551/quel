@@ -2,7 +2,6 @@ import "../types.js";
 import { Binder } from "../binder/Binder.js";
 import { Selector } from "../binder/Selector.js";
 import { Context } from "../context/Context.js";
-import { BindInfo } from "../bindInfo/BindInfo.js";
 
 export class ViewTemplate {
   /**
@@ -10,7 +9,7 @@ export class ViewTemplate {
    * @param {HTMLElement} rootElement 
    * @param {Component} component 
    * @param {ContextInfo} contextInfo
-   * @returns { binds:BindInfo[], content:DocumentFragment }
+   * @returns {{binds:BindInfo[], content:DocumentFragment}}
    */
   static render(component, template, context) {
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
@@ -26,7 +25,7 @@ export class View {
    * @param {HTMLElement} rootElement 
    * @param {Component} component 
    * @param {HTMLTemplateElement} template 
-   * @returns 
+   * @returns {BindInfo[]}
    */
   static render(rootElement, component, template) {
     const { binds, content } = ViewTemplate.render(component, template, Context.create());

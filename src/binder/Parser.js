@@ -89,9 +89,9 @@ const parseBindText = (text, defaultName) => {
  */
 export class Parser {
   /**
-   * @type {Map<string,BindTextInfo[]>}
+   * @type {Object<string,BindTextInfo[]>}
    */
-  static bindTextsByKey = new Map();
+  static bindTextsByKey = {};
 
   /**
    * 属性値のパース
@@ -101,10 +101,10 @@ export class Parser {
    */
   static parse(text, defaultName) {
     const key = text + "\t" + defaultName;
-    let binds = this.bindTextsByKey.get(key);
+    let binds = this.bindTextsByKey[key];
     if (typeof binds === "undefined") {
       binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-      this.bindTextsByKey.set(key, binds);
+      this.bindTextsByKey[key] = binds;
     }
     return binds;
   }

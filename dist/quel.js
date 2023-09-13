@@ -1,3 +1,75 @@
+/**
+ * @typedef {import("../modules/dot-notation/dot-notation.js").PropertyName} PropertyName
+ * 
+ * @typedef {import("../modules/dot-notation/dot-notation.js").PropertyAccess} PropertyAccess 
+ * 
+ * @typedef {{html?:string,css?:string,ViewModel:class,template?:HTMLTemplateElement,extendClass?:class<HTMLElement>,extendTag?:string,componentModules:Object<string,UserComponentModule>}} UserComponentModule
+ * 
+ * @typedef {(value:any,options:string[])=>{return:any}} FilterFunc
+ * 
+ * @typedef {{input:FilterFunc,output:FilterFunc}} UserFilterData
+ * 
+ * @typedef {Object<string,any>} ViewModel 
+ * 
+ * @typedef {import("./bindInfo/BindInfo.js").BindInfo} BindInfo
+ * 
+ * @typedef {import("./thread/Thread.js").Thread} Thread
+ * 
+ * @typedef {import("./thread/UpdateSlot.js").UpdateSlot} UpdateSlot
+ * 
+ * @typedef {import("./thread/ViewModelUpdator.js").ProcessData} ProcessData 
+ * 
+ * @typedef {import("./thread/UpdateSlot.js").UpdateSlotStatusCallback} UpdateSlotStatusCallback
+ * 
+ * 
+ * @typedef {import("./filter/Filter.js").Filter} Filter
+ * 
+ * @typedef {{
+ *   propName:PropertyName,
+ *   indexes:number[],
+ *   pos:number,
+ * }} ContextParam
+ * 
+ * @typedef {{indexes:number[],stack:ContextParam[]}} ContextInfo
+ * 
+ * @typedef {{
+ *   viewModel:ViewModel,
+ *   binds:BindInfo[],
+ *   thread:Thread,
+ *   updateSlot:UpdateSlot,
+ *   props:Object<string,any>,
+ *   globals:Object<string,any>,
+ *   initialResolve:(...args)=>{},
+ *   initialReject:()=>{},
+ *   initialPromise:Promise,
+ *   aliveResolve:(...args)=>{},
+ *   aliveReject:()=>{},
+ *   alivePromise:Promise,
+ *   parentComponent:Component,
+ *   withShadowRoot:boolean,
+ *   viewRootElement:ShadowRoot|HTMLElement,
+ *   initialize:()=>{},
+ *   build:()=>{},
+ *   connectedCallback:()=>{},
+ *   disconnectedCallback:()=>{},
+ *   applyToNode:(setOfViewModelPropertyKeys:Set<String>)=>{},
+ *   initialize:()=>{},
+ *   filters:{
+ *     in:Object<string,FilterFunc>,
+ *     out:Object<string,FilterFunc>,
+ *   },
+ *   static ViewModel:class<ViewModel>,
+ *   static template:HTMLTemplateElement,
+ *   static extendClass:class<HTMLElement>,
+ *   static extendTag:string,
+ *   static inputFilters:Object<string,FilterFunc>,
+ *   static outputFilters:Object<string,FilterFunc>,
+ * }} Component
+ * 
+ */
+
+window.elapsedTimes = {};
+
 class utils {
   /**
    * 
@@ -787,7 +859,7 @@ class NodePropertyInfo {
    */
   eventType;
 
-  static nodePropertyInfoByKey = new Map;
+  static nodePropertyInfoByKey = {};
   /**
    * 
    * @param {Node} node
@@ -797,8 +869,8 @@ class NodePropertyInfo {
   static get(node, nodeProperty) {
     const result = new NodePropertyInfo;
     const key = `${node.constructor.name}\t${node.textContent[2]}\t${node[Symbols.isComponent]}\t${nodeProperty}`;
-    const nodePropertyInfo = this.nodePropertyInfoByKey.get(key);
-    if (nodePropertyInfo) {
+    const nodePropertyInfo = this.nodePropertyInfoByKey[key];
+    if (typeof nodePropertyInfo !== "undefined") {
       result.type = nodePropertyInfo.type;
       result.nodePropertyElements = nodePropertyInfo.nodePropertyElements.slice(0);
       result.eventType = nodePropertyInfo.eventType;
@@ -855,7 +927,7 @@ class NodePropertyInfo {
       }
   
     } while(false);
-    this.nodePropertyInfoByKey.set(key, result);
+    this.nodePropertyInfoByKey[key] = result;
     return result;
   }
 }
@@ -1025,6 +1097,11 @@ class BindInfo {
    */
   context;
 
+  /**
+   * @type {string}
+   */
+  eventType;
+  
   /**
    * 
    * @returns {any}
@@ -1375,6 +1452,18 @@ const getNodeRoute = node => {
   return routeIndexes;
 };
 
+/**
+ * 
+ * @param {Node} node 
+ * @param {number[]} routeIndexes 
+ * @returns {Node}
+ */
+const getNodeByRouteIndexes = (node, routeIndexes) => {
+  for(let i = 0; i < routeIndexes.length; i++) {
+    node = node.childNodes[routeIndexes[i]];
+  }
+  return node;
+};
 
 /**
  * 
@@ -1410,7 +1499,7 @@ class Selector {
       // キャッシュがある場合
       // querySelectorAllを行わずにNodeの位置を特定できる
       const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-      nodes = listOfRouteIndexes.map(routeIndexes => routeIndexes.reduce((node, routeIndex) => node.childNodes[routeIndex], rootElement));
+      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
     } else {
       // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
       nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
@@ -2037,55 +2126,46 @@ class TextBind extends BindInfo {
 
 }
 
-const createPropertyBind = (bindInfo, info) => Object.assign(new PropertyBind, bindInfo, info);
-const createAttributeBind = (bindInfo, info) => Object.assign(new AttributeBind, bindInfo, info);
-const createClassListBind = (bindInfo, info) => Object.assign(new ClassListBind, bindInfo, info);
-const createClassNameBind = (bindInfo, info) => Object.assign(new ClassNameBind, bindInfo, info);
-const createRadioBind = (bindInfo, info) => Object.assign(new Radio, bindInfo, info);
-const createCheckboxBind = (bindInfo, info) => Object.assign(new Checkbox, bindInfo, info);
-const createTemplateBind = (bindInfo, info) => Object.assign(new TemplateBind, bindInfo, info);
-const createEventBind = (bindInfo, info) => Object.assign(new Event, bindInfo, info);
-const createComponentBind = (bindInfo, info) => Object.assign(new ComponentBind, bindInfo, info);
-const createStyleBind = (bindInfo, info) => Object.assign(new StyleBind, bindInfo, info);
-const createTextBind = (bindInfo, info) => Object.assign(new TextBind, bindInfo, info);
-
-const creatorByType = new Map();
-creatorByType.set(NodePropertyType.property, createPropertyBind);
-creatorByType.set(NodePropertyType.attribute, createAttributeBind);
-creatorByType.set(NodePropertyType.classList, createClassListBind);
-creatorByType.set(NodePropertyType.className, createClassNameBind);
-creatorByType.set(NodePropertyType.radio, createRadioBind);
-creatorByType.set(NodePropertyType.checkbox, createCheckboxBind);
-creatorByType.set(NodePropertyType.template, createTemplateBind);
-creatorByType.set(NodePropertyType.event, createEventBind);
-creatorByType.set(NodePropertyType.component, createComponentBind);
-creatorByType.set(NodePropertyType.style, createStyleBind);
-creatorByType.set(NodePropertyType.text, createTextBind);
+const classByType = {};
+classByType[NodePropertyType.property] = PropertyBind;
+classByType[NodePropertyType.attribute] = AttributeBind;
+classByType[NodePropertyType.classList] = ClassListBind;
+classByType[NodePropertyType.className] = ClassNameBind;
+classByType[NodePropertyType.radio] = Radio;
+classByType[NodePropertyType.checkbox] = Checkbox;
+classByType[NodePropertyType.template] = TemplateBind;
+classByType[NodePropertyType.event] = Event;
+classByType[NodePropertyType.component] = ComponentBind;
+classByType[NodePropertyType.style] = StyleBind;
+classByType[NodePropertyType.text] = TextBind;
 
 class Factory {
   /**
-   * 
-   * @param {{
-   * component:Component,
-   * node:Node,
-   * nodeProperty:string,
-   * viewModel:ViewModel,
-   * viewModelProperty:string,
-   * filters:Filter[],
-   * context:ContextInfo
-   * }}
+   * @param {Component} component
+   * @param {Node} node
+   * @param {string} nodeProperty
+   * @param {ViewModel} viewModel
+   * @param {string} viewModelProperty
+   * @param {Filter[]} filters
+   * @param {ContextInfo} context
    * @returns {BindInfo}
    */
-  static create({component, node, nodeProperty, viewModel, viewModelProperty, filters, context}) {
-    const bindData = {
-      component, node, nodeProperty, viewModel, viewModelProperty, filters, context
-    };
+  static create(component, node, nodeProperty, viewModel, viewModelProperty, filters, context) {
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
     /**
      * @type {BindInfo}
      */
-    const bindInfo = creatorByType.get(nodeInfo.type)(bindData, nodeInfo);
-    if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length == 0) {
+    const bindInfo = new classByType[nodeInfo.type];
+    bindInfo.component = component;
+    bindInfo.node = node;
+    bindInfo.nodeProperty = nodeProperty;
+    bindInfo.viewModel = viewModel;
+    bindInfo.viewModelProperty = viewModelProperty;
+    bindInfo.filters = filters;
+    bindInfo.context = context;
+    bindInfo.nodePropertyElements = nodeInfo.nodePropertyElements;
+    bindInfo.eventType = nodeInfo.eventType;
+    if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length === 0) {
       utils.raise(`${bindInfo.viewModelPropertyName.name} is outside loop`);
     }
     return bindInfo;
@@ -2180,9 +2260,9 @@ const parseBindText = (text, defaultName) => {
  */
 class Parser {
   /**
-   * @type {Map<string,BindTextInfo[]>}
+   * @type {Object<string,BindTextInfo[]>}
    */
-  static bindTextsByKey = new Map();
+  static bindTextsByKey = {};
 
   /**
    * 属性値のパース
@@ -2192,10 +2272,10 @@ class Parser {
    */
   static parse(text, defaultName) {
     const key = text + "\t" + defaultName;
-    let binds = this.bindTextsByKey.get(key);
+    let binds = this.bindTextsByKey[key];
     if (typeof binds === "undefined") {
       binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-      this.bindTextsByKey.set(key, binds);
+      this.bindTextsByKey[key] = binds;
     }
     return binds;
   }
@@ -2208,12 +2288,15 @@ class BindToDom {
    * @param {Component} component
    * @param {Object<string,any>} viewModel 
    * @param {ContextInfo} context
-   * @returns {(text:string, defaultName:string)=> BindInfo[]}
+   * @param {string} text
+   * @param {string} defaultName
+   * @returns {BindInfo[]}
    */
-  static parseBindText = (node, component, viewModel, context) => 
-    (text, defaultName) => 
-      Parser.parse(text, defaultName)
-        .map(info => Factory.create(Object.assign(info, {node, component, viewModel, context})));
+  static parseBindText = (node, component, viewModel, context, text, defaultName) => {
+    const bindInfos = 
+      Parser.parse(text, defaultName).map(info => Factory.create(component, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters, context));
+    return bindInfos;
+  }
 
   /**
    * 
@@ -2223,7 +2306,7 @@ class BindToDom {
   static applyUpdateNode = bind => bind.updateNode();
 }
 
-const DATASET_BIND_PROPERTY$1 = "bind";
+const DATASET_BIND_PROPERTY$3 = "data-bind";
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
 const DEFAULT_PROPERTY$1 = "textContent";
@@ -2274,12 +2357,11 @@ class BindToHTMLElement {
   static bind(node, component, context) {
     const viewModel = component.viewModel;
     const element = toHTMLElement(node);
-    const bindText = element.dataset[DATASET_BIND_PROPERTY$1];
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$3);
     const defaultName = getDefaultProperty(element);
 
     // パース
-    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    const binds = parseBindText(bindText, defaultName);
+    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
@@ -2316,13 +2398,18 @@ class BindToHTMLElement {
       // ・nodeが入力系（input, textarea, select） → 入力系に限定
       setDefaultEventHandler(defaultBind);
     }
-
     return binds;
   }
-
 }
 
-const DATASET_BIND_PROPERTY = "bind";
+window.elapsedTimes["BindToHTMLElement.bind"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#2"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#3"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#4"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#5"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#6"] = 0;
+
+const DATASET_BIND_PROPERTY$2 = "data-bind";
 
 /**
  * 
@@ -2349,12 +2436,11 @@ class BindToSVGElement {
   static bind(node, component, context) {
     const viewModel = component.viewModel;
     const element = toSVGElement(node);
-    const bindText = element.dataset[DATASET_BIND_PROPERTY];
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2);
     const defaultName = undefined;
 
     // パース
-    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    const binds = parseBindText(bindText, defaultName);
+    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
@@ -2396,8 +2482,7 @@ class BindToText {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    const parseBindText = BindToDom.parseBindText(textNode, component, viewModel, context);
-    const binds = parseBindText(bindText, DEFAULT_PROPERTY);
+    const binds = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
     binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
@@ -2405,6 +2490,9 @@ class BindToText {
 
 }
 
+window.elapsedTimes["BindToText.bind"] = 0;
+
+const DATASET_BIND_PROPERTY$1 = "data-bind";
 /**
  * 
  * @param {Node} node 
@@ -2425,17 +2513,18 @@ class BindToTemplate {
     const comment = toComment(node);
     const uuid = comment.textContent.slice(3);
     const template = Templates.templateByUUID.get(uuid);
-    const bindText = template.dataset.bind;
+    const bindText = template.getAttribute(DATASET_BIND_PROPERTY$1);
 
     // パース
-    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    let binds = parseBindText(bindText, undefined);
+    let binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
     binds = binds.length > 0 ? [ binds[0] ] : [];
     binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
   }
 }
+
+window.elapsedTimes["BindToTemplate.bind"] = 0;
 
 class Binder {
   /**
@@ -2463,7 +2552,7 @@ class ViewTemplate {
    * @param {HTMLElement} rootElement 
    * @param {Component} component 
    * @param {ContextInfo} contextInfo
-   * @returns { binds:BindInfo[], content:DocumentFragment }
+   * @returns {{binds:BindInfo[], content:DocumentFragment}}
    */
   static render(component, template, context) {
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
@@ -2479,7 +2568,7 @@ class View {
    * @param {HTMLElement} rootElement 
    * @param {Component} component 
    * @param {HTMLTemplateElement} template 
-   * @returns 
+   * @returns {BindInfo[]}
    */
   static render(rootElement, component, template) {
     const { binds, content } = ViewTemplate.render(component, template, Context.create());
@@ -3526,6 +3615,9 @@ function createGlobals(component) {
   return new Proxy({}, new Handler(component));
 }
 
+const DATASET_BIND_PROPERTY = "data-bind";
+const DATASET_UUID_PROPERTY = "data-uuid";
+
 class Module {
   /**
    * @type {string}
@@ -3614,10 +3706,10 @@ class Module {
           for(let childNode of Array.from(template.childNodes)) {
             newTemplate.content.appendChild(childNode);
           }
-          newTemplate.dataset.bind = template.dataset.bind;
+          newTemplate.setAttribute(DATASET_BIND_PROPERTY, template.getAttribute(DATASET_BIND_PROPERTY));
           template = newTemplate;
         }
-        template.dataset.uuid = uuid;
+        template.setAttribute(DATASET_UUID_PROPERTY, uuid);
         replaceTemplate(template.content);
         Templates.templateByUUID.set(uuid, template);
       }

@@ -3,6 +3,7 @@ import { utils } from "../utils.js";
 import { Templates } from "../view/Templates.js";
 import { BindToDom } from "./BindToDom.js";
 
+const DATASET_BIND_PROPERTY = "data-bind";
 /**
  * 
  * @param {Node} node 
@@ -23,14 +24,15 @@ export class BindToTemplate {
     const comment = toComment(node);
     const uuid = comment.textContent.slice(3);
     const template = Templates.templateByUUID.get(uuid);
-    const bindText = template.dataset.bind;
+    const bindText = template.getAttribute(DATASET_BIND_PROPERTY);
 
     // パース
-    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    let binds = parseBindText(bindText, undefined);
+    let binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
     binds = binds.length > 0 ? [ binds[0] ] : [];
     binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
   }
 }
+
+window.elapsedTimes["BindToTemplate.bind"] = 0;

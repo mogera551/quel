@@ -9,12 +9,15 @@ export class BindToDom {
    * @param {Component} component
    * @param {Object<string,any>} viewModel 
    * @param {ContextInfo} context
-   * @returns {(text:string, defaultName:string)=> BindInfo[]}
+   * @param {string} text
+   * @param {string} defaultName
+   * @returns {BindInfo[]}
    */
-  static parseBindText = (node, component, viewModel, context) => 
-    (text, defaultName) => 
-      Parser.parse(text, defaultName)
-        .map(info => Factory.create(Object.assign(info, {node, component, viewModel, context})));
+  static parseBindText = (node, component, viewModel, context, text, defaultName) => {
+    const bindInfos = 
+      Parser.parse(text, defaultName).map(info => Factory.create(component, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters, context));
+    return bindInfos;
+  }
 
   /**
    * 

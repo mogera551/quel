@@ -2,6 +2,9 @@ import "../types.js";
 import { utils } from "../utils.js";
 import { Templates } from "../view/Templates.js";
 
+const DATASET_BIND_PROPERTY = "data-bind";
+const DATASET_UUID_PROPERTY = "data-uuid";
+
 export class Module {
   /**
    * @type {string}
@@ -90,10 +93,10 @@ export class Module {
           for(let childNode of Array.from(template.childNodes)) {
             newTemplate.content.appendChild(childNode);
           }
-          newTemplate.dataset.bind = template.dataset.bind;
+          newTemplate.setAttribute(DATASET_BIND_PROPERTY, template.getAttribute(DATASET_BIND_PROPERTY));
           template = newTemplate;
         }
-        template.dataset.uuid = uuid;
+        template.setAttribute(DATASET_UUID_PROPERTY, uuid);
         replaceTemplate(template.content);
         Templates.templateByUUID.set(uuid, template);
       }

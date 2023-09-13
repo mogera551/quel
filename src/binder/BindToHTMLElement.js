@@ -6,7 +6,7 @@ import { Event } from "../bindInfo/Event.js";
 import { Radio } from "../bindInfo/Radio.js";
 import { Checkbox } from "../bindInfo/Checkbox.js";
 
-const DATASET_BIND_PROPERTY = "bind";
+const DATASET_BIND_PROPERTY = "data-bind";
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
 const DEFAULT_PROPERTY = "textContent";
@@ -57,12 +57,11 @@ export class BindToHTMLElement {
   static bind(node, component, context) {
     const viewModel = component.viewModel;
     const element = toHTMLElement(node);
-    const bindText = element.dataset[DATASET_BIND_PROPERTY];
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
     const defaultName = getDefaultProperty(element);
 
     // パース
-    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    const binds = parseBindText(bindText, defaultName);
+    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
@@ -99,8 +98,13 @@ export class BindToHTMLElement {
       // ・nodeが入力系（input, textarea, select） → 入力系に限定
       setDefaultEventHandler(defaultBind);
     }
-
     return binds;
   }
-
 }
+
+window.elapsedTimes["BindToHTMLElement.bind"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#2"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#3"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#4"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#5"] = 0;
+window.elapsedTimes["BindToHTMLElement.bind#6"] = 0;

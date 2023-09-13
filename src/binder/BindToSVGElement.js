@@ -1,15 +1,9 @@
 import "../types.js";
 import { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
-import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { Event } from "../bindInfo/Event.js";
-import { Radio } from "../bindInfo/Radio.js";
-import { Checkbox } from "../bindInfo/Checkbox.js";
 
-const DATASET_BIND_PROPERTY = "bind";
-const DEFAULT_EVENT = "oninput";
-const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
-const DEFAULT_PROPERTY = "textContent";
+const DATASET_BIND_PROPERTY = "data-bind";
 
 /**
  * 
@@ -36,12 +30,11 @@ export class BindToSVGElement {
   static bind(node, component, context) {
     const viewModel = component.viewModel;
     const element = toSVGElement(node);
-    const bindText = element.dataset[DATASET_BIND_PROPERTY];
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
     const defaultName = undefined;
 
     // パース
-    const parseBindText = BindToDom.parseBindText(node, component, viewModel, context);
-    const binds = parseBindText(bindText, defaultName);
+    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定

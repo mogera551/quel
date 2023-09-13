@@ -22,7 +22,7 @@ export class NodePropertyInfo {
    */
   eventType;
 
-  static nodePropertyInfoByKey = new Map;
+  static nodePropertyInfoByKey = {};
   /**
    * 
    * @param {Node} node
@@ -32,8 +32,8 @@ export class NodePropertyInfo {
   static get(node, nodeProperty) {
     const result = new NodePropertyInfo;
     const key = `${node.constructor.name}\t${node.textContent[2]}\t${node[Symbols.isComponent]}\t${nodeProperty}`;
-    const nodePropertyInfo = this.nodePropertyInfoByKey.get(key);
-    if (nodePropertyInfo) {
+    const nodePropertyInfo = this.nodePropertyInfoByKey[key];
+    if (typeof nodePropertyInfo !== "undefined") {
       result.type = nodePropertyInfo.type;
       result.nodePropertyElements = nodePropertyInfo.nodePropertyElements.slice(0);
       result.eventType = nodePropertyInfo.eventType;
@@ -92,7 +92,7 @@ export class NodePropertyInfo {
       }
   
     } while(false);
-    this.nodePropertyInfoByKey.set(key, result);
+    this.nodePropertyInfoByKey[key] = result;
     return result;
   }
 }

@@ -17,6 +17,18 @@ const getNodeRoute = node => {
   return routeIndexes;
 };
 
+/**
+ * 
+ * @param {Node} node 
+ * @param {number[]} routeIndexes 
+ * @returns {Node}
+ */
+const getNodeByRouteIndexes = (node, routeIndexes) => {
+  for(let i = 0; i < routeIndexes.length; i++) {
+    node = node.childNodes[routeIndexes[i]];
+  }
+  return node;
+}
 
 /**
  * 
@@ -52,7 +64,7 @@ export class Selector {
       // キャッシュがある場合
       // querySelectorAllを行わずにNodeの位置を特定できる
       const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-      nodes = listOfRouteIndexes.map(routeIndexes => routeIndexes.reduce((node, routeIndex) => node.childNodes[routeIndex], rootElement));
+      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
     } else {
       // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
       nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));

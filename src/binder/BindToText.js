@@ -28,11 +28,12 @@ export class BindToText {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    const parseBindText = BindToDom.parseBindText(textNode, component, viewModel, context);
-    const binds = parseBindText(bindText, DEFAULT_PROPERTY);
+    const binds = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
     binds.forEach(BindToDom.applyUpdateNode);
 
     return binds;
   }
 
 }
+
+window.elapsedTimes["BindToText.bind"] = 0;

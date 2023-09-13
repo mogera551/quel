@@ -169,6 +169,11 @@ export class BindInfo {
   context;
 
   /**
+   * @type {string}
+   */
+  eventType;
+  
+  /**
    * 
    * @returns {any}
    */
