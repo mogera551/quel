@@ -35,5 +35,3 @@ export class BindToText {
   }
 
 }
-
-window.elapsedTimes["BindToText.bind"] = 0;

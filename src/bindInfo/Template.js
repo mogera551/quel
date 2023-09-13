@@ -45,7 +45,8 @@ export class TemplateChild {
    * 
    */
   removeFromParent() {
-    this.childNodes.forEach(node => node.parentNode?.removeChild(node));
+//    this.childNodes.forEach(node => node.parentNode?.removeChild(node));
+    this.childNodes.forEach(node => this.fragment.appendChild(node));
     this.binds.forEach(bind => bind.removeFromParent());
   }
 

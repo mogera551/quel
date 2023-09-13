@@ -34,5 +34,3 @@ export class BindToTemplate {
     return binds;
   }
 }
-
-window.elapsedTimes["BindToTemplate.bind"] = 0;

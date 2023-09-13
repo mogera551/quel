@@ -1103,6 +1103,16 @@ class BindInfo {
   eventType;
   
   /**
+   * @type {(event:Event)=>{}}
+   */
+  defaultEventHandler;
+
+  /**
+   * @type {string}
+   */
+  defaultEventType;
+
+  /**
    * 
    * @returns {any}
    */
@@ -1143,7 +1153,13 @@ class BindInfo {
   /**
    * 
    */
-  removeFromParent() { }
+  removeFromParent() {
+    if (this.defaultEventHandler) {
+      this.htmlElement?.removeEventListener(this.defaultEventType, this.defaultEventHandler);
+      this.defaultEventHandler = undefined;
+      this.defaultEventType = undefined;
+    }
+   }
 }
 
 /**
@@ -1591,7 +1607,8 @@ class TemplateChild {
    * 
    */
   removeFromParent() {
-    this.childNodes.forEach(node => node.parentNode?.removeChild(node));
+//    this.childNodes.forEach(node => node.parentNode?.removeChild(node));
+    this.childNodes.forEach(node => this.fragment.appendChild(node));
     this.binds.forEach(bind => bind.removeFromParent());
   }
 
@@ -2370,7 +2387,13 @@ class BindToHTMLElement {
      * @type {BindInfo}
      */
     let defaultBind = null;
+    /**
+     * @type {Radio|null}
+     */
     let radioBind = null;
+    /**
+     * @type {Checkbox|null}
+     */
     let checkboxBind = null;
     binds.forEach(bind => {
       hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
@@ -2380,12 +2403,20 @@ class BindToHTMLElement {
       toEvent$1(bind)?.addEventListener();
     });
 
+    /**
+     * 
+     * @param {BindInfo} bind 
+     * @returns 
+     */
     const setDefaultEventHandler = (bind) => {
-      element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
+      const eventHandler = event => {
         event.stopPropagation();
         const process = new ProcessData(bind.updateViewModel, bind, []);
         component.updateSlot.addProcess(process);
-      });
+      };
+      element.addEventListener(DEFAULT_EVENT_TYPE, eventHandler);
+      bind.defaultEventHandler = eventHandler;
+      bind.defaultEventType = DEFAULT_EVENT_TYPE;
     };
     if (radioBind) {
       setDefaultEventHandler(radioBind);
@@ -2401,13 +2432,6 @@ class BindToHTMLElement {
     return binds;
   }
 }
-
-window.elapsedTimes["BindToHTMLElement.bind"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#2"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#3"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#4"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#5"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#6"] = 0;
 
 const DATASET_BIND_PROPERTY$2 = "data-bind";
 
@@ -2490,8 +2514,6 @@ class BindToText {
 
 }
 
-window.elapsedTimes["BindToText.bind"] = 0;
-
 const DATASET_BIND_PROPERTY$1 = "data-bind";
 /**
  * 
@@ -2523,8 +2545,6 @@ class BindToTemplate {
     return binds;
   }
 }
-
-window.elapsedTimes["BindToTemplate.bind"] = 0;
 
 class Binder {
   /**

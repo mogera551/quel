@@ -70,7 +70,13 @@ export class BindToHTMLElement {
      * @type {BindInfo}
      */
     let defaultBind = null;
+    /**
+     * @type {Radio|null}
+     */
     let radioBind = null;
+    /**
+     * @type {Checkbox|null}
+     */
     let checkboxBind = null;
     binds.forEach(bind => {
       hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
@@ -80,12 +86,20 @@ export class BindToHTMLElement {
       toEvent(bind)?.addEventListener();
     });
 
+    /**
+     * 
+     * @param {BindInfo} bind 
+     * @returns 
+     */
     const setDefaultEventHandler = (bind) => {
-      element.addEventListener(DEFAULT_EVENT_TYPE, (event) => {
+      const eventHandler = event => {
         event.stopPropagation();
         const process = new ProcessData(bind.updateViewModel, bind, []);
         component.updateSlot.addProcess(process);
-      });
+      };
+      element.addEventListener(DEFAULT_EVENT_TYPE, eventHandler);
+      bind.defaultEventHandler = eventHandler;
+      bind.defaultEventType = DEFAULT_EVENT_TYPE;
     }
     if (radioBind) {
       setDefaultEventHandler(radioBind);
@@ -101,10 +115,3 @@ export class BindToHTMLElement {
     return binds;
   }
 }
-
-window.elapsedTimes["BindToHTMLElement.bind"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#2"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#3"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#4"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#5"] = 0;
-window.elapsedTimes["BindToHTMLElement.bind#6"] = 0;

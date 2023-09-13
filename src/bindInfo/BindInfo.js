@@ -174,6 +174,16 @@ export class BindInfo {
   eventType;
   
   /**
+   * @type {(event:Event)=>{}}
+   */
+  defaultEventHandler;
+
+  /**
+   * @type {string}
+   */
+  defaultEventType;
+
+  /**
    * 
    * @returns {any}
    */
@@ -214,5 +224,11 @@ export class BindInfo {
   /**
    * 
    */
-  removeFromParent() { }
+  removeFromParent() {
+    if (this.defaultEventHandler) {
+      this.htmlElement?.removeEventListener(this.defaultEventType, this.defaultEventHandler);
+      this.defaultEventHandler = undefined;
+      this.defaultEventType = undefined;
+    }
+   }
 }
