@@ -1095,7 +1095,14 @@ class BindInfo {
   /**
    * @type {ContextInfo}
    */
-  context;
+  #context;
+  get context() {
+    return this.#context;
+  }
+  set context(value) {
+    this.#context = value;
+    this.#contextParam = undefined;
+  }
 
   /**
    * @type {string}
@@ -1154,12 +1161,14 @@ class BindInfo {
    * 
    */
   removeFromParent() {
+/*
     if (this.defaultEventHandler) {
       this.htmlElement?.removeEventListener(this.defaultEventType, this.defaultEventHandler);
       this.defaultEventHandler = undefined;
       this.defaultEventType = undefined;
     }
-   }
+*/
+  }
 }
 
 /**
@@ -1590,6 +1599,12 @@ class TemplateChild {
    * @type {ContextInfo}
    */
   context;
+
+  /**
+   * @type {string}
+   */
+  uuid;
+
   /**
    * @type {Node}
    */
@@ -1646,10 +1661,33 @@ class TemplateChild {
    * @returns {TemplateChild}
    */
   static create(templateBind, context) {
-    const {component, template} = templateBind;
-    const { binds, content } = ViewTemplate.render(component, template, context);
-    const childNodes = Array.from(content.childNodes);
-    return Object.assign(new TemplateChild, { binds, childNodes, fragment:content, context });
+    const { component, template, uuid } = templateBind;
+    const templateChildren = this.templateChildrenByUUID.get(uuid);
+    if (typeof templateChildren === "undefined" || templateChildren.length === 0) {
+      const { binds, content } = ViewTemplate.render(component, template, context);
+      const childNodes = Array.from(content.childNodes);
+      return Object.assign(new TemplateChild, { binds, childNodes, fragment:content, context, uuid });
+    } else {
+      const templateChild = templateChildren.pop();
+      templateChild.binds.forEach(bind => {
+        bind.context = context;
+        bind.updateNode();
+      });
+      return templateChild;
+    }
+  }
+
+  /**
+   * @type {Map<string,TemplateChild[]>}
+   */
+  static templateChildrenByUUID = new Map;
+  static dispose(templateChild) {
+    const children = this.templateChildrenByUUID.get(templateChild.uuid);
+    if (typeof children === "undefined") {
+      this.templateChildrenByUUID.set(templateChild.uuid, [templateChild]);
+    } else {
+      children.push(templateChild);
+    }
   }
 }
 
@@ -1688,7 +1726,10 @@ class TemplateBind extends BindInfo {
    * 
    */
   removeFromParent() {
-    this.templateChildren.forEach(child => child.removeFromParent());
+    this.templateChildren.forEach(child => {
+      child.removeFromParent();
+      TemplateChild.dispose(child);
+    });
   }
 
   /**
@@ -1787,10 +1828,11 @@ class TemplateBind extends BindInfo {
         return templateChild;
       }
     });
-    // 削除対象、追加・移動対象のインデックスを取得し、ノードを削除
+    // 削除対象インデックスを取得し、ノードを削除
     for(const indexes of indexesByLastValue.values()) {
       for(const index of indexes) {
         templateChildren[index].removeFromParent();
+        TemplateChild.dispose(templateChildren[index]);
       }
     }
 

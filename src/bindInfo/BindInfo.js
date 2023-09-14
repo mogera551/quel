@@ -166,7 +166,14 @@ export class BindInfo {
   /**
    * @type {ContextInfo}
    */
-  context;
+  #context;
+  get context() {
+    return this.#context;
+  }
+  set context(value) {
+    this.#context = value;
+    this.#contextParam = undefined;
+  }
 
   /**
    * @type {string}
@@ -225,10 +232,12 @@ export class BindInfo {
    * 
    */
   removeFromParent() {
+/*
     if (this.defaultEventHandler) {
       this.htmlElement?.removeEventListener(this.defaultEventType, this.defaultEventHandler);
       this.defaultEventHandler = undefined;
       this.defaultEventType = undefined;
     }
-   }
+*/
+  }
 }
