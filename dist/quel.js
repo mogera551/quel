@@ -1782,70 +1782,27 @@ class TemplateBind extends BindInfo {
      */
     const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out) ?? [];
 
-    /**
-     * @type {Map<any,number[]>}
-     */
-    const indexesByLastValue = lastValue.reduce((map, value, index) => {
-      map.get(value)?.push(index) ?? map.set(value, [ index ]);
-      return map;
-    }, new Map);
-    /**
-     * @type {Map<number,number>}
-     */
-    const lastIndexByNewIndex = new Map;
-    const moveOrCreateIndexes = [];
+    if (lastValue.length === newValue.length) ; else if (lastValue.length > newValue.length) {
+      const removeTemplateChildren = this.templateChildren.splice(newValue.length);
+      removeTemplateChildren.forEach(templateChild => {
+        templateChild.removeFromParent();
+        TemplateChild.dispose(templateChild);
+      });
 
-    // コンテキスト用のデータ
-    const pos = context.indexes.length;
-    const propName = this.viewModelPropertyName;
-    const parentIndexes = this.contextParam?.indexes ?? [];
-
-    // 新しくテンプレート子要素のリストを作成する
-    /**
-     * @type {TemplateChild[]}
-     */
-    const newTemplateChildren = newValue.map((value, newIndex) => {
-      const lastIndexes = indexesByLastValue.get(value);
-      if (typeof lastIndexes === "undefined" || lastIndexes.length === 0) {
-        // 元のインデックスがない場合、新規
-        lastIndexByNewIndex.set(newIndex, undefined);
-        moveOrCreateIndexes.push(newIndex);
+    } else if (lastValue.length < newValue.length) {
+      // コンテキスト用のデータ
+      const pos = context.indexes.length;
+      const propName = this.viewModelPropertyName;
+      const parentIndexes = this.contextParam?.indexes ?? [];
+      for(let i = lastValue.length; i < newValue.length; i++) {
+        const newIndex = i;
         const newContext = Context.clone(context);
         newContext.indexes.push(newIndex);
         newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
-        return TemplateChild.create(this, newContext);
-      } else {
-        // 元のインデックスがある場合、子要素のループインデックスを書き換え
-        // indexesByLastValueから、インデックスを削除、最終的に残ったものが削除する子要素
-        const lastIndex = lastIndexes.shift();
-        lastIndexByNewIndex.set(newIndex, lastIndex);
-        const templateChild = templateChildren[lastIndex];
-        (newIndex !== lastIndex) && templateChild.changeIndexes(this.viewModelPropertyName, newIndex - lastIndex);
-        const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
-        if (newIndex !== 0 && (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex)) {
-          moveOrCreateIndexes.push(newIndex);
-        }
-        return templateChild;
-      }
-    });
-    // 削除対象インデックスを取得し、ノードを削除
-    for(const indexes of indexesByLastValue.values()) {
-      for(const index of indexes) {
-        templateChildren[index].removeFromParent();
-        TemplateChild.dispose(templateChildren[index]);
+        this.templateChildren.push(TemplateChild.create(this, newContext));
       }
     }
-
-    moveOrCreateIndexes.forEach(moveOrCreateIndex => {
-      const templateChild = newTemplateChildren[moveOrCreateIndex];
-      const beforeNode = newTemplateChildren[moveOrCreateIndex - 1]?.lastNode ?? this.node;
-      beforeNode.after(...templateChild.nodesForAppend);
-    });
-
-    // 子要素の展開を実行
-    newTemplateChildren.forEach(templateChild => templateChild.updateNode());
-
-    this.templateChildren = newTemplateChildren;
+    this.templateChildren.forEach(templateChild => templateChild.updateNode());
 
     this.lastViewModelValue = newValue.slice();
   }
