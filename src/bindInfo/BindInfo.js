@@ -216,6 +216,11 @@ export class BindInfo {
   updateNode() {}
 
   /**
+   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
+   */
+  forceUpdateNode() {}
+
+  /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {}

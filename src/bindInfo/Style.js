@@ -21,7 +21,7 @@ export class StyleBind extends BindInfo {
     const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
     const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
       if (this.lastViewModelFilteredValue !== filteredValue) {
         component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
           htmlElement[STYLE_PROPERTY][styleName] = filteredValue;
@@ -33,13 +33,28 @@ export class StyleBind extends BindInfo {
   }
 
   /**
+   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
+   */
+  forceUpdateNode() {
+    const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
+    const value = this.getViewModelValue();
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    if (htmlElement[STYLE_PROPERTY][styleName] !== filteredValue) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
+        htmlElement[STYLE_PROPERTY][styleName] = filteredValue;
+      }));
+    }
+    this.lastViewModelFilteredValue = filteredValue;
+    this.lastViewModelValue = value;
+  }
+
+  /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
     const {component, htmlElement, styleName, filters} = this;
     const value = Filter.applyForInput(htmlElement[STYLE_PROPERTY][styleName], filters, component.filters.in);
     this.setViewModelValue(value);
-    this.lastViewModelValue = value;
   }
 }
 

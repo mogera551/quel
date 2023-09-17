@@ -51,7 +51,6 @@ export class TemplateChild {
    * 
    */
   removeFromParent() {
-//    this.childNodes.forEach(node => node.parentNode?.removeChild(node));
     this.childNodes.forEach(node => this.fragment.appendChild(node));
     this.binds.forEach(bind => bind.removeFromParent());
   }
@@ -62,6 +61,15 @@ export class TemplateChild {
   updateNode() {
     this.binds.forEach(bind => {
       bind.updateNode();
+    })
+  }
+
+  /**
+   * 
+   */
+  forceUpdateNode() {
+    this.binds.forEach(bind => {
+      bind.forceUpdateNode();
     })
   }
 
@@ -100,7 +108,6 @@ export class TemplateChild {
       const templateChild = templateChildren.pop();
       templateChild.binds.forEach(bind => {
         bind.context = context;
-        bind.updateNode();
       });
       return templateChild;
     }
@@ -146,29 +153,44 @@ export class TemplateBind extends BindInfo {
     return this.#uuid;
   }
 
+  /**
+   * @type {TemplateChild}
+   */
+  get lastChild() {
+    return this.templateChildren[this.templateChildren.length - 1];
+  }
+
   updateNode() {
     (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
       (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
+  }
+
+  forceUpdateNode() {
+    (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
+      (this.nodeProperty === TEMPLATE_BRANCH) ? this.forceExpandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
   }
   
   /**
    * 
    */
   removeFromParent() {
-    this.templateChildren.forEach(child => {
-      child.removeFromParent();
-      TemplateChild.dispose(child);
+    this.templateChildren.forEach(templateChild => {
+      templateChild.removeFromParent();
+      TemplateChild.dispose(templateChild);
     });
+    this.templateChildren = [];
+    this.lastViewModelValue = undefined;
+    this.lastViewModelFilteredValue = undefined;
   }
 
   /**
    * 
    */
-  appendToParent() {
+  appendToParent(templateChildren) {
     const fragment = document.createDocumentFragment();
-    this.templateChildren
+    templateChildren
       .forEach(child => fragment.appendChild(...child.nodesForAppend));
-    this.node.after(fragment);
+    (this.lastChild?.lastNode ?? this.node).after(fragment);
   }
 
   /**
@@ -179,12 +201,14 @@ export class TemplateBind extends BindInfo {
     const { component, filters, context } = this;
     const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
       if (this.lastViewModelFilteredValue !== filteredValue) {
         this.removeFromParent();
         if (filteredValue) {
-          this.templateChildren = [TemplateChild.create(this, Context.clone(context))];
-          this.appendToParent();
+          this.templateChildren = [];
+          const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
+          this.appendToParent(newTemplateChildren);
+          this.templateChildren = newTemplateChildren;
         } else {
           this.templateChildren = [];
         }
@@ -194,7 +218,27 @@ export class TemplateBind extends BindInfo {
     }
 
     // 子要素の展開を実行
-    this.templateChildren.forEach(templateChild => templateChild.updateNode());
+    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
+  }
+
+  forceExpandIf() {
+    const { component, filters, context } = this;
+    const value = this.getViewModelValue();
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    this.removeFromParent();
+    if (filteredValue) {
+      this.templateChildren = [];
+      const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
+      this.appendToParent(newTemplateChildren);
+      this.templateChildren = newTemplateChildren;
+    } else {
+      this.templateChildren = [];
+    }
+    this.lastViewModelFilteredValue = filteredValue;
+    this.lastViewModelValue = value;
+
+    // 子要素の展開を実行
+    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
   }
 
   /**
@@ -211,28 +255,29 @@ export class TemplateBind extends BindInfo {
      */
     const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out) ?? [];
 
-    if (lastValue.length === newValue.length) {
-    } else if (lastValue.length > newValue.length) {
+    if (lastValue.length > newValue.length) {
       const removeTemplateChildren = this.templateChildren.splice(newValue.length);
       removeTemplateChildren.forEach(templateChild => {
         templateChild.removeFromParent();
         TemplateChild.dispose(templateChild);
       });
-
     } else if (lastValue.length < newValue.length) {
       // コンテキスト用のデータ
       const pos = context.indexes.length;
       const propName = this.viewModelPropertyName;
       const parentIndexes = this.contextParam?.indexes ?? [];
+      const newTemplateChildren = [];
       for(let i = lastValue.length; i < newValue.length; i++) {
         const newIndex = i;
         const newContext = Context.clone(context);
         newContext.indexes.push(newIndex);
         newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos})
-        this.templateChildren.push(TemplateChild.create(this, newContext))
+        newTemplateChildren.push(TemplateChild.create(this, newContext))
       }
+      this.appendToParent(newTemplateChildren);
+      this.templateChildren = this.templateChildren.concat(newTemplateChildren);
     }
-    this.templateChildren.forEach(templateChild => templateChild.updateNode());
+    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
 
     this.lastViewModelValue = newValue.slice();
   }

@@ -103,15 +103,4 @@ export class ComponentBind extends BindInfo {
     }
   }
 
-  /**
-   * 
-   */
-  updateNode() {
-//    const { node, dataProperty } = this;
-//    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}`, []);
-  }
-
-  updateViewModel() {
-  }
-
 }

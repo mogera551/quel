@@ -17,7 +17,7 @@ export class Checkbox extends BindInfo {
     const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
     const value = this.getViewModelValue();
     if (this.lastViewModelValue !== value) {
-      const filteredValue = Filter.applyForOutput(value, filters, component.filters.out);
+      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
       if (this.lastViewModelFilteredValue !== filteredValue) {
         component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
           checkbox.checked = filteredValue.find(value => value === checkbox.value);
@@ -26,6 +26,23 @@ export class Checkbox extends BindInfo {
       }
       this.lastViewModelValue = value;
     }
+  }
+
+  /**
+   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
+   */
+  forceUpdateNode() {
+    const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
+    const value = this.getViewModelValue();
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    const checked = filteredValue.find(value => value === checkbox.value);
+    if (checkbox.checked !== checked) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+        checkbox.checked = checked;
+      }));
+    }
+    this.lastViewModelFilteredValue = value;
+    this.lastViewModelValue = value;
   }
 
   /**
@@ -38,6 +55,5 @@ export class Checkbox extends BindInfo {
     (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
     const value = Array.from(setOfValue);
     this.setViewModelValue(value);
-    this.lastViewModelValue = value;
   }
 }
