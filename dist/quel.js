@@ -5183,4 +5183,12 @@ class QuelModuleRegistrar extends Registrar {
 
 const loader = Loader.create(QuelModuleRegistrar);
 
-export { Main as default, generateComponentClass, loader };
+function registComponentModules(components) {
+  Main.componentModules(components);
+}
+
+function registConfig(config) {
+  Main.config(config);
+}
+
+export { Main as default, generateComponentClass, loader, registComponentModules, registConfig };
