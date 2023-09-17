@@ -17,14 +17,14 @@ Quelを使うには、import宣言で、CDNもしくはダウンロードした�
 CDNの例
 ```html
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 </script>
 ```
 
 ダウンロードしたファイルの例
 ```html
 <script type="module">
-import quel from "./path/to/quel.min.js"; // ファイル
+import { registComponentModules } from "./path/to/quel.min.js"; // ファイル
 </script>
 ```
 
@@ -39,7 +39,7 @@ import quel from "./path/to/quel.min.js"; // ファイル
 <myapp-main></myapp-main>
 
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 
 const html = `
 <div>{{ message }}</div>
@@ -49,7 +49,7 @@ class ViewModel {
   message = "Welcome to Quel";
 }
 
-quel.componentModules({ myappMain:{ html, ViewModel } });
+registComponentModules({ myappMain:{ html, ViewModel } });
 </script>
 </html>
 ```
@@ -78,7 +78,7 @@ quel.componentModules({ myappMain:{ html, ViewModel } });
 <div is="myapp-sub"></div>
 
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 </script>
 
 </html>
@@ -104,7 +104,7 @@ const html = `
 <button data-bind="onclick:countUp">countUp</button>
 
 <!-- 条件分岐 -->
-{{ if:disp }}
+{{ if:isOver5times }}
   <div>5回以上押されたよ</div>
 {{ end: }}
 
@@ -131,7 +131,7 @@ class ViewModel {
   name = "John Smith";
   animals = [ "Cat", "Dog", "Rabit" ];
   // getterを使った、アクセサプロパティ
-  get disp() {
+  get isOver5times() {
     return this.count >= 5;
   }
 
@@ -163,18 +163,18 @@ export default { html, ViewModel, extendTag:"div" };
 コンポーネントモジュールとカスタム要素名と対応付ける。
 
 ```js
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 // コンポーネントモジュールのimport
 import myappMain from "./main.js";
 
 // カスタム要素名とコンポーネントモジュールと対応付ける。
-quel.componentModules({ "myapp-main":myappMain });
+registComponentModules({ "myapp-main":myappMain });
 
 // カスタム要素名はキャメルケースでも大丈夫。
-quel.componentModules({ "myappMain":myappMain });
+registComponentModules({ "myappMain":myappMain });
 
 // オブジェクトリテラルの省略記法でより簡単に記述できます。
-quel.componentModules({ myappMain });
+registComponentModules({ myappMain });
 ```
 
 ## チュートリアル
@@ -205,10 +205,10 @@ quel.componentModules({ myappMain });
 <myapp-main></myapp-main>
 
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 import myappMain from "./main.js";
 
-quel.componentModules({ myappMain });
+registComponentModules({ myappMain });
 </script>
 </html>
 ```
