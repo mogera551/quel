@@ -5,9 +5,9 @@
 <myapp-main></myapp-main>
 
 <script type="module">
-import quel from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 import myappMain from "./main.js";
 
-quel.componentModules({ myappMain });
+registComponentModules({ myappMain });
 </script>
 </html>
