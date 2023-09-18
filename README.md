@@ -641,14 +641,14 @@ class ViewModel {
 
 [実行結果を見る](https://codepen.io/mogera551/pen/LYMZypL)
 
-### Step.13 ループブロック内のコンテキスト変数・ワイルドカードの使用
-* ループブロック内でワイルドーカードを使ったアクセサプロパティを宣言できます。→`members.*.no` `members.*.isAdult`
-* ループブロック内のワイルドーカードを使ったアクセサプロパティでワイルドーカードを使ったプロパティにアクセスできます。→`members.*.isAdult`内で`members.*.age`を参照している部分。
-* ループブロック内のワイルドーカードを使ったアクセサプロパティでコンテキスト変数（インデックス値）を利用することができます。
+### Step.13 繰り返しブロック内のコンテキスト変数・ワイルドカードの使用
+* 繰り返しブロック内でワイルドーカードを使ったアクセサプロパティを宣言できます。→`members.*.no` `members.*.isAdult`
+* 繰り返しブロック内のワイルドーカードを使ったアクセサプロパティでワイルドーカードを使ったプロパティにアクセスできます。→`members.*.isAdult`内で`members.*.age`を参照している部分。
+* 繰り返しブロック内のワイルドーカードを使ったアクセサプロパティでコンテキスト変数（インデックス値）を利用することができます。
   * プロパティ内でコンテキスト変数`this.$1`を参照します。
-* ループブロック内のイベントハンドラでインデックス値を利用することができます。
+* 繰り返しブロック内のイベントハンドラでインデックス値を利用することができます。
   * インデックス値はイベントハンドラ第2引数に渡されます。→`popup(e, $1)`の`$1`
-* ループブロック内で直接コンテキスト変数（インデックス値）を利用することができます。→`$1|offset,1`
+* 繰り返しブロック内で直接コンテキスト変数（インデックス値）を利用することができます。→`$1|offset,1`
 
 `main.js`の変数`html`の内容
 ```html
@@ -690,10 +690,7 @@ class ViewModel {
     "members.*.isAdult": [ "members.*.age" ]
 
     // "members.*.no": [ "$1" ], 
-    // コンテキスト変数$1に依存するが、コンテキスト変数$1は記述しない
-    // →記述するものがない
-    // →依存するものがない
-    // →省略
+    // コンテキスト変数$1に依存するが、コンテキスト変数$1は記述しなくて良いので、省略
   }
 }
 ```
@@ -708,6 +705,7 @@ class ViewModel {
 `main.js`の変数`html`の内容
 ```html
 <button type="button" data-bind="onclick:add">add grape</button>
+<button type="button" data-bind="onclick:dump">dump fruits</button>
 {{ loop:fruits }}
 <div><input type="text" data-bind="fruits.*">{{ fruits.* }}</div>
 {{ end: }}
@@ -721,6 +719,9 @@ class ViewModel {
     // イミュータブルなconcatで要素を追加して、fruitsプロパティへ代入
     // ミュータブルなpushは使わない
     this.fruits = this.fruits.concat("grape");
+  }
+  dump() {
+    alert(JSON.stringify(this.fruits));
   }
 }
 ```
@@ -840,7 +841,7 @@ class ViewModel {
 ```
 
 #### ViewModelのdeleteメソッド
-* `delete`メソッドは、ループブロック内にあるため、第2引数にインデックスが渡る
+* `delete`メソッドは、繰り返しブロック内にあるため、第2引数にインデックスが渡る
 * ToDoリストからインデックスの指す要素を削除し、ToDoリストに代入する。
    * ミュータブルな`splice`ではなく`toSpliced`を使う
 ```js
