@@ -1622,6 +1622,7 @@ class TemplateBind extends BindInfo {
       TemplateChild.dispose(templateChild);
     });
     this.templateChildren = [];
+    this.lastCount = 0;
   }
 
   /**
