@@ -65,8 +65,6 @@ test("BindToTemplate", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toEqual([]);
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
 });

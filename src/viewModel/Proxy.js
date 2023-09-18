@@ -49,6 +49,7 @@ const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
 const OPEN_DIALOG_METHOD = "$openDialog";
 const CLOSE_DIALOG_METHOD = "$closeDialog";
+const COMPONENT_PROPERTY = "$component";
 
 /**
  * @type {Set<string>}
@@ -59,6 +60,7 @@ const setOfProperties = new Set([
   DEPENDENT_PROPS_PROPERTY,
   OPEN_DIALOG_METHOD,
   CLOSE_DIALOG_METHOD,
+  COMPONENT_PROPERTY,
 ]);
 
 /**
@@ -179,7 +181,8 @@ export class ViewModelHandler extends Handler {
         return Reflect.get(target, DEPENDENT_PROPS_PROPERTY, receiver);
       } else if (propName.name === OPEN_DIALOG_METHOD) {
         return (name, data = {}, attributes = {}) => Reflect.apply(this.#openDialog, this, [target, {name, data, attributes}, receiver])
-//      } else if (propName.name === CLOSE_DIALOG_METHOD) {
+      } else if (propName.name === COMPONENT_PROPERTY) {
+        return this.component;
       } else {
         return (data = {}) => Reflect.apply(this.#closeDialog, this, [target, data, receiver]);
       }

@@ -2,8 +2,6 @@ import "../types.js";
 import { utils } from "../utils.js";
 import { Filter } from "../filter/Filter.js";
 import { BindInfo } from "./BindInfo.js";
-import { Binder } from "../binder/Binder.js";
-import { Selector } from "../binder/Selector.js";
 import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../Const.js";
 import { Context } from "../context/Context.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
@@ -66,33 +64,6 @@ export class TemplateChild {
 
   /**
    * 
-   */
-  forceUpdateNode() {
-    this.binds.forEach(bind => {
-      bind.forceUpdateNode();
-    })
-  }
-
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number} diff 
-   */
-  changeIndexes(propName, diff) {
-    const changedParam = this.context.stack.find(param => param.propName.name === propName.name);
-    if (changedParam) {
-      this.context.indexes[changedParam.pos] += diff;
-      const paramPos = changedParam.indexes.length - 1;
-      changedParam.indexes[paramPos] += diff;
-      this.context.stack.filter(param => param.propName.setOfParentPaths.has(propName.name)).forEach(param => {
-        param.indexes[paramPos] += diff;
-      });
-    }
-    this.binds.forEach(bind => bind.changeIndexes(propName, diff));
-  }
-
-  /**
-   * 
    * @param {TemplateBind} templateBind 
    * @param {ContextInfo} context
    * @returns {TemplateChild}
@@ -108,6 +79,7 @@ export class TemplateChild {
       const templateChild = templateChildren.pop();
       templateChild.binds.forEach(bind => {
         bind.context = context;
+        bind.updateNode();
       });
       return templateChild;
     }
@@ -152,6 +124,13 @@ export class TemplateBind extends BindInfo {
     }
     return this.#uuid;
   }
+  #lastCount;
+  get lastCount() {
+    return (this.#lastCount ?? 0);
+  }
+  set lastCount(v) {
+    this.#lastCount = v;
+  }
 
   /**
    * @type {TemplateChild}
@@ -165,32 +144,12 @@ export class TemplateBind extends BindInfo {
       (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
   }
 
-  forceUpdateNode() {
-    (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
-      (this.nodeProperty === TEMPLATE_BRANCH) ? this.forceExpandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
-  }
-  
-  /**
-   * 
-   */
   removeFromParent() {
     this.templateChildren.forEach(templateChild => {
       templateChild.removeFromParent();
       TemplateChild.dispose(templateChild);
     });
     this.templateChildren = [];
-    this.lastViewModelValue = undefined;
-    this.lastViewModelFilteredValue = undefined;
-  }
-
-  /**
-   * 
-   */
-  appendToParent(templateChildren) {
-    const fragment = document.createDocumentFragment();
-    templateChildren
-      .forEach(child => fragment.appendChild(...child.nodesForAppend));
-    (this.lastChild?.lastNode ?? this.node).after(fragment);
   }
 
   /**
@@ -198,97 +157,80 @@ export class TemplateBind extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { component, filters, context } = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        this.removeFromParent();
-        if (filteredValue) {
-          this.templateChildren = [];
-          const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
-          this.appendToParent(newTemplateChildren);
-          this.templateChildren = newTemplateChildren;
-        } else {
-          this.templateChildren = [];
-        }
-        this.lastViewModelFilteredValue = filteredValue;
+    const { component, filters, context, viewModelValue } = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    const currentValue = this.templateChildren.length > 0;
+    if (currentValue !== filteredValue) {
+      if (filteredValue) {
+        const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
+        TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
+        this.templateChildren = newTemplateChildren;
+      } else {
+        TemplateBind.removeFromParent(this.templateChildren);
+        this.templateChildren = [];
       }
-      this.lastViewModelValue = value;
-    }
-
-    // 子要素の展開を実行
-    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
-  }
-
-  forceExpandIf() {
-    const { component, filters, context } = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-    this.removeFromParent();
-    if (filteredValue) {
-      this.templateChildren = [];
-      const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
-      this.appendToParent(newTemplateChildren);
-      this.templateChildren = newTemplateChildren;
     } else {
-      this.templateChildren = [];
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
-
-    // 子要素の展開を実行
-    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
   }
 
   /**
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { component, filters, templateChildren, context } = this;
+    const { component, filters, context, viewModelValue } = this;
     /**
      * @type {any[]}
      */
-    const lastValue = this.lastViewModelValue ?? [];
-    /**
-     * @type {any[]}
-     */
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out) ?? [];
+    const newValue = Filter.applyForOutput(viewModelValue, filters, component.filters.out) ?? [];
 
-    if (lastValue.length > newValue.length) {
+    if (this.lastCount > newValue.length) {
       const removeTemplateChildren = this.templateChildren.splice(newValue.length);
-      removeTemplateChildren.forEach(templateChild => {
-        templateChild.removeFromParent();
-        TemplateChild.dispose(templateChild);
-      });
-    } else if (lastValue.length < newValue.length) {
+      TemplateBind.removeFromParent(removeTemplateChildren);
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
+    } else if (this.lastCount < newValue.length) {
       // コンテキスト用のデータ
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
       const pos = context.indexes.length;
       const propName = this.viewModelPropertyName;
       const parentIndexes = this.contextParam?.indexes ?? [];
       const newTemplateChildren = [];
-      for(let i = lastValue.length; i < newValue.length; i++) {
+      for(let i = this.lastCount; i < newValue.length; i++) {
         const newIndex = i;
         const newContext = Context.clone(context);
         newContext.indexes.push(newIndex);
         newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos})
         newTemplateChildren.push(TemplateChild.create(this, newContext))
       }
-      this.appendToParent(newTemplateChildren);
+      TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
       this.templateChildren = this.templateChildren.concat(newTemplateChildren);
+    } else {
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
     }
-    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
-
-    this.lastViewModelValue = newValue.slice();
+    this.lastCount = newValue.length;
   }
 
   /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number} diff 
+   * @param {TemplateChild[]} templateChildren
    */
-  changeIndexes(propName, diff) {
-    super.changeIndexes(propName, diff);
-    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(propName, diff));
+  static removeFromParent(templateChildren) {
+    templateChildren.forEach(templateChild => {
+      templateChild.removeFromParent();
+      TemplateChild.dispose(templateChild);
+    });
   }
+
+  /**
+   * @param {Node} parentNode
+   * @param {TemplateChild[]} templateChildren
+   */
+  static appendToParent(parentNode, templateChildren) {
+    const fragment = document.createDocumentFragment();
+    templateChildren
+      .forEach(templateChild => {
+        if (templateChild.childNodes.length > 0) fragment.appendChild(...templateChild.nodesForAppend);
+      });
+    parentNode.after(fragment);
+  }
+
 }

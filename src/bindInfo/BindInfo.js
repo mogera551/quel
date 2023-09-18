@@ -151,19 +151,6 @@ export class BindInfo {
   }
   
   /**
-   * @type {any}
-   */
-  lastNodeValue;
-  /**
-   * @type {any}
-   */
-  lastViewModelValue;
-  /**
-   * @type {any}
-   */
-  lastViewModelFilteredValue;
-
-  /**
    * @type {ContextInfo}
    */
   #context;
@@ -192,22 +179,27 @@ export class BindInfo {
 
   /**
    * 
-   * @returns {any}
+   * @type {any}
    */
-  getViewModelValue() {
+  get viewModelValue() {
     return (this.isContextIndex) ?
       this.contextIndexes[this.contextIndex] :
       this.viewModel[Symbols.directlyGet](this.viewModelProperty, this.indexes);
   }
-
-  /**
-   * 
-   * @param {any} value
-   */
-  setViewModelValue(value) {
+  set viewModelValue(value) {
     if (!this.isContextIndex) {
       this.viewModel[Symbols.directlySet](this.viewModelProperty, this.indexes, value);
     }
+  }
+
+  /**
+   * @type {any}
+   */
+  get nodeValue() {
+
+  }
+  set nodeValue(value) {
+    
   }
 
   /**
@@ -216,33 +208,12 @@ export class BindInfo {
   updateNode() {}
 
   /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {}
-
-  /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {}
 
   /**
    * 
-   * @param {PropertyName} propName 
-   * @param {number} diff 
    */
-  changeIndexes(propName, diff) {
-  }
-
-  /**
-   * 
-   */
-  removeFromParent() {
-/*
-    if (this.defaultEventHandler) {
-      this.htmlElement?.removeEventListener(this.defaultEventType, this.defaultEventHandler);
-      this.defaultEventHandler = undefined;
-      this.defaultEventType = undefined;
-    }
-*/
-  }
+  removeFromParent() {}
 }

@@ -16,43 +16,22 @@ export class ClassListBind extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
-          filteredValue ? element.classList.add(className) : element.classList.remove(className);
-        }));
-        this.lastViewModelFilteredValue = value;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    const {component, node, element, nodeProperty, viewModelProperty, filters, className, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const hasClassName = element.classList.contains(className);
     if (filteredValue !== hasClassName) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
         filteredValue ? element.classList.add(className) : element.classList.remove(className);
       }));
     }
-    this.lastViewModelFilteredValue = value;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, node, element, filters, className} = this;
+    const {component, element, filters, className} = this;
     const value = Filter.applyForInput(element.classList.contains(className), filters, component.filters.in);
-    this.setViewModelValue(value);
+    this.viewModelValue = value;
   }
 }

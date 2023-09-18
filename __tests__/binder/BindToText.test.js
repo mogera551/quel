@@ -54,8 +54,6 @@ test("BindToText", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe(100);
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
 });

@@ -12,46 +12,35 @@ export class AttributeBind extends BindInfo {
   }
 
   /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   * @type {string}
    */
-  updateNode() {
-    const {component, node, element, attrName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, filteredValue, () => {
-          element.setAttribute(attrName, filteredValue ?? "");
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
+  get nodeValue() {
+    return this.element.getAttribute(this.attrName);
+  }
+  set nodeValue(value) {
+    this.element.setAttribute(this.attrName, value);
   }
 
   /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
-  forceUpdateNode() {
-    const {component, node, element, attrName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-    if (element.getAttribute(attrName) !== (filteredValue ?? "")) {
+  updateNode() {
+    const {component, node, attrName, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    if (this.nodeValue !== (filteredValue ?? "")) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, filteredValue, () => {
-        element.setAttribute(attrName, filteredValue ?? "");
+        this.nodeValue = filteredValue ?? "";
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, element, attrName, filters} = this;
-    const value = Filter.applyForInput(element.getAttribute(attrName), filters, component.filters.in);
-    this.setViewModelValue(value);
+    const {component, filters, nodeValue} = this;
+    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
+    this.viewModelValue = value;
   }
 
 }

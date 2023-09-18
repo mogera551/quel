@@ -69,8 +69,6 @@ test("BindToHTMLElement div", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   node.textContent = "200";
@@ -138,8 +136,6 @@ test("BindToHTMLElement input ", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   node.value = "200";
@@ -215,8 +211,6 @@ test("BindToHTMLElement select ", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   node.value = "200";
@@ -284,8 +278,6 @@ test("BindToHTMLElement textarea ", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   node.value = "200";
@@ -369,8 +361,6 @@ test("BindToHTMLElement input defaultEvent", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[1] instanceof EventBind).toBe(true);
@@ -393,8 +383,6 @@ test("BindToHTMLElement input defaultEvent", () => {
   expect(binds[1].indexesString).toBe("");
   expect(binds[1].viewModelPropertyKey).toBe("change\t");
   expect(binds[1].contextIndexes).toEqual([]);
-  expect(binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[1].lastViewModelValue).toBe(undefined);
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 
   calledChange = false;
@@ -470,8 +458,6 @@ test("BindToHTMLElement input no defaultEvent", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[1] instanceof EventBind).toBe(true);
@@ -494,8 +480,6 @@ test("BindToHTMLElement input no defaultEvent", () => {
   expect(binds[1].indexesString).toBe("");
   expect(binds[1].viewModelPropertyKey).toBe("change\t");
   expect(binds[1].contextIndexes).toEqual([]);
-  expect(binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[1].lastViewModelValue).toBe(undefined);
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 
   calledChange = false;
@@ -568,8 +552,6 @@ test("BindToHTMLElement input radio", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe(true);
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   node.checked = false;
@@ -640,8 +622,6 @@ test("BindToHTMLElement input checkbox", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe(true);
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   node.checked = false;
@@ -754,8 +734,6 @@ test("BindToHTMLElement input radio", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[1] instanceof Radio).toBe(true);
@@ -780,8 +758,6 @@ test("BindToHTMLElement input radio", () => {
   expect(binds[1].indexesString).toBe("");
   expect(binds[1].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[1].contextIndexes).toEqual([]);
-  expect(binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[1].lastViewModelValue).toBe("100");
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 
   node1.checked = false;
@@ -865,8 +841,6 @@ test("BindToHTMLElement input checkbox", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toEqual(["100"]);
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[1] instanceof Checkbox).toBe(true);
@@ -891,8 +865,6 @@ test("BindToHTMLElement input checkbox", () => {
   expect(binds[1].indexesString).toBe("");
   expect(binds[1].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[1].contextIndexes).toEqual([]);
-  expect(binds[1].lastNodeValue).toEqual(undefined);
-  expect(binds[1].lastViewModelValue).toEqual(["100"]);
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 
   node1.checked = false;

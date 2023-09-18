@@ -1,7 +1,7 @@
 import "../../src/types.js";
 import { generateComponentClass } from "../../src/component/Component.js";
 import { createViewModel } from "../../src/viewModel/Proxy.js";
-import { NodePropertyType } from "../../src/node/PropertyType.js";
+//import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { View } from "../../src/view/View.js";
 import { Module } from "../../src/component/Module.js";
 
@@ -52,10 +52,9 @@ test ("View render", async () => {
   expect(binds[0].contextIndexes).toEqual([]);
   expect(binds[0].eventType).toBe(undefined);
   expect(binds[0].filters).toEqual([]);
-  expect(binds[0].lastViewModelValue).toBe(100);
 //  expect(binds[0].parentContextBind).toBe(null);
 //  expect(binds[0].positionContextIndexes).toBe(-1);
-  expect(binds[0].type).toBe(NodePropertyType.property);
+//  expect(binds[0].type).toBe(NodePropertyType.property);
   expect(binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].viewModelProperty).toBe("aaa");
@@ -92,10 +91,9 @@ test ("View render", async () => {
   expect(binds[0].contextIndexes).toEqual([]);
   expect(binds[0].eventType).toBe(undefined);
   expect(binds[0].filters).toEqual([]);
-  expect(binds[0].lastViewModelValue).toBe(100);
 //  expect(binds[0].parentContextBind).toBe(null);
 //  expect(binds[0].positionContextIndexes).toBe(-1);
-  expect(binds[0].type).toBe(NodePropertyType.property);
+//  expect(binds[0].type).toBe(NodePropertyType.property);
   expect(binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].viewModelProperty).toBe("aaa");
@@ -105,10 +103,9 @@ test ("View render", async () => {
   expect(binds[1].contextIndexes).toEqual([]);
   expect(binds[1].eventType).toBe(undefined);
   expect(binds[1].filters).toEqual([]);
-  expect(binds[1].lastViewModelValue).toBe(true);
 //  expect(binds[1].parentContextBind).toBe(null);
 //  expect(binds[1].positionContextIndexes).toBe(-1);
-  expect(binds[1].type).toBe(NodePropertyType.property);
+//  expect(binds[1].type).toBe(NodePropertyType.property);
   expect(binds[1].viewModel).toBe(component.viewModel);
   expect(binds[1].nodeProperty).toBe("disabled");
   expect(binds[1].viewModelProperty).toBe("bbb");
@@ -156,10 +153,9 @@ test ("View render", async () => {
   expect(binds[0].contextIndexes).toEqual([]);
   expect(binds[0].eventType).toBe(undefined);
   expect(binds[0].filters).toEqual([]);
-  expect(binds[0].lastViewModelValue).toEqual([10, 20]);
 //  expect(binds[0].parentContextBind).toBe(null);
 //  expect(binds[0].positionContextIndexes).toBe(-1);
-  expect(binds[0].type).toBe(NodePropertyType.template);
+//  expect(binds[0].type).toBe(NodePropertyType.template);
   expect(binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].nodeProperty).toBe("loop");
   expect(binds[0].viewModelProperty).toBe("aaa");
@@ -171,10 +167,9 @@ test ("View render", async () => {
   expect(binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([0]);
   expect(binds[0].templateChildren[0].binds[0].eventType).toBe(undefined);
   expect(binds[0].templateChildren[0].binds[0].filters).toEqual([]);
-  expect(binds[0].templateChildren[0].binds[0].lastViewModelValue).toEqual(10);
 //  expect(binds[0].templateChildren[0].binds[0].parentContextBind).toBe(binds[0]);
 //  expect(binds[0].templateChildren[0].binds[0].positionContextIndexes).toBe(0);
-  expect(binds[0].templateChildren[0].binds[0].type).toBe(NodePropertyType.text);
+//  expect(binds[0].templateChildren[0].binds[0].type).toBe(NodePropertyType.text);
   expect(binds[0].templateChildren[0].binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].templateChildren[0].binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].templateChildren[0].binds[0].viewModelProperty).toBe("aaa.*");
@@ -185,10 +180,9 @@ test ("View render", async () => {
   expect(binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([1]);
   expect(binds[0].templateChildren[1].binds[0].eventType).toBe(undefined);
   expect(binds[0].templateChildren[1].binds[0].filters).toEqual([]);
-  expect(binds[0].templateChildren[1].binds[0].lastViewModelValue).toEqual(20);
 //  expect(binds[0].templateChildren[1].binds[0].parentContextBind).toBe(binds[0]);
 //  expect(binds[0].templateChildren[1].binds[0].positionContextIndexes).toBe(0);
-  expect(binds[0].templateChildren[1].binds[0].type).toBe(NodePropertyType.text);
+//  expect(binds[0].templateChildren[1].binds[0].type).toBe(NodePropertyType.text);
   expect(binds[0].templateChildren[1].binds[0].viewModel).toBe(component.viewModel);
   expect(binds[0].templateChildren[1].binds[0].nodeProperty).toBe("textContent");
   expect(binds[0].templateChildren[1].binds[0].viewModelProperty).toBe("aaa.*");

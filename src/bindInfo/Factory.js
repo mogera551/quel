@@ -15,20 +15,27 @@ import { StyleBind } from "./Style.js";
 import { PropertyBind } from "./Property.js";
 import { TextBind } from "./Text.js";
 
-const classByType = {};
-classByType[NodePropertyType.property] = PropertyBind;
-classByType[NodePropertyType.attribute] = AttributeBind;
-classByType[NodePropertyType.classList] = ClassListBind;
-classByType[NodePropertyType.className] = ClassNameBind;
-classByType[NodePropertyType.radio] = Radio;
-classByType[NodePropertyType.checkbox] = Checkbox;
-classByType[NodePropertyType.template] = TemplateBind;
-classByType[NodePropertyType.event] = Event;
-classByType[NodePropertyType.component] = ComponentBind;
-classByType[NodePropertyType.style] = StyleBind;
-classByType[NodePropertyType.text] = TextBind;
-
 export class Factory {
+  /**
+   * @type {Object<nodePropertyType:number, bindClass:classof<BindInfo>>}
+   */
+  static classByType = undefined;
+  static setup() {
+    this.classByType = {};
+    this.classByType[NodePropertyType.property] = PropertyBind;
+    this.classByType[NodePropertyType.attribute] = AttributeBind;
+    this.classByType[NodePropertyType.classList] = ClassListBind;
+    this.classByType[NodePropertyType.className] = ClassNameBind;
+    this.classByType[NodePropertyType.radio] = Radio;
+    this.classByType[NodePropertyType.checkbox] = Checkbox;
+    this.classByType[NodePropertyType.template] = TemplateBind;
+    this.classByType[NodePropertyType.event] = Event;
+    this.classByType[NodePropertyType.component] = ComponentBind;
+    this.classByType[NodePropertyType.style] = StyleBind;
+    this.classByType[NodePropertyType.text] = TextBind;
+    return this.classByType;
+  }
+
   /**
    * @param {Component} component
    * @param {Node} node
@@ -44,7 +51,7 @@ export class Factory {
     /**
      * @type {BindInfo}
      */
-    const bindInfo = new classByType[nodeInfo.type];
+    const bindInfo = new (this.classByType ?? this.setup())[nodeInfo.type];
     bindInfo.component = component;
     bindInfo.node = node;
     bindInfo.nodeProperty = nodeProperty;

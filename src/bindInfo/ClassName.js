@@ -8,46 +8,34 @@ const DELIMITER = " ";
 
 export class ClassNameBind extends BindInfo {
   /**
+   * @type {string}
+   */
+  get nodeValue() {
+    return this.element[CLASS_PROPERTY];
+  }
+  set nodeValue(value) {
+    this.element[CLASS_PROPERTY] = value;
+  }
+  /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, element, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredValue, () => {
-          element[CLASS_PROPERTY] = filteredValue.join(DELIMITER);
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, element, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const joinedValue = filteredValue.join(DELIMITER);
-    if (element[CLASS_PROPERTY] !== joinedValue) {
+    if (this.nodeValue !== joinedValue) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredValue, () => {
-        element[CLASS_PROPERTY] = joinedValue;
+        this.nodeValue = joinedValue;
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, node, element, filters, className} = this;
-    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters, component.filters.in);
-    this.setViewModelValue(value);
+    const {component, filters, nodeValue} = this;
+    const value = Filter.applyForInput(nodeValue ? nodeValue.split(DELIMITER) : [], filters, component.filters.in);
+    this.viewModelValue = value;
   }
 }

@@ -69,8 +69,6 @@ test("BindToSVGElement text attribute", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
 });
@@ -134,8 +132,6 @@ test("BindToSVGElement text property ", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
 });
@@ -276,8 +272,6 @@ test("BindToSVGElement text property event", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[1] instanceof EventBind).toBe(true);
@@ -300,8 +294,6 @@ test("BindToSVGElement text property event", () => {
   expect(binds[1].indexesString).toBe("");
   expect(binds[1].viewModelPropertyKey).toBe("change\t");
   expect(binds[1].contextIndexes).toEqual([]);
-  expect(binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[1].lastViewModelValue).toBe(undefined);
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 /*
   calledChange = false;

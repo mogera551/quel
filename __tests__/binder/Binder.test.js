@@ -99,8 +99,6 @@ test("Binder", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[1] instanceof PropertyBind).toBe(true);
@@ -120,8 +118,6 @@ test("Binder", () => {
   expect(binds[1].indexesString).toBe("");
   expect(binds[1].viewModelPropertyKey).toBe("bbb\t");
   expect(binds[1].contextIndexes).toEqual([]);
-  expect(binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[1].lastViewModelValue).toBe("200");
   expect(binds[1].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[2] instanceof PropertyBind).toBe(true);
@@ -141,8 +137,6 @@ test("Binder", () => {
   expect(binds[2].indexesString).toBe("");
   expect(binds[2].viewModelPropertyKey).toBe("ccc\t");
   expect(binds[2].contextIndexes).toEqual([]);
-  expect(binds[2].lastNodeValue).toBe(undefined);
-  expect(binds[2].lastViewModelValue).toBe("300");
   expect(binds[2].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[3] instanceof TemplateBind).toBe(true);
@@ -162,8 +156,6 @@ test("Binder", () => {
   expect(binds[3].indexesString).toBe("");
   expect(binds[3].viewModelPropertyKey).toBe("ddd\t");
   expect(binds[3].contextIndexes).toEqual([]);
-  expect(binds[3].lastNodeValue).toBe(undefined);
-  expect(binds[3].lastViewModelValue).toEqual(["1", "2", "3"]);
   expect(binds[3].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[3].templateChildren.length).toBe(3);
@@ -192,8 +184,6 @@ test("Binder", () => {
   expect(binds[3].templateChildren[0].binds[0].indexesString).toBe("0");
   expect(binds[3].templateChildren[0].binds[0].viewModelPropertyKey).toBe("ddd.*\t0");
   expect(binds[3].templateChildren[0].binds[0].contextIndexes).toEqual([0]);
-  expect(binds[3].templateChildren[0].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[3].templateChildren[0].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[0].binds[0].context).toEqual({ indexes:[0], stack:[{indexes:[0], pos:0, propName:PropertyName.create("ddd")}] });
 
   expect(binds[3].templateChildren[1].context).toEqual({
@@ -221,8 +211,6 @@ test("Binder", () => {
   expect(binds[3].templateChildren[1].binds[0].indexesString).toBe("1");
   expect(binds[3].templateChildren[1].binds[0].viewModelPropertyKey).toBe("ddd.*\t1");
   expect(binds[3].templateChildren[1].binds[0].contextIndexes).toEqual([1]);
-  expect(binds[3].templateChildren[1].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[3].templateChildren[1].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[1].binds[0].context).toEqual({ indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("ddd")}] });
 
   expect(binds[3].templateChildren[2].context).toEqual({
@@ -250,8 +238,6 @@ test("Binder", () => {
   expect(binds[3].templateChildren[2].binds[0].indexesString).toBe("2");
   expect(binds[3].templateChildren[2].binds[0].viewModelPropertyKey).toBe("ddd.*\t2");
   expect(binds[3].templateChildren[2].binds[0].contextIndexes).toEqual([2]);
-  expect(binds[3].templateChildren[2].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[3].templateChildren[2].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[2].binds[0].context).toEqual({ indexes:[2], stack:[{indexes:[2], pos:0, propName:PropertyName.create("ddd")}] });
 
   expect(binds[4] instanceof TextBind).toBe(true);
@@ -271,8 +257,6 @@ test("Binder", () => {
   expect(binds[4].indexesString).toBe("");
   expect(binds[4].viewModelPropertyKey).toBe("eee\t");
   expect(binds[4].contextIndexes).toEqual([]);
-  expect(binds[4].lastNodeValue).toBe(undefined);
-  expect(binds[4].lastViewModelValue).toBe("400");
   expect(binds[4].context).toEqual({ indexes:[], stack:[] });
 });
 
@@ -360,8 +344,6 @@ test("Binder context", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
   expect(binds[0].contextIndexes).toEqual([1]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toBe("100");
   expect(binds[0].context).toEqual({
     indexes:[1], stack:[
       { indexes:[1], pos:0, propName:PropertyName.create("fff") }
@@ -385,8 +367,6 @@ test("Binder context", () => {
   expect(binds[1].indexesString).toBe("");
   expect(binds[1].viewModelPropertyKey).toBe("bbb\t");
   expect(binds[1].contextIndexes).toEqual([1]);
-  expect(binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[1].lastViewModelValue).toBe("200");
   expect(binds[1].context).toEqual({
     indexes:[1], stack:[
       { indexes:[1], pos:0, propName:PropertyName.create("fff") }
@@ -410,8 +390,6 @@ test("Binder context", () => {
   expect(binds[2].indexesString).toBe("");
   expect(binds[2].viewModelPropertyKey).toBe("ccc\t");
   expect(binds[2].contextIndexes).toEqual([1]);
-  expect(binds[2].lastNodeValue).toBe(undefined);
-  expect(binds[2].lastViewModelValue).toBe("300");
   expect(binds[2].context).toEqual({
     indexes:[1], stack:[
       { indexes:[1], pos:0, propName:PropertyName.create("fff") }
@@ -435,8 +413,6 @@ test("Binder context", () => {
   expect(binds[3].indexesString).toBe("");
   expect(binds[3].viewModelPropertyKey).toBe("ddd\t");
   expect(binds[3].contextIndexes).toEqual([1]);
-  expect(binds[3].lastNodeValue).toBe(undefined);
-  expect(binds[3].lastViewModelValue).toEqual(["1", "2", "3"]);
   expect(binds[3].context).toEqual({
     indexes:[1], stack:[
       { indexes:[1], pos:0, propName:PropertyName.create("fff") }
@@ -468,8 +444,6 @@ test("Binder context", () => {
   expect(binds[3].templateChildren[0].binds[0].indexesString).toBe("0");
   expect(binds[3].templateChildren[0].binds[0].viewModelPropertyKey).toBe("ddd.*\t0");
   expect(binds[3].templateChildren[0].binds[0].contextIndexes).toEqual([1, 0]);
-  expect(binds[3].templateChildren[0].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[3].templateChildren[0].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[0].binds[0].context).toEqual({
     indexes:[1,0],
     stack:[
@@ -503,8 +477,6 @@ test("Binder context", () => {
   expect(binds[3].templateChildren[1].binds[0].indexesString).toBe("1");
   expect(binds[3].templateChildren[1].binds[0].viewModelPropertyKey).toBe("ddd.*\t1");
   expect(binds[3].templateChildren[1].binds[0].contextIndexes).toEqual([1, 1]);
-  expect(binds[3].templateChildren[1].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[3].templateChildren[1].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[1].binds[0].context).toEqual({
     indexes:[1, 1],
     stack:[
@@ -538,8 +510,6 @@ test("Binder context", () => {
   expect(binds[3].templateChildren[2].binds[0].indexesString).toBe("2");
   expect(binds[3].templateChildren[2].binds[0].viewModelPropertyKey).toBe("ddd.*\t2");
   expect(binds[3].templateChildren[2].binds[0].contextIndexes).toEqual([1, 2]);
-  expect(binds[3].templateChildren[2].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[3].templateChildren[2].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[3].templateChildren[2].binds[0].context).toEqual({
     indexes:[1, 2],
     stack:[
@@ -565,8 +535,6 @@ test("Binder context", () => {
   expect(binds[4].indexesString).toBe("");
   expect(binds[4].viewModelPropertyKey).toBe("eee\t");
   expect(binds[4].contextIndexes).toEqual([1]);
-  expect(binds[4].lastNodeValue).toBe(undefined);
-  expect(binds[4].lastViewModelValue).toBe("400");
   expect(binds[4].context).toEqual({
     indexes:[1], stack:[
       { indexes:[1], pos:0, propName:PropertyName.create("fff") }
@@ -719,8 +687,6 @@ test("Binder svg", () => {
   expect(binds[0].indexesString).toBe("");
   expect(binds[0].viewModelPropertyKey).toBe("ddd\t");
   expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].lastViewModelValue).toEqual([{ name:"aaa", x:"10" }, { name:"bbb", x:"20" }]);
   expect(binds[0].context).toEqual({ indexes:[], stack:[] });
 
   expect(binds[0].templateChildren.length).toBe(2);
@@ -749,8 +715,6 @@ test("Binder svg", () => {
   expect(binds[0].templateChildren[0].binds[0].indexesString).toBe("0");
   expect(binds[0].templateChildren[0].binds[0].viewModelPropertyKey).toBe("ddd.*.x\t0");
   expect(binds[0].templateChildren[0].binds[0].contextIndexes).toEqual([0]);
-  expect(binds[0].templateChildren[0].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].templateChildren[0].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[0].templateChildren[0].binds[0].context).toEqual({ indexes:[0], stack:[{indexes:[0], pos:0, propName:PropertyName.create("ddd")}] });
 
   expect(binds[0].templateChildren[0].binds[1] instanceof TextBind).toBe(true);
@@ -769,8 +733,6 @@ test("Binder svg", () => {
   expect(binds[0].templateChildren[0].binds[1].indexesString).toBe("0");
   expect(binds[0].templateChildren[0].binds[1].viewModelPropertyKey).toBe("ddd.*.name\t0");
   expect(binds[0].templateChildren[0].binds[1].contextIndexes).toEqual([0]);
-  expect(binds[0].templateChildren[0].binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[0].templateChildren[0].binds[1].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[0].templateChildren[0].binds[1].context).toEqual({ indexes:[0], stack:[{indexes:[0], pos:0, propName:PropertyName.create("ddd")}] });
 
   expect(binds[0].templateChildren[1].context).toEqual({
@@ -798,8 +760,6 @@ test("Binder svg", () => {
   expect(binds[0].templateChildren[1].binds[0].indexesString).toBe("1");
   expect(binds[0].templateChildren[1].binds[0].viewModelPropertyKey).toBe("ddd.*.x\t1");
   expect(binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([1]);
-  expect(binds[0].templateChildren[1].binds[0].lastNodeValue).toBe(undefined);
-  expect(binds[0].templateChildren[1].binds[0].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[0].templateChildren[1].binds[0].context).toEqual({ indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("ddd")}] });
 
   expect(binds[0].templateChildren[1].binds[1] instanceof TextBind).toBe(true);
@@ -818,7 +778,5 @@ test("Binder svg", () => {
   expect(binds[0].templateChildren[1].binds[1].indexesString).toBe("1");
   expect(binds[0].templateChildren[1].binds[1].viewModelPropertyKey).toBe("ddd.*.name\t1");
   expect(binds[0].templateChildren[1].binds[1].contextIndexes).toEqual([1]);
-  expect(binds[0].templateChildren[1].binds[1].lastNodeValue).toBe(undefined);
-  expect(binds[0].templateChildren[1].binds[1].lastViewModelValue).toBe(undefined); // ToDo:おかしくね？
   expect(binds[0].templateChildren[1].binds[1].context).toEqual({ indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("ddd")}] });
 });

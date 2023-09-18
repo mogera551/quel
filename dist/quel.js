@@ -1080,19 +1080,6 @@ class BindInfo {
   }
   
   /**
-   * @type {any}
-   */
-  lastNodeValue;
-  /**
-   * @type {any}
-   */
-  lastViewModelValue;
-  /**
-   * @type {any}
-   */
-  lastViewModelFilteredValue;
-
-  /**
    * @type {ContextInfo}
    */
   #context;
@@ -1121,22 +1108,27 @@ class BindInfo {
 
   /**
    * 
-   * @returns {any}
+   * @type {any}
    */
-  getViewModelValue() {
+  get viewModelValue() {
     return (this.isContextIndex) ?
       this.contextIndexes[this.contextIndex] :
       this.viewModel[Symbols.directlyGet](this.viewModelProperty, this.indexes);
   }
-
-  /**
-   * 
-   * @param {any} value
-   */
-  setViewModelValue(value) {
+  set viewModelValue(value) {
     if (!this.isContextIndex) {
       this.viewModel[Symbols.directlySet](this.viewModelProperty, this.indexes, value);
     }
+  }
+
+  /**
+   * @type {any}
+   */
+  get nodeValue() {
+
+  }
+  set nodeValue(value) {
+    
   }
 
   /**
@@ -1145,35 +1137,14 @@ class BindInfo {
   updateNode() {}
 
   /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {}
-
-  /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {}
 
   /**
    * 
-   * @param {PropertyName} propName 
-   * @param {number} diff 
    */
-  changeIndexes(propName, diff) {
-  }
-
-  /**
-   * 
-   */
-  removeFromParent() {
-/*
-    if (this.defaultEventHandler) {
-      this.htmlElement?.removeEventListener(this.defaultEventType, this.defaultEventHandler);
-      this.defaultEventHandler = undefined;
-      this.defaultEventType = undefined;
-    }
-*/
-  }
+  removeFromParent() {}
 }
 
 /**
@@ -1287,46 +1258,35 @@ class AttributeBind extends BindInfo {
   }
 
   /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   * @type {string}
    */
-  updateNode() {
-    const {component, node, element, attrName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, filteredValue, () => {
-          element.setAttribute(attrName, filteredValue ?? "");
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
+  get nodeValue() {
+    return this.element.getAttribute(this.attrName);
+  }
+  set nodeValue(value) {
+    this.element.setAttribute(this.attrName, value);
   }
 
   /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
-  forceUpdateNode() {
-    const {component, node, element, attrName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-    if (element.getAttribute(attrName) !== (filteredValue ?? "")) {
+  updateNode() {
+    const {component, node, attrName, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    if (this.nodeValue !== (filteredValue ?? "")) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, filteredValue, () => {
-        element.setAttribute(attrName, filteredValue ?? "");
+        this.nodeValue = filteredValue ?? "";
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, element, attrName, filters} = this;
-    const value = Filter.applyForInput(element.getAttribute(attrName), filters, component.filters.in);
-    this.setViewModelValue(value);
+    const {component, filters, nodeValue} = this;
+    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
+    this.viewModelValue = value;
   }
 
 }
@@ -1343,44 +1303,23 @@ class ClassListBind extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
-          filteredValue ? element.classList.add(className) : element.classList.remove(className);
-        }));
-        this.lastViewModelFilteredValue = value;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, element, nodeProperty, viewModelProperty, filters, className} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    const {component, node, element, nodeProperty, viewModelProperty, filters, className, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const hasClassName = element.classList.contains(className);
     if (filteredValue !== hasClassName) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
         filteredValue ? element.classList.add(className) : element.classList.remove(className);
       }));
     }
-    this.lastViewModelFilteredValue = value;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, node, element, filters, className} = this;
+    const {component, element, filters, className} = this;
     const value = Filter.applyForInput(element.classList.contains(className), filters, component.filters.in);
-    this.setViewModelValue(value);
+    this.viewModelValue = value;
   }
 }
 
@@ -1389,47 +1328,35 @@ const DELIMITER = " ";
 
 class ClassNameBind extends BindInfo {
   /**
+   * @type {string}
+   */
+  get nodeValue() {
+    return this.element[CLASS_PROPERTY];
+  }
+  set nodeValue(value) {
+    this.element[CLASS_PROPERTY] = value;
+  }
+  /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, element, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredValue, () => {
-          element[CLASS_PROPERTY] = filteredValue.join(DELIMITER);
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, element, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const joinedValue = filteredValue.join(DELIMITER);
-    if (element[CLASS_PROPERTY] !== joinedValue) {
+    if (this.nodeValue !== joinedValue) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredValue, () => {
-        element[CLASS_PROPERTY] = joinedValue;
+        this.nodeValue = joinedValue;
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, node, element, filters, className} = this;
-    const value = Filter.applyForInput(element[CLASS_PROPERTY] ? element[CLASS_PROPERTY].split(DELIMITER) : [], filters, component.filters.in);
-    this.setViewModelValue(value);
+    const {component, filters, nodeValue} = this;
+    const value = Filter.applyForInput(nodeValue ? nodeValue.split(DELIMITER) : [], filters, component.filters.in);
+    this.viewModelValue = value;
   }
 }
 
@@ -1444,35 +1371,14 @@ class Radio extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, radio, nodeProperty, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
-          radio.checked = filteredValue === radio.value;
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, radio, nodeProperty, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    const {component, node, radio, nodeProperty, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const checked = filteredValue === radio.value;
     if (radio.checked !== checked) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
         radio.checked = checked;
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
@@ -1482,7 +1388,7 @@ class Radio extends BindInfo {
     const {component, filters, radio} = this;
     if (radio.checked) {
       const radioValue = Filter.applyForInput(radio.value, filters, component.filters.in);
-      this.setViewModelValue(radioValue);
+      this.viewModelValue = radioValue;
     }
   }
 }
@@ -1494,132 +1400,41 @@ class Checkbox extends BindInfo {
     const input = toHTMLInputElement(this.element);
     return input["type"] === "checkbox" ? input : utils.raise('not checkbox');
   }
+
+  /**
+   * @type {boolean}
+   */
+  get nodeValue() {
+    return this.checkbox.checked;
+  }
+  set nodeValue(value) {
+    this.checkbox.checked = value;
+  }
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
-          checkbox.checked = filteredValue.find(value => value === checkbox.value);
-        }));
-        this.lastViewModelFilteredValue = value;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, checkbox, nodeProperty, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
+    const {component, node, checkbox, nodeProperty, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const checked = filteredValue.find(value => value === checkbox.value);
-    if (checkbox.checked !== checked) {
+    if (this.nodeValue !== checked) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
-        checkbox.checked = checked;
+        this.nodeValue = checked;
       }));
     }
-    this.lastViewModelFilteredValue = value;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, node, filters, checkbox} = this;
+    const {component, nodeValue, filters, checkbox, viewModelValue} = this;
     const checkboxValue = Filter.applyForInput(checkbox.value, filters, component.filters.in);
-    const setOfValue = new Set(this.getViewModelValue());
-    (checkbox.checked) ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
+    const setOfValue = new Set(viewModelValue);
+    nodeValue ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
     const value = Array.from(setOfValue);
-    this.setViewModelValue(value);
+    this.viewModelValue = value;
   }
-}
-
-const SELECTOR = "[data-bind]";
-
-/**
- * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
- * ex.
- * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
- * => [1,3,7,2]
- * @param {Node} node 
- * @returns {number[]}
- */
-const getNodeRoute = node => {
-  let routeIndexes = [];
-  while(node.parentNode != null) {
-    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
-    node = node.parentNode;
-  }
-  return routeIndexes;
-};
-
-/**
- * 
- * @param {Node} node 
- * @param {number[]} routeIndexes 
- * @returns {Node}
- */
-const getNodeByRouteIndexes = (node, routeIndexes) => {
-  for(let i = 0; i < routeIndexes.length; i++) {
-    node = node.childNodes[routeIndexes[i]];
-  }
-  return node;
-};
-
-/**
- * 
- * @param {Node} node 
- * @returns 
- */
-const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
-/**
- * 
- * @param {Node} node 
- * @returns {Comment[]}
- */
-const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
-
-class Selector {
-  /**
-   * @type {Map<HTMLTemplateElement, number[][]>}
-   */
-  static listOfRouteIndexesByTemplate = new Map();
-  /**
-   * 
-   * @param {HTMLTemplateElement} template 
-   * @param {HTMLElement} rootElement
-   * @returns {Node[]}
-   */
-  static getTargetNodes(template, rootElement) {
-    /**
-     * @type {Node[]}
-     */
-    let nodes;
-
-    if (this.listOfRouteIndexesByTemplate.has(template)) {
-      // キャッシュがある場合
-      // querySelectorAllを行わずにNodeの位置を特定できる
-      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
-    } else {
-      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
-      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-
-      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
-    }
-    return nodes;
-
-  }
-
 }
 
 class Context {
@@ -1721,33 +1536,6 @@ class TemplateChild {
 
   /**
    * 
-   */
-  forceUpdateNode() {
-    this.binds.forEach(bind => {
-      bind.forceUpdateNode();
-    });
-  }
-
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number} diff 
-   */
-  changeIndexes(propName, diff) {
-    const changedParam = this.context.stack.find(param => param.propName.name === propName.name);
-    if (changedParam) {
-      this.context.indexes[changedParam.pos] += diff;
-      const paramPos = changedParam.indexes.length - 1;
-      changedParam.indexes[paramPos] += diff;
-      this.context.stack.filter(param => param.propName.setOfParentPaths.has(propName.name)).forEach(param => {
-        param.indexes[paramPos] += diff;
-      });
-    }
-    this.binds.forEach(bind => bind.changeIndexes(propName, diff));
-  }
-
-  /**
-   * 
    * @param {TemplateBind} templateBind 
    * @param {ContextInfo} context
    * @returns {TemplateChild}
@@ -1763,6 +1551,7 @@ class TemplateChild {
       const templateChild = templateChildren.pop();
       templateChild.binds.forEach(bind => {
         bind.context = context;
+        bind.updateNode();
       });
       return templateChild;
     }
@@ -1807,6 +1596,13 @@ class TemplateBind extends BindInfo {
     }
     return this.#uuid;
   }
+  #lastCount;
+  get lastCount() {
+    return (this.#lastCount ?? 0);
+  }
+  set lastCount(v) {
+    this.#lastCount = v;
+  }
 
   /**
    * @type {TemplateChild}
@@ -1820,32 +1616,12 @@ class TemplateBind extends BindInfo {
       (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
   }
 
-  forceUpdateNode() {
-    (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
-      (this.nodeProperty === TEMPLATE_BRANCH) ? this.forceExpandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
-  }
-  
-  /**
-   * 
-   */
   removeFromParent() {
     this.templateChildren.forEach(templateChild => {
       templateChild.removeFromParent();
       TemplateChild.dispose(templateChild);
     });
     this.templateChildren = [];
-    this.lastViewModelValue = undefined;
-    this.lastViewModelFilteredValue = undefined;
-  }
-
-  /**
-   * 
-   */
-  appendToParent(templateChildren) {
-    const fragment = document.createDocumentFragment();
-    templateChildren
-      .forEach(child => fragment.appendChild(...child.nodesForAppend));
-    (this.lastChild?.lastNode ?? this.node).after(fragment);
   }
 
   /**
@@ -1853,99 +1629,82 @@ class TemplateBind extends BindInfo {
    * @returns {any} newValue
    */
   expandIf() {
-    const { component, filters, context } = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        this.removeFromParent();
-        if (filteredValue) {
-          this.templateChildren = [];
-          const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
-          this.appendToParent(newTemplateChildren);
-          this.templateChildren = newTemplateChildren;
-        } else {
-          this.templateChildren = [];
-        }
-        this.lastViewModelFilteredValue = filteredValue;
+    const { component, filters, context, viewModelValue } = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    const currentValue = this.templateChildren.length > 0;
+    if (currentValue !== filteredValue) {
+      if (filteredValue) {
+        const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
+        TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
+        this.templateChildren = newTemplateChildren;
+      } else {
+        TemplateBind.removeFromParent(this.templateChildren);
+        this.templateChildren = [];
       }
-      this.lastViewModelValue = value;
-    }
-
-    // 子要素の展開を実行
-    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
-  }
-
-  forceExpandIf() {
-    const { component, filters, context } = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-    this.removeFromParent();
-    if (filteredValue) {
-      this.templateChildren = [];
-      const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
-      this.appendToParent(newTemplateChildren);
-      this.templateChildren = newTemplateChildren;
     } else {
-      this.templateChildren = [];
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
-
-    // 子要素の展開を実行
-    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
   }
 
   /**
    * @returns {any[]} newValue
    */
   expandLoop() {
-    const { component, filters, templateChildren, context } = this;
+    const { component, filters, context, viewModelValue } = this;
     /**
      * @type {any[]}
      */
-    const lastValue = this.lastViewModelValue ?? [];
-    /**
-     * @type {any[]}
-     */
-    const newValue = Filter.applyForOutput(this.getViewModelValue(), filters, component.filters.out) ?? [];
+    const newValue = Filter.applyForOutput(viewModelValue, filters, component.filters.out) ?? [];
 
-    if (lastValue.length > newValue.length) {
+    if (this.lastCount > newValue.length) {
       const removeTemplateChildren = this.templateChildren.splice(newValue.length);
-      removeTemplateChildren.forEach(templateChild => {
-        templateChild.removeFromParent();
-        TemplateChild.dispose(templateChild);
-      });
-    } else if (lastValue.length < newValue.length) {
+      TemplateBind.removeFromParent(removeTemplateChildren);
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
+    } else if (this.lastCount < newValue.length) {
       // コンテキスト用のデータ
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
       const pos = context.indexes.length;
       const propName = this.viewModelPropertyName;
       const parentIndexes = this.contextParam?.indexes ?? [];
       const newTemplateChildren = [];
-      for(let i = lastValue.length; i < newValue.length; i++) {
+      for(let i = this.lastCount; i < newValue.length; i++) {
         const newIndex = i;
         const newContext = Context.clone(context);
         newContext.indexes.push(newIndex);
         newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
         newTemplateChildren.push(TemplateChild.create(this, newContext));
       }
-      this.appendToParent(newTemplateChildren);
+      TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
       this.templateChildren = this.templateChildren.concat(newTemplateChildren);
+    } else {
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
     }
-    this.templateChildren.forEach(templateChild => templateChild.forceUpdateNode());
-
-    this.lastViewModelValue = newValue.slice();
+    this.lastCount = newValue.length;
   }
 
   /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number} diff 
+   * @param {TemplateChild[]} templateChildren
    */
-  changeIndexes(propName, diff) {
-    super.changeIndexes(propName, diff);
-    this.templateChildren.forEach(templateChild => templateChild.changeIndexes(propName, diff));
+  static removeFromParent(templateChildren) {
+    templateChildren.forEach(templateChild => {
+      templateChild.removeFromParent();
+      TemplateChild.dispose(templateChild);
+    });
   }
+
+  /**
+   * @param {Node} parentNode
+   * @param {TemplateChild[]} templateChildren
+   */
+  static appendToParent(parentNode, templateChildren) {
+    const fragment = document.createDocumentFragment();
+    templateChildren
+      .forEach(templateChild => {
+        if (templateChild.childNodes.length > 0) fragment.appendChild(...templateChild.nodesForAppend);
+      });
+    parentNode.after(fragment);
+  }
+
 }
 
 class ProcessData {
@@ -2156,46 +1915,34 @@ class StyleBind extends BindInfo {
   }
 
   /**
+   * @type {string}
+   */
+  get nodeValue() {
+    return this.htmlElement[STYLE_PROPERTY][this.styleName];
+  }
+  set nodeValue(value) {
+    this.htmlElement[STYLE_PROPERTY][this.styleName] = value;
+  }
+  /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
-          htmlElement[STYLE_PROPERTY][styleName] = filteredValue;
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, htmlElement, styleName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-    if (htmlElement[STYLE_PROPERTY][styleName] !== filteredValue) {
+    const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    if (this.nodeValue !== filteredValue) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
-        htmlElement[STYLE_PROPERTY][styleName] = filteredValue;
+        this.nodeValue = filteredValue;
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, htmlElement, styleName, filters} = this;
-    const value = Filter.applyForInput(htmlElement[STYLE_PROPERTY][styleName], filters, component.filters.in);
-    this.setViewModelValue(value);
+    const {component, filters, nodeValue} = this;
+    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
+    this.viewModelValue = value;
   }
 }
 
@@ -2214,46 +1961,35 @@ class PropertyBind extends BindInfo {
   }
 
   /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
+   * @type {any}
    */
-  updateNode() {
-    const {component, node, propName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredValue, () => {
-          node[propName] = filteredValue ?? "";
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
+  get nodeValue() {
+    return this.node[this.propName];
+  }
+  set nodeValue(value) {
+    this.node[this.propName] = value;
   }
 
   /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
+   * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
-  forceUpdateNode() {
-    const {component, node, propName, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-    if (node[propName] !== (filteredValue ?? "")) {
+  updateNode() {
+    const {component, node, propName, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    if (this.nodeValue !== (filteredValue ?? "")) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredValue, () => {
-        node[propName] = filteredValue ?? "";
+        this.nodeValue = filteredValue ?? "";
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, node, propName, filters} = this;
-    const value = Filter.applyForInput(node[propName], filters, component.filters.in);
-    this.setViewModelValue(value);
+    const {component, filters, nodeValue} = this;
+    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
+    this.viewModelValue = value;
   }
 
 }
@@ -2262,64 +1998,59 @@ const DEFAULT_PROPERTY$2 = "textContent";
 
 class TextBind extends BindInfo {
   /**
+   * @type {string}
+   */
+  get nodeValue() {
+    return this.node[DEFAULT_PROPERTY$2];
+  }
+  set nodeValue(value) {
+    this.node[DEFAULT_PROPERTY$2] = value;
+  }
+  /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    if (this.lastViewModelValue !== value) {
-      const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-      if (this.lastViewModelFilteredValue !== filteredValue) {
-        component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, filteredValue, () => {
-          node[DEFAULT_PROPERTY$2] = filteredValue ?? "";
-        }));
-        this.lastViewModelFilteredValue = filteredValue;
-      }
-      this.lastViewModelValue = value;
-    }
-  }
-
-  /**
-   * ViewModelのプロパティの値を強制的にNodeのプロパティへ反映する
-   */
-  forceUpdateNode() {
-    const {component, node, viewModelProperty, filters} = this;
-    const value = this.getViewModelValue();
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(value, filters, component.filters.out) : value;
-    if (node[DEFAULT_PROPERTY$2] !== (filteredValue ?? "")) {
+    const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    if (this.nodeValue !== (filteredValue ?? "")) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, filteredValue, () => {
-        node[DEFAULT_PROPERTY$2] = filteredValue ?? "";
+        this.nodeValue = filteredValue ?? "";
       }));
     }
-    this.lastViewModelFilteredValue = filteredValue;
-    this.lastViewModelValue = value;
   }
 
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, node, filters} = this;
-    const value = Filter.applyForInput(node[DEFAULT_PROPERTY$2], filters, component.filters.in);
-    this.setViewModelValue(value);
+    const {component, filters, nodeValue} = this;
+    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
+    this.viewModelValue = value;
   }
 
 }
 
-const classByType = {};
-classByType[NodePropertyType.property] = PropertyBind;
-classByType[NodePropertyType.attribute] = AttributeBind;
-classByType[NodePropertyType.classList] = ClassListBind;
-classByType[NodePropertyType.className] = ClassNameBind;
-classByType[NodePropertyType.radio] = Radio;
-classByType[NodePropertyType.checkbox] = Checkbox;
-classByType[NodePropertyType.template] = TemplateBind;
-classByType[NodePropertyType.event] = Event;
-classByType[NodePropertyType.component] = ComponentBind;
-classByType[NodePropertyType.style] = StyleBind;
-classByType[NodePropertyType.text] = TextBind;
-
 class Factory {
+  /**
+   * @type {Object<nodePropertyType:number, bindClass:classof<BindInfo>>}
+   */
+  static classByType = undefined;
+  static setup() {
+    this.classByType = {};
+    this.classByType[NodePropertyType.property] = PropertyBind;
+    this.classByType[NodePropertyType.attribute] = AttributeBind;
+    this.classByType[NodePropertyType.classList] = ClassListBind;
+    this.classByType[NodePropertyType.className] = ClassNameBind;
+    this.classByType[NodePropertyType.radio] = Radio;
+    this.classByType[NodePropertyType.checkbox] = Checkbox;
+    this.classByType[NodePropertyType.template] = TemplateBind;
+    this.classByType[NodePropertyType.event] = Event;
+    this.classByType[NodePropertyType.component] = ComponentBind;
+    this.classByType[NodePropertyType.style] = StyleBind;
+    this.classByType[NodePropertyType.text] = TextBind;
+    return this.classByType;
+  }
+
   /**
    * @param {Component} component
    * @param {Node} node
@@ -2335,7 +2066,7 @@ class Factory {
     /**
      * @type {BindInfo}
      */
-    const bindInfo = new classByType[nodeInfo.type];
+    const bindInfo = new (this.classByType ?? this.setup())[nodeInfo.type];
     bindInfo.component = component;
     bindInfo.node = node;
     bindInfo.nodeProperty = nodeProperty;
@@ -2729,6 +2460,86 @@ class Binder {
 
 }
 
+const SELECTOR = "[data-bind]";
+
+/**
+ * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
+ * ex.
+ * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
+ * => [1,3,7,2]
+ * @param {Node} node 
+ * @returns {number[]}
+ */
+const getNodeRoute = node => {
+  let routeIndexes = [];
+  while(node.parentNode != null) {
+    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
+    node = node.parentNode;
+  }
+  return routeIndexes;
+};
+
+/**
+ * 
+ * @param {Node} node 
+ * @param {number[]} routeIndexes 
+ * @returns {Node}
+ */
+const getNodeByRouteIndexes = (node, routeIndexes) => {
+  for(let i = 0; i < routeIndexes.length; i++) {
+    node = node.childNodes[routeIndexes[i]];
+  }
+  return node;
+};
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns 
+ */
+const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Comment[]}
+ */
+const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
+
+class Selector {
+  /**
+   * @type {Map<HTMLTemplateElement, number[][]>}
+   */
+  static listOfRouteIndexesByTemplate = new Map();
+  /**
+   * 
+   * @param {HTMLTemplateElement} template 
+   * @param {HTMLElement} rootElement
+   * @returns {Node[]}
+   */
+  static getTargetNodes(template, rootElement) {
+    /**
+     * @type {Node[]}
+     */
+    let nodes;
+
+    if (this.listOfRouteIndexesByTemplate.has(template)) {
+      // キャッシュがある場合
+      // querySelectorAllを行わずにNodeの位置を特定できる
+      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
+      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
+    } else {
+      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
+      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+
+      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
+      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
+    }
+    return nodes;
+
+  }
+
+}
+
 class ViewTemplate {
   /**
    * 
@@ -2987,6 +2798,7 @@ const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
 const OPEN_DIALOG_METHOD = "$openDialog";
 const CLOSE_DIALOG_METHOD = "$closeDialog";
+const COMPONENT_PROPERTY = "$component";
 
 /**
  * @type {Set<string>}
@@ -2997,6 +2809,7 @@ const setOfProperties = new Set([
   DEPENDENT_PROPS_PROPERTY,
   OPEN_DIALOG_METHOD,
   CLOSE_DIALOG_METHOD,
+  COMPONENT_PROPERTY,
 ]);
 
 /**
@@ -3117,7 +2930,8 @@ class ViewModelHandler extends Handler$2 {
         return Reflect.get(target, DEPENDENT_PROPS_PROPERTY, receiver);
       } else if (propName.name === OPEN_DIALOG_METHOD) {
         return (name, data = {}, attributes = {}) => Reflect.apply(this.#openDialog, this, [target, {name, data, attributes}, receiver])
-//      } else if (propName.name === CLOSE_DIALOG_METHOD) {
+      } else if (propName.name === COMPONENT_PROPERTY) {
+        return this.component;
       } else {
         return (data = {}) => Reflect.apply(this.#closeDialog, this, [target, data, receiver]);
       }
@@ -3504,8 +3318,8 @@ class Binds {
               bind.updateNode();
             }
           }
+          toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds));
         }
-        toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds));
       });
     };
     updateNode(binds);

@@ -80,8 +80,8 @@ export class Binds {
               bind.updateNode();
             }
           }
+          toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds))
         }
-        toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds))
       });
     }
     updateNode(binds);

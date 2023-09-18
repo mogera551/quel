@@ -45,15 +45,15 @@ test("Factory template loop", () => {
   const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
   rootNode.appendChild(commentNode);
 
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, 
-    node: commentNode, 
-    nodeProperty: "loop",
+    commentNode, 
+    "loop",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof TemplateBind).toBe(true);
   expect(bindInfo.node instanceof Comment).toBe(true);
   expect(bindInfo.template).toBe(templateNode);
@@ -70,8 +70,6 @@ test("Factory template loop", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
@@ -85,15 +83,15 @@ test("Factory template if", () => {
   const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
   rootNode.appendChild(commentNode);
 
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, 
-    node: commentNode, 
-    nodeProperty: "if",
+    commentNode, 
+    "if",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof TemplateBind).toBe(true);
   expect(bindInfo.node instanceof Comment).toBe(true); // Commentにリプレースされている
   expect(bindInfo.template).toBe(templateNode);
@@ -110,8 +108,6 @@ test("Factory template if", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
@@ -126,28 +122,28 @@ test("Factory template other", () => {
   rootNode.appendChild(commentNode);
 
   expect(() => {
-    const bindInfo = Factory.create({
+    const bindInfo = Factory.create(
       component, 
-      node: commentNode, 
-      nodeProperty: "textContent",
+      commentNode, 
+      "textContent",
       viewModel, 
-      viewModelProperty: "aaa",
+      "aaa",
       filters, 
-      context: { indexes:[], stack:[] }
-    });
+      { indexes:[], stack:[] }
+    );
   }).toThrow("template illegal property textContent");
 });
 
 test("Factory TextBind text", () => {
   const node = document.createTextNode("");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "textContent",
+    "textContent",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof TextBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("textContent");
@@ -162,21 +158,19 @@ test("Factory TextBind text", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
 test("Factory PropertyBind element", () => {
   const node = document.createElement("div");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "textContent",
+    "textContent",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof PropertyBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("textContent");
@@ -191,21 +185,18 @@ test("Factory PropertyBind element", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
-  expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
 test("Factory StyleBind element", () => {
   const node = document.createElement("div");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "style.display",
+    "style.display",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof StyleBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("style.display");
@@ -221,21 +212,19 @@ test("Factory StyleBind element", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
 test("Factory AttributeBind element", () => {
   const node = document.createElement("div");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "attr.title",
+    "attr.title",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof AttributeBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("attr.title");
@@ -251,22 +240,20 @@ test("Factory AttributeBind element", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
 test("Factory checkbox", () => {
   const node = document.createElement("input");
   node.type = "checkbox";
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "checkbox",
+    "checkbox",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof Checkbox).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("checkbox");
@@ -281,22 +268,20 @@ test("Factory checkbox", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
 test("Factory radio", () => {
   const node = document.createElement("input");
   node.type = "radio";
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "radio",
+    "radio",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof Radio).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("radio");
@@ -311,21 +296,19 @@ test("Factory radio", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
 test("Factory classList", () => {
   const node = document.createElement("div");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "class.completed",
+    "class.completed",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof ClassListBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("class.completed");
@@ -341,22 +324,19 @@ test("Factory classList", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
-  expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 
 });
 
 test("Factory className", () => {
   const node = document.createElement("div");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "class",
+    "class",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof ClassNameBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("class");
@@ -371,22 +351,20 @@ test("Factory className", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 
 });
 
 test("Factory Component", () => {
   const node = document.createElement("custom-tag");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "props.bbb",
+    "props.bbb",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof ComponentBind).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("props.bbb");
@@ -403,21 +381,19 @@ test("Factory Component", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
 test("Factory event", () => {
   const node = document.createElement("div");
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "onclick",
+    "onclick",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[], stack:[] }
-  });
+    { indexes:[], stack:[] }
+  );
   expect(bindInfo instanceof Event).toBe(true);
   expect(bindInfo.node).toBe(node);
   expect(bindInfo.nodeProperty).toBe("onclick");
@@ -433,8 +409,6 @@ test("Factory event", () => {
   expect(bindInfo.indexesString).toBe("");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa\t");
   expect(bindInfo.contextIndexes).toEqual([]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[], stack:[] });
 });
 
@@ -445,14 +419,14 @@ test("Factory template loop child", () => {
   templateNode.dataset["bind"] = "loop:aaa";
   const node = document.createElement("div");
   node.dataset["bind"] = "aaa.*";
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "textContent",
+    "textContent",
     viewModel, 
-    viewModelProperty: "aaa.*",
+    "aaa.*",
     filters, 
-    context: { indexes:[0], stack:[ { indexes:[0], pos:0, propName:PropertyName.create("aaa") } ] }
-  });
+    { indexes:[0], stack:[ { indexes:[0], pos:0, propName:PropertyName.create("aaa") } ] }
+  );
   expect(bindInfo instanceof PropertyBind).toBe(true);
   expect(bindInfo.node instanceof HTMLElement).toBe(true);
   expect(bindInfo.element).toBe(node);
@@ -468,8 +442,6 @@ test("Factory template loop child", () => {
   expect(bindInfo.indexesString).toBe("0");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa.*\t0");
   expect(bindInfo.contextIndexes).toEqual([0]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
   expect(bindInfo.context).toEqual({ indexes:[0], stack:[ { indexes:[0], pos:0, propName:PropertyName.create("aaa") } ] });
 });
 
@@ -478,61 +450,61 @@ test("Factory template multi level loop child", () => {
   const templateNode = document.createElement("template");
   rootNode.appendChild(templateNode);
   templateNode.dataset["bind"] = "loop:ccc";
-  const templateBind = Factory.create({
+  const templateBind = Factory.create(
     component, 
-    node: templateNode, 
-    nodeProperty: "loop",
+    templateNode, 
+    "loop",
     viewModel, 
-    viewModelProperty: "ccc",
+    "ccc",
     filters, 
 //    contextBind: null,
-    contextIndexes: []
-  });
+    {indexes:[], stack:[]},
+  );
   const templateNode2 = document.createElement("template");
   templateNode.appendChild(templateNode2);
   templateNode2.dataset["bind"] = "loop:aaa";
-  const templateBind2 = Factory.create({
+  const templateBind2 = Factory.create(
     component, 
-    node: templateNode2, 
-    nodeProperty: "loop",
+    templateNode2, 
+    "loop",
     viewModel, 
-    viewModelProperty: "aaa",
+    "aaa",
     filters, 
-    context: { indexes:[1], stack:[ 
+    { indexes:[1], stack:[ 
       { indexes:[1], pos:0, propName:PropertyName.create("ccc") },
     ] }
-  });
+  );
   const templateNode3 = document.createElement("template");
   templateNode2.appendChild(templateNode3);
   templateNode3.dataset["bind"] = "loop:aaa.*";
-  const templateBind3 = Factory.create({
+  const templateBind3 = Factory.create(
     component, 
-    node: templateNode3, 
-    nodeProperty: "loop",
+    templateNode3, 
+    "loop",
     viewModel, 
-    viewModelProperty: "aaa.*",
+    "aaa.*",
     filters, 
-    context: { indexes:[1, 4], stack:[ 
+    { indexes:[1, 4], stack:[ 
       { indexes:[1], pos:0, propName:PropertyName.create("ccc") },
       { indexes:[4], pos:0, propName:PropertyName.create("aaa") },
     ] }
-  });
+  );
 
   const node = document.createElement("div");
   node.dataset["bind"] = "aaa.*.*";
-  const bindInfo = Factory.create({
+  const bindInfo = Factory.create(
     component, node, 
-    nodeProperty: "textContent",
+    "textContent",
     viewModel, 
-    viewModelProperty: "aaa.*.*",
+    "aaa.*.*",
     filters, 
-    context: { indexes:[1, 4, 9], stack:[ 
+    { indexes:[1, 4, 9], stack:[ 
       { indexes:[1], pos:0, propName:PropertyName.create("ccc") },
       { indexes:[4], pos:0, propName:PropertyName.create("aaa") },
       { indexes:[4, 9], pos:1, propName:PropertyName.create("aaa.*") },
     ] }
 
-  });
+  );
   expect(bindInfo instanceof PropertyBind).toBe(true);
   expect(bindInfo.node instanceof HTMLElement).toBe(true);
   expect(bindInfo.element).toBe(node);
@@ -548,23 +520,21 @@ test("Factory template multi level loop child", () => {
   expect(bindInfo.indexesString).toBe("4,9");
   expect(bindInfo.viewModelPropertyKey).toBe("aaa.*.*\t4,9");
   expect(bindInfo.contextIndexes).toEqual([1,4,9]);
-  expect(bindInfo.lastNodeValue).toBe(undefined);
-  expect(bindInfo.lastViewModelValue).toBe(undefined);
 
   const node2 = document.createElement("div");
   node2.dataset["bind"] = "ccc.*";
-  const bindInfo2 = Factory.create({
+  const bindInfo2 = Factory.create(
     component, node, 
-    nodeProperty: "textContent",
+    "textContent",
     viewModel, 
-    viewModelProperty: "ccc.*",
+    "ccc.*",
     filters, 
-    context: { indexes:[1, 4, 9], stack:[ 
+    { indexes:[1, 4, 9], stack:[ 
       { indexes:[1], pos:0, propName:PropertyName.create("ccc") },
       { indexes:[4], pos:0, propName:PropertyName.create("aaa") },
       { indexes:[4, 9], pos:1, propName:PropertyName.create("aaa.*") },
     ] }
-  });
+  );
   expect(bindInfo2 instanceof PropertyBind).toBe(true);
   expect(bindInfo2.node instanceof HTMLElement).toBe(true);
   expect(bindInfo2.element).toBe(node);
@@ -580,23 +550,21 @@ test("Factory template multi level loop child", () => {
   expect(bindInfo2.indexesString).toBe("1");
   expect(bindInfo2.viewModelPropertyKey).toBe("ccc.*\t1");
   expect(bindInfo2.contextIndexes).toEqual([1,4,9]);
-  expect(bindInfo2.lastNodeValue).toBe(undefined);
-  expect(bindInfo2.lastViewModelValue).toBe(undefined);
 
   const node3 = document.createElement("div");
   node3.dataset["bind"] = "ddd.*";
   expect(() => {
-    const bindInfo3 = Factory.create({
+    const bindInfo3 = Factory.create(
       component, node, 
-      nodeProperty: "textContent",
+      "textContent",
       viewModel, 
-      viewModelProperty: "ddd.*",
+      "ddd.*",
       filters, 
-      context: { indexes:[1, 4, 9], stack:[ 
+      { indexes:[1, 4, 9], stack:[ 
         { indexes:[1], pos:0, propName:PropertyName.create("ccc") },
         { indexes:[4], pos:0, propName:PropertyName.create("aaa") },
         { indexes:[4, 9], pos:1, propName:PropertyName.create("aaa.*") },
       ] }
-    });
+    );
   }).toThrow();
 });

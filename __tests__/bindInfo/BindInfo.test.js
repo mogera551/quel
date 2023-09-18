@@ -130,39 +130,24 @@ test('BindInfo', () => {
   };
   info.viewModel = viewModel;
   info.viewModelProperty = "$1";
-  expect(info.getViewModelValue()).toBe(5);
+  expect(info.viewModelValue).toBe(5);
   info.viewModelProperty = "$2";
-  expect(info.getViewModelValue()).toBe(1);
+  expect(info.viewModelValue).toBe(1);
   info.viewModelProperty = "$3";
-  expect(info.getViewModelValue()).toBe(2);
+  expect(info.viewModelValue).toBe(2);
   info.viewModelProperty = "$4";
-  expect(info.getViewModelValue()).toBe(undefined);
+  expect(info.viewModelValue).toBe(undefined);
   info.viewModelProperty = "bbb.*";
-  expect(info.getViewModelValue()).toEqual({prop:"bbb.*",indexes:[5]});
+  expect(info.viewModelValue).toEqual({prop:"bbb.*",indexes:[5]});
 
   calledDirectlySet = undefined;
   info.viewModelProperty = "bbb.*";
-  info.setViewModelValue(100);
+  info.viewModelValue = 100;
   expect(calledDirectlySet).toEqual({prop:"bbb.*",indexes:[5], value:100});
   calledDirectlySet = undefined;
   info.viewModelProperty = "$1";
-  info.setViewModelValue(100);
+  info.viewModelValue = 100;
   expect(calledDirectlySet).toBe(undefined);
-
-  info.viewModelProperty = "bbb.*";
-  info.changeIndexes(PropertyName.create("bbb"), 4);
-  expect(info.contextIndexes).toEqual([5,1,2]);
-  expect(info.indexes).toEqual([5]);
-
-  info.viewModelProperty = "aaa.*";
-  info.changeIndexes(PropertyName.create("aaa"), -1);
-  expect(info.contextIndexes).toEqual([5,1,2]);
-  expect(info.indexes).toEqual([1]);
-
-  info.viewModelProperty = "aaa.*.*";
-  info.changeIndexes(PropertyName.create("aaa.*"), 1);
-  expect(info.contextIndexes).toEqual([5,1,2]);
-  expect(info.indexes).toEqual([1,2]);
 
   info.viewModelProperty = "ccc.*";
   expect(info.viewModelProperty).toBe("ccc.*");
