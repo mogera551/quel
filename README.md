@@ -55,7 +55,7 @@ registComponentModules({ myappMain:{ html, ViewModel } });
 ```
 
 ## 開発の流れ
-コンポーネントベースの開発になります。
+コンポーネントベースの開発で、以下の手順で開発していくことになります。
 * カスタム要素をHTMLに記述
 * 対応するコンポーネントモジュールの作成
    * テンプレートとなるHTMLを定義
@@ -160,7 +160,7 @@ export default { html, ViewModel, extendTag:"div" };
 ```
 ### カスタム要素とコンポーネントモジュールを対応付ける
 作成したコンポーネントモジュールを`import`する。
-コンポーネントモジュールとカスタム要素名と対応付ける。
+`registComponentModules`関数を使って、コンポーネントモジュールとカスタム要素名と対応付ける。
 
 ```js
 import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
@@ -170,7 +170,7 @@ import myappMain from "./main.js";
 // カスタム要素名とコンポーネントモジュールと対応付ける。
 registComponentModules({ "myapp-main":myappMain });
 
-// カスタム要素名はキャメルケースでも大丈夫。
+// カスタム要素名はキャメルケースでもOK。
 registComponentModules({ "myappMain":myappMain });
 
 // オブジェクトリテラルの省略記法でより簡単に記述できます。
@@ -189,9 +189,9 @@ registComponentModules({ myappMain });
 
 `index.html`は、  
 * カスタム要素(`<myapp-main/>`)の記述
-* quelの`import`
+* `registComponentModules`関数の`import`
 * `main`コンポーネントモジュールの`import`
-* コンポーネントモジュールとカスタム要素名と対応付け
+* `registComponentModules`関数を使ってコンポーネントモジュールとカスタム要素名と対応付け
 
 を行います。  
 断りがなければ、チュートリアルでは、下記の`index.html`の内容を使用することとします。
@@ -378,7 +378,7 @@ class ViewModel {
 
 [実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
 
-### Step.6 条件ブロック 
+### Step.6 条件分岐ブロック 
 * `ViewModel`のプロパティを条件として、表示を制御することができます。
 * 制御するブロック（要素の集合）を`{{ if:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。→`{{ if:val }}`～`{{ end: }}`
 * `{{ else }}`を使って、偽の条件を表示します。
@@ -407,7 +407,7 @@ class ViewModel {
 
 [実行結果を見る](https://codepen.io/mogera551/pen/xxmGadX)
 
-### Step.7 ループブロック 
+### Step.7 繰り返しブロック 
 * `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
 * 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
    * `{{ loop:animals }}`～`{{ end: }}`
