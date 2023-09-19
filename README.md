@@ -11,8 +11,9 @@
 * ドット記法によるプロパティ記述
 
 ## はじめよう
-Quelを使うには、import宣言で、CDNもしくはダウンロードしたファイルから読み込みます。
-※import宣言をするので、scriptタグには、`type="module"`が必要です。
+Quelを使うには、`import`宣言で、CDNもしくはダウンロードしたファイルから必要な関数を読み込みます。
+* `import`宣言をするので、`script`タグには、`type="module"`が必要です。
+* トランスパイルやツールチェインは特に要りません。
 
 CDNの例
 ```html
@@ -60,12 +61,14 @@ registComponentModules({ myappMain:{ html, ViewModel } });
 * 対応するコンポーネントモジュールの作成
    * テンプレートとなるHTMLを定義
    * 状態を保存、操作するクラスを定義
-* カスタム要素とコンポーネントモジュールを対応付けます。
+* カスタム要素とコンポーネントモジュールを対応付け
 
 ### カスタム要素をHTMLに記述
 カスタム要素は自律カスタム要素(autonomous custom element)、
 カスタマイズドビルトイン要素(customized built-in element)が利用できます。
 カスタム要素名には、ダッシュ`-`を含める必要があります。
+
+`index.html`の内容
 ```html
 <!DOCTYPE html>
 <html lang="ja">
@@ -87,11 +90,14 @@ import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/qu
 ### 対応するコンポーネントモジュールの作成
 コンポーネントモジュールは、テンプレートのHTMLと、状態を保存、操作するクラスで構成されます。
 １つのコンポーネントモジュールは、１つのファイルに記述したほうが管理しやすいです。
+ここでは、`main.js`としています。
 
 #### テンプレートとなるHTMLを定義
 コンポーネントで使用するDOMのテンプレートとなるHTMLを定義します。
-埋め込み、`html`の要素の属性値の関連付け、イベントの関連付け、条件分岐、繰り返しを記述できます。
+`ViewModel`クラスで定義するプロパティの埋め込み、`html`の要素の属性値の関連付け、イベントの関連付けや条件分岐、繰り返しを記述できます。
 `html`という変数名で宣言すると、`export`するときに便利です。
+
+`main.js`の`html`変数部分
 ```js
 const html = `
 <!-- 埋め込み -->
@@ -118,12 +124,14 @@ const html = `
 ```
 
 #### 状態を保存、操作するクラスを定義
-コンポーネントの状態を保存、操作するクラスを定義します。
-状態を保存するメンバをクラスの中でフィールド宣言します。
+コンポーネントの状態を保存、操作する`ViewModel`クラスを定義します。
+状態を保存するメンバをクラスの中でフィールド宣言することで、状態をクラスのプロパティとして扱います。
 状態を操作するメソッドをクラスの中に作成します。
 `ViewModel`というクラス名で宣言すると、`export`するときに便利です。
 getterを使った、アクセサプロパティを利用することもできます。
 ※アクセサプロパティを使う場合、依存関係の定義をすることが必要です。
+
+`main.js`の`ViewModel`クラス部分
 ```js
 class ViewModel {
   /* 状態の保存 */
@@ -141,6 +149,7 @@ class ViewModel {
   }
 
   /* 依存関係を定義 */
+  /* アクセサプロパティを使う場合必要になります。 */
   $dependentProps = {
     "disp": [ "count" ],
   }
@@ -151,6 +160,7 @@ class ViewModel {
 コンポーネントモジュールを１つのファイルに記述する場合、`export`します。
 カスタマイズドビルトイン要素の場合、拡張するタグ`extendTag`の指定が必要になります。
 
+`main.js`の`export`部分
 ```js
 // コンポーネントモジュールのexport
 export default { html, ViewModel };
@@ -159,9 +169,10 @@ export default { html, ViewModel };
 export default { html, ViewModel, extendTag:"div" };
 ```
 ### カスタム要素とコンポーネントモジュールを対応付ける
-作成したコンポーネントモジュールを`import`する。
-`registComponentModules`関数を使って、コンポーネントモジュールとカスタム要素名と対応付ける。
+作成したコンポーネントモジュールを登録する側で`import`します。ここでは、`index.html`になります。
+`registComponentModules`関数を使って、コンポーネントモジュールとカスタム要素名と対応付けます。
 
+`index.html`の`javascript`の内容
 ```js
 import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 // コンポーネントモジュールのimport
@@ -242,6 +253,7 @@ export default { html, ViewModel };
 ### Step.1 プロパティの埋め込み
 * `html`で、埋め込むプロパティ`message`を`{{ }}`で括ります。→ `{{ message }}`
 * `ViewModel`クラスで、状態保存するプロパティ`message`をフィールド宣言し、初期値`welcome to quel`を与えます。
+* `ViewModel`クラスは、実体化されたあと`Proxy`で拡張されるため、`ViewModel`クラスでは`private`フィールドを使うことはできません。
 
 `main.js`の変数`html`の内容
 ```html
