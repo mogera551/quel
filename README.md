@@ -460,7 +460,7 @@ class ViewModel {
 [実行結果を見る](https://codepen.io/mogera551/pen/eYbpzMw)
 
 ### Step.8 初期化イベントハンドラ
-* `ViewModel`に、初期化イベントハンドラであるコールバックメソッド`$initCallback`を設定できます。
+* `ViewModel`クラスに、初期化イベントハンドラであるコールバックメソッド`$connectedCallback`を設定できます。
 * 初期化イベントは、コンポーネント生成時に発生します。
 * コールバックメソッドに非同期`async`を指定することができます。
 * コールバックメソッドの引数はありません。
@@ -481,7 +481,7 @@ class ViewModel {
 ```js
 class ViewModel {
   commits = [];
-  async $initCallback() {
+  async $connectedCallback() {
     const response = await fetch("https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main");
     this.commits = await response.json();
   }
@@ -491,11 +491,11 @@ class ViewModel {
 [実行結果を見る](https://codepen.io/mogera551/pen/vYvLQVX)
 
 ### Step.9 書き込みイベントハンドラ
-* `ViewModel`に、書き込みイベントハンドラであるコールバックメソッド`$writeCallback`を設定できます。
+* `ViewModel`クラスに、書き込みイベントハンドラであるコールバックメソッド`$writeCallback`を設定できます。
 * 書き込みイベントは、`ViewModel`のプロパティに書き込みがあった場合に発生します。
 * コールバックメソッドに非同期`async`を指定することができます。
 * コールバックメソッドの引数には、書き込みしたプロパティ名とインデックス配列が渡されます。
-* 通常、入力系DOMに関連付けられた`ViewModel`プロパティは自動的に値を更新されますが、更新後に何か他の処理を行いたいときに使用します。
+* 通常、入力系DOMに関連付けられた`ViewModel`プロパティは自動的に値を更新されますが、更新後に何か他の処理を行いたいときなどに使用します。
 * サンプルでは、GitHubのAPIでレポジトリの情報を取得しています。
 
 `main.js`の変数`html`の内容
