@@ -13,7 +13,7 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise("not Co
 
 export class BindToText {
   /**
-   * 
+   * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context

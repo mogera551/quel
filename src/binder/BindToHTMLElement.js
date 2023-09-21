@@ -48,7 +48,7 @@ const isInputableElement = node => node instanceof HTMLElement &&
 
 export class BindToHTMLElement {
   /**
-   * Bindを実行
+   * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context

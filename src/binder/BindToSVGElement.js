@@ -21,7 +21,7 @@ const toEvent = bind => (bind instanceof Event) ? bind : undefined;
 
 export class BindToSVGElement {
   /**
-   * bind実行する
+   * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
