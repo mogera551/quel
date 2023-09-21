@@ -4,12 +4,12 @@ import { Parser } from "./Parser.js";
 
 export class BindToDom {
   /**
-   * 
+   * data-bind属性値からbind情報を生成
    * @param {Node} node 
    * @param {Component} component
-   * @param {Object<string,any>} viewModel 
+   * @param {ViewModel} viewModel 
    * @param {ContextInfo} context
-   * @param {string} text
+   * @param {string} text data-bind属性値
    * @param {string} defaultName
    * @returns {BindInfo[]}
    */

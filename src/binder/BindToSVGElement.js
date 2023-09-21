@@ -21,26 +21,28 @@ const toEvent = bind => (bind instanceof Event) ? bind : undefined;
 
 export class BindToSVGElement {
   /**
-   * 
+   * bind実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
    * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
+    /** @type {ViewModel} */
     const viewModel = component.viewModel;
+    /** @type {SVGElement} */
     const element = toSVGElement(node);
+    /** @type {string} */
     const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
+    /** @type {string|undefined} */
     const defaultName = undefined;
 
     // パース
+    /** @type {BindInfo[]} */
     const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
-    /**
-     * @type {BindInfo}
-     */
     binds.forEach(bind => {
       toEvent(bind)?.addEventListener();
     });

@@ -7,7 +7,7 @@ import { BindToTemplate } from "./BindToTemplate.js";
 
 export class Binder {
   /**
-   * 
+   * bindを実行する
    * @param {Node[]} nodes
    * @param {Component} component
    * @param {ContextInfo} context

@@ -5,17 +5,11 @@ const SAMENAME = "@";
 const DEFAULT = "$";
 
 export class BindTextInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} bindするnodeのプロパティ名 */
   nodeProperty;
-  /**
-   * @type {string}
-   */
+  /** @type {string} bindするviewModelのプロパティ名 */
   viewModelProperty;
-  /**
-   * @type {Filter[]}
-   */
+  /** @type {Filter[]} 適用するフィルターの配列 */
   filters;
 }
 
@@ -60,7 +54,7 @@ const parseViewModelProperty = text => {
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  * @param {string} expr 
  * @param {string} defaultName 
- * @returns {{nodeProperty:string,viewModelProp:string,filters:Filter[]}}
+ * @returns {BindTextInfo}
  */
 const parseExpression = (expr, defaultName) => {
   const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
@@ -69,10 +63,10 @@ const parseExpression = (expr, defaultName) => {
 };
 
 /**
- * 属性値のパース
- * @param {string} text 属性値
+ * data-bind属性値のパース
+ * @param {string} text data-bind属性値
  * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
- * @returns {{prop:string,viewModelProp:string,filters:Filter[]}[]}
+ * @returns {BindTextInfo[]}
  */
 const parseBindText = (text, defaultName) => {
   return text.split(";").map(trim).filter(has).map(s => { 
@@ -88,20 +82,21 @@ const parseBindText = (text, defaultName) => {
  * data-bind属性をパースする関数群
  */
 export class Parser {
-  /**
-   * @type {Object<string,BindTextInfo[]>}
-   */
+  /** @type {Object<string,BindTextInfo[]>} */
   static bindTextsByKey = {};
 
   /**
-   * 属性値のパース
-   * @param {string} text 属性値
+   * data-bind属性値のパースし、BindTextInfoの配列を返す
+   * @param {string} text data-bind属性値
    * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
    * @returns {BindTextInfo[]}
    */
   static parse(text, defaultName) {
+    /** @type {string} */
     const key = text + "\t" + defaultName;
+    /** @type {BindTextInfo[] | undefined} */
     let binds = this.bindTextsByKey[key];
+
     if (typeof binds === "undefined") {
       binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
       this.bindTextsByKey[key] = binds;

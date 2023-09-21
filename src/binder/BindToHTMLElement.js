@@ -19,7 +19,7 @@ const DEFAULT_PROPERTY = "textContent";
 const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
 
 /**
- * 
+ * HTML要素のデフォルトプロパティを取得
  * @param {HTMLElement} element 
  * @returns {string}
  */
@@ -30,7 +30,7 @@ const getDefaultProperty = element => {
 };
 
 /**
- * 
+ * Eventクラスへ変換
  * @param {BindInfo} bind 
  * @returns {Event|undefined}
  */
@@ -48,36 +48,40 @@ const isInputableElement = node => node instanceof HTMLElement &&
 
 export class BindToHTMLElement {
   /**
-   * 
+   * Bindを実行
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
    * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
+    /** @type {ViewModel} */
     const viewModel = component.viewModel;
+    /** @type {HTMLElement}  */
     const element = toHTMLElement(node);
+    /** @type {string} */
     const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
+    /** @type {string} */
     const defaultName = getDefaultProperty(element);
 
     // パース
+    /** @type {BindInfo[]} */
     const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
+    /** @type {boolean} デフォルトイベントを設定したかどうか */
     let hasDefaultEvent = false;
-    /**
-     * @type {BindInfo}
-     */
+
+    /** @type {BindInfo|null} */
     let defaultBind = null;
-    /**
-     * @type {Radio|null}
-     */
+
+    /** @type {Radio|null} */
     let radioBind = null;
-    /**
-     * @type {Checkbox|null}
-     */
+
+    /** @type {Checkbox|null} */
     let checkboxBind = null;
+
     binds.forEach(bind => {
       hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
       radioBind = (bind instanceof Radio) ? bind : radioBind;
@@ -86,11 +90,7 @@ export class BindToHTMLElement {
       toEvent(bind)?.addEventListener();
     });
 
-    /**
-     * 
-     * @param {BindInfo} bind 
-     * @returns 
-     */
+    /** @type {(bind:BindInfo)=>void} */
     const setDefaultEventHandler = (bind) => {
       const eventHandler = event => {
         event.stopPropagation();
