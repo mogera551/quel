@@ -9,38 +9,27 @@ import { Templates } from "../view/Templates.js";
 import { ViewTemplate } from "../view/View.js";
 
 export class TemplateChild {
-  /**
-   * @type {BindInfo[]}
-   */
+  /** @type {BindInfo[]} */
   binds;
-  /**
-   * @type {Node[]}
-   */
+
+  /** @type {Node[]} */
   childNodes;
-  /**
-   * @type {DocumentFragment}
-   */
+
+  /** @type {DocumentFragment} */
   fragment;
 
-  /**
-   * @type {ContextInfo}
-   */
+  /** @type {ContextInfo} */
   context;
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   uuid;
 
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   get lastNode() {
     return this.childNodes[this.childNodes.length - 1];
   }
-  /**
-   * @type {node[]|DocumentFragment}
-   */
+
+  /** @type {node[]|DocumentFragment} */
   get nodesForAppend() {
     return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
   }
@@ -85,10 +74,13 @@ export class TemplateChild {
     }
   }
 
-  /**
-   * @type {Map<string,TemplateChild[]>}
-   */
+  /** @type {Map<string,TemplateChild[]>} */
   static templateChildrenByUUID = new Map;
+
+  /**
+   * 削除したTemplateChildを再利用のため保存しておく
+   * @param {TemplateChild} templateChild 
+   */
   static dispose(templateChild) {
     const children = this.templateChildrenByUUID.get(templateChild.uuid);
     if (typeof children === "undefined") {
@@ -100,31 +92,32 @@ export class TemplateChild {
 }
 
 export class TemplateBind extends BindInfo {
-  /**
-   * @type {TemplateChild[]}
-   */
+  /** @type {TemplateChild[]} */
   templateChildren = [];
-  /**
-   * @type {HTMLTemplateElement}
-   */
+
+  /** @type {HTMLTemplateElement} */
   #template;
+  /** @type {HTMLTemplateElement} */
   get template() {
     if (typeof this.#template === "undefined") {
       this.#template = Templates.templateByUUID.get(this.uuid);
     }
     return this.#template;
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   #uuid;
+  /** @type {string} */
   get uuid() {
     if (typeof this.#uuid === "undefined") {
       this.#uuid = this.node.textContent.slice(3);
     }
     return this.#uuid;
   }
+
+  /** @type {number} */
   #lastCount;
+  /** @type {number} */
   get lastCount() {
     return (this.#lastCount ?? 0);
   }
@@ -132,9 +125,7 @@ export class TemplateBind extends BindInfo {
     this.#lastCount = v;
   }
 
-  /**
-   * @type {TemplateChild}
-   */
+  /** @type {TemplateChild | undefined} */
   get lastChild() {
     return this.templateChildren[this.templateChildren.length - 1];
   }
@@ -155,10 +146,11 @@ export class TemplateBind extends BindInfo {
 
   /**
    * 
-   * @returns {any} newValue
+   * @returns {void}
    */
   expandIf() {
     const { component, filters, context, viewModelValue } = this;
+    /** @type {boolean} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const currentValue = this.templateChildren.length > 0;
     if (currentValue !== filteredValue) {
@@ -176,13 +168,11 @@ export class TemplateBind extends BindInfo {
   }
 
   /**
-   * @returns {any[]} newValue
+   * @returns {void}
    */
   expandLoop() {
     const { component, filters, context, viewModelValue } = this;
-    /**
-     * @type {any[]}
-     */
+    /** @type {any[]} */
     const newValue = Filter.applyForOutput(viewModelValue, filters, component.filters.out) ?? [];
 
     if (this.lastCount > newValue.length) {
@@ -211,8 +201,9 @@ export class TemplateBind extends BindInfo {
     this.lastCount = newValue.length;
   }
 
-  /**
+  /** 
    * @param {TemplateChild[]} templateChildren
+   * @returns {void}
    */
   static removeFromParent(templateChildren) {
     templateChildren.forEach(templateChild => {
@@ -224,6 +215,7 @@ export class TemplateBind extends BindInfo {
   /**
    * @param {Node} parentNode
    * @param {TemplateChild[]} templateChildren
+   * @returns {void}
    */
   static appendToParent(parentNode, templateChildren) {
     const fragment = document.createDocumentFragment();

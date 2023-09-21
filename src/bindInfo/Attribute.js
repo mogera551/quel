@@ -4,16 +4,12 @@ import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 export class AttributeBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} 属性名 */
   get attrName() {
     return this.nodePropertyElements[1];
   }
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} nodeの値 */
   get nodeValue() {
     return this.element.getAttribute(this.attrName);
   }

@@ -4,16 +4,12 @@ import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 export class PropertyBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get propName() {
     return this.nodePropertyElements[0];
   }
 
-  /**
-   * @type {any}
-   */
+  /** @type {any} */
   get nodeValue() {
     return this.node[this.propName];
   }

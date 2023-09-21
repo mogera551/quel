@@ -933,38 +933,31 @@ class NodePropertyInfo {
 }
 
 class BindInfo {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   #node;
+  /** @type {Node} */
   get node() {
     return this.#node;
   }
   set node(node) {
     this.#node = node;
   }
-  /**
-   * @type {Element}
-   */
+  /** @type {Element} */
   get element() {
     return (this.node instanceof Element) ? this.node : utils.raise("not Element");
   }
-  /**
-   * @type {HTMLElement}
-   */
+  /** @type {HTMLElement} */
   get htmlElement() {
     return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
   }
-  /**
-   * @type {SVGElement}
-   */
+  /** @type {SVGElement} */
   get svgElement() {
     return (this.node instanceof SVGElement) ? this.node : utils.raise("not SVGElement");
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   #nodeProperty;
+  /** @type {string} */
   get nodeProperty() {
     return this.#nodeProperty;
   }
@@ -972,10 +965,9 @@ class BindInfo {
     this.#nodeProperty = value;
   }
 
-  /**
-   * @type {string[]}
-   */
+  /** @type {string[]} */
   #nodePropertyElements;
+  /** @type {string[]} */
   get nodePropertyElements() {
     return this.#nodePropertyElements;
   }
@@ -983,18 +975,16 @@ class BindInfo {
     this.#nodePropertyElements = value;
   }
 
-  /**
-   * @type {Component} 
-   */
+  /** @type {Component} */
   component;
-  /**
-   * @type {ViewModel}
-   */
+
+  /** @type {ViewModel} */
   viewModel;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   #viewModelProperty;
+
+  /** @type {string} */
   get viewModelProperty() {
     return this.#viewModelProperty;
   }
@@ -1006,20 +996,20 @@ class BindInfo {
     this.#contextIndex = undefined;
     this.#contextParam = undefined;
   }
-  /**
-   * @type {PropertyName}
-   */
+
+  /** @type {PropertyName} */
   #viewModelPropertyName;
+  /** @type {PropertyName} */
   get viewModelPropertyName() {
     if (typeof this.#viewModelPropertyName === "undefined") {
       this.#viewModelPropertyName = PropertyName.create(this.#viewModelProperty);
     }
     return this.#viewModelPropertyName;
   }
-  /**
-   * @type {number}
-   */
+
+  /** @type {number} */
   #contextIndex;
+  /** @type {number} */
   get contextIndex() {
     if (typeof this.#contextIndex === "undefined") {
       if (this.isContextIndex === true) {
@@ -1028,22 +1018,23 @@ class BindInfo {
     }
     return this.#contextIndex;
   }
-  /**
-   * @type {boolean}
-   */
+
+  /** @type {boolean} */
   #isContextIndex;
+  /** @type {boolean} */
   get isContextIndex() {
     if (typeof this.#isContextIndex === "undefined") {
       this.#isContextIndex = (RE_CONTEXT_INDEX.exec(this.viewModelProperty)) ? true : false;
     }
     return this.#isContextIndex;
   }
-  /**
-   * @type {Filter[]}
-   */
+
+  /** @type {Filter[]} */
   filters;
 
+  /** @type {ContextParam} */
   #contextParam;
+  /** @type {ContextParam} */
   get contextParam() {
     if (typeof this.#contextParam === "undefined") {
       const propName = this.viewModelPropertyName;
@@ -1054,35 +1045,29 @@ class BindInfo {
     return this.#contextParam;
   }
 
-  /**
-   * @type {number[]}
-   */
+  /** @type {number[]} */
   get indexes() {
     return this.contextParam?.indexes ?? [];
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get indexesString() {
     return this.indexes.toString();
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get viewModelPropertyKey() {
     return this.viewModelProperty + "\t" + this.indexesString;
   }
-  /**
-   * @type {number[]}
-   */
+
+  /** @type {number[]} */
   get contextIndexes() {
     return this.context.indexes;
   }
   
-  /**
-   * @type {ContextInfo}
-   */
+  /** @type {ContextInfo} */
   #context;
+  /** @type {ContextInfo} */
   get context() {
     return this.#context;
   }
@@ -1091,25 +1076,16 @@ class BindInfo {
     this.#contextParam = undefined;
   }
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   eventType;
   
-  /**
-   * @type {(event:Event)=>{}}
-   */
+  /** @type {(event:Event)=>void} */
   defaultEventHandler;
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   defaultEventType;
 
-  /**
-   * 
-   * @type {any}
-   */
+  /** @type {any} */
   get viewModelValue() {
     return (this.isContextIndex) ?
       this.contextIndexes[this.contextIndex] :
@@ -1121,9 +1097,7 @@ class BindInfo {
     }
   }
 
-  /**
-   * @type {any}
-   */
+  /** @type {any} */
   get nodeValue() {
 
   }
@@ -1142,7 +1116,7 @@ class BindInfo {
   updateViewModel() {}
 
   /**
-   * 
+   * ToDo:名前を変えたほうが良い
    */
   removeFromParent() {}
 }
@@ -1250,16 +1224,12 @@ class NodeUpdator {
 }
 
 class AttributeBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} 属性名 */
   get attrName() {
     return this.nodePropertyElements[1];
   }
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} nodeの値 */
   get nodeValue() {
     return this.element.getAttribute(this.attrName);
   }
@@ -1292,9 +1262,7 @@ class AttributeBind extends BindInfo {
 }
 
 class ClassListBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get className() {
     return this.nodePropertyElements[1];
   }
@@ -1304,6 +1272,7 @@ class ClassListBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, nodeProperty, viewModelProperty, filters, className, viewModelValue} = this;
+    /** @type {boolean} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const hasClassName = element.classList.contains(className);
     if (filteredValue !== hasClassName) {
@@ -1318,6 +1287,7 @@ class ClassListBind extends BindInfo {
    */
   updateViewModel() {
     const {component, element, filters, className} = this;
+    /** @type {boolean} */
     const value = Filter.applyForInput(element.classList.contains(className), filters, component.filters.in);
     this.viewModelValue = value;
   }
@@ -1327,20 +1297,20 @@ const CLASS_PROPERTY = "className";
 const DELIMITER = " ";
 
 class ClassNameBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get nodeValue() {
     return this.element[CLASS_PROPERTY];
   }
   set nodeValue(value) {
     this.element[CLASS_PROPERTY] = value;
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string[]} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const joinedValue = filteredValue.join(DELIMITER);
     if (this.nodeValue !== joinedValue) {
@@ -1355,6 +1325,7 @@ class ClassNameBind extends BindInfo {
    */
   updateViewModel() {
     const {component, filters, nodeValue} = this;
+    /** @type {string[]} */
     const value = Filter.applyForInput(nodeValue ? nodeValue.split(DELIMITER) : [], filters, component.filters.in);
     this.viewModelValue = value;
   }
@@ -1363,15 +1334,18 @@ class ClassNameBind extends BindInfo {
 const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node : utils.raise();
 
 class Radio extends BindInfo {
+  /** @type {HTMLInputElement} */
   get radio() {
     const input = toHTMLInputElement$1(this.element);
     return input["type"] === "radio" ? input : utils.raise('not radio');
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, radio, nodeProperty, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const checked = filteredValue === radio.value;
     if (radio.checked !== checked) {
@@ -1396,27 +1370,28 @@ class Radio extends BindInfo {
 const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');
 
 class Checkbox extends BindInfo {
+  /** @type {HTMLInputElement} */
   get checkbox() {
     const input = toHTMLInputElement(this.element);
     return input["type"] === "checkbox" ? input : utils.raise('not checkbox');
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get nodeValue() {
     return this.checkbox.checked;
   }
   set nodeValue(value) {
     this.checkbox.checked = value;
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, checkbox, nodeProperty, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string[]} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
-    const checked = filteredValue.find(value => value === checkbox.value);
+    const checked = typeof filteredValue.find(value => value === checkbox.value) !== "undefined";
     if (this.nodeValue !== checked) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
         this.nodeValue = checked;
@@ -1429,7 +1404,9 @@ class Checkbox extends BindInfo {
    */
   updateViewModel() {
     const {component, nodeValue, filters, checkbox, viewModelValue} = this;
+    /** @type {string} */
     const checkboxValue = Filter.applyForInput(checkbox.value, filters, component.filters.in);
+    /** @type {Set<string>} */
     const setOfValue = new Set(viewModelValue);
     nodeValue ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
     const value = Array.from(setOfValue);
@@ -1481,38 +1458,27 @@ class Templates {
 }
 
 class TemplateChild {
-  /**
-   * @type {BindInfo[]}
-   */
+  /** @type {BindInfo[]} */
   binds;
-  /**
-   * @type {Node[]}
-   */
+
+  /** @type {Node[]} */
   childNodes;
-  /**
-   * @type {DocumentFragment}
-   */
+
+  /** @type {DocumentFragment} */
   fragment;
 
-  /**
-   * @type {ContextInfo}
-   */
+  /** @type {ContextInfo} */
   context;
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   uuid;
 
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   get lastNode() {
     return this.childNodes[this.childNodes.length - 1];
   }
-  /**
-   * @type {node[]|DocumentFragment}
-   */
+
+  /** @type {node[]|DocumentFragment} */
   get nodesForAppend() {
     return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
   }
@@ -1557,10 +1523,13 @@ class TemplateChild {
     }
   }
 
-  /**
-   * @type {Map<string,TemplateChild[]>}
-   */
+  /** @type {Map<string,TemplateChild[]>} */
   static templateChildrenByUUID = new Map;
+
+  /**
+   * 削除したTemplateChildを再利用のため保存しておく
+   * @param {TemplateChild} templateChild 
+   */
   static dispose(templateChild) {
     const children = this.templateChildrenByUUID.get(templateChild.uuid);
     if (typeof children === "undefined") {
@@ -1572,31 +1541,32 @@ class TemplateChild {
 }
 
 class TemplateBind extends BindInfo {
-  /**
-   * @type {TemplateChild[]}
-   */
+  /** @type {TemplateChild[]} */
   templateChildren = [];
-  /**
-   * @type {HTMLTemplateElement}
-   */
+
+  /** @type {HTMLTemplateElement} */
   #template;
+  /** @type {HTMLTemplateElement} */
   get template() {
     if (typeof this.#template === "undefined") {
       this.#template = Templates.templateByUUID.get(this.uuid);
     }
     return this.#template;
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   #uuid;
+  /** @type {string} */
   get uuid() {
     if (typeof this.#uuid === "undefined") {
       this.#uuid = this.node.textContent.slice(3);
     }
     return this.#uuid;
   }
+
+  /** @type {number} */
   #lastCount;
+  /** @type {number} */
   get lastCount() {
     return (this.#lastCount ?? 0);
   }
@@ -1604,9 +1574,7 @@ class TemplateBind extends BindInfo {
     this.#lastCount = v;
   }
 
-  /**
-   * @type {TemplateChild}
-   */
+  /** @type {TemplateChild | undefined} */
   get lastChild() {
     return this.templateChildren[this.templateChildren.length - 1];
   }
@@ -1627,10 +1595,11 @@ class TemplateBind extends BindInfo {
 
   /**
    * 
-   * @returns {any} newValue
+   * @returns {void}
    */
   expandIf() {
     const { component, filters, context, viewModelValue } = this;
+    /** @type {boolean} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const currentValue = this.templateChildren.length > 0;
     if (currentValue !== filteredValue) {
@@ -1648,13 +1617,11 @@ class TemplateBind extends BindInfo {
   }
 
   /**
-   * @returns {any[]} newValue
+   * @returns {void}
    */
   expandLoop() {
     const { component, filters, context, viewModelValue } = this;
-    /**
-     * @type {any[]}
-     */
+    /** @type {any[]} */
     const newValue = Filter.applyForOutput(viewModelValue, filters, component.filters.out) ?? [];
 
     if (this.lastCount > newValue.length) {
@@ -1683,8 +1650,9 @@ class TemplateBind extends BindInfo {
     this.lastCount = newValue.length;
   }
 
-  /**
+  /** 
    * @param {TemplateChild[]} templateChildren
+   * @returns {void}
    */
   static removeFromParent(templateChildren) {
     templateChildren.forEach(templateChild => {
@@ -1696,6 +1664,7 @@ class TemplateBind extends BindInfo {
   /**
    * @param {Node} parentNode
    * @param {TemplateChild[]} templateChildren
+   * @returns {void}
    */
   static appendToParent(parentNode, templateChildren) {
     const fragment = document.createDocumentFragment();
@@ -1778,18 +1747,18 @@ class ViewModelUpdator {
 }
 
 class Event extends BindInfo {
+  /** @type {string} */
   #eventType;
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get eventType() {
     return this.#eventType;
   }
   set eventType(value) {
     this.#eventType = value;
   }
+
   /**
-   * 
+   * イベントハンドラを設定
    */
   addEventListener() {
     const {component, element, eventType, viewModel, viewModelProperty} = this;
@@ -1812,9 +1781,7 @@ class Event extends BindInfo {
 const toComponent = node => (node[Symbols.isComponent]) ? node : utils.raise('not Component');
 
 class ComponentBind extends BindInfo {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   get node() {
     return super.node;
   }
@@ -1822,12 +1789,13 @@ class ComponentBind extends BindInfo {
     this.thisComponent = toComponent(node);
     super.node = node;
   }
+
+  /** @type {boolean} */
   #isSetProperty() {
     return (typeof this.viewModelProperty !== "undefined" && typeof this.nodePropertyElements !== "undefined");
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get viewModelProperty() {
     return super.viewModelProperty;
   }
@@ -1837,9 +1805,8 @@ class ComponentBind extends BindInfo {
       this.bindProperty();
     }
   }
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   get nodePropertyElements() {
     return super.nodePropertyElements;
   }
@@ -1849,20 +1816,20 @@ class ComponentBind extends BindInfo {
       this.bindProperty();
     }
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get dataNameProperty() {
     return this.nodePropertyElements[0];
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get dataProperty() {
     return this.nodePropertyElements[1];
   }
 
+  /** @type {Component} */
   #thisComponent;
+  /** @type {Component} */
   get thisComponent() {
     return this.#thisComponent;
   }
@@ -1871,7 +1838,7 @@ class ComponentBind extends BindInfo {
   }
 
   /**
-   * 
+   * プロパティをバインドする
    */
   bindProperty() {
     this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes);
@@ -1880,11 +1847,10 @@ class ComponentBind extends BindInfo {
       get: function () { return this.$props[dataProperty]; },
       set: function (value) { this.$props[dataProperty] = value; },
     });
-    
   }
 
   /**
-   * 
+   * 親コンポーネントからの更新をこのコンポーネントに反映する
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   applyToNode(setOfUpdatedViewModelPropertyKeys) {
@@ -1905,30 +1871,26 @@ class ComponentBind extends BindInfo {
 
 }
 
-const STYLE_PROPERTY = "style";
-
 class StyleBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get styleName() {
     return this.nodePropertyElements[1];
   }
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get nodeValue() {
-    return this.htmlElement[STYLE_PROPERTY][this.styleName];
+    return this.htmlElement.style[this.styleName];
   }
   set nodeValue(value) {
-    this.htmlElement[STYLE_PROPERTY][this.styleName] = value;
+    this.htmlElement.style[this.styleName] = value;
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     if (this.nodeValue !== filteredValue) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
@@ -1954,16 +1916,12 @@ class StyleBind extends BindInfo {
 //   colorを#fffで、ViewModelのプロパティに指定すると、styleのcolor属性にはrgb(255,255,255)で入っている
 
 class PropertyBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get propName() {
     return this.nodePropertyElements[0];
   }
 
-  /**
-   * @type {any}
-   */
+  /** @type {any} */
   get nodeValue() {
     return this.node[this.propName];
   }
@@ -1998,20 +1956,20 @@ class PropertyBind extends BindInfo {
 const DEFAULT_PROPERTY$2 = "textContent";
 
 class TextBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get nodeValue() {
     return this.node[DEFAULT_PROPERTY$2];
   }
   set nodeValue(value) {
     this.node[DEFAULT_PROPERTY$2] = value;
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string|null} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     if (this.nodeValue !== (filteredValue ?? "")) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, filteredValue, () => {
@@ -2033,9 +1991,9 @@ class TextBind extends BindInfo {
 
 class Factory {
   /**
-   * @type {Object<nodePropertyType:number, bindClass:classof<BindInfo>>}
+   * @type {Object<number, classof<BindInfo>>}
    */
-  static classByType = undefined;
+  static classByType;
   static setup() {
     this.classByType = {};
     this.classByType[NodePropertyType.property] = PropertyBind;
@@ -2053,6 +2011,7 @@ class Factory {
   }
 
   /**
+   * バインド情報を生成する
    * @param {Component} component
    * @param {Node} node
    * @param {string} nodeProperty
@@ -2064,9 +2023,7 @@ class Factory {
    */
   static create(component, node, nodeProperty, viewModel, viewModelProperty, filters, context) {
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
-    /**
-     * @type {BindInfo}
-     */
+    /** @type {BindInfo} */
     const bindInfo = new (this.classByType ?? this.setup())[nodeInfo.type];
     bindInfo.component = component;
     bindInfo.node = node;
@@ -2088,17 +2045,11 @@ const SAMENAME = "@";
 const DEFAULT = "$";
 
 class BindTextInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} bindするnodeのプロパティ名 */
   nodeProperty;
-  /**
-   * @type {string}
-   */
+  /** @type {string} bindするviewModelのプロパティ名 */
   viewModelProperty;
-  /**
-   * @type {Filter[]}
-   */
+  /** @type {Filter[]} 適用するフィルターの配列 */
   filters;
 }
 
@@ -2143,7 +2094,7 @@ const parseViewModelProperty = text => {
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  * @param {string} expr 
  * @param {string} defaultName 
- * @returns {{nodeProperty:string,viewModelProp:string,filters:Filter[]}}
+ * @returns {BindTextInfo}
  */
 const parseExpression = (expr, defaultName) => {
   const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
@@ -2152,10 +2103,10 @@ const parseExpression = (expr, defaultName) => {
 };
 
 /**
- * 属性値のパース
- * @param {string} text 属性値
+ * data-bind属性値のパース
+ * @param {string} text data-bind属性値
  * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
- * @returns {{prop:string,viewModelProp:string,filters:Filter[]}[]}
+ * @returns {BindTextInfo[]}
  */
 const parseBindText = (text, defaultName) => {
   return text.split(";").map(trim).filter(has).map(s => { 
@@ -2171,20 +2122,21 @@ const parseBindText = (text, defaultName) => {
  * data-bind属性をパースする関数群
  */
 class Parser {
-  /**
-   * @type {Object<string,BindTextInfo[]>}
-   */
+  /** @type {Object<string,BindTextInfo[]>} */
   static bindTextsByKey = {};
 
   /**
-   * 属性値のパース
-   * @param {string} text 属性値
+   * data-bind属性値のパースし、BindTextInfoの配列を返す
+   * @param {string} text data-bind属性値
    * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
    * @returns {BindTextInfo[]}
    */
   static parse(text, defaultName) {
+    /** @type {string} */
     const key = text + "\t" + defaultName;
+    /** @type {BindTextInfo[] | undefined} */
     let binds = this.bindTextsByKey[key];
+
     if (typeof binds === "undefined") {
       binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
       this.bindTextsByKey[key] = binds;
@@ -2195,12 +2147,12 @@ class Parser {
 
 class BindToDom {
   /**
-   * 
+   * data-bind属性値からバインド情報を生成
    * @param {Node} node 
    * @param {Component} component
-   * @param {Object<string,any>} viewModel 
+   * @param {ViewModel} viewModel 
    * @param {ContextInfo} context
-   * @param {string} text
+   * @param {string} text data-bind属性値
    * @param {string} defaultName
    * @returns {BindInfo[]}
    */
@@ -2231,7 +2183,7 @@ const DEFAULT_PROPERTY$1 = "textContent";
 const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
 
 /**
- * 
+ * HTML要素のデフォルトプロパティを取得
  * @param {HTMLElement} element 
  * @returns {string}
  */
@@ -2242,7 +2194,7 @@ const getDefaultProperty = element => {
 };
 
 /**
- * 
+ * Eventクラスへ変換
  * @param {BindInfo} bind 
  * @returns {Event|undefined}
  */
@@ -2260,36 +2212,40 @@ const isInputableElement = node => node instanceof HTMLElement &&
 
 class BindToHTMLElement {
   /**
-   * 
+   * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
    * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
+    /** @type {ViewModel} */
     const viewModel = component.viewModel;
+    /** @type {HTMLElement}  */
     const element = toHTMLElement(node);
+    /** @type {string} */
     const bindText = element.getAttribute(DATASET_BIND_PROPERTY$3);
+    /** @type {string} */
     const defaultName = getDefaultProperty(element);
 
     // パース
+    /** @type {BindInfo[]} */
     const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
+    /** @type {boolean} デフォルトイベントを設定したかどうか */
     let hasDefaultEvent = false;
-    /**
-     * @type {BindInfo}
-     */
+
+    /** @type {BindInfo|null} */
     let defaultBind = null;
-    /**
-     * @type {Radio|null}
-     */
+
+    /** @type {Radio|null} */
     let radioBind = null;
-    /**
-     * @type {Checkbox|null}
-     */
+
+    /** @type {Checkbox|null} */
     let checkboxBind = null;
+
     binds.forEach(bind => {
       hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
       radioBind = (bind instanceof Radio) ? bind : radioBind;
@@ -2298,11 +2254,7 @@ class BindToHTMLElement {
       toEvent$1(bind)?.addEventListener();
     });
 
-    /**
-     * 
-     * @param {BindInfo} bind 
-     * @returns 
-     */
+    /** @type {(bind:BindInfo)=>void} */
     const setDefaultEventHandler = (bind) => {
       const eventHandler = event => {
         event.stopPropagation();
@@ -2346,26 +2298,28 @@ const toEvent = bind => (bind instanceof Event) ? bind : undefined;
 
 class BindToSVGElement {
   /**
-   * 
+   * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
    * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
+    /** @type {ViewModel} */
     const viewModel = component.viewModel;
+    /** @type {SVGElement} */
     const element = toSVGElement(node);
+    /** @type {string} */
     const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2);
+    /** @type {string|undefined} */
     const defaultName = undefined;
 
     // パース
+    /** @type {BindInfo[]} */
     const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
     binds.forEach(BindToDom.applyUpdateNode);
 
     // イベントハンドラ設定
-    /**
-     * @type {BindInfo}
-     */
     binds.forEach(bind => {
       toEvent(bind)?.addEventListener();
     });
@@ -2386,7 +2340,7 @@ const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("not 
 
 class BindToText {
   /**
-   * 
+   * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
@@ -2394,13 +2348,18 @@ class BindToText {
    */
   static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
+    /** @type {ViewModel} */
     const viewModel = component.viewModel;
+    /** @type {Comment} */
     const comment = toComment$1(node);
+    /** @type {string} */
     const bindText = comment.textContent.slice(3); // @@:をスキップ
+    /** @type {Text} */
     const textNode = document.createTextNode("");
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
+    /** @type {BindInfo[]} */
     const binds = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
     binds.forEach(BindToDom.applyUpdateNode);
 
@@ -2419,20 +2378,26 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise("not Co
 
 class BindToTemplate {
   /**
-   * 
+   * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
    * @returns {BindInfo[]}
    */
   static bind(node, component, context) {
+    /** @type {ViewModel} */
     const viewModel = component.viewModel;
+    /** @type {Comment} */
     const comment = toComment(node);
+    /** @type {string} */
     const uuid = comment.textContent.slice(3);
+    /** @type {HTMLTemplateElement} */
     const template = Templates.templateByUUID.get(uuid);
+    /** @type {string} */
     const bindText = template.getAttribute(DATASET_BIND_PROPERTY$1);
 
     // パース
+    /** @type {BindInfo[]} */
     let binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
     binds = binds.length > 0 ? [ binds[0] ] : [];
     binds.forEach(BindToDom.applyUpdateNode);
@@ -2443,7 +2408,7 @@ class BindToTemplate {
 
 class Binder {
   /**
-   * 
+   * バインドを実行する
    * @param {Node[]} nodes
    * @param {Component} component
    * @param {ContextInfo} context
@@ -2472,6 +2437,7 @@ const SELECTOR = "[data-bind]";
  * @returns {number[]}
  */
 const getNodeRoute = node => {
+  /** @type {number[]} */
   let routeIndexes = [];
   while(node.parentNode != null) {
     routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
@@ -2481,7 +2447,7 @@ const getNodeRoute = node => {
 };
 
 /**
- * 
+ * ルートのインデックス配列からノード取得する
  * @param {Node} node 
  * @param {number[]} routeIndexes 
  * @returns {Node}
@@ -2494,38 +2460,38 @@ const getNodeByRouteIndexes = (node, routeIndexes) => {
 };
 
 /**
- * 
+ * ノードがコメントかどうか
  * @param {Node} node 
- * @returns 
+ * @returns {boolean}
  */
 const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
+
 /**
- * 
+ * コメントノードを取得
  * @param {Node} node 
  * @returns {Comment[]}
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
 class Selector {
-  /**
-   * @type {Map<HTMLTemplateElement, number[][]>}
-   */
+  /** @type {Map<HTMLTemplateElement, number[][]>} */
   static listOfRouteIndexesByTemplate = new Map();
+
   /**
-   * 
+   * テンプレートからバインドする対象のノードを取得する
    * @param {HTMLTemplateElement} template 
    * @param {HTMLElement} rootElement
    * @returns {Node[]}
    */
   static getTargetNodes(template, rootElement) {
-    /**
-     * @type {Node[]}
-     */
+
+    /** @type {Node[]} */
     let nodes;
 
     if (this.listOfRouteIndexesByTemplate.has(template)) {
       // キャッシュがある場合
       // querySelectorAllを行わずにNodeの位置を特定できる
+      /** @type {number[][]} */
       const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
       nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
     } else {
@@ -3246,7 +3212,7 @@ const toTemplateBind = bind => (bind instanceof TemplateBind) ? bind : undefined
 
 class Binds {
   /**
-   * 
+   * Templateバインドをバインドツリーから取得
    * @param {BindInfo[]} binds
    * @param {Set<string>} setOfKey 
    * @returns {Template[]}
@@ -3288,7 +3254,7 @@ class Binds {
   }
 
   /**
-   * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
+   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
    * @param {BindInfo[]} binds
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */

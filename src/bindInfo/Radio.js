@@ -7,15 +7,18 @@ import { NodeUpdateData } from "../thread/NodeUpdator.js";
 const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise();
 
 export class Radio extends BindInfo {
+  /** @type {HTMLInputElement} */
   get radio() {
     const input = toHTMLInputElement(this.element);
     return input["type"] === "radio" ? input : utils.raise('not radio');
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, radio, nodeProperty, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const checked = filteredValue === radio.value;
     if (radio.checked !== checked) {

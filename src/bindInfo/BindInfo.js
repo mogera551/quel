@@ -4,38 +4,31 @@ import { Symbols } from "../Symbols.js";
 import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
 
 export class BindInfo {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   #node;
+  /** @type {Node} */
   get node() {
     return this.#node;
   }
   set node(node) {
     this.#node = node;
   }
-  /**
-   * @type {Element}
-   */
+  /** @type {Element} */
   get element() {
     return (this.node instanceof Element) ? this.node : utils.raise("not Element");
   }
-  /**
-   * @type {HTMLElement}
-   */
+  /** @type {HTMLElement} */
   get htmlElement() {
     return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
   }
-  /**
-   * @type {SVGElement}
-   */
+  /** @type {SVGElement} */
   get svgElement() {
     return (this.node instanceof SVGElement) ? this.node : utils.raise("not SVGElement");
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   #nodeProperty;
+  /** @type {string} */
   get nodeProperty() {
     return this.#nodeProperty;
   }
@@ -43,10 +36,9 @@ export class BindInfo {
     this.#nodeProperty = value;
   }
 
-  /**
-   * @type {string[]}
-   */
+  /** @type {string[]} */
   #nodePropertyElements;
+  /** @type {string[]} */
   get nodePropertyElements() {
     return this.#nodePropertyElements;
   }
@@ -54,18 +46,16 @@ export class BindInfo {
     this.#nodePropertyElements = value;
   }
 
-  /**
-   * @type {Component} 
-   */
+  /** @type {Component} */
   component;
-  /**
-   * @type {ViewModel}
-   */
+
+  /** @type {ViewModel} */
   viewModel;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   #viewModelProperty;
+
+  /** @type {string} */
   get viewModelProperty() {
     return this.#viewModelProperty;
   }
@@ -77,20 +67,20 @@ export class BindInfo {
     this.#contextIndex = undefined;
     this.#contextParam = undefined;
   }
-  /**
-   * @type {PropertyName}
-   */
+
+  /** @type {PropertyName} */
   #viewModelPropertyName;
+  /** @type {PropertyName} */
   get viewModelPropertyName() {
     if (typeof this.#viewModelPropertyName === "undefined") {
       this.#viewModelPropertyName = PropertyName.create(this.#viewModelProperty);
     }
     return this.#viewModelPropertyName;
   }
-  /**
-   * @type {number}
-   */
+
+  /** @type {number} */
   #contextIndex;
+  /** @type {number} */
   get contextIndex() {
     if (typeof this.#contextIndex === "undefined") {
       if (this.isContextIndex === true) {
@@ -99,22 +89,23 @@ export class BindInfo {
     }
     return this.#contextIndex;
   }
-  /**
-   * @type {boolean}
-   */
+
+  /** @type {boolean} */
   #isContextIndex;
+  /** @type {boolean} */
   get isContextIndex() {
     if (typeof this.#isContextIndex === "undefined") {
       this.#isContextIndex = (RE_CONTEXT_INDEX.exec(this.viewModelProperty)) ? true : false;
     }
     return this.#isContextIndex;
   }
-  /**
-   * @type {Filter[]}
-   */
+
+  /** @type {Filter[]} */
   filters;
 
+  /** @type {ContextParam} */
   #contextParam;
+  /** @type {ContextParam} */
   get contextParam() {
     if (typeof this.#contextParam === "undefined") {
       const propName = this.viewModelPropertyName;
@@ -125,35 +116,29 @@ export class BindInfo {
     return this.#contextParam;
   }
 
-  /**
-   * @type {number[]}
-   */
+  /** @type {number[]} */
   get indexes() {
     return this.contextParam?.indexes ?? [];
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get indexesString() {
     return this.indexes.toString();
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get viewModelPropertyKey() {
     return this.viewModelProperty + "\t" + this.indexesString;
   }
-  /**
-   * @type {number[]}
-   */
+
+  /** @type {number[]} */
   get contextIndexes() {
     return this.context.indexes;
   }
   
-  /**
-   * @type {ContextInfo}
-   */
+  /** @type {ContextInfo} */
   #context;
+  /** @type {ContextInfo} */
   get context() {
     return this.#context;
   }
@@ -162,25 +147,16 @@ export class BindInfo {
     this.#contextParam = undefined;
   }
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   eventType;
   
-  /**
-   * @type {(event:Event)=>{}}
-   */
+  /** @type {(event:Event)=>void} */
   defaultEventHandler;
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   defaultEventType;
 
-  /**
-   * 
-   * @type {any}
-   */
+  /** @type {any} */
   get viewModelValue() {
     return (this.isContextIndex) ?
       this.contextIndexes[this.contextIndex] :
@@ -192,9 +168,7 @@ export class BindInfo {
     }
   }
 
-  /**
-   * @type {any}
-   */
+  /** @type {any} */
   get nodeValue() {
 
   }
@@ -213,7 +187,7 @@ export class BindInfo {
   updateViewModel() {}
 
   /**
-   * 
+   * ToDo:名前を変えたほうが良い
    */
   removeFromParent() {}
 }

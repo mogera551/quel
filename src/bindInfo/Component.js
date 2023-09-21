@@ -12,9 +12,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 const toComponent = node => (node[Symbols.isComponent]) ? node : utils.raise('not Component');
 
 export class ComponentBind extends BindInfo {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   get node() {
     return super.node;
   }
@@ -22,12 +20,13 @@ export class ComponentBind extends BindInfo {
     this.thisComponent = toComponent(node);
     super.node = node;
   }
+
+  /** @type {boolean} */
   #isSetProperty() {
     return (typeof this.viewModelProperty !== "undefined" && typeof this.nodePropertyElements !== "undefined");
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get viewModelProperty() {
     return super.viewModelProperty;
   }
@@ -37,9 +36,8 @@ export class ComponentBind extends BindInfo {
       this.bindProperty();
     }
   }
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   get nodePropertyElements() {
     return super.nodePropertyElements;
   }
@@ -49,20 +47,20 @@ export class ComponentBind extends BindInfo {
       this.bindProperty();
     }
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get dataNameProperty() {
     return this.nodePropertyElements[0];
   }
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   get dataProperty() {
     return this.nodePropertyElements[1];
   }
 
+  /** @type {Component} */
   #thisComponent;
+  /** @type {Component} */
   get thisComponent() {
     return this.#thisComponent;
   }
@@ -71,7 +69,7 @@ export class ComponentBind extends BindInfo {
   }
 
   /**
-   * 
+   * プロパティをバインドする
    */
   bindProperty() {
     this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes);
@@ -80,11 +78,10 @@ export class ComponentBind extends BindInfo {
       get: function () { return this.$props[dataProperty]; },
       set: function (value) { this.$props[dataProperty] = value; },
     })
-    
   }
 
   /**
-   * 
+   * 親コンポーネントからの更新をこのコンポーネントに反映する
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   applyToNode(setOfUpdatedViewModelPropertyKeys) {

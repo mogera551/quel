@@ -5,9 +5,7 @@ import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 export class ClassListBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get className() {
     return this.nodePropertyElements[1];
   }
@@ -17,6 +15,7 @@ export class ClassListBind extends BindInfo {
    */
   updateNode() {
     const {component, node, element, nodeProperty, viewModelProperty, filters, className, viewModelValue} = this;
+    /** @type {boolean} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const hasClassName = element.classList.contains(className);
     if (filteredValue !== hasClassName) {
@@ -31,6 +30,7 @@ export class ClassListBind extends BindInfo {
    */
   updateViewModel() {
     const {component, element, filters, className} = this;
+    /** @type {boolean} */
     const value = Filter.applyForInput(element.classList.contains(className), filters, component.filters.in);
     this.viewModelValue = value;
   }

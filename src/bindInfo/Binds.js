@@ -7,7 +7,7 @@ const toTemplateBind = bind => (bind instanceof TemplateBind) ? bind : undefined
 
 export class Binds {
   /**
-   * 
+   * Templateバインドをバインドツリーから取得
    * @param {BindInfo[]} binds
    * @param {Set<string>} setOfKey 
    * @returns {Template[]}
@@ -49,7 +49,7 @@ export class Binds {
   }
 
   /**
-   * updateされたviewModelのプロパティにバインドされているnodeのプロパティを更新する
+   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
    * @param {BindInfo[]} binds
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */

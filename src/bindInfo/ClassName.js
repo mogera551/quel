@@ -7,20 +7,20 @@ const CLASS_PROPERTY = "className";
 const DELIMITER = " ";
 
 export class ClassNameBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get nodeValue() {
     return this.element[CLASS_PROPERTY];
   }
   set nodeValue(value) {
     this.element[CLASS_PROPERTY] = value;
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string[]} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     const joinedValue = filteredValue.join(DELIMITER);
     if (this.nodeValue !== joinedValue) {
@@ -35,6 +35,7 @@ export class ClassNameBind extends BindInfo {
    */
   updateViewModel() {
     const {component, filters, nodeValue} = this;
+    /** @type {string[]} */
     const value = Filter.applyForInput(nodeValue ? nodeValue.split(DELIMITER) : [], filters, component.filters.in);
     this.viewModelValue = value;
   }

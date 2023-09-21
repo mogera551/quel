@@ -17,9 +17,9 @@ import { TextBind } from "./Text.js";
 
 export class Factory {
   /**
-   * @type {Object<nodePropertyType:number, bindClass:classof<BindInfo>>}
+   * @type {Object<number, classof<BindInfo>>}
    */
-  static classByType = undefined;
+  static classByType;
   static setup() {
     this.classByType = {};
     this.classByType[NodePropertyType.property] = PropertyBind;
@@ -37,6 +37,7 @@ export class Factory {
   }
 
   /**
+   * バインド情報を生成する
    * @param {Component} component
    * @param {Node} node
    * @param {string} nodeProperty
@@ -48,9 +49,7 @@ export class Factory {
    */
   static create(component, node, nodeProperty, viewModel, viewModelProperty, filters, context) {
     const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
-    /**
-     * @type {BindInfo}
-     */
+    /** @type {BindInfo} */
     const bindInfo = new (this.classByType ?? this.setup())[nodeInfo.type];
     bindInfo.component = component;
     bindInfo.node = node;

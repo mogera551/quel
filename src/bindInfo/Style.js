@@ -4,30 +4,26 @@ import { BindInfo } from "./BindInfo.js";
 import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
-const STYLE_PROPERTY = "style";
-
 export class StyleBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get styleName() {
     return this.nodePropertyElements[1];
   }
 
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get nodeValue() {
-    return this.htmlElement[STYLE_PROPERTY][this.styleName];
+    return this.htmlElement.style[this.styleName];
   }
   set nodeValue(value) {
-    this.htmlElement[STYLE_PROPERTY][this.styleName] = value;
+    this.htmlElement.style[this.styleName] = value;
   }
+
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
     const {component, node, viewModelProperty, filters, viewModelValue} = this;
+    /** @type {string} */
     const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
     if (this.nodeValue !== filteredValue) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () => {
