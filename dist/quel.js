@@ -119,16 +119,37 @@ class utils {
   }
 }
 
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
 const num = (v, o, fn) => {
   if (v == null) return v;
   const n = Number(v);
   return isNaN(n) ? v : fn(n, o);
 };
 
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
 const str = (v, o, fn) => {
   return (v == null) ? v : fn(String(v), o);
 };
 
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
 const arr = (v, o, fn) => {
   return !Array.isArray(v) ? v : fn(v, o);
 };
@@ -353,13 +374,10 @@ class inputFilters {
 // => toFix,2|toLocaleString
 
 class Filter {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   name;
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   options;
 
   /**
@@ -372,6 +390,7 @@ class Filter {
   static applyForInput(value, filters, inputFilterFuncs) {
     return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
   }
+  
   /**
    * 
    * @param {any} value 
@@ -382,6 +401,7 @@ class Filter {
   static applyForOutput(value, filters, outputFilterFuncs) {
     return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
   }
+
   /**
    * 
    * @param {string} name 
@@ -396,9 +416,7 @@ class Filter {
   }
 }
 
-/**
- * @enum {number}
- */
+/** @enum {number} */
 const NodePropertyType = {
 //  levelTop: 1,
 //  level2nd: 2,
@@ -416,7 +434,9 @@ const NodePropertyType = {
   template: 95,
 };
 
+/** @type {string} */
 const TEMPLATE_BRANCH = "if"; // 条件分岐
+/** @type {string} */
 const TEMPLATE_REPEAT = "loop"; // 繰り返し
 
 const name = "quel";
@@ -846,22 +866,20 @@ const DEFAULT_TEXT_PROPERTY = "textContent";
 const PROPS_PROPERTY$1 = "props";
 
 class NodePropertyInfo {
-  /**
-   * @type {NodePropertyType}
-   */
+  /** @type {NodePropertyType} */
   type;
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   nodePropertyElements = [];
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   eventType;
 
+  /** @type {Object<string,NodePropertyInfo>} */
   static nodePropertyInfoByKey = {};
+
   /**
-   * 
+   * ノードからノードプロパティ情報を取得
    * @param {Node} node
    * @param {string} nodeProperty 
    * @returns {NodePropertyInfo}
@@ -1121,9 +1139,7 @@ class BindInfo {
   removeFromParent() {}
 }
 
-/**
- * @enum {number}
- */
+/** @enum {number} */
 const UpdateSlotStatus = {
   beginViewModelUpdate: 1,
   endViewMmodelUpdate: 2,
@@ -1134,26 +1150,28 @@ const UpdateSlotStatus = {
 };
 
 class NodeUpdateData {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   node;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   property;
+
+  /** @type {string} */
   viewModelProperty;
+
+  /** @type {any} */
   value;
-  /**
-   * @type {()=>{}}
-   */
+
+  /** @type {()=>void} */
   updateFunc;
 
   /**
    * 
    * @param {Node} node 
    * @param {string} property 
-   * @param {()=>{}} updateFunc 
+   * @param {string} viewModelProperty 
+   * @param {any} value 
+   * @param {()=>void} updateFunc 
    */
   constructor(node, property, viewModelProperty, value, updateFunc) {
     this.node = node;
@@ -1165,25 +1183,26 @@ class NodeUpdateData {
 }
 
 class NodeUpdator {
-  /**
-   * @type {NodeUpdateData[]}
-   */
+  /** @type {NodeUpdateData[]} */
   queue = [];
 
-  /**
-   * @type {UpdateSlotStatusCallback}
-   */
+  /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
-  /**
-   * @param {UpdateSlotStatusCallback} statusCallback
+
+  /** 
+   * @param {UpdateSlotStatusCallback} statusCallback 
    */
   constructor(statusCallback) {
     this.#statusCallback = statusCallback;
   }
 
   /**
-   * 
+   * 更新する順番を並び替える
+   * HTMLTemplateElementが前
+   * その次がHTMLSelectElementでないもの
+   * 最後がHTMLSelectElement
    * @param {NodeUpdateData[]} updates 
+   * @returns {NodeUpdateData[]}
    */
   reorder(updates) {
     updates.sort((update1, update2) => {
@@ -1197,8 +1216,9 @@ class NodeUpdator {
     });
     return updates;
   }
+
   /**
-   * 
+   * @returns {void}
    */
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
@@ -1215,9 +1235,7 @@ class NodeUpdator {
     }
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get isEmpty() {
     return this.queue.length === 0;
   }
@@ -1417,6 +1435,7 @@ class Checkbox extends BindInfo {
 class Context {
 
   /**
+   * 空のコンテクスト情報を生成
    * @returns {ContextInfo}
    */
   static create() {
@@ -1425,9 +1444,11 @@ class Context {
       stack: [],
     }
   }
+
   /**
-   * 
+   * コンテクスト情報をクローン
    * @param {ContextInfo} src 
+   * @returns {ContextInfo}
    */
   static clone(src) {
     /**
@@ -1450,9 +1471,7 @@ class Context {
 }
 
 class Templates {
-  /**
-   * @type {Map<string,HTMLTemplateElement>}
-   */
+  /** @type {Map<string,HTMLTemplateElement>} */
   static templateByUUID = new Map;
 
 }
@@ -1678,22 +1697,18 @@ class TemplateBind extends BindInfo {
 }
 
 class ProcessData {
-  /**
-   * @type {()=>{}}
-   */
+  /** @type {()=>void} */
   target;
-  /**
-   * @type {Object}
-   */
+
+  /** @type {Object} */
   thisArgument;
-  /**
-   * @type {any[]}
-   */
+
+  /** @type {any[]} */
   argumentsList;
 
   /**
    * 
-   * @param {()=>{}} target 
+   * @param {()=>void} target 
    * @param {Object} thisArgument 
    * @param {any[]} argumentsList 
    */
@@ -1705,15 +1720,12 @@ class ProcessData {
 }
 
 class ViewModelUpdator {
-  /**
-   * @type {ProcessData[]}
-   */
+  /** @type {ProcessData[]} */
   queue = [];
 
-  /**
-   * @type {UpdateSlotStatusCallback}
-   */
+  /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
+
   /**
    * @param {UpdateSlotStatusCallback} statusCallback
    */
@@ -1738,9 +1750,7 @@ class ViewModelUpdator {
     }
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get isEmpty() {
     return this.queue.length === 0;
   }
@@ -2539,6 +2549,7 @@ class View {
 }
 
 class Cache {
+  /** @type {Map<PropertyName,Map<string,any>>} */
   #valueByIndexesStringByPropertyName = new Map;
   
   /**
@@ -2570,7 +2581,7 @@ class Cache {
   }
 
   /**
-   * 
+   * @returns {void}
    */
   clear() {
     this.#valueByIndexesStringByPropertyName.clear();
@@ -2590,7 +2601,7 @@ class ViewModelize {
   /**
    * オブジェクトのすべてのプロパティのデスクリプタを取得する
    * 継承元を遡る、ただし、Objectのプロパティは取得しない
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @returns {Map<string,PropertyDescriptor>}
    */
   static getDescByName(target) {
@@ -2632,7 +2643,7 @@ class ViewModelize {
   /**
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {any} target 
+   * @param {class<ViewModel>} target 
    * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
    */
   static viewModelize(target) {
@@ -2669,19 +2680,21 @@ class ViewModelize {
     };
   }
 
-  /**
-   * @type {Map<class.constructor,ViewModelInfo>}
-   */
+  /** @type {Map<class<ViewModel>,ViewModelInfo>} */
   static viewModelInfoByConstructor = new Map;
   
 }
 
+/**
+ * $dependentPropsを表現
+ */
 class DependentProps {
+  /** @type {Set<string>} */
   #setOfDefaultProps = new Set;
-  /**
-   * @type {Map<string,Set<string>>}
-   */
+
+  /** @type {Map<string,Set<string>>} */
   #setOfPropsByRefProp = new Map;
+  /** @type {Map<string,Set<string>>} */
   get setOfPropsByRefProp() {
     return this.#setOfPropsByRefProp;
   }
@@ -2693,9 +2706,11 @@ class DependentProps {
   hasDefaultProp(prop) {
     return this.#setOfDefaultProps.has(prop);
   }
+
   /**
    * 
    * @param {string} prop 
+   * @returns {void}
    */
   addDefaultProp(prop) {
     let currentName = PropertyName.create(prop);
@@ -2712,6 +2727,7 @@ class DependentProps {
   /**
    * 
    * @param {{prop:string,refProps:string[]}} props 
+   * @returns {void}
    */
   setDependentProps(props) {
     for(const [prop, refProps] of Object.entries(props)) {
@@ -2799,61 +2815,61 @@ const setOfProperties = new Set([
  * @type {ProxyHandler<ViewModel>}
  */
 class ViewModelHandler extends Handler$2 {
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
+  /** @type {Component} */
   get component() {
     return this.#component;
   }
-  /**
-   * @type {Cache}
-   */
+
+  /** @type {Cache} */
   #cache = new Cache;
+  /** @type {Cache} */
   get cache() {
     return this.#cache;
   }
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   #methods;
+  /** @type {string[]} */
   get methods() {
     return this.#methods;
   }
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   #accessorProperties;
+  /** @type {string[]} */
   get accessorProperties() {
     return this.#accessorProperties;
   }
+
+  /** @type {Set<string>} */
   #setOfAccessorProperties;
+  /** @type {Set<string>} */
   get setOfAccessorProperties() {
     return this.#setOfAccessorProperties;
   }
 
-  /**
-   * @type {DependentProps}
-   */
+  /** @type {DependentProps} */
   #dependentProps = new DependentProps
+  /** @type {DependentProps} */
   get dependentProps() {
     return this.#dependentProps;
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   #cacheable = false;
+  /** @type {boolean} */
   get cacheable() {
     return this.#cacheable;
   }
   set cacheable(value) {
     this.#cacheable = value;
   }
-  /**
-   * @type {ContextInfo}
-   */
+
+  /** @type {ContextInfo} */
   #context;
+  /** @type {ContextInfo} */
   get context() {
     return this.#context;
   }
@@ -2878,8 +2894,8 @@ class ViewModelHandler extends Handler$2 {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * プロパティ情報からViewModelの値を取得する
+   * @param {ViewModel} target 
    * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}  
    * @param {Proxy} receiver 
    */
@@ -2919,8 +2935,8 @@ class ViewModelHandler extends Handler$2 {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * プロパティ情報からViewModelの値を設定する
+   * @param {ViewModel} target 
    * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,value:any}}  
    * @param {Proxy} receiver 
    */
@@ -2937,12 +2953,18 @@ class ViewModelHandler extends Handler$2 {
     return result;
   }
 
+  /**
+   * 更新処理をキューイングする
+   * @param {ViewModel} target 
+   * @param {Proxy} thisArg 
+   * @param {any[]} argumentArray 
+   */
   #addProcess(target, thisArg, argumentArray) {
     this.#component.updateSlot.addProcess(new ProcessData(target, thisArg, argumentArray));
   }
 
   /**
-   * 
+   * 更新情報をキューイングする
    * @param {ViewModel} target 
    * @param {PropertyAccess} propertyAccess 
    * @param {Proxy} receiver 
@@ -2952,7 +2974,7 @@ class ViewModelHandler extends Handler$2 {
   }
 
   /**
-   * 
+   * コンポーネントを動的に表示し、消滅するまで待つ
    * @param {any} target 
    * @param {{name:string,data:object,attributes:any}} param1 
    * @param {Proxy} receiver 
@@ -2971,6 +2993,12 @@ class ViewModelHandler extends Handler$2 {
     return dialog.alivePromise;
   }
 
+  /**
+   * 動的に表示されたコンポーネントを閉じる
+   * @param {ViewModel} target 
+   * @param {Object<string,any>} data 
+   * @param {Proxy} receiver 
+   */
   #closeDialog(target, data, receiver) {
     const component = this.#component;
     Object.entries(data).forEach(([key, value]) => {
@@ -2981,7 +3009,7 @@ class ViewModelHandler extends Handler$2 {
 
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {{prop:string,indexes:number[]}} 
    * @param {Proxy<>} receiver 
    * @returns {any}
@@ -2991,8 +3019,8 @@ class ViewModelHandler extends Handler$2 {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * キャッシュ機能をオン
+   * @param {ViewModel} target 
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
@@ -3003,8 +3031,8 @@ class ViewModelHandler extends Handler$2 {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * キャッシュ機能をオフ
+   * @param {ViewModel} target 
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
@@ -3012,9 +3040,10 @@ class ViewModelHandler extends Handler$2 {
     this.cacheable = false;
     return this.cacheable;
   }
+
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,context:ContextInfo,event:Event}} param1 
    * @param {Proxy} receiver 
    */
@@ -3032,7 +3061,7 @@ class ViewModelHandler extends Handler$2 {
 
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {string} prop 
    * @param {Proxy} receiver 
    * @returns {any}
@@ -3085,7 +3114,7 @@ class ViewModelHandler extends Handler$2 {
 
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {string} prop 
    * @param {any} value 
    * @param {Proxy} receiver 
@@ -3302,34 +3331,27 @@ class Binds {
  * @type {ProxyHandler<typeof PropsAccessor>}
  */
 let Handler$1 = class Handler {
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
-  /**
-   * @type {Map<string,{bindProp:string,bindIndexes:number[]}>}
-   */
+
+  /** @type {Map<string,{bindProp:string,bindIndexes:number[]}>} */
   #bindPropByThisProp = new Map();
 
-  /**
-   * @type {Proxy<typeof ViewModel>}
-   */
+  /** @type {Proxy<typeof ViewModel>} */
   #data = new Proxy({}, new Handler$2);
 
+  /** @type {boolean} */
   get hasParent() {
     return this.#component?.parentComponent?.viewModel != null;
   }
-  /**
-   * @type {{key:string,value:any}|ViewModel}
-   */
+
+  /** @type {{key:string,value:any}|ViewModel} */
   get data() {
     const data = this.hasParent ? this.#component.parentComponent.viewModel : this.#data;
 //    (data[Symbols.isSupportDotNotation]) || utils.raise(`data is not support dot-notation`);
     return data;
   }
-  /**
-   * 
-   */
+  /** @type {Object<string,any>} */
   get object() {
     const retObject = {};
     if (this.hasParent) {
@@ -3345,8 +3367,7 @@ let Handler$1 = class Handler {
     return retObject;
   }
 
-  /**
-   * 
+  /** 
    * @param {Component} component 
    */
   constructor(component) {
@@ -3354,7 +3375,7 @@ let Handler$1 = class Handler {
   }
 
   /**
-   * 
+   * Proxy.get
    * @param {any} target 
    * @param {string} prop 
    * @param {Proxy<Handler>} receiver 
@@ -3382,7 +3403,7 @@ let Handler$1 = class Handler {
   }
 
   /**
-   * 
+   * Proxy.set
    * @param {any} target 
    * @param {string} prop 
    * @param {any} value 
@@ -3415,10 +3436,9 @@ function createProps(component) {
 }
 
 class GlobalDataHandler extends Handler$2 {
-  /**
-   * @type {Map<string,Set<Component>>}
-   */
+  /** @type {Map<string,Set<Component>>} */
   #setOfComponentByProp = new Map;
+
   /**
    * 
    * @param {any} target 
@@ -3484,17 +3504,13 @@ class GlobalData {
  * @type {ProxyHandler<typeof GlobalDataAccessor>}
  */
 class Handler {
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
-  /**
-   * @type {Set<string>}
-   */
+
+  /** @type {Set<string>} */
   setOfProps = new Set;
 
   /**
-   * 
    * @param {Component} component 
    */
   constructor(component) {
@@ -3502,7 +3518,7 @@ class Handler {
   }
 
   /**
-   * 
+   * プロパティをバインドする
    * @param {string} prop 
    */
   bindProperty(prop) {
@@ -3583,43 +3599,33 @@ const DATASET_BIND_PROPERTY = "data-bind";
 const DATASET_UUID_PROPERTY = "data-uuid";
 
 class Module {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   html;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   css;
-  /**
-   * @type {class<ViewModel>}
-   */
+
+  /** @type {class<ViewModel>} */
   ViewModel;
-  /**
-   * @type {class<HTMLElement>}
-   */
+
+  /** @type {classOf<HTMLElement>} */
   extendClass;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   extendTag;
-  /**
-   * @type {Object<string,FilterFunc>}
-   */
+
+  /** @type {Object<string,FilterFunc>} */
   inputFilters;
-  /**
-   * @type {Object<string,FilterFunc>}
-   */
+
+  /** @type {Object<string,FilterFunc>} */
   outputFilters;
-  /**
-   * @type {Object<string,Module>}
-   */
+
+  /** @type {Object<string,Module>} */
   componentModules;
 
-  /**
-   * @type {HTMLTemplateElement}
-   */
+  /** @type {HTMLTemplateElement} */
   #template;
+  /** @type {HTMLTemplateElement} */
   get template() {
     if (typeof this.#template === "undefined") {
       this.#template = Module.htmlToTemplate(this.html, this.css);
@@ -3684,6 +3690,7 @@ class Module {
   }
 
   /**
+   * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
    * @param {string?} html
    * @param {string?} css
    * @returns {HTMLTemplateElement}
@@ -3695,6 +3702,8 @@ class Module {
   }
 }
 
+/** @typedef {class<HTMLElement>} ComponentClass */
+
 class Main {
   /**
    * @type {{
@@ -3704,9 +3713,7 @@ class Main {
   static #config = {
     debug: false,
   };
-  /**
-   * @typedef {class<HTMLElement>} ComponentClass
-   */
+
   /**
    * 
    * @param {Object<string,ComponentClass>} components 
@@ -3796,18 +3803,15 @@ class ThreadStop extends Error {
 }
 
 class Thread {
-  /**
-   * @type {(value:any)=>{}}
-   */
+  /** @type {Promise<(value:any)=>void>} */
   #resolve;
-  /**
-   * @type {()=>{}}
-   */
+
+  /** @type {Promise<()=>void>} */
   #reject;
-  /**
-   * @type {boolean}
-   */
+
+  /** @type {boolean} */
   #alive = true;
+  /** @type {boolean} */
   get alive() {
     return this.#alive;
   }
@@ -3831,20 +3835,23 @@ class Thread {
   }
 
   /**
-   * 
+   * @returns {void}
    */
   stop() {
     this.#reject(new ThreadStop("stop"));
   }
 
   /**
-   * 
    * @param {UpdateSlot} slot 
+   * @returns {void}
    */
   wakeup(slot) {
     this.#resolve(slot);
   }
 
+  /**
+   * @returns {void}
+   */
   async main() {
     do {
       try {
@@ -3881,19 +3888,13 @@ class Thread {
 }
 
 class NotifyReceiver {
-  /**
-   * @type {PropertyAccess[]}
-   */
+  /** @type {PropertyAccess[]} */
   queue = [];
 
-  /**
-   * @type {UpdateSlotStatusCallback}
-   */
+  /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
 
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
 
   /**
@@ -3906,7 +3907,7 @@ class NotifyReceiver {
   }
 
   /**
-   * 
+   * @returns {void}
    */
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNotifyReceive);
@@ -3927,9 +3928,7 @@ class NotifyReceiver {
     }
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get isEmpty() {
     return this.queue.length === 0;
   }
@@ -3939,55 +3938,46 @@ class NotifyReceiver {
  * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
  */
 class UpdateSlot {
-  /**
-   * @type {ViewModelUpdator}
-   */
+  /** @type {ViewModelUpdator} */
   #viewModelUpdator;
+  /** @type {ViewModelUpdator} */
   get viewModelUpdator() {
     return this.#viewModelUpdator;
   }
-  /**
-   * @type {NotifyReceiver}
-   */
+
+  /** @type {NotifyReceiver} */
   #notifyReceiver;
+  /** @type {NotifyReceiver} */
   get notifyReceiver() {
     return this.#notifyReceiver;
   }
-  /**
-   * @type {NodeUpdator}
-   */
+
+  /** @type {NodeUpdator} */
   #nodeUpdator;
+  /** @type {NodeUpdator} */
   get nodeUpdator() {
     return this.#nodeUpdator;
   }
-  /**
-   * @type {()=>{}}
-   */
+
+  /** @type {()=>void} */
   #callback;
-  /**
-   * @type {Promise<void>}
-   */
+
+  /** @type {Promise<void>} */
   #waitPromise;
-  /**
-   * @type {Promise<void>}
-   */
+
+  /** @type {Promise<void>} */
   #alivePromise;
 
-  /**
-   * @type {(value) => {}}
-   */
+  /** @type {Promise<(value)=>void>} */
   #waitResolve;
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {Promise<() => void>} */
   #waitReject;
-  /**
-   * @type {(value) => {}}
-   */
+
+  /** @type {Promise<(value) => void>} */
   #aliveResolve;
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {Promise<() => void>} */
   #aliveReject;
   
   /**
@@ -4070,8 +4060,8 @@ class UpdateSlot {
     this.#waitResolve(true); // waitingを解除する
   }
 
-  /**
-   * 
+  /** 
+   * @returns {void}
    */
   callback() {
     this.#callback && this.#callback();
@@ -4082,7 +4072,7 @@ class UpdateSlot {
    * @param {Component} component
    * @param {()=>{}} callback 
    * @param {UpdateSlotStatusCallback} statusCallback 
-   * @returns 
+   * @returns {UpdateSlot}
    */
   static create(component, callback, statusCallback) {
     return new UpdateSlot(component, callback, statusCallback);
@@ -4091,6 +4081,7 @@ class UpdateSlot {
 }
 
 class AttachShadow {
+  /** @type {Set<string>} shadow rootが可能なタグ名一覧 */
   static setOfAttachableTags = new Set([
     // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
     "articles",
@@ -4114,7 +4105,7 @@ class AttachShadow {
   ]);
 
   /**
-   * 
+   * タグ名がカスタム要素かどうか→ダッシュ(-)を含むかどうか
    * @param {string} tagName 
    * @returns {boolean}
    */
@@ -4122,6 +4113,11 @@ class AttachShadow {
     return tagName.indexOf("-") !== -1;
   }
 
+  /**
+   * タグ名がshadow rootを持つことが可能か
+   * @param {string} tagName 
+   * @returns {boolean}
+   */
   static isAttachable(tagName) {
     return this.isCustomTag(tagName) || this.setOfAttachableTags.has(tagName);
   }
@@ -4145,19 +4141,14 @@ const getParentComponent = (node) => {
 };
 
 const mixInComponent = {
-  /**
-   * @type {ViewModelProxy}
-   */
+  /** @type {ViewModelProxy} */
   get viewModel() {
     return this._viewModel;
   },
   set viewModel(value) {
     this._viewModel = value;
   },
-  /**
-   * バインドリスト
-   * @type {BindInfo[]}
-   */
+  /** @type {BindInfo[]} バインドリスト */
   get binds() {
     return this._binds;
   },
@@ -4165,10 +4156,7 @@ const mixInComponent = {
     this._binds = value;
   },
 
-  /**
-   * 更新スレッド
-   * @type {Thread}
-   */
+  /** @type {Thread} 更新スレッド */
   get thread() {
     return this._thread;
   },
@@ -4176,10 +4164,7 @@ const mixInComponent = {
     this._thread = value;
   },
 
-  /**
-   * 更新処理用スロット
-   * @type {UpdateSlot}
-   */
+  /** @type {UpdateSlot} 更新処理用スロット */
   get updateSlot() {
     if (typeof this._updateSlot === "undefined") {
       this._updateSlot = UpdateSlot.create(this, () => {
@@ -4197,47 +4182,38 @@ const mixInComponent = {
     }
     return this._updateSlot;
   },
-  /**
-   * 単体テストのモック用
-   */
+  // 単体テストのモック用
   set updateSlot(value) {
     this._updateSlot = value;
   },
-  /**
-   * @type {Object<string,any>}
-   */
+
+  /** @type {Object<string,any>} */
   get props() {
     return this._props;
   },
-  /**
-   * @type {Object<string,any>}
-   */
+
+  /** @type {Object<string,any>} */
   get globals() {
     return this._globals;
   },
 
-  /**
-   * @type {(...args) => {}}
-   */
+  /** @type {(...args) => void} */
   get initialResolve() {
     return this._initialResolve;
   },
   set initialResolve(value) {
     this._initialResolve = value;
   },
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {() => void} */
   get initialReject() {
     return this._initialReject;
   },
   set initialReject(value) {
     this._initialReject = value;
   },
-  /**
-   * 初期化確認用プロミス
-   * @type {Promise}
-   */
+
+  /** @type {Promise} 初期化確認用プロミス */
   get initialPromise() {
     return this._initialPromise;
   },
@@ -4245,28 +4221,23 @@ const mixInComponent = {
     this._initialPromise = value;
   },
 
-  /**
-   * @type {(...args) => {}}
-   */
+  /** @type {(...args) => void} */
   get aliveResolve() {
     return this._aliveResolve;
   },
   set aliveResolve(value) {
     this._aliveResolve = value;
   },
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {() => void} */
   get aliveReject() {
     return this._aliveReject;
   },
   set aliveReject(value) {
     this._aliveReject = value;
   },
-  /**
-   * 生存確認用プロミス
-   * @type {Promise}
-   */
+
+  /** @type {Promise} 生存確認用プロミス */
   get alivePromise() {
     return this._alivePromise;
   },
@@ -4274,10 +4245,7 @@ const mixInComponent = {
     this._alivePromise = value;
   },
 
-  /**
-   * 親コンポーネント
-   * @type {Component}
-   */
+  /** @type {Component} 親コンポーネント */
   get parentComponent() {
     if (typeof this._parentComponent === "undefined") {
       this._parentComponent = getParentComponent(this);
@@ -4285,18 +4253,12 @@ const mixInComponent = {
     return this._parentComponent;
   },
 
-  /**
-   * shadowRootを使ってカプセル化をする(true)
-   * @type {boolean}
-   */
+  /** @type {boolean} shadowRootを使ってカプセル化をする(true) */
   get withShadowRoot() {
     return this.hasAttribute("with-shadow-root");
   },
 
-  /**
-   * viewのルートとなる要素
-   * @type {ShadowRoot|HTMLElement}
-   */
+  /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
     return this.shadowRoot ?? this;
   },
@@ -4308,8 +4270,9 @@ const mixInComponent = {
     return this._filters;
   },
 
-  /**
-   * 
+  /** 
+   * 初期化
+   * @returns {void}
    */
   initialize() {
     this._viewModel = createViewModel(this, this.constructor.ViewModel);
@@ -4339,14 +4302,16 @@ const mixInComponent = {
   },
 
   /**
-   * @type {string[]}
+   * コンポーネント構築処理（connectedCallbackで呼ばれる）
+   *   フィルターの設定
+   *   シャドウルートの作成
+   *   スレッド生成
+   *   ViewModel生成、初期化
+   *   レンダリング
+   * @returns {void}
    */
-//  static get observedAttributes() {
-//    return [/* 変更を監視する属性名の配列 */];
-//  }
-
   async build() {
-    const { template, ViewModel, inputFilters, outputFilters } = this.constructor; // staticから取得
+    const { template, inputFilters, outputFilters } = this.constructor; // staticから取得
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
         if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
@@ -4377,7 +4342,8 @@ const mixInComponent = {
   },
 
   /**
-   * DOMツリーへ追加
+   * DOMツリーへ追加時呼ばれる
+   * @returns {void}
    */
   async connectedCallback() {
     try {
@@ -4396,32 +4362,12 @@ const mixInComponent = {
   },
 
   /**
-   * DOMツリーから削除
+   * DOMツリーから削除呼ばれる
+   * @returns {void}
    */
   disconnectedCallback() {
     this.aliveResolve && this.aliveResolve(this.props[Symbols.toObject]());
   },
-
-  /**
-   * 移動時
-   */
-/*
-  adoptedCallback() {
-    
-  }
-*/
-
-  /**
-   * 属性値更新
-   * @param {string} name 
-   * @param {any} oldValue 
-   * @param {any} newValue 
-   */
-/*
-  attributeChangedCallback(name, oldValue, newValue) {
-    
-  }
-*/
 
   /**
    * 
@@ -4442,45 +4388,34 @@ class ComponentClassGenerator {
   static generate(componentModule) {
     const getBaseClass = function (module) {
       return class extends HTMLElement {
-        /**
-         * @type {HTMLTemplateElement}
-         * @static
-         */
+
+        /** @type {HTMLTemplateElement} */
         static template = module.template;
-        /**
-         * @type {class<typeof ViewModel>}
-         * @static
-         */
+
+        /** @type {class<typeof ViewModel>} */
         static ViewModel = module.ViewModel;
-        /**
-         * @type {Object<string,FilterFunc>}
-         */
+
+        /**@type {Object<string,FilterFunc>} */
         static inputFilters = module.inputFilters;
-        /**
-         * @type {Object<string,FilterFunc>}
-         */
+
+        /** @type {Object<string,FilterFunc>} */
         static outputFilters = module.outputFilters;
-        /**
-         * @type {boolean}
-         */
+
+        /** @type {boolean} */
         get [Symbols.isComponent] () {
           return true;
         }
+
         /**
-         * 
          */
         constructor() {
           super();
           this.initialize();
         }
-        /**
-         * 
-         */
-//        initialize() {
-//        }
       };
     };
   
+    /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
     // 同じクラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
@@ -4488,6 +4423,7 @@ class ComponentClassGenerator {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
+      /** @type {classOf<HTMLElement>} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
@@ -4951,6 +4887,12 @@ class Loader {
 }
 
 class QuelModuleRegistrar extends Registrar {
+  /**
+   * 
+   * @param {string} name 
+   * @param {Object<string,any>} module 
+   * @returns {void}
+   */
   static regist(name, module) {
     if (name.startsWith("filter-")) {
       const filterName = name.slice("filter-".length);
