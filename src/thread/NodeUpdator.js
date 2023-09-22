@@ -1,26 +1,28 @@
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NodeUpdateData {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   node;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   property;
+
+  /** @type {string} */
   viewModelProperty;
+
+  /** @type {any} */
   value;
-  /**
-   * @type {()=>{}}
-   */
+
+  /** @type {()=>void} */
   updateFunc;
 
   /**
    * 
    * @param {Node} node 
    * @param {string} property 
-   * @param {()=>{}} updateFunc 
+   * @param {string} viewModelProperty 
+   * @param {any} value 
+   * @param {()=>void} updateFunc 
    */
   constructor(node, property, viewModelProperty, value, updateFunc) {
     this.node = node;
@@ -32,25 +34,26 @@ export class NodeUpdateData {
 }
 
 export class NodeUpdator {
-  /**
-   * @type {NodeUpdateData[]}
-   */
+  /** @type {NodeUpdateData[]} */
   queue = [];
 
-  /**
-   * @type {UpdateSlotStatusCallback}
-   */
+  /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
-  /**
-   * @param {UpdateSlotStatusCallback} statusCallback
+
+  /** 
+   * @param {UpdateSlotStatusCallback} statusCallback 
    */
   constructor(statusCallback) {
     this.#statusCallback = statusCallback;
   }
 
   /**
-   * 
+   * 更新する順番を並び替える
+   * HTMLTemplateElementが前
+   * その次がHTMLSelectElementでないもの
+   * 最後がHTMLSelectElement
    * @param {NodeUpdateData[]} updates 
+   * @returns {NodeUpdateData[]}
    */
   reorder(updates) {
     updates.sort((update1, update2) => {
@@ -64,8 +67,9 @@ export class NodeUpdator {
     });
     return updates;
   }
+
   /**
-   * 
+   * @returns {void}
    */
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
@@ -82,9 +86,7 @@ export class NodeUpdator {
     }
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get isEmpty() {
     return this.queue.length === 0;
   }

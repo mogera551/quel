@@ -3,19 +3,13 @@ import { ViewModelHandler } from "../viewModel/Proxy.js";
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NotifyReceiver {
-  /**
-   * @type {PropertyAccess[]}
-   */
+  /** @type {PropertyAccess[]} */
   queue = [];
 
-  /**
-   * @type {UpdateSlotStatusCallback}
-   */
+  /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
 
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
 
   /**
@@ -28,7 +22,7 @@ export class NotifyReceiver {
   }
 
   /**
-   * 
+   * @returns {void}
    */
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNotifyReceive);
@@ -49,9 +43,7 @@ export class NotifyReceiver {
     }
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get isEmpty() {
     return this.queue.length === 0;
   }

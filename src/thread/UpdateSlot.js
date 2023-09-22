@@ -7,55 +7,46 @@ import { ViewModelUpdator, ProcessData } from "./ViewModelUpdator.js";
  * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
  */
 export class UpdateSlot {
-  /**
-   * @type {ViewModelUpdator}
-   */
+  /** @type {ViewModelUpdator} */
   #viewModelUpdator;
+  /** @type {ViewModelUpdator} */
   get viewModelUpdator() {
     return this.#viewModelUpdator;
   }
-  /**
-   * @type {NotifyReceiver}
-   */
+
+  /** @type {NotifyReceiver} */
   #notifyReceiver;
+  /** @type {NotifyReceiver} */
   get notifyReceiver() {
     return this.#notifyReceiver;
   }
-  /**
-   * @type {NodeUpdator}
-   */
+
+  /** @type {NodeUpdator} */
   #nodeUpdator;
+  /** @type {NodeUpdator} */
   get nodeUpdator() {
     return this.#nodeUpdator;
   }
-  /**
-   * @type {()=>{}}
-   */
+
+  /** @type {()=>void} */
   #callback;
-  /**
-   * @type {Promise<void>}
-   */
+
+  /** @type {Promise<void>} */
   #waitPromise;
-  /**
-   * @type {Promise<void>}
-   */
+
+  /** @type {Promise<void>} */
   #alivePromise;
 
-  /**
-   * @type {(value) => {}}
-   */
+  /** @type {Promise<(value)=>void>} */
   #waitResolve;
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {Promise<() => void>} */
   #waitReject;
-  /**
-   * @type {(value) => {}}
-   */
+
+  /** @type {Promise<(value) => void>} */
   #aliveResolve;
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {Promise<() => void>} */
   #aliveReject;
   
   /**
@@ -138,8 +129,8 @@ export class UpdateSlot {
     this.#waitResolve(true); // waitingを解除する
   }
 
-  /**
-   * 
+  /** 
+   * @returns {void}
    */
   callback() {
     this.#callback && this.#callback();
@@ -150,7 +141,7 @@ export class UpdateSlot {
    * @param {Component} component
    * @param {()=>{}} callback 
    * @param {UpdateSlotStatusCallback} statusCallback 
-   * @returns 
+   * @returns {UpdateSlot}
    */
   static create(component, callback, statusCallback) {
     return new UpdateSlot(component, callback, statusCallback);

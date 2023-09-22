@@ -1,6 +1,4 @@
-/**
- * @enum {number}
- */
+/** @enum {number} */
 export const NodePropertyType = {
 //  levelTop: 1,
 //  level2nd: 2,

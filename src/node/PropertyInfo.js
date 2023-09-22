@@ -9,22 +9,20 @@ const DEFAULT_TEXT_PROPERTY = "textContent";
 const PROPS_PROPERTY = "props";
 
 export class NodePropertyInfo {
-  /**
-   * @type {NodePropertyType}
-   */
+  /** @type {NodePropertyType} */
   type;
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   nodePropertyElements = [];
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   eventType;
 
+  /** @type {Object<string,NodePropertyInfo>} */
   static nodePropertyInfoByKey = {};
+
   /**
-   * 
+   * ノードからノードプロパティ情報を取得
    * @param {Node} node
    * @param {string} nodeProperty 
    * @returns {NodePropertyInfo}

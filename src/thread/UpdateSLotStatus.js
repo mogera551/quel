@@ -1,6 +1,4 @@
-/**
- * @enum {number}
- */
+/** @enum {number} */
 export const UpdateSlotStatus = {
   beginViewModelUpdate: 1,
   endViewMmodelUpdate: 2,

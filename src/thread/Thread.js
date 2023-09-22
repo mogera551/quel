@@ -6,18 +6,15 @@ class ThreadStop extends Error {
 }
 
 export class Thread {
-  /**
-   * @type {(value:any)=>{}}
-   */
+  /** @type {Promise<(value:any)=>void>} */
   #resolve;
-  /**
-   * @type {()=>{}}
-   */
+
+  /** @type {Promise<()=>void>} */
   #reject;
-  /**
-   * @type {boolean}
-   */
+
+  /** @type {boolean} */
   #alive = true;
+  /** @type {boolean} */
   get alive() {
     return this.#alive;
   }
@@ -41,20 +38,23 @@ export class Thread {
   }
 
   /**
-   * 
+   * @returns {void}
    */
   stop() {
     this.#reject(new ThreadStop("stop"));
   }
 
   /**
-   * 
    * @param {UpdateSlot} slot 
+   * @returns {void}
    */
   wakeup(slot) {
     this.#resolve(slot);
   }
 
+  /**
+   * @returns {void}
+   */
   async main() {
     do {
       try {

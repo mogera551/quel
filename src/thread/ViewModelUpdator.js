@@ -2,22 +2,18 @@ import "../types.js";
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class ProcessData {
-  /**
-   * @type {()=>{}}
-   */
+  /** @type {()=>void} */
   target;
-  /**
-   * @type {Object}
-   */
+
+  /** @type {Object} */
   thisArgument;
-  /**
-   * @type {any[]}
-   */
+
+  /** @type {any[]} */
   argumentsList;
 
   /**
    * 
-   * @param {()=>{}} target 
+   * @param {()=>void} target 
    * @param {Object} thisArgument 
    * @param {any[]} argumentsList 
    */
@@ -29,15 +25,12 @@ export class ProcessData {
 }
 
 export class ViewModelUpdator {
-  /**
-   * @type {ProcessData[]}
-   */
+  /** @type {ProcessData[]} */
   queue = [];
 
-  /**
-   * @type {UpdateSlotStatusCallback}
-   */
+  /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
+
   /**
    * @param {UpdateSlotStatusCallback} statusCallback
    */
@@ -62,9 +55,7 @@ export class ViewModelUpdator {
     }
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get isEmpty() {
     return this.queue.length === 0;
   }
