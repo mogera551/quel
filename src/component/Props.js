@@ -10,34 +10,27 @@ import { Handler as DotNotationHandler } from "../../modules/dot-notation/dot-no
  * @type {ProxyHandler<typeof PropsAccessor>}
  */
 class Handler {
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
-  /**
-   * @type {Map<string,{bindProp:string,bindIndexes:number[]}>}
-   */
+
+  /** @type {Map<string,{bindProp:string,bindIndexes:number[]}>} */
   #bindPropByThisProp = new Map();
 
-  /**
-   * @type {Proxy<typeof ViewModel>}
-   */
+  /** @type {Proxy<typeof ViewModel>} */
   #data = new Proxy({}, new DotNotationHandler);
 
+  /** @type {boolean} */
   get hasParent() {
     return this.#component?.parentComponent?.viewModel != null;
   }
-  /**
-   * @type {{key:string,value:any}|ViewModel}
-   */
+
+  /** @type {{key:string,value:any}|ViewModel} */
   get data() {
     const data = this.hasParent ? this.#component.parentComponent.viewModel : this.#data;
 //    (data[Symbols.isSupportDotNotation]) || utils.raise(`data is not support dot-notation`);
     return data;
   }
-  /**
-   * 
-   */
+  /** @type {Object<string,any>} */
   get object() {
     const retObject = {};
     if (this.hasParent) {
@@ -54,8 +47,7 @@ class Handler {
     return retObject;
   }
 
-  /**
-   * 
+  /** 
    * @param {Component} component 
    */
   constructor(component) {
@@ -63,7 +55,7 @@ class Handler {
   }
 
   /**
-   * 
+   * Proxy.get
    * @param {any} target 
    * @param {string} prop 
    * @param {Proxy<Handler>} receiver 
@@ -91,7 +83,7 @@ class Handler {
   }
 
   /**
-   * 
+   * Proxy.set
    * @param {any} target 
    * @param {string} prop 
    * @param {any} value 

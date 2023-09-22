@@ -32,19 +32,14 @@ const getParentComponent = (node) => {
 };
 
 const mixInComponent = {
-  /**
-   * @type {ViewModelProxy}
-   */
+  /** @type {ViewModelProxy} */
   get viewModel() {
     return this._viewModel;
   },
   set viewModel(value) {
     this._viewModel = value;
   },
-  /**
-   * バインドリスト
-   * @type {BindInfo[]}
-   */
+  /** @type {BindInfo[]} バインドリスト */
   get binds() {
     return this._binds;
   },
@@ -52,10 +47,7 @@ const mixInComponent = {
     this._binds = value;
   },
 
-  /**
-   * 更新スレッド
-   * @type {Thread}
-   */
+  /** @type {Thread} 更新スレッド */
   get thread() {
     return this._thread;
   },
@@ -63,10 +55,7 @@ const mixInComponent = {
     this._thread = value;
   },
 
-  /**
-   * 更新処理用スロット
-   * @type {UpdateSlot}
-   */
+  /** @type {UpdateSlot} 更新処理用スロット */
   get updateSlot() {
     if (typeof this._updateSlot === "undefined") {
       this._updateSlot = UpdateSlot.create(this, () => {
@@ -84,47 +73,38 @@ const mixInComponent = {
     }
     return this._updateSlot;
   },
-  /**
-   * 単体テストのモック用
-   */
+  // 単体テストのモック用
   set updateSlot(value) {
     this._updateSlot = value;
   },
-  /**
-   * @type {Object<string,any>}
-   */
+
+  /** @type {Object<string,any>} */
   get props() {
     return this._props;
   },
-  /**
-   * @type {Object<string,any>}
-   */
+
+  /** @type {Object<string,any>} */
   get globals() {
     return this._globals;
   },
 
-  /**
-   * @type {(...args) => {}}
-   */
+  /** @type {(...args) => void} */
   get initialResolve() {
     return this._initialResolve;
   },
   set initialResolve(value) {
     this._initialResolve = value;
   },
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {() => void} */
   get initialReject() {
     return this._initialReject;
   },
   set initialReject(value) {
     this._initialReject = value;
   },
-  /**
-   * 初期化確認用プロミス
-   * @type {Promise}
-   */
+
+  /** @type {Promise} 初期化確認用プロミス */
   get initialPromise() {
     return this._initialPromise;
   },
@@ -132,28 +112,23 @@ const mixInComponent = {
     this._initialPromise = value;
   },
 
-  /**
-   * @type {(...args) => {}}
-   */
+  /** @type {(...args) => void} */
   get aliveResolve() {
     return this._aliveResolve;
   },
   set aliveResolve(value) {
     this._aliveResolve = value;
   },
-  /**
-   * @type {() => {}}
-   */
+
+  /** @type {() => void} */
   get aliveReject() {
     return this._aliveReject;
   },
   set aliveReject(value) {
     this._aliveReject = value;
   },
-  /**
-   * 生存確認用プロミス
-   * @type {Promise}
-   */
+
+  /** @type {Promise} 生存確認用プロミス */
   get alivePromise() {
     return this._alivePromise;
   },
@@ -161,10 +136,7 @@ const mixInComponent = {
     this._alivePromise = value;
   },
 
-  /**
-   * 親コンポーネント
-   * @type {Component}
-   */
+  /** @type {Component} 親コンポーネント */
   get parentComponent() {
     if (typeof this._parentComponent === "undefined") {
       this._parentComponent = getParentComponent(this);
@@ -172,18 +144,12 @@ const mixInComponent = {
     return this._parentComponent;
   },
 
-  /**
-   * shadowRootを使ってカプセル化をする(true)
-   * @type {boolean}
-   */
+  /** @type {boolean} shadowRootを使ってカプセル化をする(true) */
   get withShadowRoot() {
     return this.hasAttribute("with-shadow-root");
   },
 
-  /**
-   * viewのルートとなる要素
-   * @type {ShadowRoot|HTMLElement}
-   */
+  /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
     return this.shadowRoot ?? this;
   },
@@ -195,8 +161,9 @@ const mixInComponent = {
     return this._filters;
   },
 
-  /**
-   * 
+  /** 
+   * 初期化
+   * @returns {void}
    */
   initialize() {
     this._viewModel = createViewModel(this, this.constructor.ViewModel);
@@ -226,14 +193,16 @@ const mixInComponent = {
   },
 
   /**
-   * @type {string[]}
+   * コンポーネント構築処理（connectedCallbackで呼ばれる）
+   *   フィルターの設定
+   *   シャドウルートの作成
+   *   スレッド生成
+   *   ViewModel生成、初期化
+   *   レンダリング
+   * @returns {void}
    */
-//  static get observedAttributes() {
-//    return [/* 変更を監視する属性名の配列 */];
-//  }
-
   async build() {
-    const { template, ViewModel, inputFilters, outputFilters } = this.constructor; // staticから取得
+    const { template, inputFilters, outputFilters } = this.constructor; // staticから取得
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
         if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
@@ -264,7 +233,8 @@ const mixInComponent = {
   },
 
   /**
-   * DOMツリーへ追加
+   * DOMツリーへ追加時呼ばれる
+   * @returns {void}
    */
   async connectedCallback() {
     try {
@@ -283,32 +253,12 @@ const mixInComponent = {
   },
 
   /**
-   * DOMツリーから削除
+   * DOMツリーから削除呼ばれる
+   * @returns {void}
    */
   disconnectedCallback() {
     this.aliveResolve && this.aliveResolve(this.props[Symbols.toObject]());
   },
-
-  /**
-   * 移動時
-   */
-/*
-  adoptedCallback() {
-    
-  }
-*/
-
-  /**
-   * 属性値更新
-   * @param {string} name 
-   * @param {any} oldValue 
-   * @param {any} newValue 
-   */
-/*
-  attributeChangedCallback(name, oldValue, newValue) {
-    
-  }
-*/
 
   /**
    * 
@@ -329,45 +279,34 @@ export class ComponentClassGenerator {
   static generate(componentModule) {
     const getBaseClass = function (module) {
       return class extends HTMLElement {
-        /**
-         * @type {HTMLTemplateElement}
-         * @static
-         */
+
+        /** @type {HTMLTemplateElement} */
         static template = module.template;
-        /**
-         * @type {class<typeof ViewModel>}
-         * @static
-         */
+
+        /** @type {class<typeof ViewModel>} */
         static ViewModel = module.ViewModel;
-        /**
-         * @type {Object<string,FilterFunc>}
-         */
+
+        /**@type {Object<string,FilterFunc>} */
         static inputFilters = module.inputFilters;
-        /**
-         * @type {Object<string,FilterFunc>}
-         */
+
+        /** @type {Object<string,FilterFunc>} */
         static outputFilters = module.outputFilters;
-        /**
-         * @type {boolean}
-         */
+
+        /** @type {boolean} */
         get [Symbols.isComponent] () {
           return true;
         }
+
         /**
-         * 
          */
         constructor() {
           super();
           this.initialize();
         }
-        /**
-         * 
-         */
-//        initialize() {
-//        }
       };
     };
   
+    /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
     // 同じクラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
@@ -377,6 +316,7 @@ export class ComponentClassGenerator {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
+      /** @type {classOf<HTMLElement>} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;

@@ -10,17 +10,13 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
  * @type {ProxyHandler<typeof GlobalDataAccessor>}
  */
 class Handler {
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
-  /**
-   * @type {Set<string>}
-   */
+
+  /** @type {Set<string>} */
   setOfProps = new Set;
 
   /**
-   * 
    * @param {Component} component 
    */
   constructor(component) {
@@ -28,7 +24,7 @@ class Handler {
   }
 
   /**
-   * 
+   * プロパティをバインドする
    * @param {string} prop 
    */
   bindProperty(prop) {

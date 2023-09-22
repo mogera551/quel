@@ -6,43 +6,33 @@ const DATASET_BIND_PROPERTY = "data-bind";
 const DATASET_UUID_PROPERTY = "data-uuid";
 
 export class Module {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   html;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   css;
-  /**
-   * @type {class<ViewModel>}
-   */
+
+  /** @type {class<ViewModel>} */
   ViewModel;
-  /**
-   * @type {class<HTMLElement>}
-   */
+
+  /** @type {classOf<HTMLElement>} */
   extendClass;
-  /**
-   * @type {string}
-   */
+
+  /** @type {string} */
   extendTag;
-  /**
-   * @type {Object<string,FilterFunc>}
-   */
+
+  /** @type {Object<string,FilterFunc>} */
   inputFilters;
-  /**
-   * @type {Object<string,FilterFunc>}
-   */
+
+  /** @type {Object<string,FilterFunc>} */
   outputFilters;
-  /**
-   * @type {Object<string,Module>}
-   */
+
+  /** @type {Object<string,Module>} */
   componentModules;
 
-  /**
-   * @type {HTMLTemplateElement}
-   */
+  /** @type {HTMLTemplateElement} */
   #template;
+  /** @type {HTMLTemplateElement} */
   get template() {
     if (typeof this.#template === "undefined") {
       this.#template = Module.htmlToTemplate(this.html, this.css);
@@ -107,6 +97,7 @@ export class Module {
   }
 
   /**
+   * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
    * @param {string?} html
    * @param {string?} css
    * @returns {HTMLTemplateElement}

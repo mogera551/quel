@@ -1,5 +1,6 @@
 
 export class AttachShadow {
+  /** @type {Set<string>} shadow rootが可能なタグ名一覧 */
   static setOfAttachableTags = new Set([
     // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
     "articles",
@@ -23,7 +24,7 @@ export class AttachShadow {
   ]);
 
   /**
-   * 
+   * タグ名がカスタム要素かどうか→ダッシュ(-)を含むかどうか
    * @param {string} tagName 
    * @returns {boolean}
    */
@@ -31,6 +32,11 @@ export class AttachShadow {
     return tagName.indexOf("-") !== -1;
   }
 
+  /**
+   * タグ名がshadow rootを持つことが可能か
+   * @param {string} tagName 
+   * @returns {boolean}
+   */
   static isAttachable(tagName) {
     return this.isCustomTag(tagName) || this.setOfAttachableTags.has(tagName);
   }
