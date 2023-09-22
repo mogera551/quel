@@ -3,10 +3,9 @@ import { Symbols } from "../Symbols.js";
 import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 class GlobalDataHandler extends Handler {
-  /**
-   * @type {Map<string,Set<Component>>}
-   */
+  /** @type {Map<string,Set<Component>>} */
   #setOfComponentByProp = new Map;
+
   /**
    * 
    * @param {any} target 

@@ -4,6 +4,12 @@ import { Filter } from "../filter/Filter";
 import { Main } from "../main.js";
 
 class QuelModuleRegistrar extends Registrar {
+  /**
+   * 
+   * @param {string} name 
+   * @param {Object<string,any>} module 
+   * @returns {void}
+   */
   static regist(name, module) {
     if (name.startsWith("filter-")) {
       const filterName = name.slice("filter-".length);

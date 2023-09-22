@@ -1,8 +1,6 @@
 
 export class Templates {
-  /**
-   * @type {Map<string,HTMLTemplateElement>}
-   */
+  /** @type {Map<string,HTMLTemplateElement>} */
   static templateByUUID = new Map;
 
 }

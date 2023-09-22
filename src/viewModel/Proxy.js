@@ -83,61 +83,61 @@ const setOfProperties = new Set([
  * @type {ProxyHandler<ViewModel>}
  */
 export class ViewModelHandler extends Handler {
-  /**
-   * @type {Component}
-   */
+  /** @type {Component} */
   #component;
+  /** @type {Component} */
   get component() {
     return this.#component;
   }
-  /**
-   * @type {Cache}
-   */
+
+  /** @type {Cache} */
   #cache = new Cache;
+  /** @type {Cache} */
   get cache() {
     return this.#cache;
   }
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   #methods;
+  /** @type {string[]} */
   get methods() {
     return this.#methods;
   }
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   #accessorProperties;
+  /** @type {string[]} */
   get accessorProperties() {
     return this.#accessorProperties;
   }
+
+  /** @type {Set<string>} */
   #setOfAccessorProperties;
+  /** @type {Set<string>} */
   get setOfAccessorProperties() {
     return this.#setOfAccessorProperties;
   }
 
-  /**
-   * @type {DependentProps}
-   */
+  /** @type {DependentProps} */
   #dependentProps = new DependentProps
+  /** @type {DependentProps} */
   get dependentProps() {
     return this.#dependentProps;
   }
 
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   #cacheable = false;
+  /** @type {boolean} */
   get cacheable() {
     return this.#cacheable;
   }
   set cacheable(value) {
     this.#cacheable = value;
   }
-  /**
-   * @type {ContextInfo}
-   */
+
+  /** @type {ContextInfo} */
   #context;
+  /** @type {ContextInfo} */
   get context() {
     return this.#context;
   }
@@ -162,8 +162,8 @@ export class ViewModelHandler extends Handler {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * プロパティ情報からViewModelの値を取得する
+   * @param {ViewModel} target 
    * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}  
    * @param {Proxy} receiver 
    */
@@ -203,8 +203,8 @@ export class ViewModelHandler extends Handler {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * プロパティ情報からViewModelの値を設定する
+   * @param {ViewModel} target 
    * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,value:any}}  
    * @param {Proxy} receiver 
    */
@@ -221,12 +221,18 @@ export class ViewModelHandler extends Handler {
     return result;
   }
 
+  /**
+   * 更新処理をキューイングする
+   * @param {ViewModel} target 
+   * @param {Proxy} thisArg 
+   * @param {any[]} argumentArray 
+   */
   #addProcess(target, thisArg, argumentArray) {
     this.#component.updateSlot.addProcess(new ProcessData(target, thisArg, argumentArray));
   }
 
   /**
-   * 
+   * 更新情報をキューイングする
    * @param {ViewModel} target 
    * @param {PropertyAccess} propertyAccess 
    * @param {Proxy} receiver 
@@ -236,7 +242,7 @@ export class ViewModelHandler extends Handler {
   }
 
   /**
-   * 
+   * コンポーネントを動的に表示し、消滅するまで待つ
    * @param {any} target 
    * @param {{name:string,data:object,attributes:any}} param1 
    * @param {Proxy} receiver 
@@ -255,6 +261,12 @@ export class ViewModelHandler extends Handler {
     return dialog.alivePromise;
   }
 
+  /**
+   * 動的に表示されたコンポーネントを閉じる
+   * @param {ViewModel} target 
+   * @param {Object<string,any>} data 
+   * @param {Proxy} receiver 
+   */
   #closeDialog(target, data, receiver) {
     const component = this.#component;
     Object.entries(data).forEach(([key, value]) => {
@@ -265,7 +277,7 @@ export class ViewModelHandler extends Handler {
 
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {{prop:string,indexes:number[]}} 
    * @param {Proxy<>} receiver 
    * @returns {any}
@@ -275,8 +287,8 @@ export class ViewModelHandler extends Handler {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * キャッシュ機能をオン
+   * @param {ViewModel} target 
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
@@ -287,8 +299,8 @@ export class ViewModelHandler extends Handler {
   }
 
   /**
-   * 
-   * @param {any} target 
+   * キャッシュ機能をオフ
+   * @param {ViewModel} target 
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
@@ -296,9 +308,10 @@ export class ViewModelHandler extends Handler {
     this.cacheable = false;
     return this.cacheable;
   }
+
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,context:ContextInfo,event:Event}} param1 
    * @param {Proxy} receiver 
    */
@@ -316,7 +329,7 @@ export class ViewModelHandler extends Handler {
 
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {string} prop 
    * @param {Proxy} receiver 
    * @returns {any}
@@ -369,7 +382,7 @@ export class ViewModelHandler extends Handler {
 
   /**
    * 
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @param {string} prop 
    * @param {any} value 
    * @param {Proxy} receiver 

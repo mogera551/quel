@@ -6,13 +6,10 @@ import {inputFilters, outputFilters} from "./Builtin.js";
 // => toFix,2|toLocaleString
 
 export class Filter {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   name;
-  /**
-   * @type {string[]}
-   */
+
+  /** @type {string[]} */
   options;
 
   /**
@@ -25,6 +22,7 @@ export class Filter {
   static applyForInput(value, filters, inputFilterFuncs) {
     return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
   }
+  
   /**
    * 
    * @param {any} value 
@@ -35,6 +33,7 @@ export class Filter {
   static applyForOutput(value, filters, outputFilterFuncs) {
     return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
   }
+
   /**
    * 
    * @param {string} name 

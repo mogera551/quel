@@ -13,7 +13,7 @@ export class ViewModelize {
   /**
    * オブジェクトのすべてのプロパティのデスクリプタを取得する
    * 継承元を遡る、ただし、Objectのプロパティは取得しない
-   * @param {any} target 
+   * @param {ViewModel} target 
    * @returns {Map<string,PropertyDescriptor>}
    */
   static getDescByName(target) {
@@ -55,7 +55,7 @@ export class ViewModelize {
   /**
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {any} target 
+   * @param {class<ViewModel>} target 
    * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
    */
   static viewModelize(target) {
@@ -92,9 +92,7 @@ export class ViewModelize {
     };
   }
 
-  /**
-   * @type {Map<class.constructor,ViewModelInfo>}
-   */
+  /** @type {Map<class<ViewModel>,ViewModelInfo>} */
   static viewModelInfoByConstructor = new Map;
   
 }

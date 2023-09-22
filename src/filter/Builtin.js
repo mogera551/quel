@@ -1,15 +1,36 @@
 import "../types.js";
 
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
 const num = (v, o, fn) => {
   if (v == null) return v;
   const n = Number(v);
   return isNaN(n) ? v : fn(n, o);
 }
 
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
 const str = (v, o, fn) => {
   return (v == null) ? v : fn(String(v), o);
 }
 
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
 const arr = (v, o, fn) => {
   return !Array.isArray(v) ? v : fn(v, o);
 }

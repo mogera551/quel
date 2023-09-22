@@ -1,6 +1,7 @@
 import "../types.js";
 
 export class Cache {
+  /** @type {Map<PropertyName,Map<string,any>>} */
   #valueByIndexesStringByPropertyName = new Map;
   
   /**
@@ -32,7 +33,7 @@ export class Cache {
   }
 
   /**
-   * 
+   * @returns {void}
    */
   clear() {
     this.#valueByIndexesStringByPropertyName.clear();

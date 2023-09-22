@@ -1,12 +1,16 @@
 import "../types.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
+/**
+ * $dependentPropsを表現
+ */
 export class DependentProps {
+  /** @type {Set<string>} */
   #setOfDefaultProps = new Set;
-  /**
-   * @type {Map<string,Set<string>>}
-   */
+
+  /** @type {Map<string,Set<string>>} */
   #setOfPropsByRefProp = new Map;
+  /** @type {Map<string,Set<string>>} */
   get setOfPropsByRefProp() {
     return this.#setOfPropsByRefProp;
   }
@@ -18,9 +22,11 @@ export class DependentProps {
   hasDefaultProp(prop) {
     return this.#setOfDefaultProps.has(prop);
   }
+
   /**
    * 
    * @param {string} prop 
+   * @returns {void}
    */
   addDefaultProp(prop) {
     let currentName = PropertyName.create(prop);
@@ -37,6 +43,7 @@ export class DependentProps {
   /**
    * 
    * @param {{prop:string,refProps:string[]}} props 
+   * @returns {void}
    */
   setDependentProps(props) {
     for(const [prop, refProps] of Object.entries(props)) {

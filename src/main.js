@@ -4,6 +4,8 @@ import { Filter } from "./filter/Filter.js";
 import { GlobalData } from "./global/Data.js";
 import  { utils } from "./utils.js";
 
+/** @typedef {class<HTMLElement>} ComponentClass */
+
 export class Main {
   /**
    * @type {{
@@ -13,9 +15,7 @@ export class Main {
   static #config = {
     debug: false,
   };
-  /**
-   * @typedef {class<HTMLElement>} ComponentClass
-   */
+
   /**
    * 
    * @param {Object<string,ComponentClass>} components 

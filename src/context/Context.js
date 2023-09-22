@@ -3,6 +3,7 @@ import "../types.js";
 export class Context {
 
   /**
+   * 空のコンテクスト情報を生成
    * @returns {ContextInfo}
    */
   static create() {
@@ -11,9 +12,11 @@ export class Context {
       stack: [],
     }
   }
+
   /**
-   * 
+   * コンテクスト情報をクローン
    * @param {ContextInfo} src 
+   * @returns {ContextInfo}
    */
   static clone(src) {
     /**
