@@ -104,10 +104,10 @@ const html = `
 <div>{{ count }}</div>
 
 <!-- 要素の属性値の関連付け -->
-<input data-bind="name">
+<input data-bind="value:message">
 
 <!-- イベントの関連付け -->
-<button data-bind="onclick:countUp">countUp</button>
+<button data-bind="onclick:countUp">count up</button>
 
 <!-- 条件分岐 -->
 {{ if:is5Times }}
@@ -136,9 +136,10 @@ getterを使った、アクセサプロパティを利用することもでき�
 class ViewModel {
   /* 状態の保存 */
   count = 0;
-  name = "John Smith";
-  animals = [ "Cat", "Dog", "Rabit" ];
-  // getterを使った、アクセサプロパティ
+  message = "welcome to quel";
+  animals = [ "cat", "dog", "fox", "pig" ];
+
+// getterを使った、アクセサプロパティ
   get is5Times() {
     return this.count >= 5;
   }
@@ -151,7 +152,7 @@ class ViewModel {
   /* 依存関係を定義 */
   /* アクセサプロパティを使う場合必要になります。 */
   $dependentProps = {
-    "disp": [ "count" ],
+    "is5Times": [ "count" ],
   }
 }
 ```
@@ -312,7 +313,7 @@ class ViewModel {
 
 `main.js`の変数`html`の内容
 ```html
-<button type="button" data-bind="onclick:popup">popup</button>
+<button type="button" data-bind="onclick:popup">click here</button>
 ```
 
 `main.js`の`ViewModel`クラス
@@ -374,10 +375,10 @@ class ViewModel {
 `main.js`の変数`html`の内容
 ```html
 <div>{{ message }}</div>
-<div>{{ message|substring,4,15|toUpperCase }}</div>
+<div>{{ message|substring,4,15|toUpperCase }}<!-- QUICK BROWN --></div>
 
 <div>{{ price }}</div>
-<div>{{ price|toLocaleString }}</div>
+<div>{{ price|toLocaleString }}<!-- 19,800 --></div>
 ```
 
 `main.js`の`ViewModel`クラス
@@ -401,9 +402,9 @@ class ViewModel {
 ```html
 <button type="button" data-bind="onclick:change">change!!!</button>
 {{ if:val }}
-  <div>True</div>
+  <div>val is true</div>
 {{ else: }}
-  <div>False</div>
+  <div>val is false</div>
 {{ end: }}
 ```
 
