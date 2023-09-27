@@ -78,7 +78,7 @@ registComponentModules({ myappMain:{ html, ViewModel } });
 <myapp-main><myapp-main>
 
 <!-- カスタマイズドビルトイン要素(customized built-in element) -->
-<div is="myapp-sub"></div>
+<div is="myapp-main"></div>
 
 <script type="module">
 import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
@@ -110,7 +110,7 @@ const html = `
 <button data-bind="onclick:countUp">countUp</button>
 
 <!-- 条件分岐 -->
-{{ if:isOver5times }}
+{{ if:is5Times }}
   <div>5回以上押されたよ</div>
 {{ end: }}
 
@@ -139,7 +139,7 @@ class ViewModel {
   name = "John Smith";
   animals = [ "Cat", "Dog", "Rabit" ];
   // getterを使った、アクセサプロパティ
-  get isOver5times() {
+  get is5Times() {
     return this.count >= 5;
   }
 
@@ -423,11 +423,11 @@ class ViewModel {
 * `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
 * 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
    * `{{ loop:animals }}`～`{{ end: }}`
-   * `{{ loop:members }}`～`{{ end: }}`
+   * `{{ loop:fruits }}`～`{{ end: }}`
 * 繰り返すブロック内では配列要素をワイルドカードを用いたドット記法`(ViewModelのプロパティ).*`で記述します。
    * `animals.*`
-   * `members.*.name`
-   * `members.*.age`
+   * `fruits.*.name`
+   * `fruits.*.age`
 
 `main.js`の変数`html`の内容
 ```html
@@ -437,8 +437,8 @@ class ViewModel {
 {{ end: }}
 </ul>
 <ul>
-{{ loop:members }}
-  <li>{{ members.*.name }}({{ members.*.age }})</li>
+{{ loop:fruits }}
+  <li>{{ fruits.*.name }}({{ fruits.*.color }})</li>
 {{ end: }}
 </ul>
 ```
@@ -447,12 +447,12 @@ class ViewModel {
 ```js
 class ViewModel {
   animals = [ "cat", "dog", "fox", "pig" ];
-  members = [
-    { name:"佐藤　一郎", age:20 },
-    { name:"鈴木　二郎", age:15 },
-    { name:"高橋　三郎", age:22 },
-    { name:"田中　四郎", age:18 },
-    { name:"伊藤　五郎", age:17 },
+  fruits = [
+    { name:"apple", color:"red" },
+    { name:"banana", color:"yellow" },
+    { name:"grape", color:"grape" },
+    { name:"orange", color:"orange" },
+    { name:"strawberry", color:"red" },
   ];
 }
 ```
@@ -523,7 +523,7 @@ class ViewModel {
     const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${per_page}&sha=main`);
     return await response.json();
   }
-  async $initCallback() {
+  async $connectedCallback() {
     this.commits = await this.getCommits(this.per_page);
   }
   async $writeCallback(name, indexes) {
