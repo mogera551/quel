@@ -274,9 +274,7 @@ class ViewModel {
 ### Step.2 プロパティのバインド
 * `html`の要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
 * 要素の`data-bind`属性に`(要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
-   * `textContent:message`
-   * `value:message`
-   * `value:val`
+   `textContent:message`、`value:message`、`value:season`、`disabled:buttonDisable`、`checked:buttonDisable`
 * `ViewModel`クラスのプロパティが更新されると、自動的に`html`の要素のプロパティへ更新が反映されます。
 * 入力系要素の場合、入力値に応じて`ViewModel`クラスのプロパティが更新されます。（双方向バインドを参照）
 
@@ -288,12 +286,19 @@ class ViewModel {
   <input type="text" data-bind="value:message">
 </div>
 <div>
-  <select data-bind="value:val">
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
+  <select data-bind="value:season">
+    <option value="spring">spring</option>
+    <option value="summer">summer</option>
+    <option value="autumn">autumn</option>
+    <option value="winter">winter</option>
   </select>
-  <div>{{ val }}</div>
+  <div>{{ season }}</div>
+</div>
+<div>
+  <button data-bind="disabled:buttonDisable">button</button>
+  <label>
+    <input type="checkbox" data-bind="checked:buttonDisable">button disable
+  </label>
 </div>
 ```
 
@@ -301,7 +306,8 @@ class ViewModel {
 ```js
 class ViewModel {
   message = "welcome to quel";
-  val = "1";
+  season = "spring";
+  buttonDisable = false;
 }
 ```
 
