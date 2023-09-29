@@ -265,6 +265,7 @@ export default { html, ViewModel };
 ```js
 class ViewModel {
   message = "welcome to quel";
+  // #message NG ← privateフィールドは使えません
 }
 ```
 
@@ -275,6 +276,7 @@ class ViewModel {
 * `html`の要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
 * 要素の`data-bind`属性に`(要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
    `textContent:message`、`value:message`、`value:season`、`disabled:buttonDisable`、`checked:buttonDisable`
+* 複数のバインドを指定する場合、セミコロン`;`で区切ります。`disabled:buttonDisable; textContent:message;`
 * `ViewModel`クラスのプロパティが更新されると、自動的に`html`の要素のプロパティへ更新が反映されます。
 * 入力系要素の場合、入力値に応じて`ViewModel`クラスのプロパティが更新されます。（双方向バインドを参照）
 
@@ -295,7 +297,7 @@ class ViewModel {
   <div>{{ season }}</div>
 </div>
 <div>
-  <button data-bind="disabled:buttonDisable">button</button>
+  <button data-bind="disabled:buttonDisable; textContent:message;"></button>
   <label>
     <input type="checkbox" data-bind="checked:buttonDisable">button disable
   </label>
@@ -316,10 +318,14 @@ class ViewModel {
 ### Step.3 イベントのバインド
 * `html`の要素のイベントプロパティ(on～)と`ViewModel`クラスのメソッドを関連付けます。
 * 要素の`data-bind`属性に`(要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。→`onclick:popup`
+* `ViewModel`クラスのメソッドは`Event`オブジェクトを引数に取ります。`checked(e)`
 
 `main.js`の変数`html`の内容
 ```html
 <button type="button" data-bind="onclick:popup">click here</button>
+<label>
+  <input type="checkbox" data-bind="onclick:checked">checked
+</label>
 ```
 
 `main.js`の`ViewModel`クラス
@@ -328,37 +334,49 @@ class ViewModel {
   popup() {
     alert("popup!!!");
   }
+  checked(e) { // Eventオブジェクトを引数に取ります。
+    alert(`checked ${e.target.checked ? "on" : "off"}`);
+  }
 }
 ```
 
 [実行結果を見る](https://codepen.io/mogera551/pen/ZEVYWER)
 
 ### Step.4 アクセサプロパティ
-* `get`を使ったアクセサプロパティも埋め込んだり、バインドしたりできます。
+* `get`を使ったアクセサプロパティも埋め込みや、バインドすることができます。
 * アクセサプロパティを使う場合、`ViewModel`クラスの`$dependentProps`に依存関係を記述する必要があります。
 * 依存関係は、`(アクセサプロパティ名):(参照しているプロパティの列挙)`と記述します。
-   * `"doubled": [ "counter" ]`
+  `"doubled": [ "counter" ]`、`"is5times": [ "counter" ]`
 * 依存関係を記述しないと、`html`の要素の更新が行われません。
 
 `main.js`の変数`html`の内容
 ```html
 <div>{{ counter }}</div>
 <div>{{ doubled }}</div>
-<button type="button" data-bind="onclick:countUp">count up</button>
+<!-- 5回以上はボタンを押せなくする -->
+<button type="button" data-bind="onclick:countUp; disabled:is5times;">count up</button>
 ```
 
 `main.js`の`ViewModel`クラス
 ```js
 class ViewModel {
   counter = 1;
+
+  // アクセサプロパティ
   get doubled() {
     return this.counter * 2;
+  }
+  get is5times() {
+    return this.counter >= 5;
   }
   countUp() {
     this.counter++;
   }
+  // 依存関係を記述します
   $dependentProps = {
+    // アクセサプロパティ名:[参照するプロパティ]
     "doubled": [ "counter" ],
+    "is5times": [ "counter" ],
   };
 }
 ```
