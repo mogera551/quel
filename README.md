@@ -275,8 +275,8 @@ class ViewModel {
 ### Step.2 プロパティのバインド
 * `html`の要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
 * 要素の`data-bind`属性に`(要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
-   `textContent:message`、`value:message`、`value:season`、`disabled:buttonDisable`、`checked:buttonDisable`
-* 複数のバインドを指定する場合、セミコロン`;`で区切ります。`disabled:buttonDisable; textContent:message;`
+   `textContent:message`、`value:message`、`value:season`、`textContent:season`、`disabled:buttonDisable`、`checked:buttonDisable`
+* 複数のバインドを指定する場合、セミコロン`;`で区切ります。`disabled:buttonDisable; textContent:season;`
 * `ViewModel`クラスのプロパティが更新されると、自動的に`html`の要素のプロパティへ更新が反映されます。
 * 入力系要素の場合、入力値に応じて`ViewModel`クラスのプロパティが更新されます。（双方向バインドを参照）
 
@@ -285,21 +285,25 @@ class ViewModel {
 <div>
   <div>{{ message }}</div>
   <div data-bind="textContent:message"></div>
+  <!-- 入力系要素 -->
   <input type="text" data-bind="value:message">
 </div>
 <div>
+  <div>{{ season }}</div>
+  <!-- 入力系要素 -->
   <select data-bind="value:season">
     <option value="spring">spring</option>
     <option value="summer">summer</option>
     <option value="autumn">autumn</option>
     <option value="winter">winter</option>
   </select>
-  <div>{{ season }}</div>
 </div>
 <div>
-  <button data-bind="disabled:buttonDisable; textContent:message;"></button>
+  <button data-bind="disabled:buttonDisable; textContent:season;"></button>
   <label>
-    <input type="checkbox" data-bind="checked:buttonDisable">button disable
+    <!-- 入力系要素 -->
+    <input type="checkbox" data-bind="checked:buttonDisable">
+    button disable
   </label>
 </div>
 ```
