@@ -335,10 +335,21 @@ class ViewModel {
 `main.js`の`ViewModel`クラス
 ```js
 class ViewModel {
+  /**
+   * 「click here」ボタンをクリックしたときの処理
+   * 「popup!!!」とポップアップ表示
+   */
   popup() {
     alert("popup!!!");
   }
-  checked(e) { // Eventオブジェクトを引数に取ります。
+
+  /**
+   * 「checked」チェックボックスをクリックしたときの処理
+   * チェックボックスの状態により「checked on」もしくは「checked off」とポップアップ表示
+   * チェックボックスの状態は、引数で渡されるEventオブジェクトのtarget要素のcheckedプロパティから取得する
+   * @param {Event} e Eventオブジェクト
+   */
+  checked(e) {
     alert(`checked ${e.target.checked ? "on" : "off"}`);
   }
 }
@@ -367,18 +378,32 @@ class ViewModel {
   counter = 1;
 
   // アクセサプロパティ
+  /**
+   * counterの値を２倍します。
+   * @type {number}
+   */
   get doubled() {
     return this.counter * 2;
   }
+  /**
+   * counterの値が５以上の場合、真を返します。
+   * @type {boolean}
+   */
   get is5times() {
     return this.counter >= 5;
   }
+
+  /**
+   * 「count up」をクリックしたときの処理
+   * countを＋１加算する
+   */
   countUp() {
     this.counter++;
   }
+
   // 依存関係を記述します
   $dependentProps = {
-    // アクセサプロパティ名:[参照するプロパティ]
+    // アクセサプロパティ名:[参照するプロパティ, ... ]
     "doubled": [ "counter" ],
     "is5times": [ "counter" ],
   };
