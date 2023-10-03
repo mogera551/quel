@@ -13,5 +13,6 @@ export const NodePropertyType = {
   checkbox: 40,
   event: 91,
   component: 92,
-  template: 95,
+  if: 96,
+  loop: 97,
 };

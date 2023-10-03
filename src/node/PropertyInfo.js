@@ -40,8 +40,11 @@ export class NodePropertyInfo {
     do {
       result.nodePropertyElements = nodeProperty.split(".");
       if (node instanceof Comment && node.textContent[2] === "|") {
-        if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-          result.type = NodePropertyType.template;
+        if (nodeProperty === TEMPLATE_BRANCH) {
+          result.type = NodePropertyType.if;
+          break;
+        } else if (nodeProperty === TEMPLATE_REPEAT) {
+          result.type = NodePropertyType.loop;
           break;
         } else {
           utils.raise(`template illegal property ${nodeProperty}`);

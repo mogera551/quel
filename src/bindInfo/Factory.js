@@ -8,12 +8,13 @@ import { ClassListBind } from "./Classlist.js";
 import { ClassNameBind } from "./ClassName.js";
 import { Radio } from "./Radio.js";
 import { Checkbox } from "./Checkbox.js";
-import { TemplateBind } from "./Template.js";
 import { Event } from "./Event.js";
 import { ComponentBind } from "./Component.js";
 import { StyleBind } from "./Style.js";
 import { PropertyBind } from "./Property.js";
 import { TextBind } from "./Text.js";
+import { IfBind } from "./Template/If.js";
+import { LoopBind } from "./Template/Loop.js";
 
 export class Factory {
   /**
@@ -28,7 +29,8 @@ export class Factory {
     this.classByType[NodePropertyType.className] = ClassNameBind;
     this.classByType[NodePropertyType.radio] = Radio;
     this.classByType[NodePropertyType.checkbox] = Checkbox;
-    this.classByType[NodePropertyType.template] = TemplateBind;
+    this.classByType[NodePropertyType.if] = IfBind;
+    this.classByType[NodePropertyType.loop] = LoopBind;
     this.classByType[NodePropertyType.event] = Event;
     this.classByType[NodePropertyType.component] = ComponentBind;
     this.classByType[NodePropertyType.style] = StyleBind;
