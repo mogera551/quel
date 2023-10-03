@@ -1,6 +1,4 @@
-import  { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
-import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 const CLASS_PROPERTY = "className";

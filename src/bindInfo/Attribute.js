@@ -1,6 +1,5 @@
 import "../types.js";
 import { BindInfo } from "./BindInfo.js";
-import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 export class AttributeBind extends BindInfo {

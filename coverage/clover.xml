@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1696347742259" clover="3.2.0">
-  <project timestamp="1696347742259" name="All files">
+<coverage generated="1696370865127" clover="3.2.0">
+  <project timestamp="1696370865127" name="All files">
     <metrics statements="1237" coveredstatements="1231" conditionals="623" coveredconditionals="616" methods="533" coveredmethods="526" elements="2393" coveredelements="2373" complexity="0" loc="1237" ncloc="1237" packages="11" files="51" classes="51"/>
     <package name="src">
       <metrics statements="41" coveredstatements="40" conditionals="21" coveredconditionals="20" methods="17" coveredmethods="17"/>
@@ -68,14 +68,14 @@
       <metrics statements="297" coveredstatements="293" conditionals="156" coveredconditionals="153" methods="132" coveredmethods="125"/>
       <file name="Attribute.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Attribute.js">
         <metrics statements="8" coveredstatements="8" conditionals="6" coveredconditionals="6" methods="6" coveredmethods="6"/>
-        <line num="9" count="28" type="stmt"/>
-        <line num="14" count="11" type="stmt"/>
-        <line num="17" count="7" type="stmt"/>
-        <line num="24" count="9" type="stmt"/>
-        <line num="25" count="9" type="cond" truecount="4" falsecount="0"/>
-        <line num="26" count="7" type="stmt"/>
-        <line num="27" count="7" type="cond" truecount="2" falsecount="0"/>
-        <line num="36" count="2" type="stmt"/>
+        <line num="8" count="28" type="stmt"/>
+        <line num="13" count="11" type="stmt"/>
+        <line num="16" count="7" type="stmt"/>
+        <line num="23" count="9" type="stmt"/>
+        <line num="24" count="9" type="cond" truecount="4" falsecount="0"/>
+        <line num="25" count="7" type="stmt"/>
+        <line num="26" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="35" count="2" type="stmt"/>
       </file>
       <file name="BindInfo.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\BindInfo.js">
         <metrics statements="42" coveredstatements="42" conditionals="30" coveredconditionals="28" methods="31" coveredmethods="29"/>
@@ -180,26 +180,26 @@
       </file>
       <file name="ClassName.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\ClassName.js">
         <metrics statements="10" coveredstatements="10" conditionals="4" coveredconditionals="4" methods="5" coveredmethods="5"/>
-        <line num="6" count="21" type="stmt"/>
-        <line num="7" count="21" type="stmt"/>
-        <line num="12" count="11" type="stmt"/>
-        <line num="15" count="2" type="stmt"/>
-        <line num="22" count="6" type="stmt"/>
-        <line num="23" count="6" type="stmt"/>
-        <line num="24" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="25" count="2" type="stmt"/>
-        <line num="26" count="2" type="stmt"/>
-        <line num="35" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="4" count="21" type="stmt"/>
+        <line num="5" count="21" type="stmt"/>
+        <line num="10" count="11" type="stmt"/>
+        <line num="13" count="2" type="stmt"/>
+        <line num="20" count="6" type="stmt"/>
+        <line num="21" count="6" type="stmt"/>
+        <line num="22" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="23" count="2" type="stmt"/>
+        <line num="24" count="2" type="stmt"/>
+        <line num="33" count="4" type="cond" truecount="2" falsecount="0"/>
       </file>
       <file name="Classlist.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Classlist.js">
         <metrics statements="7" coveredstatements="7" conditionals="4" coveredconditionals="4" methods="4" coveredmethods="4"/>
-        <line num="10" count="10" type="stmt"/>
-        <line num="17" count="6" type="stmt"/>
-        <line num="18" count="5" type="stmt"/>
-        <line num="19" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="20" count="2" type="stmt"/>
-        <line num="21" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="30" count="4" type="stmt"/>
+        <line num="8" count="10" type="stmt"/>
+        <line num="15" count="6" type="stmt"/>
+        <line num="16" count="5" type="stmt"/>
+        <line num="17" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="18" count="2" type="stmt"/>
+        <line num="19" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="28" count="4" type="stmt"/>
       </file>
       <file name="Component.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Component.js">
         <metrics statements="33" coveredstatements="31" conditionals="16" coveredconditionals="16" methods="16" coveredmethods="14"/>
@@ -280,39 +280,39 @@
       </file>
       <file name="Property.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Property.js">
         <metrics statements="8" coveredstatements="8" conditionals="6" coveredconditionals="6" methods="6" coveredmethods="6"/>
-        <line num="9" count="141" type="stmt"/>
-        <line num="14" count="58" type="stmt"/>
-        <line num="17" count="34" type="stmt"/>
-        <line num="24" count="49" type="stmt"/>
-        <line num="25" count="49" type="cond" truecount="4" falsecount="0"/>
-        <line num="26" count="37" type="stmt"/>
-        <line num="27" count="34" type="cond" truecount="2" falsecount="0"/>
-        <line num="36" count="9" type="stmt"/>
+        <line num="8" count="141" type="stmt"/>
+        <line num="13" count="58" type="stmt"/>
+        <line num="16" count="34" type="stmt"/>
+        <line num="23" count="49" type="stmt"/>
+        <line num="24" count="49" type="cond" truecount="4" falsecount="0"/>
+        <line num="25" count="37" type="stmt"/>
+        <line num="26" count="34" type="cond" truecount="2" falsecount="0"/>
+        <line num="35" count="9" type="stmt"/>
       </file>
       <file name="Radio.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Radio.js">
         <metrics statements="10" coveredstatements="10" conditionals="8" coveredconditionals="8" methods="5" coveredmethods="5"/>
-        <line num="7" count="22" type="cond" truecount="2" falsecount="0"/>
-        <line num="12" count="22" type="stmt"/>
-        <line num="13" count="20" type="cond" truecount="2" falsecount="0"/>
-        <line num="20" count="11" type="stmt"/>
-        <line num="21" count="8" type="stmt"/>
-        <line num="22" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="6" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="11" count="22" type="stmt"/>
+        <line num="12" count="20" type="cond" truecount="2" falsecount="0"/>
+        <line num="19" count="11" type="stmt"/>
+        <line num="20" count="8" type="stmt"/>
+        <line num="21" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="22" count="4" type="stmt"/>
         <line num="23" count="4" type="stmt"/>
-        <line num="24" count="4" type="stmt"/>
-        <line num="33" count="7" type="cond" truecount="2" falsecount="0"/>
-        <line num="34" count="4" type="stmt"/>
+        <line num="32" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="33" count="4" type="stmt"/>
       </file>
       <file name="Style.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Style.js">
         <metrics statements="9" coveredstatements="9" conditionals="2" coveredconditionals="2" methods="6" coveredmethods="6"/>
-        <line num="7" count="21" type="stmt"/>
-        <line num="12" count="9" type="stmt"/>
-        <line num="17" count="7" type="stmt"/>
-        <line num="20" count="2" type="stmt"/>
-        <line num="27" count="4" type="stmt"/>
-        <line num="28" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="29" count="2" type="stmt"/>
-        <line num="30" count="2" type="stmt"/>
-        <line num="39" count="3" type="stmt"/>
+        <line num="5" count="21" type="stmt"/>
+        <line num="10" count="9" type="stmt"/>
+        <line num="15" count="7" type="stmt"/>
+        <line num="18" count="2" type="stmt"/>
+        <line num="25" count="4" type="stmt"/>
+        <line num="26" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="37" count="3" type="stmt"/>
       </file>
       <file name="Template.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Template.js">
         <metrics statements="77" coveredstatements="77" conditionals="36" coveredconditionals="35" methods="28" coveredmethods="27"/>
@@ -396,14 +396,14 @@
       </file>
       <file name="Text.js" path="C:\Users\m.kikuzawa\Documents\git\quel\src\bindInfo\Text.js">
         <metrics statements="8" coveredstatements="8" conditionals="6" coveredconditionals="6" methods="5" coveredmethods="5"/>
-        <line num="6" count="21" type="stmt"/>
-        <line num="11" count="43" type="stmt"/>
-        <line num="14" count="36" type="stmt"/>
-        <line num="21" count="41" type="stmt"/>
-        <line num="22" count="41" type="cond" truecount="4" falsecount="0"/>
-        <line num="23" count="38" type="stmt"/>
-        <line num="24" count="36" type="cond" truecount="2" falsecount="0"/>
-        <line num="33" count="2" type="stmt"/>
+        <line num="5" count="21" type="stmt"/>
+        <line num="10" count="43" type="stmt"/>
+        <line num="13" count="36" type="stmt"/>
+        <line num="20" count="41" type="stmt"/>
+        <line num="21" count="41" type="cond" truecount="4" falsecount="0"/>
+        <line num="22" count="38" type="stmt"/>
+        <line num="23" count="36" type="cond" truecount="2" falsecount="0"/>
+        <line num="32" count="2" type="stmt"/>
       </file>
     </package>
     <package name="src.binder">

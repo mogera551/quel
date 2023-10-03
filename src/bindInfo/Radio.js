@@ -1,7 +1,6 @@
 import "../types.js";
 import  { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
-import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise();
