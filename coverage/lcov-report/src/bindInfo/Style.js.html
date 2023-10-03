@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -109,13 +109,7 @@
 <a name='L44'></a><a href='#L44'>44</a>
 <a name='L45'></a><a href='#L45'>45</a>
 <a name='L46'></a><a href='#L46'>46</a>
-<a name='L47'></a><a href='#L47'>47</a>
-<a name='L48'></a><a href='#L48'>48</a>
-<a name='L49'></a><a href='#L49'>49</a>
-<a name='L50'></a><a href='#L50'>50</a>
-<a name='L51'></a><a href='#L51'>51</a>
-<a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L47'></a><a href='#L47'>47</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -126,11 +120,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -144,7 +134,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -158,8 +148,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -176,31 +164,27 @@ import { NodeUpdateData } from "../thread/NodeUpdator.js";
 const STYLE_PROPERTY = "style";
 &nbsp;
 export class StyleBind extends BindInfo {
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get styleName() {
     return this.nodePropertyElements[1];
   }
 &nbsp;
-  /**
-   * @type {string}
-   */
+  /** @type {string} */
   get nodeValue() {
-    return this.htmlElement[STYLE_PROPERTY][this.styleName];
+    return this.htmlElement.style[this.styleName];
   }
   set nodeValue(value) {
-    this.htmlElement[STYLE_PROPERTY][this.styleName] = value;
+    this.htmlElement.style[this.styleName] = value;
   }
+&nbsp;
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, viewModelProperty, filters, viewModelValue} = this;
-    const filteredValue = filters.length &gt; 0 ? <span class="branch-0 cbranch-no" title="branch not covered" >Filter.applyForOutput(viewModelValue, filters, component.filters.out) </span>: viewModelValue;
-    if (this.nodeValue !== filteredValue) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredValue, () =&gt; {
-        this.nodeValue = filteredValue;
+    const {component, node, viewModelProperty, filteredViewModelValue} = this;
+    if (this.nodeValue !== filteredViewModelValue) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredViewModelValue, () =&gt; {
+        this.nodeValue = filteredViewModelValue;
       }));
     }
   }
@@ -209,9 +193,7 @@ export class StyleBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, filters, nodeValue} = this;
-    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
-    this.viewModelValue = value;
+    this.filteredViewModelValue = this.nodeValue;
   }
 }
 &nbsp;
@@ -226,7 +208,7 @@ export class StyleBind extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-09-18T07:11:51.868Z
+                at 2023-10-03T15:42:22.182Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

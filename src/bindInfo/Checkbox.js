@@ -24,12 +24,10 @@ export class Checkbox extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, checkbox, nodeProperty, viewModelProperty, filters, viewModelValue} = this;
-    /** @type {string[]} */
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
-    const checked = typeof filteredValue.find(value => value === checkbox.value) !== "undefined";
+    const {component, node, checkbox, nodeProperty, viewModelProperty, filteredViewModelValue} = this;
+    const checked = typeof filteredViewModelValue.find(value => value === checkbox.value) !== "undefined";
     if (this.nodeValue !== checked) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () => {
         this.nodeValue = checked;
       }));
     }

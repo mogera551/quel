@@ -154,7 +154,9 @@
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
 <a name='L91'></a><a href='#L91'>91</a>
-<a name='L92'></a><a href='#L92'>92</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -179,11 +181,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
-<span class="cline-any cline-yes">121x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">63x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -196,12 +207,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -224,6 +229,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-yes">51x</span>
@@ -240,34 +246,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">50x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 &nbsp;
 export class NodeUpdateData {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   node;
-  /**
-   * @type {string}
-   */
+&nbsp;
+  /** @type {string} */
   property;
+&nbsp;
+  /** @type {string} */
   viewModelProperty;
+&nbsp;
+  /** @type {any} */
   value;
-  /**
-   * @type {()=&gt;{}}
-   */
+&nbsp;
+  /** @type {()=&gt;void} */
   updateFunc;
 &nbsp;
   /**
    * 
    * @param {Node} node 
    * @param {string} property 
-   * @param {()=&gt;{}} updateFunc 
+   * @param {string} viewModelProperty 
+   * @param {any} value 
+   * @param {()=&gt;void} updateFunc 
    */
   constructor(node, property, viewModelProperty, value, updateFunc) {
     this.node = node;
@@ -279,25 +285,26 @@ export class NodeUpdateData {
 }
 &nbsp;
 export class NodeUpdator {
-  /**
-   * @type {NodeUpdateData[]}
-   */
+  /** @type {NodeUpdateData[]} */
   queue = [];
 &nbsp;
-  /**
-   * @type {UpdateSlotStatusCallback}
-   */
+  /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
-  /**
-   * @param {UpdateSlotStatusCallback} statusCallback
+&nbsp;
+  /** 
+   * @param {UpdateSlotStatusCallback} statusCallback 
    */
   constructor(statusCallback) {
     this.#statusCallback = statusCallback;
   }
 &nbsp;
   /**
-   * 
+   * 更新する順番を並び替える
+   * HTMLTemplateElementが前
+   * その次がHTMLSelectElementでないもの
+   * 最後がHTMLSelectElement
    * @param {NodeUpdateData[]} updates 
+   * @returns {NodeUpdateData[]}
    */
   reorder(updates) {
     updates.sort((update1, update2) =&gt; {
@@ -311,8 +318,9 @@ export class NodeUpdator {
     });
     return updates;
   }
+&nbsp;
   /**
-   * 
+   * @returns {void}
    */
   async exec() {
     this.#statusCallback &amp;&amp; this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
@@ -329,9 +337,7 @@ export class NodeUpdator {
     }
   }
 &nbsp;
-  /**
-   * @type {boolean}
-   */
+  /** @type {boolean} */
   get isEmpty() {
     return this.queue.length === 0;
   }
@@ -343,7 +349,7 @@ export class NodeUpdator {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-09-18T07:11:51.868Z
+                at 2023-10-03T15:42:22.182Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

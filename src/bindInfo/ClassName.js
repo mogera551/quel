@@ -19,12 +19,10 @@ export class ClassNameBind extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, viewModelProperty, filters, viewModelValue} = this;
-    /** @type {string[]} */
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
-    const joinedValue = filteredValue.join(DELIMITER);
+    const {component, node, viewModelProperty, filteredViewModelValue} = this;
+    const joinedValue = filteredViewModelValue.join(DELIMITER);
     if (this.nodeValue !== joinedValue) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredValue, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredViewModelValue, () => {
         this.nodeValue = joinedValue;
       }));
     }
@@ -34,9 +32,6 @@ export class ClassNameBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, filters, nodeValue} = this;
-    /** @type {string[]} */
-    const value = Filter.applyForInput(nodeValue ? nodeValue.split(DELIMITER) : [], filters, component.filters.in);
-    this.viewModelValue = value;
+    this.filteredViewModelValue = this.nodeValue ? this.nodeValue.split(DELIMITER) : [];
   }
 }

@@ -21,11 +21,10 @@ export class PropertyBind extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, propName, viewModelProperty, filters, viewModelValue} = this;
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
-    if (this.nodeValue !== (filteredValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredValue, () => {
-        this.nodeValue = filteredValue ?? "";
+    const {component, node, propName, viewModelProperty, filteredViewModelValue} = this;
+    if (this.nodeValue !== (filteredViewModelValue ?? "")) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredViewModelValue, () => {
+        this.nodeValue = filteredViewModelValue ?? "";
       }));
     }
   }
@@ -34,9 +33,7 @@ export class PropertyBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, filters, nodeValue} = this;
-    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
-    this.viewModelValue = value;
+    this.filteredViewModelValue = this.nodeValue;
   }
 
 }

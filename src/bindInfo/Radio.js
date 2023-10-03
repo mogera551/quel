@@ -17,12 +17,10 @@ export class Radio extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, radio, nodeProperty, viewModelProperty, filters, viewModelValue} = this;
-    /** @type {string} */
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
-    const checked = filteredValue === radio.value;
+    const {component, node, radio, nodeProperty, viewModelProperty, filteredViewModelValue} = this;
+    const checked = filteredViewModelValue === radio.value;
     if (radio.checked !== checked) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () => {
         radio.checked = checked;
       }));
     }
@@ -32,10 +30,8 @@ export class Radio extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, filters, radio} = this;
-    if (radio.checked) {
-      const radioValue = Filter.applyForInput(radio.value, filters, component.filters.in);
-      this.viewModelValue = radioValue;
+    if (this.radio.checked) {
+      this.filteredViewModelValue = this.radio.value;
     }
   }
 }

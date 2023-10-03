@@ -165,10 +165,7 @@
 <a name='L100'></a><a href='#L100'>100</a>
 <a name='L101'></a><a href='#L101'>101</a>
 <a name='L102'></a><a href='#L102'>102</a>
-<a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L103'></a><a href='#L103'>103</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -184,8 +181,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -193,8 +188,9 @@
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -205,7 +201,6 @@
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -222,14 +217,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -249,7 +244,6 @@
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -287,9 +281,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 const toComponent = node =&gt; (node[Symbols.isComponent]) ? node : utils.raise('not Component');
 &nbsp;
 export class ComponentBind extends BindInfo {
-  /**
-   * @type {Node}
-   */
+  /** @type {Node} */
   get node() {
     return super.node;
   }
@@ -297,12 +289,13 @@ export class ComponentBind extends BindInfo {
     this.thisComponent = toComponent(node);
     super.node = node;
   }
+&nbsp;
+  /** @type {boolean} */
   #isSetProperty() {
     return (typeof this.viewModelProperty !== "undefined" &amp;&amp; typeof this.nodePropertyElements !== "undefined");
   }
-  /**
-   * @type {string}
-   */
+&nbsp;
+  /** @type {string} */
   get viewModelProperty() {
     return super.viewModelProperty;
   }
@@ -312,9 +305,8 @@ export class ComponentBind extends BindInfo {
       this.bindProperty();
     }
   }
-  /**
-   * @type {string[]}
-   */
+&nbsp;
+  /** @type {string[]} */
   get nodePropertyElements() {
     return super.nodePropertyElements;
   }
@@ -324,20 +316,20 @@ export class ComponentBind extends BindInfo {
       this.bindProperty();
     }
   }
-  /**
-   * @type {string}
-   */
+&nbsp;
+  /** @type {string} */
   get dataNameProperty() {
     return this.nodePropertyElements[0];
   }
-  /**
-   * @type {string}
-   */
+&nbsp;
+  /** @type {string} */
   get dataProperty() {
     return this.nodePropertyElements[1];
   }
 &nbsp;
+  /** @type {Component} */
   #thisComponent;
+  /** @type {Component} */
   get thisComponent() {
     return this.#thisComponent;
   }
@@ -346,7 +338,7 @@ export class ComponentBind extends BindInfo {
   }
 &nbsp;
   /**
-   * 
+   * プロパティをバインドする
    */
   bindProperty() {
     this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes);
@@ -355,11 +347,10 @@ export class ComponentBind extends BindInfo {
       get: <span class="fstat-no" title="function not covered" >fu</span>nction () { <span class="cstat-no" title="statement not covered" >return this.$props[dataProperty]; </span>},
       set: <span class="fstat-no" title="function not covered" >fu</span>nction (value) { <span class="cstat-no" title="statement not covered" >this.$props[dataProperty] = value; </span>},
     })
-    
   }
 &nbsp;
   /**
-   * 
+   * 親コンポーネントからの更新をこのコンポーネントに反映する
    * @param {Set&lt;string&gt;} setOfUpdatedViewModelPropertyKeys 
    */
   applyToNode(setOfUpdatedViewModelPropertyKeys) {
@@ -385,7 +376,7 @@ export class ComponentBind extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-09-18T07:11:51.868Z
+                at 2023-10-03T15:42:22.182Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

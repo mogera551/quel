@@ -2,6 +2,7 @@ import "../types.js";
 import { utils } from "../utils.js";
 import { Symbols } from "../Symbols.js";
 import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
+import { Filter } from "../filter/Filter.js";
 
 export class BindInfo {
   /** @type {Node} */
@@ -166,6 +167,16 @@ export class BindInfo {
     if (!this.isContextIndex) {
       this.viewModel[Symbols.directlySet](this.viewModelProperty, this.indexes, value);
     }
+  }
+
+  /** @type {any} */
+  get filteredViewModelValue() {
+    return this.filters.length > 0 ? 
+      Filter.applyForOutput(this.viewModelValue, this.filters, this.component.filters.out) : 
+      this.viewModelValue;
+  }
+  set filteredViewModelValue(value) {
+    this.viewModelValue = this.filters.length > 0 ? Filter.applyForInput(value, this.filters, this.component.filters.in) : value;
   }
 
   /** @type {any} */

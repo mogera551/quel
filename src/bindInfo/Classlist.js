@@ -14,13 +14,11 @@ export class ClassListBind extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, element, nodeProperty, viewModelProperty, filters, className, viewModelValue} = this;
-    /** @type {boolean} */
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    const {component, node, element, nodeProperty, viewModelProperty, className, filteredViewModelValue} = this;
     const hasClassName = element.classList.contains(className);
-    if (filteredValue !== hasClassName) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredValue, () => {
-        filteredValue ? element.classList.add(className) : element.classList.remove(className);
+    if (filteredViewModelValue !== hasClassName) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () => {
+        filteredViewModelValue ? element.classList.add(className) : element.classList.remove(className);
       }));
     }
   }
@@ -29,9 +27,6 @@ export class ClassListBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, element, filters, className} = this;
-    /** @type {boolean} */
-    const value = Filter.applyForInput(element.classList.contains(className), filters, component.filters.in);
-    this.viewModelValue = value;
+    this.filteredViewModelValue = this.element.classList.contains(this.className);
   }
 }

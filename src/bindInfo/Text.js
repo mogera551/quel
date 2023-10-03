@@ -18,12 +18,10 @@ export class TextBind extends BindInfo {
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
   updateNode() {
-    const {component, node, viewModelProperty, filters, viewModelValue} = this;
-    /** @type {string|null} */
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
-    if (this.nodeValue !== (filteredValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY, viewModelProperty, filteredValue, () => {
-        this.nodeValue = filteredValue ?? "";
+    const {component, node, viewModelProperty, filteredViewModelValue} = this;
+    if (this.nodeValue !== (filteredViewModelValue ?? "")) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY, viewModelProperty, filteredViewModelValue, () => {
+        this.nodeValue = filteredViewModelValue ?? "";
       }));
     }
   }
@@ -32,9 +30,7 @@ export class TextBind extends BindInfo {
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
   updateViewModel() {
-    const {component, filters, nodeValue} = this;
-    const value = Filter.applyForInput(nodeValue, filters, component.filters.in);
-    this.viewModelValue = value;
+    this.filteredViewModelValue = this.nodeValue;
   }
 
 }

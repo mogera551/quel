@@ -149,12 +149,10 @@ export class TemplateBind extends BindInfo {
    * @returns {void}
    */
   expandIf() {
-    const { component, filters, context, viewModelValue } = this;
-    /** @type {boolean} */
-    const filteredValue = filters.length > 0 ? Filter.applyForOutput(viewModelValue, filters, component.filters.out) : viewModelValue;
+    const { component, filters, context, filteredViewModelValue } = this;
     const currentValue = this.templateChildren.length > 0;
-    if (currentValue !== filteredValue) {
-      if (filteredValue) {
+    if (currentValue !== filteredViewModelValue) {
+      if (filteredViewModelValue) {
         const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
         TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
         this.templateChildren = newTemplateChildren;
