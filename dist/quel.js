@@ -1811,6 +1811,8 @@ class TemplateChild {
 }
 
 class TemplateBind extends BindInfo {
+  /** @type {TemplateChild[]} */
+  templateChildren = [];
 
   /** @type {HTMLTemplateElement} */
   #template;
@@ -1899,7 +1901,16 @@ class Context {
 
 class IfBind extends TemplateBind {
   /** @type {TemplateChild | undefined} */
-  templateChild;
+  get templateChild() {
+    return this.templateChildren[0];
+  }
+  set templateChild(value) {
+    if (this.templateChildren.length === 0) {
+      this.templateChildren.push(value);
+    } else {
+      this.templateChildren[0] = value;
+    }
+  }
 
   /**
    * 
@@ -1934,8 +1945,6 @@ class IfBind extends TemplateBind {
 }
 
 class LoopBind extends TemplateBind {
-  /** @type {TemplateChild[]} */
-  templateChildren = [];
 
   /** @type {number} */
   #lastCount = 0;

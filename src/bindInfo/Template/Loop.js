@@ -2,8 +2,6 @@ import { TemplateBind, TemplateChild } from "./Template.js";
 import { Context } from "../../context/Context.js";
 
 export class LoopBind extends TemplateBind {
-  /** @type {TemplateChild[]} */
-  templateChildren = [];
 
   /** @type {number} */
   #lastCount = 0;

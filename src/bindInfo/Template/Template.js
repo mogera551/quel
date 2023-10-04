@@ -87,6 +87,8 @@ export class TemplateChild {
 }
 
 export class TemplateBind extends BindInfo {
+  /** @type {TemplateChild[]} */
+  templateChildren = [];
 
   /** @type {HTMLTemplateElement} */
   #template;
