@@ -2,7 +2,9 @@ import { Symbols } from "../../src/Symbols.js";
 import { Binds } from "../../src/bindInfo/Binds.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { TemplateBind,TemplateChild } from "../../src/bindInfo/Template.js";
+import { IfBind } from "../../src/bindInfo/template/If.js";
+import { LoopBind } from "../../src/bindInfo/template/Loop.js";
+import { TemplateChild } from "../../src/bindInfo/template/Template.js";
 import { Templates } from "../../src/view/Templates.js";
 import { ComponentBind } from "../../src/bindInfo/Component.js";
 import { PropertyBind } from "../../src/bindInfo/Property.js";
@@ -109,7 +111,7 @@ test("Binds getTemplateBinds template", () => {
 
   const binds = [];
 
-  const templateBind = new TemplateBind;
+  const templateBind = new LoopBind;
   templateBind.component = component;
   templateBind.node = commentNode;
   templateBind.nodeProperty = "loop";
@@ -134,7 +136,7 @@ test("Binds getTemplateBinds template", () => {
 
   const binds = [];
 
-  const templateBind = new TemplateBind;
+  const templateBind = new LoopBind;
   templateBind.component = component;
   templateBind.node = commentNode;
   templateBind.nodeProperty = "loop";
@@ -182,7 +184,7 @@ test("Binds getTemplateBinds tree", () => {
   rootBind.context = { indexes:[], stack:[] };
   binds.push(rootBind);
 
-  const templateBind = new TemplateBind;
+  const templateBind = new LoopBind;
   templateBind.component = component;
   templateBind.node = commentNode;
   templateBind.nodeProperty = "loop";
@@ -191,7 +193,7 @@ test("Binds getTemplateBinds tree", () => {
   templateBind.context = { indexes:[], stack:[] };
   binds.push(templateBind);
 
-  const templateBind2 = new TemplateBind;
+  const templateBind2 = new LoopBind;
   templateBind2.component = component;
   templateBind2.node = commentNode2;
   templateBind2.nodeProperty = "loop";
@@ -205,7 +207,7 @@ test("Binds getTemplateBinds tree", () => {
   templateChild.childNodes = [commentNode2];
   templateBind.templateChildren.push(templateChild);
 
-  const templateBind3 = new TemplateBind;
+  const templateBind3 = new LoopBind;
   templateBind3.component = component;
   templateBind3.node = commentNode3;
   templateBind3.nodeProperty = "loop";
@@ -243,7 +245,7 @@ test("Binds applyToNode loop", () => {
 
   const binds = [];
 
-  const templateBind = new TemplateBind;
+  const templateBind = new LoopBind;
   templateBind.component = component;
   templateBind.node = commentNode;
   templateBind.nodeProperty = "loop";

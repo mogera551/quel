@@ -2,7 +2,7 @@ import { Binder } from "../../src/binder/Binder.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
-import { TemplateBind } from "../../src/bindInfo/Template.js";
+import { LoopBind } from "../../src/bindInfo/template/Loop.js";
 import { BindInfo } from "../../src/bindInfo/BindInfo.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
@@ -139,7 +139,7 @@ test("Binder", () => {
   expect(binds[2].contextIndexes).toEqual([]);
   expect(binds[2].context).toEqual({ indexes:[], stack:[] });
 
-  expect(binds[3] instanceof TemplateBind).toBe(true);
+  expect(binds[3] instanceof LoopBind).toBe(true);
   expect(binds[3].node instanceof Comment).toBe(true);
   expect(() => binds[3].element).toThrow();
   expect(binds[3].nodeProperty).toBe("loop");
@@ -396,7 +396,7 @@ test("Binder context", () => {
     ]
   });
 
-  expect(binds[3] instanceof TemplateBind).toBe(true);
+  expect(binds[3] instanceof LoopBind).toBe(true);
   expect(binds[3].node instanceof Comment).toBe(true);
   expect(() => binds[3].element).toThrow();
   expect(binds[3].nodeProperty).toBe("loop");
@@ -670,7 +670,7 @@ test("Binder svg", () => {
   const binds = Binder.bind(nodes, component, { 
     indexes:[], stack:[]
   });
-  expect(binds[0] instanceof TemplateBind).toBe(true);
+  expect(binds[0] instanceof LoopBind).toBe(true);
   expect(binds[0].node instanceof Comment).toBe(true);
   expect(() => binds[0].element).toThrow();
   expect(binds[0].nodeProperty).toBe("loop");

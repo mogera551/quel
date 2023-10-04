@@ -1,6 +1,7 @@
 import { generateComponentClass } from "../../src/component/Component.js";
 import { Factory } from "../../src/bindInfo/Factory.js";
-import { TemplateBind } from "../../src/bindInfo/Template.js";
+import { IfBind } from "../../src/bindInfo/template/If.js";
+import { LoopBind } from "../../src/bindInfo/template/Loop.js";
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { Checkbox } from "../../src/bindInfo/Checkbox.js";
 import { Radio } from "../../src/bindInfo/Radio.js";
@@ -54,7 +55,7 @@ test("Factory template loop", () => {
     filters, 
     { indexes:[], stack:[] }
   );
-  expect(bindInfo instanceof TemplateBind).toBe(true);
+  expect(bindInfo instanceof LoopBind).toBe(true);
   expect(bindInfo.node instanceof Comment).toBe(true);
   expect(bindInfo.template).toBe(templateNode);
   expect(bindInfo.uuid).toBe("xxxx-xxxx-xxxx-xxxx-0");
@@ -92,7 +93,7 @@ test("Factory template if", () => {
     filters, 
     { indexes:[], stack:[] }
   );
-  expect(bindInfo instanceof TemplateBind).toBe(true);
+  expect(bindInfo instanceof IfBind).toBe(true);
   expect(bindInfo.node instanceof Comment).toBe(true); // Commentにリプレースされている
   expect(bindInfo.template).toBe(templateNode);
   expect(bindInfo.uuid).toBe("xxxx-xxxx-xxxx-xxxx-1");

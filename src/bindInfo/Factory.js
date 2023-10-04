@@ -13,8 +13,8 @@ import { ComponentBind } from "./Component.js";
 import { StyleBind } from "./Style.js";
 import { PropertyBind } from "./Property.js";
 import { TextBind } from "./Text.js";
-import { IfBind } from "./Template/If.js";
-import { LoopBind } from "./Template/Loop.js";
+import { IfBind } from "./template/If.js";
+import { LoopBind } from "./template/Loop.js";
 
 export class Factory {
   /**

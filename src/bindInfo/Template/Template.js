@@ -1,10 +1,5 @@
-import "../types.js";
-import { utils } from "../../utils.js";
-import { Filter } from "../filter/Filter.js";
+import "../../types.js";
 import { BindInfo } from "../BindInfo.js";
-import { TEMPLATE_BRANCH, TEMPLATE_REPEAT } from "../../Const.js";
-import { Context } from "../context/Context.js";
-import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../view/Templates.js";
 import { ViewTemplate } from "../../view/View.js";
 

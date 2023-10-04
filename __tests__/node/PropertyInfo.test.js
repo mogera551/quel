@@ -9,12 +9,12 @@ test('PropertyType Template', () => {
 
   const templateNode = document.createComment("@@|xxxx-xxxx-xxxx-xxxx-0");
   expect(NodePropertyInfo.get(templateNode, "if")).toEqual({
-    type:NodePropertyType.template,
+    type:NodePropertyType.if,
     nodePropertyElements:["if"],
     eventType:undefined,
   });
   expect(NodePropertyInfo.get(templateNode, "loop")).toEqual({
-    type:NodePropertyType.template,
+    type:NodePropertyType.loop,
     nodePropertyElements:["loop"],
     eventType:undefined,
   });

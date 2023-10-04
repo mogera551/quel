@@ -3,7 +3,8 @@ import { BindToTemplate } from "../../src/binder/BindToTemplate.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
-import { TemplateBind } from "../../src/bindInfo/Template.js";
+import { LoopBind } from "../../src/bindInfo/template/Loop.js";
+import { IfBind } from "../../src/bindInfo/template/If.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
@@ -48,7 +49,7 @@ test("BindToTemplate", () => {
   };
   const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   expect(binds.length).toBe(1);
-  expect(binds[0] instanceof TemplateBind).toBe(true);
+  expect(binds[0] instanceof LoopBind).toBe(true);
   expect(binds[0].node instanceof Comment).toBe(true);
   expect(() => binds[0].element).toThrow("not Element");
   expect(binds[0].nodeProperty).toBe("loop");

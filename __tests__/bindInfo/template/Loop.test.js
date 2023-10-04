@@ -1,10 +1,10 @@
-import { Symbols } from "../../src/Symbols.js";
-import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
-import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { Templates } from "../../src/view/Templates.js";
-import { TextBind } from "../../src/bindInfo/Text.js";
-import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
-import { TemplateBind } from "../../src/bindInfo/Template.js"; 
+import { Symbols } from "../../../src/Symbols.js";
+import { NodeUpdateData } from "../../../src/thread/NodeUpdator.js";
+import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
+import { Templates } from "../../../src/view/Templates.js";
+import { TextBind } from "../../../src/bindInfo/Text.js";
+import { inputFilters, outputFilters } from "../../../src/filter/Builtin.js";
+import { LoopBind } from "../../../src/bindInfo/template/Loop.js"; 
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -61,45 +61,6 @@ const component = {
   }
 };
 
-test("Template if", () => {
-  const templateNode = document.createElement("template");
-  templateNode.dataset.uuid = crypto.randomUUID();
-  templateNode.dataset.bind = "if:bbb";
-  templateNode.innerHTML = "<div class='bbb_is_true'>bbb is true</div>";
-  Templates.templateByUUID.set(templateNode.dataset.uuid, templateNode);
-
-  const parentNode = document.createElement("div");
-  const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
-  parentNode.appendChild(commentNode);
-
-  const template = new TemplateBind;
-  template.component = component;
-  template.node = commentNode;
-  template.nodeProperty = "if";
-  template.viewModel = viewModel;
-  template.viewModelProperty = "bbb";
-  template.filters = [];
-  template.context = { indexes:[], stack:[] };
-  expect(template.node instanceof Comment).toBe(true);
-  expect(template.template instanceof HTMLTemplateElement).toBe(true);
-  expect(template.uuid).toBe("xxxx-xxxx-xxxx-xxxx-0");
-
-  template.updateNode();
-  expect(template.templateChildren.length).toBe(1);
-  expect(template.templateChildren[0].binds.length).toBe(0);
-  expect(parentNode.querySelector(".bbb_is_true") != null).toBe(true);
-
-  viewModel.bbb = false;
-  template.updateNode();
-  expect(template.templateChildren.length).toBe(0);
-  expect(parentNode.querySelector(".bbb_is_true") == null).toBe(true);
-
-  // cache
-  template.updateNode();
-  expect(template.templateChildren.length).toBe(0);
-  expect(parentNode.querySelector(".bbb_is_true") == null).toBe(true);
-});
-
 test("Template loop no binds", () => {
   const templateNode = document.createElement("template");
   templateNode.dataset.uuid = crypto.randomUUID();
@@ -111,7 +72,7 @@ test("Template loop no binds", () => {
   const commentNode = document.createComment("@@|" + templateNode.dataset.uuid);
   parentNode.appendChild(commentNode);
 
-  const template = new TemplateBind;
+  const template = new LoopBind;
   template.component = component;
   template.node = commentNode;
   template.nodeProperty = "loop";
@@ -151,7 +112,7 @@ test("Template loop binds", () => {
 
   viewModel.aaa = [10,20,30];
 
-  const template = new TemplateBind;
+  const template = new LoopBind;
   template.component = component;
   template.node = commentNode;
   template.nodeProperty = "loop";
@@ -242,7 +203,7 @@ test("Template loop loop binds", () => {
 
   viewModel.ccc = [[11,22],[111,222]];
 
-  const template = new TemplateBind;
+  const template = new LoopBind;
   template.component = component;
   template.node = commentNode;
   template.nodeProperty = "loop";
@@ -257,7 +218,7 @@ test("Template loop loop binds", () => {
   template.updateNode();
   expect(template.templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -289,7 +250,7 @@ test("Template loop loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([0, 1]);
 
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("loop");
@@ -327,7 +288,7 @@ test("Template loop loop binds", () => {
   template.updateNode();
   expect(template.templateChildren.length).toBe(1);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -394,7 +355,7 @@ test("Template loop in loop binds", () => {
   viewModel.aaa = [10,20];
   viewModel.ddd = [30,40];
 
-  const template = new TemplateBind;
+  const template = new LoopBind;
   template.component = component;
   template.node = commentNode;
   template.nodeProperty = "loop";
@@ -409,7 +370,7 @@ test("Template loop in loop binds", () => {
   template.updateNode();
   expect(template.templateChildren.length).toBe(2);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -441,7 +402,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([0, 1]);
 
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("loop");
@@ -480,7 +441,7 @@ test("Template loop in loop binds", () => {
 
   expect(template.templateChildren.length).toBe(3);
   expect(template.templateChildren[0].binds.length).toBe(1);
-  expect(template.templateChildren[0].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[0].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[0].binds[0].component).toBe(component);
   expect(template.templateChildren[0].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[0].binds[0].nodeProperty).toBe("loop");
@@ -512,7 +473,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[0].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([0, 1]);
 
   expect(template.templateChildren[1].binds.length).toBe(1);
-  expect(template.templateChildren[1].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[1].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[1].binds[0].component).toBe(component);
   expect(template.templateChildren[1].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[1].binds[0].nodeProperty).toBe("loop");
@@ -544,7 +505,7 @@ test("Template loop in loop binds", () => {
   expect(template.templateChildren[1].binds[0].templateChildren[1].binds[0].contextIndexes).toEqual([1, 1]);
 
   expect(template.templateChildren[2].binds.length).toBe(1);
-  expect(template.templateChildren[2].binds[0] instanceof TemplateBind).toBe(true);
+  expect(template.templateChildren[2].binds[0] instanceof LoopBind).toBe(true);
   expect(template.templateChildren[2].binds[0].component).toBe(component);
   expect(template.templateChildren[2].binds[0].node instanceof Comment).toBe(true);
   expect(template.templateChildren[2].binds[0].nodeProperty).toBe("loop");
@@ -591,7 +552,7 @@ test("Template loop throw", () => {
 
   viewModel.aaa = [10,20,30];
 
-  const template = new TemplateBind;
+  const template = new LoopBind;
 
   template.component = component;
   template.node = commentNode;
@@ -618,7 +579,7 @@ test("Template loop array undefined", () => {
 
   viewModel.aaa = undefined;
 
-  const template = new TemplateBind;
+  const template = new LoopBind;
 
   template.component = component;
   template.node = commentNode;

@@ -1,7 +1,6 @@
-import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import "../types.js";
 import { ComponentBind } from "./Component.js";
-import { TemplateBind } from "./Template.js";
+import { TemplateBind } from "./template/Template.js";
 
 const toTemplateBind = bind => (bind instanceof TemplateBind) ? bind : undefined;
 

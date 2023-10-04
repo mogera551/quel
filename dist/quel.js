@@ -431,7 +431,8 @@ const NodePropertyType = {
   checkbox: 40,
   event: 91,
   component: 92,
-  template: 95,
+  if: 96,
+  loop: 97,
 };
 
 /** @type {string} */
@@ -897,8 +898,11 @@ class NodePropertyInfo {
     do {
       result.nodePropertyElements = nodeProperty.split(".");
       if (node instanceof Comment && node.textContent[2] === "|") {
-        if (nodeProperty === TEMPLATE_BRANCH || nodeProperty === TEMPLATE_REPEAT) {
-          result.type = NodePropertyType.template;
+        if (nodeProperty === TEMPLATE_BRANCH) {
+          result.type = NodePropertyType.if;
+          break;
+        } else if (nodeProperty === TEMPLATE_REPEAT) {
+          result.type = NodePropertyType.loop;
           break;
         } else {
           utils.raise(`template illegal property ${nodeProperty}`);
@@ -1423,268 +1427,6 @@ class Checkbox extends BindInfo {
   }
 }
 
-class Context {
-
-  /**
-   * 空のコンテクスト情報を生成
-   * @returns {ContextInfo}
-   */
-  static create() {
-    return {
-      indexes: [],
-      stack: [],
-    }
-  }
-
-  /**
-   * コンテクスト情報をクローン
-   * @param {ContextInfo} src 
-   * @returns {ContextInfo}
-   */
-  static clone(src) {
-    /**
-     * @type {ContextInfo}
-     */
-    const dst = this.create();
-    dst.indexes = src.indexes.slice();
-    for(const srcParam of src.stack) {
-      /**
-       * @type {ContextParam}
-       */
-      const dstParam = {};
-      dstParam.indexes = srcParam.indexes.slice();
-      dstParam.pos = srcParam.pos;
-      dstParam.propName = srcParam.propName;
-      dst.stack.push(dstParam);
-    }
-    return dst;
-  }
-}
-
-class Templates {
-  /** @type {Map<string,HTMLTemplateElement>} */
-  static templateByUUID = new Map;
-
-}
-
-class TemplateChild {
-  /** @type {BindInfo[]} */
-  binds;
-
-  /** @type {Node[]} */
-  childNodes;
-
-  /** @type {DocumentFragment} */
-  fragment;
-
-  /** @type {ContextInfo} */
-  context;
-
-  /** @type {string} */
-  uuid;
-
-  /** @type {Node} */
-  get lastNode() {
-    return this.childNodes[this.childNodes.length - 1];
-  }
-
-  /** @type {node[]|DocumentFragment} */
-  get nodesForAppend() {
-    return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
-  }
-
-  /**
-   * 
-   */
-  removeFromParent() {
-    this.childNodes.forEach(node => this.fragment.appendChild(node));
-    this.binds.forEach(bind => bind.removeFromParent());
-  }
-
-  /**
-   * 
-   */
-  updateNode() {
-    this.binds.forEach(bind => {
-      bind.updateNode();
-    });
-  }
-
-  /**
-   * 
-   * @param {TemplateBind} templateBind 
-   * @param {ContextInfo} context
-   * @returns {TemplateChild}
-   */
-  static create(templateBind, context) {
-    const { component, template, uuid } = templateBind;
-    const templateChildren = this.templateChildrenByUUID.get(uuid);
-    if (typeof templateChildren === "undefined" || templateChildren.length === 0) {
-      const { binds, content } = ViewTemplate.render(component, template, context);
-      const childNodes = Array.from(content.childNodes);
-      return Object.assign(new TemplateChild, { binds, childNodes, fragment:content, context, uuid });
-    } else {
-      const templateChild = templateChildren.pop();
-      templateChild.binds.forEach(bind => {
-        bind.context = context;
-        bind.updateNode();
-      });
-      return templateChild;
-    }
-  }
-
-  /** @type {Map<string,TemplateChild[]>} */
-  static templateChildrenByUUID = new Map;
-
-  /**
-   * 削除したTemplateChildを再利用のため保存しておく
-   * @param {TemplateChild} templateChild 
-   */
-  static dispose(templateChild) {
-    const children = this.templateChildrenByUUID.get(templateChild.uuid);
-    if (typeof children === "undefined") {
-      this.templateChildrenByUUID.set(templateChild.uuid, [templateChild]);
-    } else {
-      children.push(templateChild);
-    }
-  }
-}
-
-class TemplateBind extends BindInfo {
-  /** @type {TemplateChild[]} */
-  templateChildren = [];
-
-  /** @type {HTMLTemplateElement} */
-  #template;
-  /** @type {HTMLTemplateElement} */
-  get template() {
-    if (typeof this.#template === "undefined") {
-      this.#template = Templates.templateByUUID.get(this.uuid);
-    }
-    return this.#template;
-  }
-
-  /** @type {string} */
-  #uuid;
-  /** @type {string} */
-  get uuid() {
-    if (typeof this.#uuid === "undefined") {
-      this.#uuid = this.node.textContent.slice(3);
-    }
-    return this.#uuid;
-  }
-
-  /** @type {number} */
-  #lastCount;
-  /** @type {number} */
-  get lastCount() {
-    return (this.#lastCount ?? 0);
-  }
-  set lastCount(v) {
-    this.#lastCount = v;
-  }
-
-  /** @type {TemplateChild | undefined} */
-  get lastChild() {
-    return this.templateChildren[this.templateChildren.length - 1];
-  }
-
-  updateNode() {
-    (this.nodeProperty === TEMPLATE_REPEAT) ? this.expandLoop() : 
-      (this.nodeProperty === TEMPLATE_BRANCH) ? this.expandIf() : utils.raise(`unknown property ${this.nodeProperty}`);
-  }
-
-  removeFromParent() {
-    this.templateChildren.forEach(templateChild => {
-      templateChild.removeFromParent();
-      TemplateChild.dispose(templateChild);
-    });
-    this.templateChildren = [];
-    this.lastCount = 0;
-  }
-
-  /**
-   * 
-   * @returns {void}
-   */
-  expandIf() {
-    const { component, filters, context, filteredViewModelValue } = this;
-    const currentValue = this.templateChildren.length > 0;
-    if (currentValue !== filteredViewModelValue) {
-      if (filteredViewModelValue) {
-        const newTemplateChildren = [TemplateChild.create(this, Context.clone(context))];
-        TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
-        this.templateChildren = newTemplateChildren;
-      } else {
-        TemplateBind.removeFromParent(this.templateChildren);
-        this.templateChildren = [];
-      }
-    } else {
-      this.templateChildren.forEach(templateChild => templateChild.updateNode());
-    }
-  }
-
-  /**
-   * @returns {void}
-   */
-  expandLoop() {
-    const { component, filters, context, viewModelValue } = this;
-    /** @type {any[]} */
-    const newValue = Filter.applyForOutput(viewModelValue, filters, component.filters.out) ?? [];
-
-    if (this.lastCount > newValue.length) {
-      const removeTemplateChildren = this.templateChildren.splice(newValue.length);
-      TemplateBind.removeFromParent(removeTemplateChildren);
-      this.templateChildren.forEach(templateChild => templateChild.updateNode());
-    } else if (this.lastCount < newValue.length) {
-      // コンテキスト用のデータ
-      this.templateChildren.forEach(templateChild => templateChild.updateNode());
-      const pos = context.indexes.length;
-      const propName = this.viewModelPropertyName;
-      const parentIndexes = this.contextParam?.indexes ?? [];
-      const newTemplateChildren = [];
-      for(let i = this.lastCount; i < newValue.length; i++) {
-        const newIndex = i;
-        const newContext = Context.clone(context);
-        newContext.indexes.push(newIndex);
-        newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
-        newTemplateChildren.push(TemplateChild.create(this, newContext));
-      }
-      TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
-      this.templateChildren = this.templateChildren.concat(newTemplateChildren);
-    } else {
-      this.templateChildren.forEach(templateChild => templateChild.updateNode());
-    }
-    this.lastCount = newValue.length;
-  }
-
-  /** 
-   * @param {TemplateChild[]} templateChildren
-   * @returns {void}
-   */
-  static removeFromParent(templateChildren) {
-    templateChildren.forEach(templateChild => {
-      templateChild.removeFromParent();
-      TemplateChild.dispose(templateChild);
-    });
-  }
-
-  /**
-   * @param {Node} parentNode
-   * @param {TemplateChild[]} templateChildren
-   * @returns {void}
-   */
-  static appendToParent(parentNode, templateChildren) {
-    const fragment = document.createDocumentFragment();
-    templateChildren
-      .forEach(templateChild => {
-        if (templateChild.childNodes.length > 0) fragment.appendChild(...templateChild.nodesForAppend);
-      });
-    parentNode.after(fragment);
-  }
-
-}
-
 class ProcessData {
   /** @type {()=>void} */
   target;
@@ -1979,6 +1721,279 @@ class TextBind extends BindInfo {
 
 }
 
+class Templates {
+  /** @type {Map<string,HTMLTemplateElement>} */
+  static templateByUUID = new Map;
+
+}
+
+class TemplateChild {
+  /** @type {BindInfo[]} */
+  binds;
+
+  /** @type {Node[]} */
+  childNodes;
+
+  /** @type {DocumentFragment} */
+  fragment;
+
+  /** @type {ContextInfo} */
+  context;
+
+  /** @type {string} */
+  uuid;
+
+  /** @type {Node} */
+  get lastNode() {
+    return this.childNodes[this.childNodes.length - 1];
+  }
+
+  /** @type {Node[]} */
+  get nodesForAppend() {
+    return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
+  }
+
+  /**
+   * 
+   */
+  removeFromParent() {
+    this.childNodes.forEach(node => this.fragment.appendChild(node));
+    this.binds.forEach(bind => bind.removeFromParent());
+  }
+
+  /**
+   * 
+   */
+  updateNode() {
+    this.binds.forEach(bind => {
+      bind.updateNode();
+    });
+  }
+
+  /**
+   * 
+   * @param {TemplateBind} templateBind 
+   * @param {ContextInfo} context
+   * @returns {TemplateChild}
+   */
+  static create(templateBind, context) {
+    const { component, template, uuid } = templateBind;
+    const templateChildren = this.templateChildrenByUUID.get(uuid);
+    if (typeof templateChildren === "undefined" || templateChildren.length === 0) {
+      const { binds, content } = ViewTemplate.render(component, template, context);
+      const childNodes = Array.from(content.childNodes);
+      return Object.assign(new TemplateChild, { binds, childNodes, fragment:content, context, uuid });
+    } else {
+      const templateChild = templateChildren.pop();
+      templateChild.binds.forEach(bind => {
+        bind.context = context;
+        bind.updateNode();
+      });
+      return templateChild;
+    }
+  }
+
+  /** @type {Map<string,TemplateChild[]>} 再利用のためのキャッシュ */
+  static templateChildrenByUUID = new Map;
+
+  /**
+   * 削除したTemplateChildを再利用のため保存しておく
+   * @param {TemplateChild} templateChild 
+   */
+  static dispose(templateChild) {
+    const children = this.templateChildrenByUUID.get(templateChild.uuid);
+    if (typeof children === "undefined") {
+      this.templateChildrenByUUID.set(templateChild.uuid, [templateChild]);
+    } else {
+      children.push(templateChild);
+    }
+  }
+}
+
+class TemplateBind extends BindInfo {
+
+  /** @type {HTMLTemplateElement} */
+  #template;
+  /** @type {HTMLTemplateElement} */
+  get template() {
+    if (typeof this.#template === "undefined") {
+      this.#template = Templates.templateByUUID.get(this.uuid);
+    }
+    return this.#template;
+  }
+
+  /** @type {string} */
+  #uuid;
+  /** @type {string} */
+  get uuid() {
+    if (typeof this.#uuid === "undefined") {
+      this.#uuid = this.node.textContent.slice(3);
+    }
+    return this.#uuid;
+  }
+
+  /** 
+   * @param {TemplateChild[]} templateChildren
+   * @returns {void}
+   */
+  static removeFromParent(templateChildren) {
+    templateChildren.forEach(templateChild => {
+      templateChild.removeFromParent();
+      TemplateChild.dispose(templateChild);
+    });
+  }
+
+  /**
+   * @param {Node} parentNode
+   * @param {TemplateChild[]} templateChildren
+   * @returns {void}
+   */
+  static appendToParent(parentNode, templateChildren) {
+    const fragment = document.createDocumentFragment();
+    templateChildren
+      .forEach(templateChild => {
+        if (templateChild.childNodes.length > 0) fragment.appendChild(...templateChild.nodesForAppend);
+      });
+    parentNode.after(fragment);
+  }
+
+}
+
+class Context {
+
+  /**
+   * 空のコンテクスト情報を生成
+   * @returns {ContextInfo}
+   */
+  static create() {
+    return {
+      indexes: [],
+      stack: [],
+    }
+  }
+
+  /**
+   * コンテクスト情報をクローン
+   * @param {ContextInfo} src 
+   * @returns {ContextInfo}
+   */
+  static clone(src) {
+    /**
+     * @type {ContextInfo}
+     */
+    const dst = this.create();
+    dst.indexes = src.indexes.slice();
+    for(const srcParam of src.stack) {
+      /**
+       * @type {ContextParam}
+       */
+      const dstParam = {};
+      dstParam.indexes = srcParam.indexes.slice();
+      dstParam.pos = srcParam.pos;
+      dstParam.propName = srcParam.propName;
+      dst.stack.push(dstParam);
+    }
+    return dst;
+  }
+}
+
+class IfBind extends TemplateBind {
+  /** @type {TemplateChild | undefined} */
+  templateChild;
+
+  /**
+   * 
+   */
+  updateNode() {
+    const { templateChild, context, filteredViewModelValue, node } = this;
+    const currentValue = typeof templateChild !== "undefined";
+    if (currentValue !== filteredViewModelValue) {
+      if (filteredViewModelValue) {
+        const newTemplateChild = TemplateChild.create(this, Context.clone(context));
+        TemplateBind.appendToParent(node, [newTemplateChild]);
+        this.templateChild = newTemplateChild;
+      } else {
+        TemplateBind.removeFromParent([templateChild]);
+        this.templateChild = undefined;
+      }
+    } else {
+      templateChild.updateNode();
+    }
+  }
+
+  /**
+   * 
+   */
+  removeFromParent() {
+    if (typeof this.templateChild !== "undefined") {
+      TemplateBind.removeFromParent([this.templateChild]);
+      this.templateChild = undefined;
+    }
+  }
+
+}
+
+class LoopBind extends TemplateBind {
+  /** @type {TemplateChild[]} */
+  templateChildren = [];
+
+  /** @type {number} */
+  #lastCount = 0;
+  /** @type {number} */
+  get lastCount() {
+    return this.#lastCount;
+  }
+  set lastCount(v) {
+    this.#lastCount = v;
+  }
+
+  /** @type {TemplateChild | undefined} */
+  get lastChild() {
+    return this.templateChildren[this.templateChildren.length - 1];
+  }
+
+  updateNode() {
+    /** @type {any[]} */
+    const newValue = this.filteredViewModelValue ?? [];
+
+    if (this.lastCount > newValue.length) {
+      // 前の配列の長さ　＞　現在の配列の長さ
+      // 現在の配列の長さに合わせるように配列を削除する
+      const removeTemplateChildren = this.templateChildren.splice(newValue.length);
+      TemplateBind.removeFromParent(removeTemplateChildren);
+      // 全ての配列の値をノードへ反映する
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
+    } else if (this.lastCount < newValue.length) {
+      // 前の配列の部分の配列の値をノードへ反映する
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
+      // 足りない部分を生成し追加する
+      const pos = this.context.indexes.length;
+      const propName = this.viewModelPropertyName;
+      const parentIndexes = this.contextParam?.indexes ?? [];
+      const newTemplateChildren = [];
+      for(let i = this.lastCount; i < newValue.length; i++) {
+        const newIndex = i;
+        const newContext = Context.clone(this.context);
+        newContext.indexes.push(newIndex);
+        newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
+        newTemplateChildren.push(TemplateChild.create(this, newContext));
+      }
+      TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
+      this.templateChildren = this.templateChildren.concat(newTemplateChildren);
+    } else {
+      // 全ての配列の値をノードへ反映する
+      this.templateChildren.forEach(templateChild => templateChild.updateNode());
+    }
+    this.lastCount = newValue.length;
+  }
+
+  removeFromParent() {
+    TemplateBind.removeFromParent(this.templateChildren);
+    this.templateChildren = [];
+    this.lastCount = 0;
+  }
+}
+
 class Factory {
   /**
    * @type {Object<number, classof<BindInfo>>}
@@ -1992,7 +2007,8 @@ class Factory {
     this.classByType[NodePropertyType.className] = ClassNameBind;
     this.classByType[NodePropertyType.radio] = Radio;
     this.classByType[NodePropertyType.checkbox] = Checkbox;
-    this.classByType[NodePropertyType.template] = TemplateBind;
+    this.classByType[NodePropertyType.if] = IfBind;
+    this.classByType[NodePropertyType.loop] = LoopBind;
     this.classByType[NodePropertyType.event] = Event;
     this.classByType[NodePropertyType.component] = ComponentBind;
     this.classByType[NodePropertyType.style] = StyleBind;
