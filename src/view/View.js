@@ -6,9 +6,9 @@ import { Context } from "../context/Context.js";
 export class ViewTemplate {
   /**
    * 
-   * @param {HTMLElement} rootElement 
    * @param {Component} component 
-   * @param {ContextInfo} contextInfo
+   * @param {HTMLTemplateElement} template
+   * @param {ContextInfo} context
    * @returns {{binds:BindInfo[], content:DocumentFragment}}
    */
   static render(component, template, context) {
