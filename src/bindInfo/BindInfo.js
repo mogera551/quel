@@ -5,9 +5,9 @@ import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-n
 import { Filter } from "../filter/Filter.js";
 
 export class BindInfo {
-  /** @type {Node} */
+  /** @type {Node} バインドするDOMノード */
   #node;
-  /** @type {Node} */
+  /** @type {Node} バインドするDOMノード */
   get node() {
     return this.#node;
   }
@@ -27,9 +27,9 @@ export class BindInfo {
     return (this.node instanceof SVGElement) ? this.node : utils.raise("not SVGElement");
   }
 
-  /** @type {string} */
+  /** @type {string} バインドするDOMノードのプロパティ名 */
   #nodeProperty;
-  /** @type {string} */
+  /** @type {string} バインドするDOMノードのプロパティ名 */
   get nodeProperty() {
     return this.#nodeProperty;
   }
@@ -37,9 +37,9 @@ export class BindInfo {
     this.#nodeProperty = value;
   }
 
-  /** @type {string[]} */
+  /** @type {string[]} バインドするDOMノードのプロパティ要素配列 */
   #nodePropertyElements;
-  /** @type {string[]} */
+  /** @type {string[]} バインドするDOMノードのプロパティ要素配列 */
   get nodePropertyElements() {
     return this.#nodePropertyElements;
   }
@@ -47,16 +47,16 @@ export class BindInfo {
     this.#nodePropertyElements = value;
   }
 
-  /** @type {Component} */
+  /** @type {Component} 親コンポーネント */
   component;
 
-  /** @type {ViewModel} */
+  /** @type {ViewModel} バインドするViewModelオブジェクト */
   viewModel;
 
-  /** @type {string} */
+  /** @type {string} バインドするViewModelオブジェクトのプロパティ名 */
   #viewModelProperty;
 
-  /** @type {string} */
+  /** @type {string} バインドするViewModelオブジェクトのプロパティ名 */
   get viewModelProperty() {
     return this.#viewModelProperty;
   }
@@ -69,9 +69,9 @@ export class BindInfo {
     this.#contextParam = undefined;
   }
 
-  /** @type {PropertyName} */
+  /** @type {PropertyName} バインドするViewModelオブジェクトのプロパティ情報 */
   #viewModelPropertyName;
-  /** @type {PropertyName} */
+  /** @type {PropertyName} バインドするViewModelオブジェクトのプロパティ情報 */
   get viewModelPropertyName() {
     if (typeof this.#viewModelPropertyName === "undefined") {
       this.#viewModelPropertyName = PropertyName.create(this.#viewModelProperty);
@@ -91,7 +91,7 @@ export class BindInfo {
     return this.#contextIndex;
   }
 
-  /** @type {boolean} */
+  /** @type {boolean} バインドするViewModelオブジェクトのプロパティが*/
   #isContextIndex;
   /** @type {boolean} */
   get isContextIndex() {
@@ -101,12 +101,12 @@ export class BindInfo {
     return this.#isContextIndex;
   }
 
-  /** @type {Filter[]} */
+  /** @type {Filter[]} 適用するフィルター情報の配列 */
   filters;
 
-  /** @type {ContextParam} */
+  /** @type {ContextParam} コンテキスト情報 */
   #contextParam;
-  /** @type {ContextParam} */
+  /** @type {ContextParam} コンテキスト情報 */
   get contextParam() {
     if (typeof this.#contextParam === "undefined") {
       const propName = this.viewModelPropertyName;
