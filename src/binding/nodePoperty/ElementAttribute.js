@@ -1,12 +1,6 @@
-import { utils } from "../../utils.js";
-import { NodeProperty } from "./NodeProperty.js";
+import { ElementProperty } from "./ElementProperty.js";
 
-export class NodeAttribute extends NodeProperty {
-  /** @type {Element} */
-  get element() {
-    return (node instanceof Element) ? this.node : utils.raise("not element");
-  }
-
+export class ElementAttribute extends ElementProperty {
   /** @type {string} */
   get attributeName() {
     return this.propertyNameElements[1];
@@ -19,5 +13,4 @@ export class NodeAttribute extends NodeProperty {
   set value(value) {
     this.element.setAttribute(this.attributeName, value);
   }
-
 }

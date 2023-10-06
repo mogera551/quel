@@ -3,16 +3,15 @@ import "../../types.js";
 export class NodeProperty {
   /** @type {Node} */
   #node;
-  /** @type {Node} */
   get node() {
     return this.#node;
   }
   set node(value) {
     this.#node = value;
   }
+
   /** @type {string} */
   #propertyName;
-  /** @type {string} */
   get propertyName() {
     return this.#propertyName;
   }
@@ -20,6 +19,7 @@ export class NodeProperty {
     this.#propertyName = value;
     this.#propertyNameElements = value.split(".");
   }
+
   /** @type {string[]} */
   #propertyNameElements = [];
   get propertyNameElements() {

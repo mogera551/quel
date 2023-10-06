@@ -2,6 +2,7 @@ import { Filter } from "../filter/Filter.js";
 import "../types.js";
 import { Templates } from "../view/Templates.js";
 import { ViewTemplate } from "../view/View.js";
+import { NodeUpdateData } from "../thread/NodeUpdator.js";
 
 export class Binding {
   /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
@@ -23,7 +24,7 @@ export class Binding {
     const filteredViewModelValue = filters.length > 0 ? 
       Filter.applyForOutput(viewModelProperty.value, filters, component.filters.out) : viewModelProperty.value;
     if (nodeProperty.value !== (filteredViewModelValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, filteredViewModelValue, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty.propertyName, viewModelProperty.propertyName, filteredViewModelValue, () => {
         nodeProperty.value = filteredViewModelValue ?? "";
       }));
     }
