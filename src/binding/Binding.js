@@ -3,6 +3,7 @@ import "../types.js";
 import { Templates } from "../view/Templates.js";
 import { ViewTemplate } from "../view/View.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
+import { ProcessData } from "../thread/ViewModelUpdator.js";
 
 export class Binding {
   /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
@@ -36,6 +37,20 @@ export class Binding {
   applyToViewModel() {
 
   }
+
+  addEventListener() {
+    const {component, element, eventType, viewModel, viewModelProperty} = this;
+    element.addEventListener(eventType, (event) => {
+      event.stopPropagation();
+      const context = this.context;
+      const process = new ProcessData(
+        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, context, event]
+      );
+      component.updateSlot.addProcess(process);
+    });
+  
+  }
+
 }
 
 /** @type {Array<Binding>} */
