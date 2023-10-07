@@ -3,7 +3,7 @@ import { ElementProperty } from "./ElementProperty.js";
 export class ElementAttribute extends ElementProperty {
   /** @type {string} */
   get attributeName() {
-    return this.propertyNameElements[1];
+    return this.nameElements[1];
   }
 
   /** @type {any} */

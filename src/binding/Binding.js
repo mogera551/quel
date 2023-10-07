@@ -1,9 +1,11 @@
-import { Filter } from "../filter/Filter.js";
 import "../types.js";
+import { Symbols } from "../Symbols.js";
+import { Filter } from "../filter/Filter.js";
 import { Templates } from "../view/Templates.js";
 import { ViewTemplate } from "../view/View.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
+import { utils } from "../utils.js";
 
 export class Binding {
   /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
@@ -21,11 +23,10 @@ export class Binding {
    * Nodeへ値を反映する
    */
   applyToNode() {
-    const { filters, component, nodeProperty, viewModelProperty } = this;
-    const filteredViewModelValue = filters.length > 0 ? 
-      Filter.applyForOutput(viewModelProperty.value, filters, component.filters.out) : viewModelProperty.value;
+    const { component, nodeProperty, viewModelProperty } = this;
+    const filteredViewModelValue = viewModelProperty.filteredValue;
     if (nodeProperty.value !== (filteredViewModelValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty.propertyName, viewModelProperty.propertyName, filteredViewModelValue, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
         nodeProperty.value = filteredViewModelValue ?? "";
       }));
     }
@@ -35,22 +36,46 @@ export class Binding {
    * ViewModelへ値を反映する
    */
   applyToViewModel() {
-
+    const { nodeProperty, viewModelProperty } = this;
+    const filteredNodelValue = nodeProperty.filteredValue;
+    viewModelProperty.value = filteredNodelValue;
   }
 
+  /**
+   * 
+   */
   addEventListener() {
-    const {component, element, eventType, viewModel, viewModelProperty} = this;
-    element.addEventListener(eventType, (event) => {
+    const {component, nodeProperty, viewModelProperty, context} = this;
+    /** @type {import("./nodePoperty/ElementEvent.js").ElementEvent} */
+    const eventProperty = nodeProperty;
+    eventProperty.element.addEventListener(eventProperty.eventType, (event) => {
       event.stopPropagation();
-      const context = this.context;
       const process = new ProcessData(
-        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, context, event]
+        viewModelProperty.viewModel[Symbols.directlyCall], viewModelProperty.viewModel, [viewModelProperty.propertyName, context, event]
       );
       component.updateSlot.addProcess(process);
     });
-  
+
   }
 
+  /**
+   * 
+   * @param {Event} event 
+   */
+  execEventHandler(event) {
+    event.stopPropagation();
+
+    const {component, viewModelProperty, context} = this;
+    const process = new ProcessData(
+      viewModelProperty.viewModel[Symbols.directlyCall], viewModelProperty.viewModel, [viewModelProperty.propertyName, context, event]
+    );
+    component.updateSlot.addProcess(process);
+  }
+
+  initialize() {
+    this.nodeProperty.initialize(this);
+    this.viewModelProperty.initialize(this);
+  }
 }
 
 /** @type {Array<Binding>} */

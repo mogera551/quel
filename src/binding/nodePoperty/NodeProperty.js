@@ -1,4 +1,5 @@
 import "../../types.js";
+import { Filter } from "../../filter/Filter.js";
 
 export class NodeProperty {
   /** @type {Node} */
@@ -11,27 +12,52 @@ export class NodeProperty {
   }
 
   /** @type {string} */
-  #propertyName;
-  get propertyName() {
-    return this.#propertyName;
+  #name;
+  get name() {
+    return this.#name;
   }
-  set propertyName(value) {
-    this.#propertyName = value;
-    this.#propertyNameElements = value.split(".");
+  set name(value) {
+    this.#name = value;
+    this.#nameElements = value.split(".");
   }
 
   /** @type {string[]} */
-  #propertyNameElements = [];
-  get propertyNameElements() {
-    return this.#propertyNameElements;
+  #nameElements = [];
+  get nameElements() {
+    return this.#nameElements;
   }
 
   /** @type {any} */
   get value() {
-    return this.node[this.propertyName];
+    return this.node[this.name];
   }
   set value(value) {
-    this.node[this.propertyName] = value;
+    this.node[this.name] = value;
   }
 
+  /** @type {Filter[]} */
+  filters;
+
+  /** @type {any} */
+  get filteredValue() {
+    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters) : this.value;
+  }
+
+  /**
+   * 
+   * @param {Node} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   */
+  constructor(node, name, filters) {
+    this.node = node;
+    this.name = name;
+    this.filters = filters;
+  }
+
+  /**
+   * @param {import("../Binding.js").Binding} binding
+   */
+  initialize(binding) {
+  }
 }
