@@ -1,7 +1,7 @@
 import { Context } from "../context/Context.js";
 import { Bindings, Binding } from "./Binding.js";
 
-export class BlockBranch extends Binding {
+export class BranchBinding extends Binding {
   /** @type {Bindings | undefined} */
   get child() {
     return this.children[0];
@@ -18,22 +18,26 @@ export class BlockBranch extends Binding {
     }
   }
 
+  /** @type {boolean} */
   get currentValue() {
     return this.children.length > 0;
+  }
+
+  /** @type {import("./nodePoperty/TemplateProperty.js").TemplateProperty} */
+  get templateProperty() {
+    return this.nodeProperty;
   }
 
   /**
    * 
    */
   applyToNode() {
-    const { component, nodeProperty, viewModelProperty, context, currentValue } = this;
-    /** @type {import("./nodePoperty/TemplateProperty.js").TemplateProperty} */
-    const templateProperty = nodeProperty;
+    const { component, templateProperty, viewModelProperty, context, currentValue } = this;
     const filteredViewModelValue = viewModelProperty.filteredValue;
     if (currentValue !== filteredViewModelValue) {
       if (filteredViewModelValue) {
         // 生成
-        this.child = new Bindings(component, templateProperty.uuid, Context.clone(context))
+        this.child = new Bindings(component, templateProperty.uuid, Context.clone(context));
       } else {
         // 削除
         this.child = null;
