@@ -18,6 +18,8 @@ export class Binding {
   children = [];
   /** @type {Component} */
   component;
+  /** @type {ContextInfo} */
+  context;
 
   /**
    * Nodeへ値を反映する
@@ -43,23 +45,6 @@ export class Binding {
 
   /**
    * 
-   */
-  addEventListener() {
-    const {component, nodeProperty, viewModelProperty, context} = this;
-    /** @type {import("./nodePoperty/ElementEvent.js").ElementEvent} */
-    const eventProperty = nodeProperty;
-    eventProperty.element.addEventListener(eventProperty.eventType, (event) => {
-      event.stopPropagation();
-      const process = new ProcessData(
-        viewModelProperty.viewModel[Symbols.directlyCall], viewModelProperty.viewModel, [viewModelProperty.propertyName, context, event]
-      );
-      component.updateSlot.addProcess(process);
-    });
-
-  }
-
-  /**
-   * 
    * @param {Event} event 
    */
   execEventHandler(event) {
@@ -72,6 +57,9 @@ export class Binding {
     component.updateSlot.addProcess(process);
   }
 
+  /**
+   * 初期化
+   */
   initialize() {
     this.nodeProperty.initialize(this);
     this.viewModelProperty.initialize(this);
@@ -103,5 +91,19 @@ export class Bindings extends Array {
     this.fragment = content;
     this.context = context;
     this.uuid = uuid;
+  }
+
+  /**
+   * 
+   */
+  applyToNode() {
+    this.forEach(binding => binding.applyToNode());
+  }
+
+  /**
+   * 
+   */
+  applyToViewModel() {
+    this.forEach(binding => binding.applyToViewModel());
   }
 }
