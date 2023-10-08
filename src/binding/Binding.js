@@ -19,7 +19,27 @@ export class Binding {
   /** @type {Component} */
   component;
   /** @type {ContextInfo} */
-  context;
+  #context;
+  get context() {
+    return this.#context;
+  }
+  set context(value) {
+    this.#context = value;
+    this.#contextParam = undefined;
+  }
+
+  /** @type {ContextParam} コンテキスト情報 */
+  #contextParam;
+  /** @type {ContextParam} コンテキスト情報 */
+  get contextParam() {
+    if (typeof this.#contextParam === "undefined") {
+      const propName = this.viewModelProperty.propertyName;
+      if (propName.level > 0) {
+        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+      }
+    }
+    return this.#contextParam;
+  }
 
   /**
    * Nodeへ値を反映する
