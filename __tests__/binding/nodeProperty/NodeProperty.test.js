@@ -3,20 +3,24 @@ import { inputFilters } from "../../../src/filter/Builtin.js";
 
 test("NodeProperty property access", () => {
   const node = document.createTextNode("abc");
-  const nodeProperty = new NodeProperty(node, "aaaa", [], {});
-  expect(nodeProperty.node).toBe(node);
-  expect(nodeProperty.name).toBe("aaaa");
-  expect(nodeProperty.nameElements).toEqual(["aaaa"]);
-  expect(nodeProperty.filters).toEqual([]);
-  expect(nodeProperty.inputFilterFuncs).toEqual({});
-
-  nodeProperty.name = "aaaa.bbbb";
-  expect(nodeProperty.name).toBe("aaaa.bbbb");
-  expect(nodeProperty.nameElements).toEqual(["aaaa", "bbbb"]);
-
-  nodeProperty.name = "aaaa.*.bbbb";
-  expect(nodeProperty.name).toBe("aaaa.*.bbbb");
-  expect(nodeProperty.nameElements).toEqual(["aaaa", "*", "bbbb"]);
+  {
+    const nodeProperty = new NodeProperty(node, "aaaa", [], {});
+    expect(nodeProperty.node).toBe(node);
+    expect(nodeProperty.name).toBe("aaaa");
+    expect(nodeProperty.nameElements).toEqual(["aaaa"]);
+    expect(nodeProperty.filters).toEqual([]);
+    expect(nodeProperty.filterFuncs).toEqual({});
+  }
+  {
+    const nodeProperty = new NodeProperty(node, "aaaa.bbbb", [], {});
+    expect(nodeProperty.name).toBe("aaaa.bbbb");
+    expect(nodeProperty.nameElements).toEqual(["aaaa", "bbbb"]);
+  }
+  {
+    const nodeProperty = new NodeProperty(node, "aaaa.*.bbbb", [], {});
+    expect(nodeProperty.name).toBe("aaaa.*.bbbb");
+    expect(nodeProperty.nameElements).toEqual(["aaaa", "*", "bbbb"]);
+  }
 });
 
 test("NodeProperty property value", () => {

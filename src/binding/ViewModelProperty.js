@@ -2,71 +2,107 @@ import "../types.js";
 import { Filter } from "../filter/Filter.js";
 import { MultiValue } from "./nodePoperty/MultiValue.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { Symbols } from "../Symbols.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
   #viewModel;
-  /** @type { ViewModel } */
   get viewModel() {
     return this.#viewModel;
   }
-  set viewModel(value) {
-    this.#viewModel = value;
-  }
+
   /** @type { string } */
   #name;
-  /** @type { string } */
   get name() {
     return this.#name;
   }
-  set name(value) {
-    this.#name = value;
-  }
 
-  /** @type PropertyName */
+  /** @type {PropertyName} */
   get propertyName() {
     return PropertyName.create(this.name);
   }
 
+  /** @type {ContextInfo} */
+  #context;
+  get context() {
+    return this.#context;
+  }
+  set context(value) {
+    this.#context = context;
+    this.#contextParam = undefined;
+  }
+
+  /** @type {ContextParam} コンテキスト情報 */
+  #contextParam;
+  /** @type {ContextParam} コンテキスト情報 */
+  get contextParam() {
+    const propName = this.propertyName;
+    if (typeof this.#contextParam === "undefined" && propName.level > 0) {
+      this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    }
+    return this.#contextParam;
+  }
+
+  /** @type {number[]} */
+  get indexes() {
+    return this.contextParam?.indexes ?? [];
+  }
+
   /** @type {any} */
   get value() {
-    return this.viewModel[this.name];
+    return this.viewModel[Symbols.directlyGet](this.propertyName, this.indexes);
   }
   set value(value) {
-    const thisValue = this.value;
+    const setValue = value => {
+      this.viewModel[Symbols.directlySet](this.propertyName, this.indexes, value);
+    };
     if (value instanceof MultiValue) {
+      const thisValue = this.value;
       if (Array.isArray(thisValue)) {
         const setOfThisValue = new Set(thisValue);
         value.enabled ? setOfThisValue.add(value.value) : setOfThisValue.delete(value.value);
-        this.viewModel[this.name] = Array.from(setOfThisValue);
+        setValue(Array.from(setOfThisValue));
       } else {
         if (value.enabled) {
-          this.value = value.value;
+          setValue(value.value);
         }
       }
     } else {
-      this.viewModel[this.name] = value;
+      setValue(value);
     }
   }
 
   /** @type {Filter[]} */
-  filters;
+  #filters;
+  get filters() {
+    return this.#filters;
+  }
+
+  /** @type {Object<string,FilterFunc>} */
+  #filterFuncs;
+  get filterFuncs() {
+    return this.#filterFuncs;
+  }
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters) : this.value;
+    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters, this.filterFuncs) : this.value;
   }
 
   /**
    * 
    * @param {ViewModel} viewModel 
    * @param {string} name 
+   * @param {ContextInfo} context 
    * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(viewModel, name, filters) {
-    this.viewModel = viewModel;
-    this.name = name;
-    this.filters = filters;
+  constructor(viewModel, name, context, filters, filterFuncs) {
+    this.#viewModel = viewModel;
+    this.#name = name;
+    this.#context = context;
+    this.#filters = filters;
+    this.#filterFuncs = filterFuncs;
   }
 
   /**

@@ -7,18 +7,11 @@ export class NodeProperty {
   get node() {
     return this.#node;
   }
-  set node(value) {
-    this.#node = value;
-  }
 
   /** @type {string} */
   #name;
   get name() {
     return this.#name;
-  }
-  set name(value) {
-    this.#name = value;
-    this.#nameElements = value.split(".");
   }
 
   /** @type {string[]} */
@@ -36,14 +29,20 @@ export class NodeProperty {
   }
 
   /** @type {Filter[]} */
-  filters;
+  #filters;
+  get filters() {
+    return this.#filters;
+  }
 
   /** @type {Object<string,FilterFunc>} */
-  inputFilterFuncs;
+  #filterFuncs;
+  get filterFuncs() {
+    return this.#filterFuncs;
+  }
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.inputFilterFuncs) : this.value;
+    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
   }
 
   /**
@@ -51,13 +50,14 @@ export class NodeProperty {
    * @param {Node} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(node, name, filters, inputFilterFuncs) {
-    this.node = node;
-    this.name = name;
-    this.filters = filters;
-    this.inputFilterFuncs = inputFilterFuncs;
+  constructor(node, name, filters, filterFuncs) {
+    this.#node = node;
+    this.#name = name;
+    this.#nameElements = name.split(".");
+    this.#filters = filters;
+    this.#filterFuncs = filterFuncs;
   }
 
   /**
