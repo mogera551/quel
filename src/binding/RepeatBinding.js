@@ -17,7 +17,8 @@ export class RepeatBinding extends Binding {
     if (this.children.length === 0) {
       return this.nodeProperty.node;
     } else {
-      return this.children[this.children.length - 1].nodes[nodes.length - 1];
+      const nodes = this.children[this.children.length - 1].nodes;
+      return nodes[nodes.length - 1];
     }
   }
 
@@ -25,16 +26,16 @@ export class RepeatBinding extends Binding {
    * 
    */
   applyToNode() {
-    const { component, templateProperty, viewModelProperty, context, currentCount } = this;
+    const { component, templateProperty, viewModelProperty, currentCount } = this;
     /** @type {Array} */
     const filteredViewModelValue = viewModelProperty.filteredValue;
     if (currentCount < filteredViewModelValue.length) {
       this.children.forEach(child => child.applyToNode());
-      const pos = this.context.indexes.length;
+      const pos = viewModelProperty.context.indexes.length;
       const propName = this.viewModelProperty.propertyName;
       const parentIndexes = this.contextParam?.indexes ?? [];
       for(let newIndex = currentCount; newIndex < filteredViewModelValue.length; newIndex++) {
-        const newContext = Context.clone(this.context);
+        const newContext = Context.clone(viewModelProperty.context);
         newContext.indexes.push(newIndex);
         newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
         const bindings = new Bindings(component, templateProperty.uuid, newContext);
@@ -43,7 +44,8 @@ export class RepeatBinding extends Binding {
       }
 
     } else if (currentCount > filteredViewModelValue.length) {
-      const deletedChildren = this.children.splice(filteredViewModelValue.length);
+      const deletedBindings = this.children.splice(filteredViewModelValue.length);
+      // ToDo:破棄
       this.children.forEach(child => child.applyToNode());
     } else {
       this.children.forEach(child => child.applyToNode());

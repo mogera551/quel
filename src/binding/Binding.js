@@ -8,38 +8,21 @@ import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { utils } from "../utils.js";
 
 export class Binding {
+
   /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
   nodeProperty;
+
   /** @type { import("./ViewModelProperty.js").ViewModelProperty } */
   viewModelProperty;
+
   /** @type { Filter[] } */
   filters = [];
+
   /** @type { Bindings[] } */
   children = [];
+
   /** @type {Component} */
   component;
-  /** @type {ContextInfo} */
-  #context;
-  get context() {
-    return this.#context;
-  }
-  set context(value) {
-    this.#context = value;
-    this.#contextParam = undefined;
-  }
-
-  /** @type {ContextParam} コンテキスト情報 */
-  #contextParam;
-  /** @type {ContextParam} コンテキスト情報 */
-  get contextParam() {
-    if (typeof this.#contextParam === "undefined") {
-      const propName = this.viewModelProperty.propertyName;
-      if (propName.level > 0) {
-        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-      }
-    }
-    return this.#contextParam;
-  }
 
   /**
    * Nodeへ値を反映する
@@ -70,9 +53,9 @@ export class Binding {
   execEventHandler(event) {
     event.stopPropagation();
 
-    const {component, viewModelProperty, context} = this;
+    const {component, viewModelProperty} = this;
     const process = new ProcessData(
-      viewModelProperty.viewModel[Symbols.directlyCall], viewModelProperty.viewModel, [viewModelProperty.propertyName, context, event]
+      viewModelProperty.viewModel[Symbols.directlyCall], viewModelProperty.viewModel, [viewModelProperty.propertyName, viewModelProperty.context, event]
     );
     component.updateSlot.addProcess(process);
   }
@@ -84,18 +67,46 @@ export class Binding {
     this.nodeProperty.initialize(this);
     this.viewModelProperty.initialize(this);
   }
+
+  /**
+   * 
+   * @param {Node} node 
+   */
+  appear(node) {
+    this.children.reduce((node, bindings) => bindings.appear(node), node);
+  }
+
+  /**
+   * 
+   */
+  disappear() {
+    this.children.forEach(bindings => bindings.disappear());
+  }
 }
 
 /** @type {Array<Binding>} */
 export class Bindings extends Array {
+
   /** @type {Node[]} */
   nodes = [];
+
   /** @type {DocumentFragment} */
-  fragment;
+  #fragment;
+  get fragment() {
+    return this.#fragment;
+  }
+
   /** @type {ContextInfo} */
-  context;
+  #context;
+  get context() {
+    return this.#context;
+  }
+
   /** @type {string} */
-  uuid;
+  #uuid;
+  get uuid() {
+    return this.#uuid;
+  }
 
   /**
    * 
@@ -108,9 +119,9 @@ export class Bindings extends Array {
     const { binds, content } = ViewTemplate.render(component, template, context);
     this.push(...binds);
     this.nodes = Array.from(content.childNodes);
-    this.fragment = content;
-    this.context = context;
-    this.uuid = uuid;
+    this.#fragment = content;
+    this.#context = context;
+    this.#uuid = uuid;
   }
 
   /**
@@ -125,5 +136,23 @@ export class Bindings extends Array {
    */
   applyToViewModel() {
     this.forEach(binding => binding.applyToViewModel());
+  }
+
+  /**
+   * @param {Node} node
+   * @return {Node}
+   */
+  appear(node) {
+    node.appendChild(this.fragment);
+    return this.reduce((node, binding) => binding.appear(node), this.nodes[this.nodes.length - 1]);
+  }
+
+  /**
+   * 
+   */
+  disappear() {
+    const fragment = this.fragment;
+    this.nodes.forEach(node => fragment.appendChild(node));
+    this.forEach(binding => binding.disappear())
   }
 }

@@ -8,13 +8,15 @@ export class BranchBinding extends Binding {
   }
   set child(value) {
     if (value === null) {
-      this.children.pop();
+      const binding = this.children.pop();
+      // ToDo:破棄
     } else {
       if (this.children.length === 0) {
         this.children.push(value);
       } else {
         this.children[0] = value;
       }
+      this.nodeProperty.node.appendChild(value.fragment);
     }
   }
 
@@ -32,12 +34,12 @@ export class BranchBinding extends Binding {
    * 
    */
   applyToNode() {
-    const { component, templateProperty, viewModelProperty, context, currentValue } = this;
+    const { component, templateProperty, viewModelProperty, currentValue } = this;
     const filteredViewModelValue = viewModelProperty.filteredValue;
     if (currentValue !== filteredViewModelValue) {
       if (filteredViewModelValue) {
         // 生成
-        this.child = new Bindings(component, templateProperty.uuid, Context.clone(context));
+        this.child = new Bindings(component, templateProperty.uuid, Context.clone(viewModelProperty.context));
       } else {
         // 削除
         this.child = null;
