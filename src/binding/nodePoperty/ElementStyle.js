@@ -1,10 +1,10 @@
 import { utils } from "../../utils.js";
 import { ElementProperty } from "./ElementProperty.js";
 
-export class ElementAttribute extends ElementProperty {
+export class ElementStyle extends ElementProperty {
   /** @type {HTMLElement} */
   get htmlElement() {
-    return (this.node instanceof HTMLElement) ? this.node : utils.raise("not htmlElement");
+    return this.node;
   }
 
   /** @type {string} */
@@ -18,5 +18,17 @@ export class ElementAttribute extends ElementProperty {
   }
   set value(value) {
     this.htmlElement.style[this.styleName] = value;
+  }
+
+  /**
+   * 
+   * @param {HTMLElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   */
+  constructor(node, name, filters, inputFilterFuncs) {
+    if (!(node instanceof HTMLElement)) utils.raise("not htmlElement");
+    super(node, name, filters, inputFilterFuncs);
   }
 }

@@ -38,9 +38,12 @@ export class NodeProperty {
   /** @type {Filter[]} */
   filters;
 
+  /** @type {Object<string,FilterFunc>} */
+  inputFilterFuncs;
+
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters) : this.value;
+    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.inputFilterFuncs) : this.value;
   }
 
   /**
@@ -48,11 +51,13 @@ export class NodeProperty {
    * @param {Node} node 
    * @param {string} name 
    * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
-  constructor(node, name, filters) {
+  constructor(node, name, filters, inputFilterFuncs) {
     this.node = node;
     this.name = name;
     this.filters = filters;
+    this.inputFilterFuncs = inputFilterFuncs;
   }
 
   /**
