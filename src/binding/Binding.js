@@ -71,9 +71,10 @@ export class Binding {
   /**
    * 
    * @param {Node} node 
+   * @returns {Node}
    */
   appear(node) {
-    this.children.reduce((node, bindings) => bindings.appear(node), node);
+    return this.children.reduce((node, bindings) => bindings.appear(node), node);
   }
 
   /**
