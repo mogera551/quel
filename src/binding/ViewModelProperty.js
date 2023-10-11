@@ -28,7 +28,7 @@ export class ViewModelProperty {
     return this.#context;
   }
   set context(value) {
-    this.#context = context;
+    this.#context = value;
     this.#contextParam = undefined;
   }
 

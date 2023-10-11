@@ -2,6 +2,7 @@ import "../../src/types.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
 import { Symbols } from "../../src/Symbols.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { MultiValue } from "../../src/binding/nodePoperty/MultiValue.js";
 
 class ViewModel {
   /**
@@ -50,6 +51,7 @@ class ViewModel {
 
   aaa = 100;
   bbb = [10, 20, 30];
+  ccc = "abc";
 }
 
 test("ViewModelProperty property access", () => {
@@ -81,6 +83,30 @@ test("ViewModelProperty property access", () => {
     viewModelProperty.value = 15;
     expect(viewModelProperty.value).toBe(15);
     expect(viewModel.bbb).toEqual([15,20,30]);
+
+    const newContext = { indexes:[1], stack:[{propName: new PropertyName("bbb"), indexes:[1], pos:1}] };
+    viewModelProperty.context = newContext;
+    expect(viewModelProperty.context).toEqual({ indexes:[1], stack:[{propName: new PropertyName("bbb"), indexes:[1], pos:1}] });
+    expect(viewModelProperty.contextParam).toEqual({propName: new PropertyName("bbb"), indexes:[1], pos:1});
+    expect(viewModelProperty.value).toBe(20);
+    viewModelProperty.value = 25;
+    expect(viewModelProperty.value).toBe(25);
+    expect(viewModel.bbb).toEqual([15,25,30]);
+  }
+  {
+    viewModel.aaa = 100;
+    const context = { indexes:[], stack:[] };
+    const viewModelProperty = new ViewModelProperty(viewModel, "aaa", context, [], {});
+    expect(viewModelProperty.value).toBe(100);
+    viewModelProperty.value = new MultiValue(150, false);
+    expect(viewModelProperty.value).toBe(100);
+    expect(viewModel.aaa).toBe(100);
+    viewModelProperty.value = new MultiValue(150, true);
+    expect(viewModelProperty.value).toBe(150);
+    expect(viewModel.aaa).toBe(150);
+    viewModelProperty.value = new MultiValue(200, false);
+    expect(viewModelProperty.value).toBe(150);
+    expect(viewModel.aaa).toBe(150);
   }
 
 });
