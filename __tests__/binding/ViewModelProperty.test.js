@@ -3,6 +3,7 @@ import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
 import { Symbols } from "../../src/Symbols.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { MultiValue } from "../../src/binding/nodePoperty/MultiValue.js";
+import { outputFilters } from "../../src/filter/Builtin.js";
 
 class ViewModel {
   /**
@@ -66,8 +67,10 @@ test("ViewModelProperty property access", () => {
     expect(viewModelProperty.filterFuncs).toEqual({});
     expect(viewModelProperty.viewModel).toBe(viewModel);
     expect(viewModelProperty.value).toBe(100);
+    expect(viewModelProperty.filteredValue).toBe(100);
     viewModelProperty.value = 200;
     expect(viewModelProperty.value).toBe(200);
+    expect(viewModelProperty.filteredValue).toBe(200);
     expect(viewModel.aaa).toBe(200);
   }
   {
@@ -80,8 +83,10 @@ test("ViewModelProperty property access", () => {
     expect(viewModelProperty.filterFuncs).toEqual({});
     expect(viewModelProperty.viewModel).toBe(viewModel);
     expect(viewModelProperty.value).toBe(10);
+    expect(viewModelProperty.filteredValue).toBe(10);
     viewModelProperty.value = 15;
     expect(viewModelProperty.value).toBe(15);
+    expect(viewModelProperty.filteredValue).toBe(15);
     expect(viewModel.bbb).toEqual([15,20,30]);
 
     const newContext = { indexes:[1], stack:[{propName: new PropertyName("bbb"), indexes:[1], pos:1}] };
@@ -92,6 +97,21 @@ test("ViewModelProperty property access", () => {
     viewModelProperty.value = 25;
     expect(viewModelProperty.value).toBe(25);
     expect(viewModel.bbb).toEqual([15,25,30]);
+  }
+  {
+    viewModel.aaa = 100;
+    const context = { indexes:[], stack:[] };
+    const viewModelProperty = new ViewModelProperty(viewModel, "aaa", context, [], {});
+    expect(viewModelProperty.value).toBe(100);
+    viewModelProperty.value = new MultiValue(150, false);
+    expect(viewModelProperty.value).toBe(100);
+    expect(viewModel.aaa).toBe(100);
+    viewModelProperty.value = new MultiValue(150, true);
+    expect(viewModelProperty.value).toBe(150);
+    expect(viewModel.aaa).toBe(150);
+    viewModelProperty.value = new MultiValue(200, true);
+    expect(viewModelProperty.value).toBe(200);
+    expect(viewModel.aaa).toBe(200);
   }
   {
     viewModel.bbb = [10,20,30];
@@ -107,6 +127,16 @@ test("ViewModelProperty property access", () => {
     viewModelProperty.value = new MultiValue(40, true);
     expect(viewModelProperty.value).toEqual([20,30,10,40]);
     expect(viewModel.bbb).toEqual([20,30,10,40]);
+  }
+  {
+    const context = { indexes:[], stack:[] };
+    const viewModelProperty = new ViewModelProperty(viewModel, "ccc", context,  [{name:"toUpperCase", options:[]}], outputFilters);
+    expect(viewModelProperty.value).toBe("abc");
+    expect(viewModelProperty.filteredValue).toBe("ABC");
+    viewModelProperty.value = "def";
+    expect(viewModelProperty.value).toBe("def");
+    expect(viewModelProperty.filteredValue).toBe("DEF");
+    expect(viewModel.ccc).toBe("def");
   }
 
 });

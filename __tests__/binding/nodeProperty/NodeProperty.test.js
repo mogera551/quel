@@ -38,7 +38,7 @@ test("NodeProperty property value", () => {
 
 test("NodeProperty property filtered value", () => {
   const node = document.createTextNode("123");
-  const nodeProperty = new NodeProperty(node, "textContent", [{name:"number", option:[]}], inputFilters);
+  const nodeProperty = new NodeProperty(node, "textContent", [{name:"number", options:[]}], inputFilters);
   expect(nodeProperty.value).toBe("123");
   expect(nodeProperty.filteredValue).toBe(123);
   expect(node.textContent).toBe("123");
