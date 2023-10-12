@@ -94,19 +94,19 @@ test("ViewModelProperty property access", () => {
     expect(viewModel.bbb).toEqual([15,25,30]);
   }
   {
-    viewModel.aaa = 100;
+    viewModel.bbb = [10,20,30];
     const context = { indexes:[], stack:[] };
-    const viewModelProperty = new ViewModelProperty(viewModel, "aaa", context, [], {});
-    expect(viewModelProperty.value).toBe(100);
-    viewModelProperty.value = new MultiValue(150, false);
-    expect(viewModelProperty.value).toBe(100);
-    expect(viewModel.aaa).toBe(100);
-    viewModelProperty.value = new MultiValue(150, true);
-    expect(viewModelProperty.value).toBe(150);
-    expect(viewModel.aaa).toBe(150);
-    viewModelProperty.value = new MultiValue(200, false);
-    expect(viewModelProperty.value).toBe(150);
-    expect(viewModel.aaa).toBe(150);
+    const viewModelProperty = new ViewModelProperty(viewModel, "bbb", context, [], {});
+    expect(viewModelProperty.value).toEqual([10,20,30]);
+    viewModelProperty.value = new MultiValue(10, false);
+    expect(viewModelProperty.value).toEqual([20,30]);
+    expect(viewModel.bbb).toEqual([20,30]);
+    viewModelProperty.value = new MultiValue(10, true);
+    expect(viewModelProperty.value).toEqual([20,30,10]);
+    expect(viewModel.bbb).toEqual([20,30,10]);
+    viewModelProperty.value = new MultiValue(40, true);
+    expect(viewModelProperty.value).toEqual([20,30,10,40]);
+    expect(viewModel.bbb).toEqual([20,30,10,40]);
   }
 
 });
