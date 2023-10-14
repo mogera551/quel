@@ -274,16 +274,17 @@ export class ComponentClassGenerator {
   /**
    * 
    * @param {UserComponentModule} componentModule 
-   * @returns {class<HTMLElement>}
+   * @returns {typeof HTMLElement}
    */
   static generate(componentModule) {
+    /** @type {(module:Module)=>typeof HTMLElement} */
     const getBaseClass = function (module) {
       return class extends HTMLElement {
 
         /** @type {HTMLTemplateElement} */
         static template = module.template;
 
-        /** @type {class<typeof ViewModel>} */
+        /** @type {typeof ViewModel} */
         static ViewModel = module.ViewModel;
 
         /**@type {Object<string,FilterFunc>} */
@@ -308,7 +309,7 @@ export class ComponentClassGenerator {
   
     /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
-    // 同じクラスを登録できないため新しいクラスを生成する
+    // カスタムコンポーネントには同一クラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
     if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") {
       // 自律型カスタム要素
@@ -316,7 +317,7 @@ export class ComponentClassGenerator {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
-      /** @type {classOf<HTMLElement>} */
+      /** @type {typeof HTMLElement} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;

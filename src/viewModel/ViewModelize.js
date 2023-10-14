@@ -2,13 +2,13 @@ import "../types.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /**
- * @typedef {{
- *   removeProps:string[],
- *   definedProps:string[],
- *   accessorProps:string[],
- *   methods:string[]
- * }} ViewModelInfo
+ * @typedef {Object} ViewModelInfo
+ * @property {string[]} removeProps
+ * @property {string[]} definedProps
+ * @property {string[]} accessorProps
+ * @property {string[]} methods
  */
+
 export class ViewModelize {
   /**
    * オブジェクトのすべてのプロパティのデスクリプタを取得する
@@ -55,7 +55,7 @@ export class ViewModelize {
   /**
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {class<ViewModel>} target 
+   * @param {typeof ViewModel} target 
    * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
    */
   static viewModelize(target) {
@@ -92,7 +92,7 @@ export class ViewModelize {
     };
   }
 
-  /** @type {Map<class<ViewModel>,ViewModelInfo>} */
+  /** @type {Map<typeof ViewModel,ViewModelInfo>} */
   static viewModelInfoByConstructor = new Map;
   
 }

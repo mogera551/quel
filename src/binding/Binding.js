@@ -1,6 +1,5 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { Filter } from "../filter/Filter.js";
 import { Templates } from "../view/Templates.js";
 import { ViewTemplate } from "../view/View.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
@@ -10,19 +9,37 @@ import { utils } from "../utils.js";
 export class Binding {
 
   /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
-  nodeProperty;
+  #nodeProperty;
+  get nodeProperty() {
+    return this.#nodeProperty
+  }
 
   /** @type { import("./ViewModelProperty.js").ViewModelProperty } */
-  viewModelProperty;
+  #viewModelProperty;
+  get viewModelProperty() {
+    return this.#viewModelProperty;
+  }
 
-  /** @type { Filter[] } */
-  filters = [];
+  /** @type {Component} */
+  #component;
+  get component() {
+    return this.#component;
+  }
 
   /** @type { Bindings[] } */
   children = [];
 
-  /** @type {Component} */
-  component;
+  /**
+   * 
+   * @param {Component} component 
+   * @param {import("./nodePoperty/NodeProperty.js").NodeProperty} nodeProperty 
+   * @param {import("./ViewModelProperty.js").ViewModelProperty} viewModelProperty 
+   */
+  constructor(component, nodeProperty, viewModelProperty) {
+    this.#component = component;
+    this.#nodeProperty = nodeProperty;
+    this.#viewModelProperty = viewModelProperty;
+  }
 
   /**
    * Nodeへ値を反映する

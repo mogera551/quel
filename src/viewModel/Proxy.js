@@ -496,7 +496,7 @@ export class ViewModelHandler extends Handler {
 /**
  * 
  * @param {Component} component 
- * @param {class<ViewModel>} viewModelClass 
+ * @param {typeof ViewModel} viewModelClass 
  * @returns {Proxy<ViewModel>}
  */
 export function createViewModel(component, viewModelClass) {

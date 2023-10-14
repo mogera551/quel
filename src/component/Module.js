@@ -12,10 +12,10 @@ export class Module {
   /** @type {string} */
   css;
 
-  /** @type {class<ViewModel>} */
+  /** @type {typeof ViewModel} */
   ViewModel;
 
-  /** @type {classOf<HTMLElement>} */
+  /** @type {typeof HTMLElement} */
   extendClass;
 
   /** @type {string} */
