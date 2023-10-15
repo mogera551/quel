@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">76.47% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>13/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">62.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>5/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">76.47% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>13/17</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -115,30 +115,30 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -160,33 +160,33 @@ import { Context } from "../../context/Context.js";
 &nbsp;
 export class IfBind extends TemplateBind {
   /** @type {TemplateChild | undefined} */
-<span class="fstat-no" title="function not covered" >  ge</span>t templateChild() {
-<span class="cstat-no" title="statement not covered" >    return this.templateChildren[0];</span>
+  get templateChild() {
+    return this.templateChildren[0];
   }
-<span class="fstat-no" title="function not covered" >  se</span>t templateChild(value) {
-<span class="cstat-no" title="statement not covered" >    if (this.templateChildren.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >      this.templateChildren.push(value);</span>
+  set templateChild(value) {
+    if (this.templateChildren.length === 0) {
+      this.templateChildren.push(value);
     } else {
-<span class="cstat-no" title="statement not covered" >      this.templateChildren[0] = value;</span>
+      this.templateChildren[0] = value;
     }
   }
 &nbsp;
   /**
    * 
    */
-<span class="fstat-no" title="function not covered" >  up</span>dateNode() {
-    const { templateChild, context, filteredViewModelValue, node } = <span class="cstat-no" title="statement not covered" >this;</span>
-    const currentValue = <span class="cstat-no" title="statement not covered" >typeof templateChild !== "undefined";</span>
-<span class="cstat-no" title="statement not covered" >    if (currentValue !== filteredViewModelValue) {</span>
-<span class="cstat-no" title="statement not covered" >      if (filteredViewModelValue) {</span>
-        const newTemplateChild = <span class="cstat-no" title="statement not covered" >TemplateChild.create(this, Context.clone(context));</span>
-<span class="cstat-no" title="statement not covered" >        TemplateBind.appendToParent(node, [newTemplateChild]);</span>
-<span class="cstat-no" title="statement not covered" >        this.templateChild = newTemplateChild;</span>
+  updateNode() {
+    const { templateChild, context, filteredViewModelValue, node } = this;
+    const currentValue = typeof templateChild !== "undefined";
+    if (currentValue !== filteredViewModelValue) {
+      if (filteredViewModelValue) {
+        const newTemplateChild = TemplateChild.create(this, Context.clone(context));
+        TemplateBind.appendToParent(node, [newTemplateChild]);
+        this.templateChild = newTemplateChild;
       } else {
-<span class="cstat-no" title="statement not covered" >        TemplateBind.removeFromParent([templateChild]);</span>
-<span class="cstat-no" title="statement not covered" >        this.templateChild = undefined;</span>
+        TemplateBind.removeFromParent([templateChild]);
+        this.templateChild = undefined;
       }
-    } else {
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>{
 <span class="cstat-no" title="statement not covered" >      templateChild.updateNode();</span>
     }
   }
@@ -208,7 +208,7 @@ export class IfBind extends TemplateBind {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-15T21:31:08.308Z
+                at 2023-10-15T22:29:31.333Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

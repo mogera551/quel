@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">17.85% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/28</span>
+                <span class='fraction'>5/28</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">42.85% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>3/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">20.83% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/24</span>
+                <span class='fraction'>5/24</span>
             </div>
         
             
@@ -124,17 +124,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -146,10 +146,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -178,13 +178,13 @@ import { Bindings, Binding } from "./Binding.js";
 &nbsp;
 export class RepeatBinding extends Binding {
   /** @type {number} */
-<span class="fstat-no" title="function not covered" >  ge</span>t currentCount() {
-<span class="cstat-no" title="statement not covered" >    return this.children.count;</span>
+  get currentCount() {
+    return this.children.count;
   }
 &nbsp;
   /** @type {import("./nodePoperty/TemplateProperty.js").TemplateProperty} */
-<span class="fstat-no" title="function not covered" >  ge</span>t templateProperty() {
-<span class="cstat-no" title="statement not covered" >    return this.nodeProperty;</span>
+  get templateProperty() {
+    return this.nodeProperty;
   }
 &nbsp;
   /** @type {Node} */
@@ -200,11 +200,11 @@ export class RepeatBinding extends Binding {
   /**
    * 
    */
-<span class="fstat-no" title="function not covered" >  ap</span>plyToNode() {
-    const { component, templateProperty, viewModelProperty, currentCount } = <span class="cstat-no" title="statement not covered" >this;</span>
+  applyToNode() {
+    const { component, templateProperty, viewModelProperty, currentCount } = this;
     /** @type {Array} */
-    const filteredViewModelValue = <span class="cstat-no" title="statement not covered" >viewModelProperty.filteredValue;</span>
-<span class="cstat-no" title="statement not covered" >    if (currentCount &lt; filteredViewModelValue.length) {</span>
+    const filteredViewModelValue = viewModelProperty.filteredValue;
+    if (currentCount &lt; filteredViewModelValue.length) {
 <span class="cstat-no" title="statement not covered" >      this.children.forEach(<span class="fstat-no" title="function not covered" >ch</span>ild =&gt; <span class="cstat-no" title="statement not covered" >child.applyToNode())</span>;</span>
       const pos = <span class="cstat-no" title="statement not covered" >viewModelProperty.context.indexes.length;</span>
       const propName = <span class="cstat-no" title="statement not covered" >this.viewModelProperty.propertyName;</span>
@@ -235,7 +235,7 @@ export class RepeatBinding extends Binding {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-15T21:31:08.308Z
+                at 2023-10-15T22:29:31.333Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
