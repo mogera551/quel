@@ -6,6 +6,7 @@ test("ElementAttribute", () => {
   const elementAttribute = new ElementAttribute(element, "attr.title", [], {});
   expect(elementAttribute.attributeName).toBe("title");
   expect(elementAttribute.value).toBe("abc");
+  expect(elementAttribute.applicable).toBe(true);
   expect(element.title).toBe("abc");
 
   elementAttribute.value = "def";

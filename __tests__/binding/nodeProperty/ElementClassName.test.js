@@ -4,6 +4,7 @@ test("ElementClassName", () => {
   const element = document.createElement("div");
   const elementClassName = new ElementClassName(element, "class", [], {});
   expect(elementClassName.value).toEqual([]);
+  expect(elementClassName.applicable).toBe(true);
 
   element.className = "aaa";
   expect(elementClassName.value).toEqual(["aaa"]);

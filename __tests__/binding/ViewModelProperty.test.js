@@ -68,6 +68,7 @@ test("ViewModelProperty property access", () => {
     expect(viewModelProperty.viewModel).toBe(viewModel);
     expect(viewModelProperty.value).toBe(100);
     expect(viewModelProperty.filteredValue).toBe(100);
+    expect(viewModelProperty.applicable).toBe(true);
     viewModelProperty.value = 200;
     expect(viewModelProperty.value).toBe(200);
     expect(viewModelProperty.filteredValue).toBe(200);

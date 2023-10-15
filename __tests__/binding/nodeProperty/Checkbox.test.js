@@ -10,6 +10,7 @@ test("Checkbox", () => {
   element.checked = false;
   expect(checkbox.value).toEqual({value:"100", enabled:false});
   expect(checkbox.filteredValue).toEqual({value:"100", enabled:false});
+  expect(checkbox.applicable).toBe(true);
 
   checkbox.value = ["100"];
   expect(element.checked).toBe(true);

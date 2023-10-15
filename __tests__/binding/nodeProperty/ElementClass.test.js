@@ -5,6 +5,7 @@ test("ElementClass", () => {
   const elementClass = new ElementClass(element, "class.selected", [], {});
   expect(elementClass.className).toBe("selected");
   expect(elementClass.value).toBe(false);
+  expect(elementClass.applicable).toBe(true);
 
   element.className = "selected";
   expect(elementClass.value).toBe(true);

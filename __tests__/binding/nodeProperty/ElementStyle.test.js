@@ -6,6 +6,7 @@ test("ElementStyle", () => {
   const elementStyle = new ElementStyle(element, "style.width", [], {});
   expect(elementStyle.styleName).toBe("width");
   expect(elementStyle.value).toBe("100px");
+  expect(elementStyle.applicable).toBe(true);
   expect(element.style["width"]).toBe("100px");
 
   elementStyle.value = "200px";

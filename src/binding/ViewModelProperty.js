@@ -3,6 +3,7 @@ import { Filter } from "../filter/Filter.js";
 import { MultiValue } from "./nodePoperty/MultiValue.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../Symbols.js";
+import { utils } from "../utils.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -87,6 +88,11 @@ export class ViewModelProperty {
   /** @type {any} */
   get filteredValue() {
     return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters, this.filterFuncs) : this.value;
+  }
+
+  /** @type {boolean} */
+  get applicable() {
+    return true;
   }
 
   /**

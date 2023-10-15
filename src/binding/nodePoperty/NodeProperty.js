@@ -45,6 +45,11 @@ export class NodeProperty {
     return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
   }
 
+  /** @type {boolean} */
+  get applicable() {
+    return true;
+  }
+
   /**
    * 
    * @param {Node} node 

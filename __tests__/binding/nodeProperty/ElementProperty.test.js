@@ -6,6 +6,7 @@ test("ElementProperty", () => {
   const elementProperty = new ElementProperty(element, "textContent", [], {});
   expect(elementProperty.node).toBe(element);
   expect(elementProperty.element).toBe(element);
+  expect(elementProperty.applicable).toBe(true);
 
   expect(() => {
     const node = document.createTextNode("abc");

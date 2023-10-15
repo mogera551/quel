@@ -10,6 +10,7 @@ test("NodeProperty property access", () => {
     expect(nodeProperty.nameElements).toEqual(["aaaa"]);
     expect(nodeProperty.filters).toEqual([]);
     expect(nodeProperty.filterFuncs).toEqual({});
+    expect(nodeProperty.applicable).toBe(true);
   }
   {
     const nodeProperty = new NodeProperty(node, "aaaa.bbbb", [], {});

@@ -6,6 +6,11 @@ export class ElementEvent extends ElementProperty {
     return this.name.slice(2); // on～
   }
 
+  /** @type {boolean} */
+  get applicable() {
+    return false;
+  }
+
   /**
    * @param {import("../Binding.js").Binding} binding
    */

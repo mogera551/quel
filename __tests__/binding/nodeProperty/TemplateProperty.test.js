@@ -11,6 +11,7 @@ test("TemplateProperty property access", () => {
     const templateProperty = new TemplateProperty(node, "if", [], {});
     expect(templateProperty.uuid).toBe("123-123");
     expect(templateProperty.template).toBe(template);
+    expect(templateProperty.applicable).toBe(true);
   }
   {
     const node = document.createComment("@@|123-124");

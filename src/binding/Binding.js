@@ -46,6 +46,7 @@ export class Binding {
    */
   applyToNode() {
     const { component, nodeProperty, viewModelProperty } = this;
+    if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue;
     if (nodeProperty.value !== (filteredViewModelValue ?? "")) {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
@@ -59,6 +60,7 @@ export class Binding {
    */
   applyToViewModel() {
     const { nodeProperty, viewModelProperty } = this;
+    if (!viewModelProperty.applicable) return;
     const filteredNodelValue = nodeProperty.filteredValue;
     viewModelProperty.value = filteredNodelValue;
   }
@@ -83,6 +85,7 @@ export class Binding {
   initialize() {
     this.nodeProperty.initialize(this);
     this.viewModelProperty.initialize(this);
+    this.applyToNode();
   }
 
   /**

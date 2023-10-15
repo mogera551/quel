@@ -10,6 +10,7 @@ test("Radio", () => {
   element.checked = false;
   expect(radio.value).toEqual({value:"100", enabled:false});
   expect(radio.filteredValue).toEqual({value:"100", enabled:false});
+  expect(radio.applicable).toBe(true);
 
   radio.value = "100";
   expect(element.checked).toBe(true);
