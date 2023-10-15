@@ -13,7 +13,8 @@ import { ElementEvent } from "./nodePoperty/ElementEvent.js";
 import { ElementClass } from "./nodePoperty/ElementClass.js";
 import { ElementAttribute } from "./nodePoperty/ElementAttribute.js";
 import { ElementStyle } from "./nodePoperty/ElementStyle.js";
-/** @type {import("../types.js").ContextInfo} */
+import { ElementProperty } from "./nodePoperty/ElementProperty.js";
+
 export class Factory {
 
   /**
@@ -24,7 +25,7 @@ export class Factory {
    * @param {ViewModel} viewModel 
    * @param {string} viewModelPropertyName 
    * @param {Filter[]} filters 
-   * @param {import("../types.js").ContextInfo} context 
+   * @param {ContextInfo} context 
    * @returns {Binding}
    */
   static create(component, node, nodePropertyName, viewModel, viewModelPropertyName, filters, context) {
@@ -60,6 +61,8 @@ export class Factory {
         classOfNodeProperty = ElementAttribute;
       } else if (nodePropertyName.startsWith("style.")) {
         classOfNodeProperty = ElementStyle;
+      } else if (node instanceof Element) {
+        classOfNodeProperty = ElementProperty;
       } else {
         classOfNodeProperty = NodeProperty;
       }
