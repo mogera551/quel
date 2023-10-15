@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">79.41% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>33/33</span>
+                <span class='fraction'>27/34</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">77.27% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>22/22</span>
+                <span class='fraction'>17/22</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">79.41% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>33/33</span>
+                <span class='fraction'>27/34</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -141,7 +141,8 @@
 <a name='L76'></a><a href='#L76'>76</a>
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
-<a name='L79'></a><a href='#L79'>79</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -173,20 +174,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
@@ -211,13 +212,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
 import { utils } from "../utils.js";
@@ -256,15 +258,15 @@ export class Factory {
     let classOfNodeProperty = undefined;
     const classOfViewModelProperty = ViewModelProperty;
 &nbsp;
-    if (node instanceof Comment) {
-      if (nodePropertyName === "if") {
-        classOfNodeProperty = TemplateProperty;
-        classOfBinding = BranchBinding;
-      } else if (nodePropertyName === "loop") {
-        classOfNodeProperty = TemplateProperty;
-        classOfBinding = RepeatBinding;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (node instanceof Comment) {
+<span class="cstat-no" title="statement not covered" >      if (nodePropertyName === "if") {</span>
+<span class="cstat-no" title="statement not covered" >        classOfNodeProperty = TemplateProperty;</span>
+<span class="cstat-no" title="statement not covered" >        classOfBinding = BranchBinding;</span>
+      } else <span class="cstat-no" title="statement not covered" >if (nodePropertyName === "loop") {</span>
+<span class="cstat-no" title="statement not covered" >        classOfNodeProperty = TemplateProperty;</span>
+<span class="cstat-no" title="statement not covered" >        classOfBinding = RepeatBinding;</span>
       } else {
-        utils.raise(`unknown node property ${nodePropertyName}`);
+<span class="cstat-no" title="statement not covered" >        utils.raise(`unknown node property ${nodePropertyName}`);</span>
       }
     } else {
       classOfBinding = Binding;
@@ -294,6 +296,7 @@ export class Factory {
     const viewModelProperty = new classOfViewModelProperty(viewModel, viewModelPropertyName, context, filters, component.outputFilters);
     /** @type {Binding} */
     const binding = new classOfBinding(component, nodeProperty, viewModelProperty);
+    binding.initialize();
 &nbsp;
     return binding;
   }
@@ -304,7 +307,7 @@ export class Factory {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-15T20:19:53.196Z
+                at 2023-10-15T21:31:08.308Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

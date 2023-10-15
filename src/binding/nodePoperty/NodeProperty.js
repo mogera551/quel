@@ -45,7 +45,7 @@ export class NodeProperty {
     return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
   }
 
-  /** @type {boolean} */
+  /** @type {boolean} applyToNode()の対象かどうか */
   get applicable() {
     return true;
   }
@@ -66,6 +66,8 @@ export class NodeProperty {
   }
 
   /**
+   * 初期化処理
+   * 特に何もしない
    * @param {import("../Binding.js").Binding} binding
    */
   initialize(binding) {

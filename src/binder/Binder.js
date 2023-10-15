@@ -11,7 +11,7 @@ export class Binder {
    * @param {Node[]} nodes
    * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {BindInfo[]}
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
   static bind(nodes, component, context) {
     return nodes.flatMap(node => 

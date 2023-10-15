@@ -17,7 +17,7 @@ export class BindToTemplate {
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {BindInfo[]}
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
   static bind(node, component, context) {
     /** @type {ViewModel} */
@@ -32,11 +32,9 @@ export class BindToTemplate {
     const bindText = template.getAttribute(DATASET_BIND_PROPERTY);
 
     // パース
-    /** @type {BindInfo[]} */
-    let binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
-    binds = binds.length > 0 ? [ binds[0] ] : [];
-    binds.forEach(BindToDom.applyUpdateNode);
+    /** @type {import("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
 
-    return binds;
+    return bindings;
   }
 }

@@ -49,7 +49,7 @@ export class Binding {
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue;
     if (nodeProperty.value !== (filteredViewModelValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(nodeProperty.node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
         nodeProperty.value = filteredViewModelValue ?? "";
       }));
     }
@@ -77,6 +77,32 @@ export class Binding {
       viewModelProperty.viewModel[Symbols.directlyCall], viewModelProperty.viewModel, [viewModelProperty.propertyName, viewModelProperty.context, event]
     );
     component.updateSlot.addProcess(process);
+  }
+
+  /**
+   * @param {(event:Event)=>void}
+   */
+  getExecEventHandler() {
+    const binding = this;
+    return event => binding.execEventHandler(event);
+  }
+
+  /**
+   * 
+   * @param {Event} event 
+   */
+  execDefautEventHandler(event) {
+    event.stopPropagation();
+    const process = new ProcessData(this.applyToViewModel, this, []);
+    component.updateSlot.addProcess(process);
+  }
+
+  /**
+   * @param {(event:Event)=>void}
+   */
+  getExecDefaultEventHandler() {
+    const binding = this;
+    return event => binding.execDefautEventHandler(event);
   }
 
   /**

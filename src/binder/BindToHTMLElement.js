@@ -65,53 +65,44 @@ export class BindToHTMLElement {
     const defaultName = getDefaultProperty(element);
 
     // パース
-    /** @type {BindInfo[]} */
-    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
-    binds.forEach(BindToDom.applyUpdateNode);
+    /** @type {import("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
 
     // イベントハンドラ設定
     /** @type {boolean} デフォルトイベントを設定したかどうか */
     let hasDefaultEvent = false;
 
-    /** @type {BindInfo|null} */
-    let defaultBind = null;
+    /** @type {import("../binding/Binding.js").Binding|null} */
+    let defaultBinding = null;
 
-    /** @type {Radio|null} */
-    let radioBind = null;
+    /** @type {import("../binding/Radio.js").Radio|null} */
+    let radioBinding = null;
 
-    /** @type {Checkbox|null} */
-    let checkboxBind = null;
+    /** @type {import("../binding/Checkbox.js").Checkbox|null} */
+    let checkboxBinding = null;
 
-    binds.forEach(bind => {
-      hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
-      radioBind = (bind instanceof Radio) ? bind : radioBind;
-      checkboxBind = (bind instanceof Checkbox) ? bind : checkboxBind;
-      defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
-      toEvent(bind)?.addEventListener();
+    bindings.forEach(binding => {
+      hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
+      radioBinding = (binding instanceof Radio) ? binding : radioBinding;
+      checkboxBinding = (binding instanceof Checkbox) ? binding : checkboxBinding;
+      defaultBinding = (binding.nodeProperty === defaultName) ? binding : defaultBinding;
     });
 
-    /** @type {(bind:BindInfo)=>void} */
-    const setDefaultEventHandler = (bind) => {
-      const eventHandler = event => {
-        event.stopPropagation();
-        const process = new ProcessData(bind.updateViewModel, bind, []);
-        component.updateSlot.addProcess(process);
-      };
-      element.addEventListener(DEFAULT_EVENT_TYPE, eventHandler);
-      bind.defaultEventHandler = eventHandler;
-      bind.defaultEventType = DEFAULT_EVENT_TYPE;
+    /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
+    const setDefaultEventHandler = (binding) => {
+      element.addEventListener(DEFAULT_EVENT_TYPE, binding.getExecDefaultEventHandler());
     }
-    if (radioBind) {
-      setDefaultEventHandler(radioBind);
-    } else if (checkboxBind) {
-      setDefaultEventHandler(checkboxBind);
-    } else if (defaultBind && !hasDefaultEvent && isInputableElement(node)) {
+    if (radioBinding) {
+      setDefaultEventHandler(radioBinding);
+    } else if (checkboxBinding) {
+      setDefaultEventHandler(checkboxBinding);
+    } else if (defaultBinding && !hasDefaultEvent && isInputableElement(node)) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
       // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
       // ・nodeが入力系（input, textarea, select） → 入力系に限定
-      setDefaultEventHandler(defaultBind);
+      setDefaultEventHandler(defaultBinding);
     }
-    return binds;
+    return bindings;
   }
 }

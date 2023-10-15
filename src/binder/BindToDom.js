@@ -1,5 +1,5 @@
 import "../types.js";
-import { Factory } from "../bindInfo/Factory.js";
+import { Factory } from "../binding/Factory.js";
 import { Parser } from "./Parser.js";
 
 export class BindToDom {
@@ -11,18 +11,11 @@ export class BindToDom {
    * @param {ContextInfo} context
    * @param {string} text data-bind属性値
    * @param {string} defaultName
-   * @returns {BindInfo[]}
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
   static parseBindText = (node, component, viewModel, context, text, defaultName) => {
-    const bindInfos = 
-      Parser.parse(text, defaultName).map(info => Factory.create(component, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters, context));
-    return bindInfos;
+    return Parser.parse(text, defaultName).map(info => 
+      Factory.create(component, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters, context));
   }
 
-  /**
-   * 
-   * @param {BindInfo} bind 
-   * @returns {void}
-   */
-  static applyUpdateNode = bind => bind.updateNode();
 } 

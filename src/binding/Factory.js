@@ -73,6 +73,7 @@ export class Factory {
     const viewModelProperty = new classOfViewModelProperty(viewModel, viewModelPropertyName, context, filters, component.outputFilters);
     /** @type {Binding} */
     const binding = new classOfBinding(component, nodeProperty, viewModelProperty);
+    binding.initialize();
 
     return binding;
   }

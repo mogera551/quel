@@ -1,7 +1,6 @@
 import "../types.js";
 import { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
-import { Event } from "../bindInfo/Event.js";
 
 const DATASET_BIND_PROPERTY = "data-bind";
 
@@ -12,20 +11,13 @@ const DATASET_BIND_PROPERTY = "data-bind";
  */
 const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`not SVGElement`);
 
-/**
- * 
- * @param {BindInfo} bind 
- * @returns {Event|undefined}
- */
-const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
-
 export class BindToSVGElement {
   /**
    * バインドを実行する
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {BindInfo[]}
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
   static bind(node, component, context) {
     /** @type {ViewModel} */
@@ -38,16 +30,10 @@ export class BindToSVGElement {
     const defaultName = undefined;
 
     // パース
-    /** @type {BindInfo[]} */
-    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
-    binds.forEach(BindToDom.applyUpdateNode);
+    /** @type {import("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
 
-    // イベントハンドラ設定
-    binds.forEach(bind => {
-      toEvent(bind)?.addEventListener();
-    });
-
-    return binds;
+    return bindings;
   }
 
 }

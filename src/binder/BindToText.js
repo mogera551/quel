@@ -1,5 +1,5 @@
 import "../types.js";
-import  { utils } from "../utils.js";
+import { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
 
 const DEFAULT_PROPERTY = "textContent";
@@ -17,7 +17,7 @@ export class BindToText {
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {BindInfo[]}
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
   static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
@@ -32,11 +32,10 @@ export class BindToText {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    /** @type {BindInfo[]} */
-    const binds = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
-    binds.forEach(BindToDom.applyUpdateNode);
+    /** @type {Binimport("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
 
-    return binds;
+    return bindings;
   }
 
 }
