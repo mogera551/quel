@@ -30,13 +30,6 @@ const getDefaultProperty = element => {
 };
 
 /**
- * Eventクラスへ変換
- * @param {BindInfo} bind 
- * @returns {Event|undefined}
- */
-const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
-
-/**
  * ユーザー操作によりデフォルト値が変わるかどうか
  * getDefaultPropertyと似ているが、HTMLOptionElementを含まない
  * @param { Node } node
@@ -52,7 +45,7 @@ export class BindToHTMLElement {
    * @param {Node} node 
    * @param {Component} component
    * @param {ContextInfo} context
-   * @returns {BindInfo[]}
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
   static bind(node, component, context) {
     /** @type {ViewModel} */

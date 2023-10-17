@@ -19,8 +19,10 @@ import { Templates } from "../../src/view/Templates.js";
 
 /** @type {Component} */
 const component = {
-  inputFilters:{},
-  outputFilters:{},
+  filters: {
+    in:{},
+    out:{},
+  },
   updateSlot:{
     addNodeUpdate:(update) => {
       Reflect.apply(update.updateFunc, update, []);

@@ -51,11 +51,11 @@ export class ViewModelProperty {
 
   /** @type {any} */
   get value() {
-    return this.viewModel[Symbols.directlyGet](this.propertyName, this.indexes);
+    return this.viewModel[Symbols.directlyGet](this.name, this.indexes);
   }
   set value(value) {
     const setValue = value => {
-      this.viewModel[Symbols.directlySet](this.propertyName, this.indexes, value);
+      this.viewModel[Symbols.directlySet](this.name, this.indexes, value);
     };
     if (value instanceof MultiValue) {
       const thisValue = this.value;

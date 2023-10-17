@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.92% </span>
+                <span class="strong">64.1% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>30/39</span>
+                <span class='fraction'>25/39</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">71.42% </span>
+                <span class="strong">64.28% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>10/14</span>
+                <span class='fraction'>9/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">62.5% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>12/16</span>
+                <span class='fraction'>10/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">63.88% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>27/36</span>
+                <span class='fraction'>23/36</span>
             </div>
         
             
@@ -235,8 +235,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -279,9 +279,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -317,9 +317,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -373,7 +373,7 @@ export class TemplateChild {
    */
   removeFromParent() {
     this.childNodes.forEach(node =&gt; this.fragment.appendChild(node));
-    this.binds.forEach(bind =&gt; bind.removeFromParent());
+    this.binds.forEach(<span class="fstat-no" title="function not covered" >bi</span>nd =&gt; <span class="cstat-no" title="statement not covered" >bind.removeFromParent())</span>;
   }
 &nbsp;
   /**
@@ -415,11 +415,11 @@ export class TemplateChild {
    * 削除したTemplateChildを再利用のため保存しておく
    * @param {TemplateChild} templateChild 
    */
-  static dispose(templateChild) {
-    const children = this.templateChildrenByUUID.get(templateChild.uuid);
-    if (typeof children === "undefined") {
-      this.templateChildrenByUUID.set(templateChild.uuid, [templateChild]);
-    } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+<span class="fstat-no" title="function not covered" >  st</span>atic dispose(templateChild) {
+    const children = <span class="cstat-no" title="statement not covered" >this.templateChildrenByUUID.get(templateChild.uuid);</span>
+<span class="cstat-no" title="statement not covered" >    if (typeof children === "undefined") {</span>
+<span class="cstat-no" title="statement not covered" >      this.templateChildrenByUUID.set(templateChild.uuid, [templateChild]);</span>
+    } else {
 <span class="cstat-no" title="statement not covered" >      children.push(templateChild);</span>
     }
   }
@@ -456,7 +456,7 @@ export class TemplateBind extends BindInfo {
   static removeFromParent(templateChildren) {
     templateChildren.forEach(templateChild =&gt; {
       templateChild.removeFromParent();
-      TemplateChild.dispose(templateChild);
+<span class="cstat-no" title="statement not covered" >      TemplateChild.dispose(templateChild);</span>
     });
   }
 &nbsp;
@@ -481,7 +481,7 @@ export class TemplateBind extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-15T22:29:31.333Z
+                at 2023-10-17T23:04:08.015Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -68,9 +68,9 @@ export class Factory {
       }
     }
     /** @type {NodeProperty} */
-    const nodeProperty = new classOfNodeProperty(node, nodePropertyName, filters, component.inputFilters);
+    const nodeProperty = new classOfNodeProperty(node, nodePropertyName, filters, component.filters.in);
     /** @type {ViewModelProperty}  */
-    const viewModelProperty = new classOfViewModelProperty(viewModel, viewModelPropertyName, context, filters, component.outputFilters);
+    const viewModelProperty = new classOfViewModelProperty(viewModel, viewModelPropertyName, context, filters, component.filters.out);
     /** @type {Binding} */
     const binding = new classOfBinding(component, nodeProperty, viewModelProperty);
     binding.initialize();

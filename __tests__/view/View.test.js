@@ -4,6 +4,8 @@ import { createViewModel } from "../../src/viewModel/Proxy.js";
 //import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { View } from "../../src/view/View.js";
 import { Module } from "../../src/component/Module.js";
+import { TemplateProperty } from "../../src/binding/nodePoperty/TemplateProperty.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -48,16 +50,19 @@ test ("View render", async () => {
   const binds = View.render(root, component, template);
   expect(binds.length).toBe(1);
   expect(binds[0].component).toBe(component);
-//  expect(binds[0].contextBind).toBe(null);
-  expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].eventType).toBe(undefined);
-  expect(binds[0].filters).toEqual([]);
-//  expect(binds[0].parentContextBind).toBe(null);
-//  expect(binds[0].positionContextIndexes).toBe(-1);
-//  expect(binds[0].type).toBe(NodePropertyType.property);
-  expect(binds[0].viewModel).toBe(component.viewModel);
-  expect(binds[0].nodeProperty).toBe("textContent");
-  expect(binds[0].viewModelProperty).toBe("aaa");
+  expect(binds[0].children).toEqual([]);
+  expect(binds[0].nodeProperty.constructor).toBe(TemplateProperty);
+  expect(binds[0].nodeProperty.node.constructor).toBe(HTMLDivElement);
+  expect(binds[0].nodeProperty.name).toBe("textContent");
+  expect(binds[0].nodeProperty.nameElements).toEqual(["textContent"]);
+  expect(binds[0].nodeProperty.applicable).toBe(true);
+  expect(binds[0].nodeProperty.value).toBe("");
+
+  expect(binds[0].viewModelProperty.viewModel).toBe(component.viewModel);
+  expect(binds[0].viewModelProperty.name).toBe("aaa");
+  expect(binds[0].viewModelProperty.applicable).toBe(true);
+  expect(binds[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
+  expect(binds[0].viewModelProperty.value).toBe(100);
   expect(root.innerHTML).toEqual(`<div data-bind="aaa"></div>`);
   expect(component.updateSlot.nodeUpdator.queue.length).toBe(1);
   expect(component.updateSlot.nodeUpdator.queue[0].property).toBe("textContent");
