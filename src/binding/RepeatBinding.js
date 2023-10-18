@@ -4,7 +4,7 @@ import { Bindings, Binding } from "./Binding.js";
 export class RepeatBinding extends Binding {
   /** @type {number} */
   get currentCount() {
-    return this.children.count;
+    return this.children.length;
   }
 
   /** @type {import("./nodePoperty/TemplateProperty.js").TemplateProperty} */

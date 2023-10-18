@@ -8,10 +8,11 @@ import { outputFilters } from "../../src/filter/Builtin.js";
 class ViewModel {
   /**
    * 
-   * @param {PropertyName} propertyName 
+   * @param {string} name 
    * @param {number[]} indexes 
    */
-  [Symbols.directlyGet](propertyName, indexes) {
+  [Symbols.directlyGet](name, indexes) {
+    const propertyName = PropertyName.create(name);
     let index = indexes.length - 1;
     const getter = (paths) => {
       if (paths.length === 0) return this;
@@ -27,11 +28,12 @@ class ViewModel {
 
   /**
    * 
-   * @param {PropertyName} propertyName 
+   * @param {string} name 
    * @param {number[]} indexes 
    * @param {any} value
    */
-  [Symbols.directlySet](propertyName, indexes, value) {
+  [Symbols.directlySet](name, indexes, value) {
+    const propertyName = PropertyName.create(name);
     let index = indexes.length - 1;
     let last = propertyName.lastPathName;
     if (last === "*") {

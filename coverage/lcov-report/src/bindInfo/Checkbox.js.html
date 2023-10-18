@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">5.55% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>18/18</span>
+                <span class='fraction'>1/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>7/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">6.25% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>1/16</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -116,80 +116,80 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import  { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
 import { Filter } from "../filter/Filter.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 &nbsp;
-const toHTMLInputElement = node =&gt; (node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');
+const toHTMLInputElement = <span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >(node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');</span>
 &nbsp;
 export class Checkbox extends BindInfo {
   /** @type {HTMLInputElement} */
-  get checkbox() {
-    const input = toHTMLInputElement(this.element);
-    return input["type"] === "checkbox" ? input : <span class="branch-1 cbranch-no" title="branch not covered" >utils.raise('not checkbox');</span>
+<span class="fstat-no" title="function not covered" >  ge</span>t checkbox() {
+    const input = <span class="cstat-no" title="statement not covered" >toHTMLInputElement(this.element);</span>
+<span class="cstat-no" title="statement not covered" >    return input["type"] === "checkbox" ? input : utils.raise('not checkbox');</span>
   }
 &nbsp;
   /** @type {boolean} */
-  get nodeValue() {
-    return this.checkbox.checked;
+<span class="fstat-no" title="function not covered" >  ge</span>t nodeValue() {
+<span class="cstat-no" title="statement not covered" >    return this.checkbox.checked;</span>
   }
-  set nodeValue(value) {
-    this.checkbox.checked = value;
+<span class="fstat-no" title="function not covered" >  se</span>t nodeValue(value) {
+<span class="cstat-no" title="statement not covered" >    this.checkbox.checked = value;</span>
   }
 &nbsp;
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
-  updateNode() {
-    const {component, node, checkbox, nodeProperty, viewModelProperty, filteredViewModelValue} = this;
-    const checked = typeof filteredViewModelValue.find(value =&gt; value === checkbox.value) !== "undefined";
-    if (this.nodeValue !== checked) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () =&gt; {
-        this.nodeValue = checked;
+<span class="fstat-no" title="function not covered" >  up</span>dateNode() {
+    const {component, node, checkbox, nodeProperty, viewModelProperty, filteredViewModelValue} = <span class="cstat-no" title="statement not covered" >this;</span>
+    const checked = <span class="cstat-no" title="statement not covered" >typeof filteredViewModelValue.find(<span class="fstat-no" title="function not covered" >va</span>lue =&gt; <span class="cstat-no" title="statement not covered" >value === checkbox.value)</span> !== "undefined";</span>
+<span class="cstat-no" title="statement not covered" >    if (this.nodeValue !== checked) {</span>
+<span class="cstat-no" title="statement not covered" >      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        this.nodeValue = checked;</span>
       }));
     }
   }
@@ -197,15 +197,15 @@ export class Checkbox extends BindInfo {
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
-  updateViewModel() {
-    const {component, nodeValue, filters, checkbox, viewModelValue} = this;
+<span class="fstat-no" title="function not covered" >  up</span>dateViewModel() {
+    const {component, nodeValue, filters, checkbox, viewModelValue} = <span class="cstat-no" title="statement not covered" >this;</span>
     /** @type {string} */
-    const checkboxValue = Filter.applyForInput(checkbox.value, filters, component.filters.in);
+    const checkboxValue = <span class="cstat-no" title="statement not covered" >Filter.applyForInput(checkbox.value, filters, component.filters.in);</span>
     /** @type {Set&lt;string&gt;} */
-    const setOfValue = new Set(viewModelValue);
-    nodeValue ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
-    const value = Array.from(setOfValue);
-    this.viewModelValue = value;
+    const setOfValue = <span class="cstat-no" title="statement not covered" >new Set(viewModelValue);</span>
+<span class="cstat-no" title="statement not covered" >    nodeValue ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);</span>
+    const value = <span class="cstat-no" title="statement not covered" >Array.from(setOfValue);</span>
+<span class="cstat-no" title="statement not covered" >    this.viewModelValue = value;</span>
   }
 }</pre></td></tr></table></pre>
 
@@ -214,7 +214,7 @@ export class Checkbox extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-17T23:04:08.015Z
+                at 2023-10-18T23:04:10.300Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

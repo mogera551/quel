@@ -1,5 +1,5 @@
 import { Binding, Bindings } from "../../src/binding/Binding.js";
-import { BranchBinding } from "../../src/binding/BranchBinding.js";
+//import { BranchBinding } from "../../src/binding/BranchBinding.js";
 import { Factory } from "../../src/binding/Factory.js";
 import { Checkbox } from "../../src/binding/nodePoperty/Checkbox.js";
 import { ElementAttribute } from "../../src/binding/nodePoperty/ElementAttribute.js";
@@ -10,8 +10,8 @@ import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty.j
 import { ElementStyle } from "../../src/binding/nodePoperty/ElementStyle.js";
 import { NodeProperty } from "../../src/binding/nodePoperty/NodeProperty.js";
 import { Radio } from "../../src/binding/nodePoperty/Radio.js";
-import { TemplateProperty } from "../../src/binding/nodePoperty/TemplateProperty.js";
-import { RepeatBinding } from "../../src/binding/RepeatBinding.js";
+//import { TemplateProperty } from "../../src/binding/nodePoperty/TemplateProperty.js";
+//import { RepeatBinding } from "../../src/binding/RepeatBinding.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
 import { Symbols } from "../../src/Symbols.js";
 import { utils } from "../../src/utils.js";

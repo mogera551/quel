@@ -32,7 +32,7 @@ export class BindToText {
     comment.parentNode.replaceChild(textNode, comment);
 
     // パース
-    /** @type {Binimport("../binding/Binding.js").Binding[]} */
+    /** @type {import("../binding/Binding.js").Binding[]} */
     const bindings = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
 
     return bindings;

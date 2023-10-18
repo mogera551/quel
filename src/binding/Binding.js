@@ -4,7 +4,6 @@ import { Templates } from "../view/Templates.js";
 import { ViewTemplate } from "../view/View.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
-import { utils } from "../utils.js";
 
 export class Binding {
 
@@ -92,6 +91,7 @@ export class Binding {
    * @param {Event} event 
    */
   execDefautEventHandler(event) {
+    const {component} = this;
     event.stopPropagation();
     const process = new ProcessData(this.applyToViewModel, this, []);
     component.updateSlot.addProcess(process);
@@ -162,9 +162,10 @@ export class Bindings extends Array {
    * @param {ContextInfo} context
    */
   constructor(component, uuid, context) {
+    super();
     const template = Templates.templateByUUID.get(uuid);
-    const { binds, content } = ViewTemplate.render(component, template, context);
-    this.push(...binds);
+    const { bindings, content } = ViewTemplate.render(component, template, context);
+    this.push(...bindings);
     this.nodes = Array.from(content.childNodes);
     this.#fragment = content;
     this.#context = context;

@@ -78,7 +78,7 @@ export class BindToHTMLElement {
       hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
       radioBinding = (binding instanceof Radio) ? binding : radioBinding;
       checkboxBinding = (binding instanceof Checkbox) ? binding : checkboxBinding;
-      defaultBinding = (binding.nodeProperty === defaultName) ? binding : defaultBinding;
+      defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
     });
 
     /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */

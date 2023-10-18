@@ -110,6 +110,7 @@ test("BindToHTMLElement input ", () => {
        * @param {ProcessData} processData 
        */
       addProcess(processData) {
+        console.log(processData);
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },

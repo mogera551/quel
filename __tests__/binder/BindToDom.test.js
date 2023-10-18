@@ -3,6 +3,7 @@ import { BindToDom } from "../../src/binder/BindToDom.js";
 import { Filter } from "../../src/filter/Filter.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
+import { Symbols } from "../../src/Symbols.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -32,7 +33,11 @@ const baseComponent = {
     },
     addProcess:(process) => {
       Reflect.apply(process.target, process.thisArgument, process.argumentsList);
-    }
+    },
+  },
+  filters: {
+    in:{},
+    out:{}
   }
 };
 
@@ -40,26 +45,32 @@ test("BindToDom parseBindText single property default", () => {
   const node = document.createElement("div");
   const viewModel = {
     "aaa": 100,
+    [Symbols.directlyGet](viewModelProperty, indexes) {
+      return this[viewModelProperty];
+    },
+    [Symbols.directlySet](viewModelProperty, indexes, value) {
+      this[viewModelProperty] = value;
+    }
   }
   const component = Object.assign(baseComponent, { viewModel });
   const context = { indexes:[], stack:[] };
   /** @type {import("../../src/binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "aaa", "textContent");
+  const binds = BindToDom.parseBindText(node, component, viewModel, context, "aaa", "textContent");
 
-  expect(bindings.length).toBe(1);
-  expect(bindings[0].nodeProperty.node).toBe(node);
-  expect(bindings[0].nodeProperty.element).toBe(node);
-  expect(bindings[0].nodeProperty.name).toBe("textContent");
-  expect(bindings[0].nodeProperty.nameElements).toEqual(["textContent"]);
-  expect(bindings[0].nodeProperty.filters).toEqual([]);
-  expect(bindings[0].nodeProperty.filterFuncs).toEqual({});
-  expect(bindings[0].component).toBe(component);
-  expect(bindings[0].viewModelProperty.viewModel).toBe(viewModel);
-  expect(bindings[0].viewModelProperty.name).toBe("aaa");
-  expect(bindings[0].viewModelProperty.propertyName).toBe(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.filters).toEqual([]);
-  expect(bindings[0].viewModelProperty.filterFuncs).toEqual({});
-  expect(bindings[0].viewModelProperty.context).toEqual({ indexes:[], stack:[] });
+  expect(binds.length).toBe(1);
+  expect(binds[0].nodeProperty.node).toBe(node);
+  expect(binds[0].nodeProperty.element).toBe(node);
+  expect(binds[0].nodeProperty.name).toBe("textContent");
+  expect(binds[0].nodeProperty.nameElements).toEqual(["textContent"]);
+  expect(binds[0].nodeProperty.filters).toEqual([]);
+  expect(binds[0].nodeProperty.filterFuncs).toEqual({});
+  expect(binds[0].component).toBe(component);
+  expect(binds[0].viewModelProperty.viewModel).toBe(viewModel);
+  expect(binds[0].viewModelProperty.name).toBe("aaa");
+  expect(binds[0].viewModelProperty.propertyName).toBe(PropertyName.create("aaa"));
+  expect(binds[0].viewModelProperty.filters).toEqual([]);
+  expect(binds[0].viewModelProperty.filterFuncs).toEqual({});
+  expect(binds[0].viewModelProperty.context).toEqual({ indexes:[], stack:[] });
 });
 /*
 test("BindToDom parseBindText single property default filters", () => {

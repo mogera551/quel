@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">9.09% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>1/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>7/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">10% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>1/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -103,34 +103,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
@@ -138,24 +138,24 @@ import  { utils } from "../utils.js";
 import { BindInfo } from "./BindInfo.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 &nbsp;
-const toHTMLInputElement = node =&gt; (node instanceof HTMLInputElement) ? node : utils.raise();
+const toHTMLInputElement = <span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >(node instanceof HTMLInputElement) ? node : utils.raise();</span>
 &nbsp;
 export class Radio extends BindInfo {
   /** @type {HTMLInputElement} */
-  get radio() {
-    const input = toHTMLInputElement(this.element);
-    return input["type"] === "radio" ? input : <span class="branch-1 cbranch-no" title="branch not covered" >utils.raise('not radio');</span>
+<span class="fstat-no" title="function not covered" >  ge</span>t radio() {
+    const input = <span class="cstat-no" title="statement not covered" >toHTMLInputElement(this.element);</span>
+<span class="cstat-no" title="statement not covered" >    return input["type"] === "radio" ? input : utils.raise('not radio');</span>
   }
 &nbsp;
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
-  updateNode() {
-    const {component, node, radio, nodeProperty, viewModelProperty, filteredViewModelValue} = this;
-    const checked = filteredViewModelValue === radio.value;
-    if (radio.checked !== checked) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () =&gt; {
-        radio.checked = checked;
+<span class="fstat-no" title="function not covered" >  up</span>dateNode() {
+    const {component, node, radio, nodeProperty, viewModelProperty, filteredViewModelValue} = <span class="cstat-no" title="statement not covered" >this;</span>
+    const checked = <span class="cstat-no" title="statement not covered" >filteredViewModelValue === radio.value;</span>
+<span class="cstat-no" title="statement not covered" >    if (radio.checked !== checked) {</span>
+<span class="cstat-no" title="statement not covered" >      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        radio.checked = checked;</span>
       }));
     }
   }
@@ -163,9 +163,9 @@ export class Radio extends BindInfo {
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
-  updateViewModel() {
-    if (this.radio.checked) {
-      this.filteredViewModelValue = this.radio.value;
+<span class="fstat-no" title="function not covered" >  up</span>dateViewModel() {
+<span class="cstat-no" title="statement not covered" >    if (this.radio.checked) {</span>
+<span class="cstat-no" title="statement not covered" >      this.filteredViewModelValue = this.radio.value;</span>
     }
   }
 }</pre></td></tr></table></pre>
@@ -175,7 +175,7 @@ export class Radio extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-17T23:04:08.015Z
+                at 2023-10-18T23:04:10.300Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

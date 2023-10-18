@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -107,34 +107,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
@@ -143,26 +143,26 @@ import { NodeUpdateData } from "../thread/NodeUpdator.js";
 &nbsp;
 export class PropertyBind extends BindInfo {
   /** @type {string} */
-  get propName() {
-    return this.nodePropertyElements[0];
+<span class="fstat-no" title="function not covered" >  ge</span>t propName() {
+<span class="cstat-no" title="statement not covered" >    return this.nodePropertyElements[0];</span>
   }
 &nbsp;
   /** @type {any} */
-  get nodeValue() {
-    return this.node[this.propName];
+<span class="fstat-no" title="function not covered" >  ge</span>t nodeValue() {
+<span class="cstat-no" title="statement not covered" >    return this.node[this.propName];</span>
   }
-  set nodeValue(value) {
-    this.node[this.propName] = value;
+<span class="fstat-no" title="function not covered" >  se</span>t nodeValue(value) {
+<span class="cstat-no" title="statement not covered" >    this.node[this.propName] = value;</span>
   }
 &nbsp;
   /**
    * ViewModelのプロパティの値をNodeのプロパティへ反映する
    */
-  updateNode() {
-    const {component, node, propName, viewModelProperty, filteredViewModelValue} = this;
-    if (this.nodeValue !== (filteredViewModelValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredViewModelValue, () =&gt; {
-        this.nodeValue = filteredViewModelValue ?? "";
+<span class="fstat-no" title="function not covered" >  up</span>dateNode() {
+    const {component, node, propName, viewModelProperty, filteredViewModelValue} = <span class="cstat-no" title="statement not covered" >this;</span>
+<span class="cstat-no" title="statement not covered" >    if (this.nodeValue !== (filteredViewModelValue ?? "")) {</span>
+<span class="cstat-no" title="statement not covered" >      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredViewModelValue, <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        this.nodeValue = filteredViewModelValue ?? "";</span>
       }));
     }
   }
@@ -170,8 +170,8 @@ export class PropertyBind extends BindInfo {
   /**
    * nodeのプロパティの値をViewModelのプロパティへ反映する
    */
-  updateViewModel() {
-    this.filteredViewModelValue = this.nodeValue;
+<span class="fstat-no" title="function not covered" >  up</span>dateViewModel() {
+<span class="cstat-no" title="statement not covered" >    this.filteredViewModelValue = this.nodeValue;</span>
   }
 &nbsp;
 }</pre></td></tr></table></pre>
@@ -181,7 +181,7 @@ export class PropertyBind extends BindInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-17T23:04:08.015Z
+                at 2023-10-18T23:04:10.300Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

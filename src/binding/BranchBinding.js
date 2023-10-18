@@ -1,5 +1,5 @@
 import { Context } from "../context/Context.js";
-import { Bindings, Binding } from "./Binding.js";
+import { Binding, Bindings } from "./Binding.js";
 
 export class BranchBinding extends Binding {
   /** @type {Bindings | undefined} */
