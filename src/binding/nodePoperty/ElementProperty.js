@@ -9,13 +9,14 @@ export class ElementProperty extends NodeProperty {
 
   /**
    * 
+   * @param {import("../Binding.js").Binding} binding
    * @param {Element} node 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
-  constructor(node, name, filters, inputFilterFuncs) {
+  constructor(binding, node, name, filters, inputFilterFuncs) {
     if (!(node instanceof Element)) utils.raise("not element");
-    super(node, name, filters, inputFilterFuncs);
+    super(binding, node, name, filters, inputFilterFuncs);
   }
 }

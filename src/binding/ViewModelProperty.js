@@ -95,15 +95,23 @@ export class ViewModelProperty {
     return true;
   }
 
+  /** @type {import("../Binding.js").Binding} */
+  #binding;
+  get binding() {
+    return this.#binding;
+  }
+
   /**
    * 
+   * @param {import("./Binding.js").Binding} binding
    * @param {ViewModel} viewModel 
    * @param {string} name 
    * @param {ContextInfo} context 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(viewModel, name, context, filters, filterFuncs) {
+  constructor(binding, viewModel, name, context, filters, filterFuncs) {
+    this.#binding = binding;
     this.#viewModel = viewModel;
     this.#name = name;
     this.#context = context;
@@ -116,6 +124,6 @@ export class ViewModelProperty {
    * 特に何もしない
    * @param {import("../Binding.js").Binding} binding
    */
-  initialize(binding) {
+  initialize() {
   }
 }

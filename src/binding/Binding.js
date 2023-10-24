@@ -25,19 +25,36 @@ export class Binding {
     return this.#component;
   }
 
+  /** @type {ContextInfo} */
+  #context;
+  get context() {
+    return this.#context;
+  }
+
   /** @type { Bindings[] } */
   children = [];
 
   /**
    * 
    * @param {Component} component 
-   * @param {import("./nodePoperty/NodeProperty.js").NodeProperty} nodeProperty 
-   * @param {import("./ViewModelProperty.js").ViewModelProperty} viewModelProperty 
+   * @param {ContextInfo} context
+   * @param {Node} node
+   * @param {string} nodePropertyName
+   * @param {typeof import("./nodePoperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
+   * @param {ViewModel} viewModel
+   * @param {string} veiewModelPropertyName
+   * @param {typeof import("./ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
+   * @param {Filter[]} filters
    */
-  constructor(component, nodeProperty, viewModelProperty) {
+  constructor(component, context,
+    node, nodePropertyName, classOfNodeProperty, 
+    viewModel, viewModelPropertyName, classOfViewModelProperty,
+    filters
+  ) {
     this.#component = component;
-    this.#nodeProperty = nodeProperty;
-    this.#viewModelProperty = viewModelProperty;
+    this.#context = context;
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, context, filters, component.filters.out);
   }
 
   /**
@@ -73,36 +90,32 @@ export class Binding {
 
     const {component, viewModelProperty} = this;
     const process = new ProcessData(
-      viewModelProperty.viewModel[Symbols.directlyCall], viewModelProperty.viewModel, [viewModelProperty.propertyName, viewModelProperty.context, event]
+      viewModelProperty.viewModel[Symbols.directlyCall], 
+      viewModelProperty.viewModel, 
+      [viewModelProperty.propertyName, viewModelProperty.context, event]
     );
     component.updateSlot.addProcess(process);
   }
 
-  /**
-   * @param {(event:Event)=>void}
-   */
-  getExecEventHandler() {
-    const binding = this;
-    return event => binding.execEventHandler(event);
+  /** @type {(event:Event)=>void} */
+  get eventHandler() {
+    return (binding => event => binding.execEventHandler(event))(this);
   }
 
   /**
    * 
    * @param {Event} event 
    */
-  execDefautEventHandler(event) {
+  execDefaultEventHandler(event) {
     const {component} = this;
     event.stopPropagation();
     const process = new ProcessData(this.applyToViewModel, this, []);
     component.updateSlot.addProcess(process);
   }
 
-  /**
-   * @param {(event:Event)=>void}
-   */
-  getExecDefaultEventHandler() {
-    const binding = this;
-    return event => binding.execDefautEventHandler(event);
+  /** @type {(event:Event)=>void} */
+  get defaultEventHandler() {
+    return (binding => event => binding.execDefaultEventHandler(event))(this);
   }
 
   /**

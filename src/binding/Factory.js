@@ -67,12 +67,12 @@ export class Factory {
         classOfNodeProperty = NodeProperty;
       }
     }
-    /** @type {NodeProperty} */
-    const nodeProperty = new classOfNodeProperty(node, nodePropertyName, filters, component.filters.in);
-    /** @type {ViewModelProperty}  */
-    const viewModelProperty = new classOfViewModelProperty(viewModel, viewModelPropertyName, context, filters, component.filters.out);
     /** @type {Binding} */
-    const binding = new classOfBinding(component, nodeProperty, viewModelProperty);
+    const binding = new classOfBinding(
+      component, context,
+      node, nodePropertyName, classOfNodeProperty, 
+      viewModel, viewModelPropertyName, classOfViewModelProperty, 
+      filters);
     binding.initialize();
 
     return binding;

@@ -50,14 +50,22 @@ export class NodeProperty {
     return true;
   }
 
+  /** @type {import("../Binding.js").Binding} */
+  #binding;
+  get binding() {
+    return this.#binding;
+  }
+
   /**
    * 
+   * @param {import("../Binding.js").Binding} binding
    * @param {Node} node 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs) {
+    this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
@@ -70,6 +78,6 @@ export class NodeProperty {
    * 特に何もしない
    * @param {import("../Binding.js").Binding} binding
    */
-  initialize(binding) {
+  initialize() {
   }
 }

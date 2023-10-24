@@ -83,7 +83,7 @@ export class BindToHTMLElement {
 
     /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
     const setDefaultEventHandler = (binding) => {
-      element.addEventListener(DEFAULT_EVENT_TYPE, binding.getExecDefaultEventHandler());
+      element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
     }
     if (radioBinding) {
       setDefaultEventHandler(radioBinding);

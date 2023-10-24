@@ -31,14 +31,15 @@ export class Radio extends ElementProperty {
   
   /**
    * 
+   * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs) {
     if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
     if (node.type !== "radio") utils.raise("not radio");
-    super(node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs);
   }
 }

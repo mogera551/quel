@@ -22,13 +22,14 @@ export class ElementStyle extends ElementProperty {
 
   /**
    * 
+   * @param {import("../Binding.js").Binding} binding
    * @param {HTMLElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
-  constructor(node, name, filters, inputFilterFuncs) {
+  constructor(binding, node, name, filters, inputFilterFuncs) {
     if (!(node instanceof HTMLElement)) utils.raise("not htmlElement");
-    super(node, name, filters, inputFilterFuncs);
+    super(binding, node, name, filters, inputFilterFuncs);
   }
 }
