@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.35% </span>
+                <span class="strong">91.17% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>28/34</span>
+                <span class='fraction'>31/34</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.27% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>17/22</span>
+                <span class='fraction'>20/22</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.35% </span>
+                <span class="strong">91.17% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>28/34</span>
+                <span class='fraction'>31/34</span>
             </div>
         
             
@@ -174,12 +174,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">81x</span>
+<span class="cline-any cline-yes">91x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">81x</span>
-<span class="cline-any cline-yes">81x</span>
+<span class="cline-any cline-yes">91x</span>
+<span class="cline-any cline-yes">91x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">81x</span>
+<span class="cline-any cline-yes">91x</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -190,36 +190,36 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">66x</span>
-<span class="cline-any cline-yes">66x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">66x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">62x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">58x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">43x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">76x</span>
+<span class="cline-any cline-yes">76x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">75x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">70x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">65x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">48x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">40x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">40x</span>
-<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">45x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">44x</span>
+<span class="cline-any cline-yes">35x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">81x</span>
+<span class="cline-any cline-yes">91x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">77x</span>
+<span class="cline-any cline-yes">87x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">77x</span>
-<span class="cline-any cline-yes">77x</span>
+<span class="cline-any cline-yes">87x</span>
+<span class="cline-any cline-yes">87x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">63x</span>
+<span class="cline-any cline-yes">73x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
 import { utils } from "../utils.js";
@@ -270,20 +270,20 @@ export class Factory {
       }
     } else {
       classOfBinding = Binding;
-      <span class="missing-if-branch" title="if path not taken" >I</span>if (nodePropertyName === "class") {
-<span class="cstat-no" title="statement not covered" >        classOfNodeProperty = ElementClassName;</span>
+      if (nodePropertyName === "class") {
+        classOfNodeProperty = ElementClassName;
       } else if (nodePropertyName === "checkbox") {
         classOfNodeProperty = Checkbox;
       } else if (nodePropertyName === "radio") {
         classOfNodeProperty = Radio;
       } else if (nodePropertyName.startsWith("on")) {
         classOfNodeProperty = ElementEvent;
-      } else <span class="missing-if-branch" title="if path not taken" >I</span>if (nodePropertyName.startsWith("class.")) {
-<span class="cstat-no" title="statement not covered" >        classOfNodeProperty = ElementClass;</span>
+      } else if (nodePropertyName.startsWith("class.")) {
+        classOfNodeProperty = ElementClass;
       } else if (nodePropertyName.startsWith("attr.")) {
         classOfNodeProperty = ElementAttribute;
-      } else <span class="missing-if-branch" title="if path not taken" >I</span>if (nodePropertyName.startsWith("style.")) {
-<span class="cstat-no" title="statement not covered" >        classOfNodeProperty = ElementStyle;</span>
+      } else if (nodePropertyName.startsWith("style.")) {
+        classOfNodeProperty = ElementStyle;
       } else if (node instanceof Element) {
         classOfNodeProperty = ElementProperty;
       } else {
@@ -307,7 +307,7 @@ export class Factory {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-19T22:08:58.246Z
+                at 2023-10-24T06:45:39.954Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
