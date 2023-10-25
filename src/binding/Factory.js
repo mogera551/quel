@@ -1,11 +1,10 @@
 import "../types.js";
 import { utils } from "../utils.js";
 import { Binding } from "./Binding.js";
-import { BranchBinding } from "./BranchBinding.js";
-import { RepeatBinding } from "./RepeatBinding.js";
+import { Repeat } from "./nodePoperty/Repeat.js";
+import { Branch } from "./nodePoperty/Branch.js";
 import { ViewModelProperty } from "./ViewModelProperty.js";
 import { NodeProperty } from "./nodePoperty/NodeProperty.js";
-import { TemplateProperty } from "./nodePoperty/TemplateProperty.js";
 import { ElementClassName } from "./nodePoperty/ElementClassName.js"
 import { Checkbox } from "./nodePoperty/Checkbox.js";
 import { Radio } from "./nodePoperty/Radio.js";
@@ -14,6 +13,24 @@ import { ElementClass } from "./nodePoperty/ElementClass.js";
 import { ElementAttribute } from "./nodePoperty/ElementAttribute.js";
 import { ElementStyle } from "./nodePoperty/ElementStyle.js";
 import { ElementProperty } from "./nodePoperty/ElementProperty.js";
+
+const classOfNodePropertyByNameByIsComment = {
+  true: {
+    "if": Branch,
+    "loop": Repeat,
+  },
+  false: {
+    "class": ElementClassName,
+    "checkbox": Checkbox,
+    "radio": Radio,
+  }
+};
+
+const classOfNodePropertyByFirstName = {
+  "class": ElementClass,
+  "attr": ElementAttribute,
+  "style": ElementStyle,
+};
 
 export class Factory {
 
@@ -29,46 +46,30 @@ export class Factory {
    * @returns {Binding}
    */
   static create(component, node, nodePropertyName, viewModel, viewModelPropertyName, filters, context) {
-    /** @type {typeof Binding} */
-    let classOfBinding = undefined;
-    /** @type {typeof NodeProperty} */
+    /** @type {typeof NodeProperty|undefined} */
     let classOfNodeProperty = undefined;
     const classOfViewModelProperty = ViewModelProperty;
 
-    if (node instanceof Comment) {
-      if (nodePropertyName === "if") {
-        classOfNodeProperty = TemplateProperty;
-        classOfBinding = BranchBinding;
-      } else if (nodePropertyName === "loop") {
-        classOfNodeProperty = TemplateProperty;
-        classOfBinding = RepeatBinding;
-      } else {
-        utils.raise(`unknown node property ${nodePropertyName}`);
-      }
-    } else {
-      classOfBinding = Binding;
-      if (nodePropertyName === "class") {
-        classOfNodeProperty = ElementClassName;
-      } else if (nodePropertyName === "checkbox") {
-        classOfNodeProperty = Checkbox;
-      } else if (nodePropertyName === "radio") {
-        classOfNodeProperty = Radio;
-      } else if (nodePropertyName.startsWith("on")) {
-        classOfNodeProperty = ElementEvent;
-      } else if (nodePropertyName.startsWith("class.")) {
-        classOfNodeProperty = ElementClass;
-      } else if (nodePropertyName.startsWith("attr.")) {
-        classOfNodeProperty = ElementAttribute;
-      } else if (nodePropertyName.startsWith("style.")) {
-        classOfNodeProperty = ElementStyle;
-      } else if (node instanceof Element) {
-        classOfNodeProperty = ElementProperty;
+    do {
+      const isComment = node instanceof Comment;
+      classOfNodeProperty = classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
+      if (typeof classOfNodeProperty !== "undefined") break;
+      if (isComment) utils.raise(`unknown node property ${nodePropertyName}`);
+      const nameElements = nodePropertyName.split(".");
+      classOfNodeProperty = classOfNodePropertyByFirstName[nameElements[0]];
+      if (typeof classOfNodeProperty !== "undefined") break;
+      if (node instanceof Element) {
+        if (nodePropertyName.startsWith("on")) {
+          classOfNodeProperty = ElementEvent;
+        } else {
+          classOfNodeProperty = ElementProperty;
+        }
       } else {
         classOfNodeProperty = NodeProperty;
       }
-    }
+    } while(false);
     /** @type {Binding} */
-    const binding = new classOfBinding(
+    const binding = new Binding(
       component, context,
       node, nodePropertyName, classOfNodeProperty, 
       viewModel, viewModelPropertyName, classOfViewModelProperty, 

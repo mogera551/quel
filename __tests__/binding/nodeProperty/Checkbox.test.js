@@ -1,13 +1,23 @@
 import { Checkbox } from "../../../src/binding/nodePoperty/Checkbox.js";
 import { inputFilters } from "../../../src/filter/Builtin.js";
 
+const binding = {};
+
 test("Checkbox", () => {
   const element = document.createElement("input");
   element.type = "checkbox";
-  const checkbox = new Checkbox(element, "", [], {});
-
   element.value = "100";
   element.checked = false;
+
+  const checkbox = new Checkbox(binding, element, "checkbox", [], {});
+  expect(checkbox.binding).toBe(binding);
+  expect(checkbox.node).toBe(element);
+  expect(checkbox.element).toBe(element);
+  expect(checkbox.inputElement).toBe(element);
+  expect(checkbox.name).toBe("checkbox");
+  expect(checkbox.nameElements).toEqual(["checkbox"]);
+  expect(checkbox.filters).toEqual([]);
+  expect(checkbox.filterFuncs).toEqual({});
   expect(checkbox.value).toEqual({value:"100", enabled:false});
   expect(checkbox.filteredValue).toEqual({value:"100", enabled:false});
   expect(checkbox.applicable).toBe(true);
@@ -26,10 +36,10 @@ test("Checkbox", () => {
 test("Checkbox filtered", () => {
   const element = document.createElement("input");
   element.type = "checkbox";
-  const checkbox = new Checkbox(element, "", [{name:"number", option:[]}], inputFilters);
-
   element.value = "100";
   element.checked = false;
+
+  const checkbox = new Checkbox(binding, element, "checkbox", [{name:"number", option:[]}], inputFilters);
   expect(checkbox.value).toEqual({value:"100", enabled:false});
   expect(checkbox.filteredValue).toEqual({value:100, enabled:false});
 
@@ -49,15 +59,15 @@ test("Checkbox filtered", () => {
 test("Checkbox fail", () => {
   expect(() => {
     const element = document.createElement("div");
-    const checkbox = new Checkbox(element, "", [], {});
+    const checkbox = new Checkbox(binding, element, "", [], {});
   }).toThrow("not htmlInputElement");
   expect(() => {
     const node = document.createTextNode("div");
-    const checkbox = new Checkbox(node, "", [], {});
+    const checkbox = new Checkbox(binding, node, "", [], {});
   }).toThrow("not htmlInputElement");
   expect(() => {
     const element = document.createElement("input");
     element.type = "radio";
-    const checkbox = new Checkbox(element, "", [], {});
+    const checkbox = new Checkbox(binding, element, "", [], {});
   }).toThrow("not checkbox");
 })

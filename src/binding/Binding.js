@@ -4,6 +4,7 @@ import { Templates } from "../view/Templates.js";
 import { ViewTemplate } from "../view/View.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 export class Binding {
 
@@ -31,6 +32,12 @@ export class Binding {
     return this.#context;
   }
 
+  /** @type {ContextParam} コンテキスト変数情報 */
+  #contextParam;
+  get contextParam() {
+    return this.#contextParam;
+  }
+
   /** @type { Bindings[] } */
   children = [];
 
@@ -42,7 +49,7 @@ export class Binding {
    * @param {string} nodePropertyName
    * @param {typeof import("./nodePoperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
    * @param {ViewModel} viewModel
-   * @param {string} veiewModelPropertyName
+   * @param {string} viewModelPropertyName
    * @param {typeof import("./ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
@@ -53,8 +60,12 @@ export class Binding {
   ) {
     this.#component = component;
     this.#context = context;
+    const propName = PropertyName.create(viewModelPropertyName);
+    if (propName.level > 0) {
+      this.#contextParam = context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    }
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, context, filters, component.filters.out);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
   }
 
   /**
@@ -142,6 +153,15 @@ export class Binding {
   disappear() {
     this.children.forEach(bindings => bindings.disappear());
   }
+
+  /**
+   * @param {Bindings} bindings
+   */
+  appendChild(bindings) {
+    const lastChild = this.children[this.children,length - 1];
+    this.children.push(bindings);
+    (lastChild?.lastNode ?? this.node).appendChild(bindings.fragment);
+  }
 }
 
 /** @type {Array<Binding>} */
@@ -149,6 +169,10 @@ export class Bindings extends Array {
 
   /** @type {Node[]} */
   nodes = [];
+
+  get lastNode() {
+    return this.nodes[this.nodes.length - 1];
+  }
 
   /** @type {DocumentFragment} */
   #fragment;
@@ -212,8 +236,13 @@ export class Bindings extends Array {
    * 
    */
   disappear() {
-    const fragment = this.fragment;
-    this.nodes.forEach(node => fragment.appendChild(node));
-    this.forEach(binding => binding.disappear())
+  }
+
+  /**
+   * 
+   */
+  removeFromParent() {
+    this.nodes.forEach(node => this.fragment.appendChild(node));
+    this.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
   }
 }

@@ -4,6 +4,7 @@ import { MultiValue } from "./nodePoperty/MultiValue.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../Symbols.js";
 import { utils } from "../utils.js";
+import { Context } from "../context/Context.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -23,30 +24,9 @@ export class ViewModelProperty {
     return PropertyName.create(this.name);
   }
 
-  /** @type {ContextInfo} */
-  #context;
-  get context() {
-    return this.#context;
-  }
-  set context(value) {
-    this.#context = value;
-    this.#contextParam = undefined;
-  }
-
-  /** @type {ContextParam} コンテキスト情報 */
-  #contextParam;
-  /** @type {ContextParam} コンテキスト情報 */
-  get contextParam() {
-    const propName = this.propertyName;
-    if (typeof this.#contextParam === "undefined" && propName.level > 0) {
-      this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-    }
-    return this.#contextParam;
-  }
-
   /** @type {number[]} */
   get indexes() {
-    return this.contextParam?.indexes ?? [];
+    return this.binding.contextParam?.indexes ?? [];
   }
 
   /** @type {any} */
@@ -95,7 +75,7 @@ export class ViewModelProperty {
     return true;
   }
 
-  /** @type {import("../Binding.js").Binding} */
+  /** @type {import("./Binding.js").Binding} */
   #binding;
   get binding() {
     return this.#binding;
@@ -106,17 +86,32 @@ export class ViewModelProperty {
    * @param {import("./Binding.js").Binding} binding
    * @param {ViewModel} viewModel 
    * @param {string} name 
-   * @param {ContextInfo} context 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, viewModel, name, context, filters, filterFuncs) {
+  constructor(binding, viewModel, name, filters, filterFuncs) {
     this.#binding = binding;
     this.#viewModel = viewModel;
     this.#name = name;
-    this.#context = context;
     this.#filters = filters;
     this.#filterFuncs = filterFuncs;
+  }
+
+  /**
+   * 
+   * @param {number} newIndex
+   * @returns {ContextInfo} 
+   */
+  createChildContext(newIndex) {
+    const pos = this.context.indexes.length;
+    const propName = this.propertyName;
+    const parentIndexes = this.contextParam?.indexes ?? [];
+
+    const newContext = Context.clone(this.context);
+    newContext.indexes.push(newIndex);
+    newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
+
+    return newContext;
   }
 
   /**
