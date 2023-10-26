@@ -1,9 +1,15 @@
 export class MultiValue {
   /** @type {any} */
-  value;
+  #value;
+  get value() {
+    return this.#value;
+  }
 
   /** @type {boolean} */
-  enabled;
+  #enabled;
+  get enabled() {
+    return this.#enabled;
+  }
 
   /**
    * 
@@ -11,7 +17,7 @@ export class MultiValue {
    * @param {boolean} enabled 
    */
   constructor(value, enabled) {
-    this.value = value;
-    this.enabled = enabled;
+    this.#value = value;
+    this.#enabled = enabled;
   }
 }
