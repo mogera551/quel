@@ -1,9 +1,19 @@
 import { ElementClassName } from "../../../src/binding/nodePoperty/ElementClassName.js";
 
+const binding = {};
+
 test("ElementClassName", () => {
   const element = document.createElement("div");
-  const elementClassName = new ElementClassName(element, "class", [], {});
+  const elementClassName = new ElementClassName(binding, element, "class", [], {});
+  expect(elementClassName.binding).toBe(binding);
+  expect(elementClassName.node).toBe(element);
+  expect(elementClassName.element).toBe(element);
+  expect(elementClassName.name).toBe("class");
+  expect(elementClassName.nameElements).toEqual(["class"]);
+  expect(elementClassName.filters).toEqual([]);
+  expect(elementClassName.filterFuncs).toEqual({});
   expect(elementClassName.value).toEqual([]);
+  expect(elementClassName.filteredValue).toEqual([]);
   expect(elementClassName.applicable).toBe(true);
 
   element.className = "aaa";
