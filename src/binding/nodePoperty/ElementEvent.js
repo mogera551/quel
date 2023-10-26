@@ -1,3 +1,4 @@
+import { utils } from "../../utils.js";
 import { ElementProperty } from "./ElementProperty.js";
 
 export class ElementEvent extends ElementProperty {
