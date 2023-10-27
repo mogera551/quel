@@ -99,11 +99,11 @@ export class Binding {
   execEventHandler(event) {
     event.stopPropagation();
 
-    const {component, viewModelProperty} = this;
+    const {component, viewModelProperty, context} = this;
     const process = new ProcessData(
       viewModelProperty.viewModel[Symbols.directlyCall], 
       viewModelProperty.viewModel, 
-      [viewModelProperty.propertyName, viewModelProperty.context, event]
+      [viewModelProperty.propertyName, context, event]
     );
     component.updateSlot.addProcess(process);
   }

@@ -42,9 +42,8 @@ test("Branch", () => {
     expect(appendDivs.length).toBe(1);
     expect(binding.children.length).toBe(1);
     expect(binding.children[0].nodes.length > 0).toBe(true);
-    expect(binding.children[0].context > 0).toEqual(binding.context);
+    expect(binding.children[0].context).toEqual(binding.context);
     expect(binding.children[0].context === binding.context).toBe(false);
-    expect(binding.children[0].filters > 0).toEqual(binding.context);
   }
   {
     branch.value = false;
@@ -76,6 +75,6 @@ test("Branch fail", () => {
   const parentNode = document.createDocumentFragment();
   parentNode.appendChild(node);
   expect(() => {
-    const binding = new Binding(component, { indexes:[], stack:[] }, node, "xxx", Branch, {}, "", ViewModelProperty, []);
-  }).toThrow("invalid property name xxx")
+    const binding = new Binding(component, { indexes:[], stack:[] }, node, "loop", Branch, {}, "", ViewModelProperty, []);
+  }).toThrow("invalid property name loop")
 });

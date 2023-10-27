@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">59.25% </span>
+                <span class="strong">40.74% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>16/27</span>
+                <span class='fraction'>11/27</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.14% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/7</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.55% </span>
+                <span class="strong">22.22% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/9</span>
+                <span class='fraction'>2/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/20</span>
+                <span class='fraction'>10/20</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -182,14 +182,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -206,20 +206,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -263,14 +263,14 @@ const getNodeByRouteIndexes = <span class="fstat-no" title="function not covered
  * @param {Node} node 
  * @returns {boolean}
  */
-const isCommentNode = node =&gt; node instanceof Comment &amp;&amp; (<span class="branch-1 cbranch-no" title="branch not covered" >node.textContent.startsWith("@@:") </span>|| <span class="branch-2 cbranch-no" title="branch not covered" >node.textContent.startsWith("@@|"))</span>;
+const isCommentNode = <span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >node instanceof Comment &amp;&amp; (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));</span>
 &nbsp;
 /**
  * コメントノードを取得
  * @param {Node} node 
  * @returns {Comment[]}
  */
-const getCommentNodes = node =&gt; Array.from(node.childNodes).flatMap(node =&gt; getCommentNodes(node).concat(isCommentNode(node) ? <span class="branch-0 cbranch-no" title="branch not covered" >node </span>: null)).filter(node =&gt; node);
+const getCommentNodes = node =&gt; Array.from(node.childNodes).flatMap(<span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >getCommentNodes(node).concat(isCommentNode(node) ? node : null))</span>.filter(<span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >node)</span>;
 &nbsp;
 export class Selector {
   /** @type {Map&lt;HTMLTemplateElement, number[][]&gt;} */
@@ -287,12 +287,12 @@ export class Selector {
     /** @type {Node[]} */
     let nodes;
 &nbsp;
-    if (this.listOfRouteIndexesByTemplate.has(template)) {
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (this.listOfRouteIndexesByTemplate.has(template)) {
       // キャッシュがある場合
       // querySelectorAllを行わずにNodeの位置を特定できる
       /** @type {number[][]} */
-      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-      nodes = listOfRouteIndexes.map(<span class="fstat-no" title="function not covered" >ro</span>uteIndexes =&gt; <span class="cstat-no" title="statement not covered" >getNodeByRouteIndexes(rootElement, routeIndexes))</span>;
+      const listOfRouteIndexes = <span class="cstat-no" title="statement not covered" >this.listOfRouteIndexesByTemplate.get(template);</span>
+<span class="cstat-no" title="statement not covered" >      nodes = listOfRouteIndexes.map(<span class="fstat-no" title="function not covered" >ro</span>uteIndexes =&gt; <span class="cstat-no" title="statement not covered" >getNodeByRouteIndexes(rootElement, routeIndexes))</span>;</span>
     } else {
       // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
       nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
@@ -313,7 +313,7 @@ export class Selector {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-27T03:54:20.335Z
+                at 2023-10-27T08:47:38.179Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,5 +1,6 @@
-import { Bindings } from "../Binding";
-import { TemplateProperty } from "./TemplateProperty";
+import { Bindings } from "../Binding.js";
+import { TemplateProperty } from "./TemplateProperty.js";
+import { utils } from "../../utils.js";
 
 export class Repeat extends TemplateProperty {
   /** @type {number} */
@@ -22,5 +23,18 @@ export class Repeat extends TemplateProperty {
     } else {
       this.binding.children.forEach(bindings => bindings.applyToNode());
     }
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Comment} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (name !== "loop") utils.raise(`invalid property name ${name}`);
+    super(binding, node, name, filters, filterFuncs);
   }
 }

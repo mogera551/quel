@@ -103,11 +103,11 @@ export class ViewModelProperty {
    * @returns {ContextInfo} 
    */
   createChildContext(newIndex) {
-    const pos = this.context.indexes.length;
+    const pos = this.binding.context.indexes.length;
     const propName = this.propertyName;
-    const parentIndexes = this.contextParam?.indexes ?? [];
+    const parentIndexes = this.binding.contextParam?.indexes ?? [];
 
-    const newContext = Context.clone(this.context);
+    const newContext = Context.clone(this.binding.context);
     newContext.indexes.push(newIndex);
     newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
 

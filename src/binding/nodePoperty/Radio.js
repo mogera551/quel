@@ -25,8 +25,10 @@ export class Radio extends ElementProperty {
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;
-    multiValue.value = this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value;
-    return multiValue;
+    return new MultiValue(
+      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
+      multiValue.enabled
+    );
   }
   
   /**

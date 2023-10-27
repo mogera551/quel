@@ -1,6 +1,8 @@
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Binding, Bindings } from "../../src/binding/Binding.js";
 //import { BranchBinding } from "../../src/binding/BranchBinding.js";
 import { Factory } from "../../src/binding/Factory.js";
+import { Branch } from "../../src/binding/nodePoperty/Branch.js";
 import { Checkbox } from "../../src/binding/nodePoperty/Checkbox.js";
 import { ElementAttribute } from "../../src/binding/nodePoperty/ElementAttribute.js";
 import { ElementClass } from "../../src/binding/nodePoperty/ElementClass.js";
@@ -10,6 +12,7 @@ import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty.j
 import { ElementStyle } from "../../src/binding/nodePoperty/ElementStyle.js";
 import { NodeProperty } from "../../src/binding/nodePoperty/NodeProperty.js";
 import { Radio } from "../../src/binding/nodePoperty/Radio.js";
+import { Repeat } from "../../src/binding/nodePoperty/Repeat.js";
 //import { TemplateProperty } from "../../src/binding/nodePoperty/TemplateProperty.js";
 //import { RepeatBinding } from "../../src/binding/RepeatBinding.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
@@ -28,6 +31,7 @@ const component = {
       Reflect.apply(update.updateFunc, update, []);
     },
     addProcess:(process) => {
+      console.log(process);
       Reflect.apply(process.target, process.thisArgument, process.argumentsList);
     }
   }
@@ -37,10 +41,11 @@ const component = {
 class ViewModel {
   /**
    * 
-   * @param {PropertyName} propertyName 
+   * @param {string} name 
    * @param {number[]} indexes 
    */
-  [Symbols.directlyGet](propertyName, indexes) {
+  [Symbols.directlyGet](name, indexes) {
+    const propertyName = PropertyName.create(name);
     let index = indexes.length - 1;
     const getter = (paths) => {
       if (paths.length === 0) return this;
@@ -56,11 +61,12 @@ class ViewModel {
 
   /**
    * 
-   * @param {PropertyName} propertyName 
+   * @param {string} name 
    * @param {number[]} indexes 
    * @param {any} value
    */
-  [Symbols.directlySet](propertyName, indexes, value) {
+  [Symbols.directlySet](name, indexes, value) {
+    const propertyName = PropertyName.create(name);
     let index = indexes.length - 1;
     let last = propertyName.lastPathName;
     if (last === "*") {
@@ -105,9 +111,10 @@ test("binding/Factory node", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(node.textContent).toBe("100");
 });
@@ -128,9 +135,10 @@ test("binding/Factory element", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(element.textContent).toBe("100");
 });
@@ -151,9 +159,10 @@ test("binding/Factory class", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(element.className).toBe("aaa bbb");
 });
@@ -176,9 +185,10 @@ test("binding/Factory checkbox", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(element.checked).toBe(true);
 });
@@ -201,9 +211,10 @@ test("binding/Factory radio", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(element.checked).toBe(true);
 });
@@ -227,9 +238,10 @@ test("binding/Factory event", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("handler");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(result).toBe("no exec");
   button.dispatchEvent(new Event('click'));
@@ -253,9 +265,10 @@ test("binding/Factory class.", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(element.classList.contains("selected")).toBe(true);
 });
@@ -276,9 +289,10 @@ test("binding/Factory attr.", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(element.getAttribute("title")).toBe("cccc");
 });
@@ -299,9 +313,10 @@ test("binding/Factory style.", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 
   expect(element.style.color).toBe("red");
 });
@@ -309,16 +324,18 @@ test("binding/Factory style.", () => {
 const template = document.createElement("template");
 const uuid = utils.createUUID();
 Templates.templateByUUID.set(uuid, template);
-/*
+
 test("binding/Factory branchBinding", () => {
   const comment = document.createComment("@@|" + uuid);
+  const parentNode = document.createDocumentFragment();
+  parentNode.appendChild(comment);
   const viewModel = new (class extends ViewModel {
     prop = true;
   });
   const binding = Factory.create(component, comment, "if", viewModel, "prop", [], {indexes:[],stack:[]} );
-  expect(binding.constructor).toBe(BranchBinding);
+  expect(binding.constructor).toBe(Binding);
   expect(binding.component).toBe(component);
-  expect(binding.nodeProperty.constructor).toBe(TemplateProperty);
+  expect(binding.nodeProperty.constructor).toBe(Branch);
   expect(binding.nodeProperty.node).toBe(comment);
   expect(binding.nodeProperty.name).toBe("if");
   expect(binding.nodeProperty.filters).toEqual([]);
@@ -326,20 +343,23 @@ test("binding/Factory branchBinding", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 });
 
 test("binding/Factory repeatBinding", () => {
   const comment = document.createComment("@@|" + uuid);
+  const parentNode = document.createDocumentFragment();
+  parentNode.appendChild(comment);
   const viewModel = new (class extends ViewModel {
-    prop = true;
+    prop = [];
   });
   const binding = Factory.create(component, comment, "loop", viewModel, "prop", [], {indexes:[],stack:[]} );
-  expect(binding.constructor).toBe(RepeatBinding);
+  expect(binding.constructor).toBe(Binding);
   expect(binding.component).toBe(component);
-  expect(binding.nodeProperty.constructor).toBe(TemplateProperty);
+  expect(binding.nodeProperty.constructor).toBe(Repeat);
   expect(binding.nodeProperty.node).toBe(comment);
   expect(binding.nodeProperty.name).toBe("loop");
   expect(binding.nodeProperty.filters).toEqual([]);
@@ -347,9 +367,10 @@ test("binding/Factory repeatBinding", () => {
   expect(binding.viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(binding.viewModelProperty.viewModel).toBe(viewModel);
   expect(binding.viewModelProperty.name).toBe("prop");
-  expect(binding.viewModelProperty.context).toEqual({indexes:[],stack:[]});
   expect(binding.viewModelProperty.filters).toEqual([]);
   expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
 });
 
 test("binding/Factory fail template", () => {
@@ -361,4 +382,3 @@ test("binding/Factory fail template", () => {
     const binding = Factory.create(component, comment, "block", viewModel, "prop", [], {indexes:[],stack:[]} );
   }).toThrow("unknown node property block")
 });
-*/
