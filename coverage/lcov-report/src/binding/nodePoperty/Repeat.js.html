@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/binding/nodePoperty/ElementProperty.js</title>
+    <title>Code coverage report for src/binding/nodePoperty/Repeat.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../../prettify.css" />
     <link rel="stylesheet" href="../../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/binding/nodePoperty</a> ElementProperty.js</h1>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/binding/nodePoperty</a> Repeat.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -84,7 +84,11 @@
 <a name='L19'></a><a href='#L19'>19</a>
 <a name='L20'></a><a href='#L20'>20</a>
 <a name='L21'></a><a href='#L21'>21</a>
-<a name='L22'></a><a href='#L22'>22</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -93,38 +97,46 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { utils } from "../../utils.js";
-import { NodeProperty } from "./NodeProperty.js";
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Bindings } from "../Binding";
+import { TemplateProperty } from "./TemplateProperty";
 &nbsp;
-export class ElementProperty extends NodeProperty {
-  /** @type {Element} */
-<span class="fstat-no" title="function not covered" >  ge</span>t element() {
-<span class="cstat-no" title="statement not covered" >    return this.node;</span>
+export class Repeat extends TemplateProperty {
+  /** @type {number} */
+<span class="fstat-no" title="function not covered" >  ge</span>t value() {
+<span class="cstat-no" title="statement not covered" >    return this.binding.children.length;</span>
   }
-&nbsp;
-  /**
-   * 
-   * @param {import("../Binding.js").Binding} binding
-   * @param {Element} node 
-   * @param {string} name 
-   * @param {Filter[]} filters 
-   * @param {Object&lt;string,FilterFunc&gt;} inputFilterFuncs
-   */
-<span class="fstat-no" title="function not covered" >  co</span>nstructor(binding, node, name, filters, inputFilterFuncs) {
-<span class="cstat-no" title="statement not covered" >    if (!(node instanceof Element)) <span class="cstat-no" title="statement not covered" >utils.raise("not element");</span></span>
-<span class="cstat-no" title="statement not covered" >    super(binding, node, name, filters, inputFilterFuncs);</span>
+<span class="fstat-no" title="function not covered" >  se</span>t value(value) {
+<span class="cstat-no" title="statement not covered" >    if (!Array.isArray(value)) <span class="cstat-no" title="statement not covered" >utils.raise("value is not array");</span></span>
+<span class="cstat-no" title="statement not covered" >    if (this.value &lt; value.length) {</span>
+<span class="cstat-no" title="statement not covered" >      this.binding.children.forEach(<span class="fstat-no" title="function not covered" >bi</span>ndings =&gt; <span class="cstat-no" title="statement not covered" >bindings.applyToNode())</span>;</span>
+<span class="cstat-no" title="statement not covered" >      for(let newIndex = <span class="cstat-no" title="statement not covered" >this.value;</span> newIndex &lt; value.length; newIndex++) {</span>
+        const newContext = <span class="cstat-no" title="statement not covered" >this.binding.viewModelProperty.createChildContext(newIndex);</span>
+        const bindings = <span class="cstat-no" title="statement not covered" >new Bindings(this.component, this.uuid, newContext);</span>
+<span class="cstat-no" title="statement not covered" >        this.binding.appendChild(bindings);</span>
+      }
+    } else <span class="cstat-no" title="statement not covered" >if (this.value &gt; value.length) {</span>
+      const removeListOfBindings = <span class="cstat-no" title="statement not covered" >this.binding.children.splice(value.length);</span>
+<span class="cstat-no" title="statement not covered" >      this.binding.children.forEach(<span class="fstat-no" title="function not covered" >bi</span>ndings =&gt; <span class="cstat-no" title="statement not covered" >bindings.applyToNode())</span>;</span>
+<span class="cstat-no" title="statement not covered" >      removeListOfBindings.forEach(<span class="fstat-no" title="function not covered" >bi</span>ndings =&gt; <span class="cstat-no" title="statement not covered" >bindings.removeFromParent())</span>;</span>
+    } else {
+<span class="cstat-no" title="statement not covered" >      this.binding.children.forEach(<span class="fstat-no" title="function not covered" >bi</span>ndings =&gt; <span class="cstat-no" title="statement not covered" >bindings.applyToNode())</span>;</span>
+    }
   }
 }</pre></td></tr></table></pre>
 

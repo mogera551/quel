@@ -133,8 +133,8 @@ export class Binding {
    * 初期化
    */
   initialize() {
-    this.nodeProperty.initialize(this);
-    this.viewModelProperty.initialize(this);
+    this.nodeProperty.initialize();
+    this.viewModelProperty.initialize();
     this.applyToNode();
   }
 
@@ -160,7 +160,8 @@ export class Binding {
   appendChild(bindings) {
     const lastChild = this.children[this.children,length - 1];
     this.children.push(bindings);
-    (lastChild?.lastNode ?? this.node).appendChild(bindings.fragment);
+    const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
+    beforeNode.parentNode.insertBefore(bindings.fragment, beforeNode.nextSibling);
   }
 }
 

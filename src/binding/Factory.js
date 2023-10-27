@@ -14,25 +14,38 @@ import { ElementAttribute } from "./nodePoperty/ElementAttribute.js";
 import { ElementStyle } from "./nodePoperty/ElementStyle.js";
 import { ElementProperty } from "./nodePoperty/ElementProperty.js";
 
-const classOfNodePropertyByNameByIsComment = {
-  true: {
-    "if": Branch,
-    "loop": Repeat,
-  },
-  false: {
-    "class": ElementClassName,
-    "checkbox": Checkbox,
-    "radio": Radio,
-  }
-};
-
-const classOfNodePropertyByFirstName = {
-  "class": ElementClass,
-  "attr": ElementAttribute,
-  "style": ElementStyle,
-};
-
 export class Factory {
+  // 面倒くさい書き方をしているのは、循環参照でエラーになるため
+  // モジュール内で、const変数で書くとjestで循環参照でエラーになる
+  static #classOfNodePropertyByNameByIsComment;
+  static get classOfNodePropertyByNameByIsComment() {
+    if (typeof this.#classOfNodePropertyByNameByIsComment === "undefined") {
+      this.#classOfNodePropertyByNameByIsComment = {
+        true: {
+          "if": Branch,
+          "loop": Repeat,
+        },
+        false: {
+          "class": ElementClassName,
+          "checkbox": Checkbox,
+          "radio": Radio,
+        }
+      };
+    }
+    return this.#classOfNodePropertyByNameByIsComment;
+  }
+  static #classOfNodePropertyByFirstName;
+  static get classOfNodePropertyByFirstName() {
+    if (typeof this.#classOfNodePropertyByFirstName === "undefined") {
+      this.#classOfNodePropertyByFirstName = {
+        "class": ElementClass,
+        "attr": ElementAttribute,
+        "style": ElementStyle,
+      };
+    }
+    return this.#classOfNodePropertyByFirstName;
+
+  }
 
   /**
    * 
@@ -52,11 +65,11 @@ export class Factory {
 
     do {
       const isComment = node instanceof Comment;
-      classOfNodeProperty = classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
+      classOfNodeProperty = this.classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
       if (typeof classOfNodeProperty !== "undefined") break;
       if (isComment) utils.raise(`unknown node property ${nodePropertyName}`);
       const nameElements = nodePropertyName.split(".");
-      classOfNodeProperty = classOfNodePropertyByFirstName[nameElements[0]];
+      classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];
       if (typeof classOfNodeProperty !== "undefined") break;
       if (node instanceof Element) {
         if (nodePropertyName.startsWith("on")) {

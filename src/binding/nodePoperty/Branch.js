@@ -26,7 +26,7 @@ export class Branch extends TemplateProperty {
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
-   * @param {HTMLInputElement} node 
+   * @param {Comment} node 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
