@@ -103,7 +103,7 @@ export class Binding {
     const process = new ProcessData(
       viewModelProperty.viewModel[Symbols.directlyCall], 
       viewModelProperty.viewModel, 
-      [viewModelProperty.propertyName, context, event]
+      [viewModelProperty.name, context, event]
     );
     component.updateSlot.addProcess(process);
   }

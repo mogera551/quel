@@ -85,12 +85,12 @@ class ViewModel {
     getter(propertyName.parentPathNames.slice())[last] = value;
   }
   /**
-   * @param {PropertyName} propertyName 
+   * @param {string} name 
    * @param {ContextInfo} context
    * @param {Event} event
    */
-  [Symbols.directlyCall](propertyName, context, event) {
-    Reflect.apply(this[propertyName.name], this, [event, ...context.indexes]);
+  [Symbols.directlyCall](name, context, event) {
+    Reflect.apply(this[name], this, [event, ...context.indexes]);
   }
 
 }

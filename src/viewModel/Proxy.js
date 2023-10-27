@@ -312,10 +312,11 @@ export class ViewModelHandler extends Handler {
   /**
    * 
    * @param {ViewModel} target 
-   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,context:ContextInfo,event:Event}} param1 
+   * @param {{prop:string,context:ContextInfo,event:Event}} param1 
    * @param {Proxy} receiver 
    */
-  async #directryCall(target, { propName, context, event }, receiver) {
+  async #directlyCall(target, { prop, context, event }, receiver) {
+    const propName = PropertyName.create(prop);
     if (typeof this.context !== "undefined") utils.raise("directCall already called");
     this.context = context;
     this.stackIndexes.push(undefined);
@@ -346,7 +347,7 @@ export class ViewModelHandler extends Handler {
     } else if (setOfApiFunctions.has(prop)) {
       if (prop === Symbols.directlyCall) {
         return async (prop, context, event) => 
-          this.#directryCall(target, { propName:PropertyName.create(prop), context, event }, receiver);
+          this.#directlyCall(target, { prop, context, event }, receiver);
       } else if (prop === Symbols.notifyForDependentProps) {
         return (prop, indexes) => {
           const propertyAccess = { propName:PropertyName.create(prop), indexes };
