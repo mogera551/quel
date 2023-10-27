@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">29.79% </span>
+                <span class="strong">31.42% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>73/245</span>
+                <span class='fraction'>77/245</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">2.17% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/46</span>
+                <span class='fraction'>1/46</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">2.36% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/169</span>
+                <span class='fraction'>4/169</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60.83% </span>
+                <span class="strong">62.5% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>73/120</span>
+                <span class='fraction'>75/120</span>
             </div>
         
             
@@ -337,7 +337,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -399,7 +399,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -539,7 +539,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -587,8 +587,8 @@ const num = <span class="fstat-no" title="function not covered" >(v</span>, o, f
  * @param {(any,string[])=&gt;any} fn 
  * @returns {any}
  */
-const str = <span class="fstat-no" title="function not covered" >(v</span>, o, fn) =&gt; {
-<span class="cstat-no" title="statement not covered" >  return (v == null) ? v : fn(String(v), o);</span>
+const str = (v, o, fn) =&gt; {
+  return (v == null) ? <span class="branch-0 cbranch-no" title="branch not covered" >v </span>: fn(String(v), o);
 }
 &nbsp;
 /**
@@ -650,7 +650,7 @@ export class outputFilters {
   static "str.toLocaleLowerCase" = <span class="fstat-no" title="function not covered" >(v</span>alue, options) =&gt; <span class="cstat-no" title="statement not covered" >str(value, options, <span class="fstat-no" title="function not covered" >(s</span>, o) =&gt; <span class="cstat-no" title="statement not covered" >s.toLocaleLowerCase(...o))</span>;</span>
   static "str.toLocaleUpperCase" = <span class="fstat-no" title="function not covered" >(v</span>alue, options) =&gt; <span class="cstat-no" title="statement not covered" >str(value, options, <span class="fstat-no" title="function not covered" >(s</span>, o) =&gt; <span class="cstat-no" title="statement not covered" >s.toLocaleUpperCase(...o))</span>;</span>
   static "str.toLowerCase"   = <span class="fstat-no" title="function not covered" >(v</span>alue, options) =&gt; <span class="cstat-no" title="statement not covered" >str(value, options, <span class="fstat-no" title="function not covered" >(s</span>, o) =&gt; <span class="cstat-no" title="statement not covered" >s.toLowerCase(...o))</span>;</span>
-  static "str.toUpperCase"   = <span class="fstat-no" title="function not covered" >(v</span>alue, options) =&gt; <span class="cstat-no" title="statement not covered" >str(value, options, <span class="fstat-no" title="function not covered" >(s</span>, o) =&gt; <span class="cstat-no" title="statement not covered" >s.toUpperCase(...o))</span>;</span>
+  static "str.toUpperCase"   = (value, options) =&gt; str(value, options, (s, o) =&gt; s.toUpperCase(...o));
   //static "str.toWellFormed"  = (value, options) =&gt; str(value, options, (s, o) =&gt; s.toWellFormed(...o));
   static "str.trim"          = <span class="fstat-no" title="function not covered" >(v</span>alue, options) =&gt; <span class="cstat-no" title="statement not covered" >str(value, options, <span class="fstat-no" title="function not covered" >(s</span>, o) =&gt; <span class="cstat-no" title="statement not covered" >s.trim(...o))</span>;</span>
   static "str.trimEnd"       = <span class="fstat-no" title="function not covered" >(v</span>alue, options) =&gt; <span class="cstat-no" title="statement not covered" >str(value, options, <span class="fstat-no" title="function not covered" >(s</span>, o) =&gt; <span class="cstat-no" title="statement not covered" >s.trimEnd(...o))</span>;</span>
@@ -789,8 +789,8 @@ export class outputFilters {
 <span class="fstat-no" title="function not covered" >  st</span>atic get toSpliced() {
 <span class="cstat-no" title="statement not covered" >    return this["arr.toSpliced"];</span>
   }
-<span class="fstat-no" title="function not covered" >  st</span>atic get toUpperCase() {
-<span class="cstat-no" title="statement not covered" >    return this["str.toUpperCase"];</span>
+  static get toUpperCase() {
+    return this["str.toUpperCase"];
   }
   //static get toWellFormed() {
   //  return this["str.toWellFormed"];
@@ -823,7 +823,7 @@ export class inputFilters {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-27T08:47:38.179Z
+                at 2023-10-27T15:31:51.482Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

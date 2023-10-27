@@ -5,6 +5,20 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { MultiValue } from "../../src/binding/nodePoperty/MultiValue.js";
 import { outputFilters } from "../../src/filter/Builtin.js";
 
+const binding = {
+  context: {},
+  viewModelPropertyName: undefined,
+  get contextParam() {
+    const propName = PropertyName.create(this.viewModelPropertyName);
+    if (propName.level > 0) {
+      return this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    } else {
+      return {};
+    }
+
+  }
+};
+
 class ViewModel {
   /**
    * 
@@ -61,9 +75,13 @@ test("ViewModelProperty property access", () => {
   const viewModel = new ViewModel();
   {
     const context = { indexes:[], stack:[] };
-    const viewModelProperty = new ViewModelProperty(viewModel, "aaa", context, [], {});
-    expect(viewModelProperty.context).toEqual({ indexes:[], stack:[] });
-    expect(viewModelProperty.contextParam).toBe(undefined);
+    binding.context = context;
+    binding.viewModelPropertyName = "aaa";
+    const viewModelProperty = new ViewModelProperty(binding, viewModel, "aaa", [], {});
+    expect(viewModelProperty.binding).toBe(binding);
+    expect(viewModelProperty.viewModel).toBe(viewModel);
+    expect(viewModelProperty.name).toBe("aaa");
+    expect(viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
     expect(viewModelProperty.indexes).toEqual([]);
     expect(viewModelProperty.filters).toEqual([]);
     expect(viewModelProperty.filterFuncs).toEqual({});
@@ -78,9 +96,13 @@ test("ViewModelProperty property access", () => {
   }
   {
     const context = { indexes:[0], stack:[{propName: new PropertyName("bbb"), indexes:[0], pos:1}] };
-    const viewModelProperty = new ViewModelProperty(viewModel, "bbb.*", context, [], {});
-    expect(viewModelProperty.context).toEqual({ indexes:[0], stack:[{propName: new PropertyName("bbb"), indexes:[0], pos:1}] });
-    expect(viewModelProperty.contextParam).toEqual({propName: new PropertyName("bbb"), indexes:[0], pos:1});
+    binding.context = context;
+    binding.viewModelPropertyName = "bbb.*";
+    const viewModelProperty = new ViewModelProperty(binding, viewModel, "bbb.*", [], {});
+    expect(viewModelProperty.binding).toBe(binding);
+    expect(viewModelProperty.viewModel).toBe(viewModel);
+    expect(viewModelProperty.name).toBe("bbb.*");
+    expect(viewModelProperty.propertyName).toEqual(PropertyName.create("bbb.*"));
     expect(viewModelProperty.indexes).toEqual([0]);
     expect(viewModelProperty.filters).toEqual([]);
     expect(viewModelProperty.filterFuncs).toEqual({});
@@ -92,19 +114,12 @@ test("ViewModelProperty property access", () => {
     expect(viewModelProperty.filteredValue).toBe(15);
     expect(viewModel.bbb).toEqual([15,20,30]);
 
-    const newContext = { indexes:[1], stack:[{propName: new PropertyName("bbb"), indexes:[1], pos:1}] };
-    viewModelProperty.context = newContext;
-    expect(viewModelProperty.context).toEqual({ indexes:[1], stack:[{propName: new PropertyName("bbb"), indexes:[1], pos:1}] });
-    expect(viewModelProperty.contextParam).toEqual({propName: new PropertyName("bbb"), indexes:[1], pos:1});
-    expect(viewModelProperty.value).toBe(20);
-    viewModelProperty.value = 25;
-    expect(viewModelProperty.value).toBe(25);
-    expect(viewModel.bbb).toEqual([15,25,30]);
   }
   {
     viewModel.aaa = 100;
     const context = { indexes:[], stack:[] };
-    const viewModelProperty = new ViewModelProperty(viewModel, "aaa", context, [], {});
+    binding.context = context;
+    const viewModelProperty = new ViewModelProperty(binding, viewModel, "aaa", [], {});
     expect(viewModelProperty.value).toBe(100);
     viewModelProperty.value = new MultiValue(150, false);
     expect(viewModelProperty.value).toBe(100);
@@ -119,7 +134,8 @@ test("ViewModelProperty property access", () => {
   {
     viewModel.bbb = [10,20,30];
     const context = { indexes:[], stack:[] };
-    const viewModelProperty = new ViewModelProperty(viewModel, "bbb", context, [], {});
+    binding.context = context;
+    const viewModelProperty = new ViewModelProperty(binding, viewModel, "bbb", [], {});
     expect(viewModelProperty.value).toEqual([10,20,30]);
     viewModelProperty.value = new MultiValue(10, false);
     expect(viewModelProperty.value).toEqual([20,30]);
@@ -133,13 +149,38 @@ test("ViewModelProperty property access", () => {
   }
   {
     const context = { indexes:[], stack:[] };
-    const viewModelProperty = new ViewModelProperty(viewModel, "ccc", context,  [{name:"toUpperCase", options:[]}], outputFilters);
+    binding.context = context;
+    const viewModelProperty = new ViewModelProperty(binding, viewModel, "ccc", [{name:"toUpperCase", options:[]}], outputFilters);
     expect(viewModelProperty.value).toBe("abc");
     expect(viewModelProperty.filteredValue).toBe("ABC");
     viewModelProperty.value = "def";
     expect(viewModelProperty.value).toBe("def");
     expect(viewModelProperty.filteredValue).toBe("DEF");
     expect(viewModel.ccc).toBe("def");
+  }
+  {
+    viewModel.bbb = [10,20,30];
+    const context = { indexes:[], stack:[] };
+    binding.context = context;
+    const viewModelProperty = new ViewModelProperty(binding, viewModel, "bbb", [], {});
+    {
+      const newContext = viewModelProperty.createChildContext(0);
+      expect(newContext).toEqual({
+        indexes:[0],
+        stack:[{propName:PropertyName.create("bbb"), indexes:[0], pos:0}]
+      });
+    }
+    {
+      const newContext = viewModelProperty.createChildContext(1);
+      expect(newContext).toEqual({
+        indexes:[1],
+        stack:[{propName:PropertyName.create("bbb"), indexes:[1], pos:0}]
+      });
+  
+    }
+    {
+      viewModelProperty.initialize();
+    }
   }
 
 });
