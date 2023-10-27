@@ -1,5 +1,6 @@
 import "../../types.js";
 import { Filter } from "../../filter/Filter.js";
+import { utils } from "../../utils.js";
 
 export class NodeProperty {
   /** @type {Node} */
@@ -65,6 +66,7 @@ export class NodeProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
+    if (!(node instanceof Node)) utils.raise("not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;

@@ -1,10 +1,13 @@
 import { NodeProperty } from "../../../src/binding/nodePoperty/NodeProperty.js";
 import { inputFilters } from "../../../src/filter/Builtin.js";
 
+const binding = {};
+
 test("NodeProperty property access", () => {
   const node = document.createTextNode("abc");
   {
-    const nodeProperty = new NodeProperty(node, "aaaa", [], {});
+    const nodeProperty = new NodeProperty(binding, node, "aaaa", [], {});
+    expect(nodeProperty.binding).toBe(binding);
     expect(nodeProperty.node).toBe(node);
     expect(nodeProperty.name).toBe("aaaa");
     expect(nodeProperty.nameElements).toEqual(["aaaa"]);
@@ -13,20 +16,30 @@ test("NodeProperty property access", () => {
     expect(nodeProperty.applicable).toBe(true);
   }
   {
-    const nodeProperty = new NodeProperty(node, "aaaa.bbbb", [], {});
+    const nodeProperty = new NodeProperty(binding, node, "aaaa.bbbb", [], {});
+    expect(nodeProperty.binding).toBe(binding);
+    expect(nodeProperty.node).toBe(node);
     expect(nodeProperty.name).toBe("aaaa.bbbb");
     expect(nodeProperty.nameElements).toEqual(["aaaa", "bbbb"]);
+    expect(nodeProperty.filters).toEqual([]);
+    expect(nodeProperty.filterFuncs).toEqual({});
+    expect(nodeProperty.applicable).toBe(true);
   }
   {
-    const nodeProperty = new NodeProperty(node, "aaaa.*.bbbb", [], {});
+    const nodeProperty = new NodeProperty(binding, node, "aaaa.*.bbbb", [], {});
+    expect(nodeProperty.binding).toBe(binding);
+    expect(nodeProperty.node).toBe(node);
     expect(nodeProperty.name).toBe("aaaa.*.bbbb");
     expect(nodeProperty.nameElements).toEqual(["aaaa", "*", "bbbb"]);
+    expect(nodeProperty.filters).toEqual([]);
+    expect(nodeProperty.filterFuncs).toEqual({});
+    expect(nodeProperty.applicable).toBe(true);
   }
 });
 
 test("NodeProperty property value", () => {
   const node = document.createTextNode("abc");
-  const nodeProperty = new NodeProperty(node, "textContent", [], {});
+  const nodeProperty = new NodeProperty(binding, node, "textContent", [], {});
   expect(nodeProperty.value).toBe("abc");
   expect(nodeProperty.filteredValue).toBe("abc");
   expect(node.textContent).toBe("abc");
@@ -39,7 +52,7 @@ test("NodeProperty property value", () => {
 
 test("NodeProperty property filtered value", () => {
   const node = document.createTextNode("123");
-  const nodeProperty = new NodeProperty(node, "textContent", [{name:"number", options:[]}], inputFilters);
+  const nodeProperty = new NodeProperty(binding, node, "textContent", [{name:"number", options:[]}], inputFilters);
   expect(nodeProperty.value).toBe("123");
   expect(nodeProperty.filteredValue).toBe(123);
   expect(node.textContent).toBe("123");
@@ -50,3 +63,8 @@ test("NodeProperty property filtered value", () => {
   expect(node.textContent).toBe("456");
 });
 
+test("NodeProperty fail", () => {
+  expect(() => {
+    const nodeProperty = new NodeProperty(binding, {}, "aaaa", [], {});
+  }).toThrow("not Node");
+})
