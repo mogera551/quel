@@ -5,6 +5,7 @@ import { ViewTemplate } from "../view/View.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { utils } from "../utils.js";
 
 export class Binding {
 
@@ -40,6 +41,11 @@ export class Binding {
 
   /** @type { Bindings[] } */
   children = [];
+
+  /** @type {boolean} */
+  get expandable() {
+    return this.nodeProperty.expandable;
+  }
 
   /**
    * 
@@ -139,33 +145,29 @@ export class Binding {
   }
 
   /**
-   * 
-   * @param {Node} node 
-   * @returns {Node}
-   */
-  appear(node) {
-    return this.children.reduce((node, bindings) => bindings.appear(node), node);
-  }
-
-  /**
-   * 
-   */
-  disappear() {
-    this.children.forEach(bindings => bindings.disappear());
-  }
-
-  /**
    * @param {Bindings} bindings
    */
   appendChild(bindings) {
+    if (!this.expandable) utils.raise("not expandable");
     const lastChild = this.children[this.children,length - 1];
     this.children.push(bindings);
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
     beforeNode.parentNode.insertBefore(bindings.fragment, beforeNode.nextSibling);
   }
+
+  /**
+   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  updateNode(setOfUpdatedViewModelPropertyKeys) {
+    this.nodeProperty.beforeUpdate(setOfUpdatedViewModelPropertyKeys);
+    if (this.viewModelProperty.isUpdate(setOfUpdatedViewModelPropertyKeys)) {
+      this.applyToNode();
+    }
+  }
 }
 
-/** @type {Array<Binding>} */
+/** @type {Binding[]} */
 export class Bindings extends Array {
 
   /** @type {Node[]} */
@@ -225,25 +227,83 @@ export class Bindings extends Array {
   }
 
   /**
-   * @param {Node} node
-   * @return {Node}
-   */
-  appear(node) {
-    node.appendChild(this.fragment);
-    return this.reduce((node, binding) => binding.appear(node), this.nodes[this.nodes.length - 1]);
-  }
-
-  /**
-   * 
-   */
-  disappear() {
-  }
-
-  /**
    * 
    */
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
     this.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
+  }
+
+  /**
+   * Templateバインドをバインドツリーから取得
+   * @param {Set<string>} setOfKey 
+   * @returns {Binding[]}
+   */
+  getExpandableBindings(setOfKey) {
+    /** @type {Binding[]} */
+    const bindings = this;
+    const expandableBindings = [];
+    const stack = [ { bindings, children:null, index:-1 } ];
+    while(stack.length > 0) {
+      const info = stack[stack.length - 1];
+      info.index++;
+      if (info.bindings) {
+        if (info.index < info.bindings.length) {
+          const binding = info.bindings[info.index];
+          if (binding.expandable) {
+            if (setOfKey.has(binding.viewModelProperty.key)) {
+              expandableBindings.push(binding);
+            } else {
+              if (binding.children.length > 0) {
+                stack.push({ bindings:null, children:binding.children, index:-1 });
+              }
+            }
+          }
+        } else {
+          stack.pop();
+        }
+      } else {
+        if (info.index < info.children.length) {
+          const bindings = info.children[info.index];
+          if (bindings.length > 0) {
+            stack.push({ bindings:bindings, children:null, index:-1 });
+          }
+        } else {
+          stack.pop();
+        }
+      }
+    }
+    return expandableBindings;
+  }
+
+  /**
+   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  updateNode(setOfUpdatedViewModelPropertyKeys) {
+    // templateを先に展開する
+    /**
+     * @type {Set<Binding>}
+     */
+    const expandableBindings = new Set(this.getExpandableBindings(setOfUpdatedViewModelPropertyKeys));
+    for(const binding of expandableBindings) {
+      binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+    }
+
+    /**
+     * 
+     * @param {Binding[]} bindings 
+     */
+    const updateNode_ = (bindings) => {
+      for(const binding of bindings) {
+        if (expandableBindings.has(binding)) return;
+        binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+        if (!binding.expandable) return;
+        for(const bindings of binding.children) {
+          updateNode_(bindings);
+        }
+      }
+    };
+    updateNode_(this);
   }
 }

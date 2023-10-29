@@ -18,9 +18,12 @@ test("Checkbox", () => {
   expect(checkbox.nameElements).toEqual(["checkbox"]);
   expect(checkbox.filters).toEqual([]);
   expect(checkbox.filterFuncs).toEqual({});
-  expect(checkbox.value).toEqual({value:"100", enabled:false});
-  expect(checkbox.filteredValue).toEqual({value:"100", enabled:false});
+  expect(checkbox.value.value).toBe("100");
+  expect(checkbox.value.enabled).toBe(false);
+  expect(checkbox.filteredValue.value).toBe("100");
+  expect(checkbox.filteredValue.enabled).toBe(false);
   expect(checkbox.applicable).toBe(true);
+  expect(checkbox.expandable).toBe(false);
 
   checkbox.value = ["100"];
   expect(element.checked).toBe(true);
@@ -40,8 +43,10 @@ test("Checkbox filtered", () => {
   element.checked = false;
 
   const checkbox = new Checkbox(binding, element, "checkbox", [{name:"number", option:[]}], inputFilters);
-  expect(checkbox.value).toEqual({value:"100", enabled:false});
-  expect(checkbox.filteredValue).toEqual({value:100, enabled:false});
+  expect(checkbox.value.value).toBe("100");
+  expect(checkbox.value.enabled).toBe(false);
+  expect(checkbox.filteredValue.value).toBe(100);
+  expect(checkbox.filteredValue.enabled).toBe(false);
 
   checkbox.value = [100];
   expect(element.checked).toBe(true);
