@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">74.07% </span>
+                <span class="strong">59.25% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/27</span>
+                <span class='fraction'>16/27</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.85% </span>
+                <span class="strong">57.14% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/7</span>
+                <span class='fraction'>4/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.77% </span>
+                <span class="strong">55.55% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/9</span>
+                <span class='fraction'>5/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/20</span>
+                <span class='fraction'>12/20</span>
             </div>
         
             
@@ -156,12 +156,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -182,14 +182,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -206,20 +206,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -235,14 +235,14 @@
  * @param {Node} node 
  * @returns {number[]}
  */
-const getNodeRoute = node =&gt; {
+const getNodeRoute = <span class="fstat-no" title="function not covered" >no</span>de =&gt; {
   /** @type {number[]} */
-  let routeIndexes = [];
-  while(node.parentNode != null) {
-    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
-    node = node.parentNode;
+  let routeIndexes = <span class="cstat-no" title="statement not covered" >[];</span>
+<span class="cstat-no" title="statement not covered" >  while(node.parentNode != null) {</span>
+<span class="cstat-no" title="statement not covered" >    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);</span>
+<span class="cstat-no" title="statement not covered" >    node = node.parentNode;</span>
   }
-  return routeIndexes;
+<span class="cstat-no" title="statement not covered" >  return routeIndexes;</span>
 };
 &nbsp;
 /**
@@ -287,18 +287,18 @@ export class Selector {
     /** @type {Node[]} */
     let nodes;
 &nbsp;
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (this.listOfRouteIndexesByTemplate.has(template)) {
+    if (this.listOfRouteIndexesByTemplate.has(template)) {
       // キャッシュがある場合
       // querySelectorAllを行わずにNodeの位置を特定できる
       /** @type {number[][]} */
-      const listOfRouteIndexes = <span class="cstat-no" title="statement not covered" >this.listOfRouteIndexesByTemplate.get(template);</span>
-<span class="cstat-no" title="statement not covered" >      nodes = listOfRouteIndexes.map(<span class="fstat-no" title="function not covered" >ro</span>uteIndexes =&gt; <span class="cstat-no" title="statement not covered" >getNodeByRouteIndexes(rootElement, routeIndexes))</span>;</span>
+      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
+      nodes = listOfRouteIndexes.map(<span class="fstat-no" title="function not covered" >ro</span>uteIndexes =&gt; <span class="cstat-no" title="statement not covered" >getNodeByRouteIndexes(rootElement, routeIndexes))</span>;
     } else {
       // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
       nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
 &nbsp;
       // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node =&gt; getNodeRoute(node)));
+      this.listOfRouteIndexesByTemplate.set(template, nodes.map(<span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >getNodeRoute(node))</span>);
     }
     return nodes;
 &nbsp;
@@ -313,7 +313,7 @@ export class Selector {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-29T18:35:22.767Z
+                at 2023-10-29T19:22:56.502Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

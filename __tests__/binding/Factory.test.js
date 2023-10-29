@@ -1,5 +1,5 @@
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { Binding, Bindings } from "../../src/binding/Binding.js";
+import { Binding, ChildBinding } from "../../src/binding/Binding.js";
 import { Factory } from "../../src/binding/Factory.js";
 import { Branch } from "../../src/binding/nodePoperty/Branch.js";
 import { Checkbox } from "../../src/binding/nodePoperty/Checkbox.js";

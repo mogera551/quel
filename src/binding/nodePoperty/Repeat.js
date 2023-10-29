@@ -1,4 +1,4 @@
-import { Bindings } from "../Binding.js";
+import { ChildBinding } from "../Binding.js";
 import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
 
@@ -10,18 +10,18 @@ export class Repeat extends TemplateProperty {
   set value(value) {
     if (!Array.isArray(value)) utils.raise("value is not array");
     if (this.value < value.length) {
-      this.binding.children.forEach(bindings => bindings.applyToNode());
+      this.binding.children.forEach(childBinding => childBinding.applyToNode());
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
-        const bindings = new Bindings(this.component, this.template, newContext);
-        this.binding.appendChild(bindings);
+        const childBinding = new ChildBinding(this.component, this.template, newContext);
+        this.binding.appendChild(childBinding);
       }
     } else if (this.value > value.length) {
-      const removeListOfBindings = this.binding.children.splice(value.length);
-      this.binding.children.forEach(bindings => bindings.applyToNode());
-      removeListOfBindings.forEach(bindings => bindings.removeFromParent());
+      const removeChildBindings = this.binding.children.splice(value.length);
+      this.binding.children.forEach(childBinding => childBinding.applyToNode());
+      removeChildBindings.forEach(childBinding => childBinding.removeFromParent());
     } else {
-      this.binding.children.forEach(bindings => bindings.applyToNode());
+      this.binding.children.forEach(childBinding => childBinding.applyToNode());
     }
   }
 

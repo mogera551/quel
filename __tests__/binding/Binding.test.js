@@ -1,4 +1,4 @@
-import { Binding, Bindings } from "../../src/binding/Binding";
+import { Binding, ChildBinding } from "../../src/binding/Binding";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty";
 import { Branch } from "../../src/binding/nodePoperty/Branch";
 import { ElementEvent } from "../../src/binding/nodePoperty/ElementEvent";
@@ -202,14 +202,13 @@ test("Binding/Binding appendChild", async () => {
   parentNode.appendChild(comment);
   const binding = new Binding(component, context, comment, "if", Branch, component.viewModel, "aaa", ViewModelProperty, []);
   {
-    const uuid = "1234";
     const template = document.createElement("template");
     template.innerHTML = "<div></div>";
-    const bindings = new Bindings(component, template, context);
-    binding.appendChild(bindings);
-    expect(bindings.nodes.length > 0).toBe(true);
-    for(let i = 0, node = comment.nextSibling; i < bindings.nodes.length; node = node.nextSibling, i++) {
-      expect(node).toBe(bindings.nodes[i]);
+    const childBinding = new ChildBinding(component, template, context);
+    binding.appendChild(childBinding);
+    expect(childBinding.nodes.length > 0).toBe(true);
+    for(let i = 0, node = comment.nextSibling; i < childBinding.nodes.length; node = node.nextSibling, i++) {
+      expect(node).toBe(childBinding.nodes[i]);
     }
   }
 
@@ -237,18 +236,17 @@ test("Binding/Binding appendChild fail", async () => {
   parentNode.appendChild(element);
   const binding = new Binding(component, context, element, "textContent", ElementProperty, component.viewModel, "aaa", ViewModelProperty, []);
   {
-    const uuid = "1234";
     const template = document.createElement("template");
     template.innerHTML = "<div></div>";
-    const bindings = new Bindings(component, template, context);
+    const childBinding = new ChildBinding(component, template, context);
     expect(() => {
-      binding.appendChild(bindings);
+      binding.appendChild(childBinding);
     }).toThrow("not expandable");
   }
 
 });
 
-test("Binding/Bindings", async () => {
+test("Binding/ChildBinding", async () => {
   const html = `
   <div data-bind='message'></div>
   `;
@@ -270,13 +268,13 @@ test("Binding/Bindings", async () => {
   template.innerHTML = "<div data-bind='text'></div>";
 
   const context = { indexes:[], stack:[]};
-  const bindings = new Bindings(component, template, context);
+  const childBinding = new ChildBinding(component, template, context);
   {
-    expect(bindings.nodes.length > 0).toBe(true);
+    expect(childBinding.nodes.length > 0).toBe(true);
     let haveDiv = false;
     let lastNode = null;
-    for(let i = 0; i < bindings.nodes.length; i++) {
-      const node = bindings.nodes[i];
+    for(let i = 0; i < childBinding.nodes.length; i++) {
+      const node = childBinding.nodes[i];
       if (node instanceof HTMLDivElement) {
         console.log(node.outerHTML);
         if (node.outerHTML === `<div data-bind="text"></div>`) {
@@ -286,11 +284,11 @@ test("Binding/Bindings", async () => {
       lastNode = node;
     }
     expect(haveDiv).toBe(true);
-    expect(bindings.lastNode).toBe(lastNode);
-    expect(bindings.fragment instanceof DocumentFragment).toBe(true);
-    expect(Array.from(bindings.fragment.childNodes)).toEqual(bindings.nodes);
-    expect(bindings.context).toEqual(context);
-    expect(bindings.template).toBe(template);
+    expect(childBinding.lastNode).toBe(lastNode);
+    expect(childBinding.fragment instanceof DocumentFragment).toBe(true);
+    expect(Array.from(childBinding.fragment.childNodes)).toEqual(childBinding.nodes);
+    expect(childBinding.context).toEqual(context);
+    expect(childBinding.template).toBe(template);
   }
 
 

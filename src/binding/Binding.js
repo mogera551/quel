@@ -39,7 +39,7 @@ export class Binding {
     return this.#contextParam;
   }
 
-  /** @type { Bindings[] } */
+  /** @type { ChildBinding[] } */
   children = [];
 
   /** @type {boolean} */
@@ -144,14 +144,14 @@ export class Binding {
   }
 
   /**
-   * @param {Bindings} bindings
+   * @param {ChildBinding} childBinding
    */
-  appendChild(bindings) {
+  appendChild(childBinding) {
     if (!this.expandable) utils.raise("not expandable");
     const lastChild = this.children[this.children,length - 1];
-    this.children.push(bindings);
+    this.children.push(childBinding);
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
-    beforeNode.parentNode.insertBefore(bindings.fragment, beforeNode.nextSibling);
+    beforeNode.parentNode.insertBefore(childBinding.fragment, beforeNode.nextSibling);
   }
 
   /**
@@ -166,8 +166,9 @@ export class Binding {
   }
 }
 
-/** @type {Binding[]} */
-export class Bindings extends Array {
+export class ChildBinding {
+  /** @type {Binding[]} */
+  bindings = [];
 
   /** @type {Node[]} */
   nodes = [];
@@ -201,9 +202,8 @@ export class Bindings extends Array {
    * @param {ContextInfo} context
    */
   constructor(component, template, context) {
-    super();
     const { bindings, content } = ViewTemplate.render(component, template, context);
-    this.push(...bindings);
+    this.bindings = bindings;
     this.nodes = Array.from(content.childNodes);
     this.#fragment = content;
     this.#context = context;
@@ -214,14 +214,14 @@ export class Bindings extends Array {
    * 
    */
   applyToNode() {
-    this.forEach(binding => binding.applyToNode());
+    this.bindings.forEach(binding => binding.applyToNode());
   }
 
   /**
    * 
    */
   applyToViewModel() {
-    this.forEach(binding => binding.applyToViewModel());
+    this.bindings.forEach(binding => binding.applyToViewModel());
   }
 
   /**
@@ -229,7 +229,7 @@ export class Bindings extends Array {
    */
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
-    this.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
+    this.bindings.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
   }
 
   /**
@@ -239,7 +239,7 @@ export class Bindings extends Array {
    */
   getExpandableBindings(setOfKey) {
     /** @type {Binding[]} */
-    const bindings = this;
+    const bindings = this.bindings;
     const expandableBindings = [];
     const stack = [ { bindings, children:null, index:-1 } ];
     while(stack.length > 0) {
@@ -262,7 +262,7 @@ export class Bindings extends Array {
         }
       } else {
         if (info.index < info.children.length) {
-          const bindings = info.children[info.index];
+          const bindings = info.children[info.index].bindings;
           if (bindings.length > 0) {
             stack.push({ bindings:bindings, children:null, index:-1 });
           }
