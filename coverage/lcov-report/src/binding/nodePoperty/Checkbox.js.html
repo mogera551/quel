@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -117,31 +117,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -151,9 +146,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { ElementProperty } from "./ElementProperty.js";
 import { MultiValue } from "./MultiValue.js";
@@ -162,27 +162,27 @@ import { utils } from "../../utils.js";
 &nbsp;
 export class Checkbox extends ElementProperty {
   /** @type {HTMLInputElement} */
-  get inputElement() {
-    return this.node;
+<span class="fstat-no" title="function not covered" >  ge</span>t inputElement() {
+<span class="cstat-no" title="statement not covered" >    return this.node;</span>
   }
 &nbsp;
   /** @type {any} */
-  get value() {
-    return new MultiValue(this.inputElement.value, this.inputElement.checked);
+<span class="fstat-no" title="function not covered" >  ge</span>t value() {
+<span class="cstat-no" title="statement not covered" >    return new MultiValue(this.inputElement.value, this.inputElement.checked);</span>
   }
-  set value(value) {
+<span class="fstat-no" title="function not covered" >  se</span>t value(value) {
     /** @type {Array} */
-    const array = value;
+    const array = <span class="cstat-no" title="statement not covered" >value;</span>
     /** @type {MultiValue} */
-    const multiValue = this.filteredValue;
-    this.inputElement.checked = array.find(v =&gt; v === multiValue.value) ? true : false;
+    const multiValue = <span class="cstat-no" title="statement not covered" >this.filteredValue;</span>
+<span class="cstat-no" title="statement not covered" >    this.inputElement.checked = array.find(<span class="fstat-no" title="function not covered" >v </span>=&gt; <span class="cstat-no" title="statement not covered" >v === multiValue.value)</span> ? true : false;</span>
   }
 &nbsp;
   /** @type {any} */
-  get filteredValue() {
+<span class="fstat-no" title="function not covered" >  ge</span>t filteredValue() {
     /** @type {MultiValue} */
-    const multiValue = this.value;
-    return new MultiValue(
+    const multiValue = <span class="cstat-no" title="statement not covered" >this.value;</span>
+<span class="cstat-no" title="statement not covered" >    return new MultiValue(</span>
       this.filters.length &gt; 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
       multiValue.enabled
     );
@@ -196,10 +196,10 @@ export class Checkbox extends ElementProperty {
    * @param {Filter[]} filters 
    * @param {Object&lt;string,FilterFunc&gt;} filterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
-    if (node.type !== "checkbox") utils.raise("not checkbox");
-    super(binding, node, name, filters, filterFuncs);
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(binding, node, name, filters, filterFuncs) {
+<span class="cstat-no" title="statement not covered" >    if (!(node instanceof HTMLInputElement)) <span class="cstat-no" title="statement not covered" >utils.raise("not htmlInputElement");</span></span>
+<span class="cstat-no" title="statement not covered" >    if (node.type !== "checkbox") <span class="cstat-no" title="statement not covered" >utils.raise("not checkbox");</span></span>
+<span class="cstat-no" title="statement not covered" >    super(binding, node, name, filters, filterFuncs);</span>
   }
 }</pre></td></tr></table></pre>
 
@@ -208,7 +208,7 @@ export class Checkbox extends ElementProperty {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-29T09:20:46.426Z
+                at 2023-10-29T18:35:22.767Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

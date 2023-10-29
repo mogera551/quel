@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/24</span>
+                <span class='fraction'>0/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">63.63% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/11</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/20</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
@@ -138,30 +138,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -169,10 +156,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -204,18 +204,18 @@ import { ElementProperty } from "./ElementProperty";
 &nbsp;
 export class ComponentProperty extends ElementProperty {
   /** @type {string} */
-  get propName() {
-    return this.nameElements[1];
+<span class="fstat-no" title="function not covered" >  ge</span>t propName() {
+<span class="cstat-no" title="statement not covered" >    return this.nameElements[1];</span>
   }
 &nbsp;
   /** @type {boolean} */
-  get applicable() {
-    return false;
+<span class="fstat-no" title="function not covered" >  ge</span>t applicable() {
+<span class="cstat-no" title="statement not covered" >    return false;</span>
   }
 &nbsp;
   /** @type {Component} */
-  get thisComponent() {
-    return this.node;
+<span class="fstat-no" title="function not covered" >  ge</span>t thisComponent() {
+<span class="cstat-no" title="statement not covered" >    return this.node;</span>
   }
 &nbsp;
   /**
@@ -226,20 +226,20 @@ export class ComponentProperty extends ElementProperty {
    * @param {Filter[]} filters 
    * @param {Object&lt;string,FilterFunc&gt;} filterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (!(node[Symbols.isComponent])) <span class="cstat-no" title="statement not covered" >utils.raise("not Component");</span>
-    super(binding, node, name, filters, filterFuncs);
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(binding, node, name, filters, filterFuncs) {
+<span class="cstat-no" title="statement not covered" >    if (!(node[Symbols.isComponent])) <span class="cstat-no" title="statement not covered" >utils.raise("not Component");</span></span>
+<span class="cstat-no" title="statement not covered" >    super(binding, node, name, filters, filterFuncs);</span>
   }
 &nbsp;
   /**
    * 初期化処理
    * DOM要素にイベントハンドラの設定を行う
    */
-  initialize() {
-    this.thisComponent.props[Symbols.bindProperty](this.propName, this.binding.viewModelProperty.name, this.binding.viewModelProperty.indexes);
-    Object.defineProperty(this.thisComponent.viewModel, this.propName, {
-      get: ((propName) =&gt; <span class="fstat-no" title="function not covered" >fu</span>nction () { <span class="cstat-no" title="statement not covered" >return this.$props[propName]; </span>})(this.propName),
-      set: ((propName) =&gt; <span class="fstat-no" title="function not covered" >fu</span>nction (value) { <span class="cstat-no" title="statement not covered" >this.$props[propName] = value; </span>})(this.propName),
+<span class="fstat-no" title="function not covered" >  in</span>itialize() {
+<span class="cstat-no" title="statement not covered" >    this.thisComponent.props[Symbols.bindProperty](this.propName, this.binding.viewModelProperty.name, this.binding.viewModelProperty.indexes);</span>
+<span class="cstat-no" title="statement not covered" >    Object.defineProperty(this.thisComponent.viewModel, this.propName, {</span>
+      get: (<span class="fstat-no" title="function not covered" >(p</span>ropName) =&gt; <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >fu</span>nction () { <span class="cstat-no" title="statement not covered" >return this.$props[propName]; </span>})</span>(this.propName),
+      set: (<span class="fstat-no" title="function not covered" >(p</span>ropName) =&gt; <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >fu</span>nction (value) { <span class="cstat-no" title="statement not covered" >this.$props[propName] = value; </span>})</span>(this.propName),
       configurable: true,
     });
   }
@@ -271,7 +271,7 @@ export class ComponentProperty extends ElementProperty {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-29T09:13:38.673Z
+                at 2023-10-29T18:35:22.767Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

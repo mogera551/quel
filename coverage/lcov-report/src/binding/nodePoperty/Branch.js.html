@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">53.33% </span>
+                <span class="strong">13.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/15</span>
+                <span class='fraction'>2/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">12.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/8</span>
+                <span class='fraction'>1/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">20% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/5</span>
+                <span class='fraction'>1/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.72% </span>
+                <span class="strong">18.18% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/11</span>
+                <span class='fraction'>2/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -101,7 +101,8 @@
 <a name='L36'></a><a href='#L36'>36</a>
 <a name='L37'></a><a href='#L37'>37</a>
 <a name='L38'></a><a href='#L38'>38</a>
-<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -109,14 +110,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -143,23 +145,24 @@
 import { utils } from "../../utils.js";
 import { Bindings } from "../Binding.js";
 import { Context } from "../../context/Context.js";
+import { Templates } from "../../view/Templates.js";
 &nbsp;
 export class Branch extends TemplateProperty {
   /** @type {boolean} */
-  get value() {
-    return this.binding.children.length &gt; 0;
+<span class="fstat-no" title="function not covered" >  ge</span>t value() {
+<span class="cstat-no" title="statement not covered" >    return this.binding.children.length &gt; 0;</span>
   }
-  set value(value) {
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (typeof value !== "boolean") <span class="cstat-no" title="statement not covered" >utils.raise("value is not boolean");</span>
-    if (this.value !== value) {
-      if (value) {
-        const bindings = new Bindings(this.binding.component, this.uuid, Context.clone(this.binding.context));
-        this.binding.appendChild(bindings);
-      } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+<span class="fstat-no" title="function not covered" >  se</span>t value(value) {
+<span class="cstat-no" title="statement not covered" >    if (typeof value !== "boolean") <span class="cstat-no" title="statement not covered" >utils.raise("value is not boolean");</span></span>
+<span class="cstat-no" title="statement not covered" >    if (this.value !== value) {</span>
+<span class="cstat-no" title="statement not covered" >      if (value) {</span>
+        const bindings = <span class="cstat-no" title="statement not covered" >new Bindings(this.binding.component, this.template, Context.clone(this.binding.context));</span>
+<span class="cstat-no" title="statement not covered" >        this.binding.appendChild(bindings);</span>
+      } else {
         const removeListOfBindings = <span class="cstat-no" title="statement not covered" >this.binding.children.splice(0, this.binding.children.length);</span>
 <span class="cstat-no" title="statement not covered" >        removeListOfBindings.forEach(<span class="fstat-no" title="function not covered" >bi</span>ndings =&gt; <span class="cstat-no" title="statement not covered" >bindings.removeFromParent())</span>;</span>
       }
-    } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+    } else {
 <span class="cstat-no" title="statement not covered" >      this.binding.children.forEach(<span class="fstat-no" title="function not covered" >bi</span>ndings =&gt; <span class="cstat-no" title="statement not covered" >bindings.applyToNode())</span>;</span>
     }
   }
@@ -184,7 +187,7 @@ export class Branch extends TemplateProperty {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-29T09:13:38.673Z
+                at 2023-10-29T18:35:22.767Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

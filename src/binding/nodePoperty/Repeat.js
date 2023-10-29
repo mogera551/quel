@@ -13,7 +13,7 @@ export class Repeat extends TemplateProperty {
       this.binding.children.forEach(bindings => bindings.applyToNode());
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
-        const bindings = new Bindings(this.component, this.uuid, newContext);
+        const bindings = new Bindings(this.component, this.template, newContext);
         this.binding.appendChild(bindings);
       }
     } else if (this.value > value.length) {

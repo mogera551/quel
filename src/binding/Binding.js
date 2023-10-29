@@ -103,9 +103,8 @@ export class Binding {
    * @param {Event} event 
    */
   execEventHandler(event) {
-    event.stopPropagation();
-
     const {component, viewModelProperty, context} = this;
+    event.stopPropagation();
     const process = new ProcessData(
       viewModelProperty.viewModel[Symbols.directlyCall], 
       viewModelProperty.viewModel, 
@@ -189,27 +188,26 @@ export class Bindings extends Array {
     return this.#context;
   }
 
-  /** @type {string} */
-  #uuid;
-  get uuid() {
-    return this.#uuid;
+  /** @type {HTMLTemplateElement} */
+  #template;
+  get template() {
+    return this.#template;
   }
 
   /**
    * 
    * @param {Component} component
-   * @param {string} uuid
+   * @param {HTMLTemplateElement} template
    * @param {ContextInfo} context
    */
-  constructor(component, uuid, context) {
+  constructor(component, template, context) {
     super();
-    const template = Templates.templateByUUID.get(uuid);
     const { bindings, content } = ViewTemplate.render(component, template, context);
     this.push(...bindings);
     this.nodes = Array.from(content.childNodes);
     this.#fragment = content;
     this.#context = context;
-    this.#uuid = uuid;
+    this.#template = template;
   }
 
   /**
@@ -235,7 +233,7 @@ export class Bindings extends Array {
   }
 
   /**
-   * Templateバインドをバインドツリーから取得
+   * expandableバインドをバインドツリーから取得
    * @param {Set<string>} setOfKey 
    * @returns {Binding[]}
    */

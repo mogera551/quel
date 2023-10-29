@@ -2,6 +2,7 @@ import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
 import { Bindings } from "../Binding.js";
 import { Context } from "../../context/Context.js";
+import { Templates } from "../../view/Templates.js";
 
 export class Branch extends TemplateProperty {
   /** @type {boolean} */
@@ -12,7 +13,7 @@ export class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const bindings = new Bindings(this.binding.component, this.uuid, Context.clone(this.binding.context));
+        const bindings = new Bindings(this.binding.component, this.template, Context.clone(this.binding.context));
         this.binding.appendChild(bindings);
       } else {
         const removeListOfBindings = this.binding.children.splice(0, this.binding.children.length);

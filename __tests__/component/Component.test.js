@@ -74,7 +74,7 @@ test("Component ", async () => {
   const ComponentEx = generateComponentClass({ html, ViewModel });
   customElements.define("aaa-ccc", ComponentEx);
   const template = document.createElement("template");
-  template.innerHTML = "<aaa-ccc></aaa-bbb>";
+  template.innerHTML = "<aaa-ccc></aaa-ccc>";
   const root = document.createElement("div");
   root.appendChild(document.importNode(template.content, true));
   /**
