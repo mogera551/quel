@@ -14,6 +14,7 @@ test("ElementProperty", () => {
   expect(elementProperty.filters).toEqual([]);
   expect(elementProperty.filterFuncs).toEqual({});
   expect(elementProperty.applicable).toBe(true);
+  expect(elementProperty.expandable).toBe(false);
 
   expect(() => {
     const node = document.createTextNode("abc");

@@ -57,6 +57,11 @@ export class NodeProperty {
     return this.#binding;
   }
 
+  /** @type {Boolean} */
+  get expandable() {
+    return false;
+  }
+
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
@@ -81,5 +86,12 @@ export class NodeProperty {
    * @param {import("../Binding.js").Binding} binding
    */
   initialize() {
+  }
+
+  /**
+   * 更新前処理
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
   }
 }

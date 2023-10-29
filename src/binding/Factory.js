@@ -13,6 +13,7 @@ import { ElementClass } from "./nodePoperty/ElementClass.js";
 import { ElementAttribute } from "./nodePoperty/ElementAttribute.js";
 import { ElementStyle } from "./nodePoperty/ElementStyle.js";
 import { ElementProperty } from "./nodePoperty/ElementProperty.js";
+import { ComponentProperty } from "./nodePoperty/ComponentProperty.js";
 
 export class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
@@ -41,6 +42,7 @@ export class Factory {
         "class": ElementClass,
         "attr": ElementAttribute,
         "style": ElementStyle,
+        "props": ComponentProperty,
       };
     }
     return this.#classOfNodePropertyByFirstName;

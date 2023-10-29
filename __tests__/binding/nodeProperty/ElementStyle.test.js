@@ -17,6 +17,7 @@ test("ElementStyle", () => {
   expect(elementStyle.filteredValue).toBe("100px");
   expect(elementStyle.applicable).toBe(true);
   expect(elementStyle.styleName).toBe("width");
+  expect(elementStyle.expandable).toBe(false);
 
   expect(element.style["width"]).toBe("100px");
 

@@ -33,6 +33,7 @@ test("Branch", () => {
   expect(branch.filters).toEqual([]);
   expect(branch.filterFuncs).toEqual({});
   expect(branch.applicable).toBe(true);
+  expect(branch.expandable).toBe(true);
   expect(branch.value).toBe(false);
 
   {

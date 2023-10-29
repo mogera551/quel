@@ -15,6 +15,7 @@ test("ElementClassName", () => {
   expect(elementClassName.value).toEqual([]);
   expect(elementClassName.filteredValue).toEqual([]);
   expect(elementClassName.applicable).toBe(true);
+  expect(elementClassName.expandable).toBe(false);
 
   element.className = "aaa";
   expect(elementClassName.value).toEqual(["aaa"]);

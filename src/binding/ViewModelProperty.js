@@ -29,6 +29,24 @@ export class ViewModelProperty {
     return this.binding.contextParam?.indexes ?? [];
   }
 
+  /** @type {string} */
+  #indexesString;
+  get indexesString() {
+    if (typeof this.#indexesString === "undefined") {
+      this.#indexesString = this.indexes.toString();
+    }
+    return this.#indexesString;
+  }
+
+  /** @type {string} */
+  #key;
+  get key() {
+    if (typeof this.#key === "undefined") {
+      this.#key = this.name + "\t" + this.indexesString;
+    }
+    return this.#key;
+  }
+
   /** @type {any} */
   get value() {
     return this.viewModel[Symbols.directlyGet](this.name, this.indexes);
@@ -120,5 +138,13 @@ export class ViewModelProperty {
    * @param {import("../Binding.js").Binding} binding
    */
   initialize() {
+  }
+
+  /**
+   * このバインドが更新対象かどうか
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  isUpdate(setOfUpdatedViewModelPropertyKeys) {
+    return setOfUpdatedViewModelPropertyKeys.has(this.key);
   }
 }

@@ -19,6 +19,7 @@ test("ElementEvent", () => {
   expect(elementEvent.filterFuncs).toEqual({});
   expect(elementEvent.eventType).toBe("click");
   expect(elementEvent.applicable).toBe(false);
+  expect(elementEvent.expandable).toBe(false);
 
   elementEvent.initialize();
 

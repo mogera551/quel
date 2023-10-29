@@ -22,6 +22,11 @@ export class TemplateProperty extends NodeProperty {
     return node.textContent.slice(3)
   }
   
+  /** @type {Boolean} */
+  get expandable() {
+    return true;
+  }
+
   /**
    * 
    * @param {import("../Binding.js").Binding} binding

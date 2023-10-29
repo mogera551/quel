@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -109,7 +109,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -118,8 +118,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -130,20 +130,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -151,7 +151,7 @@
 &nbsp;
 export class Cache {
   /** @type {Map&lt;PropertyName,Map&lt;string,any&gt;&gt;} */
-  #valueByIndexesStringByPropertyName = new Map;
+  #valueByIndexesStringByPropertyName = <span class="cstat-no" title="statement not covered" >new Map;</span>
   
   /**
    * 
@@ -159,9 +159,9 @@ export class Cache {
    * @param {number[]} indexes 
    * @returns {any}
    */
-  get(propName, indexes) {
-    const valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;
+<span class="fstat-no" title="function not covered" >  ge</span>t(propName, indexes) {
+    const valueByIndexesString = <span class="cstat-no" title="statement not covered" >this.#valueByIndexesStringByPropertyName.get(propName);</span>
+<span class="cstat-no" title="statement not covered" >    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;</span>
   }
 &nbsp;
   /**
@@ -171,21 +171,21 @@ export class Cache {
    * @param {any} value
    * @returns {any}
    */
-  set(propName, indexes, value) {
-    let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    if (!valueByIndexesString) {
-      valueByIndexesString = new Map;
-      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
+<span class="fstat-no" title="function not covered" >  se</span>t(propName, indexes, value) {
+    let valueByIndexesString = <span class="cstat-no" title="statement not covered" >this.#valueByIndexesStringByPropertyName.get(propName);</span>
+<span class="cstat-no" title="statement not covered" >    if (!valueByIndexesString) {</span>
+<span class="cstat-no" title="statement not covered" >      valueByIndexesString = new Map;</span>
+<span class="cstat-no" title="statement not covered" >      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);</span>
     }
-    valueByIndexesString.set(indexes.toString(), value);
-    return value;
+<span class="cstat-no" title="statement not covered" >    valueByIndexesString.set(indexes.toString(), value);</span>
+<span class="cstat-no" title="statement not covered" >    return value;</span>
   }
 &nbsp;
   /**
    * @returns {void}
    */
-  clear() {
-    this.#valueByIndexesStringByPropertyName.clear();
+<span class="fstat-no" title="function not covered" >  cl</span>ear() {
+<span class="cstat-no" title="statement not covered" >    this.#valueByIndexesStringByPropertyName.clear();</span>
   }
 &nbsp;
 }
@@ -196,7 +196,7 @@ export class Cache {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-24T06:45:39.954Z
+                at 2023-10-29T05:55:11.208Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

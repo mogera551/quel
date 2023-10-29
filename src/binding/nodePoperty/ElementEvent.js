@@ -28,7 +28,6 @@ export class ElementEvent extends ElementProperty {
   /**
    * 初期化処理
    * DOM要素にイベントハンドラの設定を行う
-   * @param {import("../Binding.js").Binding} binding
    */
   initialize() {
     this.element.addEventListener(this.eventType, this.binding.eventHandler);

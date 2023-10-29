@@ -20,6 +20,8 @@ test("TemplateProperty property access", () => {
     expect(templateProperty.filterFuncs).toEqual({});
     expect(templateProperty.uuid).toBe("123-123");
     expect(templateProperty.template).toBe(template);
+    expect(templateProperty.applicable).toBe(true);
+    expect(templateProperty.expandable).toBe(true);
   }
   {
     const node = document.createComment("@@|123-124");
@@ -32,6 +34,8 @@ test("TemplateProperty property access", () => {
     expect(templateProperty.filterFuncs).toEqual({});
     expect(templateProperty.uuid).toBe("123-124");
     expect(templateProperty.template).toBe(undefined);
+    expect(templateProperty.applicable).toBe(true);
+    expect(templateProperty.expandable).toBe(true);
   }
 
 });

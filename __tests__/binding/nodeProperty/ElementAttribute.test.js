@@ -17,6 +17,7 @@ test("ElementAttribute", () => {
   expect(elementAttribute.value).toBe("abc");
   expect(elementAttribute.filteredValue).toBe("abc");
   expect(elementAttribute.applicable).toBe(true);
+  expect(elementAttribute.expandable).toBe(false);
 
   expect(element.getAttribute("title")).toBe("abc");
   elementAttribute.value = "def";

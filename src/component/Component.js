@@ -31,6 +31,7 @@ const getParentComponent = (node) => {
   } while(true);
 };
 
+/** @type {ComponentBase} */
 const mixInComponent = {
   /** @type {ViewModelProxy} */
   get viewModel() {
@@ -269,22 +270,21 @@ const mixInComponent = {
   },
 }
 
-
 export class ComponentClassGenerator {
   /**
    * 
    * @param {UserComponentModule} componentModule 
-   * @returns {typeof HTMLElement}
+   * @returns {Component.constructor}
    */
   static generate(componentModule) {
-    /** @type {(module:Module)=>typeof HTMLElement} */
+    /** @type {(module:Module)=>HTMLElement.constructor} */
     const getBaseClass = function (module) {
       return class extends HTMLElement {
 
         /** @type {HTMLTemplateElement} */
         static template = module.template;
 
-        /** @type {typeof ViewModel} */
+        /** @type {ViewModel.constructor} */
         static ViewModel = module.ViewModel;
 
         /**@type {Object<string,FilterFunc>} */
@@ -317,7 +317,7 @@ export class ComponentClassGenerator {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
-      /** @type {typeof HTMLElement} */
+      /** @type {HTMLElement.constructor} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
@@ -333,7 +333,7 @@ export class ComponentClassGenerator {
 /**
  * 
  * @param {UserComponentModule} componentModule 
- * @returns {Component}
+ * @returns {Component.constructor}
  */
 export function generateComponentClass(componentModule) {
   return ComponentClassGenerator.generate(componentModule);

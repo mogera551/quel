@@ -49,9 +49,9 @@
 /**
  * @typedef {Object} UserComponentModule
  * @property {string|undefined} html
- * @property {typeof ViewModel|undefined} ViewModel
+ * @property {ViewModel.constructor|undefined} ViewModel
  * @property {HTMLTemplateElement|undefined} template
- * @property {typeof HTMLElement|undefined} extendClass
+ * @property {HTMLElement.constructor|undefined} extendClass
  * @property {string|undefined} extendTag
  * @property {Object<string,UserComponentModule>} componentModules
  */
@@ -80,7 +80,7 @@
  */
 
 /**
- * @typedef {Object} Component
+ * @typedef {Object} ComponentBase
  * @property {ViewModel} viewModel
  * @property {BindInfo[]} binds
  * @property {Thread} thread
@@ -102,10 +102,14 @@
  * @property {()=>void} disconnectedCallback
  * @property {(setOfViewModelPropertyKeys:Set<String>)=>void} applyToNode
  * @property {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}} filters
- * @property {typeof ViewModel} Component.ViewModel
+ * @property {ViewModel.constructor} Component.ViewModel
  * @property {HTMLTemplateElement} Component.template
- * @property {typeof HTMLElement} Component.extendClass
+ * @property {HTMLElement.constructor} Component.extendClass
  * @property {string} Component.extendTag
  * @property {Object<string,FilterFunc>} Component.inputFilters
  * @property {Object<string,FilterFunc>} Component.outputFilters
+ */
+
+/**
+ * @typedef {ComponentBase & HTMLElement} Component
  */

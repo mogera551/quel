@@ -16,6 +16,7 @@ test("ElementClass", () => {
   expect(elementClass.value).toBe(false);
   expect(elementClass.filteredValue).toBe(false);
   expect(elementClass.applicable).toBe(true);
+  expect(elementClass.expandable).toBe(false);
 
   element.className = "selected";
   expect(elementClass.value).toBe(true);

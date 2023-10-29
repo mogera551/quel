@@ -41,6 +41,7 @@ test("Repeat", () => {
   expect(repeat.filters).toEqual([]);
   expect(repeat.filterFuncs).toEqual({});
   expect(repeat.applicable).toBe(true);
+  expect(repeat.expandable).toBe(true);
   expect(repeat.value).toBe(0);
 
   {

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -127,21 +127,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">109x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -149,15 +141,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">26x</span>
-<span class="cline-any cline-yes">26x</span>
-<span class="cline-any cline-yes">36x</span>
-<span class="cline-any cline-yes">36x</span>
-<span class="cline-any cline-yes">30x</span>
-<span class="cline-any cline-yes">30x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -166,10 +150,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">56x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -183,21 +183,21 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
  */
 export class DependentProps {
   /** @type {Set&lt;string&gt;} */
-  #setOfDefaultProps = new Set;
+  #setOfDefaultProps = <span class="cstat-no" title="statement not covered" >new Set;</span>
 &nbsp;
   /** @type {Map&lt;string,Set&lt;string&gt;&gt;} */
-  #setOfPropsByRefProp = new Map;
+  #setOfPropsByRefProp = <span class="cstat-no" title="statement not covered" >new Map;</span>
   /** @type {Map&lt;string,Set&lt;string&gt;&gt;} */
-  get setOfPropsByRefProp() {
-    return this.#setOfPropsByRefProp;
+<span class="fstat-no" title="function not covered" >  ge</span>t setOfPropsByRefProp() {
+<span class="cstat-no" title="statement not covered" >    return this.#setOfPropsByRefProp;</span>
   }
 &nbsp;
   /**
    * @param {string} prop
    * @returns {boolean} 
    */
-  hasDefaultProp(prop) {
-    return this.#setOfDefaultProps.has(prop);
+<span class="fstat-no" title="function not covered" >  ha</span>sDefaultProp(prop) {
+<span class="cstat-no" title="statement not covered" >    return this.#setOfDefaultProps.has(prop);</span>
   }
 &nbsp;
   /**
@@ -205,15 +205,15 @@ export class DependentProps {
    * @param {string} prop 
    * @returns {void}
    */
-  addDefaultProp(prop) {
-    let currentName = PropertyName.create(prop);
-    while(currentName.parentPath !== "") {
-      const parentName = PropertyName.create(currentName.parentPath);
-      if (!this.#setOfDefaultProps.has(currentName.name)) {
-        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]))
-        this.#setOfDefaultProps.add(currentName.name);
+<span class="fstat-no" title="function not covered" >  ad</span>dDefaultProp(prop) {
+    let currentName = <span class="cstat-no" title="statement not covered" >PropertyName.create(prop);</span>
+<span class="cstat-no" title="statement not covered" >    while(currentName.parentPath !== "") {</span>
+      const parentName = <span class="cstat-no" title="statement not covered" >PropertyName.create(currentName.parentPath);</span>
+<span class="cstat-no" title="statement not covered" >      if (!this.#setOfDefaultProps.has(currentName.name)) {</span>
+<span class="cstat-no" title="statement not covered" >        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]))</span>
+<span class="cstat-no" title="statement not covered" >        this.#setOfDefaultProps.add(currentName.name);</span>
       }
-      currentName = parentName;
+<span class="cstat-no" title="statement not covered" >      currentName = parentName;</span>
     }
   }
 &nbsp;
@@ -222,10 +222,10 @@ export class DependentProps {
    * @param {{prop:string,refProps:string[]}} props 
    * @returns {void}
    */
-  setDependentProps(props) {
-    for(const [prop, refProps] of Object.entries(props)) {
-      for(const refProp of refProps) {
-        this.#setOfPropsByRefProp.get(refProp)?.add(prop) ?? this.#setOfPropsByRefProp.set(refProp, new Set([prop]));
+<span class="fstat-no" title="function not covered" >  se</span>tDependentProps(props) {
+<span class="cstat-no" title="statement not covered" >    for(const [prop, refProps] of Object.entries(props)) {</span>
+<span class="cstat-no" title="statement not covered" >      for(const refProp of refProps) {</span>
+<span class="cstat-no" title="statement not covered" >        this.#setOfPropsByRefProp.get(refProp)?.add(prop) ?? this.#setOfPropsByRefProp.set(refProp, new Set([prop]));</span>
       }
     }
   }
@@ -238,7 +238,7 @@ export class DependentProps {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-24T06:45:39.954Z
+                at 2023-10-29T05:55:11.208Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

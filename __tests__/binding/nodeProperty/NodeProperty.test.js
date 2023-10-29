@@ -14,6 +14,7 @@ test("NodeProperty property access", () => {
     expect(nodeProperty.filters).toEqual([]);
     expect(nodeProperty.filterFuncs).toEqual({});
     expect(nodeProperty.applicable).toBe(true);
+    expect(nodeProperty.expandable).toBe(false);
   }
   {
     const nodeProperty = new NodeProperty(binding, node, "aaaa.bbbb", [], {});
@@ -24,6 +25,7 @@ test("NodeProperty property access", () => {
     expect(nodeProperty.filters).toEqual([]);
     expect(nodeProperty.filterFuncs).toEqual({});
     expect(nodeProperty.applicable).toBe(true);
+    expect(nodeProperty.expandable).toBe(false);
   }
   {
     const nodeProperty = new NodeProperty(binding, node, "aaaa.*.bbbb", [], {});
@@ -34,6 +36,7 @@ test("NodeProperty property access", () => {
     expect(nodeProperty.filters).toEqual([]);
     expect(nodeProperty.filterFuncs).toEqual({});
     expect(nodeProperty.applicable).toBe(true);
+    expect(nodeProperty.expandable).toBe(false);
   }
 });
 
