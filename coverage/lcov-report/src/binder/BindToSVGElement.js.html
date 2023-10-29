@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">22.22% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>1/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">25% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -112,7 +112,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -124,19 +124,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
@@ -150,7 +150,7 @@ const DATASET_BIND_PROPERTY = "data-bind";
  * @param {Node} node 
  * @returns {SVGElement}
  */
-const toSVGElement = <span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >(node instanceof SVGElement) ? node : utils.raise(`not SVGElement`);</span>
+const toSVGElement = node =&gt; (node instanceof SVGElement) ? node : <span class="branch-1 cbranch-no" title="branch not covered" >utils.raise(`not SVGElement`);</span>
 &nbsp;
 export class BindToSVGElement {
   /**
@@ -160,21 +160,21 @@ export class BindToSVGElement {
    * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-<span class="fstat-no" title="function not covered" >  st</span>atic bind(node, component, context) {
+  static bind(node, component, context) {
     /** @type {ViewModel} */
-    const viewModel = <span class="cstat-no" title="statement not covered" >component.viewModel;</span>
+    const viewModel = component.viewModel;
     /** @type {SVGElement} */
-    const element = <span class="cstat-no" title="statement not covered" >toSVGElement(node);</span>
+    const element = toSVGElement(node);
     /** @type {string} */
-    const bindText = <span class="cstat-no" title="statement not covered" >element.getAttribute(DATASET_BIND_PROPERTY);</span>
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
     /** @type {string|undefined} */
-    const defaultName = <span class="cstat-no" title="statement not covered" >undefined;</span>
+    const defaultName = undefined;
 &nbsp;
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = <span class="cstat-no" title="statement not covered" >BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);</span>
+    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return bindings;</span>
+    return bindings;
   }
 &nbsp;
 }</pre></td></tr></table></pre>
@@ -184,7 +184,7 @@ export class BindToSVGElement {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-29T19:22:56.502Z
+                at 2023-10-29T19:59:19.673Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
