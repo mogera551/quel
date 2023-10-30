@@ -47,26 +47,26 @@ test("BindToTemplate", () => {
       out:outputFilters,
     }
   };
-  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
-  expect(binds.length).toBe(1);
-  expect(binds[0] instanceof LoopBind).toBe(true);
-  expect(binds[0].node instanceof Comment).toBe(true);
-  expect(() => binds[0].element).toThrow("not Element");
-  expect(binds[0].nodeProperty).toBe("loop");
-  expect(binds[0].nodePropertyElements).toEqual(["loop"]);
-  expect(binds[0].component).toBe(component);
-  expect(binds[0].viewModel).toBe(viewModel);
-  expect(binds[0].viewModelProperty).toBe("aaa");
-  expect(binds[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
-  expect(binds[0].contextIndex).toBe(undefined);
-  expect(binds[0].isContextIndex).toBe(false);
-  expect(binds[0].filters).toEqual([]);
-  expect(binds[0].contextParam).toBe(undefined);
-  expect(binds[0].indexes).toEqual([]);
-  expect(binds[0].indexesString).toBe("");
-  expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
-  expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
+  const bindings = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+  expect(bindings.length).toBe(1);
+  expect(bindings[0] instanceof LoopBind).toBe(true);
+  expect(bindings[0].node instanceof Comment).toBe(true);
+  expect(() => bindings[0].element).toThrow("not Element");
+  expect(bindings[0].nodeProperty).toBe("loop");
+  expect(bindings[0].nodePropertyElements).toEqual(["loop"]);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].viewModel).toBe(viewModel);
+  expect(bindings[0].viewModelProperty).toBe("aaa");
+  expect(bindings[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
+  expect(bindings[0].contextIndex).toBe(undefined);
+  expect(bindings[0].isContextIndex).toBe(false);
+  expect(bindings[0].filters).toEqual([]);
+  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].indexes).toEqual([]);
+  expect(bindings[0].indexesString).toBe("");
+  expect(bindings[0].viewModelPropertyKey).toBe("aaa\t");
+  expect(bindings[0].contextIndexes).toEqual([]);
+  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
 
 });
 
@@ -96,8 +96,8 @@ test("BindToTemplate empty", () => {
       }
     }
   };
-  const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
-  expect(binds).toEqual([])
+  const bindings = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+  expect(bindings).toEqual([])
 });
 
 test("BindToTemplate throw", () => {
@@ -124,7 +124,7 @@ test("BindToTemplate throw", () => {
     }
   };
   expect(() => {
-    const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+    const bindings = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   }).toThrow();
 });
 
@@ -155,7 +155,7 @@ test("BindToTemplate throw", () => {
     }
   };
   expect(() => {
-    const binds = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
+    const bindings = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   }).toThrow("default property undefined");
 });
 

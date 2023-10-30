@@ -50,7 +50,7 @@ test("Component ", async () => {
   expect(typeof component.initialResolve).toBe("function");
   await component.initialPromise;
   expect(component.viewModel != null).toBe(true);
-  expect(component.binds != null).toBe(true);
+  expect(component.rootBinding != null).toBe(true);
   expect(component.thread != null).toBe(true);
   const aaa = component.viewRootElement.querySelector(".aaa");
   expect(aaa.textContent).toBe("100");
@@ -87,7 +87,7 @@ test("Component ", async () => {
   }, 100);
   await component.initialPromise;
   expect(component.viewModel != null).toBe(true);
-  expect(component.binds != null).toBe(true);
+  expect(component.rootBinding != null).toBe(true);
   expect(component.thread != null).toBe(true);
   const aaa = component.viewRootElement.querySelector(".aaa");
 

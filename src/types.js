@@ -23,7 +23,11 @@
  */
 
 /**
- * @typedef {import("./bindInfo/BindInfo.js").BindInfo} BindInfo
+ * @typedef {import("./binding/Binding.js").Binding} Binding
+ */
+
+/**
+ * @typedef {import("./binding/Binding.js").ChildBinding} ChildBinding
  */
 
 /**
@@ -82,7 +86,7 @@
 /**
  * @typedef {Object} ComponentBase
  * @property {ViewModel} viewModel
- * @property {BindInfo[]} binds
+ * @property {ChildBinding} rootBinding
  * @property {Thread} thread
  * @property {UpdateSlot} updateSlot
  * @property {Object<string,any>} props

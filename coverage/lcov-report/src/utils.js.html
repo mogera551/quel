@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">30.76% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>4/13</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.14% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/14</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.57% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/7</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">40% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>4/10</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -117,7 +117,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">36x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -125,19 +125,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,16 +137,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">33x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">62x</span>
+<span class="cline-any cline-yes">62x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -173,10 +173,10 @@
    * @param {any} obj 
    * @returns {boolean}
    */
-  static isFunction = <span class="fstat-no" title="function not covered" >(o</span>bj) =&gt; {
-    const toString = <span class="cstat-no" title="statement not covered" >Object.prototype.toString;</span>
-    const text = <span class="cstat-no" title="statement not covered" >toString.call(obj).slice(8, -1).toLowerCase();</span>
-<span class="cstat-no" title="statement not covered" >    return (text === "function" || text === "asyncfunction");</span>
+  static isFunction = (obj) =&gt; {
+    const toString = Object.prototype.toString;
+    const text = toString.call(obj).slice(8, -1).toLowerCase();
+    return (text === "function" || text === "asyncfunction");
   }
 &nbsp;
   /**
@@ -184,8 +184,8 @@
    * @param {HTMLElement} element 
    * @returns {boolean}
    */
-<span class="fstat-no" title="function not covered" >  st</span>atic isInputableElement(element) {
-<span class="cstat-no" title="statement not covered" >    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || </span>
+  static isInputableElement(element) {
+    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || 
       (element instanceof HTMLInputElement &amp;&amp; element.type !== "button");
   }
 &nbsp;
@@ -194,16 +194,16 @@
    * @param {string} text 
    * @returns {string}
    */
-  static toKebabCase = <span class="fstat-no" title="function not covered" >te</span>xt =&gt; <span class="cstat-no" title="statement not covered" >(typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, <span class="fstat-no" title="function not covered" >(m</span>atch,char,index) =&gt; <span class="cstat-no" title="statement not covered" >(index &gt; 0 ? "-" : "") + char.toLowerCase())</span> : text;</span>
+  static toKebabCase = text =&gt; (typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, (match,char,index) =&gt; (index &gt; 0 ? "-" : "") + char.toLowerCase()) : text;
 &nbsp;
   /**
    * @returns {string}
    */
   static createUUID() {
     return window?.crypto?.randomUUID ? window.crypto.randomUUID()
-     : <span class="branch-1 cbranch-no" title="branch not covered" >'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, <span class="fstat-no" title="function not covered" >fu</span>nction(a) {</span>
-        let r = <span class="cstat-no" title="statement not covered" >(new Date().getTime() + Math.random() * 16)%16 | 0,</span> v = <span class="cstat-no" title="statement not covered" >a == 'x' ? r : (r &amp; 0x3 | 0x8);</span>
-<span class="cstat-no" title="statement not covered" >        return v.toString(16);</span>
+     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(a) {
+        let r = (new Date().getTime() + Math.random() * 16)%16 | 0, v = a == 'x' ? r : (r &amp; 0x3 | 0x8);
+        return v.toString(16);
       });
   }
 }
@@ -214,7 +214,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-29T19:59:19.673Z
+                at 2023-10-30T08:28:22.523Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -34,28 +34,28 @@ test("BindToText", () => {
     }
   };
   
-  const binds = BindToText.bind(node, component, { indexes:[], stack:[] });
-  expect(binds.length).toBe(1);
-  expect(binds[0].constructor).toBe(Binding);
-  expect(binds[0].nodeProperty.constructor).toBe(NodeProperty);
-  expect(binds[0].nodeProperty.node.constructor).toBe(Text);
-  expect(binds[0].nodeProperty.name).toBe("textContent");
-  expect(binds[0].nodeProperty.nameElements).toEqual(["textContent"]);
-  expect(binds[0].nodeProperty.applicable).toBe(true);
-  expect(binds[0].nodeProperty.filterFuncs).toEqual(inputFilters);
-  expect(binds[0].nodeProperty.value).toBe("100");
-  expect(binds[0].nodeProperty.filteredValue).toBe("100");
-  expect(binds[0].viewModelProperty.constructor).toBe(ViewModelProperty);
-  expect(binds[0].viewModelProperty.viewModel).toBe(component.viewModel);
-  expect(binds[0].viewModelProperty.applicable).toBe(true);
-  expect(binds[0].viewModelProperty.name).toBe("aaa");
-  expect(binds[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(binds[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(binds[0].viewModelProperty.contextParam).toBe(undefined);
-  expect(binds[0].viewModelProperty.filters).toEqual([]);
-  expect(binds[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
-  expect(binds[0].viewModelProperty.value).toBe(100);
-  expect(binds[0].viewModelProperty.filteredValue).toBe(100);
+  const bindings = BindToText.bind(node, component, { indexes:[], stack:[] });
+  expect(bindings.length).toBe(1);
+  expect(bindings[0].constructor).toBe(Binding);
+  expect(bindings[0].nodeProperty.constructor).toBe(NodeProperty);
+  expect(bindings[0].nodeProperty.node.constructor).toBe(Text);
+  expect(bindings[0].nodeProperty.name).toBe("textContent");
+  expect(bindings[0].nodeProperty.nameElements).toEqual(["textContent"]);
+  expect(bindings[0].nodeProperty.applicable).toBe(true);
+  expect(bindings[0].nodeProperty.filterFuncs).toEqual(inputFilters);
+  expect(bindings[0].nodeProperty.value).toBe("100");
+  expect(bindings[0].nodeProperty.filteredValue).toBe("100");
+  expect(bindings[0].viewModelProperty.constructor).toBe(ViewModelProperty);
+  expect(bindings[0].viewModelProperty.viewModel).toBe(component.viewModel);
+  expect(bindings[0].viewModelProperty.applicable).toBe(true);
+  expect(bindings[0].viewModelProperty.name).toBe("aaa");
+  expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
+  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
+  expect(bindings[0].viewModelProperty.filters).toEqual([]);
+  expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
+  expect(bindings[0].viewModelProperty.value).toBe(100);
+  expect(bindings[0].viewModelProperty.filteredValue).toBe(100);
 });
 
 test("BindToText throw", () => {
@@ -80,5 +80,5 @@ test("BindToText throw", () => {
       }
     }
   };
-  expect(() => { const binds = BindToText.bind(node, component, { indexes:[], stack:[] }) }).toThrow("not Comment");
+  expect(() => { const bindings = BindToText.bind(node, component, { indexes:[], stack:[] }) }).toThrow("not Comment");
 });

@@ -46,30 +46,30 @@ test("BindToSVGElement text attribute", () => {
       out:outputFilters,
     }
   };
-  const binds = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
-  expect(binds.length).toBe(1);
-  expect(binds[0] instanceof AttributeBind).toBe(true);
-  expect(binds[0].node).toBe(node);
-  expect(binds[0].node instanceof SVGElement).toBe(true);
-  expect(binds[0].node.getAttribute("x")).toBe("100");
-  expect(binds[0].element).toBe(node);
-  expect(() => binds[0].htmlElement).toThrow();
-  expect(binds[0].svgElement).toBe(node);
-  expect(binds[0].nodeProperty).toBe("attr.x");
-  expect(binds[0].nodePropertyElements).toEqual(["attr", "x"]);
-  expect(binds[0].component).toBe(component);
-  expect(binds[0].viewModel).toBe(viewModel);
-  expect(binds[0].viewModelProperty).toBe("aaa");
-  expect(binds[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
-  expect(binds[0].contextIndex).toBe(undefined);
-  expect(binds[0].isContextIndex).toBe(false);
-  expect(binds[0].filters).toEqual([]);
-  expect(binds[0].contextParam).toBe(undefined);
-  expect(binds[0].indexes).toEqual([]);
-  expect(binds[0].indexesString).toBe("");
-  expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
-  expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
+  const bindings = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
+  expect(bindings.length).toBe(1);
+  expect(bindings[0] instanceof AttributeBind).toBe(true);
+  expect(bindings[0].node).toBe(node);
+  expect(bindings[0].node instanceof SVGElement).toBe(true);
+  expect(bindings[0].node.getAttribute("x")).toBe("100");
+  expect(bindings[0].element).toBe(node);
+  expect(() => bindings[0].htmlElement).toThrow();
+  expect(bindings[0].svgElement).toBe(node);
+  expect(bindings[0].nodeProperty).toBe("attr.x");
+  expect(bindings[0].nodePropertyElements).toEqual(["attr", "x"]);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].viewModel).toBe(viewModel);
+  expect(bindings[0].viewModelProperty).toBe("aaa");
+  expect(bindings[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
+  expect(bindings[0].contextIndex).toBe(undefined);
+  expect(bindings[0].isContextIndex).toBe(false);
+  expect(bindings[0].filters).toEqual([]);
+  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].indexes).toEqual([]);
+  expect(bindings[0].indexesString).toBe("");
+  expect(bindings[0].viewModelPropertyKey).toBe("aaa\t");
+  expect(bindings[0].contextIndexes).toEqual([]);
+  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
 
 });
 
@@ -109,30 +109,30 @@ test("BindToSVGElement text property ", () => {
       out:outputFilters,
     }
   };
-  const binds = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
-  expect(binds.length).toBe(1);
-  expect(binds[0] instanceof PropertyBind).toBe(true);
-  expect(binds[0].node).toBe(node);
-  expect(binds[0].node instanceof SVGElement).toBe(true);
-  expect(binds[0].node.textContent).toBe("100");
-  expect(binds[0].element).toBe(node);
-  expect(() => binds[0].htmlElement).toThrow();
-  expect(binds[0].svgElement).toBe(node);
-  expect(binds[0].nodeProperty).toBe("textContent");
-  expect(binds[0].nodePropertyElements).toEqual(["textContent"]);
-  expect(binds[0].component).toBe(component);
-  expect(binds[0].viewModel).toBe(viewModel);
-  expect(binds[0].viewModelProperty).toBe("aaa");
-  expect(binds[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
-  expect(binds[0].contextIndex).toBe(undefined);
-  expect(binds[0].isContextIndex).toBe(false);
-  expect(binds[0].filters).toEqual([]);
-  expect(binds[0].contextParam).toBe(undefined);
-  expect(binds[0].indexes).toEqual([]);
-  expect(binds[0].indexesString).toBe("");
-  expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
-  expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
+  const bindings = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
+  expect(bindings.length).toBe(1);
+  expect(bindings[0] instanceof PropertyBind).toBe(true);
+  expect(bindings[0].node).toBe(node);
+  expect(bindings[0].node instanceof SVGElement).toBe(true);
+  expect(bindings[0].node.textContent).toBe("100");
+  expect(bindings[0].element).toBe(node);
+  expect(() => bindings[0].htmlElement).toThrow();
+  expect(bindings[0].svgElement).toBe(node);
+  expect(bindings[0].nodeProperty).toBe("textContent");
+  expect(bindings[0].nodePropertyElements).toEqual(["textContent"]);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].viewModel).toBe(viewModel);
+  expect(bindings[0].viewModelProperty).toBe("aaa");
+  expect(bindings[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
+  expect(bindings[0].contextIndex).toBe(undefined);
+  expect(bindings[0].isContextIndex).toBe(false);
+  expect(bindings[0].filters).toEqual([]);
+  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].indexes).toEqual([]);
+  expect(bindings[0].indexesString).toBe("");
+  expect(bindings[0].viewModelPropertyKey).toBe("aaa\t");
+  expect(bindings[0].contextIndexes).toEqual([]);
+  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
 
 });
 
@@ -169,7 +169,7 @@ test("BindToHTMLElement text property default", () => {
     }
   };
   expect(() => {
-    const binds = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
+    const bindings = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
   }).toThrow();
 });
 
@@ -205,7 +205,7 @@ test("BindToSVGElement not element", () => {
       },
     }
   };
-  expect(() => {const binds = BindToSVGElement.bind(node, component, null, [])}).toThrow();
+  expect(() => {const bindings = BindToSVGElement.bind(node, component, null, [])}).toThrow();
 });
 
 test("BindToSVGElement text property event", () => {
@@ -249,52 +249,52 @@ test("BindToSVGElement text property event", () => {
       out:outputFilters,
     }
     };
-  const binds = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
-  expect(binds.length).toBe(2);
-  expect(binds[0] instanceof AttributeBind).toBe(true);
-  expect(binds[0].node).toBe(node);
-  expect(binds[0].node instanceof SVGElement).toBe(true);
-  expect(binds[0].node.getAttribute("x")).toBe("100");
-  expect(binds[0].element).toBe(node);
-  expect(() => binds[0].htmlElement).toThrow();
-  expect(binds[0].svgElement).toBe(node);
-  expect(binds[0].nodeProperty).toBe("attr.x");
-  expect(binds[0].nodePropertyElements).toEqual(["attr", "x"]);
-  expect(binds[0].component).toBe(component);
-  expect(binds[0].viewModel).toBe(viewModel);
-  expect(binds[0].viewModelProperty).toBe("aaa");
-  expect(binds[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
-  expect(binds[0].contextIndex).toBe(undefined);
-  expect(binds[0].isContextIndex).toBe(false);
-  expect(binds[0].filters).toEqual([]);
-  expect(binds[0].contextParam).toBe(undefined);
-  expect(binds[0].indexes).toEqual([]);
-  expect(binds[0].indexesString).toBe("");
-  expect(binds[0].viewModelPropertyKey).toBe("aaa\t");
-  expect(binds[0].contextIndexes).toEqual([]);
-  expect(binds[0].context).toEqual({ indexes:[], stack:[] });
+  const bindings = BindToSVGElement.bind(node, component, { indexes:[], stack:[] });
+  expect(bindings.length).toBe(2);
+  expect(bindings[0] instanceof AttributeBind).toBe(true);
+  expect(bindings[0].node).toBe(node);
+  expect(bindings[0].node instanceof SVGElement).toBe(true);
+  expect(bindings[0].node.getAttribute("x")).toBe("100");
+  expect(bindings[0].element).toBe(node);
+  expect(() => bindings[0].htmlElement).toThrow();
+  expect(bindings[0].svgElement).toBe(node);
+  expect(bindings[0].nodeProperty).toBe("attr.x");
+  expect(bindings[0].nodePropertyElements).toEqual(["attr", "x"]);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].viewModel).toBe(viewModel);
+  expect(bindings[0].viewModelProperty).toBe("aaa");
+  expect(bindings[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
+  expect(bindings[0].contextIndex).toBe(undefined);
+  expect(bindings[0].isContextIndex).toBe(false);
+  expect(bindings[0].filters).toEqual([]);
+  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].indexes).toEqual([]);
+  expect(bindings[0].indexesString).toBe("");
+  expect(bindings[0].viewModelPropertyKey).toBe("aaa\t");
+  expect(bindings[0].contextIndexes).toEqual([]);
+  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
 
-  expect(binds[1] instanceof EventBind).toBe(true);
-  expect(binds[1].node).toBe(node);
-  expect(binds[1].node instanceof SVGElement).toBe(true);
-  expect(binds[1].element).toBe(node);
-  expect(() => binds[1].htmlElement).toThrow();
-  expect(binds[1].svgElement).toBe(node);
-  expect(binds[1].nodeProperty).toBe("onclick");
-  expect(binds[1].nodePropertyElements).toEqual(["onclick"]);
-  expect(binds[1].component).toBe(component);
-  expect(binds[1].viewModel).toBe(viewModel);
-  expect(binds[1].viewModelProperty).toBe("change");
-  expect(binds[1].viewModelPropertyName).toBe(PropertyName.create("change"));
-  expect(binds[1].contextIndex).toBe(undefined);
-  expect(binds[1].isContextIndex).toBe(false);
-  expect(binds[1].filters).toEqual([]);
-  expect(binds[1].contextParam).toBe(undefined);
-  expect(binds[1].indexes).toEqual([]);
-  expect(binds[1].indexesString).toBe("");
-  expect(binds[1].viewModelPropertyKey).toBe("change\t");
-  expect(binds[1].contextIndexes).toEqual([]);
-  expect(binds[1].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[1] instanceof EventBind).toBe(true);
+  expect(bindings[1].node).toBe(node);
+  expect(bindings[1].node instanceof SVGElement).toBe(true);
+  expect(bindings[1].element).toBe(node);
+  expect(() => bindings[1].htmlElement).toThrow();
+  expect(bindings[1].svgElement).toBe(node);
+  expect(bindings[1].nodeProperty).toBe("onclick");
+  expect(bindings[1].nodePropertyElements).toEqual(["onclick"]);
+  expect(bindings[1].component).toBe(component);
+  expect(bindings[1].viewModel).toBe(viewModel);
+  expect(bindings[1].viewModelProperty).toBe("change");
+  expect(bindings[1].viewModelPropertyName).toBe(PropertyName.create("change"));
+  expect(bindings[1].contextIndex).toBe(undefined);
+  expect(bindings[1].isContextIndex).toBe(false);
+  expect(bindings[1].filters).toEqual([]);
+  expect(bindings[1].contextParam).toBe(undefined);
+  expect(bindings[1].indexes).toEqual([]);
+  expect(bindings[1].indexesString).toBe("");
+  expect(bindings[1].viewModelPropertyKey).toBe("change\t");
+  expect(bindings[1].contextIndexes).toEqual([]);
+  expect(bindings[1].context).toEqual({ indexes:[], stack:[] });
 /*
   calledChange = false;
   node.setAttribute("x", "200");

@@ -1,9 +1,7 @@
 import "../types.js";
-import { View } from "../view/View.js";
 import { createViewModel } from "../viewModel/Proxy.js";
 import { Symbols } from "../Symbols.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
-import { Binds } from "../bindInfo/Binds.js";
 import { createProps } from "./Props.js";
 import { createGlobals } from "./Globals.js";
 import { Module } from "./Module.js";
@@ -13,6 +11,7 @@ import { UpdateSlot } from "../thread/UpdateSlot.js";
 import { AttachShadow } from "./AttachShadow.js";
 import { inputFilters, outputFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
+import { ChildBinding } from "../binding/Binding.js";
 
 /**
  * 
@@ -40,12 +39,13 @@ const mixInComponent = {
   set viewModel(value) {
     this._viewModel = value;
   },
-  /** @type {BindInfo[]} バインドリスト */
-  get binds() {
-    return this._binds;
+
+  /** @type {ChildBinding} */
+  get rootBinding() {
+    return this._rootBinding;
   },
-  set binds(value) {
-    this._binds = value;
+  set rootBinding(value) {
+    this._rootBinding = value;
   },
 
   /** @type {Thread} 更新スレッド */
@@ -168,7 +168,7 @@ const mixInComponent = {
    */
   initialize() {
     this._viewModel = createViewModel(this, this.constructor.ViewModel);
-    this._binds = undefined;
+    this._rootBinding = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
     this._props = createProps(this);
@@ -225,7 +225,8 @@ const mixInComponent = {
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.binds = View.render(this.viewRootElement, this, template);
+      this.rootBinding = new ChildBinding(this, template, Context.create());
+      this.viewRootElement.appendChild(this.rootBinding.fragment);
       return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
@@ -266,7 +267,7 @@ const mixInComponent = {
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   applyToNode(setOfViewModelPropertyKeys) {
-    this.binds && Binds.applyToNode(this.binds, setOfViewModelPropertyKeys);
+    this.rootBinding?.updateNode(setOfViewModelPropertyKeys);
   },
 }
 
