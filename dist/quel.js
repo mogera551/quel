@@ -3636,6 +3636,14 @@ class ViewTemplate {
 }
 
 class Binding {
+  /** @type {number} */
+  static seq = 0;
+
+  /** @type {number} */
+  #id;
+  get id() {
+    return this.#id;
+  }
 
   /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
   #nodeProperty;
@@ -3692,6 +3700,7 @@ class Binding {
     viewModel, viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
+    this.#id = ++Binding.seq;
     this.#component = component;
     this.#context = context;
     const propName = PropertyName.create(viewModelPropertyName);
@@ -3776,10 +3785,11 @@ class Binding {
    */
   appendChild(childBinding) {
     if (!this.expandable) utils.raise("not expandable");
-    const lastChild = this.children[this.children,length - 1];
+    const lastChild = this.children[this.children.length - 1];
     this.children.push(childBinding);
+    const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
-    beforeNode.parentNode.insertBefore(childBinding.fragment, beforeNode.nextSibling);
+    parentNode.insertBefore(childBinding.fragment, beforeNode.nextSibling ?? null);
   }
 
   /**

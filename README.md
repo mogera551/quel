@@ -971,7 +971,7 @@ bundle
 
 ```
 npx rollup -c
-npx rollup -c rollup.config.dev.js
+npx rollup -c rollup-dev.config.js
 ```
 
 tag
