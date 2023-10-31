@@ -56,6 +56,9 @@ test("BindToHTMLElement div", () => {
    };
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].constructor).toBe(Binding);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLDivElement);
@@ -70,8 +73,6 @@ test("BindToHTMLElement div", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe("100");
@@ -110,7 +111,6 @@ test("BindToHTMLElement input ", () => {
        * @param {ProcessData} processData 
        */
       addProcess(processData) {
-        console.log(processData);
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
 
       },
@@ -123,6 +123,9 @@ test("BindToHTMLElement input ", () => {
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
   expect(bindings[0].constructor).toBe(Binding);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -136,8 +139,6 @@ test("BindToHTMLElement input ", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe("100");
@@ -195,6 +196,9 @@ test("BindToHTMLElement select ", () => {
   };
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLSelectElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -208,8 +212,6 @@ test("BindToHTMLElement select ", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe("100");
@@ -259,6 +261,9 @@ test("BindToHTMLElement textarea ", () => {
   };
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLTextAreaElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -272,8 +277,6 @@ test("BindToHTMLElement textarea ", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe("100");
@@ -339,6 +342,9 @@ test("BindToHTMLElement input defaultEvent", () => {
   };
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(2);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -352,29 +358,26 @@ test("BindToHTMLElement input defaultEvent", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe("100");
   expect(bindings[0].viewModelProperty.filteredValue).toBe("100");
 
+  expect(bindings[1].component).toBe(component);
+  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[1].contextParam).toBe(undefined);
   expect(bindings[1].nodeProperty.constructor).toBe(ElementEvent);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.name).toBe("oninput");
   expect(bindings[1].nodeProperty.nameElements).toEqual(["oninput"]);
-  expect(bindings[1].nodeProperty.applicable).toBe(true);
+  expect(bindings[1].nodeProperty.applicable).toBe(false);
   expect(bindings[1].nodeProperty.filterFuncs).toEqual(inputFilters);
-  expect(bindings[1].nodeProperty.value).toBe("100");
-  expect(bindings[1].nodeProperty.filteredValue).toBe("100");
   expect(bindings[1].nodeProperty.eventType).toBe("input");
   expect(bindings[1].viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(bindings[1].viewModelProperty.viewModel).toBe(component.viewModel);
   expect(bindings[1].viewModelProperty.applicable).toBe(true);
   expect(bindings[1].viewModelProperty.name).toBe("change");
   expect(bindings[1].viewModelProperty.propertyName).toEqual(PropertyName.create("change"));
-  expect(bindings[1].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[1].viewModelProperty.filters).toEqual([]);
   expect(bindings[1].viewModelProperty.filterFuncs).toEqual(outputFilters);
 
@@ -430,6 +433,9 @@ test("BindToHTMLElement input not defaultEvent", () => {
   };
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(2);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -443,29 +449,26 @@ test("BindToHTMLElement input not defaultEvent", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe("100");
   expect(bindings[0].viewModelProperty.filteredValue).toBe("100");
 
+  expect(bindings[1].component).toBe(component);
+  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[1].contextParam).toBe(undefined);
   expect(bindings[1].nodeProperty.constructor).toBe(ElementEvent);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.name).toBe("onclick");
   expect(bindings[1].nodeProperty.nameElements).toEqual(["onclick"]);
-  expect(bindings[1].nodeProperty.applicable).toBe(true);
+  expect(bindings[1].nodeProperty.applicable).toBe(false);
   expect(bindings[1].nodeProperty.filterFuncs).toEqual(inputFilters);
-  expect(bindings[1].nodeProperty.value).toBe("100");
-  expect(bindings[1].nodeProperty.filteredValue).toBe("100");
   expect(bindings[1].nodeProperty.eventType).toBe("click");
   expect(bindings[1].viewModelProperty.constructor).toBe(ViewModelProperty);
   expect(bindings[1].viewModelProperty.viewModel).toBe(component.viewModel);
   expect(bindings[1].viewModelProperty.applicable).toBe(true);
   expect(bindings[1].viewModelProperty.name).toBe("change");
   expect(bindings[1].viewModelProperty.propertyName).toEqual(PropertyName.create("change"));
-  expect(bindings[1].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[1].viewModelProperty.filters).toEqual([]);
   expect(bindings[1].viewModelProperty.filterFuncs).toEqual(outputFilters);
 
@@ -517,6 +520,9 @@ test("BindToHTMLElement input radio", () => {
   };
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -531,8 +537,6 @@ test("BindToHTMLElement input radio", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe(true);
@@ -584,6 +588,9 @@ test("BindToHTMLElement input checkbox", () => {
   };
   const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -598,8 +605,6 @@ test("BindToHTMLElement input checkbox", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe(true);
@@ -645,7 +650,6 @@ test("BindToHTMLElement input radio", () => {
        */
       addProcess(processData) {
         Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
-
       },
     },
     filters: {
@@ -659,6 +663,9 @@ test("BindToHTMLElement input radio", () => {
   bindings.push(...bindings1);
   bindings.push(...bindings2);
   expect(bindings.length).toBe(2);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(Radio);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -674,12 +681,14 @@ test("BindToHTMLElement input radio", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe("100");
   expect(bindings[0].viewModelProperty.filteredValue).toBe("100");
+
+  expect(bindings[1].component).toBe(component);
+  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[1].contextParam).toBe(undefined);
   expect(bindings[1].nodeProperty.constructor).toBe(Radio);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.node.checked).toBe(false);
@@ -695,8 +704,6 @@ test("BindToHTMLElement input radio", () => {
   expect(bindings[1].viewModelProperty.applicable).toBe(true);
   expect(bindings[1].viewModelProperty.name).toBe("aaa");
   expect(bindings[1].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[1].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[1].viewModelProperty.filters).toEqual([]);
   expect(bindings[1].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[1].viewModelProperty.value).toBe("100");
@@ -761,6 +768,9 @@ test("BindToHTMLElement input checkbox", () => {
   bindings.push(...bindings1);
   bindings.push(...bindings2);
   expect(bindings.length).toBe(2);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(Checkbox);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -776,12 +786,14 @@ test("BindToHTMLElement input checkbox", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toEqual(["100"]);
   expect(bindings[0].viewModelProperty.filteredValue).toEqual(["100"]);
+
+  expect(bindings[1].component).toBe(component);
+  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[1].contextParam).toBe(undefined);
   expect(bindings[1].nodeProperty.constructor).toBe(Checkbox);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.node.checked).toBe(false);
@@ -797,8 +809,6 @@ test("BindToHTMLElement input checkbox", () => {
   expect(bindings[1].viewModelProperty.applicable).toBe(true);
   expect(bindings[1].viewModelProperty.name).toBe("aaa");
   expect(bindings[1].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[1].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[1].viewModelProperty.filters).toEqual([]);
   expect(bindings[1].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[1].viewModelProperty.value).toEqual(["100"]);

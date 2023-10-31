@@ -8,6 +8,9 @@ import { IfBind } from "../../src/bindInfo/template/If.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
+import { Binding } from "../../src/binding/Binding.js";
+import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
+import { Repeat } from "../../src/binding/nodePoperty/Repeat.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -49,24 +52,23 @@ test("BindToTemplate", () => {
   };
   const bindings = BindToTemplate.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
-  expect(bindings[0] instanceof LoopBind).toBe(true);
-  expect(bindings[0].node instanceof Comment).toBe(true);
-  expect(() => bindings[0].element).toThrow("not Element");
-  expect(bindings[0].nodeProperty).toBe("loop");
-  expect(bindings[0].nodePropertyElements).toEqual(["loop"]);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].viewModel).toBe(viewModel);
-  expect(bindings[0].viewModelProperty).toBe("aaa");
-  expect(bindings[0].viewModelPropertyName).toBe(PropertyName.create("aaa"));
-  expect(bindings[0].contextIndex).toBe(undefined);
-  expect(bindings[0].isContextIndex).toBe(false);
-  expect(bindings[0].filters).toEqual([]);
-  expect(bindings[0].contextParam).toBe(undefined);
-  expect(bindings[0].indexes).toEqual([]);
-  expect(bindings[0].indexesString).toBe("");
-  expect(bindings[0].viewModelPropertyKey).toBe("aaa\t");
-  expect(bindings[0].contextIndexes).toEqual([]);
   expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].constructor).toBe(Binding);
+  expect(bindings[0].nodeProperty.constructor).toBe(Repeat);
+  expect(bindings[0].nodeProperty.node instanceof Comment).toBe(true);
+  expect(bindings[0].nodeProperty.name).toBe("loop");
+  expect(bindings[0].nodeProperty.nameElements).toEqual(["loop"]);
+  expect(bindings[0].nodeProperty.filters).toEqual([]);
+  expect(bindings[0].nodeProperty.filterFuncs).toEqual(inputFilters);
+  expect(bindings[0].viewModelProperty.constructor).toBe(ViewModelProperty);
+  expect(bindings[0].viewModelProperty.viewModel).toBe(viewModel);
+  expect(bindings[0].viewModelProperty.name).toBe("aaa");
+  expect(bindings[0].viewModelProperty.propertyName).toBe(PropertyName.create("aaa"));
+  expect(bindings[0].viewModelProperty.filters).toEqual([]);
+  expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
+  expect(bindings[0].viewModelProperty.indexes).toEqual([]);
 
 });
 

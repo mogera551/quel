@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -113,26 +113,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -141,13 +127,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { NodeProperty } from "./NodeProperty.js";
 import { Templates } from "../../view/Templates.js";
@@ -155,13 +155,13 @@ import { utils } from "../../utils.js";
 &nbsp;
 export class TemplateProperty extends NodeProperty {
   /** @type {HTMLTemplateElement | undefined} */
-  get template() {
-    return Templates.templateByUUID.get(this.uuid);
+<span class="fstat-no" title="function not covered" >  ge</span>t template() {
+<span class="cstat-no" title="statement not covered" >    return Templates.templateByUUID.get(this.uuid);</span>
   }
 &nbsp;
   /** @type {string} */
-  get uuid() {
-    return TemplateProperty.getUUID(this.node);
+<span class="fstat-no" title="function not covered" >  ge</span>t uuid() {
+<span class="cstat-no" title="statement not covered" >    return TemplateProperty.getUUID(this.node);</span>
   }
 &nbsp;
   /**
@@ -169,13 +169,13 @@ export class TemplateProperty extends NodeProperty {
    * @param {Node} node 
    * @returns {string}
    */
-  static getUUID(node) {
-    return node.textContent.slice(3)
+<span class="fstat-no" title="function not covered" >  st</span>atic getUUID(node) {
+<span class="cstat-no" title="statement not covered" >    return node.textContent.slice(3)</span>
   }
   
   /** @type {Boolean} */
-  get expandable() {
-    return true;
+<span class="fstat-no" title="function not covered" >  ge</span>t expandable() {
+<span class="cstat-no" title="statement not covered" >    return true;</span>
   }
 &nbsp;
   /**
@@ -186,11 +186,11 @@ export class TemplateProperty extends NodeProperty {
    * @param {Filter[]} filters 
    * @param {Object&lt;string,FilterFunc&gt;} filterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (!(node instanceof Comment)) <span class="cstat-no" title="statement not covered" >utils.raise("not Comment");</span>
-    const uuid = TemplateProperty.getUUID(node);
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (typeof uuid === "undefined") <span class="cstat-no" title="statement not covered" >utils.raise(`invalid uuid ${uuid}`);</span>
-    super(binding, node, name, filters, filterFuncs);
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(binding, node, name, filters, filterFuncs) {
+<span class="cstat-no" title="statement not covered" >    if (!(node instanceof Comment)) <span class="cstat-no" title="statement not covered" >utils.raise("not Comment");</span></span>
+    const uuid = <span class="cstat-no" title="statement not covered" >TemplateProperty.getUUID(node);</span>
+<span class="cstat-no" title="statement not covered" >    if (typeof uuid === "undefined") <span class="cstat-no" title="statement not covered" >utils.raise(`invalid uuid ${uuid}`);</span></span>
+<span class="cstat-no" title="statement not covered" >    super(binding, node, name, filters, filterFuncs);</span>
   }
 }</pre></td></tr></table></pre>
 
@@ -199,7 +199,7 @@ export class TemplateProperty extends NodeProperty {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-30T08:28:22.523Z
+                at 2023-10-31T09:57:17.067Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

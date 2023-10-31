@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -111,10 +111,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -127,9 +127,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import "../types.js";
 import { Binder } from "../binder/Binder.js";
@@ -144,11 +144,11 @@ export class ViewTemplate {
    * @param {ContextInfo} context
    * @returns {{bindings:import("../binding/Binding.js").Binding[], content:DocumentFragment}}
    */
-  static render(component, template, context) {
-    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(template, content);
-    const bindings = Binder.bind(nodes, component, context);
-    return { bindings, content };
+<span class="fstat-no" title="function not covered" >  st</span>atic render(component, template, context) {
+    const content = <span class="cstat-no" title="statement not covered" >document.importNode(template.content, true);</span> // See http://var.blog.jp/archives/76177033.html
+    const nodes = <span class="cstat-no" title="statement not covered" >Selector.getTargetNodes(template, content);</span>
+    const bindings = <span class="cstat-no" title="statement not covered" >Binder.bind(nodes, component, context);</span>
+<span class="cstat-no" title="statement not covered" >    return { bindings, content };</span>
   }
 }
 &nbsp;
@@ -160,10 +160,10 @@ export class View {
    * @param {HTMLTemplateElement} template 
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static render(rootElement, component, template) {
-    const { bindings, content } = ViewTemplate.render(component, template, Context.create());
-    rootElement.appendChild(content);
-    return bindings;
+<span class="fstat-no" title="function not covered" >  st</span>atic render(rootElement, component, template) {
+    const { bindings, content } = <span class="cstat-no" title="statement not covered" >ViewTemplate.render(component, template, Context.create());</span>
+<span class="cstat-no" title="statement not covered" >    rootElement.appendChild(content);</span>
+<span class="cstat-no" title="statement not covered" >    return bindings;</span>
   }
 }</pre></td></tr></table></pre>
 
@@ -172,7 +172,7 @@ export class View {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-30T08:28:22.523Z
+                at 2023-10-31T09:57:17.067Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

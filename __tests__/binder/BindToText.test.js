@@ -37,6 +37,9 @@ test("BindToText", () => {
   const bindings = BindToText.bind(node, component, { indexes:[], stack:[] });
   expect(bindings.length).toBe(1);
   expect(bindings[0].constructor).toBe(Binding);
+  expect(bindings[0].component).toBe(component);
+  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
+  expect(bindings[0].contextParam).toBe(undefined);
   expect(bindings[0].nodeProperty.constructor).toBe(NodeProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(Text);
   expect(bindings[0].nodeProperty.name).toBe("textContent");
@@ -50,8 +53,6 @@ test("BindToText", () => {
   expect(bindings[0].viewModelProperty.applicable).toBe(true);
   expect(bindings[0].viewModelProperty.name).toBe("aaa");
   expect(bindings[0].viewModelProperty.propertyName).toEqual(PropertyName.create("aaa"));
-  expect(bindings[0].viewModelProperty.context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].viewModelProperty.contextParam).toBe(undefined);
   expect(bindings[0].viewModelProperty.filters).toEqual([]);
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual(outputFilters);
   expect(bindings[0].viewModelProperty.value).toBe(100);

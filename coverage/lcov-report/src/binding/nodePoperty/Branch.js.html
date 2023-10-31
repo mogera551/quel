@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -111,23 +111,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -137,8 +134,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { TemplateProperty } from "./TemplateProperty.js";
@@ -149,21 +149,21 @@ import { Templates } from "../../view/Templates.js";
 &nbsp;
 export class Branch extends TemplateProperty {
   /** @type {boolean} */
-  get value() {
-    return this.binding.children.length &gt; 0;
+<span class="fstat-no" title="function not covered" >  ge</span>t value() {
+<span class="cstat-no" title="statement not covered" >    return this.binding.children.length &gt; 0;</span>
   }
-  set value(value) {
-    if (typeof value !== "boolean") utils.raise("value is not boolean");
-    if (this.value !== value) {
-      if (value) {
-        const childBinding = new ChildBinding(this.binding.component, this.template, Context.clone(this.binding.context));
-        this.binding.appendChild(childBinding);
+<span class="fstat-no" title="function not covered" >  se</span>t value(value) {
+<span class="cstat-no" title="statement not covered" >    if (typeof value !== "boolean") <span class="cstat-no" title="statement not covered" >utils.raise("value is not boolean");</span></span>
+<span class="cstat-no" title="statement not covered" >    if (this.value !== value) {</span>
+<span class="cstat-no" title="statement not covered" >      if (value) {</span>
+        const childBinding = <span class="cstat-no" title="statement not covered" >new ChildBinding(this.binding.component, this.template, Context.clone(this.binding.context));</span>
+<span class="cstat-no" title="statement not covered" >        this.binding.appendChild(childBinding);</span>
       } else {
-        const removeChildBindings = this.binding.children.splice(0, this.binding.children.length);
-        removeChildBindings.forEach(childBinding =&gt; childBinding.removeFromParent());
+        const removeChildBindings = <span class="cstat-no" title="statement not covered" >this.binding.children.splice(0, this.binding.children.length);</span>
+<span class="cstat-no" title="statement not covered" >        removeChildBindings.forEach(<span class="fstat-no" title="function not covered" >ch</span>ildBinding =&gt; <span class="cstat-no" title="statement not covered" >childBinding.removeFromParent())</span>;</span>
       }
     } else {
-      this.binding.children.forEach(bindings =&gt; bindings.applyToNode());
+<span class="cstat-no" title="statement not covered" >      this.binding.children.forEach(<span class="fstat-no" title="function not covered" >bi</span>ndings =&gt; <span class="cstat-no" title="statement not covered" >bindings.applyToNode())</span>;</span>
     }
   }
 &nbsp;
@@ -175,9 +175,9 @@ export class Branch extends TemplateProperty {
    * @param {Filter[]} filters 
    * @param {Object&lt;string,FilterFunc&gt;} filterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
-    if (name !== "if") utils.raise(`invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs);
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(binding, node, name, filters, filterFuncs) {
+<span class="cstat-no" title="statement not covered" >    if (name !== "if") <span class="cstat-no" title="statement not covered" >utils.raise(`invalid property name ${name}`);</span></span>
+<span class="cstat-no" title="statement not covered" >    super(binding, node, name, filters, filterFuncs);</span>
   }
 &nbsp;
 }</pre></td></tr></table></pre>
@@ -187,7 +187,7 @@ export class Branch extends TemplateProperty {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-30T08:28:22.523Z
+                at 2023-10-31T09:57:17.067Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

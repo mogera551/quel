@@ -1,10 +1,8 @@
 import "../types.js";
 import { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
-import { ProcessData } from "../thread/ViewModelUpdator.js";
-import { Event } from "../bindInfo/Event.js";
-import { Radio } from "../bindInfo/Radio.js";
-import { Checkbox } from "../bindInfo/Checkbox.js";
+import { Radio } from "../binding/nodePoperty/Radio.js";
+import { Checkbox } from "../binding/nodePoperty/Checkbox.js";
 
 const DATASET_BIND_PROPERTY = "data-bind";
 const DEFAULT_EVENT = "oninput";
@@ -76,13 +74,14 @@ export class BindToHTMLElement {
 
     bindings.forEach(binding => {
       hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
-      radioBinding = (binding instanceof Radio) ? binding : radioBinding;
-      checkboxBinding = (binding instanceof Checkbox) ? binding : checkboxBinding;
+      radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
+      checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
       defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
     });
 
     /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
     const setDefaultEventHandler = (binding) => {
+      console.log(binding);
       element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
     }
     if (radioBinding) {
