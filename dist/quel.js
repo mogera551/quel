@@ -1,75 +1,3 @@
-/**
- * @typedef {import("../modules/dot-notation/dot-notation.js").PropertyName} PropertyName
- * 
- * @typedef {import("../modules/dot-notation/dot-notation.js").PropertyAccess} PropertyAccess 
- * 
- * @typedef {{html?:string,css?:string,ViewModel:class,template?:HTMLTemplateElement,extendClass?:class<HTMLElement>,extendTag?:string,componentModules:Object<string,UserComponentModule>}} UserComponentModule
- * 
- * @typedef {(value:any,options:string[])=>{return:any}} FilterFunc
- * 
- * @typedef {{input:FilterFunc,output:FilterFunc}} UserFilterData
- * 
- * @typedef {Object<string,any>} ViewModel 
- * 
- * @typedef {import("./bindInfo/BindInfo.js").BindInfo} BindInfo
- * 
- * @typedef {import("./thread/Thread.js").Thread} Thread
- * 
- * @typedef {import("./thread/UpdateSlot.js").UpdateSlot} UpdateSlot
- * 
- * @typedef {import("./thread/ViewModelUpdator.js").ProcessData} ProcessData 
- * 
- * @typedef {import("./thread/UpdateSlot.js").UpdateSlotStatusCallback} UpdateSlotStatusCallback
- * 
- * 
- * @typedef {import("./filter/Filter.js").Filter} Filter
- * 
- * @typedef {{
- *   propName:PropertyName,
- *   indexes:number[],
- *   pos:number,
- * }} ContextParam
- * 
- * @typedef {{indexes:number[],stack:ContextParam[]}} ContextInfo
- * 
- * @typedef {{
- *   viewModel:ViewModel,
- *   binds:BindInfo[],
- *   thread:Thread,
- *   updateSlot:UpdateSlot,
- *   props:Object<string,any>,
- *   globals:Object<string,any>,
- *   initialResolve:(...args)=>{},
- *   initialReject:()=>{},
- *   initialPromise:Promise,
- *   aliveResolve:(...args)=>{},
- *   aliveReject:()=>{},
- *   alivePromise:Promise,
- *   parentComponent:Component,
- *   withShadowRoot:boolean,
- *   viewRootElement:ShadowRoot|HTMLElement,
- *   initialize:()=>{},
- *   build:()=>{},
- *   connectedCallback:()=>{},
- *   disconnectedCallback:()=>{},
- *   applyToNode:(setOfViewModelPropertyKeys:Set<String>)=>{},
- *   initialize:()=>{},
- *   filters:{
- *     in:Object<string,FilterFunc>,
- *     out:Object<string,FilterFunc>,
- *   },
- *   static ViewModel:class<ViewModel>,
- *   static template:HTMLTemplateElement,
- *   static extendClass:class<HTMLElement>,
- *   static extendTag:string,
- *   static inputFilters:Object<string,FilterFunc>,
- *   static outputFilters:Object<string,FilterFunc>,
- * }} Component
- * 
- */
-
-window.elapsedTimes = {};
-
 class utils {
   /**
    * 
@@ -119,331 +47,49 @@ class utils {
   }
 }
 
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const num = (v, o, fn) => {
-  if (v == null) return v;
-  const n = Number(v);
-  return isNaN(n) ? v : fn(n, o);
-};
-
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const str = (v, o, fn) => {
-  return (v == null) ? v : fn(String(v), o);
-};
-
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const arr = (v, o, fn) => {
-  return !Array.isArray(v) ? v : fn(v, o);
-};
-
-class outputFilters {
-  static styleDisplay = (value, options) => value ? (options[0] ?? "") : "none";
-  static truthy       = (value, options) => value ? true : false;
-  static falsey       = (value, options) => !value ? true : false;
-  static not          = this.falsey;
-  static eq           = (value, options) => value == options[0];
-  static ne           = (value, options) => value != options[0];
-  static lt           = (value, options) => Number(value) < Number(options[0]);
-  static le           = (value, options) => Number(value) <= Number(options[0]);
-  static gt           = (value, options) => Number(value) > Number(options[0]);
-  static ge           = (value, options) => Number(value) >= Number(options[0]);
-  static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? "").replaceAll("%s", value)) : null;
-  static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
-  static null         = (value, options) => (value == null) ? true : false;
-  static offset       = (value, options) => Number(value) + Number(options[0]);
-  static unit         = (value, options) => String(value) + String(options[0]);
-  static inc          = this.offset;
-  static mul          = (value, options) => Number(value) * Number(options[0]);
-  static div          = (value, options) => Number(value) / Number(options[0]);
-  static mod          = (value, options) => Number(value) % Number(options[0]);
-
-  static "str.at"      = (value, options) => str(value, options, (s, o) => s.at(...o));
-  static "str.charAt"  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
-  static "str.charCodeAt"    = (value, options) => str(value, options, (s, o) => s.charCodeAt(...o));
-  static "str.codePointAt"   = (value, options) => str(value, options, (s, o) => s.codePointAt(...o));
-  static "str.concat"  = (value, options) => str(value, options, (s, o) => s.concat(...o));
-  static "str.endsWith"      = (value, options) => str(value, options, (s, o) => s.endsWith(...o));
-  static "str.includes" = (value, options) => str(value, options, (s, o) => s.includes(...o));
-  static "str.indexOf"  = (value, options) => str(value, options, (s, o) => s.indexOf(...o));
-//  static isWellFormed  = (value, options) => str(value, options, (s, o) => s.isWellFormed());
-  static "str.lastIndexOf" = (value, options) => str(value, options, (s, o) => s.lastIndexOf(...o));
-  static "str.localeCompare" = (value, options) => str(value, options, (s, o) => s.localeCompare(...o));
-  static "str.match"         = (value, options) => str(value, options, (s, o) => s.match(...o));
-//  static "str.matchAll"      = (value, options) => str(value, options, (s, o) => s.matchAll(...o));
-  static "str.normalize"     = (value, options) => str(value, options, (s, o) => s.normalize(...o));
-  static "str.padEnd"        = (value, options) => str(value, options, (s, o) => s.padEnd(...o));
-  static "str.padStart"      = (value, options) => str(value, options, (s, o) => s.padStart(...o));
-  static "str.repeat"        = (value, options) => str(value, options, (s, o) => s.repeat(...o));
-  static "str.replace"       = (value, options) => str(value, options, (s, o) => s.replace(...o));
-  static "str.replaceAll"    = (value, options) => str(value, options, (s, o) => s.replaceAll(...o));
-  static "str.search"        = (value, options) => str(value, options, (s, o) => s.search(...o));
-  static "str.slice"   = (value, options) => str(value, options, (s, o) => s.slice(...o));
-  static "str.split"         = (value, options) => str(value, options, (s, o) => s.split(...o));
-  static "str.startsWith"    = (value, options) => str(value, options, (s, o) => s.startsWith(...o));
-  static "str.substring"     = (value, options) => str(value, options, (s, o) => s.substring(...o));
-  static "str.toLocaleLowerCase" = (value, options) => str(value, options, (s, o) => s.toLocaleLowerCase(...o));
-  static "str.toLocaleUpperCase" = (value, options) => str(value, options, (s, o) => s.toLocaleUpperCase(...o));
-  static "str.toLowerCase"   = (value, options) => str(value, options, (s, o) => s.toLowerCase(...o));
-  static "str.toUpperCase"   = (value, options) => str(value, options, (s, o) => s.toUpperCase(...o));
-  //static "str.toWellFormed"  = (value, options) => str(value, options, (s, o) => s.toWellFormed(...o));
-  static "str.trim"          = (value, options) => str(value, options, (s, o) => s.trim(...o));
-  static "str.trimEnd"       = (value, options) => str(value, options, (s, o) => s.trimEnd(...o));
-  static "str.trimStart"     = (value, options) => str(value, options, (s, o) => s.trimStart(...o));
-
-  static "num.toExponential" = (value, options) => num(value, options, (n, o) => n.toExponential(...o));
-  static "num.toFixed"       = (value, options) => num(value, options, (n, o) => n.toFixed(...o));
-  static "num.toLocaleString" = (value, options) => num(value, options, (n, o) => n.toLocaleString(...o));
-  static "num.toPrecision"   = (value, options) => num(value, options, (n, o) => n.toPrecision(...o));
-  
-  static "arr.at"       = (value, options) => arr(value, options, (a, o) => a.at(...o));
-  static "arr.concat"   = (value, options) => arr(value, options, (a, o) => a.concat(...o));
-  static "arr.entries"  = (value, options) => arr(value, options, (a, o) => a.entries(...o));
-  static "arr.flat"     = (value, options) => arr(value, options, (a, o) => a.flat(...o));
-  static "arr.includes" = (value, options) => arr(value, options, (a, o) => a.includes(...o));
-  static "arr.indexOf"  = (value, options) => arr(value, options, (a, o) => a.indexOf(...o));
-  static "arr.join"     = (value, options) => arr(value, options, (a, o) => a.join(...o));
-  static "arr.keys"     = (value, options) => arr(value, options, (a, o) => a.keys(...o));
-  static "arr.lastIndexOf"    = (value, options) => arr(value, options, (a, o) => a.lastIndexOf(...o));
-  static "arr.slice"    = (value, options) => arr(value, options, (a, o) => a.slice(...o));
-  static "arr.toLocaleString" = (value, options) => arr(value, options, (a, o) => a.toLocaleString(...o));
-  static "arr.toReversed"     = (value, options) => arr(value, options, (a, o) => a.toReversed(...o));
-  static "arr.toSorted"       = (value, options) => arr(value, options, (a, o) => a.toSorted(...o));
-  static "arr.toSpliced"      = (value, options) => arr(value, options, (a, o) => a.toSpliced(...o));
-  static "arr.values"   = (value, options) => arr(value, options, (a, o) => a.values(...o));
-  static "arr.with"     = (value, options) => arr(value, options, (a, o) => a.with(...o));
-
-  static get at() {
-    return (value, options) => (Array.isArray(value) ? this["arr.at"] : this["str.at"])(value, options);
-  }
-  static get charAt() {
-    return this["str.charAt"];
-  }
-  static get charCodeAt() {
-    return this["str.charCodeAt"];
-  }
-  static get codePointAt() {
-    return this["str.codePointAt"];
-  }
-  static get concat() {
-    return (value, options) => (Array.isArray(value) ? this["arr.concat"] : this["str.concat"])(value, options);
-  }
-  static get endsWith() {
-    return this["str.endsWith"];
-  }
-  static get entries() {
-    return this["arr.entries"];
-  }
-  static get flat() {
-    return this["arr.flat"];
-  }
-  static get includes() {
-    return (value, options) => (Array.isArray(value) ? this["arr.includes"] : this["str.includes"])(value, options);
-  }
-  static get indexOf() {
-    return (value, options) => (Array.isArray(value) ? this["arr.indexOf"] : this["str.indexOf"])(value, options);
-  }
-  static get join() {
-    return this["arr.join"];
-  }
-  static get keys() {
-    return this["arr.keys"];
-  }
-  static get lastIndexOf() {
-    return (value, options) => (Array.isArray(value) ? this["arr.lastIndexOf"] : this["str.lastIndexOf"])(value, options);
-  }
-  static get localeCompare() {
-    return this["str.localeCompare"];
-  }
-  static get match() {
-    return this["str.match"];
-  }
-  //static get matchAll() {
-  //  return this["str.matchAll"];
-  //}
-  static get normalize() {
-    return this["str.normalize"];
-  }
-  static get padEnd() {
-    return this["str.padEnd"];
-  }
-  static get padStart() {
-    return this["str.padStart"];
-  }
-  static get repeat() {
-    return this["str.repeat"];
-  }
-  static get replace() {
-    return this["str.replace"];
-  }
-  static get replaceAll() {
-    return this["str.replaceAll"];
-  }
-  static get search() {
-    return this["str.search"];
-  }
-  static get slice() {
-    return (value, options) => (Array.isArray(value) ? this["arr.slice"] : this["str.slice"])(value, options);
-  }
-  static get split() {
-    return this["str.split"];
-  }
-  static get startsWith() {
-    return this["str.startsWith"];
-  }
-  static get substring() {
-    return this["str.substring"];
-  }
-  static get toExponential() {
-    return this["num.toExponential"];
-  }
-  static get toFixed() {
-    return this["num.toFixed"];
-  }
-  static get toLocaleString() {
-    return (value, options) => (Array.isArray(value) ? this["arr.toLocaleString"] : this["num.toLocaleString"])(value, options);
-  }
-  static get toLocaleLowerCase() {
-    return this["str.toLocaleLowerCase"];
-  }
-  static get toLocaleUpperCase() {
-    return this["str.toLocaleUpperCase"];
-  }
-  static get toLowerCase() {
-    return this["str.toLowerCase"];
-  }
-  static get toPrecision() {
-    return this["num.toPrecision"];
-  }
-  static get toReversed() {
-    return this["arr.toReversed"];
-  }
-  static get toSorted() {
-    return this["arr.toSorted"];
-  }
-  static get toSpliced() {
-    return this["arr.toSpliced"];
-  }
-  static get toUpperCase() {
-    return this["str.toUpperCase"];
-  }
-  //static get toWellFormed() {
-  //  return this["str.toWellFormed"];
-  //}
-  static get trim() {
-    return this["str.trim"];
-  }
-  static get trimEnd() {
-    return this["str.trimEnd"];
-  }
-  static get trimStart() {
-    return this["str.trimStart"];
-  }
-  static get values() {
-    return this["arr.values"];
-  }
-  static get with() {
-    return this["arr.with"];
-  }
-
-}
-
-class inputFilters {
-  static number       = (value, options) => value === "" ? null : Number(value);
-  static boolean      = (value, options) => value === "" ? null : Boolean(value);
-}
-
-// "property:vmProperty|toFix,2|toLocaleString;"
-// => toFix,2|toLocaleString
-
-class Filter {
-  /** @type {string} */
-  name;
-
-  /** @type {string[]} */
-  options;
-
-  /**
-   * 
-   * @param {any} value 
-   * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
-   * @returns {any}
-   */
-  static applyForInput(value, filters, inputFilterFuncs) {
-    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
-  }
+class Cache {
+  /** @type {Map<PropertyName,Map<string,any>>} */
+  #valueByIndexesStringByPropertyName = new Map;
   
   /**
    * 
-   * @param {any} value 
-   * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} outputFilterFuncs
+   * @param {PropertyName} propName 
+   * @param {number[]} indexes 
    * @returns {any}
    */
-  static applyForOutput(value, filters, outputFilterFuncs) {
-    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
+  get(propName, indexes) {
+    const valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
+    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;
   }
 
   /**
    * 
-   * @param {string} name 
-   * @param {(value:any,options:string[])=>{}} outputFilter 
-   * @param {(value:any,options:string[])=>{}} inputFilter 
+   * @param {PropertyName} propName 
+   * @param {number[]} indexes 
+   * @param {any} value
+   * @returns {any}
    */
-  static regist(name, outputFilter, inputFilter) {
-    if (name in outputFilters) utils.raise(`regist filter error duplicate name (${name})`);
-    if (name in inputFilters) utils.raise(`regist filter error duplicate name (${name})`);
-    outputFilter && (outputFilters[name] = outputFilter);
-    inputFilter && (inputFilters[name] = inputFilter);
+  set(propName, indexes, value) {
+    let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
+    if (!valueByIndexesString) {
+      valueByIndexesString = new Map;
+      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
+    }
+    valueByIndexesString.set(indexes.toString(), value);
+    return value;
   }
+
+  /**
+   * @returns {void}
+   */
+  clear() {
+    this.#valueByIndexesStringByPropertyName.clear();
+  }
+
 }
-
-/** @enum {number} */
-const NodePropertyType = {
-//  levelTop: 1,
-//  level2nd: 2,
-//  level3rd: 3,
-  text: 1,
-  property: 10,
-  attribute: 20,
-  style: 21,
-  classList: 22,
-  className: 23,
-  radio: 30,
-  checkbox: 40,
-  event: 91,
-  component: 92,
-  if: 96,
-  loop: 97,
-};
-
-/** @type {string} */
-const TEMPLATE_BRANCH = "if"; // 条件分岐
-/** @type {string} */
-const TEMPLATE_REPEAT = "loop"; // 繰り返し
-
-const name = "quel";
 
 const WILDCARD = "*";
-const DELIMITER$1 = ".";
+const DELIMITER = ".";
 const SYM_PREFIX = "dot-notation"; // + Math.trunc(Math.random() * 9999_9999);
 const SYM_DIRECT_GET = Symbol.for(SYM_PREFIX + ".direct_get");
 const SYM_DIRECT_SET = Symbol.for(SYM_PREFIX + ".direct_set");
@@ -504,14 +150,14 @@ class PropertyName {
    */
   constructor(name) {
     this.name = name;
-    this.pathNames = name.split(DELIMITER$1);
+    this.pathNames = name.split(DELIMITER);
     this.parentPathNames = this.pathNames.slice(0, -1);
     this.parentPaths = this.parentPathNames.reduce((paths, pathName) => { 
       paths.push(paths.at(-1)?.concat(pathName) ?? [pathName]);
       return paths;
     }, []).map(paths => paths.join("."));
     this.setOfParentPaths = new Set(this.parentPaths);
-    this.parentPath = this.parentPathNames.join(DELIMITER$1);
+    this.parentPath = this.parentPathNames.join(DELIMITER);
     this.lastPathName = this.pathNames.at(-1);
     this.regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
     this.level = this.pathNames.filter(pathName => pathName === WILDCARD).length;
@@ -836,6 +482,104 @@ let Handler$2 = class Handler {
 };
 
 /**
+ * @typedef {Object} ViewModelInfo
+ * @property {string[]} removeProps
+ * @property {string[]} definedProps
+ * @property {string[]} accessorProps
+ * @property {string[]} methods
+ */
+
+class ViewModelize {
+  /**
+   * オブジェクトのすべてのプロパティのデスクリプタを取得する
+   * 継承元を遡る、ただし、Objectのプロパティは取得しない
+   * @param {ViewModel} target 
+   * @returns {Map<string,PropertyDescriptor>}
+   */
+  static getDescByName(target) {
+    /**
+     * @type {Map<string,PropertyDescriptor>}
+     */
+    const descByName = new Map;
+    let object = target;
+    while(object !== Object.prototype) {
+      const descs = Object.getOwnPropertyDescriptors(object);
+      for(const [name, desc] of Object.entries(descs)) {
+        if (descByName.has(name)) continue;
+        descByName.set(name, desc);
+      }
+      object = Object.getPrototypeOf(object);
+    }
+    return descByName;
+  }
+
+  /**
+   * オブジェクト内のメソッドを取得する
+   * コンストラクタは含まない
+   * @param {[string,PropertyDescriptor][]} descByNameEntries 
+   * @returns {[string,PropertyDescriptor][]}
+   */
+  static getMethods(descByNameEntries, targetClass) {
+    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value === "function")
+  }
+
+  /**
+   * オブジェクト内のプロパティを取得する
+   * @param {[string,PropertyDescriptor][]} descByNameEntries 
+   * @returns {[string,PropertyDescriptor][]}
+   */
+  static getProperties(descByNameEntries, targetClass) {
+    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value !== "function")
+  }
+
+  /**
+   * ViewModel化
+   * ・非プリミティブかつ初期値のないプロパティは削除する
+   * @param {typeof ViewModel} target 
+   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
+   */
+  static viewModelize(target) {
+    const viewModelConstructor = target.constructor;
+    let viewModelInfo = this.viewModelInfoByConstructor.get(viewModelConstructor);
+    if (!viewModelInfo) {
+      const descByName = this.getDescByName(target);
+      const descByNameEntries = Array.from(descByName.entries());
+      const removeProps = [];
+      const definedProps = [];
+      const accessorProps = [];
+      const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
+      this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
+        definedProps.push(name);
+        const propName = PropertyName.create(name);
+        if (!propName.isPrimitive) {
+          if (("value" in desc) && typeof desc.value === "undefined") {
+            removeProps.push(name);
+          }
+        }
+        if ("get" in desc && typeof desc.get !== "undefined") {
+          accessorProps.push(name);
+        }
+      });
+      viewModelInfo = { removeProps, definedProps, methods, accessorProps };
+      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);
+    }
+    viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
+    return {
+      definedProps:viewModelInfo.definedProps, 
+      methods:viewModelInfo.methods, 
+      accessorProps:viewModelInfo.accessorProps,
+      viewModel:target
+    };
+  }
+
+  /** @type {Map<typeof ViewModel,ViewModelInfo>} */
+  static viewModelInfoByConstructor = new Map;
+  
+}
+
+const name = "quel";
+
+/**
  * @enum {Symbol}
  */
 const Symbols = Object.assign({
@@ -862,297 +606,6 @@ const Symbols = Object.assign({
   isComponent: Symbol.for(`${name}:component.isComponent`),
 }, Symbols$1);
 
-const PREFIX_EVENT = "on";
-const DEFAULT_TEXT_PROPERTY = "textContent";
-const PROPS_PROPERTY$1 = "props";
-
-class NodePropertyInfo {
-  /** @type {NodePropertyType} */
-  type;
-
-  /** @type {string[]} */
-  nodePropertyElements = [];
-
-  /** @type {string} */
-  eventType;
-
-  /** @type {Object<string,NodePropertyInfo>} */
-  static nodePropertyInfoByKey = {};
-
-  /**
-   * ノードからノードプロパティ情報を取得
-   * @param {Node} node
-   * @param {string} nodeProperty 
-   * @returns {NodePropertyInfo}
-   */
-  static get(node, nodeProperty) {
-    const result = new NodePropertyInfo;
-    const key = `${node.constructor.name}\t${node.textContent[2]}\t${node[Symbols.isComponent]}\t${nodeProperty}`;
-    const nodePropertyInfo = this.nodePropertyInfoByKey[key];
-    if (typeof nodePropertyInfo !== "undefined") {
-      result.type = nodePropertyInfo.type;
-      result.nodePropertyElements = nodePropertyInfo.nodePropertyElements.slice(0);
-      result.eventType = nodePropertyInfo.eventType;
-      return result;
-    }
-    do {
-      result.nodePropertyElements = nodeProperty.split(".");
-      if (node instanceof Comment && node.textContent[2] === "|") {
-        if (nodeProperty === TEMPLATE_BRANCH) {
-          result.type = NodePropertyType.if;
-          break;
-        } else if (nodeProperty === TEMPLATE_REPEAT) {
-          result.type = NodePropertyType.loop;
-          break;
-        } else {
-          utils.raise(`template illegal property ${nodeProperty}`);
-        }
-      }      
-      if (node[Symbols.isComponent] && result.nodePropertyElements[0] === PROPS_PROPERTY$1) { 
-        result.type = NodePropertyType.component;
-        break;
-      }      if ((node instanceof HTMLElement) || (node instanceof SVGElement)) {
-        if (result.nodePropertyElements.length === 1) {
-          if (result.nodePropertyElements[0].startsWith(PREFIX_EVENT)) {
-            result.type = NodePropertyType.event;
-            result.eventType = result.nodePropertyElements[0].slice(PREFIX_EVENT.length);
-          } else if (result.nodePropertyElements[0] === "class") {
-            result.type = NodePropertyType.className;
-          } else if (result.nodePropertyElements[0] === "radio") {
-            result.type = NodePropertyType.radio;
-          } else if (result.nodePropertyElements[0] === "checkbox") {
-            result.type = NodePropertyType.checkbox;
-          } else {
-            result.type = NodePropertyType.property;
-          }
-        } else if (result.nodePropertyElements.length === 2) {
-          if (result.nodePropertyElements[0] === "class") {
-            result.type = NodePropertyType.classList;
-          } else if (result.nodePropertyElements[0] === "style") {
-            result.type = NodePropertyType.style;
-          } else if (result.nodePropertyElements[0] === "attr") {
-            result.type = NodePropertyType.attribute;
-          } else {
-            utils.raise(`unknown property ${nodeProperty}`);
-          }
-        } else {
-          utils.raise(`unknown property ${nodeProperty}`);
-        }
-      } else {
-        if (result.nodePropertyElements.length === 1 && result.nodePropertyElements[0] === DEFAULT_TEXT_PROPERTY) {
-          result.type = NodePropertyType.text;
-        } else {
-          const toString = Object.prototype.toString;
-          const nodeType = toString.call(node).slice(8, -1).toLowerCase();
-          utils.raise(`unknown node ${nodeType} or property ${nodeProperty}`);
-        }
-      }
-  
-    } while(false);
-    this.nodePropertyInfoByKey[key] = result;
-    return result;
-  }
-}
-
-class BindInfo {
-  /** @type {Node} */
-  #node;
-  /** @type {Node} */
-  get node() {
-    return this.#node;
-  }
-  set node(node) {
-    this.#node = node;
-  }
-  /** @type {Element} */
-  get element() {
-    return (this.node instanceof Element) ? this.node : utils.raise("not Element");
-  }
-  /** @type {HTMLElement} */
-  get htmlElement() {
-    return (this.node instanceof HTMLElement) ? this.node : utils.raise("not HTMLElement");
-  }
-  /** @type {SVGElement} */
-  get svgElement() {
-    return (this.node instanceof SVGElement) ? this.node : utils.raise("not SVGElement");
-  }
-
-  /** @type {string} */
-  #nodeProperty;
-  /** @type {string} */
-  get nodeProperty() {
-    return this.#nodeProperty;
-  }
-  set nodeProperty(value) {
-    this.#nodeProperty = value;
-  }
-
-  /** @type {string[]} */
-  #nodePropertyElements;
-  /** @type {string[]} */
-  get nodePropertyElements() {
-    return this.#nodePropertyElements;
-  }
-  set nodePropertyElements(value) {
-    this.#nodePropertyElements = value;
-  }
-
-  /** @type {Component} */
-  component;
-
-  /** @type {ViewModel} */
-  viewModel;
-
-  /** @type {string} */
-  #viewModelProperty;
-
-  /** @type {string} */
-  get viewModelProperty() {
-    return this.#viewModelProperty;
-  }
-  set viewModelProperty(value) {
-    this.#viewModelProperty = value;
-
-    this.#viewModelPropertyName = undefined;
-    this.#isContextIndex = undefined;
-    this.#contextIndex = undefined;
-    this.#contextParam = undefined;
-  }
-
-  /** @type {PropertyName} */
-  #viewModelPropertyName;
-  /** @type {PropertyName} */
-  get viewModelPropertyName() {
-    if (typeof this.#viewModelPropertyName === "undefined") {
-      this.#viewModelPropertyName = PropertyName.create(this.#viewModelProperty);
-    }
-    return this.#viewModelPropertyName;
-  }
-
-  /** @type {number} */
-  #contextIndex;
-  /** @type {number} */
-  get contextIndex() {
-    if (typeof this.#contextIndex === "undefined") {
-      if (this.isContextIndex === true) {
-        this.#contextIndex = Number(this.viewModelProperty.slice(1)) - 1;
-      }
-    }
-    return this.#contextIndex;
-  }
-
-  /** @type {boolean} */
-  #isContextIndex;
-  /** @type {boolean} */
-  get isContextIndex() {
-    if (typeof this.#isContextIndex === "undefined") {
-      this.#isContextIndex = (RE_CONTEXT_INDEX.exec(this.viewModelProperty)) ? true : false;
-    }
-    return this.#isContextIndex;
-  }
-
-  /** @type {Filter[]} */
-  filters;
-
-  /** @type {ContextParam} */
-  #contextParam;
-  /** @type {ContextParam} */
-  get contextParam() {
-    if (typeof this.#contextParam === "undefined") {
-      const propName = this.viewModelPropertyName;
-      if (propName.level > 0) {
-        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-      }
-    }
-    return this.#contextParam;
-  }
-
-  /** @type {number[]} */
-  get indexes() {
-    return this.contextParam?.indexes ?? [];
-  }
-
-  /** @type {string} */
-  get indexesString() {
-    return this.indexes.toString();
-  }
-
-  /** @type {string} */
-  get viewModelPropertyKey() {
-    return this.viewModelProperty + "\t" + this.indexesString;
-  }
-
-  /** @type {number[]} */
-  get contextIndexes() {
-    return this.context.indexes;
-  }
-  
-  /** @type {ContextInfo} */
-  #context;
-  /** @type {ContextInfo} */
-  get context() {
-    return this.#context;
-  }
-  set context(value) {
-    this.#context = value;
-    this.#contextParam = undefined;
-  }
-
-  /** @type {string} */
-  eventType;
-  
-  /** @type {(event:Event)=>void} */
-  defaultEventHandler;
-
-  /** @type {string} */
-  defaultEventType;
-
-  /** @type {any} */
-  get viewModelValue() {
-    return (this.isContextIndex) ?
-      this.contextIndexes[this.contextIndex] :
-      this.viewModel[Symbols.directlyGet](this.viewModelProperty, this.indexes);
-  }
-  set viewModelValue(value) {
-    if (!this.isContextIndex) {
-      this.viewModel[Symbols.directlySet](this.viewModelProperty, this.indexes, value);
-    }
-  }
-
-  /** @type {any} */
-  get filteredViewModelValue() {
-    return this.filters.length > 0 ? 
-      Filter.applyForOutput(this.viewModelValue, this.filters, this.component.filters.out) : 
-      this.viewModelValue;
-  }
-  set filteredViewModelValue(value) {
-    this.viewModelValue = this.filters.length > 0 ? Filter.applyForInput(value, this.filters, this.component.filters.in) : value;
-  }
-
-  /** @type {any} */
-  get nodeValue() {
-
-  }
-  set nodeValue(value) {
-    
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {}
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {}
-
-  /**
-   * ToDo:名前を変えたほうが良い
-   */
-  removeFromParent() {}
-}
-
 /** @enum {number} */
 const UpdateSlotStatus = {
   beginViewModelUpdate: 1,
@@ -1162,270 +615,6 @@ const UpdateSlotStatus = {
   beginNodeUpdate: 5,
   endNodeUpdate: 6,
 };
-
-class NodeUpdateData {
-  /** @type {Node} */
-  node;
-
-  /** @type {string} */
-  property;
-
-  /** @type {string} */
-  viewModelProperty;
-
-  /** @type {any} */
-  value;
-
-  /** @type {()=>void} */
-  updateFunc;
-
-  /**
-   * 
-   * @param {Node} node 
-   * @param {string} property 
-   * @param {string} viewModelProperty 
-   * @param {any} value 
-   * @param {()=>void} updateFunc 
-   */
-  constructor(node, property, viewModelProperty, value, updateFunc) {
-    this.node = node;
-    this.property = property;
-    this.viewModelProperty = viewModelProperty;
-    this.value = value;
-    this.updateFunc = updateFunc;
-  }
-}
-
-class NodeUpdator {
-  /** @type {NodeUpdateData[]} */
-  queue = [];
-
-  /** @type {UpdateSlotStatusCallback} */
-  #statusCallback;
-
-  /** 
-   * @param {UpdateSlotStatusCallback} statusCallback 
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
-
-  /**
-   * 更新する順番を並び替える
-   * HTMLTemplateElementが前
-   * その次がHTMLSelectElementでないもの
-   * 最後がHTMLSelectElement
-   * @param {NodeUpdateData[]} updates 
-   * @returns {NodeUpdateData[]}
-   */
-  reorder(updates) {
-    updates.sort((update1, update2) => {
-      if (update1.node instanceof HTMLTemplateElement && update2.node instanceof HTMLTemplateElement) return 0;
-      if (update2.node instanceof HTMLTemplateElement) return 1;
-      if (update1.node instanceof HTMLTemplateElement) return -1;
-      if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
-      if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
-      if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;
-      return 0;
-    });
-    return updates;
-  }
-
-  /**
-   * @returns {void}
-   */
-  async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
-    try {
-      while(this.queue.length > 0) {
-        const updates = this.queue.splice(0);
-        const orderedUpdates = this.reorder(updates);
-        for(const update of orderedUpdates) {
-          Reflect.apply(update.updateFunc, update, []);
-        }
-      }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
-    }
-  }
-
-  /** @type {boolean} */
-  get isEmpty() {
-    return this.queue.length === 0;
-  }
-}
-
-class AttributeBind extends BindInfo {
-  /** @type {string} 属性名 */
-  get attrName() {
-    return this.nodePropertyElements[1];
-  }
-
-  /** @type {string} nodeの値 */
-  get nodeValue() {
-    return this.element.getAttribute(this.attrName);
-  }
-  set nodeValue(value) {
-    this.element.setAttribute(this.attrName, value);
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, attrName, viewModelProperty, filteredViewModelValue} = this;
-    if (this.nodeValue !== (filteredViewModelValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, attrName, viewModelProperty, filteredViewModelValue, () => {
-        this.nodeValue = filteredViewModelValue ?? "";
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    this.filteredViewModelValue = this.nodeValue;
-  }
-
-}
-
-class ClassListBind extends BindInfo {
-  /** @type {string} */
-  get className() {
-    return this.nodePropertyElements[1];
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, element, nodeProperty, viewModelProperty, className, filteredViewModelValue} = this;
-    const hasClassName = element.classList.contains(className);
-    if (filteredViewModelValue !== hasClassName) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () => {
-        filteredViewModelValue ? element.classList.add(className) : element.classList.remove(className);
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    this.filteredViewModelValue = this.element.classList.contains(this.className);
-  }
-}
-
-const CLASS_PROPERTY = "className";
-const DELIMITER = " ";
-
-class ClassNameBind extends BindInfo {
-  /** @type {string} */
-  get nodeValue() {
-    return this.element[CLASS_PROPERTY];
-  }
-  set nodeValue(value) {
-    this.element[CLASS_PROPERTY] = value;
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, viewModelProperty, filteredViewModelValue} = this;
-    const joinedValue = filteredViewModelValue.join(DELIMITER);
-    if (this.nodeValue !== joinedValue) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, CLASS_PROPERTY, viewModelProperty, filteredViewModelValue, () => {
-        this.nodeValue = joinedValue;
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    this.filteredViewModelValue = this.nodeValue ? this.nodeValue.split(DELIMITER) : [];
-  }
-}
-
-const toHTMLInputElement$1 = node => (node instanceof HTMLInputElement) ? node : utils.raise();
-
-class Radio extends BindInfo {
-  /** @type {HTMLInputElement} */
-  get radio() {
-    const input = toHTMLInputElement$1(this.element);
-    return input["type"] === "radio" ? input : utils.raise('not radio');
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, radio, nodeProperty, viewModelProperty, filteredViewModelValue} = this;
-    const checked = filteredViewModelValue === radio.value;
-    if (radio.checked !== checked) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () => {
-        radio.checked = checked;
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    if (this.radio.checked) {
-      this.filteredViewModelValue = this.radio.value;
-    }
-  }
-}
-
-const toHTMLInputElement = node => (node instanceof HTMLInputElement) ? node : utils.raise('not HTMLInputElement');
-
-class Checkbox extends BindInfo {
-  /** @type {HTMLInputElement} */
-  get checkbox() {
-    const input = toHTMLInputElement(this.element);
-    return input["type"] === "checkbox" ? input : utils.raise('not checkbox');
-  }
-
-  /** @type {boolean} */
-  get nodeValue() {
-    return this.checkbox.checked;
-  }
-  set nodeValue(value) {
-    this.checkbox.checked = value;
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, checkbox, nodeProperty, viewModelProperty, filteredViewModelValue} = this;
-    const checked = typeof filteredViewModelValue.find(value => value === checkbox.value) !== "undefined";
-    if (this.nodeValue !== checked) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, nodeProperty, viewModelProperty, filteredViewModelValue, () => {
-        this.nodeValue = checked;
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    const {component, nodeValue, filters, checkbox, viewModelValue} = this;
-    /** @type {string} */
-    const checkboxValue = Filter.applyForInput(checkbox.value, filters, component.filters.in);
-    /** @type {Set<string>} */
-    const setOfValue = new Set(viewModelValue);
-    nodeValue ? setOfValue.add(checkboxValue) : setOfValue.delete(checkboxValue);
-    const value = Array.from(setOfValue);
-    this.viewModelValue = value;
-  }
-}
 
 class ProcessData {
   /** @type {()=>void} */
@@ -1485,1209 +674,6 @@ class ViewModelUpdator {
   get isEmpty() {
     return this.queue.length === 0;
   }
-}
-
-class Event extends BindInfo {
-  /** @type {string} */
-  #eventType;
-  /** @type {string} */
-  get eventType() {
-    return this.#eventType;
-  }
-  set eventType(value) {
-    this.#eventType = value;
-  }
-
-  /**
-   * イベントハンドラを設定
-   */
-  addEventListener() {
-    const {component, element, eventType, viewModel, viewModelProperty} = this;
-    element.addEventListener(eventType, (event) => {
-      event.stopPropagation();
-      const context = this.context;
-      const process = new ProcessData(
-        viewModel[Symbols.directlyCall], viewModel, [viewModelProperty, context, event]
-      );
-      component.updateSlot.addProcess(process);
-    });
-  }
-}
-
-/**
- * 
- * @param {Node} node 
- * @returns {Component}
- */
-const toComponent = node => (node[Symbols.isComponent]) ? node : utils.raise('not Component');
-
-class ComponentBind extends BindInfo {
-  /** @type {Node} */
-  get node() {
-    return super.node;
-  }
-  set node(node) {
-    this.thisComponent = toComponent(node);
-    super.node = node;
-  }
-
-  /** @type {boolean} */
-  #isSetProperty() {
-    return (typeof this.viewModelProperty !== "undefined" && typeof this.nodePropertyElements !== "undefined");
-  }
-
-  /** @type {string} */
-  get viewModelProperty() {
-    return super.viewModelProperty;
-  }
-  set viewModelProperty(value) {
-    super.viewModelProperty = value;
-    if (this.#isSetProperty()) {
-      this.bindProperty();
-    }
-  }
-
-  /** @type {string[]} */
-  get nodePropertyElements() {
-    return super.nodePropertyElements;
-  }
-  set nodePropertyElements(value) {
-    super.nodePropertyElements = value;
-    if (this.#isSetProperty()) {
-      this.bindProperty();
-    }
-  }
-
-  /** @type {string} */
-  get dataNameProperty() {
-    return this.nodePropertyElements[0];
-  }
-
-  /** @type {string} */
-  get dataProperty() {
-    return this.nodePropertyElements[1];
-  }
-
-  /** @type {Component} */
-  #thisComponent;
-  /** @type {Component} */
-  get thisComponent() {
-    return this.#thisComponent;
-  }
-  set thisComponent(value) {
-    this.#thisComponent = value;
-  }
-
-  /**
-   * プロパティをバインドする
-   */
-  bindProperty() {
-    this.thisComponent.props[Symbols.bindProperty](this.dataProperty, this.viewModelProperty, this.indexes);
-    const dataProperty = this.dataProperty;
-    Object.defineProperty(this.thisComponent.viewModel, dataProperty, {
-      get: function () { return this.$props[dataProperty]; },
-      set: function (value) { this.$props[dataProperty] = value; },
-    });
-  }
-
-  /**
-   * 親コンポーネントからの更新をこのコンポーネントに反映する
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
-   */
-  applyToNode(setOfUpdatedViewModelPropertyKeys) {
-    const { viewModelProperty, dataProperty } = this;
-    for(const key of setOfUpdatedViewModelPropertyKeys) {
-      const [ name, indexesString ] = key.split("\t");
-      const propName = PropertyName.create(name);
-      if (name === viewModelProperty || propName.setOfParentPaths.has(viewModelProperty)) {
-        const remain = name.slice(viewModelProperty.length);
-        const indexes = ((indexesString || null)?.split(",") ?? []).map(i => Number(i));
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`$props.${dataProperty}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`${dataProperty}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${dataProperty}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${dataProperty}${remain}`, indexes);
-      }
-    }
-  }
-
-}
-
-const STYLE_PROPERTY = "style";
-
-class StyleBind extends BindInfo {
-  /** @type {string} */
-  get styleName() {
-    return this.nodePropertyElements[1];
-  }
-
-  /** @type {string} */
-  get nodeValue() {
-    return this.htmlElement.style[this.styleName];
-  }
-  set nodeValue(value) {
-    this.htmlElement.style[this.styleName] = value;
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, viewModelProperty, filteredViewModelValue} = this;
-    if (this.nodeValue !== filteredViewModelValue) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, STYLE_PROPERTY, viewModelProperty, filteredViewModelValue, () => {
-        this.nodeValue = filteredViewModelValue;
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    this.filteredViewModelValue = this.nodeValue;
-  }
-}
-
-
-// ToDo: ViewModelのプロパティの値とstyleの属性値が合わない場合をどうするか
-// たとえば、
-//   間違ったcolorをViewModelのプロパティを指定すると、styleのcolor属性には値は入らない
-//   colorを#fffで、ViewModelのプロパティに指定すると、styleのcolor属性にはrgb(255,255,255)で入っている
-
-class PropertyBind extends BindInfo {
-  /** @type {string} */
-  get propName() {
-    return this.nodePropertyElements[0];
-  }
-
-  /** @type {any} */
-  get nodeValue() {
-    return this.node[this.propName];
-  }
-  set nodeValue(value) {
-    this.node[this.propName] = value;
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, propName, viewModelProperty, filteredViewModelValue} = this;
-    if (this.nodeValue !== (filteredViewModelValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, propName, viewModelProperty, filteredViewModelValue, () => {
-        this.nodeValue = filteredViewModelValue ?? "";
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    this.filteredViewModelValue = this.nodeValue;
-  }
-
-}
-
-const DEFAULT_PROPERTY$2 = "textContent";
-
-class TextBind extends BindInfo {
-  /** @type {string} */
-  get nodeValue() {
-    return this.node[DEFAULT_PROPERTY$2];
-  }
-  set nodeValue(value) {
-    this.node[DEFAULT_PROPERTY$2] = value;
-  }
-
-  /**
-   * ViewModelのプロパティの値をNodeのプロパティへ反映する
-   */
-  updateNode() {
-    const {component, node, viewModelProperty, filteredViewModelValue} = this;
-    if (this.nodeValue !== (filteredViewModelValue ?? "")) {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(node, DEFAULT_PROPERTY$2, viewModelProperty, filteredViewModelValue, () => {
-        this.nodeValue = filteredViewModelValue ?? "";
-      }));
-    }
-  }
-
-  /**
-   * nodeのプロパティの値をViewModelのプロパティへ反映する
-   */
-  updateViewModel() {
-    this.filteredViewModelValue = this.nodeValue;
-  }
-
-}
-
-class Templates {
-  /** @type {Map<string,HTMLTemplateElement>} */
-  static templateByUUID = new Map;
-
-}
-
-class TemplateChild {
-  /** @type {BindInfo[]} */
-  binds;
-
-  /** @type {Node[]} */
-  childNodes;
-
-  /** @type {DocumentFragment} */
-  fragment;
-
-  /** @type {ContextInfo} */
-  context;
-
-  /** @type {string} */
-  uuid;
-
-  /** @type {Node} */
-  get lastNode() {
-    return this.childNodes[this.childNodes.length - 1];
-  }
-
-  /** @type {Node[]} */
-  get nodesForAppend() {
-    return this.fragment.childNodes.length > 0 ? [this.fragment] : this.childNodes;
-  }
-
-  /**
-   * 
-   */
-  removeFromParent() {
-    this.childNodes.forEach(node => this.fragment.appendChild(node));
-    this.binds.forEach(bind => bind.removeFromParent());
-  }
-
-  /**
-   * 
-   */
-  updateNode() {
-    this.binds.forEach(bind => {
-      bind.updateNode();
-    });
-  }
-
-  /**
-   * 
-   * @param {TemplateBind} templateBind 
-   * @param {ContextInfo} context
-   * @returns {TemplateChild}
-   */
-  static create(templateBind, context) {
-    const { component, template, uuid } = templateBind;
-    const templateChildren = this.templateChildrenByUUID.get(uuid);
-    if (typeof templateChildren === "undefined" || templateChildren.length === 0) {
-      const { binds, content } = ViewTemplate.render(component, template, context);
-      const childNodes = Array.from(content.childNodes);
-      return Object.assign(new TemplateChild, { binds, childNodes, fragment:content, context, uuid });
-    } else {
-      const templateChild = templateChildren.pop();
-      templateChild.binds.forEach(bind => {
-        bind.context = context;
-        bind.updateNode();
-      });
-      return templateChild;
-    }
-  }
-
-  /** @type {Map<string,TemplateChild[]>} 再利用のためのキャッシュ */
-  static templateChildrenByUUID = new Map;
-
-  /**
-   * 削除したTemplateChildを再利用のため保存しておく
-   * @param {TemplateChild} templateChild 
-   */
-  static dispose(templateChild) {
-    const children = this.templateChildrenByUUID.get(templateChild.uuid);
-    if (typeof children === "undefined") {
-      this.templateChildrenByUUID.set(templateChild.uuid, [templateChild]);
-    } else {
-      children.push(templateChild);
-    }
-  }
-}
-
-class TemplateBind extends BindInfo {
-  /** @type {TemplateChild[]} */
-  templateChildren = [];
-
-  /** @type {HTMLTemplateElement} */
-  #template;
-  /** @type {HTMLTemplateElement} */
-  get template() {
-    if (typeof this.#template === "undefined") {
-      this.#template = Templates.templateByUUID.get(this.uuid);
-    }
-    return this.#template;
-  }
-
-  /** @type {string} */
-  #uuid;
-  /** @type {string} */
-  get uuid() {
-    if (typeof this.#uuid === "undefined") {
-      this.#uuid = this.node.textContent.slice(3);
-    }
-    return this.#uuid;
-  }
-
-  /** 
-   * @param {TemplateChild[]} templateChildren
-   * @returns {void}
-   */
-  static removeFromParent(templateChildren) {
-    templateChildren.forEach(templateChild => {
-      templateChild.removeFromParent();
-      TemplateChild.dispose(templateChild);
-    });
-  }
-
-  /**
-   * @param {Node} parentNode
-   * @param {TemplateChild[]} templateChildren
-   * @returns {void}
-   */
-  static appendToParent(parentNode, templateChildren) {
-    const fragment = document.createDocumentFragment();
-    templateChildren
-      .forEach(templateChild => {
-        if (templateChild.childNodes.length > 0) fragment.appendChild(...templateChild.nodesForAppend);
-      });
-    parentNode.after(fragment);
-  }
-
-}
-
-class Context {
-
-  /**
-   * 空のコンテクスト情報を生成
-   * @returns {ContextInfo}
-   */
-  static create() {
-    return {
-      indexes: [],
-      stack: [],
-    }
-  }
-
-  /**
-   * コンテクスト情報をクローン
-   * @param {ContextInfo} src 
-   * @returns {ContextInfo}
-   */
-  static clone(src) {
-    /**
-     * @type {ContextInfo}
-     */
-    const dst = this.create();
-    dst.indexes = src.indexes.slice();
-    for(const srcParam of src.stack) {
-      /**
-       * @type {ContextParam}
-       */
-      const dstParam = {};
-      dstParam.indexes = srcParam.indexes.slice();
-      dstParam.pos = srcParam.pos;
-      dstParam.propName = srcParam.propName;
-      dst.stack.push(dstParam);
-    }
-    return dst;
-  }
-}
-
-class IfBind extends TemplateBind {
-  /** @type {TemplateChild | undefined} */
-  get templateChild() {
-    return this.templateChildren[0];
-  }
-  set templateChild(value) {
-    if (this.templateChildren.length === 0) {
-      this.templateChildren.push(value);
-    } else {
-      this.templateChildren[0] = value;
-    }
-  }
-
-  /**
-   * 
-   */
-  updateNode() {
-    const { templateChild, context, filteredViewModelValue, node } = this;
-    const currentValue = typeof templateChild !== "undefined";
-    if (currentValue !== filteredViewModelValue) {
-      if (filteredViewModelValue) {
-        const newTemplateChild = TemplateChild.create(this, Context.clone(context));
-        TemplateBind.appendToParent(node, [newTemplateChild]);
-        this.templateChild = newTemplateChild;
-      } else {
-        TemplateBind.removeFromParent([templateChild]);
-        this.templateChild = undefined;
-      }
-    } else {
-      templateChild.updateNode();
-    }
-  }
-
-  /**
-   * 
-   */
-  removeFromParent() {
-    if (typeof this.templateChild !== "undefined") {
-      TemplateBind.removeFromParent([this.templateChild]);
-      this.templateChild = undefined;
-    }
-  }
-
-}
-
-class LoopBind extends TemplateBind {
-
-  /** @type {number} */
-  #lastCount = 0;
-  /** @type {number} */
-  get lastCount() {
-    return this.#lastCount;
-  }
-  set lastCount(v) {
-    this.#lastCount = v;
-  }
-
-  /** @type {TemplateChild | undefined} */
-  get lastChild() {
-    return this.templateChildren[this.templateChildren.length - 1];
-  }
-
-  updateNode() {
-    /** @type {any[]} */
-    const newValue = this.filteredViewModelValue ?? [];
-
-    if (this.lastCount > newValue.length) {
-      // 前の配列の長さ　＞　現在の配列の長さ
-      // 現在の配列の長さに合わせるように配列を削除する
-      const removeTemplateChildren = this.templateChildren.splice(newValue.length);
-      TemplateBind.removeFromParent(removeTemplateChildren);
-      // 全ての配列の値をノードへ反映する
-      this.templateChildren.forEach(templateChild => templateChild.updateNode());
-    } else if (this.lastCount < newValue.length) {
-      // 前の配列の部分の配列の値をノードへ反映する
-      this.templateChildren.forEach(templateChild => templateChild.updateNode());
-      // 足りない部分を生成し追加する
-      const pos = this.context.indexes.length;
-      const propName = this.viewModelPropertyName;
-      const parentIndexes = this.contextParam?.indexes ?? [];
-      const newTemplateChildren = [];
-      for(let i = this.lastCount; i < newValue.length; i++) {
-        const newIndex = i;
-        const newContext = Context.clone(this.context);
-        newContext.indexes.push(newIndex);
-        newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
-        newTemplateChildren.push(TemplateChild.create(this, newContext));
-      }
-      TemplateBind.appendToParent(this.lastChild?.lastNode ?? this.node, newTemplateChildren);
-      this.templateChildren = this.templateChildren.concat(newTemplateChildren);
-    } else {
-      // 全ての配列の値をノードへ反映する
-      this.templateChildren.forEach(templateChild => templateChild.updateNode());
-    }
-    this.lastCount = newValue.length;
-  }
-
-  removeFromParent() {
-    TemplateBind.removeFromParent(this.templateChildren);
-    this.templateChildren = [];
-    this.lastCount = 0;
-  }
-}
-
-class Factory {
-  /**
-   * @type {Object<number, classof<BindInfo>>}
-   */
-  static classByType;
-  static setup() {
-    this.classByType = {};
-    this.classByType[NodePropertyType.property] = PropertyBind;
-    this.classByType[NodePropertyType.attribute] = AttributeBind;
-    this.classByType[NodePropertyType.classList] = ClassListBind;
-    this.classByType[NodePropertyType.className] = ClassNameBind;
-    this.classByType[NodePropertyType.radio] = Radio;
-    this.classByType[NodePropertyType.checkbox] = Checkbox;
-    this.classByType[NodePropertyType.if] = IfBind;
-    this.classByType[NodePropertyType.loop] = LoopBind;
-    this.classByType[NodePropertyType.event] = Event;
-    this.classByType[NodePropertyType.component] = ComponentBind;
-    this.classByType[NodePropertyType.style] = StyleBind;
-    this.classByType[NodePropertyType.text] = TextBind;
-    return this.classByType;
-  }
-
-  /**
-   * バインド情報を生成する
-   * @param {Component} component
-   * @param {Node} node
-   * @param {string} nodeProperty
-   * @param {ViewModel} viewModel
-   * @param {string} viewModelProperty
-   * @param {Filter[]} filters
-   * @param {ContextInfo} context
-   * @returns {BindInfo}
-   */
-  static create(component, node, nodeProperty, viewModel, viewModelProperty, filters, context) {
-    const nodeInfo = NodePropertyInfo.get(node, nodeProperty);
-    /** @type {BindInfo} */
-    const bindInfo = new (this.classByType ?? this.setup())[nodeInfo.type];
-    bindInfo.component = component;
-    bindInfo.node = node;
-    bindInfo.nodeProperty = nodeProperty;
-    bindInfo.viewModel = viewModel;
-    bindInfo.viewModelProperty = viewModelProperty;
-    bindInfo.filters = filters;
-    bindInfo.context = context;
-    bindInfo.nodePropertyElements = nodeInfo.nodePropertyElements;
-    bindInfo.eventType = nodeInfo.eventType;
-    if (bindInfo.viewModelPropertyName.level > 0 && bindInfo.indexes.length === 0) {
-      utils.raise(`${bindInfo.viewModelPropertyName.name} is outside loop`);
-    }
-    return bindInfo;
-  }
-}
-
-const SAMENAME = "@";
-const DEFAULT = "$";
-
-class BindTextInfo {
-  /** @type {string} bindするnodeのプロパティ名 */
-  nodeProperty;
-  /** @type {string} bindするviewModelのプロパティ名 */
-  viewModelProperty;
-  /** @type {Filter[]} 適用するフィルターの配列 */
-  filters;
-}
-
-/**
- * トリム関数
- * @param {string} s 
- * @returns {string}
- */
-const trim = s => s.trim();
-
-/**
- * 長さチェック関数
- * @param {string} s 
- * @returns {string}
- */
-const has = s => s.length > 0;
-
-/**
- * フィルターのパース
- * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
- * @param {string} text 
- * @returns {Filter}
- */
-const parseFilter = text => {
-  const [name, ...options] = text.split(",").map(trim);
-  return Object.assign(new Filter, {name, options});
-};
-
-/**
- * ViewModelプロパティのパース
- * "value|eq,100|falsey" ---> ["value", Filter[]]
- * @param {string} text 
- * @returns {{viewModelProperty:string,filters:Filter[]}}
- */
-const parseViewModelProperty = text => {
-  const [viewModelProperty, ...filterTexts] = text.split("|").map(trim);
-  return {viewModelProperty, filters:filterTexts.map(text => parseFilter(text))};
-};
-
-/**
- * 式のパース
- * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
- * @param {string} expr 
- * @param {string} defaultName 
- * @returns {BindTextInfo}
- */
-const parseExpression = (expr, defaultName) => {
-  const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
-  const { viewModelProperty, filters } = parseViewModelProperty(viewModelPropertyText);
-  return { nodeProperty, viewModelProperty, filters };
-};
-
-/**
- * data-bind属性値のパース
- * @param {string} text data-bind属性値
- * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
- * @returns {BindTextInfo[]}
- */
-const parseBindText = (text, defaultName) => {
-  return text.split(";").map(trim).filter(has).map(s => { 
-    let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
-    viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
-    nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
-    typeof nodeProperty === "undefined" && utils.raise("default property undefined");
-    return { nodeProperty, viewModelProperty, filters };
-  });
-};
-
-/**
- * data-bind属性をパースする関数群
- */
-class Parser {
-  /** @type {Object<string,BindTextInfo[]>} */
-  static bindTextsByKey = {};
-
-  /**
-   * data-bind属性値のパースし、BindTextInfoの配列を返す
-   * @param {string} text data-bind属性値
-   * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
-   * @returns {BindTextInfo[]}
-   */
-  static parse(text, defaultName) {
-    /** @type {string} */
-    const key = text + "\t" + defaultName;
-    /** @type {BindTextInfo[] | undefined} */
-    let binds = this.bindTextsByKey[key];
-
-    if (typeof binds === "undefined") {
-      binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-      this.bindTextsByKey[key] = binds;
-    }
-    return binds;
-  }
-}
-
-class BindToDom {
-  /**
-   * data-bind属性値からバインド情報を生成
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {ViewModel} viewModel 
-   * @param {ContextInfo} context
-   * @param {string} text data-bind属性値
-   * @param {string} defaultName
-   * @returns {BindInfo[]}
-   */
-  static parseBindText = (node, component, viewModel, context, text, defaultName) => {
-    const bindInfos = 
-      Parser.parse(text, defaultName).map(info => Factory.create(component, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters, context));
-    return bindInfos;
-  }
-
-  /**
-   * 
-   * @param {BindInfo} bind 
-   * @returns {void}
-   */
-  static applyUpdateNode = bind => bind.updateNode();
-}
-
-const DATASET_BIND_PROPERTY$3 = "data-bind";
-const DEFAULT_EVENT = "oninput";
-const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
-const DEFAULT_PROPERTY$1 = "textContent";
-
-/**
- * 
- * @param {Node} node 
- * @returns {HTMLElement}
- */
-const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
-
-/**
- * HTML要素のデフォルトプロパティを取得
- * @param {HTMLElement} element 
- * @returns {string}
- */
-const getDefaultProperty = element => {
-  return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
-  element instanceof HTMLInputElement ? ((element.type === "radio" || element.type === "checkbox") ? "checked" : "value") : 
-  DEFAULT_PROPERTY$1;
-};
-
-/**
- * Eventクラスへ変換
- * @param {BindInfo} bind 
- * @returns {Event|undefined}
- */
-const toEvent$1 = bind => (bind instanceof Event) ? bind : undefined; 
-
-/**
- * ユーザー操作によりデフォルト値が変わるかどうか
- * getDefaultPropertyと似ているが、HTMLOptionElementを含まない
- * @param { Node } node
- * @returns { boolean }
- */
-const isInputableElement = node => node instanceof HTMLElement && 
-  (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
-
-
-class BindToHTMLElement {
-  /**
-   * バインドを実行する
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, context) {
-    /** @type {ViewModel} */
-    const viewModel = component.viewModel;
-    /** @type {HTMLElement}  */
-    const element = toHTMLElement(node);
-    /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$3);
-    /** @type {string} */
-    const defaultName = getDefaultProperty(element);
-
-    // パース
-    /** @type {BindInfo[]} */
-    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
-    binds.forEach(BindToDom.applyUpdateNode);
-
-    // イベントハンドラ設定
-    /** @type {boolean} デフォルトイベントを設定したかどうか */
-    let hasDefaultEvent = false;
-
-    /** @type {BindInfo|null} */
-    let defaultBind = null;
-
-    /** @type {Radio|null} */
-    let radioBind = null;
-
-    /** @type {Checkbox|null} */
-    let checkboxBind = null;
-
-    binds.forEach(bind => {
-      hasDefaultEvent ||= bind.nodeProperty === DEFAULT_EVENT;
-      radioBind = (bind instanceof Radio) ? bind : radioBind;
-      checkboxBind = (bind instanceof Checkbox) ? bind : checkboxBind;
-      defaultBind = (bind.nodeProperty === defaultName) ? bind : defaultBind;
-      toEvent$1(bind)?.addEventListener();
-    });
-
-    /** @type {(bind:BindInfo)=>void} */
-    const setDefaultEventHandler = (bind) => {
-      const eventHandler = event => {
-        event.stopPropagation();
-        const process = new ProcessData(bind.updateViewModel, bind, []);
-        component.updateSlot.addProcess(process);
-      };
-      element.addEventListener(DEFAULT_EVENT_TYPE, eventHandler);
-      bind.defaultEventHandler = eventHandler;
-      bind.defaultEventType = DEFAULT_EVENT_TYPE;
-    };
-    if (radioBind) {
-      setDefaultEventHandler(radioBind);
-    } else if (checkboxBind) {
-      setDefaultEventHandler(checkboxBind);
-    } else if (defaultBind && !hasDefaultEvent && isInputableElement(node)) {
-      // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
-      // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
-      // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
-      // ・nodeが入力系（input, textarea, select） → 入力系に限定
-      setDefaultEventHandler(defaultBind);
-    }
-    return binds;
-  }
-}
-
-const DATASET_BIND_PROPERTY$2 = "data-bind";
-
-/**
- * 
- * @param {Node} node 
- * @returns {SVGElement}
- */
-const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`not SVGElement`);
-
-/**
- * 
- * @param {BindInfo} bind 
- * @returns {Event|undefined}
- */
-const toEvent = bind => (bind instanceof Event) ? bind : undefined; 
-
-class BindToSVGElement {
-  /**
-   * バインドを実行する
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, context) {
-    /** @type {ViewModel} */
-    const viewModel = component.viewModel;
-    /** @type {SVGElement} */
-    const element = toSVGElement(node);
-    /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2);
-    /** @type {string|undefined} */
-    const defaultName = undefined;
-
-    // パース
-    /** @type {BindInfo[]} */
-    const binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
-    binds.forEach(BindToDom.applyUpdateNode);
-
-    // イベントハンドラ設定
-    binds.forEach(bind => {
-      toEvent(bind)?.addEventListener();
-    });
-
-    return binds;
-  }
-
-}
-
-const DEFAULT_PROPERTY = "textContent";
-
-/**
- * 
- * @param {Node} node 
- * @returns {Comment}
- */
-const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("not Comment");
-
-class BindToText {
-  /**
-   * バインドを実行する
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, context) {
-    // コメントノードをテキストノードに差し替える
-    /** @type {ViewModel} */
-    const viewModel = component.viewModel;
-    /** @type {Comment} */
-    const comment = toComment$1(node);
-    /** @type {string} */
-    const bindText = comment.textContent.slice(3); // @@:をスキップ
-    /** @type {Text} */
-    const textNode = document.createTextNode("");
-    comment.parentNode.replaceChild(textNode, comment);
-
-    // パース
-    /** @type {BindInfo[]} */
-    const binds = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
-    binds.forEach(BindToDom.applyUpdateNode);
-
-    return binds;
-  }
-
-}
-
-const DATASET_BIND_PROPERTY$1 = "data-bind";
-/**
- * 
- * @param {Node} node 
- * @returns {Comment}
- */
-const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
-
-class BindToTemplate {
-  /**
-   * バインドを実行する
-   * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
-   * @returns {BindInfo[]}
-   */
-  static bind(node, component, context) {
-    /** @type {ViewModel} */
-    const viewModel = component.viewModel;
-    /** @type {Comment} */
-    const comment = toComment(node);
-    /** @type {string} */
-    const uuid = comment.textContent.slice(3);
-    /** @type {HTMLTemplateElement} */
-    const template = Templates.templateByUUID.get(uuid);
-    /** @type {string} */
-    const bindText = template.getAttribute(DATASET_BIND_PROPERTY$1);
-
-    // パース
-    /** @type {BindInfo[]} */
-    let binds = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
-    binds = binds.length > 0 ? [ binds[0] ] : [];
-    binds.forEach(BindToDom.applyUpdateNode);
-
-    return binds;
-  }
-}
-
-class Binder {
-  /**
-   * バインドを実行する
-   * @param {Node[]} nodes
-   * @param {Component} component
-   * @param {ContextInfo} context
-   * @returns {BindInfo[]}
-   */
-  static bind(nodes, component, context) {
-    return nodes.flatMap(node => 
-      (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(node, component, context) : 
-      (node instanceof HTMLElement) ? BindToHTMLElement.bind(node, component, context) :
-      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(node, component, context) : 
-      (node instanceof SVGElement) ? BindToSVGElement.bind(node, component, context) :
-      utils.raise(`unknown node type`)
-    );
-  }
-
-}
-
-const SELECTOR = "[data-bind]";
-
-/**
- * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
- * ex.
- * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
- * => [1,3,7,2]
- * @param {Node} node 
- * @returns {number[]}
- */
-const getNodeRoute = node => {
-  /** @type {number[]} */
-  let routeIndexes = [];
-  while(node.parentNode != null) {
-    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
-    node = node.parentNode;
-  }
-  return routeIndexes;
-};
-
-/**
- * ルートのインデックス配列からノード取得する
- * @param {Node} node 
- * @param {number[]} routeIndexes 
- * @returns {Node}
- */
-const getNodeByRouteIndexes = (node, routeIndexes) => {
-  for(let i = 0; i < routeIndexes.length; i++) {
-    node = node.childNodes[routeIndexes[i]];
-  }
-  return node;
-};
-
-/**
- * ノードがコメントかどうか
- * @param {Node} node 
- * @returns {boolean}
- */
-const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
-
-/**
- * コメントノードを取得
- * @param {Node} node 
- * @returns {Comment[]}
- */
-const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
-
-class Selector {
-  /** @type {Map<HTMLTemplateElement, number[][]>} */
-  static listOfRouteIndexesByTemplate = new Map();
-
-  /**
-   * テンプレートからバインドする対象のノードを取得する
-   * @param {HTMLTemplateElement} template 
-   * @param {HTMLElement} rootElement
-   * @returns {Node[]}
-   */
-  static getTargetNodes(template, rootElement) {
-
-    /** @type {Node[]} */
-    let nodes;
-
-    if (this.listOfRouteIndexesByTemplate.has(template)) {
-      // キャッシュがある場合
-      // querySelectorAllを行わずにNodeの位置を特定できる
-      /** @type {number[][]} */
-      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
-    } else {
-      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
-      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-
-      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
-    }
-    return nodes;
-
-  }
-
-}
-
-class ViewTemplate {
-  /**
-   * 
-   * @param {HTMLElement} rootElement 
-   * @param {Component} component 
-   * @param {ContextInfo} contextInfo
-   * @returns {{binds:BindInfo[], content:DocumentFragment}}
-   */
-  static render(component, template, context) {
-    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(template, content);
-    const binds = Binder.bind(nodes, component, context);
-    return { binds, content };
-  }
-}
-
-class View {
-  /**
-   * 
-   * @param {HTMLElement} rootElement 
-   * @param {Component} component 
-   * @param {HTMLTemplateElement} template 
-   * @returns {BindInfo[]}
-   */
-  static render(rootElement, component, template) {
-    const { binds, content } = ViewTemplate.render(component, template, Context.create());
-    rootElement.appendChild(content);
-    return binds;
-  }
-}
-
-class Cache {
-  /** @type {Map<PropertyName,Map<string,any>>} */
-  #valueByIndexesStringByPropertyName = new Map;
-  
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number[]} indexes 
-   * @returns {any}
-   */
-  get(propName, indexes) {
-    const valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;
-  }
-
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number[]} indexes 
-   * @param {any} value
-   * @returns {any}
-   */
-  set(propName, indexes, value) {
-    let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    if (!valueByIndexesString) {
-      valueByIndexesString = new Map;
-      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
-    }
-    valueByIndexesString.set(indexes.toString(), value);
-    return value;
-  }
-
-  /**
-   * @returns {void}
-   */
-  clear() {
-    this.#valueByIndexesStringByPropertyName.clear();
-  }
-
-}
-
-/**
- * @typedef {{
- *   removeProps:string[],
- *   definedProps:string[],
- *   accessorProps:string[],
- *   methods:string[]
- * }} ViewModelInfo
- */
-class ViewModelize {
-  /**
-   * オブジェクトのすべてのプロパティのデスクリプタを取得する
-   * 継承元を遡る、ただし、Objectのプロパティは取得しない
-   * @param {ViewModel} target 
-   * @returns {Map<string,PropertyDescriptor>}
-   */
-  static getDescByName(target) {
-    /**
-     * @type {Map<string,PropertyDescriptor>}
-     */
-    const descByName = new Map;
-    let object = target;
-    while(object !== Object.prototype) {
-      const descs = Object.getOwnPropertyDescriptors(object);
-      for(const [name, desc] of Object.entries(descs)) {
-        if (descByName.has(name)) continue;
-        descByName.set(name, desc);
-      }
-      object = Object.getPrototypeOf(object);
-    }
-    return descByName;
-  }
-
-  /**
-   * オブジェクト内のメソッドを取得する
-   * コンストラクタは含まない
-   * @param {[string,PropertyDescriptor][]} descByNameEntries 
-   * @returns {[string,PropertyDescriptor][]}
-   */
-  static getMethods(descByNameEntries, targetClass) {
-    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value === "function")
-  }
-
-  /**
-   * オブジェクト内のプロパティを取得する
-   * @param {[string,PropertyDescriptor][]} descByNameEntries 
-   * @returns {[string,PropertyDescriptor][]}
-   */
-  static getProperties(descByNameEntries, targetClass) {
-    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value !== "function")
-  }
-
-  /**
-   * ViewModel化
-   * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {class<ViewModel>} target 
-   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
-   */
-  static viewModelize(target) {
-    const viewModelConstructor = target.constructor;
-    let viewModelInfo = this.viewModelInfoByConstructor.get(viewModelConstructor);
-    if (!viewModelInfo) {
-      const descByName = this.getDescByName(target);
-      const descByNameEntries = Array.from(descByName.entries());
-      const removeProps = [];
-      const definedProps = [];
-      const accessorProps = [];
-      const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
-      this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
-        definedProps.push(name);
-        const propName = PropertyName.create(name);
-        if (!propName.isPrimitive) {
-          if (("value" in desc) && typeof desc.value === "undefined") {
-            removeProps.push(name);
-          }
-        }
-        if ("get" in desc && typeof desc.get !== "undefined") {
-          accessorProps.push(name);
-        }
-      });
-      viewModelInfo = { removeProps, definedProps, methods, accessorProps };
-      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);
-    }
-    viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
-    return {
-      definedProps:viewModelInfo.definedProps, 
-      methods:viewModelInfo.methods, 
-      accessorProps:viewModelInfo.accessorProps,
-      viewModel:target
-    };
-  }
-
-  /** @type {Map<class<ViewModel>,ViewModelInfo>} */
-  static viewModelInfoByConstructor = new Map;
-  
 }
 
 /**
@@ -3049,10 +1035,11 @@ class ViewModelHandler extends Handler$2 {
   /**
    * 
    * @param {ViewModel} target 
-   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,context:ContextInfo,event:Event}} param1 
+   * @param {{prop:string,context:ContextInfo,event:Event}} param1 
    * @param {Proxy} receiver 
    */
-  async #directryCall(target, { propName, context, event }, receiver) {
+  async #directlyCall(target, { prop, context, event }, receiver) {
+    const propName = PropertyName.create(prop);
     if (typeof this.context !== "undefined") utils.raise("directCall already called");
     this.context = context;
     this.stackIndexes.push(undefined);
@@ -3083,7 +1070,7 @@ class ViewModelHandler extends Handler$2 {
     } else if (setOfApiFunctions.has(prop)) {
       if (prop === Symbols.directlyCall) {
         return async (prop, context, event) => 
-          this.#directryCall(target, { propName:PropertyName.create(prop), context, event }, receiver);
+          this.#directlyCall(target, { prop, context, event }, receiver);
       } else if (prop === Symbols.notifyForDependentProps) {
         return (prop, indexes) => {
           const propertyAccess = { propName:PropertyName.create(prop), indexes };
@@ -3233,99 +1220,13 @@ class ViewModelHandler extends Handler$2 {
 /**
  * 
  * @param {Component} component 
- * @param {class<ViewModel>} viewModelClass 
+ * @param {typeof ViewModel} viewModelClass 
  * @returns {Proxy<ViewModel>}
  */
 function createViewModel(component, viewModelClass) {
   const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(viewModelClass, []));
   const { viewModel, accessorProps, methods } = viewModelInfo;
   return new Proxy(viewModel, new ViewModelHandler(component, accessorProps, methods, viewModel[DEPENDENT_PROPS_PROPERTY]));
-}
-
-const toTemplateBind = bind => (bind instanceof TemplateBind) ? bind : undefined;
-
-class Binds {
-  /**
-   * Templateバインドをバインドツリーから取得
-   * @param {BindInfo[]} binds
-   * @param {Set<string>} setOfKey 
-   * @returns {Template[]}
-   */
-  static getTemplateBinds(binds, setOfKey) {
-    const templateBinds = [];
-    const stack = [ { binds, children:null, index:-1 } ];
-    while(stack.length > 0) {
-      const info = stack[stack.length - 1];
-      info.index++;
-      if (info.binds) {
-        if (info.index < info.binds.length) {
-          const template = toTemplateBind(info.binds[info.index]);
-          if (template) {
-            if (setOfKey.has(template.viewModelPropertyKey)) {
-              templateBinds.push(template);
-            } else {
-              if (template.templateChildren.length > 0) {
-                stack.push({ binds:null, children:template.templateChildren, index:-1 });
-              }
-            }
-          }
-        } else {
-          stack.pop();
-        }
-      } else {
-        if (info.index < info.children.length) {
-          const child = info.children[info.index];
-          if (child.binds.length > 0) {
-            stack.push({ binds:child.binds, children:null, index:-1 });
-          }
-        } else {
-          stack.pop();
-        }
-      }
-    }
-
-    return templateBinds;
-  }
-
-  /**
-   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
-   * @param {BindInfo[]} binds
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
-   */
-  static applyToNode(binds, setOfUpdatedViewModelPropertyKeys) {
-    // templateを先に展開する
-    /**
-     * @type {Set<Template>}
-     */
-    const templateBinds = new Set(this.getTemplateBinds(binds, setOfUpdatedViewModelPropertyKeys));
-    if (templateBinds.size > 0) {
-      for(const templateBind of templateBinds) {
-        templateBind.updateNode();
-      }
-    }
-
-    /**
-     * 
-     * @param {BindInfo[]} binds 
-     */
-    const updateNode = (binds) => {
-      binds.forEach(bind => {
-        if (!templateBinds.has(bind)) {
-          if (bind instanceof ComponentBind) {
-            // コンポーネントの場合
-            bind.applyToNode(setOfUpdatedViewModelPropertyKeys);
-          } else {
-            if (setOfUpdatedViewModelPropertyKeys.has(bind.viewModelPropertyKey)) {
-              bind.updateNode();
-            }
-          }
-          toTemplateBind(bind)?.templateChildren.forEach(templateChild => updateNode(templateChild.binds));
-        }
-      });
-    };
-    updateNode(binds);
-  }
-
 }
 
 /**
@@ -3600,7 +1501,13 @@ function createGlobals(component) {
   return new Proxy({}, new Handler(component));
 }
 
-const DATASET_BIND_PROPERTY = "data-bind";
+class Templates {
+  /** @type {Map<string,HTMLTemplateElement>} */
+  static templateByUUID = new Map;
+
+}
+
+const DATASET_BIND_PROPERTY$3 = "data-bind";
 const DATASET_UUID_PROPERTY = "data-uuid";
 
 class Module {
@@ -3610,10 +1517,10 @@ class Module {
   /** @type {string} */
   css;
 
-  /** @type {class<ViewModel>} */
+  /** @type {typeof ViewModel} */
   ViewModel;
 
-  /** @type {classOf<HTMLElement>} */
+  /** @type {typeof HTMLElement} */
   extendClass;
 
   /** @type {string} */
@@ -3681,7 +1588,7 @@ class Module {
           for(let childNode of Array.from(template.childNodes)) {
             newTemplate.content.appendChild(childNode);
           }
-          newTemplate.setAttribute(DATASET_BIND_PROPERTY, template.getAttribute(DATASET_BIND_PROPERTY));
+          newTemplate.setAttribute(DATASET_BIND_PROPERTY$3, template.getAttribute(DATASET_BIND_PROPERTY$3));
           template = newTemplate;
         }
         template.setAttribute(DATASET_UUID_PROPERTY, uuid);
@@ -3704,6 +1611,303 @@ class Module {
     const template = document.createElement("template");
     template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? Module.replaceTag(html) : "");
     return template;
+  }
+}
+
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
+const num = (v, o, fn) => {
+  if (v == null) return v;
+  const n = Number(v);
+  return isNaN(n) ? v : fn(n, o);
+};
+
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
+const str = (v, o, fn) => {
+  return (v == null) ? v : fn(String(v), o);
+};
+
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
+const arr = (v, o, fn) => {
+  return !Array.isArray(v) ? v : fn(v, o);
+};
+
+class outputFilters {
+  static styleDisplay = (value, options) => value ? (options[0] ?? "") : "none";
+  static truthy       = (value, options) => value ? true : false;
+  static falsey       = (value, options) => !value ? true : false;
+  static not          = this.falsey;
+  static eq           = (value, options) => value == options[0];
+  static ne           = (value, options) => value != options[0];
+  static lt           = (value, options) => Number(value) < Number(options[0]);
+  static le           = (value, options) => Number(value) <= Number(options[0]);
+  static gt           = (value, options) => Number(value) > Number(options[0]);
+  static ge           = (value, options) => Number(value) >= Number(options[0]);
+  static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? "").replaceAll("%s", value)) : null;
+  static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
+  static null         = (value, options) => (value == null) ? true : false;
+  static offset       = (value, options) => Number(value) + Number(options[0]);
+  static unit         = (value, options) => String(value) + String(options[0]);
+  static inc          = this.offset;
+  static mul          = (value, options) => Number(value) * Number(options[0]);
+  static div          = (value, options) => Number(value) / Number(options[0]);
+  static mod          = (value, options) => Number(value) % Number(options[0]);
+
+  static "str.at"      = (value, options) => str(value, options, (s, o) => s.at(...o));
+  static "str.charAt"  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
+  static "str.charCodeAt"    = (value, options) => str(value, options, (s, o) => s.charCodeAt(...o));
+  static "str.codePointAt"   = (value, options) => str(value, options, (s, o) => s.codePointAt(...o));
+  static "str.concat"  = (value, options) => str(value, options, (s, o) => s.concat(...o));
+  static "str.endsWith"      = (value, options) => str(value, options, (s, o) => s.endsWith(...o));
+  static "str.includes" = (value, options) => str(value, options, (s, o) => s.includes(...o));
+  static "str.indexOf"  = (value, options) => str(value, options, (s, o) => s.indexOf(...o));
+//  static isWellFormed  = (value, options) => str(value, options, (s, o) => s.isWellFormed());
+  static "str.lastIndexOf" = (value, options) => str(value, options, (s, o) => s.lastIndexOf(...o));
+  static "str.localeCompare" = (value, options) => str(value, options, (s, o) => s.localeCompare(...o));
+  static "str.match"         = (value, options) => str(value, options, (s, o) => s.match(...o));
+//  static "str.matchAll"      = (value, options) => str(value, options, (s, o) => s.matchAll(...o));
+  static "str.normalize"     = (value, options) => str(value, options, (s, o) => s.normalize(...o));
+  static "str.padEnd"        = (value, options) => str(value, options, (s, o) => s.padEnd(...o));
+  static "str.padStart"      = (value, options) => str(value, options, (s, o) => s.padStart(...o));
+  static "str.repeat"        = (value, options) => str(value, options, (s, o) => s.repeat(...o));
+  static "str.replace"       = (value, options) => str(value, options, (s, o) => s.replace(...o));
+  static "str.replaceAll"    = (value, options) => str(value, options, (s, o) => s.replaceAll(...o));
+  static "str.search"        = (value, options) => str(value, options, (s, o) => s.search(...o));
+  static "str.slice"   = (value, options) => str(value, options, (s, o) => s.slice(...o));
+  static "str.split"         = (value, options) => str(value, options, (s, o) => s.split(...o));
+  static "str.startsWith"    = (value, options) => str(value, options, (s, o) => s.startsWith(...o));
+  static "str.substring"     = (value, options) => str(value, options, (s, o) => s.substring(...o));
+  static "str.toLocaleLowerCase" = (value, options) => str(value, options, (s, o) => s.toLocaleLowerCase(...o));
+  static "str.toLocaleUpperCase" = (value, options) => str(value, options, (s, o) => s.toLocaleUpperCase(...o));
+  static "str.toLowerCase"   = (value, options) => str(value, options, (s, o) => s.toLowerCase(...o));
+  static "str.toUpperCase"   = (value, options) => str(value, options, (s, o) => s.toUpperCase(...o));
+  //static "str.toWellFormed"  = (value, options) => str(value, options, (s, o) => s.toWellFormed(...o));
+  static "str.trim"          = (value, options) => str(value, options, (s, o) => s.trim(...o));
+  static "str.trimEnd"       = (value, options) => str(value, options, (s, o) => s.trimEnd(...o));
+  static "str.trimStart"     = (value, options) => str(value, options, (s, o) => s.trimStart(...o));
+
+  static "num.toExponential" = (value, options) => num(value, options, (n, o) => n.toExponential(...o));
+  static "num.toFixed"       = (value, options) => num(value, options, (n, o) => n.toFixed(...o));
+  static "num.toLocaleString" = (value, options) => num(value, options, (n, o) => n.toLocaleString(...o));
+  static "num.toPrecision"   = (value, options) => num(value, options, (n, o) => n.toPrecision(...o));
+  
+  static "arr.at"       = (value, options) => arr(value, options, (a, o) => a.at(...o));
+  static "arr.concat"   = (value, options) => arr(value, options, (a, o) => a.concat(...o));
+  static "arr.entries"  = (value, options) => arr(value, options, (a, o) => a.entries(...o));
+  static "arr.flat"     = (value, options) => arr(value, options, (a, o) => a.flat(...o));
+  static "arr.includes" = (value, options) => arr(value, options, (a, o) => a.includes(...o));
+  static "arr.indexOf"  = (value, options) => arr(value, options, (a, o) => a.indexOf(...o));
+  static "arr.join"     = (value, options) => arr(value, options, (a, o) => a.join(...o));
+  static "arr.keys"     = (value, options) => arr(value, options, (a, o) => a.keys(...o));
+  static "arr.lastIndexOf"    = (value, options) => arr(value, options, (a, o) => a.lastIndexOf(...o));
+  static "arr.slice"    = (value, options) => arr(value, options, (a, o) => a.slice(...o));
+  static "arr.toLocaleString" = (value, options) => arr(value, options, (a, o) => a.toLocaleString(...o));
+  static "arr.toReversed"     = (value, options) => arr(value, options, (a, o) => a.toReversed(...o));
+  static "arr.toSorted"       = (value, options) => arr(value, options, (a, o) => a.toSorted(...o));
+  static "arr.toSpliced"      = (value, options) => arr(value, options, (a, o) => a.toSpliced(...o));
+  static "arr.values"   = (value, options) => arr(value, options, (a, o) => a.values(...o));
+  static "arr.with"     = (value, options) => arr(value, options, (a, o) => a.with(...o));
+
+  static get at() {
+    return (value, options) => (Array.isArray(value) ? this["arr.at"] : this["str.at"])(value, options);
+  }
+  static get charAt() {
+    return this["str.charAt"];
+  }
+  static get charCodeAt() {
+    return this["str.charCodeAt"];
+  }
+  static get codePointAt() {
+    return this["str.codePointAt"];
+  }
+  static get concat() {
+    return (value, options) => (Array.isArray(value) ? this["arr.concat"] : this["str.concat"])(value, options);
+  }
+  static get endsWith() {
+    return this["str.endsWith"];
+  }
+  static get entries() {
+    return this["arr.entries"];
+  }
+  static get flat() {
+    return this["arr.flat"];
+  }
+  static get includes() {
+    return (value, options) => (Array.isArray(value) ? this["arr.includes"] : this["str.includes"])(value, options);
+  }
+  static get indexOf() {
+    return (value, options) => (Array.isArray(value) ? this["arr.indexOf"] : this["str.indexOf"])(value, options);
+  }
+  static get join() {
+    return this["arr.join"];
+  }
+  static get keys() {
+    return this["arr.keys"];
+  }
+  static get lastIndexOf() {
+    return (value, options) => (Array.isArray(value) ? this["arr.lastIndexOf"] : this["str.lastIndexOf"])(value, options);
+  }
+  static get localeCompare() {
+    return this["str.localeCompare"];
+  }
+  static get match() {
+    return this["str.match"];
+  }
+  //static get matchAll() {
+  //  return this["str.matchAll"];
+  //}
+  static get normalize() {
+    return this["str.normalize"];
+  }
+  static get padEnd() {
+    return this["str.padEnd"];
+  }
+  static get padStart() {
+    return this["str.padStart"];
+  }
+  static get repeat() {
+    return this["str.repeat"];
+  }
+  static get replace() {
+    return this["str.replace"];
+  }
+  static get replaceAll() {
+    return this["str.replaceAll"];
+  }
+  static get search() {
+    return this["str.search"];
+  }
+  static get slice() {
+    return (value, options) => (Array.isArray(value) ? this["arr.slice"] : this["str.slice"])(value, options);
+  }
+  static get split() {
+    return this["str.split"];
+  }
+  static get startsWith() {
+    return this["str.startsWith"];
+  }
+  static get substring() {
+    return this["str.substring"];
+  }
+  static get toExponential() {
+    return this["num.toExponential"];
+  }
+  static get toFixed() {
+    return this["num.toFixed"];
+  }
+  static get toLocaleString() {
+    return (value, options) => (Array.isArray(value) ? this["arr.toLocaleString"] : this["num.toLocaleString"])(value, options);
+  }
+  static get toLocaleLowerCase() {
+    return this["str.toLocaleLowerCase"];
+  }
+  static get toLocaleUpperCase() {
+    return this["str.toLocaleUpperCase"];
+  }
+  static get toLowerCase() {
+    return this["str.toLowerCase"];
+  }
+  static get toPrecision() {
+    return this["num.toPrecision"];
+  }
+  static get toReversed() {
+    return this["arr.toReversed"];
+  }
+  static get toSorted() {
+    return this["arr.toSorted"];
+  }
+  static get toSpliced() {
+    return this["arr.toSpliced"];
+  }
+  static get toUpperCase() {
+    return this["str.toUpperCase"];
+  }
+  //static get toWellFormed() {
+  //  return this["str.toWellFormed"];
+  //}
+  static get trim() {
+    return this["str.trim"];
+  }
+  static get trimEnd() {
+    return this["str.trimEnd"];
+  }
+  static get trimStart() {
+    return this["str.trimStart"];
+  }
+  static get values() {
+    return this["arr.values"];
+  }
+  static get with() {
+    return this["arr.with"];
+  }
+
+}
+
+class inputFilters {
+  static number       = (value, options) => value === "" ? null : Number(value);
+  static boolean      = (value, options) => value === "" ? null : Boolean(value);
+}
+
+// "property:vmProperty|toFix,2|toLocaleString;"
+// => toFix,2|toLocaleString
+
+class Filter {
+  /** @type {string} */
+  name;
+
+  /** @type {string[]} */
+  options;
+
+  /**
+   * 
+   * @param {any} value 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   * @returns {any}
+   */
+  static applyForInput(value, filters, inputFilterFuncs) {
+    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
+  }
+  
+  /**
+   * 
+   * @param {any} value 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} outputFilterFuncs
+   * @returns {any}
+   */
+  static applyForOutput(value, filters, outputFilterFuncs) {
+    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {(value:any,options:string[])=>{}} outputFilter 
+   * @param {(value:any,options:string[])=>{}} inputFilter 
+   */
+  static regist(name, outputFilter, inputFilter) {
+    if (name in outputFilters) utils.raise(`regist filter error duplicate name (${name})`);
+    if (name in inputFilters) utils.raise(`regist filter error duplicate name (${name})`);
+    outputFilter && (outputFilters[name] = outputFilter);
+    inputFilter && (inputFilters[name] = inputFilter);
   }
 }
 
@@ -3890,6 +2094,98 @@ class Thread {
     this.#alive = false;
   }
 
+}
+
+class NodeUpdateData {
+  /** @type {Node} */
+  node;
+
+  /** @type {string} */
+  property;
+
+  /** @type {string} */
+  viewModelProperty;
+
+  /** @type {any} */
+  value;
+
+  /** @type {()=>void} */
+  updateFunc;
+
+  /**
+   * 
+   * @param {Node} node 
+   * @param {string} property 
+   * @param {string} viewModelProperty 
+   * @param {any} value 
+   * @param {()=>void} updateFunc 
+   */
+  constructor(node, property, viewModelProperty, value, updateFunc) {
+    this.node = node;
+    this.property = property;
+    this.viewModelProperty = viewModelProperty;
+    this.value = value;
+    this.updateFunc = updateFunc;
+  }
+}
+
+class NodeUpdator {
+  /** @type {NodeUpdateData[]} */
+  queue = [];
+
+  /** @type {UpdateSlotStatusCallback} */
+  #statusCallback;
+
+  /** 
+   * @param {UpdateSlotStatusCallback} statusCallback 
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
+   * 更新する順番を並び替える
+   * HTMLTemplateElementが前
+   * その次がHTMLSelectElementでないもの
+   * 最後がHTMLSelectElement
+   * @param {NodeUpdateData[]} updates 
+   * @returns {NodeUpdateData[]}
+   */
+  reorder(updates) {
+    updates.sort((update1, update2) => {
+      if (update1.node instanceof HTMLTemplateElement && update2.node instanceof HTMLTemplateElement) return 0;
+      if (update2.node instanceof HTMLTemplateElement) return 1;
+      if (update1.node instanceof HTMLTemplateElement) return -1;
+      if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
+      if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
+      if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;
+      return 0;
+    });
+    return updates;
+  }
+
+  /**
+   * @returns {void}
+   */
+  async exec() {
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
+    try {
+      while(this.queue.length > 0) {
+        const updates = this.queue.splice(0);
+        const orderedUpdates = this.reorder(updates);
+        for(const update of orderedUpdates) {
+          Reflect.apply(update.updateFunc, update, []);
+        }
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
+    }
+  }
+
+  /** @type {boolean} */
+  get isEmpty() {
+    return this.queue.length === 0;
+  }
 }
 
 class NotifyReceiver {
@@ -4128,6 +2424,1516 @@ class AttachShadow {
   }
 }
 
+class NodeProperty {
+  /** @type {Node} */
+  #node;
+  get node() {
+    return this.#node;
+  }
+
+  /** @type {string} */
+  #name;
+  get name() {
+    return this.#name;
+  }
+
+  /** @type {string[]} */
+  #nameElements = [];
+  get nameElements() {
+    return this.#nameElements;
+  }
+
+  /** @type {any} */
+  get value() {
+    return this.node[this.name];
+  }
+  set value(value) {
+    this.node[this.name] = value;
+  }
+
+  /** @type {Filter[]} */
+  #filters;
+  get filters() {
+    return this.#filters;
+  }
+
+  /** @type {Object<string,FilterFunc>} */
+  #filterFuncs;
+  get filterFuncs() {
+    return this.#filterFuncs;
+  }
+
+  /** @type {any} */
+  get filteredValue() {
+    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
+  }
+
+  /** @type {boolean} applyToNode()の対象かどうか */
+  get applicable() {
+    return true;
+  }
+
+  /** @type {import("../Binding.js").Binding} */
+  #binding;
+  get binding() {
+    return this.#binding;
+  }
+
+  /** @type {Boolean} */
+  get expandable() {
+    return false;
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Node} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (!(node instanceof Node)) utils.raise("not Node");
+    this.#binding = binding;
+    this.#node = node;
+    this.#name = name;
+    this.#nameElements = name.split(".");
+    this.#filters = filters;
+    this.#filterFuncs = filterFuncs;
+  }
+
+  /**
+   * 初期化処理
+   * 特に何もしない
+   * @param {import("../Binding.js").Binding} binding
+   */
+  initialize() {
+  }
+
+  /**
+   * 更新前処理
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+  }
+}
+
+class TemplateProperty extends NodeProperty {
+  /** @type {HTMLTemplateElement | undefined} */
+  get template() {
+    return Templates.templateByUUID.get(this.uuid);
+  }
+
+  /** @type {string} */
+  get uuid() {
+    return TemplateProperty.getUUID(this.node);
+  }
+
+  /**
+   * 
+   * @param {Node} node 
+   * @returns {string}
+   */
+  static getUUID(node) {
+    return node.textContent.slice(3)
+  }
+  
+  /** @type {Boolean} */
+  get expandable() {
+    return true;
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Comment} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (!(node instanceof Comment)) utils.raise("not Comment");
+    const uuid = TemplateProperty.getUUID(node);
+    if (typeof uuid === "undefined") utils.raise(`invalid uuid ${uuid}`);
+    super(binding, node, name, filters, filterFuncs);
+  }
+}
+
+class Repeat extends TemplateProperty {
+  /** @type {number} */
+  get value() {
+    return this.binding.children.length;
+  }
+  set value(value) {
+    if (!Array.isArray(value)) utils.raise("value is not array");
+    if (this.value < value.length) {
+      this.binding.children.forEach(childBinding => childBinding.applyToNode());
+      for(let newIndex = this.value; newIndex < value.length; newIndex++) {
+        const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
+        const childBinding = new ChildBinding(this.binding.component, this.template, newContext);
+        this.binding.appendChild(childBinding);
+      }
+    } else if (this.value > value.length) {
+      const removeChildBindings = this.binding.children.splice(value.length);
+      this.binding.children.forEach(childBinding => childBinding.applyToNode());
+      removeChildBindings.forEach(childBinding => childBinding.removeFromParent());
+    } else {
+      this.binding.children.forEach(childBinding => childBinding.applyToNode());
+    }
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Comment} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (name !== "loop") utils.raise(`invalid property name ${name}`);
+    super(binding, node, name, filters, filterFuncs);
+  }
+}
+
+class Context {
+
+  /**
+   * 空のコンテクスト情報を生成
+   * @returns {ContextInfo}
+   */
+  static create() {
+    return {
+      indexes: [],
+      stack: [],
+    }
+  }
+
+  /**
+   * コンテクスト情報をクローン
+   * @param {ContextInfo} src 
+   * @returns {ContextInfo}
+   */
+  static clone(src) {
+    /**
+     * @type {ContextInfo}
+     */
+    const dst = this.create();
+    dst.indexes = src.indexes.slice();
+    for(const srcParam of src.stack) {
+      /**
+       * @type {ContextParam}
+       */
+      const dstParam = {};
+      dstParam.indexes = srcParam.indexes.slice();
+      dstParam.pos = srcParam.pos;
+      dstParam.propName = srcParam.propName;
+      dst.stack.push(dstParam);
+    }
+    return dst;
+  }
+}
+
+class Branch extends TemplateProperty {
+  /** @type {boolean} */
+  get value() {
+    return this.binding.children.length > 0;
+  }
+  set value(value) {
+    if (typeof value !== "boolean") utils.raise("value is not boolean");
+    if (this.value !== value) {
+      if (value) {
+        const childBinding = new ChildBinding(this.binding.component, this.template, Context.clone(this.binding.context));
+        this.binding.appendChild(childBinding);
+      } else {
+        const removeChildBindings = this.binding.children.splice(0, this.binding.children.length);
+        removeChildBindings.forEach(childBinding => childBinding.removeFromParent());
+      }
+    } else {
+      this.binding.children.forEach(bindings => bindings.applyToNode());
+    }
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Comment} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (name !== "if") utils.raise(`invalid property name ${name}`);
+    super(binding, node, name, filters, filterFuncs);
+  }
+
+}
+
+class MultiValue {
+  /** @type {any} */
+  #value;
+  get value() {
+    return this.#value;
+  }
+
+  /** @type {boolean} */
+  #enabled;
+  get enabled() {
+    return this.#enabled;
+  }
+
+  /**
+   * 
+   * @param {any} value 
+   * @param {boolean} enabled 
+   */
+  constructor(value, enabled) {
+    this.#value = value;
+    this.#enabled = enabled;
+  }
+}
+
+class ViewModelProperty {
+  /** @type { ViewModel } */
+  #viewModel;
+  get viewModel() {
+    return this.#viewModel;
+  }
+
+  /** @type { string } */
+  #name;
+  get name() {
+    return this.#name;
+  }
+
+  /** @type {PropertyName} */
+  get propertyName() {
+    return PropertyName.create(this.name);
+  }
+
+  /** @type {number[]} */
+  get indexes() {
+    return this.binding.contextParam?.indexes ?? [];
+  }
+
+  /** @type {string} */
+  #indexesString;
+  get indexesString() {
+    if (typeof this.#indexesString === "undefined") {
+      this.#indexesString = this.indexes.toString();
+    }
+    return this.#indexesString;
+  }
+
+  /** @type {string} */
+  #key;
+  get key() {
+    if (typeof this.#key === "undefined") {
+      this.#key = this.name + "\t" + this.indexesString;
+    }
+    return this.#key;
+  }
+
+  /** @type {any} */
+  get value() {
+    return this.viewModel[Symbols.directlyGet](this.name, this.indexes);
+  }
+  set value(value) {
+    const setValue = value => {
+      this.viewModel[Symbols.directlySet](this.name, this.indexes, value);
+    };
+    if (value instanceof MultiValue) {
+      const thisValue = this.value;
+      if (Array.isArray(thisValue)) {
+        const setOfThisValue = new Set(thisValue);
+        value.enabled ? setOfThisValue.add(value.value) : setOfThisValue.delete(value.value);
+        setValue(Array.from(setOfThisValue));
+      } else {
+        if (value.enabled) {
+          setValue(value.value);
+        }
+      }
+    } else {
+      setValue(value);
+    }
+  }
+
+  /** @type {Filter[]} */
+  #filters;
+  get filters() {
+    return this.#filters;
+  }
+
+  /** @type {Object<string,FilterFunc>} */
+  #filterFuncs;
+  get filterFuncs() {
+    return this.#filterFuncs;
+  }
+
+  /** @type {any} */
+  get filteredValue() {
+    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters, this.filterFuncs) : this.value;
+  }
+
+  /** @type {boolean} applyToViewModel()の対象かどうか */
+  get applicable() {
+    return true;
+  }
+
+  /** @type {import("./Binding.js").Binding} */
+  #binding;
+  get binding() {
+    return this.#binding;
+  }
+
+  /**
+   * 
+   * @param {import("./Binding.js").Binding} binding
+   * @param {ViewModel} viewModel 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, viewModel, name, filters, filterFuncs) {
+    this.#binding = binding;
+    this.#viewModel = viewModel;
+    this.#name = name;
+    this.#filters = filters;
+    this.#filterFuncs = filterFuncs;
+  }
+
+  /**
+   * 
+   * @param {number} newIndex
+   * @returns {ContextInfo} 
+   */
+  createChildContext(newIndex) {
+    const pos = this.binding.context.indexes.length;
+    const propName = this.propertyName;
+    const parentIndexes = this.binding.contextParam?.indexes ?? [];
+
+    const newContext = Context.clone(this.binding.context);
+    newContext.indexes.push(newIndex);
+    newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
+
+    return newContext;
+  }
+
+  /**
+   * 初期化処理
+   * 特に何もしない
+   * @param {import("../Binding.js").Binding} binding
+   */
+  initialize() {
+  }
+
+  /**
+   * このバインドが更新対象かどうか
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  isUpdate(setOfUpdatedViewModelPropertyKeys) {
+    return setOfUpdatedViewModelPropertyKeys.has(this.key);
+  }
+}
+
+class ElementProperty extends NodeProperty {
+  /** @type {Element} */
+  get element() {
+    return this.node;
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Element} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   */
+  constructor(binding, node, name, filters, inputFilterFuncs) {
+    if (!(node instanceof Element)) utils.raise("not element");
+    super(binding, node, name, filters, inputFilterFuncs);
+  }
+}
+
+class ElementClassName extends ElementProperty {
+  /** @type {any} */
+  get value() {
+    return this.element.className.length > 0 ? this.element.className.split(" ") : [];
+  }
+  set value(value) {
+    this.element.className = value.join(" ");
+  }
+}
+
+class Checkbox extends ElementProperty {
+  /** @type {HTMLInputElement} */
+  get inputElement() {
+    return this.node;
+  }
+
+  /** @type {any} */
+  get value() {
+    return new MultiValue(this.inputElement.value, this.inputElement.checked);
+  }
+  set value(value) {
+    /** @type {Array} */
+    const array = value;
+    /** @type {MultiValue} */
+    const multiValue = this.filteredValue;
+    this.inputElement.checked = array.find(v => v === multiValue.value) ? true : false;
+  }
+
+  /** @type {any} */
+  get filteredValue() {
+    /** @type {MultiValue} */
+    const multiValue = this.value;
+    return new MultiValue(
+      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
+      multiValue.enabled
+    );
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {HTMLInputElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
+    if (node.type !== "checkbox") utils.raise("not checkbox");
+    super(binding, node, name, filters, filterFuncs);
+  }
+}
+
+class Radio extends ElementProperty {
+  /** @type {HTMLInputElement} */
+  get inputElement() {
+    return this.node;
+  }
+
+  /** @type {any} */
+  get value() {
+    return new MultiValue(this.inputElement.value, this.inputElement.checked);
+  }
+  set value(value) {
+    /** @type {MultiValue} */
+    const multiValue = this.filteredValue;
+    this.inputElement.checked = (value === multiValue.value) ? true : false;
+  }
+
+  /** @type {any} */
+  get filteredValue() {
+    /** @type {MultiValue} */
+    const multiValue = this.value;
+    return new MultiValue(
+      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
+      multiValue.enabled
+    );
+  }
+  
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {HTMLInputElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
+    if (node.type !== "radio") utils.raise("not radio");
+    super(binding, node, name, filters, filterFuncs);
+  }
+}
+
+class ElementEvent extends ElementProperty {
+  /** @type {string} nameのonの後ろを取得する */
+  get eventType() {
+    return this.name.slice(2); // on～
+  }
+
+  /** @type {boolean} applyToNode()の対象かどうか */
+  get applicable() {
+    return false;
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {HTMLInputElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (!name.startsWith("on")) utils.raise(`invalid property name ${name}`);
+    super(binding, node, name, filters, filterFuncs);
+  }
+
+  /**
+   * 初期化処理
+   * DOM要素にイベントハンドラの設定を行う
+   */
+  initialize() {
+    this.element.addEventListener(this.eventType, this.binding.eventHandler);
+  }
+
+}
+
+class ElementClass extends ElementProperty {
+  /** @type {string} */
+  get className() {
+    return this.nameElements[1];
+  }
+
+  /** @type {any} */
+  get value() {
+    return this.element.classList.contains(this.className);
+  }
+  set value(value) {
+    value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
+  }
+}
+
+class ElementAttribute extends ElementProperty {
+  /** @type {string} */
+  get attributeName() {
+    return this.nameElements[1];
+  }
+
+  /** @type {any} */
+  get value() {
+    return this.element.getAttribute(this.attributeName);
+  }
+  set value(value) {
+    this.element.setAttribute(this.attributeName, value);
+  }
+}
+
+class ElementStyle extends ElementProperty {
+  /** @type {HTMLElement} */
+  get htmlElement() {
+    return this.node;
+  }
+
+  /** @type {string} */
+  get styleName() {
+    return this.nameElements[1];
+  }
+
+  /** @type {any} */
+  get value() {
+    return this.htmlElement.style[this.styleName];
+  }
+  set value(value) {
+    this.htmlElement.style[this.styleName] = value;
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {HTMLElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   */
+  constructor(binding, node, name, filters, inputFilterFuncs) {
+    if (!(node instanceof HTMLElement)) utils.raise("not htmlElement");
+    super(binding, node, name, filters, inputFilterFuncs);
+  }
+}
+
+class ComponentProperty extends ElementProperty {
+  /** @type {string} */
+  get propName() {
+    return this.nameElements[1];
+  }
+
+  /** @type {boolean} */
+  get applicable() {
+    return false;
+  }
+
+  /** @type {Component} */
+  get thisComponent() {
+    return this.node;
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {HTMLInputElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (!(node[Symbols.isComponent])) utils.raise("not Component");
+    super(binding, node, name, filters, filterFuncs);
+  }
+
+  /**
+   * 初期化処理
+   * DOM要素にイベントハンドラの設定を行う
+   */
+  initialize() {
+    this.thisComponent.props[Symbols.bindProperty](this.propName, this.binding.viewModelProperty.name, this.binding.viewModelProperty.indexes);
+    Object.defineProperty(this.thisComponent.viewModel, this.propName, {
+      get: ((propName) => function () { return this.$props[propName]; })(this.propName),
+      set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),
+      configurable: true,
+    });
+  }
+
+  /**
+   * 更新前処理
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+    const viewModelProperty = this.binding.viewModelProperty.name;
+    const propName = this.propName;
+    for(const key of setOfUpdatedViewModelPropertyKeys) {
+      const [ name, indexesString ] = key.split("\t");
+      if (name === viewModelProperty || PropertyName.create(name).setOfParentPaths.has(viewModelProperty)) {
+        const remain = name.slice(viewModelProperty.length);
+        const indexes = ((indexesString || null)?.split(",") ?? []).map(i => Number(i));
+        this.thisComponent.viewModel?.[Symbols.writeCallback](`$props.${propName}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols.writeCallback](`${propName}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${propName}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, indexes);
+      }
+    }
+  }
+
+}
+
+class Factory {
+  // 面倒くさい書き方をしているのは、循環参照でエラーになるため
+  // モジュール内で、const変数で書くとjestで循環参照でエラーになる
+  static #classOfNodePropertyByNameByIsComment;
+  static get classOfNodePropertyByNameByIsComment() {
+    if (typeof this.#classOfNodePropertyByNameByIsComment === "undefined") {
+      this.#classOfNodePropertyByNameByIsComment = {
+        true: {
+          "if": Branch,
+          "loop": Repeat,
+        },
+        false: {
+          "class": ElementClassName,
+          "checkbox": Checkbox,
+          "radio": Radio,
+        }
+      };
+    }
+    return this.#classOfNodePropertyByNameByIsComment;
+  }
+  static #classOfNodePropertyByFirstName;
+  static get classOfNodePropertyByFirstName() {
+    if (typeof this.#classOfNodePropertyByFirstName === "undefined") {
+      this.#classOfNodePropertyByFirstName = {
+        "class": ElementClass,
+        "attr": ElementAttribute,
+        "style": ElementStyle,
+        "props": ComponentProperty,
+      };
+    }
+    return this.#classOfNodePropertyByFirstName;
+
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @param {Node} node 
+   * @param {string} nodePropertyName 
+   * @param {ViewModel} viewModel 
+   * @param {string} viewModelPropertyName 
+   * @param {Filter[]} filters 
+   * @param {ContextInfo} context 
+   * @returns {Binding}
+   */
+  static create(component, node, nodePropertyName, viewModel, viewModelPropertyName, filters, context) {
+    /** @type {typeof NodeProperty|undefined} */
+    let classOfNodeProperty = undefined;
+    const classOfViewModelProperty = ViewModelProperty;
+
+    do {
+      const isComment = node instanceof Comment;
+      classOfNodeProperty = this.classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
+      if (typeof classOfNodeProperty !== "undefined") break;
+      if (isComment) utils.raise(`unknown node property ${nodePropertyName}`);
+      const nameElements = nodePropertyName.split(".");
+      classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];
+      if (typeof classOfNodeProperty !== "undefined") break;
+      if (node instanceof Element) {
+        if (nodePropertyName.startsWith("on")) {
+          classOfNodeProperty = ElementEvent;
+        } else {
+          classOfNodeProperty = ElementProperty;
+        }
+      } else {
+        classOfNodeProperty = NodeProperty;
+      }
+    } while(false);
+    /** @type {Binding} */
+    const binding = new Binding(
+      component, context,
+      node, nodePropertyName, classOfNodeProperty, 
+      viewModel, viewModelPropertyName, classOfViewModelProperty, 
+      filters);
+    binding.initialize();
+
+    return binding;
+  }
+}
+
+const SAMENAME = "@";
+const DEFAULT = "$";
+
+class BindTextInfo {
+  /** @type {string} bindするnodeのプロパティ名 */
+  nodeProperty;
+  /** @type {string} bindするviewModelのプロパティ名 */
+  viewModelProperty;
+  /** @type {Filter[]} 適用するフィルターの配列 */
+  filters;
+}
+
+/**
+ * トリム関数
+ * @param {string} s 
+ * @returns {string}
+ */
+const trim = s => s.trim();
+
+/**
+ * 長さチェック関数
+ * @param {string} s 
+ * @returns {string}
+ */
+const has = s => s.length > 0;
+
+/**
+ * フィルターのパース
+ * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
+ * @param {string} text 
+ * @returns {Filter}
+ */
+const parseFilter = text => {
+  const [name, ...options] = text.split(",").map(trim);
+  return Object.assign(new Filter, {name, options});
+};
+
+/**
+ * ViewModelプロパティのパース
+ * "value|eq,100|falsey" ---> ["value", Filter[]]
+ * @param {string} text 
+ * @returns {{viewModelProperty:string,filters:Filter[]}}
+ */
+const parseViewModelProperty = text => {
+  const [viewModelProperty, ...filterTexts] = text.split("|").map(trim);
+  return {viewModelProperty, filters:filterTexts.map(text => parseFilter(text))};
+};
+
+/**
+ * 式のパース
+ * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
+ * @param {string} expr 
+ * @param {string} defaultName 
+ * @returns {BindTextInfo}
+ */
+const parseExpression = (expr, defaultName) => {
+  const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
+  const { viewModelProperty, filters } = parseViewModelProperty(viewModelPropertyText);
+  return { nodeProperty, viewModelProperty, filters };
+};
+
+/**
+ * data-bind属性値のパース
+ * @param {string} text data-bind属性値
+ * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+ * @returns {BindTextInfo[]}
+ */
+const parseBindText = (text, defaultName) => {
+  return text.split(";").map(trim).filter(has).map(s => { 
+    let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
+    viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
+    nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
+    typeof nodeProperty === "undefined" && utils.raise("default property undefined");
+    return { nodeProperty, viewModelProperty, filters };
+  });
+};
+
+/**
+ * data-bind属性をパースする関数群
+ */
+class Parser {
+  /** @type {Object<string,BindTextInfo[]>} */
+  static bindTextsByKey = {};
+
+  /**
+   * data-bind属性値のパースし、BindTextInfoの配列を返す
+   * @param {string} text data-bind属性値
+   * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+   * @returns {BindTextInfo[]}
+   */
+  static parse(text, defaultName) {
+    /** @type {string} */
+    const key = text + "\t" + defaultName;
+    /** @type {BindTextInfo[] | undefined} */
+    let binds = this.bindTextsByKey[key];
+
+    if (typeof binds === "undefined") {
+      binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
+      this.bindTextsByKey[key] = binds;
+    }
+    return binds;
+  }
+}
+
+class BindToDom {
+  /**
+   * data-bind属性値からバインド情報を生成
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {ViewModel} viewModel 
+   * @param {ContextInfo} context
+   * @param {string} text data-bind属性値
+   * @param {string} defaultName
+   * @returns {import("../binding/Binding.js").Binding[]}
+   */
+  static parseBindText = (node, component, viewModel, context, text, defaultName) => {
+    return Parser.parse(text, defaultName).map(info => 
+      Factory.create(component, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters, context));
+  }
+
+}
+
+const DATASET_BIND_PROPERTY$2 = "data-bind";
+const DEFAULT_EVENT = "oninput";
+const DEFAULT_EVENT_TYPE = DEFAULT_EVENT.slice(2);
+const DEFAULT_PROPERTY$1 = "textContent";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {HTMLElement}
+ */
+const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
+
+/**
+ * HTML要素のデフォルトプロパティを取得
+ * @param {HTMLElement} element 
+ * @returns {string}
+ */
+const getDefaultProperty = element => {
+  return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
+  element instanceof HTMLInputElement ? ((element.type === "radio" || element.type === "checkbox") ? "checked" : "value") : 
+  DEFAULT_PROPERTY$1;
+};
+
+/**
+ * ユーザー操作によりデフォルト値が変わるかどうか
+ * getDefaultPropertyと似ているが、HTMLOptionElementを含まない
+ * @param { Node } node
+ * @returns { boolean }
+ */
+const isInputableElement = node => node instanceof HTMLElement && 
+  (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
+
+
+class BindToHTMLElement {
+  /**
+   * バインドを実行する
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {ContextInfo} context
+   * @returns {import("../binding/Binding.js").Binding[]}
+   */
+  static bind(node, component, context) {
+    /** @type {ViewModel} */
+    const viewModel = component.viewModel;
+    /** @type {HTMLElement}  */
+    const element = toHTMLElement(node);
+    /** @type {string} */
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2);
+    /** @type {string} */
+    const defaultName = getDefaultProperty(element);
+
+    // パース
+    /** @type {import("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
+
+    // イベントハンドラ設定
+    /** @type {boolean} デフォルトイベントを設定したかどうか */
+    let hasDefaultEvent = false;
+
+    /** @type {import("../binding/Binding.js").Binding|null} */
+    let defaultBinding = null;
+
+    /** @type {import("../binding/Radio.js").Radio|null} */
+    let radioBinding = null;
+
+    /** @type {import("../binding/Checkbox.js").Checkbox|null} */
+    let checkboxBinding = null;
+
+    bindings.forEach(binding => {
+      hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
+      radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
+      checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
+      defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
+    });
+
+    /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
+    const setDefaultEventHandler = (binding) => {
+      console.log(binding);
+      element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
+    };
+    if (radioBinding) {
+      setDefaultEventHandler(radioBinding);
+    } else if (checkboxBinding) {
+      setDefaultEventHandler(checkboxBinding);
+    } else if (defaultBinding && !hasDefaultEvent && isInputableElement(node)) {
+      // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
+      // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
+      // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
+      // ・nodeが入力系（input, textarea, select） → 入力系に限定
+      setDefaultEventHandler(defaultBinding);
+    }
+    return bindings;
+  }
+}
+
+const DATASET_BIND_PROPERTY$1 = "data-bind";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {SVGElement}
+ */
+const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`not SVGElement`);
+
+class BindToSVGElement {
+  /**
+   * バインドを実行する
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {ContextInfo} context
+   * @returns {import("../binding/Binding.js").Binding[]}
+   */
+  static bind(node, component, context) {
+    /** @type {ViewModel} */
+    const viewModel = component.viewModel;
+    /** @type {SVGElement} */
+    const element = toSVGElement(node);
+    /** @type {string} */
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$1);
+    /** @type {string|undefined} */
+    const defaultName = undefined;
+
+    // パース
+    /** @type {import("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
+
+    return bindings;
+  }
+
+}
+
+const DEFAULT_PROPERTY = "textContent";
+
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Comment}
+ */
+const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+
+class BindToText {
+  /**
+   * バインドを実行する
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {ContextInfo} context
+   * @returns {import("../binding/Binding.js").Binding[]}
+   */
+  static bind(node, component, context) {
+    // コメントノードをテキストノードに差し替える
+    /** @type {ViewModel} */
+    const viewModel = component.viewModel;
+    /** @type {Comment} */
+    const comment = toComment$1(node);
+    /** @type {string} */
+    const bindText = comment.textContent.slice(3); // @@:をスキップ
+    /** @type {Text} */
+    const textNode = document.createTextNode("");
+    comment.parentNode.replaceChild(textNode, comment);
+
+    // パース
+    /** @type {import("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
+
+    return bindings;
+  }
+
+}
+
+const DATASET_BIND_PROPERTY = "data-bind";
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Comment}
+ */
+const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+
+class BindToTemplate {
+  /**
+   * バインドを実行する
+   * @param {Node} node 
+   * @param {Component} component
+   * @param {ContextInfo} context
+   * @returns {import("../binding/Binding.js").Binding[]}
+   */
+  static bind(node, component, context) {
+    /** @type {ViewModel} */
+    const viewModel = component.viewModel;
+    /** @type {Comment} */
+    const comment = toComment(node);
+    /** @type {string} */
+    const uuid = comment.textContent.slice(3);
+    /** @type {HTMLTemplateElement} */
+    const template = Templates.templateByUUID.get(uuid);
+    /** @type {string} */
+    const bindText = template.getAttribute(DATASET_BIND_PROPERTY);
+
+    // パース
+    /** @type {import("../binding/Binding.js").Binding[]} */
+    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
+
+    return bindings;
+  }
+}
+
+class Binder {
+  /**
+   * バインドを実行する
+   * @param {Node[]} nodes
+   * @param {Component} component
+   * @param {ContextInfo} context
+   * @returns {import("../binding/Binding.js").Binding[]}
+   */
+  static bind(nodes, component, context) {
+    return nodes.flatMap(node => 
+      (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(node, component, context) : 
+      (node instanceof HTMLElement) ? BindToHTMLElement.bind(node, component, context) :
+      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(node, component, context) : 
+      (node instanceof SVGElement) ? BindToSVGElement.bind(node, component, context) :
+      utils.raise(`unknown node type`)
+    );
+  }
+
+}
+
+const SELECTOR = "[data-bind]";
+
+/**
+ * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
+ * ex.
+ * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
+ * => [1,3,7,2]
+ * @param {Node} node 
+ * @returns {number[]}
+ */
+const getNodeRoute = node => {
+  /** @type {number[]} */
+  let routeIndexes = [];
+  while(node.parentNode != null) {
+    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
+    node = node.parentNode;
+  }
+  return routeIndexes;
+};
+
+/**
+ * ルートのインデックス配列からノード取得する
+ * @param {Node} node 
+ * @param {number[]} routeIndexes 
+ * @returns {Node}
+ */
+const getNodeByRouteIndexes = (node, routeIndexes) => {
+  for(let i = 0; i < routeIndexes.length; i++) {
+    node = node.childNodes[routeIndexes[i]];
+  }
+  return node;
+};
+
+/**
+ * ノードがコメントかどうか
+ * @param {Node} node 
+ * @returns {boolean}
+ */
+const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
+
+/**
+ * コメントノードを取得
+ * @param {Node} node 
+ * @returns {Comment[]}
+ */
+const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
+
+class Selector {
+  /** @type {Map<HTMLTemplateElement, number[][]>} */
+  static listOfRouteIndexesByTemplate = new Map();
+
+  /**
+   * テンプレートからバインドする対象のノードを取得する
+   * @param {HTMLTemplateElement} template 
+   * @param {HTMLElement} rootElement
+   * @returns {Node[]}
+   */
+  static getTargetNodes(template, rootElement) {
+
+    /** @type {Node[]} */
+    let nodes;
+
+    if (this.listOfRouteIndexesByTemplate.has(template)) {
+      // キャッシュがある場合
+      // querySelectorAllを行わずにNodeの位置を特定できる
+      /** @type {number[][]} */
+      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
+      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
+    } else {
+      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
+      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+
+      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
+      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
+    }
+    return nodes;
+
+  }
+
+}
+
+class ViewTemplate {
+  /**
+   * 
+   * @param {Component} component 
+   * @param {HTMLTemplateElement} template
+   * @param {ContextInfo} context
+   * @returns {{bindings:import("../binding/Binding.js").Binding[], content:DocumentFragment}}
+   */
+  static render(component, template, context) {
+    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(template, content);
+    const bindings = Binder.bind(nodes, component, context);
+    return { bindings, content };
+  }
+}
+
+class Binding {
+
+  /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
+  #nodeProperty;
+  get nodeProperty() {
+    return this.#nodeProperty
+  }
+
+  /** @type { import("./ViewModelProperty.js").ViewModelProperty } */
+  #viewModelProperty;
+  get viewModelProperty() {
+    return this.#viewModelProperty;
+  }
+
+  /** @type {Component} */
+  #component;
+  get component() {
+    return this.#component;
+  }
+
+  /** @type {ContextInfo} */
+  #context;
+  get context() {
+    return this.#context;
+  }
+
+  /** @type {ContextParam} コンテキスト変数情報 */
+  #contextParam;
+  get contextParam() {
+    return this.#contextParam;
+  }
+
+  /** @type { ChildBinding[] } */
+  children = [];
+
+  /** @type {boolean} */
+  get expandable() {
+    return this.nodeProperty.expandable;
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @param {ContextInfo} context
+   * @param {Node} node
+   * @param {string} nodePropertyName
+   * @param {typeof import("./nodePoperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
+   * @param {ViewModel} viewModel
+   * @param {string} viewModelPropertyName
+   * @param {typeof import("./ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
+   * @param {Filter[]} filters
+   */
+  constructor(component, context,
+    node, nodePropertyName, classOfNodeProperty, 
+    viewModel, viewModelPropertyName, classOfViewModelProperty,
+    filters
+  ) {
+    this.#component = component;
+    this.#context = context;
+    const propName = PropertyName.create(viewModelPropertyName);
+    if (propName.level > 0) {
+      this.#contextParam = context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    }
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
+  }
+
+  /**
+   * Nodeへ値を反映する
+   */
+  applyToNode() {
+    const { component, nodeProperty, viewModelProperty } = this;
+    if (!nodeProperty.applicable) return;
+    const filteredViewModelValue = viewModelProperty.filteredValue;
+    if (nodeProperty.value !== (filteredViewModelValue ?? "")) {
+      component.updateSlot.addNodeUpdate(new NodeUpdateData(nodeProperty.node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
+        nodeProperty.value = filteredViewModelValue ?? "";
+      }));
+    }
+  }
+
+  /**
+   * ViewModelへ値を反映する
+   */
+  applyToViewModel() {
+    const { nodeProperty, viewModelProperty } = this;
+    if (!viewModelProperty.applicable) return;
+    const filteredNodelValue = nodeProperty.filteredValue;
+    viewModelProperty.value = filteredNodelValue;
+  }
+
+  /**
+   * 
+   * @param {Event} event 
+   */
+  execEventHandler(event) {
+    const {component, viewModelProperty, context} = this;
+    event.stopPropagation();
+    const process = new ProcessData(
+      viewModelProperty.viewModel[Symbols.directlyCall], 
+      viewModelProperty.viewModel, 
+      [viewModelProperty.name, context, event]
+    );
+    component.updateSlot.addProcess(process);
+  }
+
+  /** @type {(event:Event)=>void} */
+  get eventHandler() {
+    return (binding => event => binding.execEventHandler(event))(this);
+  }
+
+  /**
+   * 
+   * @param {Event} event 
+   */
+  execDefaultEventHandler(event) {
+    const {component} = this;
+    event.stopPropagation();
+    const process = new ProcessData(this.applyToViewModel, this, []);
+    component.updateSlot.addProcess(process);
+  }
+
+  /** @type {(event:Event)=>void} */
+  get defaultEventHandler() {
+    return (binding => event => binding.execDefaultEventHandler(event))(this);
+  }
+
+  /**
+   * 初期化
+   */
+  initialize() {
+    this.nodeProperty.initialize();
+    this.viewModelProperty.initialize();
+    this.applyToNode();
+  }
+
+  /**
+   * @param {ChildBinding} childBinding
+   */
+  appendChild(childBinding) {
+    if (!this.expandable) utils.raise("not expandable");
+    const lastChild = this.children[this.children,length - 1];
+    this.children.push(childBinding);
+    const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
+    beforeNode.parentNode.insertBefore(childBinding.fragment, beforeNode.nextSibling);
+  }
+
+  /**
+   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  updateNode(setOfUpdatedViewModelPropertyKeys) {
+    this.nodeProperty.beforeUpdate(setOfUpdatedViewModelPropertyKeys);
+    if (this.viewModelProperty.isUpdate(setOfUpdatedViewModelPropertyKeys)) {
+      this.applyToNode();
+    }
+  }
+}
+
+class ChildBinding {
+  /** @type {Binding[]} */
+  bindings = [];
+
+  /** @type {Node[]} */
+  nodes = [];
+
+  get lastNode() {
+    return this.nodes[this.nodes.length - 1];
+  }
+
+  /** @type {DocumentFragment} */
+  #fragment;
+  get fragment() {
+    return this.#fragment;
+  }
+
+  /** @type {ContextInfo} */
+  #context;
+  get context() {
+    return this.#context;
+  }
+
+  /** @type {HTMLTemplateElement} */
+  #template;
+  get template() {
+    return this.#template;
+  }
+
+  /**
+   * 
+   * @param {Component} component
+   * @param {HTMLTemplateElement} template
+   * @param {ContextInfo} context
+   */
+  constructor(component, template, context) {
+    const { bindings, content } = ViewTemplate.render(component, template, context);
+    this.bindings = bindings;
+    this.nodes = Array.from(content.childNodes);
+    this.#fragment = content;
+    this.#context = context;
+    this.#template = template;
+  }
+
+  /**
+   * 
+   */
+  applyToNode() {
+    this.bindings.forEach(binding => binding.applyToNode());
+  }
+
+  /**
+   * 
+   */
+  applyToViewModel() {
+    this.bindings.forEach(binding => binding.applyToViewModel());
+  }
+
+  /**
+   * 
+   */
+  removeFromParent() {
+    this.nodes.forEach(node => this.fragment.appendChild(node));
+    this.bindings.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
+  }
+
+  /**
+   * expandableバインドをバインドツリーから取得
+   * @param {Set<string>} setOfKey 
+   * @returns {Binding[]}
+   */
+  getExpandableBindings(setOfKey) {
+    /** @type {Binding[]} */
+    const bindings = this.bindings;
+    const expandableBindings = [];
+    const stack = [ { bindings, children:null, index:-1 } ];
+    while(stack.length > 0) {
+      const info = stack[stack.length - 1];
+      info.index++;
+      if (info.bindings) {
+        if (info.index < info.bindings.length) {
+          const binding = info.bindings[info.index];
+          if (binding.expandable) {
+            if (setOfKey.has(binding.viewModelProperty.key)) {
+              expandableBindings.push(binding);
+            } else {
+              if (binding.children.length > 0) {
+                stack.push({ bindings:null, children:binding.children, index:-1 });
+              }
+            }
+          }
+        } else {
+          stack.pop();
+        }
+      } else {
+        if (info.index < info.children.length) {
+          const bindings = info.children[info.index].bindings;
+          if (bindings.length > 0) {
+            stack.push({ bindings:bindings, children:null, index:-1 });
+          }
+        } else {
+          stack.pop();
+        }
+      }
+    }
+    return expandableBindings;
+  }
+
+  /**
+   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
+   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   */
+  updateNode(setOfUpdatedViewModelPropertyKeys) {
+    // templateを先に展開する
+    /**
+     * @type {Set<Binding>}
+     */
+    const expandableBindings = new Set(this.getExpandableBindings(setOfUpdatedViewModelPropertyKeys));
+    for(const binding of expandableBindings) {
+      binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+    }
+
+    /**
+     * 
+     * @param {Binding[]} bindings 
+     */
+    const updateNode_ = (bindings) => {
+      for(const binding of bindings) {
+        if (expandableBindings.has(binding)) return;
+        binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+        if (!binding.expandable) return;
+        for(const childBinding of binding.children) {
+          updateNode_(childBinding.bindings);
+        }
+      }
+    };
+    updateNode_(this.bindings);
+  }
+}
+
 /**
  * 
  * @param {Node} node 
@@ -4145,6 +3951,7 @@ const getParentComponent = (node) => {
   } while(true);
 };
 
+/** @type {ComponentBase} */
 const mixInComponent = {
   /** @type {ViewModelProxy} */
   get viewModel() {
@@ -4153,12 +3960,13 @@ const mixInComponent = {
   set viewModel(value) {
     this._viewModel = value;
   },
-  /** @type {BindInfo[]} バインドリスト */
-  get binds() {
-    return this._binds;
+
+  /** @type {ChildBinding} */
+  get rootBinding() {
+    return this._rootBinding;
   },
-  set binds(value) {
-    this._binds = value;
+  set rootBinding(value) {
+    this._rootBinding = value;
   },
 
   /** @type {Thread} 更新スレッド */
@@ -4281,7 +4089,7 @@ const mixInComponent = {
    */
   initialize() {
     this._viewModel = createViewModel(this, this.constructor.ViewModel);
-    this._binds = undefined;
+    this._rootBinding = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
     this._props = createProps(this);
@@ -4338,7 +4146,8 @@ const mixInComponent = {
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.binds = View.render(this.viewRootElement, this, template);
+      this.rootBinding = new ChildBinding(this, template, Context.create());
+      this.viewRootElement.appendChild(this.rootBinding.fragment);
       return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
@@ -4379,25 +4188,25 @@ const mixInComponent = {
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   applyToNode(setOfViewModelPropertyKeys) {
-    this.binds && Binds.applyToNode(this.binds, setOfViewModelPropertyKeys);
+    this.rootBinding?.updateNode(setOfViewModelPropertyKeys);
   },
 };
-
 
 class ComponentClassGenerator {
   /**
    * 
    * @param {UserComponentModule} componentModule 
-   * @returns {class<HTMLElement>}
+   * @returns {Component.constructor}
    */
   static generate(componentModule) {
+    /** @type {(module:Module)=>HTMLElement.constructor} */
     const getBaseClass = function (module) {
       return class extends HTMLElement {
 
         /** @type {HTMLTemplateElement} */
         static template = module.template;
 
-        /** @type {class<typeof ViewModel>} */
+        /** @type {ViewModel.constructor} */
         static ViewModel = module.ViewModel;
 
         /**@type {Object<string,FilterFunc>} */
@@ -4422,13 +4231,13 @@ class ComponentClassGenerator {
   
     /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
-    // 同じクラスを登録できないため新しいクラスを生成する
+    // カスタムコンポーネントには同一クラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
     if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") ; else {
       // カスタマイズされた組み込み要素
       // extendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
-      /** @type {classOf<HTMLElement>} */
+      /** @type {HTMLElement.constructor} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
@@ -4444,7 +4253,7 @@ class ComponentClassGenerator {
 /**
  * 
  * @param {UserComponentModule} componentModule 
- * @returns {Component}
+ * @returns {Component.constructor}
  */
 function generateComponentClass(componentModule) {
   return ComponentClassGenerator.generate(componentModule);

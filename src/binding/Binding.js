@@ -297,8 +297,8 @@ export class ChildBinding {
         if (expandableBindings.has(binding)) return;
         binding.updateNode(setOfUpdatedViewModelPropertyKeys);
         if (!binding.expandable) return;
-        for(const bindings of binding.children) {
-          updateNode_(bindings);
+        for(const childBinding of binding.children) {
+          updateNode_(childBinding.bindings);
         }
       }
     };

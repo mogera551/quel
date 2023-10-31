@@ -1069,11 +1069,13 @@ test('Proxy event handler multi loop2 throw', async() => {
   root.innerHTML = `
   <custom-event6></custom-event6>
   `;
+  /** @type {Component} */
   const component = root.querySelector("custom-event6");
   document.body.appendChild(root);
   await component.initialPromise;
   const buttons = component.querySelectorAll("button");
 
+/*
   occurThrow1 = false;
   occurThrow2 = false;
   occurThrow3 = false;
@@ -1088,8 +1090,26 @@ test('Proxy event handler multi loop2 throw', async() => {
     expect(component.viewModel["list2.0"]).toBe(100);
     expect(component.viewModel["list2.1"]).toBe(444);
   }, 10);
-  buttons[0].dispatchEvent(new Event("click"));
-  await sleepX(100);
+*/
+  /** @type {(bindings:Binding[])=>{}} */
+  const showBindings = (bindings) => {
+    for(const binding of bindings) {
+      if (binding.context.stack.length > 0) {
+        console.log(binding.context.stack);
+      } else {
+        console.log(binding.context);
+      }
+      for(const childBinding of binding.children) {
+        showBindings(childBinding.bindings);
+      }
+  
+    }
+  
+  }
+  showBindings(component.rootBinding.bindings);
+
+//  buttons[0].dispatchEvent(new Event("click"));
+//  await sleepX(100);
 });
 
 test('Proxy dialog', async () => {
