@@ -302,6 +302,6 @@ export class ChildBinding {
         }
       }
     };
-    updateNode_(this);
+    updateNode_(this.bindings);
   }
 }

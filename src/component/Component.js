@@ -12,6 +12,7 @@ import { AttachShadow } from "./AttachShadow.js";
 import { inputFilters, outputFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
 import { ChildBinding } from "../binding/Binding.js";
+import { Context } from "../context/Context.js";
 
 /**
  * 

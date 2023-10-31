@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">20% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/10</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">22.22% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -108,14 +108,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -128,20 +128,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,7 +156,7 @@ const DEFAULT_PROPERTY = "textContent";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment = <span class="fstat-no" title="function not covered" >no</span>de =&gt; <span class="cstat-no" title="statement not covered" >(node instanceof Comment) ? node : utils.raise("not Comment");</span>
+const toComment = node =&gt; (node instanceof Comment) ? node : utils.raise("not Comment");
 &nbsp;
 export class BindToText {
   /**
@@ -166,23 +166,23 @@ export class BindToText {
    * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-<span class="fstat-no" title="function not covered" >  st</span>atic bind(node, component, context) {
+  static bind(node, component, context) {
     // コメントノードをテキストノードに差し替える
     /** @type {ViewModel} */
-    const viewModel = <span class="cstat-no" title="statement not covered" >component.viewModel;</span>
+    const viewModel = component.viewModel;
     /** @type {Comment} */
-    const comment = <span class="cstat-no" title="statement not covered" >toComment(node);</span>
+    const comment = toComment(node);
     /** @type {string} */
-    const bindText = <span class="cstat-no" title="statement not covered" >comment.textContent.slice(3);</span> // @@:をスキップ
+    const bindText = comment.textContent.slice(3); // @@:をスキップ
     /** @type {Text} */
-    const textNode = <span class="cstat-no" title="statement not covered" >document.createTextNode("");</span>
-<span class="cstat-no" title="statement not covered" >    comment.parentNode.replaceChild(textNode, comment);</span>
+    const textNode = document.createTextNode("");
+    comment.parentNode.replaceChild(textNode, comment);
 &nbsp;
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = <span class="cstat-no" title="statement not covered" >BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);</span>
+    const bindings = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return bindings;</span>
+    return bindings;
   }
 &nbsp;
 }
@@ -193,7 +193,7 @@ export class BindToText {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-31T09:57:17.067Z
+                at 2023-10-31T12:11:30.578Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
