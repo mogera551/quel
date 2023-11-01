@@ -2836,6 +2836,43 @@ class ViewModelProperty {
   }
 }
 
+const regexp$1 = RegExp(/^\$[0-9]+$/);
+
+class ContextIndex extends ViewModelProperty {
+  /** @type {number} */
+  get index() {
+    return Number(this.name.slice(1)) - 1;
+  }
+
+  /** @type {number} */
+  get value() {
+    return this.binding.context.indexes[this.index];
+  }
+
+  /** @type {number[]} */
+  get indexes() {
+    return [];
+  }
+
+  /** @type {string} */
+  get indexesString() {
+    return "";
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {ViewModel} viewModel 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, viewModel, name, filters, filterFuncs) {
+    if (!regexp$1.test(name)) utils.raise(`invalid name ${name}`);
+    super(binding, viewModel, name, filters, filterFuncs);
+  }
+}
+
 class ElementProperty extends NodeProperty {
   /** @type {Element} */
   get element() {
@@ -3111,6 +3148,8 @@ class ComponentProperty extends ElementProperty {
 
 }
 
+const regexp = RegExp(/^\$[0-9]+$/);
+
 class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
   // モジュール内で、const変数で書くとjestで循環参照でエラーになる
@@ -3158,8 +3197,8 @@ class Factory {
    */
   static create(component, node, nodePropertyName, viewModel, viewModelPropertyName, filters, context) {
     /** @type {typeof NodeProperty|undefined} */
-    let classOfNodeProperty = undefined;
-    const classOfViewModelProperty = ViewModelProperty;
+    let classOfNodeProperty;
+    const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
 
     do {
       const isComment = node instanceof Comment;
