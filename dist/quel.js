@@ -3973,7 +3973,7 @@ class ChildBinding {
       for(const binding of bindings) {
         if (expandableBindings.has(binding)) return;
         binding.updateNode(setOfUpdatedViewModelPropertyKeys);
-        if (!binding.expandable) return;
+        //if (!binding.expandable) return;
         for(const childBinding of binding.children) {
           updateNode_(childBinding.bindings);
         }
