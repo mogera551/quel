@@ -4,6 +4,7 @@ import { Binding } from "./Binding.js";
 import { Repeat } from "./nodeProperty/Repeat.js";
 import { Branch } from "./nodeProperty/Branch.js";
 import { ViewModelProperty } from "./viewModelProperty/ViewModelProperty.js";
+import { ContextIndex } from "./viewModelProperty/ContextIndex.js";
 import { NodeProperty } from "./nodeProperty/NodeProperty.js";
 import { ElementClassName } from "./nodeProperty/ElementClassName.js"
 import { Checkbox } from "./nodeProperty/Checkbox.js";
@@ -14,6 +15,8 @@ import { ElementAttribute } from "./nodeProperty/ElementAttribute.js";
 import { ElementStyle } from "./nodeProperty/ElementStyle.js";
 import { ElementProperty } from "./nodeProperty/ElementProperty.js";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty.js";
+
+const regexp = RegExp(/^\$[0-9]+$/);
 
 export class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
@@ -62,8 +65,8 @@ export class Factory {
    */
   static create(component, node, nodePropertyName, viewModel, viewModelPropertyName, filters, context) {
     /** @type {typeof NodeProperty|undefined} */
-    let classOfNodeProperty = undefined;
-    const classOfViewModelProperty = ViewModelProperty;
+    let classOfNodeProperty;
+    const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
 
     do {
       const isComment = node instanceof Comment;

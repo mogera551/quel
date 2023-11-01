@@ -18,6 +18,7 @@ import { Symbols } from "../../src/Symbols.js";
 import { utils } from "../../src/utils.js";
 import { Templates } from "../../src/view/Templates.js";
 import { createProps } from "../../src/component/Props.js";
+import { ContextIndex } from "../../src/binding/viewModelProperty/ContextIndex.js";
 
 /** @type {Component} */
 const component = {
@@ -93,7 +94,7 @@ class ViewModel {
 
 }
 
-test("binding/Factory node", () => {
+test("binding/Factory node viewModel", () => {
   const node = document.createTextNode("");
   component.viewModel = new (class extends ViewModel {
     prop = 100;
@@ -115,6 +116,29 @@ test("binding/Factory node", () => {
   expect(binding.contextParam).toBe(undefined);
 
   expect(node.textContent).toBe("100");
+});
+
+test("binding/Factory node contextIndex", () => {
+  const node = document.createTextNode("");
+  component.viewModel = new (class extends ViewModel {
+  });
+  const binding = Factory.create(component, node, "textContent", component.viewModel, "$1", [], {indexes:[15],stack:[]} );
+  expect(binding.constructor).toBe(Binding);
+  expect(binding.component).toBe(component);
+  expect(binding.nodeProperty.constructor).toBe(NodeProperty);
+  expect(binding.nodeProperty.node).toBe(node);
+  expect(binding.nodeProperty.name).toBe("textContent");
+  expect(binding.nodeProperty.filters).toEqual([]);
+  expect(binding.nodeProperty.filterFuncs).toEqual({});
+  expect(binding.viewModelProperty.constructor).toBe(ContextIndex);
+  expect(binding.viewModelProperty.viewModel).toBe(component.viewModel);
+  expect(binding.viewModelProperty.name).toBe("$1");
+  expect(binding.viewModelProperty.filters).toEqual([]);
+  expect(binding.viewModelProperty.filterFuncs).toEqual({});
+  expect(binding.context).toEqual({indexes:[15],stack:[]});
+  expect(binding.contextParam).toBe(undefined);
+
+  expect(node.textContent).toBe("15");
 });
 
 test("binding/Factory element", () => {
