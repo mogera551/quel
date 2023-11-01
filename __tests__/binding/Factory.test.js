@@ -13,7 +13,7 @@ import { ElementStyle } from "../../src/binding/nodeProperty/ElementStyle.js";
 import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty.js";
 import { Radio } from "../../src/binding/nodeProperty/Radio.js";
 import { Repeat } from "../../src/binding/nodeProperty/Repeat.js";
-import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
+import { ViewModelProperty } from "../../src/binding/viewModelProperty/ViewModelProperty.js";
 import { Symbols } from "../../src/Symbols.js";
 import { utils } from "../../src/utils.js";
 import { Templates } from "../../src/view/Templates.js";

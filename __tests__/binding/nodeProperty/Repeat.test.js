@@ -1,6 +1,6 @@
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Binding } from "../../../src/binding/Binding.js";
-import { ViewModelProperty } from "../../../src/binding/ViewModelProperty.js";
+import { ViewModelProperty } from "../../../src/binding/viewModelProperty/ViewModelProperty.js";
 import { Repeat } from "../../../src/binding/nodeProperty/Repeat.js";
 import { Templates } from "../../../src/view/Templates.js";
 

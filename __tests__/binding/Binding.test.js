@@ -1,5 +1,5 @@
 import { Binding, ChildBinding } from "../../src/binding/Binding";
-import { ViewModelProperty } from "../../src/binding/ViewModelProperty";
+import { ViewModelProperty } from "../../src/binding/viewModelProperty/ViewModelProperty";
 import { Branch } from "../../src/binding/nodeProperty/Branch";
 import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent";
 import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty";

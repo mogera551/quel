@@ -1,10 +1,10 @@
-import "../types.js";
-import { Filter } from "../filter/Filter.js";
-import { MultiValue } from "./nodeProperty/MultiValue.js";
-import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { Symbols } from "../Symbols.js";
-import { utils } from "../utils.js";
-import { Context } from "../context/Context.js";
+import "../../types.js";
+import { Filter } from "../../filter/Filter.js";
+import { MultiValue } from "../nodeProperty/MultiValue.js";
+import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
+import { Symbols } from "../../Symbols.js";
+import { utils } from "../../utils.js";
+import { Context } from "../../context/Context.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -93,7 +93,7 @@ export class ViewModelProperty {
     return true;
   }
 
-  /** @type {import("./Binding.js").Binding} */
+  /** @type {import("../Binding.js").Binding} */
   #binding;
   get binding() {
     return this.#binding;
@@ -101,7 +101,7 @@ export class ViewModelProperty {
 
   /**
    * 
-   * @param {import("./Binding.js").Binding} binding
+   * @param {import("../Binding.js").Binding} binding
    * @param {ViewModel} viewModel 
    * @param {string} name 
    * @param {Filter[]} filters 

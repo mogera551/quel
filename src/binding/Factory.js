@@ -3,7 +3,7 @@ import { utils } from "../utils.js";
 import { Binding } from "./Binding.js";
 import { Repeat } from "./nodeProperty/Repeat.js";
 import { Branch } from "./nodeProperty/Branch.js";
-import { ViewModelProperty } from "./ViewModelProperty.js";
+import { ViewModelProperty } from "./viewModelProperty/ViewModelProperty.js";
 import { NodeProperty } from "./nodeProperty/NodeProperty.js";
 import { ElementClassName } from "./nodeProperty/ElementClassName.js"
 import { Checkbox } from "./nodeProperty/Checkbox.js";

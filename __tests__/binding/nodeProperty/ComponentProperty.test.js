@@ -1,5 +1,5 @@
 import { Symbols } from "../../../src/Symbols.js";
-import { ViewModelProperty } from "../../../src/binding/ViewModelProperty.js";
+import { ViewModelProperty } from "../../../src/binding/viewModelProperty/ViewModelProperty.js";
 import { ComponentProperty } from "../../../src/binding/nodeProperty/ComponentProperty.js";
 import { createProps } from "../../../src/component/Props.js";
 

@@ -10,7 +10,7 @@ import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
 import { ElementAttribute } from "../../src/binding/nodeProperty/ElementAttribute.js";
-import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
+import { ViewModelProperty } from "../../src/binding/viewModelProperty/ViewModelProperty.js";
 import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent.js";
 
 

@@ -2780,7 +2780,7 @@ class ViewModelProperty {
     return true;
   }
 
-  /** @type {import("./Binding.js").Binding} */
+  /** @type {import("../Binding.js").Binding} */
   #binding;
   get binding() {
     return this.#binding;
@@ -2788,7 +2788,7 @@ class ViewModelProperty {
 
   /**
    * 
-   * @param {import("./Binding.js").Binding} binding
+   * @param {import("../Binding.js").Binding} binding
    * @param {ViewModel} viewModel 
    * @param {string} name 
    * @param {Filter[]} filters 
@@ -3651,7 +3651,7 @@ class Binding {
     return this.#nodeProperty
   }
 
-  /** @type { import("./ViewModelProperty.js").ViewModelProperty } */
+  /** @type { import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty } */
   #viewModelProperty;
   get viewModelProperty() {
     return this.#viewModelProperty;
@@ -3692,7 +3692,7 @@ class Binding {
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
    * @param {ViewModel} viewModel
    * @param {string} viewModelPropertyName
-   * @param {typeof import("./ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
+   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
   constructor(component, context,

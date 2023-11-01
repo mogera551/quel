@@ -5,7 +5,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty.js";
 import { Binding } from "../../src/binding/Binding.js";
-import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
+import { ViewModelProperty } from "../../src/binding/viewModelProperty/ViewModelProperty.js";
 
 test("BindToText", () => {
   const parentNode = document.createElement("div");

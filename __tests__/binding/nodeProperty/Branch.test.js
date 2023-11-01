@@ -1,5 +1,5 @@
 import { Binding } from "../../../src/binding/Binding.js";
-import { ViewModelProperty } from "../../../src/binding/ViewModelProperty.js";
+import { ViewModelProperty } from "../../../src/binding/viewModelProperty/ViewModelProperty.js";
 import { Branch } from "../../../src/binding/nodeProperty/Branch.js";
 import { Templates } from "../../../src/view/Templates.js";
 

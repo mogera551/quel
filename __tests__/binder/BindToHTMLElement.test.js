@@ -16,7 +16,7 @@ import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent.js";
 import { Radio } from "../../src/binding/nodeProperty/Radio.js";
 import { Checkbox } from "../../src/binding/nodeProperty/Checkbox.js";
 import { MultiValue } from "../../src/binding/nodeProperty/MultiValue.js";
-import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
+import { ViewModelProperty } from "../../src/binding/viewModelProperty/ViewModelProperty.js";
 
 test("BindToHTMLElement div", () => {
   const node = document.createElement("div");
