@@ -1,12 +1,8 @@
-//import { Component } from "../../src/component/Component.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
-import { Event as EventBind } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { BindToSVGElement } from "../../src/binder/BindToSVGElement.js";
-import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
 import { ElementAttribute } from "../../src/binding/nodeProperty/ElementAttribute.js";

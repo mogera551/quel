@@ -2,13 +2,8 @@ import { Binder } from "../../src/binder/Binder.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
-import { LoopBind } from "../../src/bindInfo/template/Loop.js";
-import { BindInfo } from "../../src/bindInfo/BindInfo.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
-import { PropertyBind } from "../../src/bindInfo/Property.js";
-import { TextBind } from "../../src/bindInfo/Text.js";
-import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Binding, ChildBinding } from "../../src/binding/Binding.js";
 import { Repeat } from "../../src/binding/nodeProperty/Repeat.js";
@@ -653,7 +648,6 @@ test("Binder indexes fail", () => {
       out:outputFilters,
     }
   };
-  const contextBind = new BindInfo();
   expect(() => {
     const context = {
       indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("fff") }]

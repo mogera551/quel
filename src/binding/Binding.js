@@ -40,6 +40,13 @@ export class Binding {
   get context() {
     return this.#context;
   }
+  set context(value) {
+    this.#context = value;
+    const propName = PropertyName.create(this.viewModelProperty.name);
+    if (propName.level > 0) {
+      this.#contextParam = value.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    }
+  }
 
   /** @type {ContextParam} コンテキスト変数情報 */
   #contextParam;
@@ -74,13 +81,9 @@ export class Binding {
   ) {
     this.#id = ++Binding.seq;
     this.#component = component;
-    this.#context = context;
-    const propName = PropertyName.create(viewModelPropertyName);
-    if (propName.level > 0) {
-      this.#contextParam = context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-    }
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
+    this.context = context;
   }
 
   /**
@@ -198,6 +201,9 @@ export class ChildBinding {
   get context() {
     return this.#context;
   }
+  set context(value) {
+    this.#context = value;
+  }
 
   /** @type {HTMLTemplateElement} */
   #template;
@@ -240,6 +246,9 @@ export class ChildBinding {
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
+    const childBindings = ChildBinding.bindingsByTemplate.get(this.template) ?? 
+      ChildBinding.bindingsByTemplate.set(this.template, []).get(this.template);
+    childBindings.push(this);
   }
 
   /**
@@ -313,5 +322,41 @@ export class ChildBinding {
       }
     };
     updateNode_(this.bindings);
+  }
+
+  /** @type {Map<HTMLTemplateElement,ChildBinding[]>} */
+  static bindingsByTemplate = new Map;
+
+  /**
+   * 
+   * @param {Component} component
+   * @param {HTMLTemplateElement} template
+   * @param {ContextInfo} context
+   */
+  static create(component, template, context) {
+    const childBindings = this.bindingsByTemplate.get(template) ?? [];
+    if (childBindings.length > 0) {
+      const childBinding = childBindings.pop();
+      childBinding.context = context;
+      /**
+       * 
+       * @param {Binding[]} bindings 
+       * @param {ContextInfo} context 
+       */
+      const setContext = (bindings, context) => {
+        for(const binding of bindings) {
+          binding.context = context;
+          binding.applyToNode();
+          for(const childBinding of binding.children) {
+            setContext(childBinding.bindings, context);
+          }
+        }
+      };
+      setContext(childBinding.bindings, context);
+  
+      return childBinding;
+    } else {
+      return new ChildBinding(component, template, context);
+    }
   }
 }

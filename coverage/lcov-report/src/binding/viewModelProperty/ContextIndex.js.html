@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">12.5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>1/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -104,40 +104,40 @@
 <a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { utils } from "../../utils";
 import { ViewModelProperty } from "./ViewModelProperty";
@@ -146,23 +146,23 @@ const regexp = RegExp(/^\$[0-9]+$/);
 &nbsp;
 export class ContextIndex extends ViewModelProperty {
   /** @type {number} */
-  get index() {
-    return Number(this.name.slice(1)) - 1;
+<span class="fstat-no" title="function not covered" >  ge</span>t index() {
+<span class="cstat-no" title="statement not covered" >    return Number(this.name.slice(1)) - 1;</span>
   }
 &nbsp;
   /** @type {number} */
-  get value() {
-    return this.binding.context.indexes[this.index];
+<span class="fstat-no" title="function not covered" >  ge</span>t value() {
+<span class="cstat-no" title="statement not covered" >    return this.binding.context.indexes[this.index];</span>
   }
 &nbsp;
   /** @type {number[]} */
-  get indexes() {
-    return [];
+<span class="fstat-no" title="function not covered" >  ge</span>t indexes() {
+<span class="cstat-no" title="statement not covered" >    return [];</span>
   }
 &nbsp;
   /** @type {string} */
-  get indexesString() {
-    return "";
+<span class="fstat-no" title="function not covered" >  ge</span>t indexesString() {
+<span class="cstat-no" title="statement not covered" >    return "";</span>
   }
 &nbsp;
   /**
@@ -173,9 +173,9 @@ export class ContextIndex extends ViewModelProperty {
    * @param {Filter[]} filters 
    * @param {Object&lt;string,FilterFunc&gt;} filterFuncs
    */
-  constructor(binding, viewModel, name, filters, filterFuncs) {
-    if (!regexp.test(name)) utils.raise(`invalid name ${name}`);
-    super(binding, viewModel, name, filters, filterFuncs);
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(binding, viewModel, name, filters, filterFuncs) {
+<span class="cstat-no" title="statement not covered" >    if (!regexp.test(name)) <span class="cstat-no" title="statement not covered" >utils.raise(`invalid name ${name}`);</span></span>
+<span class="cstat-no" title="statement not covered" >    super(binding, viewModel, name, filters, filterFuncs);</span>
   }
 }</pre></td></tr></table></pre>
 
@@ -184,7 +184,7 @@ export class ContextIndex extends ViewModelProperty {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-11-01T06:31:54.728Z
+                at 2023-11-01T20:24:44.174Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

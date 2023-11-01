@@ -2570,7 +2570,7 @@ class Repeat extends TemplateProperty {
       this.binding.children.forEach(childBinding => childBinding.applyToNode());
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
-        const childBinding = new ChildBinding(this.binding.component, this.template, newContext);
+        const childBinding = ChildBinding.create(this.binding.component, this.template, newContext);
         this.binding.appendChild(childBinding);
       }
     } else if (this.value > value.length) {
@@ -2643,7 +2643,7 @@ class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const childBinding = new ChildBinding(this.binding.component, this.template, Context.clone(this.binding.context));
+        const childBinding = ChildBinding.create(this.binding.component, this.template, Context.clone(this.binding.context));
         this.binding.appendChild(childBinding);
       } else {
         const removeChildBindings = this.binding.children.splice(0, this.binding.children.length);
@@ -3707,6 +3707,13 @@ class Binding {
   get context() {
     return this.#context;
   }
+  set context(value) {
+    this.#context = value;
+    const propName = PropertyName.create(this.viewModelProperty.name);
+    if (propName.level > 0) {
+      this.#contextParam = value.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    }
+  }
 
   /** @type {ContextParam} コンテキスト変数情報 */
   #contextParam;
@@ -3741,13 +3748,9 @@ class Binding {
   ) {
     this.#id = ++Binding.seq;
     this.#component = component;
-    this.#context = context;
-    const propName = PropertyName.create(viewModelPropertyName);
-    if (propName.level > 0) {
-      this.#contextParam = context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-    }
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
+    this.context = context;
   }
 
   /**
@@ -3865,6 +3868,9 @@ class ChildBinding {
   get context() {
     return this.#context;
   }
+  set context(value) {
+    this.#context = value;
+  }
 
   /** @type {HTMLTemplateElement} */
   #template;
@@ -3907,6 +3913,9 @@ class ChildBinding {
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
+    const childBindings = ChildBinding.bindingsByTemplate.get(this.template) ?? 
+      ChildBinding.bindingsByTemplate.set(this.template, []).get(this.template);
+    childBindings.push(this);
   }
 
   /**
@@ -3980,6 +3989,42 @@ class ChildBinding {
       }
     };
     updateNode_(this.bindings);
+  }
+
+  /** @type {Map<HTMLTemplateElement,ChildBinding[]>} */
+  static bindingsByTemplate = new Map;
+
+  /**
+   * 
+   * @param {Component} component
+   * @param {HTMLTemplateElement} template
+   * @param {ContextInfo} context
+   */
+  static create(component, template, context) {
+    const childBindings = this.bindingsByTemplate.get(template) ?? [];
+    if (childBindings.length > 0) {
+      const childBinding = childBindings.pop();
+      childBinding.context = context;
+      /**
+       * 
+       * @param {Binding[]} bindings 
+       * @param {ContextInfo} context 
+       */
+      const setContext = (bindings, context) => {
+        for(const binding of bindings) {
+          binding.context = context;
+          binding.applyToNode();
+          for(const childBinding of binding.children) {
+            setContext(childBinding.bindings, context);
+          }
+        }
+      };
+      setContext(childBinding.bindings, context);
+  
+      return childBinding;
+    } else {
+      return new ChildBinding(component, template, context);
+    }
   }
 }
 
@@ -4195,7 +4240,7 @@ const mixInComponent = {
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.rootBinding = new ChildBinding(this, template, Context.create());
+      this.rootBinding = ChildBinding.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
       return this.viewModel[Symbols.connectedCallback]();
     };

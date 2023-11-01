@@ -1,10 +1,6 @@
-//import { Component } from "../../src/component/Component.js";
 import { BindToTemplate } from "../../src/binder/BindToTemplate.js";
 import { Symbols } from "../../src/Symbols.js";
-import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
-import { LoopBind } from "../../src/bindInfo/template/Loop.js";
-import { IfBind } from "../../src/bindInfo/template/If.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";

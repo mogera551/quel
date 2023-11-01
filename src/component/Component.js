@@ -226,7 +226,7 @@ const mixInComponent = {
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.rootBinding = new ChildBinding(this, template, Context.create());
+      this.rootBinding = ChildBinding.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
       return this.viewModel[Symbols.connectedCallback]();
     };

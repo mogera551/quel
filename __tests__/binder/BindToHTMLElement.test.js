@@ -1,13 +1,8 @@
-//import { Component } from "../../src/component/Component.js";
 import { BindToHTMLElement } from "../../src/binder/BindToHTMLElement.js";
 import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
-import { Event as EventBind } from "../../src/bindInfo/Event.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-//import { PropertyBind } from "../../src/bindInfo/Property.js";
-//import { Radio } from "../../src/bindInfo/Radio.js";
-//import { Checkbox } from "../../src/bindInfo/Checkbox.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Binding } from "../../src/binding/Binding.js";
 import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty.js";
