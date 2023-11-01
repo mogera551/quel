@@ -1,4 +1,4 @@
-import { NodeProperty } from "../../../src/binding/nodePoperty/NodeProperty.js";
+import { NodeProperty } from "../../../src/binding/nodeProperty/NodeProperty.js";
 import { inputFilters } from "../../../src/filter/Builtin.js";
 
 const binding = {};

@@ -1,4 +1,4 @@
-import { ElementClassName } from "../../../src/binding/nodePoperty/ElementClassName.js";
+import { ElementClassName } from "../../../src/binding/nodeProperty/ElementClassName.js";
 
 const binding = {};
 

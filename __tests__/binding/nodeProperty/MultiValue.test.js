@@ -1,4 +1,4 @@
-import { MultiValue } from "../../../src/binding/nodePoperty/MultiValue.js";
+import { MultiValue } from "../../../src/binding/nodeProperty/MultiValue.js";
 
 test("MultiValue", () => {
   const multiValue = new MultiValue("123", true);

@@ -1,4 +1,4 @@
-import { ElementClass } from "../../../src/binding/nodePoperty/ElementClass.js";
+import { ElementClass } from "../../../src/binding/nodeProperty/ElementClass.js";
 
 const binding = {};
 

@@ -1,8 +1,8 @@
 import "../types.js";
 import { utils } from "../utils.js";
 import { BindToDom } from "./BindToDom.js";
-import { Radio } from "../binding/nodePoperty/Radio.js";
-import { Checkbox } from "../binding/nodePoperty/Checkbox.js";
+import { Radio } from "../binding/nodeProperty/Radio.js";
+import { Checkbox } from "../binding/nodeProperty/Checkbox.js";
 
 const DATASET_BIND_PROPERTY = "data-bind";
 const DEFAULT_EVENT = "oninput";

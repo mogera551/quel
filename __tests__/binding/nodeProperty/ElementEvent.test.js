@@ -1,4 +1,4 @@
-import { ElementEvent } from "../../../src/binding/nodePoperty/ElementEvent.js";
+import { ElementEvent } from "../../../src/binding/nodeProperty/ElementEvent.js";
 
 let calledEventHandler = false;
 const binding = {

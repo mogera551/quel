@@ -1,6 +1,6 @@
 import { Binding } from "../../../src/binding/Binding.js";
 import { ViewModelProperty } from "../../../src/binding/ViewModelProperty.js";
-import { Branch } from "../../../src/binding/nodePoperty/Branch.js";
+import { Branch } from "../../../src/binding/nodeProperty/Branch.js";
 import { Templates } from "../../../src/view/Templates.js";
 
 const binding = {

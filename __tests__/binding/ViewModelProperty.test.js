@@ -2,7 +2,7 @@ import "../../src/types.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
 import { Symbols } from "../../src/Symbols.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { MultiValue } from "../../src/binding/nodePoperty/MultiValue.js";
+import { MultiValue } from "../../src/binding/nodeProperty/MultiValue.js";
 import { outputFilters } from "../../src/filter/Builtin.js";
 
 const binding = {

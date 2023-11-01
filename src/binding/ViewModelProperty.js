@@ -1,6 +1,6 @@
 import "../types.js";
 import { Filter } from "../filter/Filter.js";
-import { MultiValue } from "./nodePoperty/MultiValue.js";
+import { MultiValue } from "./nodeProperty/MultiValue.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../Symbols.js";
 import { utils } from "../utils.js";

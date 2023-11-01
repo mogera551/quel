@@ -1,19 +1,19 @@
 import "../types.js";
 import { utils } from "../utils.js";
 import { Binding } from "./Binding.js";
-import { Repeat } from "./nodePoperty/Repeat.js";
-import { Branch } from "./nodePoperty/Branch.js";
+import { Repeat } from "./nodeProperty/Repeat.js";
+import { Branch } from "./nodeProperty/Branch.js";
 import { ViewModelProperty } from "./ViewModelProperty.js";
-import { NodeProperty } from "./nodePoperty/NodeProperty.js";
-import { ElementClassName } from "./nodePoperty/ElementClassName.js"
-import { Checkbox } from "./nodePoperty/Checkbox.js";
-import { Radio } from "./nodePoperty/Radio.js";
-import { ElementEvent } from "./nodePoperty/ElementEvent.js";
-import { ElementClass } from "./nodePoperty/ElementClass.js";
-import { ElementAttribute } from "./nodePoperty/ElementAttribute.js";
-import { ElementStyle } from "./nodePoperty/ElementStyle.js";
-import { ElementProperty } from "./nodePoperty/ElementProperty.js";
-import { ComponentProperty } from "./nodePoperty/ComponentProperty.js";
+import { NodeProperty } from "./nodeProperty/NodeProperty.js";
+import { ElementClassName } from "./nodeProperty/ElementClassName.js"
+import { Checkbox } from "./nodeProperty/Checkbox.js";
+import { Radio } from "./nodeProperty/Radio.js";
+import { ElementEvent } from "./nodeProperty/ElementEvent.js";
+import { ElementClass } from "./nodeProperty/ElementClass.js";
+import { ElementAttribute } from "./nodeProperty/ElementAttribute.js";
+import { ElementStyle } from "./nodeProperty/ElementStyle.js";
+import { ElementProperty } from "./nodeProperty/ElementProperty.js";
+import { ComponentProperty } from "./nodeProperty/ComponentProperty.js";
 
 export class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため

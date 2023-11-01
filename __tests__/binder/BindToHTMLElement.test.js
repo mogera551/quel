@@ -10,12 +10,12 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 //import { Checkbox } from "../../src/bindInfo/Checkbox.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Binding } from "../../src/binding/Binding.js";
-import { NodeProperty } from "../../src/binding/nodePoperty/NodeProperty.js";
-import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty.js";
-import { ElementEvent } from "../../src/binding/nodePoperty/ElementEvent.js";
-import { Radio } from "../../src/binding/nodePoperty/Radio.js";
-import { Checkbox } from "../../src/binding/nodePoperty/Checkbox.js";
-import { MultiValue } from "../../src/binding/nodePoperty/MultiValue.js";
+import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty.js";
+import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
+import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent.js";
+import { Radio } from "../../src/binding/nodeProperty/Radio.js";
+import { Checkbox } from "../../src/binding/nodeProperty/Checkbox.js";
+import { MultiValue } from "../../src/binding/nodeProperty/MultiValue.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
 
 test("BindToHTMLElement div", () => {

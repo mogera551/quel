@@ -11,9 +11,9 @@ import { TextBind } from "../../src/bindInfo/Text.js";
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Binding, ChildBinding } from "../../src/binding/Binding.js";
-import { Repeat } from "../../src/binding/nodePoperty/Repeat.js";
-import { Branch } from "../../src/binding/nodePoperty/Branch.js";
-import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty.js";
+import { Repeat } from "../../src/binding/nodeProperty/Repeat.js";
+import { Branch } from "../../src/binding/nodeProperty/Branch.js";
+import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
 import { utils } from "../../src/utils.js";
 
 let uuid_counter = 0;

@@ -1,9 +1,9 @@
 import { Binding, ChildBinding } from "../../src/binding/Binding";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty";
-import { Branch } from "../../src/binding/nodePoperty/Branch";
-import { ElementEvent } from "../../src/binding/nodePoperty/ElementEvent";
-import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty";
-import { NodeProperty } from "../../src/binding/nodePoperty/NodeProperty";
+import { Branch } from "../../src/binding/nodeProperty/Branch";
+import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent";
+import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty";
+import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty";
 import { generateComponentClass } from "../../src/component/Component";
 import { Templates } from "../../src/view/Templates";
 

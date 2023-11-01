@@ -1,4 +1,4 @@
-import { TemplateProperty } from "../../../src/binding/nodePoperty/TemplateProperty.js";
+import { TemplateProperty } from "../../../src/binding/nodeProperty/TemplateProperty.js";
 import { inputFilters } from "../../../src/filter/Builtin.js";
 import { Templates } from "../../../src/view/Templates.js";
 

@@ -1,4 +1,4 @@
-import { ElementStyle } from "../../../src/binding/nodePoperty/ElementStyle.js";
+import { ElementStyle } from "../../../src/binding/nodeProperty/ElementStyle.js";
 
 const binding = {};
 

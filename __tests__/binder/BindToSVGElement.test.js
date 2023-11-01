@@ -8,10 +8,10 @@ import { PropertyBind } from "../../src/bindInfo/Property.js";
 import { BindToSVGElement } from "../../src/binder/BindToSVGElement.js";
 import { AttributeBind } from "../../src/bindInfo/Attribute.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
-import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty.js";
-import { ElementAttribute } from "../../src/binding/nodePoperty/ElementAttribute.js";
+import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
+import { ElementAttribute } from "../../src/binding/nodeProperty/ElementAttribute.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
-import { ElementEvent } from "../../src/binding/nodePoperty/ElementEvent.js";
+import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent.js";
 
 
 test("BindToSVGElement text attribute", () => {

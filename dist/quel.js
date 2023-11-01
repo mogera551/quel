@@ -3645,7 +3645,7 @@ class Binding {
     return this.#id;
   }
 
-  /** @type { import("./nodePoperty/NodeProperty.js").NodeProperty } */
+  /** @type { import("./nodeProperty/NodeProperty.js").NodeProperty } */
   #nodeProperty;
   get nodeProperty() {
     return this.#nodeProperty
@@ -3689,7 +3689,7 @@ class Binding {
    * @param {ContextInfo} context
    * @param {Node} node
    * @param {string} nodePropertyName
-   * @param {typeof import("./nodePoperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
+   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
    * @param {ViewModel} viewModel
    * @param {string} viewModelPropertyName
    * @param {typeof import("./ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 

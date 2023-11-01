@@ -1,4 +1,4 @@
-import { Radio } from "../../../src/binding/nodePoperty/Radio.js";
+import { Radio } from "../../../src/binding/nodeProperty/Radio.js";
 import { inputFilters } from "../../../src/filter/Builtin.js";
 
 const binding = {};

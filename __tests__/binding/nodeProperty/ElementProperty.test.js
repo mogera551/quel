@@ -1,4 +1,4 @@
-import { ElementProperty } from "../../../src/binding/nodePoperty/ElementProperty.js";
+import { ElementProperty } from "../../../src/binding/nodeProperty/ElementProperty.js";
 
 const binding = {};
 

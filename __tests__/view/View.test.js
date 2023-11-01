@@ -4,9 +4,9 @@ import { createViewModel } from "../../src/viewModel/Proxy.js";
 //import { NodePropertyType } from "../../src/node/PropertyType.js";
 import { View } from "../../src/view/View.js";
 import { Module } from "../../src/component/Module.js";
-import { TemplateProperty } from "../../src/binding/nodePoperty/TemplateProperty.js";
+import { TemplateProperty } from "../../src/binding/nodeProperty/TemplateProperty.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty.js";
+import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
 import { Binding } from "../../src/binding/Binding.js";
 
 let uuid_counter = 0;

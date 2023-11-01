@@ -10,7 +10,7 @@ import { Templates } from "../../src/view/Templates.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Binding } from "../../src/binding/Binding.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
-import { Repeat } from "../../src/binding/nodePoperty/Repeat.js";
+import { Repeat } from "../../src/binding/nodeProperty/Repeat.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {

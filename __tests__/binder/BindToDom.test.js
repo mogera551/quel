@@ -4,13 +4,13 @@ import { Filter } from "../../src/filter/Filter.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Templates } from "../../src/view/Templates.js";
 import { Symbols } from "../../src/Symbols.js";
-import { Radio } from "../../src/binding/nodePoperty/Radio.js";
-import { Checkbox } from "../../src/binding/nodePoperty/Checkbox.js";
-import { ElementStyle } from "../../src/binding/nodePoperty/ElementStyle.js";
-import { ElementProperty } from "../../src/binding/nodePoperty/ElementProperty.js";
-import { ElementClass } from "../../src/binding/nodePoperty/ElementClass.js";
-import { ElementClassName } from "../../src/binding/nodePoperty/ElementClassName.js";
-import { ElementEvent } from "../../src/binding/nodePoperty/ElementEvent.js";
+import { Radio } from "../../src/binding/nodeProperty/Radio.js";
+import { Checkbox } from "../../src/binding/nodeProperty/Checkbox.js";
+import { ElementStyle } from "../../src/binding/nodeProperty/ElementStyle.js";
+import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
+import { ElementClass } from "../../src/binding/nodeProperty/ElementClass.js";
+import { ElementClassName } from "../../src/binding/nodeProperty/ElementClassName.js";
+import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {

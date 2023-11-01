@@ -1,4 +1,4 @@
-import { Checkbox } from "../../../src/binding/nodePoperty/Checkbox.js";
+import { Checkbox } from "../../../src/binding/nodeProperty/Checkbox.js";
 import { inputFilters } from "../../../src/filter/Builtin.js";
 
 const binding = {};

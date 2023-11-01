@@ -3,7 +3,7 @@ import { Symbols } from "../../src/Symbols.js";
 import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
-import { NodeProperty } from "../../src/binding/nodePoperty/NodeProperty.js";
+import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty.js";
 import { Binding } from "../../src/binding/Binding.js";
 import { ViewModelProperty } from "../../src/binding/ViewModelProperty.js";
 
