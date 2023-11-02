@@ -5,7 +5,7 @@ import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
-import { Binding, ChildBinding } from "../../src/binding/Binding.js";
+import { Binding, BindingManager } from "../../src/binding/Binding.js";
 import { Repeat } from "../../src/binding/nodeProperty/Repeat.js";
 import { Branch } from "../../src/binding/nodeProperty/Branch.js";
 import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
@@ -429,7 +429,7 @@ test("Binder context", () => {
   expect(bindings[3].viewModelProperty.filteredValue).toEqual(["1", "2", "3"]);
   expect(bindings[3].children.length).toBe(3);
 
-  expect(bindings[3].children[0].constructor).toBe(ChildBinding);
+  expect(bindings[3].children[0].constructor).toBe(BindingManager);
   expect(bindings[3].children[0].context).toEqual({
     indexes:[1, 0],
     stack:[
@@ -464,7 +464,7 @@ test("Binder context", () => {
   expect(bindings[3].children[0].bindings[0].viewModelProperty.filteredValue).toBe("1");
   expect(bindings[3].children[0].bindings[0].viewModelProperty.indexes).toEqual([0]);
 
-  expect(bindings[3].children[1].constructor).toBe(ChildBinding);
+  expect(bindings[3].children[1].constructor).toBe(BindingManager);
   expect(bindings[3].children[1].context).toEqual({
     indexes:[1, 1],
     stack:[
@@ -499,7 +499,7 @@ test("Binder context", () => {
   expect(bindings[3].children[1].bindings[0].viewModelProperty.filteredValue).toBe("2");
   expect(bindings[3].children[1].bindings[0].viewModelProperty.indexes).toEqual([1]);
 
-  expect(bindings[3].children[2].constructor).toBe(ChildBinding);
+  expect(bindings[3].children[2].constructor).toBe(BindingManager);
   expect(bindings[3].children[2].context).toEqual({
     indexes:[1, 2],
     stack:[

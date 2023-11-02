@@ -54,7 +54,7 @@ export class Binding {
     return this.#contextParam;
   }
 
-  /** @type { ChildBinding[] } */
+  /** @type { BindingManager[] } */
   children = [];
 
   /** @type {boolean} */
@@ -157,15 +157,15 @@ export class Binding {
   }
 
   /**
-   * @param {ChildBinding} childBinding
+   * @param {BindingManager} bindingManager
    */
-  appendChild(childBinding) {
+  appendChild(bindingManager) {
     if (!this.expandable) utils.raise("not expandable");
     const lastChild = this.children[this.children.length - 1];
-    this.children.push(childBinding);
+    this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
-    parentNode.insertBefore(childBinding.fragment, beforeNode.nextSibling ?? null);
+    parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
   /**
@@ -187,7 +187,7 @@ export class Binding {
    */
   static addBindingKey(binding) {
     const setOfBindingByKey = Binding.setOfBindingByKeyByComponent.get(binding.component) ?? 
-    Binding.setOfBindingByKeyByComponent.set(component, new Map).get(component);
+      Binding.setOfBindingByKeyByComponent.set(binding.component, new Map).get(binding.component);
     const setOfBinding = setOfBindingByKey.get(binding.viewModelProperty.key) ??
       setOfBindingByKey.set(binding.viewModelProperty.key, new Set).get(binding.viewModelProperty.key);
     setOfBinding.add(binding);
@@ -197,7 +197,7 @@ export class Binding {
    * @param {Binding} binding 
    */
   static deleteBindingKey(binding) {
-    const setOfBinding = Binding.setOfBindingByKeyByComponent.get(component)?.get(binding.viewModelProperty.key) ?? new Set;
+    const setOfBinding = Binding.setOfBindingByKeyByComponent.get(binding.component)?.get(binding.viewModelProperty.key) ?? new Set;
     setOfBinding.delete(binding);
   }
 
@@ -212,7 +212,7 @@ export class Binding {
   }
 }
 
-export class ChildBinding {
+export class BindingManager {
   /** @type {Binding[]} */
   bindings = [];
 
@@ -280,11 +280,11 @@ export class ChildBinding {
     this.nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
       Binding.deleteBindingKey(binding);
-      binding.children.forEach(childBinding => childBinding.removeFromParent())
+      binding.children.forEach(bindingManager => bindingManager.removeFromParent())
     });
-    const childBindings = ChildBinding.bindingsByTemplate.get(this.template) ?? 
-      ChildBinding.bindingsByTemplate.set(this.template, []).get(this.template);
-    childBindings.push(this);
+    const bindingManagers = BindingManager.bindingsByTemplate.get(this.template) ?? 
+      BindingManager.bindingsByTemplate.set(this.template, []).get(this.template);
+    bindingManagers.push(this);
   }
 
   /**
@@ -352,15 +352,15 @@ export class ChildBinding {
         if (expandableBindings.has(binding)) return;
         binding.updateNode(setOfUpdatedViewModelPropertyKeys);
         //if (!binding.expandable) return;
-        for(const childBinding of binding.children) {
-          updateNode_(childBinding.bindings);
+        for(const bindingManager of binding.children) {
+          updateNode_(bindingManager.bindings);
         }
       }
     };
     updateNode_(this.bindings);
   }
 
-  /** @type {Map<HTMLTemplateElement,ChildBinding[]>} */
+  /** @type {Map<HTMLTemplateElement,BindingManager[]>} */
   static bindingsByTemplate = new Map;
 
   /**
@@ -370,10 +370,10 @@ export class ChildBinding {
    * @param {ContextInfo} context
    */
   static create(component, template, context) {
-    const childBindings = this.bindingsByTemplate.get(template) ?? [];
-    if (childBindings.length > 0) {
-      const childBinding = childBindings.pop();
-      childBinding.context = context;
+    const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
+    if (bindingManagers.length > 0) {
+      const bindingManager = bindingManagers.pop();
+      bindingManager.context = context;
       /**
        * 
        * @param {Binding[]} bindings 
@@ -383,16 +383,16 @@ export class ChildBinding {
         for(const binding of bindings) {
           binding.context = context;
           binding.applyToNode();
-          for(const childBinding of binding.children) {
-            setContext(childBinding.bindings, context);
+          for(const bindingManager of binding.children) {
+            setContext(bindingManager.bindings, context);
           }
         }
       };
-      setContext(childBinding.bindings, context);
+      setContext(bindingManager.bindings, context);
   
-      return childBinding;
+      return bindingManager;
     } else {
-      return new ChildBinding(component, template, context);
+      return new BindingManager(component, template, context);
     }
   }
 

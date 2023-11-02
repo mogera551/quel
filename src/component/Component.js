@@ -11,7 +11,7 @@ import { UpdateSlot } from "../thread/UpdateSlot.js";
 import { AttachShadow } from "./AttachShadow.js";
 import { inputFilters, outputFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
-import { ChildBinding } from "../binding/Binding.js";
+import { BindingManager } from "../binding/Binding.js";
 import { Context } from "../context/Context.js";
 
 /**
@@ -41,7 +41,7 @@ const mixInComponent = {
     this._viewModel = value;
   },
 
-  /** @type {ChildBinding} */
+  /** @type {BindingManager} */
   get rootBinding() {
     return this._rootBinding;
   },
@@ -226,7 +226,7 @@ const mixInComponent = {
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.rootBinding = ChildBinding.create(this, template, Context.create());
+      this.rootBinding = BindingManager.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
       return this.viewModel[Symbols.connectedCallback]();
     };

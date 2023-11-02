@@ -27,7 +27,7 @@
  */
 
 /**
- * @typedef {import("./binding/Binding.js").ChildBinding} ChildBinding
+ * @typedef {import("./binding/Binding.js").BindingManager} BindingManager
  */
 
 /**
@@ -86,7 +86,7 @@
 /**
  * @typedef {Object} ComponentBase
  * @property {ViewModel} viewModel
- * @property {ChildBinding} rootBinding
+ * @property {BindingManager} rootBinding
  * @property {Thread} thread
  * @property {UpdateSlot} updateSlot
  * @property {Object<string,any>} props

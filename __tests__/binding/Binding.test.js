@@ -1,4 +1,4 @@
-import { Binding, ChildBinding } from "../../src/binding/Binding";
+import { Binding, BindingManager } from "../../src/binding/Binding";
 import { ViewModelProperty } from "../../src/binding/viewModelProperty/ViewModelProperty";
 import { Branch } from "../../src/binding/nodeProperty/Branch";
 import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent";
@@ -204,11 +204,11 @@ test("Binding/Binding appendChild", async () => {
   {
     const template = document.createElement("template");
     template.innerHTML = "<div></div>";
-    const childBinding = new ChildBinding(component, template, context);
-    binding.appendChild(childBinding);
-    expect(childBinding.nodes.length > 0).toBe(true);
-    for(let i = 0, node = comment.nextSibling; i < childBinding.nodes.length; node = node.nextSibling, i++) {
-      expect(node).toBe(childBinding.nodes[i]);
+    const bindingManager = new BindingManager(component, template, context);
+    binding.appendChild(bindingManager);
+    expect(bindingManager.nodes.length > 0).toBe(true);
+    for(let i = 0, node = comment.nextSibling; i < bindingManager.nodes.length; node = node.nextSibling, i++) {
+      expect(node).toBe(bindingManager.nodes[i]);
     }
   }
 
@@ -238,15 +238,15 @@ test("Binding/Binding appendChild fail", async () => {
   {
     const template = document.createElement("template");
     template.innerHTML = "<div></div>";
-    const childBinding = new ChildBinding(component, template, context);
+    const bindingManager = new BindingManager(component, template, context);
     expect(() => {
-      binding.appendChild(childBinding);
+      binding.appendChild(bindingManager);
     }).toThrow("not expandable");
   }
 
 });
 
-test("Binding/ChildBinding", async () => {
+test("Binding/BindingManager", async () => {
   const html = `
   <div data-bind='message'></div>
   `;
@@ -268,13 +268,13 @@ test("Binding/ChildBinding", async () => {
   template.innerHTML = "<div data-bind='text'></div>";
 
   const context = { indexes:[], stack:[]};
-  const childBinding = new ChildBinding(component, template, context);
+  const bindingManager = new BindingManager(component, template, context);
   {
-    expect(childBinding.nodes.length > 0).toBe(true);
+    expect(bindingManager.nodes.length > 0).toBe(true);
     let haveDiv = false;
     let lastNode = null;
-    for(let i = 0; i < childBinding.nodes.length; i++) {
-      const node = childBinding.nodes[i];
+    for(let i = 0; i < bindingManager.nodes.length; i++) {
+      const node = bindingManager.nodes[i];
       if (node instanceof HTMLDivElement) {
         console.log(node.outerHTML);
         if (node.outerHTML === `<div data-bind="text"></div>`) {
@@ -284,11 +284,11 @@ test("Binding/ChildBinding", async () => {
       lastNode = node;
     }
     expect(haveDiv).toBe(true);
-    expect(childBinding.lastNode).toBe(lastNode);
-    expect(childBinding.fragment instanceof DocumentFragment).toBe(true);
-    expect(Array.from(childBinding.fragment.childNodes)).toEqual(childBinding.nodes);
-    expect(childBinding.context).toEqual(context);
-    expect(childBinding.template).toBe(template);
+    expect(bindingManager.lastNode).toBe(lastNode);
+    expect(bindingManager.fragment instanceof DocumentFragment).toBe(true);
+    expect(Array.from(bindingManager.fragment.childNodes)).toEqual(bindingManager.nodes);
+    expect(bindingManager.context).toEqual(context);
+    expect(bindingManager.template).toBe(template);
   }
 
 

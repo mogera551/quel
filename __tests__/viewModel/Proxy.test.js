@@ -1099,8 +1099,8 @@ test('Proxy event handler multi loop2 throw', async() => {
       } else {
         console.log(binding.context);
       }
-      for(const childBinding of binding.children) {
-        showBindings(childBinding.bindings);
+      for(const bindingManager of binding.children) {
+        showBindings(bindingManager.bindings);
       }
   
     }

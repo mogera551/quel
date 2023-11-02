@@ -2567,18 +2567,18 @@ class Repeat extends TemplateProperty {
   set value(value) {
     if (!Array.isArray(value)) utils.raise("value is not array");
     if (this.value < value.length) {
-      this.binding.children.forEach(childBinding => childBinding.applyToNode());
+      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
-        const childBinding = ChildBinding.create(this.binding.component, this.template, newContext);
-        this.binding.appendChild(childBinding);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
+        this.binding.appendChild(bindingManager);
       }
     } else if (this.value > value.length) {
-      const removeChildBindings = this.binding.children.splice(value.length);
-      this.binding.children.forEach(childBinding => childBinding.applyToNode());
-      removeChildBindings.forEach(childBinding => childBinding.removeFromParent());
+      const removeBindingManagers = this.binding.children.splice(value.length);
+      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
+      removeBindingManagers.forEach(bindingManager => bindingManager.removeFromParent());
     } else {
-      this.binding.children.forEach(childBinding => childBinding.applyToNode());
+      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
     }
   }
 
@@ -2643,11 +2643,11 @@ class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const childBinding = ChildBinding.create(this.binding.component, this.template, Context.clone(this.binding.context));
-        this.binding.appendChild(childBinding);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, Context.clone(this.binding.context));
+        this.binding.appendChild(bindingManager);
       } else {
-        const removeChildBindings = this.binding.children.splice(0, this.binding.children.length);
-        removeChildBindings.forEach(childBinding => childBinding.removeFromParent());
+        const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
+        removeBindingManagers.forEach(bindingManager => bindingManager.removeFromParent());
       }
     } else {
       this.binding.children.forEach(bindings => bindings.applyToNode());
@@ -3714,7 +3714,7 @@ class Binding {
     return this.#contextParam;
   }
 
-  /** @type { ChildBinding[] } */
+  /** @type { BindingManager[] } */
   children = [];
 
   /** @type {boolean} */
@@ -3744,6 +3744,7 @@ class Binding {
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
     this.context = context;
+    Binding.addBindingKey(this);
   }
 
   /**
@@ -3816,15 +3817,15 @@ class Binding {
   }
 
   /**
-   * @param {ChildBinding} childBinding
+   * @param {BindingManager} bindingManager
    */
-  appendChild(childBinding) {
+  appendChild(bindingManager) {
     if (!this.expandable) utils.raise("not expandable");
     const lastChild = this.children[this.children.length - 1];
-    this.children.push(childBinding);
+    this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
-    parentNode.insertBefore(childBinding.fragment, beforeNode.nextSibling ?? null);
+    parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
   /**
@@ -3837,9 +3838,41 @@ class Binding {
       this.applyToNode();
     }
   }
+
+  /** @type {Map<Component,Map<string,Set<Binding>>>} */
+  static setOfBindingByKeyByComponent = new Map();
+  /**
+   * 
+   * @param {Binding} binding 
+   */
+  static addBindingKey(binding) {
+    const setOfBindingByKey = Binding.setOfBindingByKeyByComponent.get(binding.component) ?? 
+      Binding.setOfBindingByKeyByComponent.set(binding.component, new Map).get(binding.component);
+    const setOfBinding = setOfBindingByKey.get(binding.viewModelProperty.key) ??
+      setOfBindingByKey.set(binding.viewModelProperty.key, new Set).get(binding.viewModelProperty.key);
+    setOfBinding.add(binding);
+  }
+  /**
+   * 
+   * @param {Binding} binding 
+   */
+  static deleteBindingKey(binding) {
+    const setOfBinding = Binding.setOfBindingByKeyByComponent.get(binding.component)?.get(binding.viewModelProperty.key) ?? new Set;
+    setOfBinding.delete(binding);
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @param {string} key 
+   * @returns {Set<Binding>}
+   */
+  static getSetOfBindingByKey(component, key) {
+    return Binding.setOfBindingByKeyByComponent.get(component)?.get(key) ?? new Set;
+  }
 }
 
-class ChildBinding {
+class BindingManager {
   /** @type {Binding[]} */
   bindings = [];
 
@@ -3905,10 +3938,13 @@ class ChildBinding {
    */
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
-    this.bindings.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
-    const childBindings = ChildBinding.bindingsByTemplate.get(this.template) ?? 
-      ChildBinding.bindingsByTemplate.set(this.template, []).get(this.template);
-    childBindings.push(this);
+    this.bindings.forEach(binding => {
+      Binding.deleteBindingKey(binding);
+      binding.children.forEach(bindingManager => bindingManager.removeFromParent());
+    });
+    const bindingManagers = BindingManager.bindingsByTemplate.get(this.template) ?? 
+      BindingManager.bindingsByTemplate.set(this.template, []).get(this.template);
+    bindingManagers.push(this);
   }
 
   /**
@@ -3976,15 +4012,15 @@ class ChildBinding {
         if (expandableBindings.has(binding)) return;
         binding.updateNode(setOfUpdatedViewModelPropertyKeys);
         //if (!binding.expandable) return;
-        for(const childBinding of binding.children) {
-          updateNode_(childBinding.bindings);
+        for(const bindingManager of binding.children) {
+          updateNode_(bindingManager.bindings);
         }
       }
     };
     updateNode_(this.bindings);
   }
 
-  /** @type {Map<HTMLTemplateElement,ChildBinding[]>} */
+  /** @type {Map<HTMLTemplateElement,BindingManager[]>} */
   static bindingsByTemplate = new Map;
 
   /**
@@ -3994,10 +4030,10 @@ class ChildBinding {
    * @param {ContextInfo} context
    */
   static create(component, template, context) {
-    const childBindings = this.bindingsByTemplate.get(template) ?? [];
-    if (childBindings.length > 0) {
-      const childBinding = childBindings.pop();
-      childBinding.context = context;
+    const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
+    if (bindingManagers.length > 0) {
+      const bindingManager = bindingManagers.pop();
+      bindingManager.context = context;
       /**
        * 
        * @param {Binding[]} bindings 
@@ -4007,18 +4043,19 @@ class ChildBinding {
         for(const binding of bindings) {
           binding.context = context;
           binding.applyToNode();
-          for(const childBinding of binding.children) {
-            setContext(childBinding.bindings, context);
+          for(const bindingManager of binding.children) {
+            setContext(bindingManager.bindings, context);
           }
         }
       };
-      setContext(childBinding.bindings, context);
+      setContext(bindingManager.bindings, context);
   
-      return childBinding;
+      return bindingManager;
     } else {
-      return new ChildBinding(component, template, context);
+      return new BindingManager(component, template, context);
     }
   }
+
 }
 
 /**
@@ -4048,7 +4085,7 @@ const mixInComponent = {
     this._viewModel = value;
   },
 
-  /** @type {ChildBinding} */
+  /** @type {BindingManager} */
   get rootBinding() {
     return this._rootBinding;
   },
@@ -4233,7 +4270,7 @@ const mixInComponent = {
     await this.viewModel[Symbols.initCallback]();
 
     const initProc = async () => {
-      this.rootBinding = ChildBinding.create(this, template, Context.create());
+      this.rootBinding = BindingManager.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
       return this.viewModel[Symbols.connectedCallback]();
     };

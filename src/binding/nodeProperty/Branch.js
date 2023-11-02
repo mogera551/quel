@@ -1,6 +1,6 @@
 import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
-import { ChildBinding } from "../Binding.js";
+import { BindingManager } from "../Binding.js";
 import { Context } from "../../context/Context.js";
 import { Templates } from "../../view/Templates.js";
 
@@ -13,11 +13,11 @@ export class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const childBinding = ChildBinding.create(this.binding.component, this.template, Context.clone(this.binding.context));
-        this.binding.appendChild(childBinding);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, Context.clone(this.binding.context));
+        this.binding.appendChild(bindingManager);
       } else {
-        const removeChildBindings = this.binding.children.splice(0, this.binding.children.length);
-        removeChildBindings.forEach(childBinding => childBinding.removeFromParent());
+        const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
+        removeBindingManagers.forEach(bindingManager => bindingManager.removeFromParent());
       }
     } else {
       this.binding.children.forEach(bindings => bindings.applyToNode());
