@@ -3744,7 +3744,6 @@ class Binding {
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
     this.context = context;
-    Binding.addBindingKey(this);
   }
 
   /**
@@ -3839,37 +3838,6 @@ class Binding {
     }
   }
 
-  /** @type {Map<Component,Map<string,Set<Binding>>>} */
-  static setOfBindingByKeyByComponent = new Map();
-  /**
-   * 
-   * @param {Binding} binding 
-   */
-  static addBindingKey(binding) {
-    const setOfBindingByKey = Binding.setOfBindingByKeyByComponent.get(binding.component) ?? 
-      Binding.setOfBindingByKeyByComponent.set(binding.component, new Map).get(binding.component);
-    const setOfBinding = setOfBindingByKey.get(binding.viewModelProperty.key) ??
-      setOfBindingByKey.set(binding.viewModelProperty.key, new Set).get(binding.viewModelProperty.key);
-    setOfBinding.add(binding);
-  }
-  /**
-   * 
-   * @param {Binding} binding 
-   */
-  static deleteBindingKey(binding) {
-    const setOfBinding = Binding.setOfBindingByKeyByComponent.get(binding.component)?.get(binding.viewModelProperty.key) ?? new Set;
-    setOfBinding.delete(binding);
-  }
-
-  /**
-   * 
-   * @param {Component} component 
-   * @param {string} key 
-   * @returns {Set<Binding>}
-   */
-  static getSetOfBindingByKey(component, key) {
-    return Binding.setOfBindingByKeyByComponent.get(component)?.get(key) ?? new Set;
-  }
 }
 
 class BindingManager {
@@ -3939,12 +3907,11 @@ class BindingManager {
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
-      Binding.deleteBindingKey(binding);
       binding.children.forEach(bindingManager => bindingManager.removeFromParent());
     });
-    const bindingManagers = BindingManager.bindingsByTemplate.get(this.template) ?? 
+    const recycleBindingManagers = BindingManager.bindingsByTemplate.get(this.template) ?? 
       BindingManager.bindingsByTemplate.set(this.template, []).get(this.template);
-    bindingManagers.push(this);
+    recycleBindingManagers.push(this);
   }
 
   /**
@@ -4011,7 +3978,6 @@ class BindingManager {
       for(const binding of bindings) {
         if (expandableBindings.has(binding)) return;
         binding.updateNode(setOfUpdatedViewModelPropertyKeys);
-        //if (!binding.expandable) return;
         for(const bindingManager of binding.children) {
           updateNode_(bindingManager.bindings);
         }
