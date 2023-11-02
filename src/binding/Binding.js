@@ -205,6 +205,7 @@ export class Binding {
    * 
    * @param {Component} component 
    * @param {string} key 
+   * @returns {Set<Binding>}
    */
   static getSetOfBindingByKey(component, key) {
     return Binding.setOfBindingByKeyByComponent.get(component)?.get(key) ?? new Set;
