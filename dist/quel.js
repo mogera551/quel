@@ -2717,21 +2717,14 @@ class ViewModelProperty {
   }
 
   /** @type {string} */
-  #indexesString;
   get indexesString() {
-    if (typeof this.#indexesString === "undefined") {
-      this.#indexesString = this.indexes.toString();
-    }
-    return this.#indexesString;
+    return this.indexes.toString();
   }
 
   /** @type {string} */
   #key;
   get key() {
-    if (typeof this.#key === "undefined") {
-      this.#key = this.name + "\t" + this.indexesString;
-    }
-    return this.#key;
+    return this.name + "\t" + this.indexesString;
   }
 
   /** @type {any} */
