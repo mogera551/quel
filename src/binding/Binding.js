@@ -84,6 +84,7 @@ export class Binding {
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
     this.context = context;
+    Binding.addBindingKey(this);
   }
 
   /**
@@ -177,6 +178,37 @@ export class Binding {
       this.applyToNode();
     }
   }
+
+  /** @type {Map<Component,Map<string,Set<Binding>>>} */
+  static setOfBindingByKeyByComponent = new Map();
+  /**
+   * 
+   * @param {Binding} binding 
+   */
+  static addBindingKey(binding) {
+    const setOfBindingByKey = Binding.setOfBindingByKeyByComponent.get(binding.component) ?? 
+    Binding.setOfBindingByKeyByComponent.set(component, new Map).get(component);
+    const setOfBinding = setOfBindingByKey.get(binding.viewModelProperty.key) ??
+      setOfBindingByKey.set(binding.viewModelProperty.key, new Set).get(binding.viewModelProperty.key);
+    setOfBinding.add(binding);
+  }
+  /**
+   * 
+   * @param {Binding} binding 
+   */
+  static deleteBindingKey(binding) {
+    const setOfBinding = Binding.setOfBindingByKeyByComponent.get(component)?.get(binding.viewModelProperty.key) ?? new Set;
+    setOfBinding.delete(binding);
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @param {string} key 
+   */
+  static getSetOfBindingByKey(component, key) {
+    return Binding.setOfBindingByKeyByComponent.get(component)?.get(key) ?? new Set;
+  }
 }
 
 export class ChildBinding {
@@ -245,7 +277,10 @@ export class ChildBinding {
    */
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
-    this.bindings.forEach(binding => binding.children.forEach(bindings => bindings.removeFromParent()));
+    this.bindings.forEach(binding => {
+      Binding.deleteBindingKey(binding);
+      binding.children.forEach(childBinding => childBinding.removeFromParent())
+    });
     const childBindings = ChildBinding.bindingsByTemplate.get(this.template) ?? 
       ChildBinding.bindingsByTemplate.set(this.template, []).get(this.template);
     childBindings.push(this);
@@ -359,4 +394,5 @@ export class ChildBinding {
       return new ChildBinding(component, template, context);
     }
   }
+
 }
