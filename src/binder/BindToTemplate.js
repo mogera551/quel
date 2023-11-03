@@ -13,15 +13,14 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise("not Co
 
 export class BindToTemplate {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがComment（Templateの置換）の場合）
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {Comment} */
     const comment = toComment(node);
     /** @type {string} */
@@ -33,7 +32,7 @@ export class BindToTemplate {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
+    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, undefined);
 
     return bindings;
   }

@@ -13,15 +13,14 @@ const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`
 
 export class BindToSVGElement {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがSVGElementの場合）
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {SVGElement} */
     const element = toSVGElement(node);
     /** @type {string} */
@@ -31,7 +30,7 @@ export class BindToSVGElement {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
+    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
 
     return bindings;
   }

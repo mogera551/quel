@@ -65,7 +65,7 @@ const parseExpression = (expr, defaultName) => {
 /**
  * data-bind属性値のパース
  * @param {string} text data-bind属性値
- * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+ * @param {string|undefined} defaultName prop:を省略時、デフォルトのプロパティ値
  * @returns {BindTextInfo[]}
  */
 const parseBindText = (text, defaultName) => {
@@ -88,7 +88,7 @@ export class Parser {
   /**
    * data-bind属性値のパースし、BindTextInfoの配列を返す
    * @param {string} text data-bind属性値
-   * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+   * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
    * @returns {BindTextInfo[]}
    */
   static parse(text, defaultName) {

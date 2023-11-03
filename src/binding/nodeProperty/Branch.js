@@ -13,7 +13,7 @@ export class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, Context.clone(this.binding.context));
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.context);
         this.binding.appendChild(bindingManager);
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);

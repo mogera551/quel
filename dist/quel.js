@@ -2424,6 +2424,87 @@ class AttachShadow {
   }
 }
 
+const SELECTOR = "[data-bind]";
+
+/**
+ * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
+ * ex.
+ * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
+ * => [1,3,7,2]
+ * @param {Node} node 
+ * @returns {number[]}
+ */
+const getNodeRoute = node => {
+  /** @type {number[]} */
+  let routeIndexes = [];
+  while(node.parentNode != null) {
+    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
+    node = node.parentNode;
+  }
+  return routeIndexes;
+};
+
+/**
+ * ルートのインデックス配列からノード取得する
+ * @param {Node} node 
+ * @param {number[]} routeIndexes 
+ * @returns {Node}
+ */
+const getNodeByRouteIndexes = (node, routeIndexes) => {
+  for(let i = 0; i < routeIndexes.length; i++) {
+    node = node.childNodes[routeIndexes[i]];
+  }
+  return node;
+};
+
+/**
+ * ノードがコメントかどうか
+ * @param {Node} node 
+ * @returns {boolean}
+ */
+const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
+
+/**
+ * コメントノードを取得
+ * @param {Node} node 
+ * @returns {Comment[]}
+ */
+const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
+
+class Selector {
+  /** @type {Map<HTMLTemplateElement, number[][]>} */
+  static listOfRouteIndexesByTemplate = new Map();
+
+  /**
+   * テンプレートからバインドする対象のノードを取得する
+   * @param {HTMLTemplateElement} template 
+   * @param {HTMLElement} rootElement
+   * @returns {Node[]}
+   */
+  static getTargetNodes(template, rootElement) {
+
+    /** @type {Node[]} */
+    let nodes;
+
+    if (this.listOfRouteIndexesByTemplate.has(template)) {
+      // キャッシュがある場合
+      // querySelectorAllを行わずにNodeの位置を特定できる
+      /** @type {number[][]} */
+      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
+      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
+    } else {
+      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
+      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+
+      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
+      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
+    }
+    return nodes;
+
+  }
+
+}
+
 class NodeProperty {
   /** @type {Node} */
   #node;
@@ -2643,7 +2724,7 @@ class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, Context.clone(this.binding.context));
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.context);
         this.binding.appendChild(bindingManager);
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
@@ -3179,16 +3260,15 @@ class Factory {
 
   /**
    * 
-   * @param {Component} component 
+   * @param {BindingManager} bindingManager
    * @param {Node} node 
    * @param {string} nodePropertyName 
    * @param {ViewModel} viewModel 
    * @param {string} viewModelPropertyName 
    * @param {Filter[]} filters 
-   * @param {ContextInfo} context 
    * @returns {Binding}
    */
-  static create(component, node, nodePropertyName, viewModel, viewModelPropertyName, filters, context) {
+  static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {
     /** @type {typeof NodeProperty|undefined} */
     let classOfNodeProperty;
     const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
@@ -3213,7 +3293,7 @@ class Factory {
     } while(false);
     /** @type {Binding} */
     const binding = new Binding(
-      component, context,
+      bindingManager,
       node, nodePropertyName, classOfNodeProperty, 
       viewModel, viewModelPropertyName, classOfViewModelProperty, 
       filters);
@@ -3287,7 +3367,7 @@ const parseExpression = (expr, defaultName) => {
 /**
  * data-bind属性値のパース
  * @param {string} text data-bind属性値
- * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+ * @param {string|undefined} defaultName prop:を省略時、デフォルトのプロパティ値
  * @returns {BindTextInfo[]}
  */
 const parseBindText = (text, defaultName) => {
@@ -3310,7 +3390,7 @@ class Parser {
   /**
    * data-bind属性値のパースし、BindTextInfoの配列を返す
    * @param {string} text data-bind属性値
-   * @param {string} defaultName prop:を省略時、デフォルトのプロパティ値
+   * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
    * @returns {BindTextInfo[]}
    */
   static parse(text, defaultName) {
@@ -3329,18 +3409,17 @@ class Parser {
 
 class BindToDom {
   /**
-   * data-bind属性値からバインド情報を生成
+   * data-bind属性のテキストからバインド情報を生成
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager 
    * @param {Node} node 
-   * @param {Component} component
    * @param {ViewModel} viewModel 
-   * @param {ContextInfo} context
    * @param {string} text data-bind属性値
-   * @param {string} defaultName
+   * @param {string|undefined} defaultName nodeのデフォルトプロパティ名
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static parseBindText = (node, component, viewModel, context, text, defaultName) => {
+  static parseBindText = (bindingManager, node, viewModel, text, defaultName) => {
     return Parser.parse(text, defaultName).map(info => 
-      Factory.create(component, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters, context));
+      Factory.create(bindingManager, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters));
   }
 
 }
@@ -3380,15 +3459,15 @@ const isInputableElement = node => node instanceof HTMLElement &&
 
 class BindToHTMLElement {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがHTMLElementの場合）
+   * デフォルトイベントハンドラの設定を行う
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {HTMLElement}  */
     const element = toHTMLElement(node);
     /** @type {string} */
@@ -3398,7 +3477,7 @@ class BindToHTMLElement {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
+    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
 
     // イベントハンドラ設定
     /** @type {boolean} デフォルトイベントを設定したかどうか */
@@ -3422,7 +3501,6 @@ class BindToHTMLElement {
 
     /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
     const setDefaultEventHandler = (binding) => {
-      console.log(binding);
       element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
     };
     if (radioBinding) {
@@ -3451,15 +3529,14 @@ const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`
 
 class BindToSVGElement {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがSVGElementの場合）
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {SVGElement} */
     const element = toSVGElement(node);
     /** @type {string} */
@@ -3469,7 +3546,7 @@ class BindToSVGElement {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
+    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
 
     return bindings;
   }
@@ -3487,16 +3564,16 @@ const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("not 
 
 class BindToText {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
+   * Commentノードをテキストノードに置換する
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     // コメントノードをテキストノードに差し替える
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {Comment} */
     const comment = toComment$1(node);
     /** @type {string} */
@@ -3507,7 +3584,7 @@ class BindToText {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
+    const bindings = BindToDom.parseBindText(bindingManager, textNode, viewModel, bindText, DEFAULT_PROPERTY);
 
     return bindings;
   }
@@ -3524,15 +3601,14 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise("not Co
 
 class BindToTemplate {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがComment（Templateの置換）の場合）
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {Comment} */
     const comment = toComment(node);
     /** @type {string} */
@@ -3544,7 +3620,7 @@ class BindToTemplate {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, undefined);
+    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, undefined);
 
     return bindings;
   }
@@ -3552,119 +3628,21 @@ class BindToTemplate {
 
 class Binder {
   /**
-   * バインドを実行する
+   * DOMのプロパティとViewModelプロパティのバインドを行う
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node[]} nodes
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(nodes, component, context) {
+  static bind(bindingManager, nodes) {
     return nodes.flatMap(node => 
-      (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(node, component, context) : 
-      (node instanceof HTMLElement) ? BindToHTMLElement.bind(node, component, context) :
-      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(node, component, context) : 
-      (node instanceof SVGElement) ? BindToSVGElement.bind(node, component, context) :
+      (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(bindingManager, node) : 
+      (node instanceof HTMLElement) ? BindToHTMLElement.bind(bindingManager, node) :
+      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(bindingManager, node) : 
+      (node instanceof SVGElement) ? BindToSVGElement.bind(bindingManager, node) :
       utils.raise(`unknown node type`)
     );
   }
 
-}
-
-const SELECTOR = "[data-bind]";
-
-/**
- * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
- * ex.
- * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
- * => [1,3,7,2]
- * @param {Node} node 
- * @returns {number[]}
- */
-const getNodeRoute = node => {
-  /** @type {number[]} */
-  let routeIndexes = [];
-  while(node.parentNode != null) {
-    routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
-    node = node.parentNode;
-  }
-  return routeIndexes;
-};
-
-/**
- * ルートのインデックス配列からノード取得する
- * @param {Node} node 
- * @param {number[]} routeIndexes 
- * @returns {Node}
- */
-const getNodeByRouteIndexes = (node, routeIndexes) => {
-  for(let i = 0; i < routeIndexes.length; i++) {
-    node = node.childNodes[routeIndexes[i]];
-  }
-  return node;
-};
-
-/**
- * ノードがコメントかどうか
- * @param {Node} node 
- * @returns {boolean}
- */
-const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
-
-/**
- * コメントノードを取得
- * @param {Node} node 
- * @returns {Comment[]}
- */
-const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
-
-class Selector {
-  /** @type {Map<HTMLTemplateElement, number[][]>} */
-  static listOfRouteIndexesByTemplate = new Map();
-
-  /**
-   * テンプレートからバインドする対象のノードを取得する
-   * @param {HTMLTemplateElement} template 
-   * @param {HTMLElement} rootElement
-   * @returns {Node[]}
-   */
-  static getTargetNodes(template, rootElement) {
-
-    /** @type {Node[]} */
-    let nodes;
-
-    if (this.listOfRouteIndexesByTemplate.has(template)) {
-      // キャッシュがある場合
-      // querySelectorAllを行わずにNodeの位置を特定できる
-      /** @type {number[][]} */
-      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
-    } else {
-      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
-      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-
-      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
-    }
-    return nodes;
-
-  }
-
-}
-
-class ViewTemplate {
-  /**
-   * 
-   * @param {Component} component 
-   * @param {HTMLTemplateElement} template
-   * @param {ContextInfo} context
-   * @returns {{bindings:import("../binding/Binding.js").Binding[], content:DocumentFragment}}
-   */
-  static render(component, template, context) {
-    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(template, content);
-    const bindings = Binder.bind(nodes, component, context);
-    return { bindings, content };
-  }
 }
 
 class Binding {
@@ -3675,6 +3653,12 @@ class Binding {
   #id;
   get id() {
     return this.#id;
+  }
+
+  /** @type {BindingManager} */
+  #bindingManager;
+  get bindingManager() {
+    return this.#bindingManager;
   }
 
   /** @type { import("./nodeProperty/NodeProperty.js").NodeProperty } */
@@ -3690,27 +3674,27 @@ class Binding {
   }
 
   /** @type {Component} */
-  #component;
   get component() {
-    return this.#component;
+    return this.bindingManager.component;
   }
 
   /** @type {ContextInfo} */
-  #context;
   get context() {
-    return this.#context;
-  }
-  set context(value) {
-    this.#context = value;
-    const propName = PropertyName.create(this.viewModelProperty.name);
-    if (propName.level > 0) {
-      this.#contextParam = value.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-    }
+    return this.bindingManager.context;
   }
 
-  /** @type {ContextParam} コンテキスト変数情報 */
+  /** @type {ContextParam | undefined | null} コンテキスト変数情報 */
   #contextParam;
+  /** @type {ContextParam | null} コンテキスト変数情報 */
   get contextParam() {
+    if (typeof this.#contextParam === "undefined") {
+      const propName = PropertyName.create(this.viewModelProperty.name);
+      if (propName.level > 0) {
+        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+      } else {
+        this.#contextParam = null;
+      }
+    }
     return this.#contextParam;
   }
 
@@ -3724,8 +3708,7 @@ class Binding {
 
   /**
    * 
-   * @param {Component} component 
-   * @param {ContextInfo} context
+   * @param {BindingManager} bindingManager 
    * @param {Node} node
    * @param {string} nodePropertyName
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
@@ -3734,16 +3717,15 @@ class Binding {
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
-  constructor(component, context,
+  constructor(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
     viewModel, viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
     this.#id = ++Binding.seq;
-    this.#component = component;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
-    this.context = context;
+    this.#bindingManager = bindingManager;
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, bindingManager.component.filters.out);
   }
 
   /**
@@ -3838,14 +3820,29 @@ class Binding {
     }
   }
 
+  changeContext() {
+    this.#contextParam = undefined;
+  }
 }
 
 class BindingManager {
+  /** @type { Component } */
+  #component;
+  get component() {
+    return this.#component;
+  }
+
   /** @type {Binding[]} */
-  bindings = [];
+  #bindings = [];
+  get bindings() {
+    return this.#bindings;
+  }
 
   /** @type {Node[]} */
-  nodes = [];
+  #nodes = [];
+  get nodes() {
+    return this.#nodes;
+  }
 
   get lastNode() {
     return this.nodes[this.nodes.length - 1];
@@ -3864,6 +3861,7 @@ class BindingManager {
   }
   set context(value) {
     this.#context = value;
+    this.bindings.forEach(binding => binding.changeContext());
   }
 
   /** @type {HTMLTemplateElement} */
@@ -3879,12 +3877,14 @@ class BindingManager {
    * @param {ContextInfo} context
    */
   constructor(component, template, context) {
-    const { bindings, content } = ViewTemplate.render(component, template, context);
-    this.bindings = bindings;
-    this.nodes = Array.from(content.childNodes);
-    this.#fragment = content;
     this.#context = context;
+    this.#component = component;
     this.#template = template;
+    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(template, content);
+    this.#bindings = Binder.bind(this, nodes);
+    this.#nodes = Array.from(content.childNodes);
+    this.#fragment = content;
   }
 
   /**
@@ -4007,14 +4007,13 @@ class BindingManager {
        */
       const setContext = (bindings, context) => {
         for(const binding of bindings) {
-          binding.context = context;
           binding.applyToNode();
           for(const bindingManager of binding.children) {
-            setContext(bindingManager.bindings, context);
+            setContext(bindingManager.bindings);
           }
         }
       };
-      setContext(bindingManager.bindings, context);
+      setContext(bindingManager.bindings);
   
       return bindingManager;
     } else {

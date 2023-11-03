@@ -39,15 +39,15 @@ const isInputableElement = node => node instanceof HTMLElement &&
 
 export class BindToHTMLElement {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがHTMLElementの場合）
+   * デフォルトイベントハンドラの設定を行う
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {HTMLElement}  */
     const element = toHTMLElement(node);
     /** @type {string} */
@@ -57,7 +57,7 @@ export class BindToHTMLElement {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(node, component, viewModel, context, bindText, defaultName);
+    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
 
     // イベントハンドラ設定
     /** @type {boolean} デフォルトイベントを設定したかどうか */
@@ -81,7 +81,6 @@ export class BindToHTMLElement {
 
     /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
     const setDefaultEventHandler = (binding) => {
-      console.log(binding);
       element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
     }
     if (radioBinding) {

@@ -1,6 +1,6 @@
 import "../types.js";
 import { utils } from "../utils.js";
-import { Binding } from "./Binding.js";
+import { Binding, BindingManager } from "./Binding.js";
 import { Repeat } from "./nodeProperty/Repeat.js";
 import { Branch } from "./nodeProperty/Branch.js";
 import { ViewModelProperty } from "./viewModelProperty/ViewModelProperty.js";
@@ -54,16 +54,15 @@ export class Factory {
 
   /**
    * 
-   * @param {Component} component 
+   * @param {BindingManager} bindingManager
    * @param {Node} node 
    * @param {string} nodePropertyName 
    * @param {ViewModel} viewModel 
    * @param {string} viewModelPropertyName 
    * @param {Filter[]} filters 
-   * @param {ContextInfo} context 
    * @returns {Binding}
    */
-  static create(component, node, nodePropertyName, viewModel, viewModelPropertyName, filters, context) {
+  static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {
     /** @type {typeof NodeProperty|undefined} */
     let classOfNodeProperty;
     const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
@@ -88,7 +87,7 @@ export class Factory {
     } while(false);
     /** @type {Binding} */
     const binding = new Binding(
-      component, context,
+      bindingManager,
       node, nodePropertyName, classOfNodeProperty, 
       viewModel, viewModelPropertyName, classOfViewModelProperty, 
       filters);

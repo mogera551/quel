@@ -1,11 +1,11 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { Templates } from "../view/Templates.js";
-import { ViewTemplate } from "../view/View.js";
 import { NodeUpdateData } from "../thread/NodeUpdator.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { utils } from "../utils.js";
+import { Selector } from "../binder/Selector.js";
+import { Binder } from "../binder/Binder.js";
 
 export class Binding {
   /** @type {number} */
@@ -15,6 +15,12 @@ export class Binding {
   #id;
   get id() {
     return this.#id;
+  }
+
+  /** @type {BindingManager} */
+  #bindingManager;
+  get bindingManager() {
+    return this.#bindingManager;
   }
 
   /** @type { import("./nodeProperty/NodeProperty.js").NodeProperty } */
@@ -30,27 +36,27 @@ export class Binding {
   }
 
   /** @type {Component} */
-  #component;
   get component() {
-    return this.#component;
+    return this.bindingManager.component;
   }
 
   /** @type {ContextInfo} */
-  #context;
   get context() {
-    return this.#context;
-  }
-  set context(value) {
-    this.#context = value;
-    const propName = PropertyName.create(this.viewModelProperty.name);
-    if (propName.level > 0) {
-      this.#contextParam = value.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-    }
+    return this.bindingManager.context;
   }
 
-  /** @type {ContextParam} コンテキスト変数情報 */
+  /** @type {ContextParam | undefined | null} コンテキスト変数情報 */
   #contextParam;
+  /** @type {ContextParam | null} コンテキスト変数情報 */
   get contextParam() {
+    if (typeof this.#contextParam === "undefined") {
+      const propName = PropertyName.create(this.viewModelProperty.name);
+      if (propName.level > 0) {
+        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+      } else {
+        this.#contextParam = null;
+      }
+    }
     return this.#contextParam;
   }
 
@@ -64,8 +70,7 @@ export class Binding {
 
   /**
    * 
-   * @param {Component} component 
-   * @param {ContextInfo} context
+   * @param {BindingManager} bindingManager 
    * @param {Node} node
    * @param {string} nodePropertyName
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
@@ -74,16 +79,15 @@ export class Binding {
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
-  constructor(component, context,
+  constructor(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
     viewModel, viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
     this.#id = ++Binding.seq;
-    this.#component = component;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, component.filters.in);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, component.filters.out);
-    this.context = context;
+    this.#bindingManager = bindingManager;
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, bindingManager.component.filters.out);
   }
 
   /**
@@ -178,14 +182,29 @@ export class Binding {
     }
   }
 
+  changeContext() {
+    this.#contextParam = undefined;
+  }
 }
 
 export class BindingManager {
+  /** @type { Component } */
+  #component;
+  get component() {
+    return this.#component;
+  }
+
   /** @type {Binding[]} */
-  bindings = [];
+  #bindings = [];
+  get bindings() {
+    return this.#bindings;
+  }
 
   /** @type {Node[]} */
-  nodes = [];
+  #nodes = [];
+  get nodes() {
+    return this.#nodes;
+  }
 
   get lastNode() {
     return this.nodes[this.nodes.length - 1];
@@ -204,6 +223,7 @@ export class BindingManager {
   }
   set context(value) {
     this.#context = value;
+    this.bindings.forEach(binding => binding.changeContext());
   }
 
   /** @type {HTMLTemplateElement} */
@@ -219,12 +239,14 @@ export class BindingManager {
    * @param {ContextInfo} context
    */
   constructor(component, template, context) {
-    const { bindings, content } = ViewTemplate.render(component, template, context);
-    this.bindings = bindings;
-    this.nodes = Array.from(content.childNodes);
-    this.#fragment = content;
     this.#context = context;
+    this.#component = component;
     this.#template = template;
+    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(template, content);
+    this.#bindings = Binder.bind(this, nodes);
+    this.#nodes = Array.from(content.childNodes);
+    this.#fragment = content;
   }
 
   /**
@@ -347,7 +369,6 @@ export class BindingManager {
        */
       const setContext = (bindings, context) => {
         for(const binding of bindings) {
-          binding.context = context;
           binding.applyToNode();
           for(const bindingManager of binding.children) {
             setContext(bindingManager.bindings, context);

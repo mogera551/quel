@@ -13,16 +13,16 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise("not Co
 
 export class BindToText {
   /**
-   * バインドを実行する
+   * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
+   * Commentノードをテキストノードに置換する
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager
    * @param {Node} node 
-   * @param {Component} component
-   * @param {ContextInfo} context
    * @returns {import("../binding/Binding.js").Binding[]}
    */
-  static bind(node, component, context) {
+  static bind(bindingManager, node) {
     // コメントノードをテキストノードに差し替える
     /** @type {ViewModel} */
-    const viewModel = component.viewModel;
+    const viewModel = bindingManager.component.viewModel;
     /** @type {Comment} */
     const comment = toComment(node);
     /** @type {string} */
@@ -33,7 +33,7 @@ export class BindToText {
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(textNode, component, viewModel, context, bindText, DEFAULT_PROPERTY);
+    const bindings = BindToDom.parseBindText(bindingManager, textNode, viewModel, bindText, DEFAULT_PROPERTY);
 
     return bindings;
   }
