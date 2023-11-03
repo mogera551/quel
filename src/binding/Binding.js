@@ -94,12 +94,15 @@ export class Binding {
    * Nodeへ値を反映する
    */
   applyToNode() {
-    const { component, nodeProperty, viewModelProperty } = this;
+    const { component, nodeProperty, viewModelProperty, expandable } = this;
     if (!nodeProperty.applicable) return;
-    const filteredViewModelValue = viewModelProperty.filteredValue;
-    if (nodeProperty.value !== (filteredViewModelValue ?? "")) {
+    const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
+    if (nodeProperty.value === filteredViewModelValue) return;
+    if (expandable) {
+      nodeProperty.value = filteredViewModelValue;
+    } else {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(nodeProperty.node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
-        nodeProperty.value = filteredViewModelValue ?? "";
+        nodeProperty.value = filteredViewModelValue;
       }));
     }
   }
@@ -110,8 +113,7 @@ export class Binding {
   applyToViewModel() {
     const { nodeProperty, viewModelProperty } = this;
     if (!viewModelProperty.applicable) return;
-    const filteredNodelValue = nodeProperty.filteredValue;
-    viewModelProperty.value = filteredNodelValue;
+    viewModelProperty.value = nodeProperty.filteredValue;
   }
 
   /**
@@ -338,8 +340,9 @@ export class BindingManager {
      */
     const updateNode_ = (bindings) => {
       for(const binding of bindings) {
-        if (expandableBindings.has(binding)) return;
-        binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+        if (!expandableBindings.has(binding)) {
+          binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+        }
         for(const bindingManager of binding.children) {
           updateNode_(bindingManager.bindings);
         }

@@ -223,12 +223,12 @@ const mixInComponent = {
     this.thread = new Thread;
 
 //    this.viewModel = createViewModel(this, ViewModel);
-    await this.viewModel[Symbols.initCallback]();
+//    await this.viewModel[Symbols.initCallback]();
+    await this.viewModel[Symbols.connectedCallback]();
 
     const initProc = async () => {
       this.rootBinding = BindingManager.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
-      return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
     updateSlot.addProcess(new ProcessData(initProc, this, []));

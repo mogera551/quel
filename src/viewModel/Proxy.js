@@ -7,7 +7,6 @@ import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { DependentProps } from "./DependentProps.js";
 import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
-const INIT_CALLBACK = "$initCallback";
 const WRITE_CALLBACK = "$writeCallback";
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
@@ -19,7 +18,6 @@ const callbackNameBySymbol = {
   [Symbols.connectedCallback]: CONNECTED_CALLBACK,
   [Symbols.disconnectedCallback]: DISCONNECTED_CALLBACK,
   [Symbols.writeCallback]: WRITE_CALLBACK,
-  [Symbols.initCallback]: INIT_CALLBACK,
 };
 /**
  * @type {Set<Symbol>}
@@ -28,7 +26,6 @@ const setOfAllCallbacks = new Set([
   Symbols.connectedCallback,
   Symbols.disconnectedCallback,
   Symbols.writeCallback,
-  Symbols.initCallback,
 ]);
 
 /**
@@ -70,7 +67,6 @@ const setOfProperties = new Set([
  * 通知機能
  *   ViewModelのプロパティを更新した場合、関連するプロパティの更新通知を発行する
  * コンポーネントイベントハンドラ呼び出し
- *   初期化：$initCallback
  *   プロパティ書き込み：$writeCallback
  *   DOMツリー追加時：$connectedCallback
  *   DOMツリー削除時：$disconnectedCallback
@@ -339,7 +335,7 @@ export class ViewModelHandler extends Handler {
     if (setOfAllCallbacks.has(prop)) {
       const callbackName = callbackNameBySymbol[prop];
       const applyCallback = (...args) => async () => Reflect.apply(target[callbackName], receiver, args);
-      if (prop === Symbols.initCallback) {
+      if (prop === Symbols.connectedCallback) {
         return (callbackName in target) ? (...args) => applyCallback(...args)() : () => {};
       } else {
         return (callbackName in target) ? (...args) => this.#addProcess(applyCallback(...args), receiver, []) : () => {};

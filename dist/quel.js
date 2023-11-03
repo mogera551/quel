@@ -730,7 +730,6 @@ class DependentProps {
 
 }
 
-const INIT_CALLBACK = "$initCallback";
 const WRITE_CALLBACK = "$writeCallback";
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
@@ -742,7 +741,6 @@ const callbackNameBySymbol = {
   [Symbols.connectedCallback]: CONNECTED_CALLBACK,
   [Symbols.disconnectedCallback]: DISCONNECTED_CALLBACK,
   [Symbols.writeCallback]: WRITE_CALLBACK,
-  [Symbols.initCallback]: INIT_CALLBACK,
 };
 /**
  * @type {Set<Symbol>}
@@ -751,7 +749,6 @@ const setOfAllCallbacks = new Set([
   Symbols.connectedCallback,
   Symbols.disconnectedCallback,
   Symbols.writeCallback,
-  Symbols.initCallback,
 ]);
 
 /**
@@ -793,7 +790,6 @@ const setOfProperties = new Set([
  * 通知機能
  *   ViewModelのプロパティを更新した場合、関連するプロパティの更新通知を発行する
  * コンポーネントイベントハンドラ呼び出し
- *   初期化：$initCallback
  *   プロパティ書き込み：$writeCallback
  *   DOMツリー追加時：$connectedCallback
  *   DOMツリー削除時：$disconnectedCallback
@@ -1062,7 +1058,7 @@ class ViewModelHandler extends Handler$2 {
     if (setOfAllCallbacks.has(prop)) {
       const callbackName = callbackNameBySymbol[prop];
       const applyCallback = (...args) => async () => Reflect.apply(target[callbackName], receiver, args);
-      if (prop === Symbols.initCallback) {
+      if (prop === Symbols.connectedCallback) {
         return (callbackName in target) ? (...args) => applyCallback(...args)() : () => {};
       } else {
         return (callbackName in target) ? (...args) => this.#addProcess(applyCallback(...args), receiver, []) : () => {};
@@ -2153,9 +2149,9 @@ class NodeUpdator {
    */
   reorder(updates) {
     updates.sort((update1, update2) => {
-      if (update1.node instanceof HTMLTemplateElement && update2.node instanceof HTMLTemplateElement) return 0;
-      if (update2.node instanceof HTMLTemplateElement) return 1;
-      if (update1.node instanceof HTMLTemplateElement) return -1;
+      if (update1.node instanceof Comment && update2.node instanceof Comment) return 0;
+      if (update2.node instanceof Comment) return 1;
+      if (update1.node instanceof Comment) return -1;
       if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
       if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
       if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;
@@ -3732,12 +3728,15 @@ class Binding {
    * Nodeへ値を反映する
    */
   applyToNode() {
-    const { component, nodeProperty, viewModelProperty } = this;
+    const { component, nodeProperty, viewModelProperty, expandable } = this;
     if (!nodeProperty.applicable) return;
-    const filteredViewModelValue = viewModelProperty.filteredValue;
-    if (nodeProperty.value !== (filteredViewModelValue ?? "")) {
+    const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
+    if (nodeProperty.value === filteredViewModelValue) return;
+    if (expandable) {
+      nodeProperty.value = filteredViewModelValue;
+    } else {
       component.updateSlot.addNodeUpdate(new NodeUpdateData(nodeProperty.node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
-        nodeProperty.value = filteredViewModelValue ?? "";
+        nodeProperty.value = filteredViewModelValue;
       }));
     }
   }
@@ -3748,8 +3747,7 @@ class Binding {
   applyToViewModel() {
     const { nodeProperty, viewModelProperty } = this;
     if (!viewModelProperty.applicable) return;
-    const filteredNodelValue = nodeProperty.filteredValue;
-    viewModelProperty.value = filteredNodelValue;
+    viewModelProperty.value = nodeProperty.filteredValue;
   }
 
   /**
@@ -3976,8 +3974,9 @@ class BindingManager {
      */
     const updateNode_ = (bindings) => {
       for(const binding of bindings) {
-        if (expandableBindings.has(binding)) return;
-        binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+        if (!expandableBindings.has(binding)) {
+          binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+        }
         for(const bindingManager of binding.children) {
           updateNode_(bindingManager.bindings);
         }
@@ -4232,12 +4231,12 @@ const mixInComponent = {
     this.thread = new Thread;
 
 //    this.viewModel = createViewModel(this, ViewModel);
-    await this.viewModel[Symbols.initCallback]();
+//    await this.viewModel[Symbols.initCallback]();
+    await this.viewModel[Symbols.connectedCallback]();
 
     const initProc = async () => {
       this.rootBinding = BindingManager.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
-      return this.viewModel[Symbols.connectedCallback]();
     };
     const updateSlot = this.updateSlot;
     updateSlot.addProcess(new ProcessData(initProc, this, []));

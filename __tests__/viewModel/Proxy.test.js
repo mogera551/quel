@@ -142,14 +142,10 @@ test('Handler callback', () => {
       }
     }
   };
-  let initCallbacked = false;
   let connectedCallbacked = false;
   let disconnectedCallbacked = false;
   let writeCallbacked = undefined;
   class targetClass {
-    $initCallback() {
-      initCallbacked = true;
-    }
     $connectedCallback() {
       connectedCallbacked = true;
     }
@@ -163,12 +159,6 @@ test('Handler callback', () => {
   const target = new targetClass;
   const handler = new ViewModelHandler(component, [], [], []);
   const proxy = new Proxy(target, handler);
-
-  calledAddProcess = false;
-  expect(typeof proxy[Symbols.initCallback]).toBe("function");
-  proxy[Symbols.initCallback]();
-  expect(initCallbacked).toBe(true);
-  expect(calledAddProcess).toBe(false);
 
   calledAddProcess = false;
   expect(typeof proxy[Symbols.connectedCallback]).toBe("function");
@@ -191,7 +181,6 @@ test('Handler callback', () => {
 });
 
 test('Handler callback', () => {
-  let initCallbacked = false;
   let connectedCallbacked = false;
   let disconnectedCallbacked = false;
   let writeCallbacked = undefined;
@@ -201,12 +190,6 @@ test('Handler callback', () => {
   const handler = new ViewModelHandler(component, [], []);
   const proxy = new Proxy(target, handler);
   component.viewModel = proxy;
-
-  calledAddProcess = false;
-  expect(typeof proxy[Symbols.initCallback]).toBe("function");
-  proxy[Symbols.initCallback]();
-  expect(initCallbacked).toBe(false);
-  expect(calledAddProcess).toBe(false);
 
   calledAddProcess = false;
   expect(typeof proxy[Symbols.connectedCallback]).toBe("function");

@@ -57,9 +57,9 @@ export class NodeUpdator {
    */
   reorder(updates) {
     updates.sort((update1, update2) => {
-      if (update1.node instanceof HTMLTemplateElement && update2.node instanceof HTMLTemplateElement) return 0;
-      if (update2.node instanceof HTMLTemplateElement) return 1;
-      if (update1.node instanceof HTMLTemplateElement) return -1;
+      if (update1.node instanceof Comment && update2.node instanceof Comment) return 0;
+      if (update2.node instanceof Comment) return 1;
+      if (update1.node instanceof Comment) return -1;
       if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
       if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
       if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;

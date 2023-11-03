@@ -11,7 +11,7 @@ const html = `
 class ViewModel {
   commits = [];
 
-  async $initCallback() {
+  async $connectedCallback() {
     const response = await fetch("https://api.github.com/repos/mogera551/quel/commits?per_page=3&sha=main");
     this.commits = await response.json();
   }
