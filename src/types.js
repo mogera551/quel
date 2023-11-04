@@ -104,7 +104,7 @@
  * @property {()=>void} build
  * @property {()=>void} connectedCallback
  * @property {()=>void} disconnectedCallback
- * @property {(setOfViewModelPropertyKeys:Set<String>)=>void} applyToNode
+ * @property {(setOfViewModelPropertyKeys:Set<String>)=>void} updateNode
  * @property {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}} filters
  * @property {ViewModel.constructor} Component.ViewModel
  * @property {HTMLTemplateElement} Component.template

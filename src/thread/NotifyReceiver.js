@@ -36,7 +36,7 @@ export class NotifyReceiver {
         const setOfUpdatedViewModelPropertyKeys = new Set(
           notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
         );
-        this.#component.applyToNode(setOfUpdatedViewModelPropertyKeys);
+        this.#component.updateNode(setOfUpdatedViewModelPropertyKeys);
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNotifyReceive);

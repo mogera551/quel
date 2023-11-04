@@ -1,3 +1,5 @@
+import { Symbols } from "../../Symbols.js";
+import { ProcessData } from "../../thread/ViewModelUpdator.js";
 import { utils } from "../../utils.js";
 import { ElementProperty } from "./ElementProperty.js";
 
@@ -30,7 +32,29 @@ export class ElementEvent extends ElementProperty {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.element.addEventListener(this.eventType, this.binding.eventHandler);
+    this.element.addEventListener(this.eventType, event => this.eventHandler(event));
   }
 
+  /**
+   * 
+   * @param {Event} event
+   */
+  createProcessData(event) {
+    const { viewModelProperty, context } = this.binding;
+    return new ProcessData(
+      viewModelProperty.viewModel[Symbols.directlyCall], 
+      viewModelProperty.viewModel, 
+      [viewModelProperty.name, context, event]
+    );
+  }
+
+  /**
+   * 
+   * @param {Event} event
+   */
+  eventHandler(event) {
+    event.stopPropagation();
+    const processData = this.createProcessData(event);
+    this.binding.component.updateSlot.addProcess(processData);
+  }
 }

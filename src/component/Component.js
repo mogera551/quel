@@ -222,8 +222,6 @@ const mixInComponent = {
     }
     this.thread = new Thread;
 
-//    this.viewModel = createViewModel(this, ViewModel);
-//    await this.viewModel[Symbols.initCallback]();
     await this.viewModel[Symbols.connectedCallback]();
 
     const initProc = async () => {
@@ -267,7 +265,7 @@ const mixInComponent = {
    * 
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
-  applyToNode(setOfViewModelPropertyKeys) {
+  updateNode(setOfViewModelPropertyKeys) {
     this.rootBinding?.updateNode(setOfViewModelPropertyKeys);
   },
 }

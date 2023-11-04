@@ -2218,7 +2218,7 @@ class NotifyReceiver {
         const setOfUpdatedViewModelPropertyKeys = new Set(
           notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
         );
-        this.#component.applyToNode(setOfUpdatedViewModelPropertyKeys);
+        this.#component.updateNode(setOfUpdatedViewModelPropertyKeys);
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNotifyReceive);
@@ -3086,9 +3086,31 @@ class ElementEvent extends ElementProperty {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.element.addEventListener(this.eventType, this.binding.eventHandler);
+    this.element.addEventListener(this.eventType, event => this.eventHandler(event));
   }
 
+  /**
+   * 
+   * @param {Event} event
+   */
+  createProcessData(event) {
+    const { viewModelProperty, context } = this.binding;
+    return new ProcessData(
+      viewModelProperty.viewModel[Symbols.directlyCall], 
+      viewModelProperty.viewModel, 
+      [viewModelProperty.name, context, event]
+    );
+  }
+
+  /**
+   * 
+   * @param {Event} event
+   */
+  eventHandler(event) {
+    event.stopPropagation();
+    const processData = this.createProcessData(event);
+    this.binding.component.updateSlot.addProcess(processData);
+  }
 }
 
 class ElementClass extends ElementProperty {
@@ -3732,6 +3754,11 @@ class Binding {
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.value === filteredViewModelValue) return;
+    /**
+     * 展開可能（ifもしくはrepeat）な場合、変更スロットに入れずに展開する
+     * 展開可能でない場合、変更スロットに変更処理を入れる
+     * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
+     */
     if (expandable) {
       nodeProperty.value = filteredViewModelValue;
     } else {
@@ -3748,26 +3775,6 @@ class Binding {
     const { nodeProperty, viewModelProperty } = this;
     if (!viewModelProperty.applicable) return;
     viewModelProperty.value = nodeProperty.filteredValue;
-  }
-
-  /**
-   * 
-   * @param {Event} event 
-   */
-  execEventHandler(event) {
-    const {component, viewModelProperty, context} = this;
-    event.stopPropagation();
-    const process = new ProcessData(
-      viewModelProperty.viewModel[Symbols.directlyCall], 
-      viewModelProperty.viewModel, 
-      [viewModelProperty.name, context, event]
-    );
-    component.updateSlot.addProcess(process);
-  }
-
-  /** @type {(event:Event)=>void} */
-  get eventHandler() {
-    return (binding => event => binding.execEventHandler(event))(this);
   }
 
   /**
@@ -3819,6 +3826,10 @@ class Binding {
     }
   }
 
+  /**
+   * コンテキスト変更処理
+   * #contextParamをクリアする
+   */
   changeContext() {
     this.#contextParam = undefined;
   }
@@ -3963,7 +3974,6 @@ class BindingManager {
    * @param {ContextInfo} context
    */
   static create(component, template, context) {
-    console.log("BindingManager.create");
     const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
     if (bindingManagers.length > 0) {
       const bindingManager = bindingManagers.pop();
@@ -4199,8 +4209,6 @@ const mixInComponent = {
     }
     this.thread = new Thread;
 
-//    this.viewModel = createViewModel(this, ViewModel);
-//    await this.viewModel[Symbols.initCallback]();
     await this.viewModel[Symbols.connectedCallback]();
 
     const initProc = async () => {
@@ -4244,7 +4252,7 @@ const mixInComponent = {
    * 
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
-  applyToNode(setOfViewModelPropertyKeys) {
+  updateNode(setOfViewModelPropertyKeys) {
     this.rootBinding?.updateNode(setOfViewModelPropertyKeys);
   },
 };
