@@ -3799,6 +3799,7 @@ class Binding {
    * @param {BindingManager} bindingManager
    */
   appendChild(bindingManager) {
+    console.log("appendChild");
     if (!this.expandable) utils.raise("not expandable");
     const lastChild = this.children[this.children.length - 1];
     this.children.push(bindingManager);
@@ -3905,53 +3906,12 @@ class BindingManager {
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
-      binding.children.forEach(bindingManager => bindingManager.removeFromParent());
+      const removeBindManagers = binding.children.splice(0);
+      removeBindManagers.forEach(bindingManager => bindingManager.removeFromParent());
     });
     const recycleBindingManagers = BindingManager.bindingsByTemplate.get(this.template) ?? 
       BindingManager.bindingsByTemplate.set(this.template, []).get(this.template);
     recycleBindingManagers.push(this);
-  }
-
-  /**
-   * expandableバインドをバインドツリーから取得
-   * @param {Set<string>} setOfKey 
-   * @returns {Binding[]}
-   */
-  getExpandableBindings(setOfKey) {
-    /** @type {Binding[]} */
-    const bindings = this.bindings;
-    const expandableBindings = [];
-    const stack = [ { bindings, children:null, index:-1 } ];
-    while(stack.length > 0) {
-      const info = stack[stack.length - 1];
-      info.index++;
-      if (info.bindings) {
-        if (info.index < info.bindings.length) {
-          const binding = info.bindings[info.index];
-          if (binding.expandable) {
-            if (setOfKey.has(binding.viewModelProperty.key)) {
-              expandableBindings.push(binding);
-            } else {
-              if (binding.children.length > 0) {
-                stack.push({ bindings:null, children:binding.children, index:-1 });
-              }
-            }
-          }
-        } else {
-          stack.pop();
-        }
-      } else {
-        if (info.index < info.children.length) {
-          const bindings = info.children[info.index].bindings;
-          if (bindings.length > 0) {
-            stack.push({ bindings:bindings, children:null, index:-1 });
-          }
-        } else {
-          stack.pop();
-        }
-      }
-    }
-    return expandableBindings;
   }
 
   /**
@@ -3961,12 +3921,20 @@ class BindingManager {
   updateNode(setOfUpdatedViewModelPropertyKeys) {
     // templateを先に展開する
     /**
-     * @type {Set<Binding>}
+     * 
+     * @param {Binding[]} bindings 
      */
-    const expandableBindings = new Set(this.getExpandableBindings(setOfUpdatedViewModelPropertyKeys));
-    for(const binding of expandableBindings) {
-      binding.updateNode(setOfUpdatedViewModelPropertyKeys);
-    }
+    const expandableUpdateNode_ = (bindings) => {
+      for(const binding of bindings) {
+        if (binding.expandable && setOfUpdatedViewModelPropertyKeys.has(binding.viewModelProperty.key)) {
+          binding.updateNode(setOfUpdatedViewModelPropertyKeys);
+        }
+        for(const bindingManager of binding.children) {
+          expandableUpdateNode_(bindingManager.bindings);
+        }
+      }
+    };
+    expandableUpdateNode_(this.bindings);
 
     /**
      * 
@@ -3974,7 +3942,7 @@ class BindingManager {
      */
     const updateNode_ = (bindings) => {
       for(const binding of bindings) {
-        if (!expandableBindings.has(binding)) {
+        if (!binding.expandable) {
           binding.updateNode(setOfUpdatedViewModelPropertyKeys);
         }
         for(const bindingManager of binding.children) {
@@ -3995,6 +3963,7 @@ class BindingManager {
    * @param {ContextInfo} context
    */
   static create(component, template, context) {
+    console.log("BindingManager.create");
     const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
     if (bindingManagers.length > 0) {
       const bindingManager = bindingManagers.pop();
