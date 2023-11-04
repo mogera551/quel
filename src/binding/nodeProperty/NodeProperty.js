@@ -57,8 +57,13 @@ export class NodeProperty {
     return this.#binding;
   }
 
-  /** @type {Boolean} */
+  /** @type {boolean} */
   get expandable() {
+    return false;
+  }
+
+  /** @type {boolean} */
+  get isSelectValue() {
     return false;
   }
 

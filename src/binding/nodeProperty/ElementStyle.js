@@ -1,7 +1,7 @@
 import { utils } from "../../utils.js";
-import { ElementProperty } from "./ElementProperty.js";
+import { ElementBase } from "./ElementBase.js";
 
-export class ElementStyle extends ElementProperty {
+export class ElementStyle extends ElementBase {
   /** @type {HTMLElement} */
   get htmlElement() {
     return this.node;

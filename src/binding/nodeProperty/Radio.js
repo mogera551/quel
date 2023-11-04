@@ -1,9 +1,9 @@
-import { ElementProperty } from "./ElementProperty.js";
 import { MultiValue } from "./MultiValue.js";
 import { Filter } from "../../filter/Filter.js";
 import { utils } from "../../utils.js";
+import { ElementBase } from "./ElementBase.js";
 
-export class Radio extends ElementProperty {
+export class Radio extends ElementBase {
   /** @type {HTMLInputElement} */
   get inputElement() {
     return this.node;

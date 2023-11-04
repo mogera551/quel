@@ -1,9 +1,9 @@
 import { PropertyName } from "../../../modules/dot-notation/dot-notation";
 import { Symbols } from "../../Symbols";
 import { utils } from "../../utils";
-import { ElementProperty } from "./ElementProperty";
+import { ElementBase } from "./ElementBase.js";
 
-export class ComponentProperty extends ElementProperty {
+export class ComponentProperty extends ElementBase {
   /** @type {string} */
   get propName() {
     return this.nameElements[1];

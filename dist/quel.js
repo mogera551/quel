@@ -2093,35 +2093,26 @@ class Thread {
 }
 
 class NodeUpdateData {
-  /** @type {Node} */
-  node;
-
-  /** @type {string} */
-  property;
-
-  /** @type {string} */
-  viewModelProperty;
-
-  /** @type {any} */
-  value;
+  /** @type {import("../binding/Binding.js").Binding} */
+  #binding;
+  get binding() {
+    return this.#binding;
+  }
 
   /** @type {()=>void} */
-  updateFunc;
+  #updateFunc;
+  get updateFunc() {
+    return this.#updateFunc;
+  }
 
   /**
    * 
-   * @param {Node} node 
-   * @param {string} property 
-   * @param {string} viewModelProperty 
-   * @param {any} value 
+   * @param {import("../binding/Binding.js").Binding} binding 
    * @param {()=>void} updateFunc 
    */
-  constructor(node, property, viewModelProperty, value, updateFunc) {
-    this.node = node;
-    this.property = property;
-    this.viewModelProperty = viewModelProperty;
-    this.value = value;
-    this.updateFunc = updateFunc;
+  constructor(binding, updateFunc) {
+    this.#binding = binding;
+    this.#updateFunc = updateFunc;
   }
 }
 
@@ -2141,20 +2132,17 @@ class NodeUpdator {
 
   /**
    * 更新する順番を並び替える
-   * HTMLTemplateElementが前
-   * その次がHTMLSelectElementでないもの
-   * 最後がHTMLSelectElement
+   * ※optionを更新する前に、selectを更新すると、値が設定されない
+   * 1.HTMLSelectElementかつvalueプロパティ、でないもの
+   * 2.HTMLSelectElementかつvalueプロパティ
    * @param {NodeUpdateData[]} updates 
    * @returns {NodeUpdateData[]}
    */
   reorder(updates) {
     updates.sort((update1, update2) => {
-      if (update1.node instanceof Comment && update2.node instanceof Comment) return 0;
-      if (update2.node instanceof Comment) return 1;
-      if (update1.node instanceof Comment) return -1;
-      if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
-      if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
-      if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;
+      if (update1.binding.isSelectValue && update2.binding.isSelectValue) return 0;
+      if (update1.binding.isSelectValue) return 1;
+      if (update2.binding.isSelectValue) return -1;
       return 0;
     });
     return updates;
@@ -2556,8 +2544,13 @@ class NodeProperty {
     return this.#binding;
   }
 
-  /** @type {Boolean} */
+  /** @type {boolean} */
   get expandable() {
+    return false;
+  }
+
+  /** @type {boolean} */
+  get isSelectValue() {
     return false;
   }
 
@@ -2636,6 +2629,13 @@ class TemplateProperty extends NodeProperty {
   }
 }
 
+/**
+ * 
+ * @param {BindingManager} bindingManager 
+ * @returns 
+ */
+const applyToNodeFunc = bindingManager => bindingManager.applyToNode();
+
 class Repeat extends TemplateProperty {
   /** @type {number} */
   get value() {
@@ -2644,7 +2644,7 @@ class Repeat extends TemplateProperty {
   set value(value) {
     if (!Array.isArray(value)) utils.raise("value is not array");
     if (this.value < value.length) {
-      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
+      this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
         const bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
@@ -2652,10 +2652,10 @@ class Repeat extends TemplateProperty {
       }
     } else if (this.value > value.length) {
       const removeBindingManagers = this.binding.children.splice(value.length);
-      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
+      this.binding.children.forEach(applyToNodeFunc);
       removeBindingManagers.forEach(bindingManager => bindingManager.removeFromParent());
     } else {
-      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
+      this.binding.children.forEach(applyToNodeFunc);
     }
   }
 
@@ -2673,45 +2673,12 @@ class Repeat extends TemplateProperty {
   }
 }
 
-class Context {
-
-  /**
-   * 空のコンテクスト情報を生成
-   * @returns {ContextInfo}
-   */
-  static create() {
-    return {
-      indexes: [],
-      stack: [],
-    }
-  }
-
-  /**
-   * コンテクスト情報をクローン
-   * @param {ContextInfo} src 
-   * @returns {ContextInfo}
-   */
-  static clone(src) {
-    /**
-     * @type {ContextInfo}
-     */
-    const dst = this.create();
-    dst.indexes = src.indexes.slice();
-    for(const srcParam of src.stack) {
-      /**
-       * @type {ContextParam}
-       */
-      const dstParam = {};
-      dstParam.indexes = srcParam.indexes.slice();
-      dstParam.pos = srcParam.pos;
-      dstParam.propName = srcParam.propName;
-      dst.stack.push(dstParam);
-    }
-    return dst;
-  }
-}
-
 class Branch extends TemplateProperty {
+  /** @type {boolean} */
+  get isSelectValue() {
+    return false;
+  }
+
   /** @type {boolean} */
   get value() {
     return this.binding.children.length > 0;
@@ -2767,6 +2734,44 @@ class MultiValue {
   constructor(value, enabled) {
     this.#value = value;
     this.#enabled = enabled;
+  }
+}
+
+class Context {
+
+  /**
+   * 空のコンテクスト情報を生成
+   * @returns {ContextInfo}
+   */
+  static create() {
+    return {
+      indexes: [],
+      stack: [],
+    }
+  }
+
+  /**
+   * コンテクスト情報をクローン
+   * @param {ContextInfo} src 
+   * @returns {ContextInfo}
+   */
+  static clone(src) {
+    /**
+     * @type {ContextInfo}
+     */
+    const dst = this.create();
+    dst.indexes = src.indexes.slice();
+    for(const srcParam of src.stack) {
+      /**
+       * @type {ContextParam}
+       */
+      const dstParam = {};
+      dstParam.indexes = srcParam.indexes.slice();
+      dstParam.pos = srcParam.pos;
+      dstParam.propName = srcParam.propName;
+      dst.stack.push(dstParam);
+    }
+    return dst;
   }
 }
 
@@ -2943,7 +2948,7 @@ class ContextIndex extends ViewModelProperty {
   }
 }
 
-class ElementProperty extends NodeProperty {
+class ElementBase extends NodeProperty {
   /** @type {Element} */
   get element() {
     return this.node;
@@ -2963,7 +2968,7 @@ class ElementProperty extends NodeProperty {
   }
 }
 
-class ElementClassName extends ElementProperty {
+class ElementClassName extends ElementBase {
   /** @type {any} */
   get value() {
     return this.element.className.length > 0 ? this.element.className.split(" ") : [];
@@ -2973,7 +2978,12 @@ class ElementClassName extends ElementProperty {
   }
 }
 
-class Checkbox extends ElementProperty {
+class Checkbox extends ElementBase {
+  /** @type {boolean} */
+  get isSelectValue() {
+    return false;
+  }
+
   /** @type {HTMLInputElement} */
   get inputElement() {
     return this.node;
@@ -3016,7 +3026,7 @@ class Checkbox extends ElementProperty {
   }
 }
 
-class Radio extends ElementProperty {
+class Radio extends ElementBase {
   /** @type {HTMLInputElement} */
   get inputElement() {
     return this.node;
@@ -3057,7 +3067,7 @@ class Radio extends ElementProperty {
   }
 }
 
-class ElementEvent extends ElementProperty {
+class ElementEvent extends ElementBase {
   /** @type {string} nameのonの後ろを取得する */
   get eventType() {
     return this.name.slice(2); // on～
@@ -3113,7 +3123,7 @@ class ElementEvent extends ElementProperty {
   }
 }
 
-class ElementClass extends ElementProperty {
+class ElementClass extends ElementBase {
   /** @type {string} */
   get className() {
     return this.nameElements[1];
@@ -3128,7 +3138,7 @@ class ElementClass extends ElementProperty {
   }
 }
 
-class ElementAttribute extends ElementProperty {
+class ElementAttribute extends ElementBase {
   /** @type {string} */
   get attributeName() {
     return this.nameElements[1];
@@ -3143,7 +3153,7 @@ class ElementAttribute extends ElementProperty {
   }
 }
 
-class ElementStyle extends ElementProperty {
+class ElementStyle extends ElementBase {
   /** @type {HTMLElement} */
   get htmlElement() {
     return this.node;
@@ -3176,7 +3186,18 @@ class ElementStyle extends ElementProperty {
   }
 }
 
-class ComponentProperty extends ElementProperty {
+class ElementProperty extends ElementBase {
+  /** @type {boolean} */
+  #isSelectValue;
+  get isSelectValue() {
+    if (typeof this.#isSelectValue === "undefined") {
+      this.#isSelectValue = this.node.constructor === HTMLSelectElement && this.name === "value";
+    }
+    return this.#isSelectValue;
+  }
+}
+
+class ComponentProperty extends ElementBase {
   /** @type {string} */
   get propName() {
     return this.nameElements[1];
@@ -3717,11 +3738,19 @@ class Binding {
   }
 
   /** @type { BindingManager[] } */
-  children = [];
+  #children = [];
+  get children() {
+    return this.#children;
+  }
 
   /** @type {boolean} */
   get expandable() {
     return this.nodeProperty.expandable;
+  }
+
+  /** @type {boolean} */
+  get isSelectValue() {
+    return this.nodeProperty.isSelectValue;
   }
 
   /**
@@ -3754,18 +3783,13 @@ class Binding {
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.value === filteredViewModelValue) return;
+    const setValue = () => nodeProperty.value = filteredViewModelValue;
     /**
-     * 展開可能（ifもしくはrepeat）な場合、変更スロットに入れずに展開する
+     * 展開可能（branchもしくはrepeat）な場合、変更スロットに入れずに展開する
      * 展開可能でない場合、変更スロットに変更処理を入れる
      * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
      */
-    if (expandable) {
-      nodeProperty.value = filteredViewModelValue;
-    } else {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(nodeProperty.node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
-        nodeProperty.value = filteredViewModelValue;
-      }));
-    }
+    expandable ? setValue() : component.updateSlot.addNodeUpdate(new NodeUpdateData(this, setValue));
   }
 
   /**
@@ -3782,10 +3806,9 @@ class Binding {
    * @param {Event} event 
    */
   execDefaultEventHandler(event) {
-    const {component} = this;
     event.stopPropagation();
     const process = new ProcessData(this.applyToViewModel, this, []);
-    component.updateSlot.addProcess(process);
+    this.component.updateSlot.addProcess(process);
   }
 
   /** @type {(event:Event)=>void} */
@@ -3806,7 +3829,6 @@ class Binding {
    * @param {BindingManager} bindingManager
    */
   appendChild(bindingManager) {
-    console.log("appendChild");
     if (!this.expandable) utils.raise("not expandable");
     const lastChild = this.children[this.children.length - 1];
     this.children.push(bindingManager);

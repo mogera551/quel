@@ -1,9 +1,9 @@
 import { Symbols } from "../../Symbols.js";
 import { ProcessData } from "../../thread/ViewModelUpdator.js";
 import { utils } from "../../utils.js";
-import { ElementProperty } from "./ElementProperty.js";
+import { ElementBase } from "./ElementBase.js";
 
-export class ElementEvent extends ElementProperty {
+export class ElementEvent extends ElementBase {
   /** @type {string} nameのonの後ろを取得する */
   get eventType() {
     return this.name.slice(2); // on～

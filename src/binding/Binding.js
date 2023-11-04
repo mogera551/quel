@@ -61,11 +61,19 @@ export class Binding {
   }
 
   /** @type { BindingManager[] } */
-  children = [];
+  #children = [];
+  get children() {
+    return this.#children;
+  }
 
   /** @type {boolean} */
   get expandable() {
     return this.nodeProperty.expandable;
+  }
+
+  /** @type {boolean} */
+  get isSelectValue() {
+    return this.nodeProperty.isSelectValue;
   }
 
   /**
@@ -98,18 +106,13 @@ export class Binding {
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.value === filteredViewModelValue) return;
+    const setValue = () => nodeProperty.value = filteredViewModelValue;
     /**
-     * 展開可能（ifもしくはrepeat）な場合、変更スロットに入れずに展開する
+     * 展開可能（branchもしくはrepeat）な場合、変更スロットに入れずに展開する
      * 展開可能でない場合、変更スロットに変更処理を入れる
      * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
      */
-    if (expandable) {
-      nodeProperty.value = filteredViewModelValue;
-    } else {
-      component.updateSlot.addNodeUpdate(new NodeUpdateData(nodeProperty.node, nodeProperty.name, viewModelProperty.name, filteredViewModelValue, () => {
-        nodeProperty.value = filteredViewModelValue;
-      }));
-    }
+    expandable ? setValue() : component.updateSlot.addNodeUpdate(new NodeUpdateData(this, setValue));
   }
 
   /**
@@ -126,10 +129,9 @@ export class Binding {
    * @param {Event} event 
    */
   execDefaultEventHandler(event) {
-    const {component} = this;
     event.stopPropagation();
     const process = new ProcessData(this.applyToViewModel, this, []);
-    component.updateSlot.addProcess(process);
+    this.component.updateSlot.addProcess(process);
   }
 
   /** @type {(event:Event)=>void} */
@@ -150,7 +152,6 @@ export class Binding {
    * @param {BindingManager} bindingManager
    */
   appendChild(bindingManager) {
-    console.log("appendChild");
     if (!this.expandable) utils.raise("not expandable");
     const lastChild = this.children[this.children.length - 1];
     this.children.push(bindingManager);

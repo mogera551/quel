@@ -1,35 +1,26 @@
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NodeUpdateData {
-  /** @type {Node} */
-  node;
-
-  /** @type {string} */
-  property;
-
-  /** @type {string} */
-  viewModelProperty;
-
-  /** @type {any} */
-  value;
+  /** @type {import("../binding/Binding.js").Binding} */
+  #binding;
+  get binding() {
+    return this.#binding;
+  }
 
   /** @type {()=>void} */
-  updateFunc;
+  #updateFunc;
+  get updateFunc() {
+    return this.#updateFunc;
+  }
 
   /**
    * 
-   * @param {Node} node 
-   * @param {string} property 
-   * @param {string} viewModelProperty 
-   * @param {any} value 
+   * @param {import("../binding/Binding.js").Binding} binding 
    * @param {()=>void} updateFunc 
    */
-  constructor(node, property, viewModelProperty, value, updateFunc) {
-    this.node = node;
-    this.property = property;
-    this.viewModelProperty = viewModelProperty;
-    this.value = value;
-    this.updateFunc = updateFunc;
+  constructor(binding, updateFunc) {
+    this.#binding = binding;
+    this.#updateFunc = updateFunc;
   }
 }
 
@@ -49,20 +40,17 @@ export class NodeUpdator {
 
   /**
    * 更新する順番を並び替える
-   * HTMLTemplateElementが前
-   * その次がHTMLSelectElementでないもの
-   * 最後がHTMLSelectElement
+   * ※optionを更新する前に、selectを更新すると、値が設定されない
+   * 1.HTMLSelectElementかつvalueプロパティ、でないもの
+   * 2.HTMLSelectElementかつvalueプロパティ
    * @param {NodeUpdateData[]} updates 
    * @returns {NodeUpdateData[]}
    */
   reorder(updates) {
     updates.sort((update1, update2) => {
-      if (update1.node instanceof Comment && update2.node instanceof Comment) return 0;
-      if (update2.node instanceof Comment) return 1;
-      if (update1.node instanceof Comment) return -1;
-      if (update1.node instanceof HTMLSelectElement && update1.property === "value" && update2.node instanceof HTMLSelectElement && update2.property === "value") return 0;
-      if (update1.node instanceof HTMLSelectElement && update1.property === "value") return 1;
-      if (update2.node instanceof HTMLSelectElement && update2.property === "value") return -1;
+      if (update1.binding.isSelectValue && update2.binding.isSelectValue) return 0;
+      if (update1.binding.isSelectValue) return 1;
+      if (update2.binding.isSelectValue) return -1;
       return 0;
     });
     return updates;

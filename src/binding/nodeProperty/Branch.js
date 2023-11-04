@@ -1,10 +1,13 @@
 import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
 import { BindingManager } from "../Binding.js";
-import { Context } from "../../context/Context.js";
-import { Templates } from "../../view/Templates.js";
 
 export class Branch extends TemplateProperty {
+  /** @type {boolean} */
+  get isSelectValue() {
+    return false;
+  }
+
   /** @type {boolean} */
   get value() {
     return this.binding.children.length > 0;

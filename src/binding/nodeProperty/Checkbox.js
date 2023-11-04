@@ -1,9 +1,14 @@
-import { ElementProperty } from "./ElementProperty.js";
+import { ElementBase } from "./ElementBase.js";
 import { MultiValue } from "./MultiValue.js";
 import { Filter } from "../../filter/Filter.js";
 import { utils } from "../../utils.js";
 
-export class Checkbox extends ElementProperty {
+export class Checkbox extends ElementBase {
+  /** @type {boolean} */
+  get isSelectValue() {
+    return false;
+  }
+
   /** @type {HTMLInputElement} */
   get inputElement() {
     return this.node;

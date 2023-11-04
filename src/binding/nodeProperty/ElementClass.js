@@ -1,6 +1,6 @@
-import { ElementProperty } from "./ElementProperty.js";
+import { ElementBase } from "./ElementBase.js";
 
-export class ElementClass extends ElementProperty {
+export class ElementClass extends ElementBase {
   /** @type {string} */
   get className() {
     return this.nameElements[1];
