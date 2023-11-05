@@ -26,7 +26,6 @@ export class NodeProperty {
     return this.node[this.name];
   }
   set value(value) {
-    console.log(`node.${this.name} = ${value}`);
     this.node[this.name] = value;
   }
 
