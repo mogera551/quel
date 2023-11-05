@@ -2090,33 +2090,9 @@ class Thread {
 
 }
 
-class NodeUpdateData {
-  /** @type {import("../binding/Binding.js").Binding} */
-  #binding;
-  get binding() {
-    return this.#binding;
-  }
-
-  /** @type {()=>void} */
-  #updateFunc;
-  get updateFunc() {
-    return this.#updateFunc;
-  }
-
-  /**
-   * 
-   * @param {import("../binding/Binding.js").Binding} binding 
-   * @param {()=>void} updateFunc 
-   */
-  constructor(binding, updateFunc) {
-    this.#binding = binding;
-    this.#updateFunc = updateFunc;
-  }
-}
-
 class NodeUpdator {
-  /** @type {NodeUpdateData[]} */
-  queue = [];
+  /** @type {Set<import("../binding/Binding.js").Binding>} */
+  queue = new Set;
 
   /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
@@ -2133,17 +2109,17 @@ class NodeUpdator {
    * ※optionを更新する前に、selectを更新すると、値が設定されない
    * 1.HTMLSelectElementかつvalueプロパティ、でないもの
    * 2.HTMLSelectElementかつvalueプロパティ
-   * @param {NodeUpdateData[]} updates 
-   * @returns {NodeUpdateData[]}
+   * @param {import("../binding/Binding.js").Binding[]} bindings 
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
-  reorder(updates) {
-    updates.sort((update1, update2) => {
-      if (update1.binding.isSelectValue && update2.binding.isSelectValue) return 0;
-      if (update1.binding.isSelectValue) return 1;
-      if (update2.binding.isSelectValue) return -1;
+  reorder(bindings) {
+    bindings.sort((binding1, binding2) => {
+      if (binding1.isSelectValue && binding2.isSelectValue) return 0;
+      if (binding1.isSelectValue) return 1;
+      if (binding2.isSelectValue) return -1;
       return 0;
     });
-    return updates;
+    return bindings;
   }
 
   /**
@@ -2152,12 +2128,12 @@ class NodeUpdator {
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
     try {
-      while(this.queue.length > 0) {
-        const updates = this.queue.splice(0);
-        const orderedUpdates = this.reorder(updates);
-        for(const update of orderedUpdates) {
-          Reflect.apply(update.updateFunc, update, []);
+      while(this.queue.size > 0) {
+        const bindings = this.reorder(Array.from(this.queue));
+        for(const binding of bindings) {
+          binding.nodeProperty.assignFromViewModelValue();
         }
+        this.queue = new Set;
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
@@ -2166,7 +2142,7 @@ class NodeUpdator {
 
   /** @type {boolean} */
   get isEmpty() {
-    return this.queue.length === 0;
+    return this.queue.size === 0;
   }
 }
 
@@ -2336,10 +2312,10 @@ class UpdateSlot {
 
   /**
    * 
-   * @param {NodeUpdateData} nodeUpdateData 
+   * @param {import("../binding/Binding.js").Binding} binding 
    */
-  async addNodeUpdate(nodeUpdateData) {
-    this.#nodeUpdator.queue.push(nodeUpdateData);
+  async addNodeUpdate(binding) {
+    this.#nodeUpdator.queue.add(binding);
     this.#waitResolve(true); // waitingを解除する
   }
 
@@ -2553,13 +2529,6 @@ class NodeProperty {
     return false;
   }
 
-  /** 
-   * @param {any} value
-   */
-  isSameValue(value) {
-    return this.value === value;
-  }
-
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
@@ -2591,6 +2560,17 @@ class NodeProperty {
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+  }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return this.value === value;
+  }
+
+  assignFromViewModelValue() {
+    this.value = this.binding.viewModelProperty.filteredValue ?? "";
   }
 }
 
@@ -2926,7 +2906,8 @@ class ViewModelProperty {
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   isUpdate(setOfUpdatedViewModelPropertyKeys) {
-    return setOfUpdatedViewModelPropertyKeys.has(this.key);
+    return setOfUpdatedViewModelPropertyKeys.has(this.key) && 
+      !this.binding.component.updateSlot.nodeUpdator.queue.has(this);
   }
 }
 
@@ -3829,13 +3810,12 @@ class Binding {
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-    const setValue = () => nodeProperty.value = filteredViewModelValue;
     /**
      * 展開可能（branchもしくはrepeat）な場合、変更スロットに入れずに展開する
      * 展開可能でない場合、変更スロットに変更処理を入れる
      * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
      */
-    expandable ? setValue() : component.updateSlot.addNodeUpdate(new NodeUpdateData(this, setValue));
+    expandable ? nodeProperty.assignFromViewModelValue() : component.updateSlot.addNodeUpdate(this);
   }
 
   /**

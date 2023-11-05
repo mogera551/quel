@@ -67,13 +67,6 @@ export class NodeProperty {
     return false;
   }
 
-  /** 
-   * @param {any} value
-   */
-  isSameValue(value) {
-    return this.value === value;
-  }
-
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
@@ -105,5 +98,16 @@ export class NodeProperty {
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+  }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return this.value === value;
+  }
+
+  assignFromViewModelValue() {
+    this.value = this.binding.viewModelProperty.filteredValue ?? "";
   }
 }

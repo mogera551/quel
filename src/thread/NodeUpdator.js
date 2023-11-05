@@ -25,8 +25,8 @@ export class NodeUpdateData {
 }
 
 export class NodeUpdator {
-  /** @type {NodeUpdateData[]} */
-  queue = [];
+  /** @type {Set<import("../binding/Binding.js").Binding>} */
+  queue = new Set;
 
   /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
@@ -43,17 +43,17 @@ export class NodeUpdator {
    * ※optionを更新する前に、selectを更新すると、値が設定されない
    * 1.HTMLSelectElementかつvalueプロパティ、でないもの
    * 2.HTMLSelectElementかつvalueプロパティ
-   * @param {NodeUpdateData[]} updates 
-   * @returns {NodeUpdateData[]}
+   * @param {import("../binding/Binding.js").Binding[]} bindings 
+   * @returns {import("../binding/Binding.js").Binding[]}
    */
-  reorder(updates) {
-    updates.sort((update1, update2) => {
-      if (update1.binding.isSelectValue && update2.binding.isSelectValue) return 0;
-      if (update1.binding.isSelectValue) return 1;
-      if (update2.binding.isSelectValue) return -1;
+  reorder(bindings) {
+    bindings.sort((binding1, binding2) => {
+      if (binding1.isSelectValue && binding2.isSelectValue) return 0;
+      if (binding1.isSelectValue) return 1;
+      if (binding2.isSelectValue) return -1;
       return 0;
     });
-    return updates;
+    return bindings;
   }
 
   /**
@@ -62,12 +62,12 @@ export class NodeUpdator {
   async exec() {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
     try {
-      while(this.queue.length > 0) {
-        const updates = this.queue.splice(0);
-        const orderedUpdates = this.reorder(updates);
-        for(const update of orderedUpdates) {
-          Reflect.apply(update.updateFunc, update, []);
+      while(this.queue.size > 0) {
+        const bindings = this.reorder(Array.from(this.queue));
+        for(const binding of bindings) {
+          binding.nodeProperty.assignFromViewModelValue();
         }
+        this.queue = new Set;
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
@@ -76,6 +76,6 @@ export class NodeUpdator {
 
   /** @type {boolean} */
   get isEmpty() {
-    return this.queue.length === 0;
+    return this.queue.size === 0;
   }
 }

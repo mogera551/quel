@@ -138,6 +138,7 @@ export class ViewModelProperty {
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   isUpdate(setOfUpdatedViewModelPropertyKeys) {
-    return setOfUpdatedViewModelPropertyKeys.has(this.key);
+    return setOfUpdatedViewModelPropertyKeys.has(this.key) && 
+      !this.binding.component.updateSlot.nodeUpdator.queue.has(this);
   }
 }

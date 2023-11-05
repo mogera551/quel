@@ -106,13 +106,12 @@ export class Binding {
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-    const setValue = () => nodeProperty.value = filteredViewModelValue;
     /**
      * 展開可能（branchもしくはrepeat）な場合、変更スロットに入れずに展開する
      * 展開可能でない場合、変更スロットに変更処理を入れる
      * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
      */
-    expandable ? setValue() : component.updateSlot.addNodeUpdate(new NodeUpdateData(this, setValue));
+    expandable ? nodeProperty.assignFromViewModelValue() : component.updateSlot.addNodeUpdate(this);
   }
 
   /**

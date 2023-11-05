@@ -122,10 +122,10 @@ export class UpdateSlot {
 
   /**
    * 
-   * @param {NodeUpdateData} nodeUpdateData 
+   * @param {import("../binding/Binding.js").Binding} binding 
    */
-  async addNodeUpdate(nodeUpdateData) {
-    this.#nodeUpdator.queue.push(nodeUpdateData);
+  async addNodeUpdate(binding) {
+    this.#nodeUpdator.queue.add(binding);
     this.#waitResolve(true); // waitingを解除する
   }
 
