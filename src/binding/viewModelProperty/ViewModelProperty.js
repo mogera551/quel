@@ -141,4 +141,8 @@ export class ViewModelProperty {
     return setOfUpdatedViewModelPropertyKeys.has(this.key) && 
       !this.binding.component.updateSlot.nodeUpdator.queue.has(this);
   }
+
+  assignFromNodeValue() {
+    this.value = this.binding.nodeProperty.filteredValue;
+  }
 }

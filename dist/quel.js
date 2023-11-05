@@ -2909,6 +2909,10 @@ class ViewModelProperty {
     return setOfUpdatedViewModelPropertyKeys.has(this.key) && 
       !this.binding.component.updateSlot.nodeUpdator.queue.has(this);
   }
+
+  assignFromNodeValue() {
+    this.value = this.binding.nodeProperty.filteredValue;
+  }
 }
 
 const regexp$1 = RegExp(/^\$[0-9]+$/);
@@ -3824,7 +3828,7 @@ class Binding {
   applyToViewModel() {
     const { nodeProperty, viewModelProperty } = this;
     if (!viewModelProperty.applicable) return;
-    viewModelProperty.value = nodeProperty.filteredValue;
+    viewModelProperty.assignFromNodeValue();
   }
 
   /**

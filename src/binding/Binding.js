@@ -120,7 +120,7 @@ export class Binding {
   applyToViewModel() {
     const { nodeProperty, viewModelProperty } = this;
     if (!viewModelProperty.applicable) return;
-    viewModelProperty.value = nodeProperty.filteredValue;
+    viewModelProperty.assignFromNodeValue();
   }
 
   /**
