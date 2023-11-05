@@ -55,12 +55,11 @@ export class ViewModelize {
   /**
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {typeof ViewModel} target 
+   * @param {ViewModel} target 
    * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
    */
   static viewModelize(target) {
-    const viewModelConstructor = target.constructor;
-    let viewModelInfo = this.viewModelInfoByConstructor.get(viewModelConstructor);
+    let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
     if (!viewModelInfo) {
       const descByName = this.getDescByName(target);
       const descByNameEntries = Array.from(descByName.entries());
@@ -81,7 +80,7 @@ export class ViewModelize {
         }
       });
       viewModelInfo = { removeProps, definedProps, methods, accessorProps };
-      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);
+      this.viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
     }
     viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
     return {

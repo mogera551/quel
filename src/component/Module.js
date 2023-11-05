@@ -68,16 +68,15 @@ export class Module {
     // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
     const root = document.createElement("template"); // 仮のルート
     root.innerHTML = replacedHtml;
+    /** @type {(element:HTMLElement)=>{}} */
     const replaceTemplate = (element) => {
-      /**
-       * @type {Node}
-       */
+      /** @type {HTMLTemplateElement} */
       let template;
       while(template = element.querySelector("template")) {
         const uuid =  utils.createUUID();
         const comment = document.createComment(`@@|${uuid}`);
         template.parentNode.replaceChild(comment, template);
-        if (!(template instanceof HTMLTemplateElement)) {
+        if (template.constructor !== HTMLTemplateElement) {
           // SVGタグ内のtemplateタグを想定
           const newTemplate = document.createElement("template");
           for(let childNode of Array.from(template.childNodes)) {

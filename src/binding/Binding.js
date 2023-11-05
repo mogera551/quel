@@ -105,7 +105,7 @@ export class Binding {
     const { component, nodeProperty, viewModelProperty, expandable } = this;
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
-    if (nodeProperty.value === filteredViewModelValue) return;
+    if (nodeProperty.isSameValue(filteredViewModelValue)) return;
     const setValue = () => nodeProperty.value = filteredViewModelValue;
     /**
      * 展開可能（branchもしくはrepeat）な場合、変更スロットに入れずに展開する

@@ -44,4 +44,11 @@ export class Radio extends ElementBase {
     if (node.type !== "radio") utils.raise("not radio");
     super(binding, node, name, filters, filterFuncs);
   }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
 }

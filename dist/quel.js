@@ -535,12 +535,11 @@ class ViewModelize {
   /**
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {typeof ViewModel} target 
+   * @param {ViewModel} target 
    * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
    */
   static viewModelize(target) {
-    const viewModelConstructor = target.constructor;
-    let viewModelInfo = this.viewModelInfoByConstructor.get(viewModelConstructor);
+    let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
     if (!viewModelInfo) {
       const descByName = this.getDescByName(target);
       const descByNameEntries = Array.from(descByName.entries());
@@ -561,7 +560,7 @@ class ViewModelize {
         }
       });
       viewModelInfo = { removeProps, definedProps, methods, accessorProps };
-      this.viewModelInfoByConstructor.set(viewModelConstructor, viewModelInfo);
+      this.viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
     }
     viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
     return {
@@ -1230,7 +1229,7 @@ function createViewModel(component, viewModelClass) {
  */
 
 /**
- * @type {ProxyHandler<typeof PropsAccessor>}
+ * @type {ProxyHandler<PropsAccessor>}
  */
 let Handler$1 = class Handler {
   /** @type {Component} */
@@ -1569,16 +1568,15 @@ class Module {
     // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
     const root = document.createElement("template"); // 仮のルート
     root.innerHTML = replacedHtml;
+    /** @type {(element:HTMLElement)=>{}} */
     const replaceTemplate = (element) => {
-      /**
-       * @type {Node}
-       */
+      /** @type {HTMLTemplateElement} */
       let template;
       while(template = element.querySelector("template")) {
         const uuid =  utils.createUUID();
         const comment = document.createComment(`@@|${uuid}`);
         template.parentNode.replaceChild(comment, template);
-        if (!(template instanceof HTMLTemplateElement)) {
+        if (template.constructor !== HTMLTemplateElement) {
           // SVGタグ内のtemplateタグを想定
           const newTemplate = document.createElement("template");
           for(let childNode of Array.from(template.childNodes)) {
@@ -2390,7 +2388,8 @@ class AttachShadow {
   ]);
 
   /**
-   * タグ名がカスタム要素かどうか→ダッシュ(-)を含むかどうか
+   * タグ名がカスタム要素かどうか
+   * →ダッシュ(-)を含むかどうか
    * @param {string} tagName 
    * @returns {boolean}
    */
@@ -2513,6 +2512,7 @@ class NodeProperty {
     return this.node[this.name];
   }
   set value(value) {
+    console.log(`node.${this.name} = ${value}`);
     this.node[this.name] = value;
   }
 
@@ -2552,6 +2552,13 @@ class NodeProperty {
   /** @type {boolean} */
   get isSelectValue() {
     return false;
+  }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return this.value === value;
   }
 
   /**
@@ -2671,6 +2678,13 @@ class Repeat extends TemplateProperty {
     if (name !== "loop") utils.raise(`invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
 }
 
 class Branch extends TemplateProperty {
@@ -2711,6 +2725,12 @@ class Branch extends TemplateProperty {
     super(binding, node, name, filters, filterFuncs);
   }
 
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
 }
 
 class MultiValue {
@@ -3024,6 +3044,13 @@ class Checkbox extends ElementBase {
     if (node.type !== "checkbox") utils.raise("not checkbox");
     super(binding, node, name, filters, filterFuncs);
   }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
 }
 
 class Radio extends ElementBase {
@@ -3064,6 +3091,13 @@ class Radio extends ElementBase {
     if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
     if (node.type !== "radio") utils.raise("not radio");
     super(binding, node, name, filters, filterFuncs);
+  }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
   }
 }
 
@@ -3259,6 +3293,13 @@ class ComponentProperty extends ElementBase {
     }
   }
 
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
+  
 }
 
 const regexp = RegExp(/^\$[0-9]+$/);
@@ -3266,7 +3307,10 @@ const regexp = RegExp(/^\$[0-9]+$/);
 class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
   // モジュール内で、const変数で書くとjestで循環参照でエラーになる
+
+  /** @type {Object<boolean,Object<string,NodeProperty.constructor>> | undefined} */
   static #classOfNodePropertyByNameByIsComment;
+  /** @type {Object<boolean,Object<string,NodeProperty.constructor>>} */
   static get classOfNodePropertyByNameByIsComment() {
     if (typeof this.#classOfNodePropertyByNameByIsComment === "undefined") {
       this.#classOfNodePropertyByNameByIsComment = {
@@ -3283,7 +3327,10 @@ class Factory {
     }
     return this.#classOfNodePropertyByNameByIsComment;
   }
+
+  /** @type {ObjectObject<string,NodeProperty.constructor> | undefined} */
   static #classOfNodePropertyByFirstName;
+  /** @type {ObjectObject<string,NodeProperty.constructor>} */
   static get classOfNodePropertyByFirstName() {
     if (typeof this.#classOfNodePropertyByFirstName === "undefined") {
       this.#classOfNodePropertyByFirstName = {
@@ -3294,11 +3341,10 @@ class Factory {
       };
     }
     return this.#classOfNodePropertyByFirstName;
-
   }
 
   /**
-   * 
+   * Bindingオブジェクトを生成する
    * @param {BindingManager} bindingManager
    * @param {Node} node 
    * @param {string} nodePropertyName 
@@ -3308,7 +3354,7 @@ class Factory {
    * @returns {Binding}
    */
   static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {
-    /** @type {typeof NodeProperty|undefined} */
+    /** @type {NodeProperty.constructor|undefined} */
     let classOfNodeProperty;
     const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
 
@@ -3330,6 +3376,7 @@ class Factory {
         classOfNodeProperty = NodeProperty;
       }
     } while(false);
+    
     /** @type {Binding} */
     const binding = new Binding(
       bindingManager,
@@ -3782,7 +3829,7 @@ class Binding {
     const { component, nodeProperty, viewModelProperty, expandable } = this;
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
-    if (nodeProperty.value === filteredViewModelValue) return;
+    if (nodeProperty.isSameValue(filteredViewModelValue)) return;
     const setValue = () => nodeProperty.value = filteredViewModelValue;
     /**
      * 展開可能（branchもしくはrepeat）な場合、変更スロットに入れずに展開する
@@ -4205,15 +4252,11 @@ const mixInComponent = {
 
   /**
    * コンポーネント構築処理（connectedCallbackで呼ばれる）
-   *   フィルターの設定
-   *   シャドウルートの作成
-   *   スレッド生成
-   *   ViewModel生成、初期化
-   *   レンダリング
    * @returns {void}
    */
   async build() {
     const { template, inputFilters, outputFilters } = this.constructor; // staticから取得
+    // フィルターの設定
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
         if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
@@ -4226,14 +4269,19 @@ const mixInComponent = {
         this.filters.out[name] = filterFunc;
       }
     }
+    // シャドウルートの作成
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
+    // スレッドの生成
     this.thread = new Thread;
 
+    // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
     await this.viewModel[Symbols.connectedCallback]();
 
+    // 更新通知を伴う初期化処理
     const initProc = async () => {
+      // Bindingツリーの構築
       this.rootBinding = BindingManager.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
     };
@@ -4248,14 +4296,18 @@ const mixInComponent = {
    */
   async connectedCallback() {
     try {
+      // 親要素の初期化処理の終了を待つ
       if (this.parentComponent) {
         await this.parentComponent.initialPromise;
       } else {
       }
+      
+      // 生存確認用プロミスの生成
       this.alivePromise = new Promise((resolve, reject) => {
         this.aliveResolve = resolve;
         this.aliveReject = reject;
       });
+
       await this.build();
     } finally {
       this.initialResolve && this.initialResolve();
@@ -4263,7 +4315,7 @@ const mixInComponent = {
   },
 
   /**
-   * DOMツリーから削除呼ばれる
+   * DOMツリーから削除で呼ばれる
    * @returns {void}
    */
   disconnectedCallback() {
@@ -4271,7 +4323,8 @@ const mixInComponent = {
   },
 
   /**
-   * 
+   * ノード更新処理
+   * UpdateSlotのNotifyReceiverから呼び出される
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   updateNode(setOfViewModelPropertyKeys) {
@@ -4279,9 +4332,14 @@ const mixInComponent = {
   },
 };
 
+/**
+ * コンポーネントクラスを生成するクラス
+ * ※customElements.defineでタグに対して、ユニークなクラスを登録する必要があるため
+ */
 class ComponentClassGenerator {
+  
   /**
-   * 
+   * コンポーネントクラスを生成
    * @param {UserComponentModule} componentModule 
    * @returns {Component.constructor}
    */
@@ -4318,11 +4376,12 @@ class ComponentClassGenerator {
   
     /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
+
     // カスタムコンポーネントには同一クラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
     if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") ; else {
       // カスタマイズされた組み込み要素
-      // extendsを書き換える
+      // classのextendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
       /** @type {HTMLElement.constructor} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
@@ -4330,7 +4389,7 @@ class ComponentClassGenerator {
       componentClass.__proto__ = extendClass;
     }
   
-    // mix in 
+    // 生成したコンポーネントクラスにComponentの機能を追加する（mix in） 
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
@@ -4338,7 +4397,7 @@ class ComponentClassGenerator {
   }
 }
 /**
- * 
+ * コンポーネントクラスを生成する
  * @param {UserComponentModule} componentModule 
  * @returns {Component.constructor}
  */

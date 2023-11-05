@@ -7,7 +7,7 @@ import { Handler as DotNotationHandler } from "../../modules/dot-notation/dot-no
  */
 
 /**
- * @type {ProxyHandler<typeof PropsAccessor>}
+ * @type {ProxyHandler<PropsAccessor>}
  */
 class Handler {
   /** @type {Component} */

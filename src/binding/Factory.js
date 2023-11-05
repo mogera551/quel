@@ -21,7 +21,10 @@ const regexp = RegExp(/^\$[0-9]+$/);
 export class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
   // モジュール内で、const変数で書くとjestで循環参照でエラーになる
+
+  /** @type {Object<boolean,Object<string,NodeProperty.constructor>> | undefined} */
   static #classOfNodePropertyByNameByIsComment;
+  /** @type {Object<boolean,Object<string,NodeProperty.constructor>>} */
   static get classOfNodePropertyByNameByIsComment() {
     if (typeof this.#classOfNodePropertyByNameByIsComment === "undefined") {
       this.#classOfNodePropertyByNameByIsComment = {
@@ -38,7 +41,10 @@ export class Factory {
     }
     return this.#classOfNodePropertyByNameByIsComment;
   }
+
+  /** @type {ObjectObject<string,NodeProperty.constructor> | undefined} */
   static #classOfNodePropertyByFirstName;
+  /** @type {ObjectObject<string,NodeProperty.constructor>} */
   static get classOfNodePropertyByFirstName() {
     if (typeof this.#classOfNodePropertyByFirstName === "undefined") {
       this.#classOfNodePropertyByFirstName = {
@@ -49,11 +55,10 @@ export class Factory {
       };
     }
     return this.#classOfNodePropertyByFirstName;
-
   }
 
   /**
-   * 
+   * Bindingオブジェクトを生成する
    * @param {BindingManager} bindingManager
    * @param {Node} node 
    * @param {string} nodePropertyName 
@@ -63,7 +68,7 @@ export class Factory {
    * @returns {Binding}
    */
   static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {
-    /** @type {typeof NodeProperty|undefined} */
+    /** @type {NodeProperty.constructor|undefined} */
     let classOfNodeProperty;
     const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
 
@@ -85,6 +90,7 @@ export class Factory {
         classOfNodeProperty = NodeProperty;
       }
     } while(false);
+    
     /** @type {Binding} */
     const binding = new Binding(
       bindingManager,

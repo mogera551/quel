@@ -196,15 +196,11 @@ const mixInComponent = {
 
   /**
    * コンポーネント構築処理（connectedCallbackで呼ばれる）
-   *   フィルターの設定
-   *   シャドウルートの作成
-   *   スレッド生成
-   *   ViewModel生成、初期化
-   *   レンダリング
    * @returns {void}
    */
   async build() {
     const { template, inputFilters, outputFilters } = this.constructor; // staticから取得
+    // フィルターの設定
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
         if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
@@ -217,14 +213,19 @@ const mixInComponent = {
         this.filters.out[name] = filterFunc;
       }
     }
+    // シャドウルートの作成
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
+    // スレッドの生成
     this.thread = new Thread;
 
+    // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
     await this.viewModel[Symbols.connectedCallback]();
 
+    // 更新通知を伴う初期化処理
     const initProc = async () => {
+      // Bindingツリーの構築
       this.rootBinding = BindingManager.create(this, template, Context.create());
       this.viewRootElement.appendChild(this.rootBinding.fragment);
     };
@@ -239,14 +240,18 @@ const mixInComponent = {
    */
   async connectedCallback() {
     try {
+      // 親要素の初期化処理の終了を待つ
       if (this.parentComponent) {
         await this.parentComponent.initialPromise;
       } else {
       }
+      
+      // 生存確認用プロミスの生成
       this.alivePromise = new Promise((resolve, reject) => {
         this.aliveResolve = resolve;
         this.aliveReject = reject;
       });
+
       await this.build();
     } finally {
       this.initialResolve && this.initialResolve();
@@ -254,7 +259,7 @@ const mixInComponent = {
   },
 
   /**
-   * DOMツリーから削除呼ばれる
+   * DOMツリーから削除で呼ばれる
    * @returns {void}
    */
   disconnectedCallback() {
@@ -262,7 +267,8 @@ const mixInComponent = {
   },
 
   /**
-   * 
+   * ノード更新処理
+   * UpdateSlotのNotifyReceiverから呼び出される
    * @param {Set<string>} setOfViewModelPropertyKeys 
    */
   updateNode(setOfViewModelPropertyKeys) {
@@ -270,9 +276,14 @@ const mixInComponent = {
   },
 }
 
+/**
+ * コンポーネントクラスを生成するクラス
+ * ※customElements.defineでタグに対して、ユニークなクラスを登録する必要があるため
+ */
 export class ComponentClassGenerator {
+  
   /**
-   * 
+   * コンポーネントクラスを生成
    * @param {UserComponentModule} componentModule 
    * @returns {Component.constructor}
    */
@@ -309,13 +320,14 @@ export class ComponentClassGenerator {
   
     /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
+
     // カスタムコンポーネントには同一クラスを登録できないため新しいクラスを生成する
     const componentClass = getBaseClass(module);
     if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") {
       // 自律型カスタム要素
     } else {
       // カスタマイズされた組み込み要素
-      // extendsを書き換える
+      // classのextendsを書き換える
       // See http://var.blog.jp/archives/75174484.html
       /** @type {HTMLElement.constructor} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
@@ -323,7 +335,7 @@ export class ComponentClassGenerator {
       componentClass.__proto__ = extendClass;
     }
   
-    // mix in 
+    // 生成したコンポーネントクラスにComponentの機能を追加する（mix in） 
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
@@ -331,7 +343,7 @@ export class ComponentClassGenerator {
   }
 }
 /**
- * 
+ * コンポーネントクラスを生成する
  * @param {UserComponentModule} componentModule 
  * @returns {Component.constructor}
  */

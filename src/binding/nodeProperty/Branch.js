@@ -40,4 +40,10 @@ export class Branch extends TemplateProperty {
     super(binding, node, name, filters, filterFuncs);
   }
 
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
 }

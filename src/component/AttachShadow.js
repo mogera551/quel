@@ -24,7 +24,8 @@ export class AttachShadow {
   ]);
 
   /**
-   * タグ名がカスタム要素かどうか→ダッシュ(-)を含むかどうか
+   * タグ名がカスタム要素かどうか
+   * →ダッシュ(-)を含むかどうか
    * @param {string} tagName 
    * @returns {boolean}
    */

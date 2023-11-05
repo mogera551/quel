@@ -26,6 +26,7 @@ export class NodeProperty {
     return this.node[this.name];
   }
   set value(value) {
+    console.log(`node.${this.name} = ${value}`);
     this.node[this.name] = value;
   }
 
@@ -65,6 +66,13 @@ export class NodeProperty {
   /** @type {boolean} */
   get isSelectValue() {
     return false;
+  }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return this.value === value;
   }
 
   /**

@@ -49,4 +49,11 @@ export class Checkbox extends ElementBase {
     if (node.type !== "checkbox") utils.raise("not checkbox");
     super(binding, node, name, filters, filterFuncs);
   }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
 }

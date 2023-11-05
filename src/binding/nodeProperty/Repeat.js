@@ -44,4 +44,11 @@ export class Repeat extends TemplateProperty {
     if (name !== "loop") utils.raise(`invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
+
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
 }

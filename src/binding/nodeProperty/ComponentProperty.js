@@ -65,4 +65,11 @@ export class ComponentProperty extends ElementBase {
     }
   }
 
+  /** 
+   * @param {any} value
+   */
+  isSameValue(value) {
+    return false;
+  }
+  
 }
