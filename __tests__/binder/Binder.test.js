@@ -1,15 +1,14 @@
 import { Binder } from "../../src/binder/Binder.js";
 import { Symbols } from "../../src/Symbols.js";
-import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Module } from "../../src/component/Module.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Binding, BindingManager } from "../../src/binding/Binding.js";
 import { Repeat } from "../../src/binding/nodeProperty/Repeat.js";
-import { Branch } from "../../src/binding/nodeProperty/Branch.js";
 import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
 import { utils } from "../../src/utils.js";
+import { Context, ContextParam } from "../../src/context/Context.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -67,10 +66,10 @@ test("Binder", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -86,13 +85,15 @@ test("Binder", () => {
       out:outputFilters,
     }
   };
-  const bindings = Binder.bind(nodes, component, { 
-    indexes:[], stack:[]
-  });
+  const bindingManager = {
+    component, context:Context.create()
+  }
+  const bindings = Binder.bind(bindingManager, nodes);
   expect(bindings.length).toBe(5);
   expect(bindings[0].constructor).toBe(Binding);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.node).toBe(nodes[0]);
   expect(bindings[0].nodeProperty.element).toBe(nodes[0]);
   expect(bindings[0].nodeProperty.name).toBe("textContent");
@@ -111,7 +112,8 @@ test("Binder", () => {
 
   expect(bindings[1].constructor).toBe(Binding);
   expect(bindings[1].component).toBe(component);
-  expect(bindings[1].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[1].context.indexes).toEqual([]);
+  expect(bindings[1].context.stack).toEqual([]);
   expect(bindings[1].nodeProperty.node).toBe(nodes[1]);
   expect(bindings[1].nodeProperty.element).toBe(nodes[1]);
   expect(bindings[1].nodeProperty.name).toBe("textContent");
@@ -130,7 +132,8 @@ test("Binder", () => {
 
   expect(bindings[2].constructor).toBe(Binding);
   expect(bindings[2].component).toBe(component);
-  expect(bindings[2].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[2].context.indexes).toEqual([]);
+  expect(bindings[2].context.stack).toEqual([]);
   expect(bindings[2].nodeProperty.node).toBe(nodes[2]);
   expect(bindings[2].nodeProperty.element).toBe(nodes[2]);
   expect(bindings[2].nodeProperty.name).toBe("textContent");
@@ -149,7 +152,8 @@ test("Binder", () => {
 
   expect(bindings[3].constructor).toBe(Binding);
   expect(bindings[3].component).toBe(component);
-  expect(bindings[3].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[3].context.indexes).toEqual([]);
+  expect(bindings[3].context.stack).toEqual([]);
   expect(bindings[3].nodeProperty.node).toBe(nodes[3]);
   expect(bindings[3].nodeProperty.name).toBe("loop");
   expect(bindings[3].nodeProperty.nameElements).toEqual(["loop"]);
@@ -168,7 +172,11 @@ test("Binder", () => {
   expect(bindings[3].children[0].bindings.length).toBe(1);
   expect(bindings[3].children[0].bindings[0].constructor).toBe(Binding);
   expect(bindings[3].children[0].bindings[0].component).toBe(component);
-  expect(bindings[3].children[0].bindings[0].context).toEqual({ indexes:[0], stack:[{indexes:[0], pos:0, propName:PropertyName.create("ddd")}] });
+  expect(bindings[3].children[0].bindings[0].context.indexes).toEqual([0]);
+  expect(bindings[3].children[0].bindings[0].context.stack.length).toBe(1);
+  expect(bindings[3].children[0].bindings[0].context.stack[0].indexes).toEqual([0]);
+  expect(bindings[3].children[0].bindings[0].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[0].bindings[0].context.stack[0].propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[3].children[0].bindings[0].nodeProperty.node.constructor).toBe(HTMLDivElement);
   expect(bindings[3].children[0].bindings[0].nodeProperty.name).toBe("textContent");
   expect(bindings[3].children[0].bindings[0].nodeProperty.nameElements).toEqual(["textContent"]);
@@ -186,7 +194,11 @@ test("Binder", () => {
   expect(bindings[3].children[1].bindings.length).toBe(1);
   expect(bindings[3].children[1].bindings[0].constructor).toBe(Binding);
   expect(bindings[3].children[1].bindings[0].component).toBe(component);
-  expect(bindings[3].children[1].bindings[0].context).toEqual({ indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("ddd")}] });
+  expect(bindings[3].children[1].bindings[0].context.indexes).toEqual([1]);
+  expect(bindings[3].children[1].bindings[0].context.stack.length).toBe(1);
+  expect(bindings[3].children[1].bindings[0].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].children[1].bindings[0].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[1].bindings[0].context.stack[0].propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[3].children[1].bindings[0].nodeProperty.node.constructor).toBe(HTMLDivElement);
   expect(bindings[3].children[1].bindings[0].nodeProperty.name).toBe("textContent");
   expect(bindings[3].children[1].bindings[0].nodeProperty.nameElements).toEqual(["textContent"]);
@@ -204,7 +216,11 @@ test("Binder", () => {
   expect(bindings[3].children[2].bindings.length).toBe(1);
   expect(bindings[3].children[2].bindings[0].constructor).toBe(Binding);
   expect(bindings[3].children[2].bindings[0].component).toBe(component);
-  expect(bindings[3].children[2].bindings[0].context).toEqual({ indexes:[2], stack:[{indexes:[2], pos:0, propName:PropertyName.create("ddd")}] });
+  expect(bindings[3].children[2].bindings[0].context.indexes).toEqual([2]);
+  expect(bindings[3].children[2].bindings[0].context.stack.length).toBe(1);
+  expect(bindings[3].children[2].bindings[0].context.stack[0].indexes).toEqual([2]);
+  expect(bindings[3].children[2].bindings[0].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[2].bindings[0].context.stack[0].propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[3].children[2].bindings[0].nodeProperty.node.constructor).toBe(HTMLDivElement);
   expect(bindings[3].children[2].bindings[0].nodeProperty.name).toBe("textContent");
   expect(bindings[3].children[2].bindings[0].nodeProperty.nameElements).toEqual(["textContent"]);
@@ -221,7 +237,8 @@ test("Binder", () => {
 
   expect(bindings[4].constructor).toBe(Binding);
   expect(bindings[4].component).toBe(component);
-  expect(bindings[4].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[4].context.indexes).toEqual([]);
+  expect(bindings[4].context.stack).toEqual([]);
 //  expect(bindings[4].nodeProperty.node).toBe(nodes[4]);
 //  expect(bindings[4].nodeProperty.element).toBe(nodes[4]);
   expect(bindings[4].nodeProperty.name).toBe("textContent");
@@ -310,10 +327,10 @@ test("Binder context", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -329,19 +346,20 @@ test("Binder context", () => {
       out:outputFilters,
     }
   };
-  const bindings = Binder.bind(nodes, component, { 
-    indexes:[1], stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") }
-    ]
-  });
+  const bindingManager = {
+    component, context:Context.create()
+  }
+  bindingManager.context.indexes.push(1);
+  bindingManager.context.stack.push(new ContextParam(PropertyName.create("fff"), [1], 0));
+  const bindings = Binder.bind(bindingManager, nodes);
   expect(bindings.length).toBe(5);
   expect(bindings[0].constructor).toBe(Binding);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({
-    indexes:[1], stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") }
-    ]
-  });
+  expect(bindings[0].context.indexes).toEqual([1]);
+  expect(bindings[0].context.stack.length).toBe(1);
+  expect(bindings[0].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[0].context.stack[0].pos).toBe(0);
+  expect(bindings[0].context.stack[0].propName).toEqual(PropertyName.create("fff"));
   expect(bindings[0].nodeProperty.node).toBe(nodes[0]);
   expect(bindings[0].nodeProperty.element).toBe(nodes[0]);
   expect(bindings[0].nodeProperty.name).toBe("textContent");
@@ -360,11 +378,11 @@ test("Binder context", () => {
 
   expect(bindings[1].constructor).toBe(Binding);
   expect(bindings[1].component).toBe(component);
-  expect(bindings[1].context).toEqual({
-    indexes:[1], stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") }
-    ]
-  });
+  expect(bindings[1].context.indexes).toEqual([1]);
+  expect(bindings[1].context.stack.length).toBe(1);
+  expect(bindings[1].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[1].context.stack[0].pos).toBe(0);
+  expect(bindings[1].context.stack[0].propName).toEqual(PropertyName.create("fff"));
   expect(bindings[1].nodeProperty.node).toBe(nodes[1]);
   expect(bindings[1].nodeProperty.element).toBe(nodes[1]);
   expect(bindings[1].nodeProperty.name).toBe("textContent");
@@ -383,11 +401,11 @@ test("Binder context", () => {
 
   expect(bindings[2].constructor).toBe(Binding);
   expect(bindings[2].component).toBe(component);
-  expect(bindings[2].context).toEqual({
-    indexes:[1], stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") }
-    ]
-  });
+  expect(bindings[2].context.indexes).toEqual([1]);
+  expect(bindings[2].context.stack.length).toBe(1);
+  expect(bindings[2].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[2].context.stack[0].pos).toBe(0);
+  expect(bindings[2].context.stack[0].propName).toEqual(PropertyName.create("fff"));
   expect(bindings[2].nodeProperty.node).toBe(nodes[2]);
   expect(bindings[2].nodeProperty.element).toBe(nodes[2]);
   expect(bindings[2].nodeProperty.name).toBe("textContent");
@@ -406,11 +424,11 @@ test("Binder context", () => {
 
   expect(bindings[3].constructor).toBe(Binding);
   expect(bindings[3].component).toBe(component);
-  expect(bindings[3].context).toEqual({
-    indexes:[1], stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") }
-    ]
-  });
+  expect(bindings[3].context.indexes).toEqual([1]);
+  expect(bindings[3].context.stack.length).toBe(1);
+  expect(bindings[3].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].context.stack[0].pos).toBe(0);
+  expect(bindings[3].context.stack[0].propName).toEqual(PropertyName.create("fff"));
   expect(bindings[3].nodeProperty.constructor).toBe(Repeat);
 //  expect(bindings[3].nodeProperty.node).toBe(nodes[4]);
 //  expect(bindings[3].nodeProperty.element).toBe(nodes[4]);
@@ -430,23 +448,28 @@ test("Binder context", () => {
   expect(bindings[3].children.length).toBe(3);
 
   expect(bindings[3].children[0].constructor).toBe(BindingManager);
-  expect(bindings[3].children[0].context).toEqual({
-    indexes:[1, 0],
-    stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") },
-      { indexes:[0], pos:1, propName:PropertyName.create("ddd") }
-    ]
-  });
+  expect(bindings[3].children[0].context.indexes).toEqual([1, 0]);
+  expect(bindings[3].children[0].context.stack.length).toBe(2);
+  expect(bindings[3].children[0].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].children[0].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[0].context.stack[0].propName).toEqual(PropertyName.create("fff"));
+  expect(bindings[3].children[0].context.stack[1].indexes).toEqual([0]);
+  expect(bindings[3].children[0].context.stack[1].pos).toBe(1);
+  expect(bindings[3].children[0].context.stack[1].propName).toEqual(PropertyName.create("ddd"));
+
   expect(bindings[3].children[0].bindings.length).toBe(1);
   expect(bindings[3].children[0].bindings[0].component).toBe(component);
-  expect(bindings[3].children[0].bindings[0].context).toEqual({
-    indexes:[1, 0],
-    stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") },
-      { indexes:[0], pos:1, propName:PropertyName.create("ddd") }
-    ]
-  });
-  expect(bindings[3].children[0].bindings[0].contextParam).toEqual({ indexes:[0], pos:1, propName:PropertyName.create("ddd") });
+  expect(bindings[3].children[0].bindings[0].context.indexes).toEqual([1, 0]);
+  expect(bindings[3].children[0].bindings[0].context.stack.length).toBe(2);
+  expect(bindings[3].children[0].bindings[0].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].children[0].bindings[0].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[0].bindings[0].context.stack[0].propName).toEqual(PropertyName.create("fff"));
+  expect(bindings[3].children[0].bindings[0].context.stack[1].indexes).toEqual([0]);
+  expect(bindings[3].children[0].bindings[0].context.stack[1].pos).toBe(1);
+  expect(bindings[3].children[0].bindings[0].context.stack[1].propName).toEqual(PropertyName.create("ddd"));
+  expect(bindings[3].children[0].bindings[0].contextParam.indexes).toEqual([0]);
+  expect(bindings[3].children[0].bindings[0].contextParam.pos).toBe(1);
+  expect(bindings[3].children[0].bindings[0].contextParam.propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[3].children[0].bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[3].children[0].bindings[0].nodeProperty.node instanceof HTMLDivElement).toBe(true);
   expect(bindings[3].children[0].bindings[0].nodeProperty.name).toBe("textContent");
@@ -465,23 +488,28 @@ test("Binder context", () => {
   expect(bindings[3].children[0].bindings[0].viewModelProperty.indexes).toEqual([0]);
 
   expect(bindings[3].children[1].constructor).toBe(BindingManager);
-  expect(bindings[3].children[1].context).toEqual({
-    indexes:[1, 1],
-    stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") },
-      { indexes:[1], pos:1, propName:PropertyName.create("ddd") }
-    ]
-  });
+  expect(bindings[3].children[1].context.indexes).toEqual([1, 1]);
+  expect(bindings[3].children[1].context.stack.length).toBe(2);
+  expect(bindings[3].children[1].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].children[1].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[1].context.stack[0].propName).toEqual(PropertyName.create("fff"));
+  expect(bindings[3].children[1].context.stack[1].indexes).toEqual([1]);
+  expect(bindings[3].children[1].context.stack[1].pos).toBe(1);
+  expect(bindings[3].children[1].context.stack[1].propName).toEqual(PropertyName.create("ddd"));
+
   expect(bindings[3].children[1].bindings.length).toBe(1);
   expect(bindings[3].children[1].bindings[0].component).toBe(component);
-  expect(bindings[3].children[1].bindings[0].context).toEqual({
-    indexes:[1, 1],
-    stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") },
-      { indexes:[1], pos:1, propName:PropertyName.create("ddd") }
-    ]
-  });
-  expect(bindings[3].children[1].bindings[0].contextParam).toEqual({ indexes:[1], pos:1, propName:PropertyName.create("ddd") });
+  expect(bindings[3].children[1].bindings[0].context.indexes).toEqual([1, 1]);
+  expect(bindings[3].children[1].bindings[0].context.stack.length).toBe(2);
+  expect(bindings[3].children[1].bindings[0].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].children[1].bindings[0].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[1].bindings[0].context.stack[0].propName).toEqual(PropertyName.create("fff"));
+  expect(bindings[3].children[1].bindings[0].context.stack[1].indexes).toEqual([1]);
+  expect(bindings[3].children[1].bindings[0].context.stack[1].pos).toBe(1);
+  expect(bindings[3].children[1].bindings[0].context.stack[1].propName).toEqual(PropertyName.create("ddd"));
+  expect(bindings[3].children[1].bindings[0].contextParam.indexes).toEqual([1]);
+  expect(bindings[3].children[1].bindings[0].contextParam.pos).toBe(1);
+  expect(bindings[3].children[1].bindings[0].contextParam.propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[3].children[1].bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[3].children[1].bindings[0].nodeProperty.node instanceof HTMLDivElement).toBe(true);
   expect(bindings[3].children[1].bindings[0].nodeProperty.name).toBe("textContent");
@@ -500,23 +528,26 @@ test("Binder context", () => {
   expect(bindings[3].children[1].bindings[0].viewModelProperty.indexes).toEqual([1]);
 
   expect(bindings[3].children[2].constructor).toBe(BindingManager);
-  expect(bindings[3].children[2].context).toEqual({
-    indexes:[1, 2],
-    stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") },
-      { indexes:[2], pos:1, propName:PropertyName.create("ddd") }
-    ]
-  });
+  expect(bindings[3].children[2].context.indexes).toEqual([1, 2]);
+  expect(bindings[3].children[2].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].children[2].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[2].context.stack[0].propName).toEqual(PropertyName.create("fff"));
+  expect(bindings[3].children[2].context.stack[1].indexes).toEqual([2]);
+  expect(bindings[3].children[2].context.stack[1].pos).toBe(1);
+  expect(bindings[3].children[2].context.stack[1].propName).toEqual(PropertyName.create("ddd"));
+
   expect(bindings[3].children[2].bindings.length).toBe(1);
   expect(bindings[3].children[2].bindings[0].component).toBe(component);
-  expect(bindings[3].children[2].bindings[0].context).toEqual({
-    indexes:[1, 2],
-    stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") },
-      { indexes:[2], pos:1, propName:PropertyName.create("ddd") }
-    ]
-  });
-  expect(bindings[3].children[2].bindings[0].contextParam).toEqual({ indexes:[2], pos:1, propName:PropertyName.create("ddd") });
+  expect(bindings[3].children[2].bindings[0].context.indexes).toEqual([1, 2]);
+  expect(bindings[3].children[2].bindings[0].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[3].children[2].bindings[0].context.stack[0].pos).toBe(0);
+  expect(bindings[3].children[2].bindings[0].context.stack[0].propName).toEqual(PropertyName.create("fff"));
+  expect(bindings[3].children[2].bindings[0].context.stack[1].indexes).toEqual([2]);
+  expect(bindings[3].children[2].bindings[0].context.stack[1].pos).toBe(1);
+  expect(bindings[3].children[2].bindings[0].context.stack[1].propName).toEqual(PropertyName.create("ddd"));
+  expect(bindings[3].children[2].bindings[0].contextParam.indexes).toEqual([2]);
+  expect(bindings[3].children[2].bindings[0].contextParam.pos).toBe(1);
+  expect(bindings[3].children[2].bindings[0].contextParam.propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[3].children[2].bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[3].children[2].bindings[0].nodeProperty.node instanceof HTMLDivElement).toBe(true);
   expect(bindings[3].children[2].bindings[0].nodeProperty.name).toBe("textContent");
@@ -536,11 +567,11 @@ test("Binder context", () => {
 
   expect(bindings[4].constructor).toBe(Binding);
   expect(bindings[4].component).toBe(component);
-  expect(bindings[4].context).toEqual({
-    indexes:[1], stack:[
-      { indexes:[1], pos:0, propName:PropertyName.create("fff") }
-    ]
-  });
+  expect(bindings[4].context.indexes).toEqual([1]);
+  expect(bindings[4].context.stack.length).toBe(1);
+  expect(bindings[4].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[4].context.stack[0].pos).toBe(0);
+  expect(bindings[4].context.stack[0].propName).toEqual(PropertyName.create("fff"));
 //  expect(bindings[4].nodeProperty.node).toBe(nodes[4]);
 //  expect(bindings[4].nodeProperty.element).toBe(nodes[4]);
   expect(bindings[4].nodeProperty.name).toBe("textContent");
@@ -629,10 +660,10 @@ test("Binder indexes fail", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -648,11 +679,14 @@ test("Binder indexes fail", () => {
       out:outputFilters,
     }
   };
+  const bindingManager = {
+    component, context:Context.create()
+  }
+  bindingManager.context.indexes.push(1);
+  bindingManager.context.stack.push(new ContextParam(PropertyName.create("fff"), [1], 0));
+
   expect(() => {
-    const context = {
-      indexes:[1], stack:[{indexes:[1], pos:0, propName:PropertyName.create("fff") }]
-    }
-    const bindings = Binder.bind(nodes, component, context);
+    const bindings = Binder.bind(bindingManager, nodes);
   }).toThrow("unknown node type");
 });
 
@@ -719,10 +753,10 @@ test("Binder svg", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -738,13 +772,15 @@ test("Binder svg", () => {
       out:outputFilters,
     }
   };
-  const bindings = Binder.bind(nodes, component, { 
-    indexes:[], stack:[]
-  });
+  const bindingManager = {
+    component, context:Context.create()
+  }
+  const bindings = Binder.bind(bindingManager, nodes);
   expect(bindings.length).toBe(1);
   expect(bindings[0].constructor).toBe(Binding);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
 //  expect(bindings[0].nodeProperty.node).toBe(nodes[0]);
 //  expect(bindings[0].nodeProperty.element).toBe(nodes[0]);
   expect(bindings[0].nodeProperty.name).toBe("loop");
@@ -762,12 +798,11 @@ test("Binder svg", () => {
   expect(bindings[0].viewModelProperty.filteredValue).toEqual([{ name:"aaa", x:"10" }, { name:"bbb", x:"20" }]);
 
   expect(bindings[0].children.length).toBe(2);
-  expect(bindings[0].children[0].context).toEqual({
-    indexes:[0],
-    stack:[
-      { indexes:[0], pos:0, propName:PropertyName.create("ddd") }
-    ]
-  });
+  expect(bindings[0].children[0].context.indexes).toEqual([0]);
+  expect(bindings[0].children[0].context.stack.length).toBe(1);
+  expect(bindings[0].children[0].context.stack[0].indexes).toEqual([0]);
+  expect(bindings[0].children[0].context.stack[0].pos).toBe(0);
+  expect(bindings[0].children[0].context.stack[0].propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[0].children[0].bindings.length).toBe(2);
   expect(bindings[0].children[0].bindings[0].nodeProperty.name).toBe("attr.x");
   expect(bindings[0].children[0].bindings[0].nodeProperty.nameElements).toEqual(["attr", "x"]);
@@ -799,6 +834,11 @@ test("Binder svg", () => {
   expect(bindings[0].children[0].bindings[1].viewModelProperty.filteredValue).toEqual("aaa");
   expect(bindings[0].children[0].bindings[1].viewModelProperty.indexes).toEqual([0]);
 
+  expect(bindings[0].children[1].context.indexes).toEqual([1]);
+  expect(bindings[0].children[1].context.stack.length).toBe(1);
+  expect(bindings[0].children[1].context.stack[0].indexes).toEqual([1]);
+  expect(bindings[0].children[1].context.stack[0].pos).toBe(0);
+  expect(bindings[0].children[1].context.stack[0].propName).toEqual(PropertyName.create("ddd"));
   expect(bindings[0].children[1].bindings.length).toBe(2);
   expect(bindings[0].children[1].bindings[0].nodeProperty.name).toBe("attr.x");
   expect(bindings[0].children[1].bindings[0].nodeProperty.nameElements).toEqual(["attr", "x"]);

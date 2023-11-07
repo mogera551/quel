@@ -1,29 +1,5 @@
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
-export class NodeUpdateData {
-  /** @type {import("../binding/Binding.js").Binding} */
-  #binding;
-  get binding() {
-    return this.#binding;
-  }
-
-  /** @type {()=>void} */
-  #updateFunc;
-  get updateFunc() {
-    return this.#updateFunc;
-  }
-
-  /**
-   * 
-   * @param {import("../binding/Binding.js").Binding} binding 
-   * @param {()=>void} updateFunc 
-   */
-  constructor(binding, updateFunc) {
-    this.#binding = binding;
-    this.#updateFunc = updateFunc;
-  }
-}
-
 export class NodeUpdator {
   /** @type {Set<import("../binding/Binding.js").Binding>} */
   queue = new Set;

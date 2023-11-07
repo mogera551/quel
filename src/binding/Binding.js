@@ -1,6 +1,4 @@
 import "../types.js";
-import { Symbols } from "../Symbols.js";
-import { NodeUpdateData } from "../thread/NodeUpdator.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { utils } from "../utils.js";

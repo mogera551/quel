@@ -1,5 +1,5 @@
 import "../types.js";
-import { NodeUpdator, NodeUpdateData } from "./NodeUpdator.js";
+import { NodeUpdator } from "./NodeUpdator.js";
 import { NotifyReceiver } from "./NotifyReceiver.js";
 import { ViewModelUpdator, ProcessData } from "./ViewModelUpdator.js";
 
