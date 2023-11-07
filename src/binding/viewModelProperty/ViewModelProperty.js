@@ -4,7 +4,7 @@ import { MultiValue } from "../nodeProperty/MultiValue.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils.js";
-import { Context } from "../../context/Context.js";
+import { Context, ContextParam } from "../../context/Context.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -120,7 +120,7 @@ export class ViewModelProperty {
 
     const newContext = Context.clone(this.binding.context);
     newContext.indexes.push(newIndex);
-    newContext.stack.push({propName, indexes:parentIndexes.concat(newIndex), pos});
+    newContext.stack.push(new ContextParam(propName, parentIndexes.concat(newIndex), pos));
 
     return newContext;
   }

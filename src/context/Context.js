@@ -1,5 +1,73 @@
 import "../types.js";
 
+/**
+ * @type {ContextParam}
+ */
+export class ContextParam {
+  /** @type {PropertyName} */
+  #propName;
+  get propName() {
+    return this.#propName;
+  }
+
+  /** @type {number[]} */
+  #indexes = [];
+  get indexes() {
+    return this.#indexes;
+  }
+
+  /** @type {number} */
+  #pos;
+  get pos() {
+    return this.#pos;
+  }
+
+  /**
+   * 
+   * @param {PropertyName} propName 
+   * @param {number[]} indexes 
+   * @param {number} pos 
+   */
+  constructor(propName, indexes, pos) {
+    this.#propName = propName;
+    this.#indexes = indexes;
+    this.#pos = pos;
+  }
+}
+/**
+ * @typedef {Object} ContextParam
+ * @property {PropertyName} propName
+ * @property {number[]} indexes
+ * @property {number} pos
+ */
+
+/**
+ * @type {ContextInfo}
+ */
+export class ContextInfo {
+  /** @type {number[]} */
+  #indexes = [];
+  get indexes() {
+    return this.#indexes;
+  }
+
+  /** @type {number[]} */
+  #stack = [];
+  get stack() {
+    return this.#stack;
+  }
+
+  /**
+   * 
+   * @param {ContextInfo} src 
+   */
+  copy(src) {
+    this.#indexes = src.indexes.slice();
+    this.#stack = src.stack.slice();
+  }
+
+}
+
 export class Context {
 
   /**
@@ -7,10 +75,7 @@ export class Context {
    * @returns {ContextInfo}
    */
   static create() {
-    return {
-      indexes: [],
-      stack: [],
-    }
+    return new ContextInfo;
   }
 
   /**
@@ -19,21 +84,8 @@ export class Context {
    * @returns {ContextInfo}
    */
   static clone(src) {
-    /**
-     * @type {ContextInfo}
-     */
-    const dst = this.create();
-    dst.indexes = src.indexes.slice();
-    for(const srcParam of src.stack) {
-      /**
-       * @type {ContextParam}
-       */
-      const dstParam = {};
-      dstParam.indexes = srcParam.indexes.slice();
-      dstParam.pos = srcParam.pos;
-      dstParam.propName = srcParam.propName;
-      dst.stack.push(dstParam);
-    }
-    return dst;
+    const contextInfo = new ContextInfo;
+    contextInfo.copy(src);
+    return contextInfo;
   }
 }
