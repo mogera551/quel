@@ -11,6 +11,7 @@ import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.
 import { ElementClass } from "../../src/binding/nodeProperty/ElementClass.js";
 import { ElementClassName } from "../../src/binding/nodeProperty/ElementClassName.js";
 import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent.js";
+import { Context } from "../../src/context/Context.js";
 
 let uuid_counter = 0;
 function fn_randomeUUID() {
@@ -35,8 +36,12 @@ const baseComponent = {
   inputFilters:{},
   outputFilters:{},
   updateSlot:{
-    addNodeUpdate:(update) => {
-      Reflect.apply(update.updateFunc, update, []);
+    /**
+     * 
+     * @param {Binding} binding 
+     */
+    addNodeUpdate:(binding) => {
+      binding.nodeProperty.assignFromViewModelValue();
     },
     addProcess:(process) => {
       Reflect.apply(process.target, process.thisArgument, process.argumentsList);
@@ -63,13 +68,14 @@ test("BindToDom parseBindText single property default", () => {
     "aaa": 100,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
+  const bindManager = { component, context:Context.create() };
   /** @type {import("../../src/binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "aaa", "textContent");
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "aaa", "textContent");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -90,12 +96,13 @@ test("BindToDom parseBindText single property default filters", () => {
     "aaa": 100,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "aaa|falsey|not|toFixed,2", "textContent");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "aaa|falsey|not|toFixed,2", "textContent");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -125,12 +132,13 @@ test("BindToDom parseBindText single property", () => {
     "bbb": true,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "disabled:bbb;", "textContent");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "disabled:bbb;", "textContent");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -152,12 +160,13 @@ test("BindToDom parseBindText multi property", () => {
     "bbb": true,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "aaa; disabled:bbb;", "textContent");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "aaa; disabled:bbb;", "textContent");
 
   expect(bindings.length).toBe(2);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -172,7 +181,8 @@ test("BindToDom parseBindText multi property", () => {
   expect(bindings[0].viewModelProperty.filterFuncs).toEqual({});
 
   expect(bindings[1].component).toBe(component);
-  expect(bindings[1].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[1].context.indexes).toEqual([]);
+  expect(bindings[1].context.stack).toEqual([]);
   expect(bindings[1].nodeProperty.node).toBe(node);
   expect(bindings[1].nodeProperty.element).toBe(node);
   expect(bindings[1].nodeProperty.name).toBe("disabled");
@@ -193,12 +203,13 @@ test("BindToDom parseBindText single style", () => {
     "bbb": true,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "style.display:bbb;", "textContent");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "style.display:bbb;", "textContent");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementStyle);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -222,12 +233,13 @@ test("BindToDom parseBindText single Checkbox", () => {
     "bbb": true,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "checkbox:aaa;", "checked");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "checkbox:aaa;", "checked");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(Checkbox);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -251,12 +263,13 @@ test("BindToDom parseBindText single Radio", () => {
     "bbb": true,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "radio:aaa;", "checked");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "radio:aaa;", "checked");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(Radio);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -278,12 +291,13 @@ test("BindToDom parseBindText single ClassList", () => {
     "bbb": true,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "class.zzz:aaa;", "textContent");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "class.zzz:aaa;", "textContent");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementClass);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -305,12 +319,13 @@ test("BindToDom parseBindText single ClassName", () => {
     "bbb": true,
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "class:aaa;", "textContent");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "class:aaa;", "textContent");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementClassName);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
@@ -369,12 +384,13 @@ test("BindToDom parseBindText single Event", () => {
     }
   });
   const component = Object.assign(baseComponent, { viewModel });
-  const context = { indexes:[], stack:[] };
-  const bindings = BindToDom.parseBindText(node, component, viewModel, context, "onclick:double;", "textContent");
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToDom.parseBindText(bindManager, node, viewModel, "onclick:double;", "textContent");
 
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({ indexes:[], stack:[] });
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementEvent);
   expect(bindings[0].nodeProperty.node).toBe(node);
   expect(bindings[0].nodeProperty.element).toBe(node);
