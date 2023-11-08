@@ -147,8 +147,13 @@ const mixInComponent = {
   },
 
   /** @type {boolean} shadowRootを使ってカプセル化をする(true) */
-  get withShadowRoot() {
-    return this.hasAttribute("with-shadow-root");
+  get useShadowRoot() {
+    return this._useShadowRoot;
+  },
+
+  /** @type {boolean} 仮想コンポーネントを使う */
+  get usePseudo() {
+    return this._usePseudo;
   },
 
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
@@ -183,6 +188,10 @@ const mixInComponent = {
     this._aliveReject = undefined;
 
     this._parentComponent = undefined;
+
+    this._useShadowRoot = this.constructor.useShadowRoot;
+    this._usePseudo = this.constructor.usePseudo;
+    
     this._filters = {
       in: class extends inputFilters {},
       out: class extends outputFilters {},
@@ -214,7 +223,7 @@ const mixInComponent = {
       }
     }
     // シャドウルートの作成
-    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
+    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
     // スレッドの生成
@@ -303,6 +312,12 @@ export class ComponentClassGenerator {
 
         /** @type {Object<string,FilterFunc>} */
         static outputFilters = module.outputFilters;
+
+        /** @type {boolean} */
+        static useShadowRoot = module.useShadowRoot;
+
+        /** @type {boolean} */
+        static usePseudo = module.usePseudo;
 
         /** @type {boolean} */
         get [Symbols.isComponent] () {

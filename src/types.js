@@ -58,6 +58,8 @@
  * @property {HTMLElement.constructor|undefined} extendClass
  * @property {string|undefined} extendTag
  * @property {Object<string,UserComponentModule>} componentModules
+ * @property {boolean|undefined} useShadowRoot
+ * @property {boolean|undefined} usePseudo
  */
 
 /**
@@ -98,7 +100,8 @@
  * @property {()=>void} aliveReject
  * @property {Promise} alivePromise
  * @property {Component} parentComponent
- * @property {boolean} withShadowRoot
+ * @property {boolean} useShadowRoot
+ * @property {boolean} usePseudo
  * @property {ShadowRoot|HTMLElement} viewRootElement
  * @property {()=>void} initialize
  * @property {()=>void} build

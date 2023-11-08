@@ -12,14 +12,20 @@ export class Module {
   /** @type {string} */
   css;
 
-  /** @type {typeof ViewModel} */
+  /** @type {ViewModel.constructor} */
   ViewModel;
 
-  /** @type {typeof HTMLElement} */
+  /** @type {HTMLElement.constructor} */
   extendClass;
 
   /** @type {string} */
   extendTag;
+
+  /** @type {boolean} */
+  usePseudo = false;
+
+  /** @type {boolean} */
+  useShadowRoot = false;
 
   /** @type {Object<string,FilterFunc>} */
   inputFilters;
@@ -45,6 +51,7 @@ export class Module {
    * {{loop:}}{{if:}}{{else:}}を<template>へ置換
    * {{end:}}を</template>へ置換
    * {{...}}を<!--@@:...-->へ置換
+   * <template>を<!--@@|...-->へ置換
    * @param {string} html 
    * @returns {string}
    */
