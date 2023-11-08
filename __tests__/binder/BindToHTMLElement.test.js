@@ -1,17 +1,16 @@
 import { BindToHTMLElement } from "../../src/binder/BindToHTMLElement.js";
 import { Symbols } from "../../src/Symbols.js";
-import { NodeUpdateData } from "../../src/thread/NodeUpdator.js";
 import { ProcessData } from "../../src/thread/ViewModelUpdator.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { inputFilters, outputFilters } from "../../src/filter/Builtin.js";
 import { Binding } from "../../src/binding/Binding.js";
-import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty.js";
 import { ElementProperty } from "../../src/binding/nodeProperty/ElementProperty.js";
 import { ElementEvent } from "../../src/binding/nodeProperty/ElementEvent.js";
 import { Radio } from "../../src/binding/nodeProperty/Radio.js";
 import { Checkbox } from "../../src/binding/nodeProperty/Checkbox.js";
 import { MultiValue } from "../../src/binding/nodeProperty/MultiValue.js";
 import { ViewModelProperty } from "../../src/binding/viewModelProperty/ViewModelProperty.js";
+import { Context } from "../../src/context/Context.js";
 
 test("BindToHTMLElement div", () => {
   const node = document.createElement("div");
@@ -30,10 +29,10 @@ test("BindToHTMLElement div", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -49,11 +48,13 @@ test("BindToHTMLElement div", () => {
       out:outputFilters,
     }
    };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].constructor).toBe(Binding);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLDivElement);
@@ -96,10 +97,10 @@ test("BindToHTMLElement input ", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -115,12 +116,14 @@ test("BindToHTMLElement input ", () => {
       out:outputFilters,
     }
   };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(1);
   expect(bindings[0].constructor).toBe(Binding);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -170,10 +173,10 @@ test("BindToHTMLElement select ", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -189,11 +192,13 @@ test("BindToHTMLElement select ", () => {
       out:outputFilters,
     }
   };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLSelectElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -235,10 +240,10 @@ test("BindToHTMLElement textarea ", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -254,11 +259,13 @@ test("BindToHTMLElement textarea ", () => {
       out:outputFilters,
     }
   };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLTextAreaElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -317,10 +324,10 @@ test("BindToHTMLElement input defaultEvent", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -335,11 +342,13 @@ test("BindToHTMLElement input defaultEvent", () => {
       out:outputFilters,
     }
   };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(2);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -359,8 +368,9 @@ test("BindToHTMLElement input defaultEvent", () => {
   expect(bindings[0].viewModelProperty.filteredValue).toBe("100");
 
   expect(bindings[1].component).toBe(component);
-  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].contextParam).toBe(undefined);
+  expect(bindings[1].context.indexes).toEqual([]);
+  expect(bindings[1].context.stack).toEqual([]);
+  expect(bindings[1].contextParam).toBe(null);
   expect(bindings[1].nodeProperty.constructor).toBe(ElementEvent);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.name).toBe("oninput");
@@ -408,10 +418,10 @@ test("BindToHTMLElement input not defaultEvent", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -426,11 +436,13 @@ test("BindToHTMLElement input not defaultEvent", () => {
       out:outputFilters,
     }
   };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(2);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.name).toBe("value");
@@ -450,8 +462,9 @@ test("BindToHTMLElement input not defaultEvent", () => {
   expect(bindings[0].viewModelProperty.filteredValue).toBe("100");
 
   expect(bindings[1].component).toBe(component);
-  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].contextParam).toBe(undefined);
+  expect(bindings[1].context.indexes).toEqual([]);
+  expect(bindings[1].context.stack).toEqual([]);
+  expect(bindings[1].contextParam).toBe(null);
   expect(bindings[1].nodeProperty.constructor).toBe(ElementEvent);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.name).toBe("onclick");
@@ -494,10 +507,10 @@ test("BindToHTMLElement input radio", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -513,11 +526,13 @@ test("BindToHTMLElement input radio", () => {
       out:outputFilters,
     }
   };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -562,10 +577,10 @@ test("BindToHTMLElement input checkbox", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -581,11 +596,13 @@ test("BindToHTMLElement input checkbox", () => {
       out:outputFilters,
     }
   };
-  const bindings = BindToHTMLElement.bind(node, component, { indexes:[], stack:[] });
+  const bindManager = { component, context:Context.create() };
+  const bindings = BindToHTMLElement.bind(bindManager, node);
   expect(bindings.length).toBe(1);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(ElementProperty);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -634,10 +651,10 @@ test("BindToHTMLElement input radio", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -652,15 +669,17 @@ test("BindToHTMLElement input radio", () => {
       out:outputFilters,
     }
   };
+  const bindManager = { component, context:Context.create() };
+  const bindings1 = BindToHTMLElement.bind(bindManager, node1);
+  const bindings2 = BindToHTMLElement.bind(bindManager, node2);
   const bindings = [];
-  const bindings1 = BindToHTMLElement.bind(node1, component, { indexes:[], stack:[] });
-  const bindings2 = BindToHTMLElement.bind(node2, component, { indexes:[], stack:[] });
   bindings.push(...bindings1);
   bindings.push(...bindings2);
   expect(bindings.length).toBe(2);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(Radio);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -682,8 +701,9 @@ test("BindToHTMLElement input radio", () => {
   expect(bindings[0].viewModelProperty.filteredValue).toBe("100");
 
   expect(bindings[1].component).toBe(component);
-  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].contextParam).toBe(undefined);
+  expect(bindings[1].context.indexes).toEqual([]);
+  expect(bindings[1].context.stack).toEqual([]);
+  expect(bindings[1].contextParam).toBe(null);
   expect(bindings[1].nodeProperty.constructor).toBe(Radio);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.node.checked).toBe(false);
@@ -738,10 +758,10 @@ test("BindToHTMLElement input checkbox", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -757,15 +777,17 @@ test("BindToHTMLElement input checkbox", () => {
       out:outputFilters,
     }
   };
+  const bindManager = { component, context:Context.create() };
+  const bindings1 = BindToHTMLElement.bind(bindManager, node1);
+  const bindings2 = BindToHTMLElement.bind(bindManager, node2);
   const bindings = [];
-  const bindings1 = BindToHTMLElement.bind(node1, component, { indexes:[], stack:[] });
-  const bindings2 = BindToHTMLElement.bind(node2, component, { indexes:[], stack:[] });
   bindings.push(...bindings1);
   bindings.push(...bindings2);
   expect(bindings.length).toBe(2);
   expect(bindings[0].component).toBe(component);
-  expect(bindings[0].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[0].contextParam).toBe(undefined);
+  expect(bindings[0].context.indexes).toEqual([]);
+  expect(bindings[0].context.stack).toEqual([]);
+  expect(bindings[0].contextParam).toBe(null);
   expect(bindings[0].nodeProperty.constructor).toBe(Checkbox);
   expect(bindings[0].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[0].nodeProperty.node.checked).toBe(true);
@@ -787,8 +809,9 @@ test("BindToHTMLElement input checkbox", () => {
   expect(bindings[0].viewModelProperty.filteredValue).toEqual(["100"]);
 
   expect(bindings[1].component).toBe(component);
-  expect(bindings[1].context).toEqual({indexes:[], stack:[]});
-  expect(bindings[1].contextParam).toBe(undefined);
+  expect(bindings[1].context.indexes).toEqual([]);
+  expect(bindings[1].context.stack).toEqual([]);
+  expect(bindings[1].contextParam).toBe(null);
   expect(bindings[1].nodeProperty.constructor).toBe(Checkbox);
   expect(bindings[1].nodeProperty.node.constructor).toBe(HTMLInputElement);
   expect(bindings[1].nodeProperty.node.checked).toBe(false);
@@ -835,6 +858,47 @@ test("BindToHTMLElement input checkbox", () => {
   expect(viewModel["aaa"]).toEqual([]);
 });
 
+test("BindToHTMLElement no htmlelement throw", () => {
+  const node = document.createTextNode("text");
+  const viewModel = {
+    "aaa": "100",
+    [Symbols.directlyGet](viewModelProperty, indexes) {
+      return this[viewModelProperty];
+    },
+    [Symbols.directlySet](viewModelProperty, indexes, value) {
+      this[viewModelProperty] = value;
+    }
+  }
+  const component = { 
+    viewModel,
+    updateSlot: {
+      /**
+       * 
+       * @param {Binding} binding 
+       */
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
+      },
+      /**
+       * 
+       * @param {ProcessData} processData 
+       */
+      addProcess(processData) {
+        Reflect.apply(processData.target, processData.thisArgument, processData.argumentsList);
+
+      },
+    },
+    filters: {
+      in:inputFilters,
+      out:outputFilters,
+    }
+  };
+  const bindManager = { component, context:Context.create() };
+  expect(() => {
+    const bindings1 = BindToHTMLElement.bind(bindManager, node);
+  }).toThrow("not HTMLElement");
+});
+
 test("BindToHTMLElement input radio throw", () => {
   const node1 = document.createElement("input");
   node1.type = "checkbox";
@@ -858,10 +922,10 @@ test("BindToHTMLElement input radio throw", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -877,11 +941,12 @@ test("BindToHTMLElement input radio throw", () => {
       out:outputFilters,
     }
   };
+  const bindManager = { component, context:Context.create() };
   expect(() => {
-    const bindings1 = BindToHTMLElement.bind(node1, component, { indexes:[], stack:[] });
+    const bindings1 = BindToHTMLElement.bind(bindManager, node1);
   }).toThrow("not radio");
   expect(() => {
-    const bindings2 = BindToHTMLElement.bind(node2, component, { indexes:[], stack:[] });
+    const bindings2 = BindToHTMLElement.bind(bindManager, node2);
   }).toThrow("not radio");
 });
 
@@ -908,10 +973,10 @@ test("BindToHTMLElement input checkbox throw", () => {
     updateSlot: {
       /**
        * 
-       * @param {NodeUpdateData} nodeUpdateData 
+       * @param {Binding} binding 
        */
-      addNodeUpdate(nodeUpdateData) {
-        nodeUpdateData.updateFunc();
+      addNodeUpdate(binding) {
+        binding.nodeProperty.assignFromViewModelValue();
       },
       /**
        * 
@@ -927,11 +992,12 @@ test("BindToHTMLElement input checkbox throw", () => {
       out:outputFilters,
     }
   };
+  const bindManager = { component, context:Context.create() };
   expect(() => {
-    const bindings1 = BindToHTMLElement.bind(node1, component, { indexes:[], stack:[] });
+    const bindings1 = BindToHTMLElement.bind(bindManager, node1);
   }).toThrow("not checkbox");
   expect(() => {
-    const bindings2 = BindToHTMLElement.bind(node2, component, { indexes:[], stack:[] });
+    const bindings2 = BindToHTMLElement.bind(bindManager, node2);
   }).toThrow("not checkbox");
 });
 

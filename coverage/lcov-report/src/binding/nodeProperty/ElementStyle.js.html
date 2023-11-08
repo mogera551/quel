@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -103,54 +103,54 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 &nbsp;
 export class ElementStyle extends ElementBase {
   /** @type {HTMLElement} */
-  get htmlElement() {
-    return this.node;
+<span class="fstat-no" title="function not covered" >  ge</span>t htmlElement() {
+<span class="cstat-no" title="statement not covered" >    return this.node;</span>
   }
 &nbsp;
   /** @type {string} */
-  get styleName() {
-    return this.nameElements[1];
+<span class="fstat-no" title="function not covered" >  ge</span>t styleName() {
+<span class="cstat-no" title="statement not covered" >    return this.nameElements[1];</span>
   }
 &nbsp;
   /** @type {any} */
-  get value() {
-    return this.htmlElement.style[this.styleName];
+<span class="fstat-no" title="function not covered" >  ge</span>t value() {
+<span class="cstat-no" title="statement not covered" >    return this.htmlElement.style[this.styleName];</span>
   }
-  set value(value) {
-    this.htmlElement.style[this.styleName] = value;
+<span class="fstat-no" title="function not covered" >  se</span>t value(value) {
+<span class="cstat-no" title="statement not covered" >    this.htmlElement.style[this.styleName] = value;</span>
   }
 &nbsp;
   /**
@@ -161,9 +161,9 @@ export class ElementStyle extends ElementBase {
    * @param {Filter[]} filters 
    * @param {Object&lt;string,FilterFunc&gt;} inputFilterFuncs
    */
-  constructor(binding, node, name, filters, inputFilterFuncs) {
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (!(node instanceof HTMLElement)) <span class="cstat-no" title="statement not covered" >utils.raise("not htmlElement");</span>
-    super(binding, node, name, filters, inputFilterFuncs);
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(binding, node, name, filters, inputFilterFuncs) {
+<span class="cstat-no" title="statement not covered" >    if (!(node instanceof HTMLElement)) <span class="cstat-no" title="statement not covered" >utils.raise("not htmlElement");</span></span>
+<span class="cstat-no" title="statement not covered" >    super(binding, node, name, filters, inputFilterFuncs);</span>
   }
 }</pre></td></tr></table></pre>
 
@@ -172,7 +172,7 @@ export class ElementStyle extends ElementBase {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-11-07T22:23:47.259Z
+                at 2023-11-08T22:16:17.716Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
