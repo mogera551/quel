@@ -232,15 +232,13 @@ const mixInComponent = {
     // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
     await this.viewModel[Symbols.connectedCallback]();
 
-    // 更新通知を伴う初期化処理
-    const initProc = async () => {
-      // Bindingツリーの構築
-      this.rootBinding = BindingManager.create(this, template, Context.create());
-      this.viewRootElement.appendChild(this.rootBinding.fragment);
-    };
-    const updateSlot = this.updateSlot;
-    updateSlot.addProcess(new ProcessData(initProc, this, []));
-    await updateSlot.alive();
+    this.viewModel[Symbols.beCacheable]();
+
+    // Bindingツリーの構築
+    this.rootBinding = BindingManager.create(this, template, Context.create());
+    this.viewRootElement.appendChild(this.rootBinding.fragment);
+
+    await this.updateSlot.alive();
   },
 
   /**

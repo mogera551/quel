@@ -1512,14 +1512,20 @@ class Module {
   /** @type {string} */
   css;
 
-  /** @type {typeof ViewModel} */
+  /** @type {ViewModel.constructor} */
   ViewModel;
 
-  /** @type {typeof HTMLElement} */
+  /** @type {HTMLElement.constructor} */
   extendClass;
 
   /** @type {string} */
   extendTag;
+
+  /** @type {boolean} */
+  usePseudo = false;
+
+  /** @type {boolean} */
+  useShadowRoot = false;
 
   /** @type {Object<string,FilterFunc>} */
   inputFilters;
@@ -1545,6 +1551,7 @@ class Module {
    * {{loop:}}{{if:}}{{else:}}を<template>へ置換
    * {{end:}}を</template>へ置換
    * {{...}}を<!--@@:...-->へ置換
+   * <template>を<!--@@|...-->へ置換
    * @param {string} html 
    * @returns {string}
    */
@@ -4238,8 +4245,13 @@ const mixInComponent = {
   },
 
   /** @type {boolean} shadowRootを使ってカプセル化をする(true) */
-  get withShadowRoot() {
-    return this.hasAttribute("with-shadow-root");
+  get useShadowRoot() {
+    return this._useShadowRoot;
+  },
+
+  /** @type {boolean} 仮想コンポーネントを使う */
+  get usePseudo() {
+    return this._usePseudo;
   },
 
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
@@ -4274,6 +4286,10 @@ const mixInComponent = {
     this._aliveReject = undefined;
 
     this._parentComponent = undefined;
+
+    this._useShadowRoot = this.constructor.useShadowRoot;
+    this._usePseudo = this.constructor.usePseudo;
+    
     this._filters = {
       in: class extends inputFilters {},
       out: class extends outputFilters {},
@@ -4305,7 +4321,7 @@ const mixInComponent = {
       }
     }
     // シャドウルートの作成
-    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.withShadowRoot) {
+    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot) {
       this.attachShadow({mode: 'open'});
     }
     // スレッドの生成
@@ -4314,15 +4330,13 @@ const mixInComponent = {
     // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
     await this.viewModel[Symbols.connectedCallback]();
 
-    // 更新通知を伴う初期化処理
-    const initProc = async () => {
-      // Bindingツリーの構築
-      this.rootBinding = BindingManager.create(this, template, Context.create());
-      this.viewRootElement.appendChild(this.rootBinding.fragment);
-    };
-    const updateSlot = this.updateSlot;
-    updateSlot.addProcess(new ProcessData(initProc, this, []));
-    await updateSlot.alive();
+    this.viewModel[Symbols.beCacheable]();
+
+    // Bindingツリーの構築
+    this.rootBinding = BindingManager.create(this, template, Context.create());
+    this.viewRootElement.appendChild(this.rootBinding.fragment);
+
+    await this.updateSlot.alive();
   },
 
   /**
@@ -4394,6 +4408,12 @@ class ComponentClassGenerator {
 
         /** @type {Object<string,FilterFunc>} */
         static outputFilters = module.outputFilters;
+
+        /** @type {boolean} */
+        static useShadowRoot = module.useShadowRoot;
+
+        /** @type {boolean} */
+        static usePseudo = module.usePseudo;
 
         /** @type {boolean} */
         get [Symbols.isComponent] () {
