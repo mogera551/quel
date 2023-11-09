@@ -1,6 +1,6 @@
-import { PropertyName } from "../../../modules/dot-notation/dot-notation";
-import { Symbols } from "../../Symbols";
-import { utils } from "../../utils";
+import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
+import { Symbols } from "../../Symbols.js";
+import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
 export class ComponentProperty extends ElementBase {

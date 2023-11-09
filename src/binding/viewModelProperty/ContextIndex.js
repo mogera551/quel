@@ -1,5 +1,5 @@
-import { utils } from "../../utils";
-import { ViewModelProperty } from "./ViewModelProperty";
+import { utils } from "../../utils.js";
+import { ViewModelProperty } from "./ViewModelProperty.js";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 

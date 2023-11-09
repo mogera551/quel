@@ -14,6 +14,9 @@ import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
 import { Context } from "../context/Context.js";
 
+/** @type {WeakMap<Node,Component>} */
+const pseudoComponentByNode = new WeakMap;
+
 /**
  * 
  * @param {Node} node 
@@ -28,6 +31,8 @@ const getParentComponent = (node) => {
       if (node.host[Symbols.isComponent]) return node.host;
       node = node.host;
     }
+    const component = pseudoComponentByNode.get(node);
+    if (typeof component !== "undefined") return component;
   } while(true);
 };
 
@@ -158,7 +163,17 @@ const mixInComponent = {
 
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
-    return this.shadowRoot ?? this;
+    return this.usePseudo ? this.pseudoParentNode : (this.shadowRoot ?? this);
+  },
+
+  /** @type {Node} 親要素（usePseudo以外では使わないこと） */
+  get pseudoParentNode() {
+    return this.usePseudo ? this._pseudoParentNode : utils.raise("not usePseudo");
+  },
+
+  /** @type {Node} 代替要素 */
+  get pseudoNode() {
+    return this._pseudoNode;
   },
 
   /**
@@ -191,6 +206,9 @@ const mixInComponent = {
 
     this._useShadowRoot = this.constructor.useShadowRoot;
     this._usePseudo = this.constructor.usePseudo;
+
+    this._pseudoParentNode = undefined;
+    this._pseudoNode = undefined;
     
     this._filters = {
       in: class extends inputFilters {},
@@ -223,7 +241,7 @@ const mixInComponent = {
       }
     }
     // シャドウルートの作成
-    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot) {
+    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && !this.usePseudo) {
       this.attachShadow({mode: 'open'});
     }
     // スレッドの生成
@@ -236,7 +254,11 @@ const mixInComponent = {
 
     // Bindingツリーの構築
     this.rootBinding = BindingManager.create(this, template, Context.create());
-    this.viewRootElement.appendChild(this.rootBinding.fragment);
+    if (this.usePseudo) {
+      this.viewRootElement.insertBefore(this.rootBinding.fragment, this.pseudoNode.nextSibling)
+    } else {
+      this.viewRootElement.appendChild(this.rootBinding.fragment);
+    }
 
     await this.updateSlot.alive();
   },
@@ -252,7 +274,13 @@ const mixInComponent = {
         await this.parentComponent.initialPromise;
       } else {
       }
-      
+
+      if (this.usePseudo) {
+        const comment = document.createComment(`@@/${this.tagName}`);
+        this._pseudoParentNode = this.parentNode;
+        this._pseudoNode = comment;
+        this.pseudoParentNode.replaceChild(comment, this);
+      }
       // 生存確認用プロミスの生成
       this.alivePromise = new Promise((resolve, reject) => {
         this.aliveResolve = resolve;
@@ -260,6 +288,7 @@ const mixInComponent = {
       });
 
       await this.build();
+      
     } finally {
       this.initialResolve && this.initialResolve();
     }
