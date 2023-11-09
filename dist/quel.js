@@ -4157,7 +4157,7 @@ const mixInComponent = {
         if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
           this.viewModel[Symbols.beUncacheable]();
         } else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
-          this.viewModel[Symbols.beUncacheable]();
+          this.viewModel[Symbols.beCacheable]();
         } else if (updateSlotStatus === UpdateSlotStatus.beginNodeUpdate) {
           this.viewModel[Symbols.beCacheable]();
         }
