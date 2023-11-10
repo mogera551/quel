@@ -946,7 +946,7 @@ class ViewModelHandler extends Handler$2 {
    * @param {any[]} argumentArray 
    */
   #addProcess(target, thisArg, argumentArray) {
-    this.#component.updateSlot.addProcess(new ProcessData(target, thisArg, argumentArray));
+    this.#component.updateSlot?.addProcess(new ProcessData(target, thisArg, argumentArray));
   }
 
   /**
@@ -956,7 +956,7 @@ class ViewModelHandler extends Handler$2 {
    * @param {Proxy} receiver 
    */
   #addNotify(target, propertyAccess, receiver) {
-    this.#component.updateSlot.addNotify(propertyAccess);
+    this.#component.updateSlot?.addNotify(propertyAccess);
   }
 
   /**
@@ -2288,6 +2288,11 @@ class UpdateSlot {
    */
   async alive() {
     return this.#alivePromise;
+  }
+
+  /** @type {boolean} */
+  get isEmpty() {
+    return this.#viewModelUpdator.isEmpty && this.#notifyReceiver.isEmpty && this.#nodeUpdator.isEmpty;
   }
 
   async exec() {
@@ -4162,6 +4167,9 @@ const mixInComponent = {
 
   /** @type {UpdateSlot} 更新処理用スロット */
   get updateSlot() {
+    if (typeof this._thread === "undefined") {
+      return undefined;
+    }
     if (typeof this._updateSlot === "undefined") {
       this._updateSlot = UpdateSlot.create(this, () => {
         this._updateSlot = undefined;
@@ -4269,7 +4277,7 @@ const mixInComponent = {
     return this.usePseudo ? this._pseudoParentNode : utils.raise("not usePseudo");
   },
 
-  /** @type {Node} 代替要素 */
+  /** @type {Node} 代替要素（usePseudo以外では使わないこと） */
   get pseudoNode() {
     return this._pseudoNode;
   },
@@ -4324,6 +4332,7 @@ const mixInComponent = {
    * @returns {void}
    */
   async build() {
+//    console.log(`components[${this.tagName}].build`);
     const { template, inputFilters, outputFilters } = this.constructor; // staticから取得
     // フィルターの設定
     if (typeof inputFilters !== "undefined") {
@@ -4354,10 +4363,14 @@ const mixInComponent = {
     this.rootBinding = BindingManager.create(this, template, Context.create());
     if (this.usePseudo) {
       this.viewRootElement.insertBefore(this.rootBinding.fragment, this.pseudoNode.nextSibling);
+      this.rootBinding.nodes.forEach(node => pseudoComponentByNode.set(node, this));
     } else {
       this.viewRootElement.appendChild(this.rootBinding.fragment);
     }
 
+    if (this.updateSlot.isEmpty) {
+      this.updateSlot.waitResolve(true);
+    }
     await this.updateSlot.alive();
   },
 
@@ -4366,6 +4379,7 @@ const mixInComponent = {
    * @returns {void}
    */
   async connectedCallback() {
+//    console.log(`components[${this.tagName}].connectedCallback`);
     try {
       // 親要素の初期化処理の終了を待つ
       if (this.parentComponent) {

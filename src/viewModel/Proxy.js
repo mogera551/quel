@@ -224,7 +224,7 @@ export class ViewModelHandler extends Handler {
    * @param {any[]} argumentArray 
    */
   #addProcess(target, thisArg, argumentArray) {
-    this.#component.updateSlot.addProcess(new ProcessData(target, thisArg, argumentArray));
+    this.#component.updateSlot?.addProcess(new ProcessData(target, thisArg, argumentArray));
   }
 
   /**
@@ -234,7 +234,7 @@ export class ViewModelHandler extends Handler {
    * @param {Proxy} receiver 
    */
   #addNotify(target, propertyAccess, receiver) {
-    this.#component.updateSlot.addNotify(propertyAccess);
+    this.#component.updateSlot?.addNotify(propertyAccess);
   }
 
   /**

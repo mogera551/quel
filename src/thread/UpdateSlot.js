@@ -93,6 +93,11 @@ export class UpdateSlot {
     return this.#alivePromise;
   }
 
+  /** @type {boolean} */
+  get isEmpty() {
+    return this.#viewModelUpdator.isEmpty && this.#notifyReceiver.isEmpty && this.#nodeUpdator.isEmpty;
+  }
+
   async exec() {
     do {
       await this.#viewModelUpdator.exec();
