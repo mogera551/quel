@@ -2214,8 +2214,8 @@ class Thread {
 }
 
 class NodeUpdator {
-  /** @type {Set<import("../binding/Binding.js").Binding>} */
-  queue = new Set;
+  /** @type {Map<import("../binding/Binding.js").Binding,any>} */
+  queue = new Map;
 
   /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
@@ -2252,11 +2252,11 @@ class NodeUpdator {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
     try {
       while(this.queue.size > 0) {
-        const bindings = this.reorder(Array.from(this.queue));
+        const bindings = this.reorder(Array.from(this.queue.keys()));
         for(const binding of bindings) {
-          binding.nodeProperty.assignFromViewModelValue();
+          binding.nodeProperty.assignValue(this.queue.get(binding));
         }
-        this.queue = new Set;
+        this.queue = new Map;
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
@@ -2605,9 +2605,10 @@ class UpdateSlot {
   /**
    * 
    * @param {import("../binding/Binding.js").Binding} binding 
+   * @param {any} value
    */
-  async addNodeUpdate(binding) {
-    this.#nodeUpdator.queue.add(binding);
+  async addNodeUpdate(binding, value) {
+    this.#nodeUpdator.queue.set(binding, value);
     this.#waitResolve(true); // waitingを解除する
   }
 
@@ -2863,6 +2864,10 @@ class NodeProperty {
 
   assignFromViewModelValue() {
     this.value = this.binding.viewModelProperty.filteredValue ?? "";
+  }
+
+  assignValue(value) {
+    this.value = value;
   }
 }
 
@@ -3253,6 +3258,10 @@ class ViewModelProperty {
 
   assignFromNodeValue() {
     this.value = this.binding.nodeProperty.filteredValue;
+  }
+
+  assignValue(value) {
+    this.value = value;
   }
 }
 
@@ -4158,7 +4167,7 @@ class Binding {
      * 展開可能でない場合、変更スロットに変更処理を入れる
      * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
      */
-    expandable ? nodeProperty.assignFromViewModelValue() : component.updateSlot.addNodeUpdate(this);
+    expandable ? nodeProperty.assignFromViewModelValue() : component.updateSlot.addNodeUpdate(this, filteredViewModelValue);
   }
 
   /**

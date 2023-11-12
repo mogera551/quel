@@ -1,8 +1,8 @@
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NodeUpdator {
-  /** @type {Set<import("../binding/Binding.js").Binding>} */
-  queue = new Set;
+  /** @type {Map<import("../binding/Binding.js").Binding,any>} */
+  queue = new Map;
 
   /** @type {UpdateSlotStatusCallback} */
   #statusCallback;
@@ -39,11 +39,11 @@ export class NodeUpdator {
     this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
     try {
       while(this.queue.size > 0) {
-        const bindings = this.reorder(Array.from(this.queue));
+        const bindings = this.reorder(Array.from(this.queue.keys()));
         for(const binding of bindings) {
-          binding.nodeProperty.assignFromViewModelValue();
+          binding.nodeProperty.assignValue(this.queue.get(binding));
         }
-        this.queue = new Set;
+        this.queue = new Map;
       }
     } finally {
       this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);

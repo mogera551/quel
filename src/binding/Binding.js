@@ -108,7 +108,7 @@ export class Binding {
      * 展開可能でない場合、変更スロットに変更処理を入れる
      * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
      */
-    expandable ? nodeProperty.assignFromViewModelValue() : component.updateSlot.addNodeUpdate(this);
+    expandable ? nodeProperty.assignFromViewModelValue() : component.updateSlot.addNodeUpdate(this, filteredViewModelValue);
   }
 
   /**

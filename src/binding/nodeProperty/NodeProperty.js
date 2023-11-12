@@ -110,4 +110,8 @@ export class NodeProperty {
   assignFromViewModelValue() {
     this.value = this.binding.viewModelProperty.filteredValue ?? "";
   }
+
+  assignValue(value) {
+    this.value = value;
+  }
 }
