@@ -4171,7 +4171,7 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {ContextParam}
+   * @returns {ContextParam | undefined}
    */
   findParam(prop) {
     if (typeof this.directlyCallContext.context === "undefined") return;

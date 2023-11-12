@@ -1,9 +1,8 @@
-import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../Symbols.js";
 import { utils } from "../utils.js";
 import { Api } from "./Api.js";
 import { Callback } from "./Callback.js";
-import { Dialog } from "./Dialog.js";
 import { DirectlyCallContext } from "./DirectlyCallContext.js";
 import { SpecialProp } from "./SpecialProp.js";
 import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
@@ -66,7 +65,7 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {ContextParam}
+   * @returns {ContextParam | undefined}
    */
   findParam(prop) {
     if (typeof this.directlyCallContext.context === "undefined") return;

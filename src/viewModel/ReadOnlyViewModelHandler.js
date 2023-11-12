@@ -1,5 +1,4 @@
 import "../types.js"
-import { Handler } from "../../modules/dot-notation/dot-notation.js";
 import { Callback } from "./Callback.js";
 import { Api } from "./Api.js";
 import { utils } from "../utils.js";
