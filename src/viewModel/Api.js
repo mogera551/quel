@@ -1,6 +1,5 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { ViewModelHandler } from "./Proxy_bak.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /**
@@ -10,11 +9,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 const setOfApiFunctions = new Set([
   Symbols.directlyCall,
   Symbols.getDependentProps,
-  //Symbols.addNotify,
   Symbols.notifyForDependentProps,
-  //Symbols.getHandler, // 未使用
-  //Symbols.beCacheable, // 廃止
-  //Symbols.beUncacheable, //廃止
   Symbols.clearCache,
 ]);
 
@@ -34,7 +29,7 @@ export class Api {
    * 
    * @param {ViewModel} viewModel 
    * @param {Proxy<ViewModel>} viewModelProxy 
-   * @param {ViewModelHandler} handler
+   * @param {import("./ViewModelHandlerBase.js").ViewModelHandlerBase} handler
    * @param {symbol} prop
    */
   static get(viewModel, viewModelProxy, handler, prop) {

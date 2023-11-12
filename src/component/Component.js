@@ -1,7 +1,5 @@
 import "../types.js";
-import { createViewModel } from "../viewModel/Proxy_bak.js";
 import { Symbols } from "../Symbols.js";
-import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { createProps } from "./Props.js";
 import { createGlobals } from "./Globals.js";
 import { Module } from "./Module.js";

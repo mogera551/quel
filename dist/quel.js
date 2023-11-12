@@ -1,92 +1,4 @@
-let utils$1 = class utils {
-  /**
-   * 
-   * @param {string} message 
-   */
-  static raise(message) {
-    throw new Error(message);
-  }
-
-  /**
-   * 関数かどうかをチェック
-   * @param {any} obj 
-   * @returns {boolean}
-   */
-  static isFunction = (obj) => {
-    const toString = Object.prototype.toString;
-    const text = toString.call(obj).slice(8, -1).toLowerCase();
-    return (text === "function" || text === "asyncfunction");
-  }
-
-  /**
-   * 
-   * @param {HTMLElement} element 
-   * @returns {boolean}
-   */
-  static isInputableElement(element) {
-    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || 
-      (element instanceof HTMLInputElement && element.type !== "button");
-  }
-
-  /**
-   * to kebab case (upper camel, lower camel, snakeを想定)
-   * @param {string} text 
-   * @returns {string}
-   */
-  static toKebabCase = text => (typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase()) : text;
-
-  /**
-   * @returns {string}
-   */
-  static createUUID() {
-    return window?.crypto?.randomUUID ? window.crypto.randomUUID()
-     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(a) {
-        let r = (new Date().getTime() + Math.random() * 16)%16 | 0, v = a == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-  }
-};
-
-class Cache {
-  /** @type {Map<PropertyName,Map<string,any>>} */
-  #valueByIndexesStringByPropertyName = new Map;
-  
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number[]} indexes 
-   * @returns {any}
-   */
-  get(propName, indexes) {
-    const valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;
-  }
-
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number[]} indexes 
-   * @param {any} value
-   * @returns {any}
-   */
-  set(propName, indexes, value) {
-    let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    if (!valueByIndexesString) {
-      valueByIndexesString = new Map;
-      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
-    }
-    valueByIndexesString.set(indexes.toString(), value);
-    return value;
-  }
-
-  /**
-   * @returns {void}
-   */
-  clear() {
-    this.#valueByIndexesStringByPropertyName.clear();
-  }
-
-}
+const name = "quel";
 
 const WILDCARD = "*";
 const DELIMITER = ".";
@@ -532,813 +444,26 @@ let Handler$2 = class Handler {
 };
 
 /**
- * @typedef {Object} ViewModelInfo
- * @property {string[]} removeProps
- * @property {string[]} definedProps
- * @property {string[]} accessorProps
- * @property {string[]} methods
- */
-
-class ViewModelize {
-  /**
-   * オブジェクトのすべてのプロパティのデスクリプタを取得する
-   * 継承元を遡る、ただし、Objectのプロパティは取得しない
-   * @param {ViewModel} target 
-   * @returns {Map<string,PropertyDescriptor>}
-   */
-  static getDescByName(target) {
-    /**
-     * @type {Map<string,PropertyDescriptor>}
-     */
-    const descByName = new Map;
-    let object = target;
-    while(object !== Object.prototype) {
-      const descs = Object.getOwnPropertyDescriptors(object);
-      for(const [name, desc] of Object.entries(descs)) {
-        if (descByName.has(name)) continue;
-        descByName.set(name, desc);
-      }
-      object = Object.getPrototypeOf(object);
-    }
-    return descByName;
-  }
-
-  /**
-   * オブジェクト内のメソッドを取得する
-   * コンストラクタは含まない
-   * @param {[string,PropertyDescriptor][]} descByNameEntries 
-   * @returns {[string,PropertyDescriptor][]}
-   */
-  static getMethods(descByNameEntries, targetClass) {
-    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value === "function")
-  }
-
-  /**
-   * オブジェクト内のプロパティを取得する
-   * @param {[string,PropertyDescriptor][]} descByNameEntries 
-   * @returns {[string,PropertyDescriptor][]}
-   */
-  static getProperties(descByNameEntries, targetClass) {
-    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value !== "function")
-  }
-
-  /**
-   * ViewModel化
-   * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {ViewModel} target 
-   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:ViewModel}}
-   */
-  static viewModelize(target) {
-    let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
-    if (!viewModelInfo) {
-      const descByName = this.getDescByName(target);
-      const descByNameEntries = Array.from(descByName.entries());
-      const removeProps = [];
-      const definedProps = [];
-      const accessorProps = [];
-      const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
-      this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
-        definedProps.push(name);
-        const propName = PropertyName.create(name);
-        if (!propName.isPrimitive) {
-          if (("value" in desc) && typeof desc.value === "undefined") {
-            removeProps.push(name);
-          }
-        }
-        if ("get" in desc && typeof desc.get !== "undefined") {
-          accessorProps.push(name);
-        }
-      });
-      viewModelInfo = { removeProps, definedProps, methods, accessorProps };
-      this.viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
-    }
-    viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
-    return {
-      definedProps:viewModelInfo.definedProps, 
-      methods:viewModelInfo.methods, 
-      accessorProps:viewModelInfo.accessorProps,
-      viewModel:target
-    };
-  }
-
-  /** @type {Map<typeof ViewModel,ViewModelInfo>} */
-  static viewModelInfoByConstructor = new Map;
-  
-}
-
-const name = "quel";
-
-/**
  * @enum {Symbol}
  */
 const Symbols$1 = Object.assign({
   connectedCallback: Symbol.for(`${name}:viewModel.connectedCallback`),
   disconnectedCallback: Symbol.for(`${name}:viewModel.disconnectedCallback`),
-  initCallback: Symbol.for(`${name}:viewModel.initCallback`),
   writeCallback: Symbol.for(`${name}:viewModel.writeCallback`),
   getDependentProps: Symbol.for(`${name}:viewModel.getDependentProps`),
-  getHandler: Symbol.for(`${name}:viewModel.getHandler`),
-  addNotify: Symbol.for(`${name}:viewModel.addNotify`),
-
-  beCacheable: Symbol.for(`${name}:viewModel.beCacheable`),
-  beUncacheable: Symbol.for(`${name}:viewModel.beUncacheable`),
   clearCache: Symbol.for(`${name}:viewModel.clearCache`),
+  directlyCall: Symbol.for(`${name}:viewModel.directCall`),
+  notifyForDependentProps: Symbol.for(`${name}:viewModel.notifyForDependentProps`),
 
   boundByComponent: Symbol.for(`${name}:globalData.boundByComponent`),
 
-  directlyCall: Symbol.for(`${name}:viewModel.directCall`),
   bindTo: Symbol.for(`${name}:componentModule.bindTo`),
-  notifyForDependentProps: Symbol.for(`${name}:viewModel.notifyForDependentProps`),
 
   bindProperty: Symbol.for(`${name}:props.bindProperty`),
   toObject: Symbol.for(`${name}:props.toObject`),
 
   isComponent: Symbol.for(`${name}:component.isComponent`),
 }, Symbols$2);
-
-/** @enum {number} */
-const UpdateSlotStatus = {
-  beginViewModelUpdate: 1,
-  endViewMmodelUpdate: 2,
-  beginNotifyReceive: 3,
-  endNotifyReceive: 4,
-  beginNodeUpdate: 5,
-  endNodeUpdate: 6,
-};
-
-class ProcessData {
-  /** @type {()=>void} */
-  target;
-
-  /** @type {Object} */
-  thisArgument;
-
-  /** @type {any[]} */
-  argumentsList;
-
-  /**
-   * 
-   * @param {()=>void} target 
-   * @param {Object} thisArgument 
-   * @param {any[]} argumentsList 
-   */
-  constructor(target, thisArgument, argumentsList) {
-    this.target = target;
-    this.thisArgument = thisArgument;
-    this.argumentsList = argumentsList;
-  }
-}
-
-class ViewModelUpdator {
-  /** @type {ProcessData[]} */
-  queue = [];
-
-  /** @type {UpdateSlotStatusCallback} */
-  #statusCallback;
-
-  /**
-   * @param {UpdateSlotStatusCallback} statusCallback
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
-
-  /**
-   * 
-   */
-  async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginViewModelUpdate);
-    try {
-      while(this.queue.length > 0) {
-        const processes = this.queue.splice(0);
-        for(const process of processes) {
-          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
-        }
-      }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endViewMmodelUpdate);
-    }
-  }
-
-  /** @type {boolean} */
-  get isEmpty() {
-    return this.queue.length === 0;
-  }
-}
-
-/**
- * $dependentPropsを表現
- */
-class DependentProps {
-  /** @type {Set<string>} */
-  #setOfDefaultProps = new Set;
-
-  /** @type {Map<string,Set<string>>} */
-  #setOfPropsByRefProp = new Map;
-  /** @type {Map<string,Set<string>>} */
-  get setOfPropsByRefProp() {
-    return this.#setOfPropsByRefProp;
-  }
-
-  /**
-   * @param {string} prop
-   * @returns {boolean} 
-   */
-  hasDefaultProp(prop) {
-    return this.#setOfDefaultProps.has(prop);
-  }
-
-  /**
-   * 
-   * @param {string} prop 
-   * @returns {void}
-   */
-  addDefaultProp(prop) {
-    let currentName = PropertyName.create(prop);
-    while(currentName.parentPath !== "") {
-      const parentName = PropertyName.create(currentName.parentPath);
-      if (!this.#setOfDefaultProps.has(currentName.name)) {
-        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]));
-        this.#setOfDefaultProps.add(currentName.name);
-      }
-      currentName = parentName;
-    }
-  }
-
-  /**
-   * 
-   * @param {{prop:string,refProps:string[]}} props 
-   * @returns {void}
-   */
-  setDependentProps(props) {
-    for(const [prop, refProps] of Object.entries(props)) {
-      for(const refProp of refProps) {
-        this.#setOfPropsByRefProp.get(refProp)?.add(prop) ?? this.#setOfPropsByRefProp.set(refProp, new Set([prop]));
-      }
-    }
-  }
-
-}
-
-class Dialog {
-  /**
-   * コンポーネントを動的に表示し、消滅するまで待つ
-   * @param {string} dialogName 
-   * @param {Object<string,any>} data 
-   * @param {Object<string,any>} attributes 
-   * @returns {Promise<boolean>}
-   */
-  static async open(dialogName, data, attributes) {
-    const tagName = utils.toKebabCase(dialogName);
-    const dialog = document.createElement(tagName);
-    Object.entries(attributes).forEach(([key, value]) => {
-      dialog.setAttribute(key, value);
-    });
-    Object.entries(data).forEach(([key, value]) => {
-      dialog.props[Symbols.bindProperty](key, key, []);
-      dialog.props[key] = value;
-    });
-    document.body.appendChild(dialog);
-    return dialog.alivePromise;
-  }
-
-  /**
-   * 動的に表示されたコンポーネントを閉じる
-   * @param {Component} dialog 
-   * @param {Object<string,any>} data 
-   */
-  static close(dialog, data) {
-    Object.entries(data).forEach(([key, value]) => {
-      dialog.props[key] = value;
-    });
-    dialog.parentNode.removeChild(dialog);
-  }
-
-
-}
-
-class DirectlyCallContext {
-  /** @type {ContextInfo} */
-  #context;
-  get context() {
-    return this.#context;
-  }
-
-  async callback(context, directlyCallback) {
-    if (typeof this.#context !== "undefined") utils$1.raise("already set context");
-    this.#context = context;
-    try {
-      return directlyCallback();
-    } finally {
-      this.#context = undefined;
-    }
-  }
-
-}
-
-/**
- * 外部から呼び出されるAPI
- * @type {Set<symbol>}
- */
-const setOfApiFunctions = new Set([
-  Symbols$1.directlyCall,
-  Symbols$1.getDependentProps,
-  //Symbols.addNotify,
-  Symbols$1.notifyForDependentProps,
-  //Symbols.getHandler, // 未使用
-  //Symbols.beCacheable, // 廃止
-  //Symbols.beUncacheable, //廃止
-  Symbols$1.clearCache,
-]);
-
-const callFuncBySymbol = {
-  [Symbols$1.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, context, event) => 
-    handler.directlyCallback(context, async () => 
-      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...context.indexes])
-    ),
-  [Symbols$1.notifyForDependentProps]:({viewModel, viewModelProxy, handler}) => (prop, indexes) => 
-    handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
-  [Symbols$1.getDependentProps]:({handler}) => () => handler.dependentProps,
-  [Symbols$1.clearCache]:({handler}) => () => handler.cache.clear(),
-};
-
-class Api {
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @param {Proxy<ViewModel>} viewModelProxy 
-   * @param {ViewModelHandler} handler
-   * @param {symbol} prop
-   */
-  static get(viewModel, viewModelProxy, handler, prop) {
-    return callFuncBySymbol[prop]?.({viewModel, viewModelProxy, handler});
-  }
-
-  /**
-   * @param {symbol | string} prop
-   * @returns {boolean}
-   */
-  static has(prop) {
-    return setOfApiFunctions.has(prop);
-  }
-
-}
-
-const WRITE_CALLBACK$1 = "$writeCallback";
-const CONNECTED_CALLBACK$1 = "$connectedCallback";
-const DISCONNECTED_CALLBACK$1 = "$disconnectedCallback";
-
-/**
- * @type {{symbol:Symbol,callbackName:string}}
- */
-const callbackNameBySymbol$1 = {
-  [Symbols$1.connectedCallback]: CONNECTED_CALLBACK$1,
-  [Symbols$1.disconnectedCallback]: DISCONNECTED_CALLBACK$1,
-  [Symbols$1.writeCallback]: WRITE_CALLBACK$1,
-};
-/**
- * @type {Set<Symbol>}
- */
-const setOfAllCallbacks$1 = new Set([
-  Symbols$1.connectedCallback,
-  Symbols$1.disconnectedCallback,
-  Symbols$1.writeCallback,
-]);
-
-/**
- * 外部から呼び出されるAPI
- */
-new Set([
-  Symbols$1.directlyCall,
-  Symbols$1.getDependentProps,
-  //Symbols.addNotify,
-  Symbols$1.notifyForDependentProps,
-  Symbols$1.getHandler,
-  Symbols$1.beCacheable,
-  Symbols$1.beUncacheable,
-]);
-
-const PROPS_PROPERTY$1 = "$props";
-const GLOBALS_PROPERTY$1 = "$globals";
-const DEPENDENT_PROPS_PROPERTY$2 = "$dependentProps";
-const OPEN_DIALOG_METHOD$1 = "$openDialog";
-const CLOSE_DIALOG_METHOD$1 = "$closeDialog";
-const COMPONENT_PROPERTY$1 = "$component";
-
-/**
- * @type {Set<string>}
- */
-const setOfProperties$1 = new Set([
-  PROPS_PROPERTY$1,
-  GLOBALS_PROPERTY$1,
-  DEPENDENT_PROPS_PROPERTY$2,
-  OPEN_DIALOG_METHOD$1,
-  CLOSE_DIALOG_METHOD$1,
-  COMPONENT_PROPERTY$1,
-]);
-
-/**
- * キャッシュ機能
- *   ViewModelのアクセサプロパティなら、キャッシュする
- * 配列プロキシ
- * 通知機能
- *   ViewModelのプロパティを更新した場合、関連するプロパティの更新通知を発行する
- * コンポーネントイベントハンドラ呼び出し
- *   プロパティ書き込み：$writeCallback
- *   DOMツリー追加時：$connectedCallback
- *   DOMツリー削除時：$disconnectedCallback
- * バインドイベントハンドラ呼び出し
- * コンテキスト変数の提供
- *   インデックス：$1～$8
- *   コンポーネント：$component
- */
-/**
- * @type {ProxyHandler<ViewModel>}
- */
-class ViewModelHandler extends Handler$2 {
-  /** @type {Component} */
-  #component;
-  /** @type {Component} */
-  get component() {
-    return this.#component;
-  }
-
-  /** @type {Cache} */
-  #cache = new Cache;
-  /** @type {Cache} */
-  get cache() {
-    return this.#cache;
-  }
-
-  /** @type {string[]} */
-  #methods;
-  /** @type {string[]} */
-  get methods() {
-    return this.#methods;
-  }
-
-  /** @type {string[]} */
-  #accessorProperties;
-  /** @type {string[]} */
-  get accessorProperties() {
-    return this.#accessorProperties;
-  }
-
-  /** @type {Set<string>} */
-  #setOfAccessorProperties;
-  /** @type {Set<string>} */
-  get setOfAccessorProperties() {
-    return this.#setOfAccessorProperties;
-  }
-
-  /** @type {DependentProps} */
-  #dependentProps = new DependentProps
-  /** @type {DependentProps} */
-  get dependentProps() {
-    return this.#dependentProps;
-  }
-
-  /** @type {boolean} */
-  #cacheable = false;
-  /** @type {boolean} */
-  get cacheable() {
-    return this.#cacheable;
-  }
-  set cacheable(value) {
-    this.#cacheable = value;
-  }
-
-  /** @type {ContextInfo} */
-  #context;
-  /** @type {ContextInfo} */
-  get context() {
-    return this.#context;
-  }
-  set context(value) {
-    this.#context = value;
-  }
-
-  /**
-   * 
-   * @param {Component} component
-   * @param {string[]} accessorProperties
-   * @param {string[]} methods
-   * @param {{prop:string,refProps:string[]}|undefined}
-   */
-  constructor(component, accessorProperties, methods, dependentProps) {
-    super();
-    this.#component = component;
-    this.#methods = methods;
-    this.#accessorProperties = accessorProperties;
-    this.#setOfAccessorProperties = new Set(this.#accessorProperties);
-    this.#dependentProps.setDependentProps(dependentProps ?? {});
-  }
-
-  /**
-   * プロパティ情報からViewModelの値を取得する
-   * @param {ViewModel} target 
-   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}  
-   * @param {Proxy} receiver 
-   */
-  getByPropertyName(target, { propName }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.#dependentProps.hasDefaultProp(propName.name) && this.#dependentProps.addDefaultProp(propName.name);
-    }
-    let value;
-    if (setOfProperties$1.has(propName.name)) {
-      if (propName.name === PROPS_PROPERTY$1) {
-        return this.component.props;
-      } else if (propName.name === GLOBALS_PROPERTY$1) {
-        return this.component.globals;
-      } else if (propName.name === DEPENDENT_PROPS_PROPERTY$2) {
-        return Reflect.get(target, DEPENDENT_PROPS_PROPERTY$2, receiver);
-      } else if (propName.name === OPEN_DIALOG_METHOD$1) {
-        return async (name, data = {}, attributes = {}) => Dialog.open(name, data, attributes);
-      } else if (propName.name === COMPONENT_PROPERTY$1) {
-        return this.component;
-      } else {
-        return (data = {}) => Dialog.close(this.#component, data);
-      }
-    } else {
-      if (this.#setOfAccessorProperties.has(propName.name) && this.#cacheable) {
-        // アクセサプロパティの場合、キャッシュから取得する
-        const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
-        value = this.#cache.get(propName, indexes);
-        if (typeof value === "undefined") {
-          value = super.getByPropertyName(target, { propName }, receiver);
-          this.#cache.set(propName, indexes, value);
-        }
-      } else {
-        value = super.getByPropertyName(target, { propName }, receiver);
-      }
-    }
-    return value;
-  }
-
-  /**
-   * プロパティ情報からViewModelの値を設定する
-   * @param {ViewModel} target 
-   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,value:any}}  
-   * @param {Proxy} receiver 
-   */
-  setByPropertyName(target, { propName, value }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.#dependentProps.hasDefaultProp(propName.name) && this.#dependentProps.addDefaultProp(propName.name);
-    }
-    const indexes = this.lastIndexes;
-    const propertyAccess = { propName, indexes };
-    const result = super.setByPropertyName(target, { propName, value }, receiver);
-    receiver[Symbols$1.writeCallback](propName.name, indexes);
-    this.addNotify(target, propertyAccess, receiver);
-
-    return result;
-  }
-
-  /**
-   * 更新処理をキューイングする
-   * @param {ViewModel} target 
-   * @param {Proxy} thisArg 
-   * @param {any[]} argumentArray 
-   */
-  addProcess(target, thisArg, argumentArray) {
-    this.#component.updateSlot?.addProcess(new ProcessData(target, thisArg, argumentArray));
-  }
-
-  /**
-   * 更新情報をキューイングする
-   * @param {ViewModel} target 
-   * @param {PropertyAccess} propertyAccess 
-   * @param {Proxy} receiver 
-   */
-  addNotify(target, propertyAccess, receiver) {
-    this.#component.updateSlot?.addNotify(propertyAccess);
-  }
-
-  /**
-   * コンポーネントを動的に表示し、消滅するまで待つ
-   * @param {any} target 
-   * @param {{name:string,data:object,attributes:any}} param1 
-   * @param {Proxy} receiver 
-   */
-  async #openDialog(target, {name, data, attributes}, receiver) {
-    const tagName = utils$1.toKebabCase(name);
-    const dialog = document.createElement(tagName);
-    Object.entries(attributes).forEach(([key, value]) => {
-      dialog.setAttribute(key, value);
-    });
-    Object.entries(data).forEach(([key, value]) => {
-      dialog.props[Symbols$1.bindProperty](key, key, []);
-      dialog.props[key] = value;
-    });
-    document.body.appendChild(dialog);
-    return dialog.alivePromise;
-  }
-
-  /**
-   * 動的に表示されたコンポーネントを閉じる
-   * @param {ViewModel} target 
-   * @param {Object<string,any>} data 
-   * @param {Proxy} receiver 
-   */
-  #closeDialog(target, data, receiver) {
-    const component = this.#component;
-    Object.entries(data).forEach(([key, value]) => {
-      component.props[key] = value;
-    });
-    component.parentNode.removeChild(component);
-  }
-
-  /**
-   * キャッシュ機能をオン
-   * @param {ViewModel} target 
-   * @param {Proxy<>} receiver 
-   * @returns {boolean}
-   */
-  [Symbols$1.beCacheable](target, receiver) {
-    this.cacheable = true;
-    this.#cache.clear();
-    return this.cacheable;
-  }
-
-  /**
-   * キャッシュ機能をオフ
-   * @param {ViewModel} target 
-   * @param {Proxy<>} receiver 
-   * @returns {boolean}
-   */
-  [Symbols$1.beUncacheable](target, receiver) {
-    this.cacheable = false;
-    return this.cacheable;
-  }
-
-
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {{prop:string,context:ContextInfo,event:Event}} param1 
-   * @param {Proxy} receiver 
-   */
-  async #directlyCall(target, { prop, context, event }, receiver) {
-    const propName = PropertyName.create(prop);
-    if (typeof this.context !== "undefined") utils$1.raise("directCall already called");
-    this.context = context;
-    this.stackIndexes.push(undefined);
-    try {
-      return await Reflect.apply(target[propName.name], receiver, [event, ...context.indexes]);
-    } finally {
-      this.stackIndexes.pop();
-      this.context = undefined;
-    }
-  }
-
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {string} prop 
-   * @param {Proxy} receiver 
-   * @returns {any}
-   */
-  get(target, prop, receiver) {
-    if (setOfAllCallbacks$1.has(prop)) {
-      const callbackName = callbackNameBySymbol$1[prop];
-      const applyCallback = (...args) => async () => Reflect.apply(target[callbackName], receiver, args);
-      if (prop === Symbols$1.connectedCallback) {
-        return (callbackName in target) ? (...args) => applyCallback(...args)() : () => {};
-      } else {
-        return (callbackName in target) ? (...args) => this.addProcess(applyCallback(...args), receiver, []) : () => {};
-      }
-    } else if (Api.has(prop)) {
-      return Api.get(target, receiver, this, prop);
-    } else {
-      let value;
-      do {
-        if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {
-          const propName = PropertyName.create(prop);
-          if (typeof this.context !== "undefined" && propName.level > 0 && prop.at(0) !== "@") {
-            const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-            if (typeof param === "undefined") utils$1.raise(`${prop} is outside loop`);
-            value = this.directlyGet(target, { prop, indexes:param.indexes}, receiver);
-            break;
-          }
-        }
-        value = super.get(target, prop, receiver);
-      } while(false);
-      return value;
-    }
-  }
-
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {string} prop 
-   * @param {any} value 
-   * @param {Proxy} receiver 
-   * @returns {boolean}
-   */
-  set(target, prop, value, receiver) {
-    let result;
-    do {
-      if (typeof prop === "string" && !prop.startsWith("@@__") && prop !== "constructor") {
-        const propName = PropertyName.create(prop);
-        if (typeof this.context !== "undefined" && propName.level > 0 && prop.at(0) !== "@") {
-          const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-          if (typeof param === "undefined") utils$1.raise(`${prop} is outside loop`);
-          result = this.directlySet(target, { prop, indexes:param.indexes, value}, receiver);
-          break;
-        }
-      }
-      result = super.set(target, prop, value, receiver);
-    } while(false);
-    return result;
-  }
-
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @param {PropertyAccess} propertyAccess
-   * @param {string} prop 
-   * @param {number[]} indexes 
-   * @returns {PropertyAccess[]}
-   */
-  static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
-    const { propName, indexes } = propertyAccess;
-    const propertyAccessKey = propName.name + "\t" + indexes.toString();
-    if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
-    setOfSavePropertyAccessKeys.add(propertyAccessKey);
-    const dependentProps = viewModel[Symbols$1.getDependentProps]();
-    const setOfProps = dependentProps.setOfPropsByRefProp.get(propName.name);
-    const propertyAccesses = [];
-    if (typeof setOfProps === "undefined") return [];
-    for(const prop of setOfProps) {
-      const curPropName = PropertyName.create(prop);
-      if (indexes.length < curPropName.level) {
-        const listOfIndexes = ViewModelHandler.expandIndexes(viewModel, { propName:curPropName, indexes });
-        propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));
-      } else {
-        const notifyIndexes = indexes.slice(0, curPropName.level);
-        propertyAccesses.push({ propName:curPropName, indexes:notifyIndexes });
-      }
-      propertyAccesses.push(...this.makeNotifyForDependentProps(viewModel, { propName:curPropName, indexes }, setOfSavePropertyAccessKeys));
-    }
-    return propertyAccesses;
-  }
-
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @param {PropertyAccess} propertyAccess
-   * @param {number[]} indexes 
-   * @returns {number[][]}
-   */
-  static expandIndexes(viewModel, propertyAccess) {
-    const { propName, indexes } = propertyAccess;
-    if (propName.level === indexes.length) {
-      return [ indexes ];
-    } else if (propName.level < indexes.length) {
-      return [ indexes.slice(0, propName.level) ];
-    } else {
-      /**
-       * 
-       * @param {string} parentName 
-       * @param {number} elementIndex 
-       * @param {number[]} loopIndexes 
-       * @returns {number[][]}
-       */
-      const traverse = (parentName, elementIndex, loopIndexes) => {
-        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
-        const element = propName.pathNames[elementIndex];
-        const isTerminate = (propName.pathNames.length - 1) === elementIndex;
-        const currentName = parentNameDot + element;
-        let retIndexes;
-        if (isTerminate) {
-          if (element === "*") {
-            retIndexes = (viewModel[Symbols$1.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
-              return [ loopIndexes.concat(index) ];
-            });
-          } else {
-            retIndexes = [ loopIndexes ];
-          }
-        } else {
-          if (element === "*") {
-            if (loopIndexes.length < indexes.length) {
-              retIndexes = traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
-            } else {
-              retIndexes = (viewModel[Symbols$1.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
-                return traverse(currentName, elementIndex + 1, loopIndexes.concat(index));
-              });
-            }
-          } else {
-            retIndexes = traverse(currentName, elementIndex + 1, loopIndexes);
-          }
-
-        }
-        return retIndexes;
-      };
-      const listOfIndexes = traverse("", 0, []);
-      return listOfIndexes;
-    }
-  }
-}
 
 /**
  * @typedef { {prop:string,value:any} } PropsAccessor
@@ -1611,6 +736,55 @@ class Handler {
 function createGlobals(component) {
   return new Proxy({}, new Handler(component));
 }
+
+let utils$1 = class utils {
+  /**
+   * 
+   * @param {string} message 
+   */
+  static raise(message) {
+    throw new Error(message);
+  }
+
+  /**
+   * 関数かどうかをチェック
+   * @param {any} obj 
+   * @returns {boolean}
+   */
+  static isFunction = (obj) => {
+    const toString = Object.prototype.toString;
+    const text = toString.call(obj).slice(8, -1).toLowerCase();
+    return (text === "function" || text === "asyncfunction");
+  }
+
+  /**
+   * 
+   * @param {HTMLElement} element 
+   * @returns {boolean}
+   */
+  static isInputableElement(element) {
+    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || 
+      (element instanceof HTMLInputElement && element.type !== "button");
+  }
+
+  /**
+   * to kebab case (upper camel, lower camel, snakeを想定)
+   * @param {string} text 
+   * @returns {string}
+   */
+  static toKebabCase = text => (typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase()) : text;
+
+  /**
+   * @returns {string}
+   */
+  static createUUID() {
+    return window?.crypto?.randomUUID ? window.crypto.randomUUID()
+     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(a) {
+        let r = (new Date().getTime() + Math.random() * 16)%16 | 0, v = a == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+  }
+};
 
 class Templates {
   /** @type {Map<string,HTMLTemplateElement>} */
@@ -2213,6 +1387,16 @@ class Thread {
 
 }
 
+/** @enum {number} */
+const UpdateSlotStatus = {
+  beginViewModelUpdate: 1,
+  endViewMmodelUpdate: 2,
+  beginNotifyReceive: 3,
+  endNotifyReceive: 4,
+  beginNodeUpdate: 5,
+  endNodeUpdate: 6,
+};
+
 class NodeUpdator {
   /** @type {Map<import("../binding/Binding.js").Binding,any>} */
   queue = new Map;
@@ -2266,6 +1450,66 @@ class NodeUpdator {
   /** @type {boolean} */
   get isEmpty() {
     return this.queue.size === 0;
+  }
+}
+
+class ProcessData {
+  /** @type {()=>void} */
+  target;
+
+  /** @type {Object} */
+  thisArgument;
+
+  /** @type {any[]} */
+  argumentsList;
+
+  /**
+   * 
+   * @param {()=>void} target 
+   * @param {Object} thisArgument 
+   * @param {any[]} argumentsList 
+   */
+  constructor(target, thisArgument, argumentsList) {
+    this.target = target;
+    this.thisArgument = thisArgument;
+    this.argumentsList = argumentsList;
+  }
+}
+
+class ViewModelUpdator {
+  /** @type {ProcessData[]} */
+  queue = [];
+
+  /** @type {UpdateSlotStatusCallback} */
+  #statusCallback;
+
+  /**
+   * @param {UpdateSlotStatusCallback} statusCallback
+   */
+  constructor(statusCallback) {
+    this.#statusCallback = statusCallback;
+  }
+
+  /**
+   * 
+   */
+  async exec() {
+    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginViewModelUpdate);
+    try {
+      while(this.queue.length > 0) {
+        const processes = this.queue.splice(0);
+        for(const process of processes) {
+          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
+        }
+      }
+    } finally {
+      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endViewMmodelUpdate);
+    }
+  }
+
+  /** @type {boolean} */
+  get isEmpty() {
+    return this.queue.length === 0;
   }
 }
 
@@ -4401,6 +3645,60 @@ class BindingManager {
 
 }
 
+/**
+ * $dependentPropsを表現
+ */
+class DependentProps {
+  /** @type {Set<string>} */
+  #setOfDefaultProps = new Set;
+
+  /** @type {Map<string,Set<string>>} */
+  #setOfPropsByRefProp = new Map;
+  /** @type {Map<string,Set<string>>} */
+  get setOfPropsByRefProp() {
+    return this.#setOfPropsByRefProp;
+  }
+
+  /**
+   * @param {string} prop
+   * @returns {boolean} 
+   */
+  hasDefaultProp(prop) {
+    return this.#setOfDefaultProps.has(prop);
+  }
+
+  /**
+   * 
+   * @param {string} prop 
+   * @returns {void}
+   */
+  addDefaultProp(prop) {
+    let currentName = PropertyName.create(prop);
+    while(currentName.parentPath !== "") {
+      const parentName = PropertyName.create(currentName.parentPath);
+      if (!this.#setOfDefaultProps.has(currentName.name)) {
+        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]));
+        this.#setOfDefaultProps.add(currentName.name);
+      }
+      currentName = parentName;
+    }
+  }
+
+  /**
+   * 
+   * @param {{prop:string,refProps:string[]}} props 
+   * @returns {void}
+   */
+  setDependentProps(props) {
+    for(const [prop, refProps] of Object.entries(props)) {
+      for(const refProp of refProps) {
+        this.#setOfPropsByRefProp.get(refProp)?.add(prop) ?? this.#setOfPropsByRefProp.set(refProp, new Set([prop]));
+      }
+    }
+  }
+
+}
+
 const WRITE_CALLBACK = "$writeCallback";
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
@@ -4448,6 +3746,87 @@ class Callback {
   static has(prop) {
     return setOfAllCallbacks.has(prop);
   }
+}
+
+/**
+ * 外部から呼び出されるAPI
+ * @type {Set<symbol>}
+ */
+const setOfApiFunctions = new Set([
+  Symbols$1.directlyCall,
+  Symbols$1.getDependentProps,
+  Symbols$1.notifyForDependentProps,
+  Symbols$1.clearCache,
+]);
+
+const callFuncBySymbol = {
+  [Symbols$1.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, context, event) => 
+    handler.directlyCallback(context, async () => 
+      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...context.indexes])
+    ),
+  [Symbols$1.notifyForDependentProps]:({viewModel, viewModelProxy, handler}) => (prop, indexes) => 
+    handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
+  [Symbols$1.getDependentProps]:({handler}) => () => handler.dependentProps,
+  [Symbols$1.clearCache]:({handler}) => () => handler.cache.clear(),
+};
+
+class Api {
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {Proxy<ViewModel>} viewModelProxy 
+   * @param {import("./ViewModelHandlerBase.js").ViewModelHandlerBase} handler
+   * @param {symbol} prop
+   */
+  static get(viewModel, viewModelProxy, handler, prop) {
+    return callFuncBySymbol[prop]?.({viewModel, viewModelProxy, handler});
+  }
+
+  /**
+   * @param {symbol | string} prop
+   * @returns {boolean}
+   */
+  static has(prop) {
+    return setOfApiFunctions.has(prop);
+  }
+
+}
+
+class Dialog {
+  /**
+   * コンポーネントを動的に表示し、消滅するまで待つ
+   * @param {string} dialogName 
+   * @param {Object<string,any>} data 
+   * @param {Object<string,any>} attributes 
+   * @returns {Promise<boolean>}
+   */
+  static async open(dialogName, data, attributes) {
+    const tagName = utils.toKebabCase(dialogName);
+    const dialog = document.createElement(tagName);
+    Object.entries(attributes).forEach(([key, value]) => {
+      dialog.setAttribute(key, value);
+    });
+    Object.entries(data).forEach(([key, value]) => {
+      dialog.props[Symbols.bindProperty](key, key, []);
+      dialog.props[key] = value;
+    });
+    document.body.appendChild(dialog);
+    return dialog.alivePromise;
+  }
+
+  /**
+   * 動的に表示されたコンポーネントを閉じる
+   * @param {Component} dialog 
+   * @param {Object<string,any>} data 
+   */
+  static close(dialog, data) {
+    Object.entries(data).forEach(([key, value]) => {
+      dialog.props[key] = value;
+    });
+    dialog.parentNode.removeChild(dialog);
+  }
+
+
 }
 
 const PROPS_PROPERTY = "$props";
@@ -4501,6 +3880,47 @@ class SpecialProp {
   static has(name) {
     return setOfProperties.has(name);
   }
+}
+
+class Cache {
+  /** @type {Map<PropertyName,Map<string,any>>} */
+  #valueByIndexesStringByPropertyName = new Map;
+  
+  /**
+   * 
+   * @param {PropertyName} propName 
+   * @param {number[]} indexes 
+   * @returns {any}
+   */
+  get(propName, indexes) {
+    const valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
+    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;
+  }
+
+  /**
+   * 
+   * @param {PropertyName} propName 
+   * @param {number[]} indexes 
+   * @param {any} value
+   * @returns {any}
+   */
+  set(propName, indexes, value) {
+    let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
+    if (!valueByIndexesString) {
+      valueByIndexesString = new Map;
+      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
+    }
+    valueByIndexesString.set(indexes.toString(), value);
+    return value;
+  }
+
+  /**
+   * @returns {void}
+   */
+  clear() {
+    this.#valueByIndexesStringByPropertyName.clear();
+  }
+
 }
 
 class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
@@ -4577,6 +3997,120 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
   set(target, prop, value, receiver) {
     utils$1.raise("viewModel is read only");
   }
+}
+
+/**
+ * @typedef {Object} ViewModelInfo
+ * @property {string[]} removeProps
+ * @property {string[]} definedProps
+ * @property {string[]} accessorProps
+ * @property {string[]} methods
+ */
+
+class ViewModelize {
+  /**
+   * オブジェクトのすべてのプロパティのデスクリプタを取得する
+   * 継承元を遡る、ただし、Objectのプロパティは取得しない
+   * @param {ViewModel} target 
+   * @returns {Map<string,PropertyDescriptor>}
+   */
+  static getDescByName(target) {
+    /**
+     * @type {Map<string,PropertyDescriptor>}
+     */
+    const descByName = new Map;
+    let object = target;
+    while(object !== Object.prototype) {
+      const descs = Object.getOwnPropertyDescriptors(object);
+      for(const [name, desc] of Object.entries(descs)) {
+        if (descByName.has(name)) continue;
+        descByName.set(name, desc);
+      }
+      object = Object.getPrototypeOf(object);
+    }
+    return descByName;
+  }
+
+  /**
+   * オブジェクト内のメソッドを取得する
+   * コンストラクタは含まない
+   * @param {[string,PropertyDescriptor][]} descByNameEntries 
+   * @returns {[string,PropertyDescriptor][]}
+   */
+  static getMethods(descByNameEntries, targetClass) {
+    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value === "function")
+  }
+
+  /**
+   * オブジェクト内のプロパティを取得する
+   * @param {[string,PropertyDescriptor][]} descByNameEntries 
+   * @returns {[string,PropertyDescriptor][]}
+   */
+  static getProperties(descByNameEntries, targetClass) {
+    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value !== "function")
+  }
+
+  /**
+   * ViewModel化
+   * ・非プリミティブかつ初期値のないプロパティは削除する
+   * @param {ViewModel} target 
+   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:ViewModel}}
+   */
+  static viewModelize(target) {
+    let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
+    if (!viewModelInfo) {
+      const descByName = this.getDescByName(target);
+      const descByNameEntries = Array.from(descByName.entries());
+      const removeProps = [];
+      const definedProps = [];
+      const accessorProps = [];
+      const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
+      this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
+        definedProps.push(name);
+        const propName = PropertyName.create(name);
+        if (!propName.isPrimitive) {
+          if (("value" in desc) && typeof desc.value === "undefined") {
+            removeProps.push(name);
+          }
+        }
+        if ("get" in desc && typeof desc.get !== "undefined") {
+          accessorProps.push(name);
+        }
+      });
+      viewModelInfo = { removeProps, definedProps, methods, accessorProps };
+      this.viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
+    }
+    viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
+    return {
+      definedProps:viewModelInfo.definedProps, 
+      methods:viewModelInfo.methods, 
+      accessorProps:viewModelInfo.accessorProps,
+      viewModel:target
+    };
+  }
+
+  /** @type {Map<typeof ViewModel,ViewModelInfo>} */
+  static viewModelInfoByConstructor = new Map;
+  
+}
+
+class DirectlyCallContext {
+  /** @type {ContextInfo} */
+  #context;
+  get context() {
+    return this.#context;
+  }
+
+  async callback(context, directlyCallback) {
+    if (typeof this.#context !== "undefined") utils$1.raise("already set context");
+    this.#context = context;
+    try {
+      return directlyCallback();
+    } finally {
+      this.#context = undefined;
+    }
+  }
+
 }
 
 class WritableViewModelHandler extends ViewModelHandlerBase {
