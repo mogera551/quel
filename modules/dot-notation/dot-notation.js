@@ -17,68 +17,114 @@ const Symbols = {
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 
 class PropertyName {
-  /**
-   * @type {string}
-   */
-  name;
-  /**
-   * @type {string[]}
-   */
-  pathNames = [];
-  /**
-   * @type {string[]}
-   */
-  parentPathNames = [];
-  /**
-   * @type {string}
-   */
-  parentPath;
-  /**
-   * @type {string[]}
-   */
-  parentPaths = [];
-  /**
-   * @type {Set<string>}
-   */
-  setOfParentPaths;
-  /**
-   * @type {RegExp}
-   */
-  regexp;
-  /**
-   * @type {number}
-   */
-  level = 0;
-  /**
-   * @type {boolean}
-   */
-  isPrimitive;
+  /** @type {string} */
+  #name;
+  get name() {
+    return this.#name;
+  }
+
+  /** @type {string[]} */
+  #pathNames;
+  /** @type {string[]} 名前（name）をドットで区切った配列 */
+  get pathNames() {
+    return this.#pathNames;
+  }
+
+  /** @type {string[] */
+  #parentPathNames;
+  /** @type {string[]} 名前（name）をドットで区切った配列、最後の要素を含まない */
+  get parentPathNames() {
+    return this.#parentPathNames;
+  }
+
+  /** @type {string} */
+  #parentPath;
+  /** @type {string} 親の名前、親名前配列（parentPathNames）をjoinしたもの */
+  get parentPath() {
+    return this.#parentPath;
+  }
+
+  /** @type {string[]} */
+  #parentPaths;
+  /** @type {string[]} 親の名前候補すべて */
+  get parentPaths() {
+    return this.#parentPaths;
+  }
+
+  /** @type {Set<string>} */
+  #setOfParentPaths;
+  /** @type {Set<string>} 親の名前候補のセット */
+  get setOfParentPaths() {
+    return this.#setOfParentPaths;
+  }
+
+  /** @type {string} */
+  #lastPathName;
+  /** @type {string} 名前（name）をドットで区切った配列の最後の要素 */
+  get lastPathName() {
+    return this.#lastPathName;
+  }
+
+  /** @type {RegExp} */
+  #regexp;
+  /** @type {RegExp} ドット記法の書式が一致するかテストするための正規表現 */
+  get regexp() {
+    return this.#regexp;
+  }
+
+  /** @type {number} */
+  #level;
+  /** @type {number} ループレベル、名前（name）に含むワイルドカード（*）の数 */
+  get level() {
+    return this.#level;
+  }
+
+  /** @type {boolean} */
+  #isPrimitive;
+  /** @type {boolean} プリミティブかどうか、名前（name）にドット（.）を含まない */
+  get isPrimitive() {
+    return this.#isPrimitive;
+  }
+
+  /** @type {string} */
+  #nearestWildcardName;
+  /** @type {string}  最後のワイルドカードまでの部分 */
+  get nearestWildcardName() {
+    return this.#nearestWildcardName;
+  }
+
+  /** @type {string} */
+  #nearestWildcardParentName;
+  /** @type {string}  最後のワイルドカードまでの部分の親 */
+  get nearestWildcardParentName() {
+    return this.#nearestWildcardParentName;
+  }
 
   /**
    * 
-   * @param {string} name 
+   * @param {string} name プロパティ名
    */
   constructor(name) {
-    this.name = name;
-    this.pathNames = name.split(DELIMITER);
-    this.parentPathNames = this.pathNames.slice(0, -1);
-    this.parentPaths = this.parentPathNames.reduce((paths, pathName) => { 
+    this.#name = name;
+    this.#pathNames = name.split(DELIMITER);
+    this.#parentPathNames = this.#pathNames.slice(0, -1);
+    this.#parentPaths = this.#parentPathNames.reduce((paths, pathName) => { 
       paths.push(paths.at(-1)?.concat(pathName) ?? [pathName]);
       return paths;
     }, []).map(paths => paths.join("."));
-    this.setOfParentPaths = new Set(this.parentPaths);
-    this.parentPath = this.parentPathNames.join(DELIMITER);
-    this.lastPathName = this.pathNames.at(-1);
-    this.regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
-    this.level = this.pathNames.filter(pathName => pathName === WILDCARD).length;
-    this.isPrimitive = (this.pathNames.length === 1);
-    this.nearestWildcardName = undefined;
-    this.nearestWildcardParentName = undefined;
-    if (this.level > 0) {
-      for(let i = this.pathNames.length - 1; i >= 0; i--) {
-        if (this.pathNames[i] === WILDCARD) {
-          this.nearestWildcardName = this.pathNames.slice(0, i + 1).join(".");
-          this.nearestWildcardParentName = this.pathNames.slice(0, i).join(".");
+    this.#setOfParentPaths = new Set(this.#parentPaths);
+    this.#parentPath = this.#parentPathNames.join(DELIMITER);
+    this.#lastPathName = this.#pathNames.at(-1);
+    this.#regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
+    this.#level = this.#pathNames.reduce((level, pathName) => level += (pathName === WILDCARD ? 1 : 0), 0);
+    this.#isPrimitive = (this.#pathNames.length === 1);
+    this.#nearestWildcardName = undefined;
+    this.#nearestWildcardParentName = undefined;
+    if (this.#level > 0) {
+      for(let i = this.#pathNames.length - 1; i >= 0; i--) {
+        if (this.#pathNames[i] === WILDCARD) {
+          this.#nearestWildcardName = this.#pathNames.slice(0, i + 1).join(".");
+          this.#nearestWildcardParentName = this.#pathNames.slice(0, i).join(".");
           break;
         }
       }
@@ -92,7 +138,7 @@ class PropertyName {
    */
   static create(name) {
     const propertyName = this.propertyNameByName.get(name);
-    if (propertyName) return propertyName;
+    if (typeof propertyName !== "undefined") return propertyName;
     const newPropertyName = new PropertyName(name);
     this.propertyNameByName.set(name, newPropertyName);
     return newPropertyName;
@@ -281,7 +327,7 @@ class Handler {
    * @param {Proxy<>} receiver 
    * @returns {any}
    */
-  [Symbols.directlyGet](target, {prop, indexes}, receiver) {
+  directlyGet(target, {prop, indexes}, receiver) {
     const propName = PropertyName.create(prop);
     return this.pushIndexes(indexes, () => this.getByPropertyName(target, { propName }, receiver));
   }
@@ -293,7 +339,7 @@ class Handler {
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
-  [Symbols.directlySet](target, {prop, indexes, value}, receiver) {
+  directlySet(target, {prop, indexes, value}, receiver) {
     const propName = PropertyName.create(prop);
     return this.pushIndexes(indexes, () => this.setByPropertyName(target, { propName, value }, receiver));
   }
@@ -316,11 +362,11 @@ class Handler {
     if (prop === Symbols.directlyGet) {
       // プロパティとindexesを直接指定してgetする
       return (prop, indexes) => 
-        Reflect.apply(this[Symbols.directlyGet], this, [target, { prop, indexes }, receiver]);
+        Reflect.apply(this.directlyGet, this, [target, { prop, indexes }, receiver]);
     } else if (prop === Symbols.directlySet) {
       // プロパティとindexesを直接指定してsetする
       return (prop, indexes, value) => 
-        Reflect.apply(this[Symbols.directlySet], this, [target, { prop, indexes, value }, receiver]);
+        Reflect.apply(this.directlySet, this, [target, { prop, indexes, value }, receiver]);
     } else if (prop === Symbols.isSupportDotNotation) {
       return true;
     } else if (isPropString) {
@@ -342,11 +388,13 @@ class Handler {
       const propAccess = PropertyName.parse(prop);
       if (propAccess.propName.level === propAccess.indexes.length) {
         this.#matchByName.set(prop, propAccess);
+        return getFunc(propAccess);
+      } else {
+        return getFunc({
+          propName:propAccess.propName,
+          indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
+        });
       }
-      return getFunc({
-        propName:propAccess.propName,
-        indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
-      });
     } else {
       return Reflect.get(target, prop, receiver);
     }
@@ -380,11 +428,13 @@ class Handler {
       const propAccess = PropertyName.parse(prop);
       if (propAccess.propName.level === propAccess.indexes.length) {
         this.#matchByName.set(prop, propAccess);
+        return setFunc(propAccess, value);
+        } else {
+        return setFunc({
+          propName:propAccess.propName,
+          indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
+        }, value);
       }
-      return setFunc({
-        propName:propAccess.propName,
-        indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
-      }, value);
     } else {
       return Reflect.set(target, prop, value, receiver);
     }

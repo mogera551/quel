@@ -1,4 +1,4 @@
-class utils {
+let utils$1 = class utils {
   /**
    * 
    * @param {string} message 
@@ -45,7 +45,7 @@ class utils {
         return v.toString(16);
       });
   }
-}
+};
 
 class Cache {
   /** @type {Map<PropertyName,Map<string,any>>} */
@@ -98,7 +98,7 @@ const SYM_IS_SUPPORT_DOT_NOTATION = Symbol.for(SYM_PREFIX + ".is_support_dot_not
 /**
  * @enum {Symbol}
  */
-const Symbols$1 = {
+const Symbols$2 = {
   directlyGet: SYM_DIRECT_GET,
   directlySet: SYM_DIRECT_SET,
   isSupportDotNotation: SYM_IS_SUPPORT_DOT_NOTATION,
@@ -107,68 +107,114 @@ const Symbols$1 = {
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 
 class PropertyName {
-  /**
-   * @type {string}
-   */
-  name;
-  /**
-   * @type {string[]}
-   */
-  pathNames = [];
-  /**
-   * @type {string[]}
-   */
-  parentPathNames = [];
-  /**
-   * @type {string}
-   */
-  parentPath;
-  /**
-   * @type {string[]}
-   */
-  parentPaths = [];
-  /**
-   * @type {Set<string>}
-   */
-  setOfParentPaths;
-  /**
-   * @type {RegExp}
-   */
-  regexp;
-  /**
-   * @type {number}
-   */
-  level = 0;
-  /**
-   * @type {boolean}
-   */
-  isPrimitive;
+  /** @type {string} */
+  #name;
+  get name() {
+    return this.#name;
+  }
+
+  /** @type {string[]} */
+  #pathNames;
+  /** @type {string[]} 名前（name）をドットで区切った配列 */
+  get pathNames() {
+    return this.#pathNames;
+  }
+
+  /** @type {string[] */
+  #parentPathNames;
+  /** @type {string[]} 名前（name）をドットで区切った配列、最後の要素を含まない */
+  get parentPathNames() {
+    return this.#parentPathNames;
+  }
+
+  /** @type {string} */
+  #parentPath;
+  /** @type {string} 親の名前、親名前配列（parentPathNames）をjoinしたもの */
+  get parentPath() {
+    return this.#parentPath;
+  }
+
+  /** @type {string[]} */
+  #parentPaths;
+  /** @type {string[]} 親の名前候補すべて */
+  get parentPaths() {
+    return this.#parentPaths;
+  }
+
+  /** @type {Set<string>} */
+  #setOfParentPaths;
+  /** @type {Set<string>} 親の名前候補のセット */
+  get setOfParentPaths() {
+    return this.#setOfParentPaths;
+  }
+
+  /** @type {string} */
+  #lastPathName;
+  /** @type {string} 名前（name）をドットで区切った配列の最後の要素 */
+  get lastPathName() {
+    return this.#lastPathName;
+  }
+
+  /** @type {RegExp} */
+  #regexp;
+  /** @type {RegExp} ドット記法の書式が一致するかテストするための正規表現 */
+  get regexp() {
+    return this.#regexp;
+  }
+
+  /** @type {number} */
+  #level;
+  /** @type {number} ループレベル、名前（name）に含むワイルドカード（*）の数 */
+  get level() {
+    return this.#level;
+  }
+
+  /** @type {boolean} */
+  #isPrimitive;
+  /** @type {boolean} プリミティブかどうか、名前（name）にドット（.）を含まない */
+  get isPrimitive() {
+    return this.#isPrimitive;
+  }
+
+  /** @type {string} */
+  #nearestWildcardName;
+  /** @type {string}  最後のワイルドカードまでの部分 */
+  get nearestWildcardName() {
+    return this.#nearestWildcardName;
+  }
+
+  /** @type {string} */
+  #nearestWildcardParentName;
+  /** @type {string}  最後のワイルドカードまでの部分の親 */
+  get nearestWildcardParentName() {
+    return this.#nearestWildcardParentName;
+  }
 
   /**
    * 
-   * @param {string} name 
+   * @param {string} name プロパティ名
    */
   constructor(name) {
-    this.name = name;
-    this.pathNames = name.split(DELIMITER);
-    this.parentPathNames = this.pathNames.slice(0, -1);
-    this.parentPaths = this.parentPathNames.reduce((paths, pathName) => { 
+    this.#name = name;
+    this.#pathNames = name.split(DELIMITER);
+    this.#parentPathNames = this.#pathNames.slice(0, -1);
+    this.#parentPaths = this.#parentPathNames.reduce((paths, pathName) => { 
       paths.push(paths.at(-1)?.concat(pathName) ?? [pathName]);
       return paths;
     }, []).map(paths => paths.join("."));
-    this.setOfParentPaths = new Set(this.parentPaths);
-    this.parentPath = this.parentPathNames.join(DELIMITER);
-    this.lastPathName = this.pathNames.at(-1);
-    this.regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
-    this.level = this.pathNames.filter(pathName => pathName === WILDCARD).length;
-    this.isPrimitive = (this.pathNames.length === 1);
-    this.nearestWildcardName = undefined;
-    this.nearestWildcardParentName = undefined;
-    if (this.level > 0) {
-      for(let i = this.pathNames.length - 1; i >= 0; i--) {
-        if (this.pathNames[i] === WILDCARD) {
-          this.nearestWildcardName = this.pathNames.slice(0, i + 1).join(".");
-          this.nearestWildcardParentName = this.pathNames.slice(0, i).join(".");
+    this.#setOfParentPaths = new Set(this.#parentPaths);
+    this.#parentPath = this.#parentPathNames.join(DELIMITER);
+    this.#lastPathName = this.#pathNames.at(-1);
+    this.#regexp = new RegExp("^" + name.replaceAll(".", "\\.").replaceAll("*", "([0-9a-zA-Z_]*)") + "$");
+    this.#level = this.#pathNames.reduce((level, pathName) => level += (pathName === WILDCARD ? 1 : 0), 0);
+    this.#isPrimitive = (this.#pathNames.length === 1);
+    this.#nearestWildcardName = undefined;
+    this.#nearestWildcardParentName = undefined;
+    if (this.#level > 0) {
+      for(let i = this.#pathNames.length - 1; i >= 0; i--) {
+        if (this.#pathNames[i] === WILDCARD) {
+          this.#nearestWildcardName = this.#pathNames.slice(0, i + 1).join(".");
+          this.#nearestWildcardParentName = this.#pathNames.slice(0, i).join(".");
           break;
         }
       }
@@ -182,7 +228,7 @@ class PropertyName {
    */
   static create(name) {
     const propertyName = this.propertyNameByName.get(name);
-    if (propertyName) return propertyName;
+    if (typeof propertyName !== "undefined") return propertyName;
     const newPropertyName = new PropertyName(name);
     this.propertyNameByName.set(name, newPropertyName);
     return newPropertyName;
@@ -371,7 +417,7 @@ let Handler$2 = class Handler {
    * @param {Proxy<>} receiver 
    * @returns {any}
    */
-  [Symbols$1.directlyGet](target, {prop, indexes}, receiver) {
+  directlyGet(target, {prop, indexes}, receiver) {
     const propName = PropertyName.create(prop);
     return this.pushIndexes(indexes, () => this.getByPropertyName(target, { propName }, receiver));
   }
@@ -383,7 +429,7 @@ let Handler$2 = class Handler {
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
-  [Symbols$1.directlySet](target, {prop, indexes, value}, receiver) {
+  directlySet(target, {prop, indexes, value}, receiver) {
     const propName = PropertyName.create(prop);
     return this.pushIndexes(indexes, () => this.setByPropertyName(target, { propName, value }, receiver));
   }
@@ -403,15 +449,15 @@ let Handler$2 = class Handler {
     const getFunc = this.getFunc(target, receiver);
     const lastIndexes = this.lastIndexes;
     let match;
-    if (prop === Symbols$1.directlyGet) {
+    if (prop === Symbols$2.directlyGet) {
       // プロパティとindexesを直接指定してgetする
       return (prop, indexes) => 
-        Reflect.apply(this[Symbols$1.directlyGet], this, [target, { prop, indexes }, receiver]);
-    } else if (prop === Symbols$1.directlySet) {
+        Reflect.apply(this.directlyGet, this, [target, { prop, indexes }, receiver]);
+    } else if (prop === Symbols$2.directlySet) {
       // プロパティとindexesを直接指定してsetする
       return (prop, indexes, value) => 
-        Reflect.apply(this[Symbols$1.directlySet], this, [target, { prop, indexes, value }, receiver]);
-    } else if (prop === Symbols$1.isSupportDotNotation) {
+        Reflect.apply(this.directlySet, this, [target, { prop, indexes, value }, receiver]);
+    } else if (prop === Symbols$2.isSupportDotNotation) {
       return true;
     } else if (isPropString) {
       if (match = RE_CONTEXT_INDEX.exec(prop)) {
@@ -432,11 +478,13 @@ let Handler$2 = class Handler {
       const propAccess = PropertyName.parse(prop);
       if (propAccess.propName.level === propAccess.indexes.length) {
         this.#matchByName.set(prop, propAccess);
+        return getFunc(propAccess);
+      } else {
+        return getFunc({
+          propName:propAccess.propName,
+          indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
+        });
       }
-      return getFunc({
-        propName:propAccess.propName,
-        indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
-      });
     } else {
       return Reflect.get(target, prop, receiver);
     }
@@ -470,11 +518,13 @@ let Handler$2 = class Handler {
       const propAccess = PropertyName.parse(prop);
       if (propAccess.propName.level === propAccess.indexes.length) {
         this.#matchByName.set(prop, propAccess);
+        return setFunc(propAccess, value);
+        } else {
+        return setFunc({
+          propName:propAccess.propName,
+          indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
+        }, value);
       }
-      return setFunc({
-        propName:propAccess.propName,
-        indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
-      }, value);
     } else {
       return Reflect.set(target, prop, value, receiver);
     }
@@ -536,7 +586,7 @@ class ViewModelize {
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
    * @param {ViewModel} target 
-   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
+   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:ViewModel}}
    */
   static viewModelize(target) {
     let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
@@ -581,7 +631,7 @@ const name = "quel";
 /**
  * @enum {Symbol}
  */
-const Symbols = Object.assign({
+const Symbols$1 = Object.assign({
   connectedCallback: Symbol.for(`${name}:viewModel.connectedCallback`),
   disconnectedCallback: Symbol.for(`${name}:viewModel.disconnectedCallback`),
   initCallback: Symbol.for(`${name}:viewModel.initCallback`),
@@ -592,6 +642,7 @@ const Symbols = Object.assign({
 
   beCacheable: Symbol.for(`${name}:viewModel.beCacheable`),
   beUncacheable: Symbol.for(`${name}:viewModel.beUncacheable`),
+  clearCache: Symbol.for(`${name}:viewModel.clearCache`),
 
   boundByComponent: Symbol.for(`${name}:globalData.boundByComponent`),
 
@@ -603,7 +654,7 @@ const Symbols = Object.assign({
   toObject: Symbol.for(`${name}:props.toObject`),
 
   isComponent: Symbol.for(`${name}:component.isComponent`),
-}, Symbols$1);
+}, Symbols$2);
 
 /** @enum {number} */
 const UpdateSlotStatus = {
@@ -729,57 +780,161 @@ class DependentProps {
 
 }
 
-const WRITE_CALLBACK = "$writeCallback";
-const CONNECTED_CALLBACK = "$connectedCallback";
-const DISCONNECTED_CALLBACK = "$disconnectedCallback";
+class Dialog {
+  /**
+   * コンポーネントを動的に表示し、消滅するまで待つ
+   * @param {string} dialogName 
+   * @param {Object<string,any>} data 
+   * @param {Object<string,any>} attributes 
+   * @returns {Promise<boolean>}
+   */
+  static async open(dialogName, data, attributes) {
+    const tagName = utils.toKebabCase(dialogName);
+    const dialog = document.createElement(tagName);
+    Object.entries(attributes).forEach(([key, value]) => {
+      dialog.setAttribute(key, value);
+    });
+    Object.entries(data).forEach(([key, value]) => {
+      dialog.props[Symbols.bindProperty](key, key, []);
+      dialog.props[key] = value;
+    });
+    document.body.appendChild(dialog);
+    return dialog.alivePromise;
+  }
+
+  /**
+   * 動的に表示されたコンポーネントを閉じる
+   * @param {Component} dialog 
+   * @param {Object<string,any>} data 
+   */
+  static close(dialog, data) {
+    Object.entries(data).forEach(([key, value]) => {
+      dialog.props[key] = value;
+    });
+    dialog.parentNode.removeChild(dialog);
+  }
+
+
+}
+
+class DirectlyCallContext {
+  /** @type {ContextInfo} */
+  #context;
+  get context() {
+    return this.#context;
+  }
+
+  async callback(context, directlyCallback) {
+    if (typeof this.#context !== "undefined") utils$1.raise("already set context");
+    this.#context = context;
+    try {
+      return directlyCallback();
+    } finally {
+      this.#context = undefined;
+    }
+  }
+
+}
+
+/**
+ * 外部から呼び出されるAPI
+ * @type {Set<symbol>}
+ */
+const setOfApiFunctions = new Set([
+  Symbols$1.directlyCall,
+  Symbols$1.getDependentProps,
+  //Symbols.addNotify,
+  Symbols$1.notifyForDependentProps,
+  //Symbols.getHandler, // 未使用
+  //Symbols.beCacheable, // 廃止
+  //Symbols.beUncacheable, //廃止
+  Symbols$1.clearCache,
+]);
+
+const callFuncBySymbol = {
+  [Symbols$1.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, context, event) => 
+    handler.directlyCallback(context, async () => 
+      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...context.indexes])
+    ),
+  [Symbols$1.notifyForDependentProps]:({viewModel, viewModelProxy, handler}) => (prop, indexes) => 
+    handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
+  [Symbols$1.getDependentProps]:({handler}) => () => handler.dependentProps,
+  [Symbols$1.clearCache]:({handler}) => () => handler.cache.clear(),
+};
+
+class Api {
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {Proxy<ViewModel>} viewModelProxy 
+   * @param {ViewModelHandler} handler
+   * @param {symbol} prop
+   */
+  static get(viewModel, viewModelProxy, handler, prop) {
+    return callFuncBySymbol[prop]?.({viewModel, viewModelProxy, handler});
+  }
+
+  /**
+   * @param {symbol | string} prop
+   * @returns {boolean}
+   */
+  static has(prop) {
+    return setOfApiFunctions.has(prop);
+  }
+
+}
+
+const WRITE_CALLBACK$1 = "$writeCallback";
+const CONNECTED_CALLBACK$1 = "$connectedCallback";
+const DISCONNECTED_CALLBACK$1 = "$disconnectedCallback";
 
 /**
  * @type {{symbol:Symbol,callbackName:string}}
  */
-const callbackNameBySymbol = {
-  [Symbols.connectedCallback]: CONNECTED_CALLBACK,
-  [Symbols.disconnectedCallback]: DISCONNECTED_CALLBACK,
-  [Symbols.writeCallback]: WRITE_CALLBACK,
+const callbackNameBySymbol$1 = {
+  [Symbols$1.connectedCallback]: CONNECTED_CALLBACK$1,
+  [Symbols$1.disconnectedCallback]: DISCONNECTED_CALLBACK$1,
+  [Symbols$1.writeCallback]: WRITE_CALLBACK$1,
 };
 /**
  * @type {Set<Symbol>}
  */
-const setOfAllCallbacks = new Set([
-  Symbols.connectedCallback,
-  Symbols.disconnectedCallback,
-  Symbols.writeCallback,
+const setOfAllCallbacks$1 = new Set([
+  Symbols$1.connectedCallback,
+  Symbols$1.disconnectedCallback,
+  Symbols$1.writeCallback,
 ]);
 
 /**
- * 
+ * 外部から呼び出されるAPI
  */
-const setOfApiFunctions = new Set([
-  Symbols.directlyCall,
-  Symbols.getDependentProps,
+new Set([
+  Symbols$1.directlyCall,
+  Symbols$1.getDependentProps,
   //Symbols.addNotify,
-  Symbols.notifyForDependentProps,
-  Symbols.getHandler,
-  Symbols.beCacheable,
-  Symbols.beUncacheable,
+  Symbols$1.notifyForDependentProps,
+  Symbols$1.getHandler,
+  Symbols$1.beCacheable,
+  Symbols$1.beUncacheable,
 ]);
 
-const PROPS_PROPERTY = "$props";
-const GLOBALS_PROPERTY = "$globals";
-const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
-const OPEN_DIALOG_METHOD = "$openDialog";
-const CLOSE_DIALOG_METHOD = "$closeDialog";
-const COMPONENT_PROPERTY = "$component";
+const PROPS_PROPERTY$1 = "$props";
+const GLOBALS_PROPERTY$1 = "$globals";
+const DEPENDENT_PROPS_PROPERTY$2 = "$dependentProps";
+const OPEN_DIALOG_METHOD$1 = "$openDialog";
+const CLOSE_DIALOG_METHOD$1 = "$closeDialog";
+const COMPONENT_PROPERTY$1 = "$component";
 
 /**
  * @type {Set<string>}
  */
-const setOfProperties = new Set([
-  PROPS_PROPERTY,
-  GLOBALS_PROPERTY,
-  DEPENDENT_PROPS_PROPERTY,
-  OPEN_DIALOG_METHOD,
-  CLOSE_DIALOG_METHOD,
-  COMPONENT_PROPERTY,
+const setOfProperties$1 = new Set([
+  PROPS_PROPERTY$1,
+  GLOBALS_PROPERTY$1,
+  DEPENDENT_PROPS_PROPERTY$2,
+  OPEN_DIALOG_METHOD$1,
+  CLOSE_DIALOG_METHOD$1,
+  COMPONENT_PROPERTY$1,
 ]);
 
 /**
@@ -890,19 +1045,19 @@ class ViewModelHandler extends Handler$2 {
       !this.#dependentProps.hasDefaultProp(propName.name) && this.#dependentProps.addDefaultProp(propName.name);
     }
     let value;
-    if (setOfProperties.has(propName.name)) {
-      if (propName.name === PROPS_PROPERTY) {
+    if (setOfProperties$1.has(propName.name)) {
+      if (propName.name === PROPS_PROPERTY$1) {
         return this.component.props;
-      } else if (propName.name === GLOBALS_PROPERTY) {
+      } else if (propName.name === GLOBALS_PROPERTY$1) {
         return this.component.globals;
-      } else if (propName.name === DEPENDENT_PROPS_PROPERTY) {
-        return Reflect.get(target, DEPENDENT_PROPS_PROPERTY, receiver);
-      } else if (propName.name === OPEN_DIALOG_METHOD) {
-        return (name, data = {}, attributes = {}) => Reflect.apply(this.#openDialog, this, [target, {name, data, attributes}, receiver])
-      } else if (propName.name === COMPONENT_PROPERTY) {
+      } else if (propName.name === DEPENDENT_PROPS_PROPERTY$2) {
+        return Reflect.get(target, DEPENDENT_PROPS_PROPERTY$2, receiver);
+      } else if (propName.name === OPEN_DIALOG_METHOD$1) {
+        return async (name, data = {}, attributes = {}) => Dialog.open(name, data, attributes);
+      } else if (propName.name === COMPONENT_PROPERTY$1) {
         return this.component;
       } else {
-        return (data = {}) => Reflect.apply(this.#closeDialog, this, [target, data, receiver]);
+        return (data = {}) => Dialog.close(this.#component, data);
       }
     } else {
       if (this.#setOfAccessorProperties.has(propName.name) && this.#cacheable) {
@@ -933,8 +1088,8 @@ class ViewModelHandler extends Handler$2 {
     const indexes = this.lastIndexes;
     const propertyAccess = { propName, indexes };
     const result = super.setByPropertyName(target, { propName, value }, receiver);
-    receiver[Symbols.writeCallback](propName.name, indexes);
-    this.#addNotify(target, propertyAccess, receiver);
+    receiver[Symbols$1.writeCallback](propName.name, indexes);
+    this.addNotify(target, propertyAccess, receiver);
 
     return result;
   }
@@ -945,7 +1100,7 @@ class ViewModelHandler extends Handler$2 {
    * @param {Proxy} thisArg 
    * @param {any[]} argumentArray 
    */
-  #addProcess(target, thisArg, argumentArray) {
+  addProcess(target, thisArg, argumentArray) {
     this.#component.updateSlot?.addProcess(new ProcessData(target, thisArg, argumentArray));
   }
 
@@ -955,7 +1110,7 @@ class ViewModelHandler extends Handler$2 {
    * @param {PropertyAccess} propertyAccess 
    * @param {Proxy} receiver 
    */
-  #addNotify(target, propertyAccess, receiver) {
+  addNotify(target, propertyAccess, receiver) {
     this.#component.updateSlot?.addNotify(propertyAccess);
   }
 
@@ -966,13 +1121,13 @@ class ViewModelHandler extends Handler$2 {
    * @param {Proxy} receiver 
    */
   async #openDialog(target, {name, data, attributes}, receiver) {
-    const tagName = utils.toKebabCase(name);
+    const tagName = utils$1.toKebabCase(name);
     const dialog = document.createElement(tagName);
     Object.entries(attributes).forEach(([key, value]) => {
       dialog.setAttribute(key, value);
     });
     Object.entries(data).forEach(([key, value]) => {
-      dialog.props[Symbols.bindProperty](key, key, []);
+      dialog.props[Symbols$1.bindProperty](key, key, []);
       dialog.props[key] = value;
     });
     document.body.appendChild(dialog);
@@ -994,23 +1149,12 @@ class ViewModelHandler extends Handler$2 {
   }
 
   /**
-   * 
-   * @param {ViewModel} target 
-   * @param {{prop:string,indexes:number[]}} 
-   * @param {Proxy<>} receiver 
-   * @returns {any}
-   */
-  [Symbols.directlyGet](target, {prop, indexes}, receiver) {
-    return super[Symbols.directlyGet](target, {prop, indexes}, receiver);
-  }
-
-  /**
    * キャッシュ機能をオン
    * @param {ViewModel} target 
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
-  [Symbols.beCacheable](target, receiver) {
+  [Symbols$1.beCacheable](target, receiver) {
     this.cacheable = true;
     this.#cache.clear();
     return this.cacheable;
@@ -1022,10 +1166,11 @@ class ViewModelHandler extends Handler$2 {
    * @param {Proxy<>} receiver 
    * @returns {boolean}
    */
-  [Symbols.beUncacheable](target, receiver) {
+  [Symbols$1.beUncacheable](target, receiver) {
     this.cacheable = false;
     return this.cacheable;
   }
+
 
   /**
    * 
@@ -1035,7 +1180,7 @@ class ViewModelHandler extends Handler$2 {
    */
   async #directlyCall(target, { prop, context, event }, receiver) {
     const propName = PropertyName.create(prop);
-    if (typeof this.context !== "undefined") utils.raise("directCall already called");
+    if (typeof this.context !== "undefined") utils$1.raise("directCall already called");
     this.context = context;
     this.stackIndexes.push(undefined);
     try {
@@ -1054,33 +1199,16 @@ class ViewModelHandler extends Handler$2 {
    * @returns {any}
    */
   get(target, prop, receiver) {
-    if (setOfAllCallbacks.has(prop)) {
-      const callbackName = callbackNameBySymbol[prop];
+    if (setOfAllCallbacks$1.has(prop)) {
+      const callbackName = callbackNameBySymbol$1[prop];
       const applyCallback = (...args) => async () => Reflect.apply(target[callbackName], receiver, args);
-      if (prop === Symbols.connectedCallback) {
+      if (prop === Symbols$1.connectedCallback) {
         return (callbackName in target) ? (...args) => applyCallback(...args)() : () => {};
       } else {
-        return (callbackName in target) ? (...args) => this.#addProcess(applyCallback(...args), receiver, []) : () => {};
+        return (callbackName in target) ? (...args) => this.addProcess(applyCallback(...args), receiver, []) : () => {};
       }
-    } else if (setOfApiFunctions.has(prop)) {
-      if (prop === Symbols.directlyCall) {
-        return async (prop, context, event) => 
-          this.#directlyCall(target, { prop, context, event }, receiver);
-      } else if (prop === Symbols.notifyForDependentProps) {
-        return (prop, indexes) => {
-          const propertyAccess = { propName:PropertyName.create(prop), indexes };
-          this.#addNotify(target, propertyAccess, receiver);
-        }
-      } else if (prop === Symbols.getDependentProps) {
-        return () => this.dependentProps;
-      } else if (prop === Symbols.getHandler) {
-        return () => this;
-      } else if (prop === Symbols.beCacheable) {
-        return () => Reflect.apply(this[Symbols.beCacheable], this, [target, receiver]);
-//      } else if (prop === Symbols.beUncacheable) {
-      } else {
-        return () => Reflect.apply(this[Symbols.beUncacheable], this, [target, receiver]);
-      }
+    } else if (Api.has(prop)) {
+      return Api.get(target, receiver, this, prop);
     } else {
       let value;
       do {
@@ -1088,8 +1216,8 @@ class ViewModelHandler extends Handler$2 {
           const propName = PropertyName.create(prop);
           if (typeof this.context !== "undefined" && propName.level > 0 && prop.at(0) !== "@") {
             const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-            if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
-            value = this[Symbols.directlyGet](target, { prop, indexes:param.indexes}, receiver);
+            if (typeof param === "undefined") utils$1.raise(`${prop} is outside loop`);
+            value = this.directlyGet(target, { prop, indexes:param.indexes}, receiver);
             break;
           }
         }
@@ -1114,8 +1242,8 @@ class ViewModelHandler extends Handler$2 {
         const propName = PropertyName.create(prop);
         if (typeof this.context !== "undefined" && propName.level > 0 && prop.at(0) !== "@") {
           const param = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-          if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
-          result = this[Symbols.directlySet](target, { prop, indexes:param.indexes, value}, receiver);
+          if (typeof param === "undefined") utils$1.raise(`${prop} is outside loop`);
+          result = this.directlySet(target, { prop, indexes:param.indexes, value}, receiver);
           break;
         }
       }
@@ -1137,7 +1265,7 @@ class ViewModelHandler extends Handler$2 {
     const propertyAccessKey = propName.name + "\t" + indexes.toString();
     if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
     setOfSavePropertyAccessKeys.add(propertyAccessKey);
-    const dependentProps = viewModel[Symbols.getDependentProps]();
+    const dependentProps = viewModel[Symbols$1.getDependentProps]();
     const setOfProps = dependentProps.setOfPropsByRefProp.get(propName.name);
     const propertyAccesses = [];
     if (typeof setOfProps === "undefined") return [];
@@ -1184,7 +1312,7 @@ class ViewModelHandler extends Handler$2 {
         let retIndexes;
         if (isTerminate) {
           if (element === "*") {
-            retIndexes = (viewModel[Symbols.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
+            retIndexes = (viewModel[Symbols$1.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
               return [ loopIndexes.concat(index) ];
             });
           } else {
@@ -1195,7 +1323,7 @@ class ViewModelHandler extends Handler$2 {
             if (loopIndexes.length < indexes.length) {
               retIndexes = traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
             } else {
-              retIndexes = (viewModel[Symbols.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
+              retIndexes = (viewModel[Symbols$1.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
                 return traverse(currentName, elementIndex + 1, loopIndexes.concat(index));
               });
             }
@@ -1210,18 +1338,6 @@ class ViewModelHandler extends Handler$2 {
       return listOfIndexes;
     }
   }
-}
-
-/**
- * 
- * @param {Component} component 
- * @param {typeof ViewModel} viewModelClass 
- * @returns {Proxy<ViewModel>}
- */
-function createViewModel(component, viewModelClass) {
-  const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(viewModelClass, []));
-  const { viewModel, accessorProps, methods } = viewModelInfo;
-  return new Proxy(viewModel, new ViewModelHandler(component, accessorProps, methods, viewModel[DEPENDENT_PROPS_PROPERTY]));
 }
 
 /**
@@ -1259,7 +1375,7 @@ let Handler$1 = class Handler {
       const viewModel = this.#component.parentComponent.viewModel;
       for(const [key, bindAccess] of this.#bindPropByThisProp.entries()) {
         const { bindProp, bindIndexes } = bindAccess;
-        retObject[key] = viewModel[Symbols.directlyGet](bindProp, bindIndexes);      }
+        retObject[key] = viewModel[Symbols$1.directlyGet](bindProp, bindIndexes);      }
     } else {
       for(const [key, value] of Object.entries(this.#data)) {
         retObject[key] = value;
@@ -1283,17 +1399,17 @@ let Handler$1 = class Handler {
    * @returns 
    */
   get(target, prop, receiver) {
-    if (prop === Symbols.bindProperty) {
+    if (prop === Symbols$1.bindProperty) {
       return (thisProp, bindProp, bindIndexes) => 
         this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
-    } else if (prop === Symbols.toObject) {
+    } else if (prop === Symbols$1.toObject) {
       return () => this.object;
     }
     const { data } = this;
     if (this.hasParent) {
       const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
       if (bindProp) {
-        return data[Symbols.directlyGet](bindProp, bindIndexes);
+        return data[Symbols$1.directlyGet](bindProp, bindIndexes);
       } else {
         console.error(`undefined property ${prop}`);
         return undefined;
@@ -1316,7 +1432,7 @@ let Handler$1 = class Handler {
     if (this.hasParent) {
       const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
       if (bindProp) {
-        return data[Symbols.directlySet](bindProp, bindIndexes, value);
+        return data[Symbols$1.directlySet](bindProp, bindIndexes, value);
       } else {
         console.error(`undefined property ${prop}`);
         return false;
@@ -1348,7 +1464,7 @@ class GlobalDataHandler extends Handler$2 {
    * @returns 
    */
   get(target, prop, receiver) {
-    if (prop === Symbols.boundByComponent) {
+    if (prop === Symbols$1.boundByComponent) {
       return (component, prop) => {
         let setOfComponent = this.#setOfComponentByProp.get(prop);
         if (setOfComponent == null) {
@@ -1371,11 +1487,11 @@ class GlobalDataHandler extends Handler$2 {
    */
   set(target, prop, value, receiver) {
     const { propName, indexes } = PropertyName.parse(prop);
-    const result = receiver[Symbols.directlySet](propName.name, indexes, value);
+    const result = receiver[Symbols$1.directlySet](propName.name, indexes, value);
     let setOfComponent = this.#setOfComponentByProp.get(propName.name);
     if (setOfComponent) {
       for(const component of setOfComponent) {
-        component.viewModel[Symbols.notifyForDependentProps]("$globals." + propName.name, indexes);
+        component.viewModel[Symbols$1.notifyForDependentProps]("$globals." + propName.name, indexes);
       }
     }
     return result;
@@ -1423,7 +1539,7 @@ class Handler {
    * @param {string} prop 
    */
   bindProperty(prop) {
-    GlobalData.data[Symbols.boundByComponent](this.#component, prop);
+    GlobalData.data[Symbols$1.boundByComponent](this.#component, prop);
     this.setOfProps.add(prop);
   }
 
@@ -1437,7 +1553,7 @@ class Handler {
     if (!this.setOfProps.has(name)) {
       this.bindProperty(name);
     }
-    return GlobalData.data[Symbols.directlyGet](name, indexes);
+    return GlobalData.data[Symbols$1.directlyGet](name, indexes);
   }
 
   /**
@@ -1451,7 +1567,7 @@ class Handler {
     if (!this.setOfProps.has(name)) {
       this.bindProperty(name);
     }
-    return GlobalData.data[Symbols.directlySet](name, indexes, value);
+    return GlobalData.data[Symbols$1.directlySet](name, indexes, value);
   }
 
   /**
@@ -1462,11 +1578,11 @@ class Handler {
    * @returns 
    */
   get(target, prop, receiver) {
-    if (prop === Symbols.directlyGet) {
+    if (prop === Symbols$1.directlyGet) {
       return this.directGet;
-    } else if (prop === Symbols.directlySet) {
+    } else if (prop === Symbols$1.directlySet) {
       return this.directSet;
-    } else if (prop === Symbols.isSupportDotNotation) {
+    } else if (prop === Symbols$1.isSupportDotNotation) {
       return true;
     }
     const { propName, indexes } = PropertyName.parse(prop);
@@ -1580,7 +1696,7 @@ class Module {
       /** @type {HTMLTemplateElement} */
       let template;
       while(template = element.querySelector("template")) {
-        const uuid =  utils.createUUID();
+        const uuid =  utils$1.createUUID();
         const comment = document.createComment(`@@|${uuid}`);
         template.parentNode.replaceChild(comment, template);
         if (template.constructor !== HTMLTemplateElement) {
@@ -1905,8 +2021,8 @@ class Filter {
    * @param {(value:any,options:string[])=>{}} inputFilter 
    */
   static regist(name, outputFilter, inputFilter) {
-    if (name in outputFilters) utils.raise(`regist filter error duplicate name (${name})`);
-    if (name in inputFilters) utils.raise(`regist filter error duplicate name (${name})`);
+    if (name in outputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
+    if (name in inputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
     outputFilter && (outputFilters[name] = outputFilter);
     inputFilter && (inputFilters[name] = inputFilter);
   }
@@ -1931,7 +2047,7 @@ class Main {
    */
   static components(components) {
     Object.entries(components).forEach(([name, componentClass]) => {
-      const componentName = utils.toKebabCase(name);
+      const componentName = utils$1.toKebabCase(name);
       customElements.define(componentName, componentClass);
     });
     return this;
@@ -1942,14 +2058,14 @@ class Main {
    * @param {UserComponentModule} componentModule 
    */
   static registComponentModule(customElementName, componentModule) {
-    const customElementKebabName = utils.toKebabCase(customElementName);
+    const customElementKebabName = utils$1.toKebabCase(customElementName);
     const componentClass = ComponentClassGenerator.generate(componentModule);
     if (componentModule.extendTag) {
       customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
     } else if (typeof componentModule?.extendClass === "undefined") {
       customElements.define(customElementKebabName, componentClass);
     } else {
-      utils.raise("extendTag should be set");
+      utils$1.raise("extendTag should be set");
     }
     if (componentModule.componentModules) {
       this.componentModules(componentModule.componentModules);
@@ -2153,6 +2269,146 @@ class NodeUpdator {
   }
 }
 
+class ViewModelHandlerBase extends Handler$2 {
+  /** @type {Component} */
+  #component;
+  get component() {
+    return this.#component;
+  }
+
+  /** @type {import("./DependentProps.js").DependentProps} */
+  #dependentProps;
+  get dependentProps() {
+    return this.#dependentProps;
+  }
+
+  /** @type {Set<string>} */
+  #setOfAccessorProperties;
+  get setOfAccessorProperties() {
+    return this.#setOfAccessorProperties;
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @param {Set<string>} setOfAccessorProperties
+   * @param {import("./DependentProps.js").DependentProps} dependentProps
+   */
+  constructor(component, setOfAccessorProperties, dependentProps) {
+    super();
+    this.#component = component;
+    this.#setOfAccessorProperties = setOfAccessorProperties;
+    this.#dependentProps = dependentProps;
+  }
+
+  /**
+   * 更新処理をキューイングする
+   * @param {ViewModel} target 
+   * @param {Proxy} thisArg 
+   * @param {any[]} argumentArray 
+   */
+  addProcess(target, thisArg, argumentArray) {
+    this.#component.updateSlot?.addProcess(new ProcessData(target, thisArg, argumentArray));
+  }
+
+  /**
+   * 更新情報をキューイングする
+   * @param {ViewModel} target 
+   * @param {PropertyAccess} propertyAccess 
+   * @param {Proxy} receiver 
+   */
+  addNotify(target, propertyAccess, receiver) {
+    this.#component.updateSlot?.addNotify(propertyAccess);
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {PropertyAccess} propertyAccess
+   * @param {string} prop 
+   * @param {number[]} indexes 
+   * @returns {PropertyAccess[]}
+   */
+  static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
+    const { propName, indexes } = propertyAccess;
+    const propertyAccessKey = propName.name + "\t" + indexes.toString();
+    if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
+    setOfSavePropertyAccessKeys.add(propertyAccessKey);
+    const dependentProps = viewModel[Symbols$1.getDependentProps]();
+    const setOfProps = dependentProps.setOfPropsByRefProp.get(propName.name);
+    const propertyAccesses = [];
+    if (typeof setOfProps === "undefined") return [];
+    for(const prop of setOfProps) {
+      const curPropName = PropertyName.create(prop);
+      if (indexes.length < curPropName.level) {
+        const listOfIndexes = ViewModelHandlerBase.expandIndexes(viewModel, { propName:curPropName, indexes });
+        propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));
+      } else {
+        const notifyIndexes = indexes.slice(0, curPropName.level);
+        propertyAccesses.push({ propName:curPropName, indexes:notifyIndexes });
+      }
+      propertyAccesses.push(...this.makeNotifyForDependentProps(viewModel, { propName:curPropName, indexes }, setOfSavePropertyAccessKeys));
+    }
+    return propertyAccesses;
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {PropertyAccess} propertyAccess
+   * @param {number[]} indexes 
+   * @returns {number[][]}
+   */
+  static expandIndexes(viewModel, propertyAccess) {
+    const { propName, indexes } = propertyAccess;
+    if (propName.level === indexes.length) {
+      return [ indexes ];
+    } else if (propName.level < indexes.length) {
+      return [ indexes.slice(0, propName.level) ];
+    } else {
+      /**
+       * 
+       * @param {string} parentName 
+       * @param {number} elementIndex 
+       * @param {number[]} loopIndexes 
+       * @returns {number[][]}
+       */
+      const traverse = (parentName, elementIndex, loopIndexes) => {
+        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
+        const element = propName.pathNames[elementIndex];
+        const isTerminate = (propName.pathNames.length - 1) === elementIndex;
+        const currentName = parentNameDot + element;
+        let retIndexes;
+        if (isTerminate) {
+          if (element === "*") {
+            retIndexes = (viewModel[Symbols$1.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
+              return [ loopIndexes.concat(index) ];
+            });
+          } else {
+            retIndexes = [ loopIndexes ];
+          }
+        } else {
+          if (element === "*") {
+            if (loopIndexes.length < indexes.length) {
+              retIndexes = traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+            } else {
+              retIndexes = (viewModel[Symbols$1.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
+                return traverse(currentName, elementIndex + 1, loopIndexes.concat(index));
+              });
+            }
+          } else {
+            retIndexes = traverse(currentName, elementIndex + 1, loopIndexes);
+          }
+
+        }
+        return retIndexes;
+      };
+      const listOfIndexes = traverse("", 0, []);
+      return listOfIndexes;
+    }
+  }
+}
+
 class NotifyReceiver {
   /** @type {PropertyAccess[]} */
   queue = [];
@@ -2182,7 +2438,7 @@ class NotifyReceiver {
         const notifies = this.queue.splice(0);
         const dependentPropertyAccesses = [];
         for(const propertyAccess of notifies) {
-          dependentPropertyAccesses.push(...ViewModelHandler.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
+          dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
         }
         const setOfUpdatedViewModelPropertyKeys = new Set(
           notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
@@ -2199,6 +2455,17 @@ class NotifyReceiver {
     return this.queue.length === 0;
   }
 }
+
+/**
+ * @enum {number} 実行フェーズ
+ */
+const Phase = {
+  sleep: 0 ,
+  updateViewModel: 1,
+  gatherUpdatedProperties: 2,
+  applyToNode: 3,
+  terminate: 100,
+};
 
 /**
  * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
@@ -2245,6 +2512,12 @@ class UpdateSlot {
 
   /** @type {Promise<() => void>} */
   #aliveReject;
+
+  /** @type {Phase} */
+  #phase = Phase.sleep;
+  get phase() {
+    return this.#phase;
+  }
   
   /**
    * 
@@ -2297,10 +2570,17 @@ class UpdateSlot {
 
   async exec() {
     do {
+      this.#phase = Phase.updateViewModel;
       await this.#viewModelUpdator.exec();
+
+      this.#phase = Phase.gatherUpdatedProperties;
       await this.#notifyReceiver.exec();
+
+      this.#phase = Phase.applyToNode;
       await this.#nodeUpdator.exec();
     } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty || !this.#nodeUpdator.isEmpty);
+
+    this.#phase = Phase.terminate;
     this.#aliveResolve();
   }
 
@@ -2550,7 +2830,7 @@ class NodeProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof Node)) utils.raise("not Node");
+    if (!(node instanceof Node)) utils$1.raise("not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
@@ -2620,9 +2900,9 @@ class TemplateProperty extends NodeProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof Comment)) utils.raise("not Comment");
+    if (!(node instanceof Comment)) utils$1.raise("not Comment");
     const uuid = TemplateProperty.getUUID(node);
-    if (typeof uuid === "undefined") utils.raise(`invalid uuid ${uuid}`);
+    if (typeof uuid === "undefined") utils$1.raise(`invalid uuid ${uuid}`);
     super(binding, node, name, filters, filterFuncs);
   }
 }
@@ -2640,7 +2920,7 @@ class Repeat extends TemplateProperty {
     return this.binding.children.length;
   }
   set value(value) {
-    if (!Array.isArray(value)) utils.raise("value is not array");
+    if (!Array.isArray(value)) utils$1.raise("value is not array");
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
@@ -2666,7 +2946,7 @@ class Repeat extends TemplateProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (name !== "loop") utils.raise(`invalid property name ${name}`);
+    if (name !== "loop") utils$1.raise(`invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2689,7 +2969,7 @@ class Branch extends TemplateProperty {
     return this.binding.children.length > 0;
   }
   set value(value) {
-    if (typeof value !== "boolean") utils.raise("value is not boolean");
+    if (typeof value !== "boolean") utils$1.raise("value is not boolean");
     if (this.value !== value) {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.context);
@@ -2712,7 +2992,7 @@ class Branch extends TemplateProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (name !== "if") utils.raise(`invalid property name ${name}`);
+    if (name !== "if") utils$1.raise(`invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2840,9 +3120,8 @@ class Context {
 
 class ViewModelProperty {
   /** @type { ViewModel } */
-  #viewModel;
   get viewModel() {
-    return this.#viewModel;
+    return this.#binding.component.viewModel;
   }
 
   /** @type { string } */
@@ -2874,11 +3153,11 @@ class ViewModelProperty {
 
   /** @type {any} */
   get value() {
-    return this.viewModel[Symbols.directlyGet](this.name, this.indexes);
+    return this.viewModel[Symbols$1.directlyGet](this.name, this.indexes);
   }
   set value(value) {
     const setValue = value => {
-      this.viewModel[Symbols.directlySet](this.name, this.indexes, value);
+      this.viewModel[Symbols$1.directlySet](this.name, this.indexes, value);
     };
     if (value instanceof MultiValue) {
       const thisValue = this.value;
@@ -2927,14 +3206,12 @@ class ViewModelProperty {
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
-   * @param {ViewModel} viewModel 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, viewModel, name, filters, filterFuncs) {
+  constructor(binding, name, filters, filterFuncs) {
     this.#binding = binding;
-    this.#viewModel = viewModel;
     this.#name = name;
     this.#filters = filters;
     this.#filterFuncs = filterFuncs;
@@ -3005,14 +3282,13 @@ class ContextIndex extends ViewModelProperty {
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
-   * @param {ViewModel} viewModel 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, viewModel, name, filters, filterFuncs) {
-    if (!regexp$1.test(name)) utils.raise(`invalid name ${name}`);
-    super(binding, viewModel, name, filters, filterFuncs);
+  constructor(binding, name, filters, filterFuncs) {
+    if (!regexp$1.test(name)) utils$1.raise(`invalid name ${name}`);
+    super(binding, name, filters, filterFuncs);
   }
 }
 
@@ -3031,7 +3307,7 @@ class ElementBase extends NodeProperty {
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
   constructor(binding, node, name, filters, inputFilterFuncs) {
-    if (!(node instanceof Element)) utils.raise("not element");
+    if (!(node instanceof Element)) utils$1.raise("not element");
     super(binding, node, name, filters, inputFilterFuncs);
   }
 }
@@ -3088,8 +3364,8 @@ class Checkbox extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
-    if (node.type !== "checkbox") utils.raise("not checkbox");
+    if (!(node instanceof HTMLInputElement)) utils$1.raise("not htmlInputElement");
+    if (node.type !== "checkbox") utils$1.raise("not checkbox");
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -3136,8 +3412,8 @@ class Radio extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
-    if (node.type !== "radio") utils.raise("not radio");
+    if (!(node instanceof HTMLInputElement)) utils$1.raise("not htmlInputElement");
+    if (node.type !== "radio") utils$1.raise("not radio");
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -3169,7 +3445,7 @@ class ElementEvent extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!name.startsWith("on")) utils.raise(`invalid property name ${name}`);
+    if (!name.startsWith("on")) utils$1.raise(`invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -3188,7 +3464,7 @@ class ElementEvent extends ElementBase {
   createProcessData(event) {
     const { viewModelProperty, context } = this.binding;
     return new ProcessData(
-      viewModelProperty.viewModel[Symbols.directlyCall], 
+      viewModelProperty.viewModel[Symbols$1.directlyCall], 
       viewModelProperty.viewModel, 
       [viewModelProperty.name, context, event]
     );
@@ -3263,7 +3539,7 @@ class ElementStyle extends ElementBase {
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
   constructor(binding, node, name, filters, inputFilterFuncs) {
-    if (!(node instanceof HTMLElement)) utils.raise("not htmlElement");
+    if (!(node instanceof HTMLElement)) utils$1.raise("not htmlElement");
     super(binding, node, name, filters, inputFilterFuncs);
   }
 }
@@ -3304,7 +3580,7 @@ class ComponentProperty extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node[Symbols.isComponent])) utils.raise("not Component");
+    if (!(node[Symbols$1.isComponent])) utils$1.raise("not Component");
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -3313,7 +3589,7 @@ class ComponentProperty extends ElementBase {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.thisComponent.props[Symbols.bindProperty](this.propName, this.binding.viewModelProperty.name, this.binding.viewModelProperty.indexes);
+    this.thisComponent.props[Symbols$1.bindProperty](this.propName, this.binding.viewModelProperty.name, this.binding.viewModelProperty.indexes);
     Object.defineProperty(this.thisComponent.viewModel, this.propName, {
       get: ((propName) => function () { return this.$props[propName]; })(this.propName),
       set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),
@@ -3333,10 +3609,10 @@ class ComponentProperty extends ElementBase {
       if (name === viewModelProperty || PropertyName.create(name).setOfParentPaths.has(viewModelProperty)) {
         const remain = name.slice(viewModelProperty.length);
         const indexes = ((indexesString || null)?.split(",") ?? []).map(i => Number(i));
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`$props.${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols$1.writeCallback](`$props.${propName}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols$1.writeCallback](`${propName}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols$1.notifyForDependentProps](`$props.${propName}${remain}`, indexes);
+        this.thisComponent.viewModel?.[Symbols$1.notifyForDependentProps](`${propName}${remain}`, indexes);
       }
     }
   }
@@ -3410,7 +3686,7 @@ class Factory {
       const isComment = node instanceof Comment;
       classOfNodeProperty = this.classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
       if (typeof classOfNodeProperty !== "undefined") break;
-      if (isComment) utils.raise(`unknown node property ${nodePropertyName}`);
+      if (isComment) utils$1.raise(`unknown node property ${nodePropertyName}`);
       const nameElements = nodePropertyName.split(".");
       classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];
       if (typeof classOfNodeProperty !== "undefined") break;
@@ -3429,7 +3705,7 @@ class Factory {
     const binding = new Binding(
       bindingManager,
       node, nodePropertyName, classOfNodeProperty, 
-      viewModel, viewModelPropertyName, classOfViewModelProperty, 
+      viewModelPropertyName, classOfViewModelProperty, 
       filters);
     binding.initialize();
 
@@ -3509,7 +3785,7 @@ const parseBindText = (text, defaultName) => {
     let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
     viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
-    typeof nodeProperty === "undefined" && utils.raise("default property undefined");
+    typeof nodeProperty === "undefined" && utils$1.raise("default property undefined");
     return { nodeProperty, viewModelProperty, filters };
   });
 };
@@ -3568,7 +3844,7 @@ const DEFAULT_PROPERTY$1 = "textContent";
  * @param {Node} node 
  * @returns {HTMLElement}
  */
-const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
+const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils$1.raise(`not HTMLElement`);
 
 /**
  * HTML要素のデフォルトプロパティを取得
@@ -3659,7 +3935,7 @@ const DATASET_BIND_PROPERTY$1 = "data-bind";
  * @param {Node} node 
  * @returns {SVGElement}
  */
-const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`not SVGElement`);
+const toSVGElement = node => (node instanceof SVGElement) ? node : utils$1.raise(`not SVGElement`);
 
 class BindToSVGElement {
   /**
@@ -3694,7 +3970,7 @@ const DEFAULT_PROPERTY = "textContent";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+const toComment$1 = node => (node instanceof Comment) ? node : utils$1.raise("not Comment");
 
 class BindToText {
   /**
@@ -3731,7 +4007,7 @@ const DATASET_BIND_PROPERTY = "data-bind";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+const toComment = node => (node instanceof Comment) ? node : utils$1.raise("not Comment");
 
 class BindToTemplate {
   /**
@@ -3773,7 +4049,7 @@ class Binder {
       (node instanceof HTMLElement) ? BindToHTMLElement.bind(bindingManager, node) :
       (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(bindingManager, node) : 
       (node instanceof SVGElement) ? BindToSVGElement.bind(bindingManager, node) :
-      utils.raise(`unknown node type`)
+      utils$1.raise(`unknown node type`)
     );
   }
 
@@ -3854,20 +4130,19 @@ class Binding {
    * @param {Node} node
    * @param {string} nodePropertyName
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
-   * @param {ViewModel} viewModel
    * @param {string} viewModelPropertyName
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
   constructor(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
-    viewModel, viewModelPropertyName, classOfViewModelProperty,
+    viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
     this.#id = ++Binding.seq;
     this.#bindingManager = bindingManager;
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, bindingManager.component.filters.out);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);
   }
 
   /**
@@ -3923,7 +4198,7 @@ class Binding {
    * @param {BindingManager} bindingManager
    */
   appendChild(bindingManager) {
-    if (!this.expandable) utils.raise("not expandable");
+    if (!this.expandable) utils$1.raise("not expandable");
     const lastChild = this.children[this.children.length - 1];
     this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
@@ -4117,6 +4392,314 @@ class BindingManager {
 
 }
 
+const WRITE_CALLBACK = "$writeCallback";
+const CONNECTED_CALLBACK = "$connectedCallback";
+const DISCONNECTED_CALLBACK = "$disconnectedCallback";
+
+/**
+ * @type {Object<symbol,string>}
+ */
+const callbackNameBySymbol = {
+  [Symbols$1.connectedCallback]: CONNECTED_CALLBACK,
+  [Symbols$1.disconnectedCallback]: DISCONNECTED_CALLBACK,
+  [Symbols$1.writeCallback]: WRITE_CALLBACK,
+};
+/**
+ * @type {Set<symbol>}
+ */
+const setOfAllCallbacks = new Set([
+  Symbols$1.connectedCallback,
+  Symbols$1.disconnectedCallback,
+  Symbols$1.writeCallback,
+]);
+
+class Callback {
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {Proxy<ViewModel>} viewModelProxy 
+   * @param {ViewModelHandlerBase} handler
+   * @param {symbol} prop
+   */
+  static get(viewModel, viewModelProxy, handler, prop) {
+    const callbackName = callbackNameBySymbol[prop];
+    const applyCallback = (...args) => async () => Reflect.apply(viewModel[callbackName], viewModelProxy, args);
+    if (prop === Symbols$1.connectedCallback) {
+      return (callbackName in viewModel) ? (...args) => applyCallback(...args)() : () => {};
+    } else {
+      return (callbackName in viewModel) ? (...args) => handler.addProcess(applyCallback(...args), viewModelProxy, []) : () => {};
+    }
+  }
+
+  /**
+   * 
+   * @param {symbol | string} prop 
+   * @returns {boolean}
+   */
+  static has(prop) {
+    return setOfAllCallbacks.has(prop);
+  }
+}
+
+const PROPS_PROPERTY = "$props";
+const GLOBALS_PROPERTY = "$globals";
+const DEPENDENT_PROPS_PROPERTY$1 = "$dependentProps";
+const OPEN_DIALOG_METHOD = "$openDialog";
+const CLOSE_DIALOG_METHOD = "$closeDialog";
+const COMPONENT_PROPERTY = "$component";
+
+/**
+ * @type {Set<string>}
+ */
+const setOfProperties = new Set([
+  PROPS_PROPERTY,
+  GLOBALS_PROPERTY,
+  DEPENDENT_PROPS_PROPERTY$1,
+  OPEN_DIALOG_METHOD,
+  CLOSE_DIALOG_METHOD,
+  COMPONENT_PROPERTY,
+]);
+
+/**
+ * @type {Object<string,({component:Component, viewModel:ViewModel})=>{}>}
+ */
+const getFuncByName = {
+  [PROPS_PROPERTY]: ({component}) => component.props,
+  [GLOBALS_PROPERTY]: ({component}) => component.globals,
+  [DEPENDENT_PROPS_PROPERTY$1]: ({viewModel}) => viewModel[DEPENDENT_PROPS_PROPERTY$1],
+  [OPEN_DIALOG_METHOD]: () => async (name, data = {}, attributes = {}) => Dialog.open(name, data, attributes),
+  [COMPONENT_PROPERTY]: ({component}) => component,
+  [CLOSE_DIALOG_METHOD]: ({component}) => (data = {}) => Dialog.close(component, data),
+};
+
+class SpecialProp {
+  /**
+   * 
+   * @param {Component} component 
+   * @param {ViewModel} viewModel 
+   * @param {string} name 
+   * @returns {any}
+   */
+  static get(component, viewModel, name) {
+    return getFuncByName[name]?.({component, viewModel});
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @returns {boolean}
+   */
+  static has(name) {
+    return setOfProperties.has(name);
+  }
+}
+
+class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
+  /** @type {Cache} */
+  #cache = new Cache;
+  get cache() {
+    return this.#cache;
+  }
+
+  /**
+   * プロパティ情報からViewModelの値を取得する
+   * @param {ViewModel} target 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}  
+   * @param {Proxy} receiver 
+   */
+  getByPropertyName(target, { propName }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
+    }
+    let value;
+    if (SpecialProp.has(propName.name)) {
+      return SpecialProp.get(this.component, target, propName.name);
+    } else {
+      if (this.setOfAccessorProperties.has(propName.name)) {
+        // アクセサプロパティの場合、キャッシュから取得する
+        const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
+        value = this.#cache.get(propName, indexes);
+        if (typeof value === "undefined") {
+          value = super.getByPropertyName(target, { propName }, receiver);
+          this.#cache.set(propName, indexes, value);
+        }
+      } else {
+        value = super.getByPropertyName(target, { propName }, receiver);
+      }
+    }
+    return value;
+  }
+
+  /**
+   * プロパティ情報からViewModelの値を設定する
+   * @param {ViewModel} target 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,value:any}}  
+   * @param {Proxy} receiver 
+   */
+  setByPropertyName(target, { propName, value }, receiver) {
+    utils$1.raise("viewModel is read only");
+  }
+
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {string} prop 
+   * @param {Proxy} receiver 
+   * @returns {any}
+   */
+  get(target, prop, receiver) {
+    if (Callback.has(prop)) {
+      return Callback.get(target, receiver, this, prop);
+    } else if (Api.has(prop)) {
+      return Api.get(target, receiver, this, prop);
+    } else {
+      return super.get(target, prop, receiver);
+    }
+  }
+
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Proxy} receiver 
+   * @returns {boolean}
+   */
+  set(target, prop, value, receiver) {
+    utils$1.raise("viewModel is read only");
+  }
+}
+
+class WritableViewModelHandler extends ViewModelHandlerBase {
+  /** @type {DirectlyCallContext} */
+  #directlyCallContext = new DirectlyCallContext;
+  get directlyCallContext() {
+    return this.#directlyCallContext;
+  }
+
+  /**
+   * プロパティ情報からViewModelの値を取得する
+   * @param {ViewModel} target 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}  
+   * @param {Proxy} receiver 
+   */
+  getByPropertyName(target, { propName }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
+    }
+    return (SpecialProp.has(propName.name)) ?
+      SpecialProp.get(this.component, target, propName.name):
+      super.getByPropertyName(target, { propName }, receiver)
+    ;
+  }
+
+  /**
+   * プロパティ情報からViewModelの値を設定する
+   * @param {ViewModel} target 
+   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName,value:any}}  
+   * @param {Proxy} receiver 
+   */
+  setByPropertyName(target, { propName, value }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
+    }
+    const result = super.setByPropertyName(target, { propName, value }, receiver);
+    const indexes = this.lastIndexes;
+    receiver[Symbols$1.writeCallback](propName.name, indexes);
+    this.addNotify(target, { propName, indexes }, receiver);
+
+    return result;
+  }
+
+  async directlyCallback(context, directlyCallback) {
+    return this.directlyCallContext.callback(context, async () => {
+      // directlyCallの場合、引数で$1,$2,...を渡す
+      // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
+      // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
+      this.stackIndexes.push(undefined);
+      try {
+        return directlyCallback();
+      } finally {
+        this.stackIndexes.pop();
+      }
+    });
+  }
+
+  /**
+   * 
+   * @param {string} prop 
+   * @returns {ContextParam}
+   */
+  findParam(prop) {
+    if (typeof this.directlyCallContext.context === "undefined") return;
+    if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
+    const propName = PropertyName.create(prop);
+    if (propName.level === 0 || prop.at(0) === "@") return;
+    const param = this.directlyCallContext.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    if (typeof param === "undefined") utils$1.raise(`${prop} is outside loop`);
+    return param;
+  }
+
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {string} prop 
+   * @param {Proxy} receiver 
+   * @returns {any}
+   */
+  get(target, prop, receiver) {
+    if (Callback.has(prop)) {
+      return Callback.get(target, receiver, this, prop);
+    } else if (Api.has(prop)) {
+      return Api.get(target, receiver, this, prop);
+    } else {
+      do {
+        const contextParam = this.findParam(prop);
+        if (typeof contextParam === "undefined") break;
+        return this.directlyGet(target, { prop, indexes:contextParam.indexes}, receiver);
+      } while(false);
+      return super.get(target, prop, receiver);
+    }
+  }
+
+  /**
+   * 
+   * @param {ViewModel} target 
+   * @param {string} prop 
+   * @param {any} value 
+   * @param {Proxy} receiver 
+   * @returns {boolean}
+   */
+  set(target, prop, value, receiver) {
+    do {
+      const contextParam = this.findParam(prop);
+      if (typeof contextParam === "undefined") break;
+      return this.directlySet(target, { prop, indexes:contextParam.indexes, value}, receiver);
+    } while(false);
+    return super.set(target, prop, value, receiver);
+  }
+
+}
+
+const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
+/**
+ * 
+ * @param {Component} component 
+ * @param {ViewModel.constructor} viewModelClass 
+ * @returns {{readonly:Proxy,writable:Proxy}}
+ */
+function createViewModels(component, viewModelClass) {
+  const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(viewModelClass, []));
+  const { viewModel, accessorProps } = viewModelInfo;
+  const setOfAccessorProperties = new Set(accessorProps);
+  const dependentProps = new DependentProps();
+  dependentProps.setDependentProps(viewModel[DEPENDENT_PROPS_PROPERTY] ?? {});
+  return {
+    "readonly": new Proxy(viewModel, new ReadOnlyViewModelHandler(component, setOfAccessorProperties, dependentProps)),
+    "writable": new Proxy(viewModel, new WritableViewModelHandler(component, setOfAccessorProperties, dependentProps)),
+  };
+}
+
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
 
@@ -4129,9 +4712,9 @@ const getParentComponent = (node) => {
   do {
     node = node.parentNode;
     if (node == null) return null;
-    if (node[Symbols.isComponent]) return node;
+    if (node[Symbols$1.isComponent]) return node;
     if (node instanceof ShadowRoot) {
-      if (node.host[Symbols.isComponent]) return node.host;
+      if (node.host[Symbols$1.isComponent]) return node.host;
       node = node.host;
     }
     const component = pseudoComponentByNode.get(node);
@@ -4143,10 +4726,12 @@ const getParentComponent = (node) => {
 const mixInComponent = {
   /** @type {ViewModelProxy} */
   get viewModel() {
-    return this._viewModel;
-  },
-  set viewModel(value) {
-    this._viewModel = value;
+    if (typeof this.updateSlot === "undefined" || 
+      (this.updateSlot.phase !== Phase.gatherUpdatedProperties && this.updateSlot.phase !== Phase.applyToNode)) {
+      return this._viewModels["writable"];
+    } else {
+      return this._viewModels["readonly"];
+    }
   },
 
   /** @type {BindingManager} */
@@ -4174,13 +4759,10 @@ const mixInComponent = {
       this._updateSlot = UpdateSlot.create(this, () => {
         this._updateSlot = undefined;
       }, (updateSlotStatus) => {
-        if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
-          this.viewModel[Symbols.beUncacheable]();
-        } else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
-          this.viewModel[Symbols.beCacheable]();
-        } else if (updateSlotStatus === UpdateSlotStatus.beginNodeUpdate) {
-          this.viewModel[Symbols.beCacheable]();
-        }
+        if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) ; else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
+          this.viewModel[Symbols$1.clearCache]();
+//          this.viewModel[Symbols.beCacheable]();
+        } else ;
       });
       this.thread.wakeup(this._updateSlot);
     }
@@ -4274,7 +4856,7 @@ const mixInComponent = {
 
   /** @type {Node} 親要素（usePseudo以外では使わないこと） */
   get pseudoParentNode() {
-    return this.usePseudo ? this._pseudoParentNode : utils.raise("not usePseudo");
+    return this.usePseudo ? this._pseudoParentNode : utils$1.raise("not usePseudo");
   },
 
   /** @type {Node} 代替要素（usePseudo以外では使わないこと） */
@@ -4294,7 +4876,7 @@ const mixInComponent = {
    * @returns {void}
    */
   initialize() {
-    this._viewModel = createViewModel(this, this.constructor.ViewModel);
+    this._viewModels = createViewModels(this, this.constructor.ViewModel);
     this._rootBinding = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
@@ -4337,13 +4919,13 @@ const mixInComponent = {
     // フィルターの設定
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
-        if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
+        if (name in this.filters.in) utils$1.raise(`already exists filter ${name}`);
         this.filters.in[name] = filterFunc;
       }
     }
     if (typeof outputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(outputFilters)) {
-        if (name in this.filters.out) utils.raise(`already exists filter ${name}`);
+        if (name in this.filters.out) utils$1.raise(`already exists filter ${name}`);
         this.filters.out[name] = filterFunc;
       }
     }
@@ -4355,9 +4937,9 @@ const mixInComponent = {
     this.thread = new Thread;
 
     // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
-    await this.viewModel[Symbols.connectedCallback]();
+    await this.viewModel[Symbols$1.connectedCallback]();
 
-    this.viewModel[Symbols.beCacheable]();
+//    this.viewModel[Symbols.beCacheable]();
 
     // Bindingツリーの構築
     this.rootBinding = BindingManager.create(this, template, Context.create());
@@ -4411,7 +4993,7 @@ const mixInComponent = {
    * @returns {void}
    */
   disconnectedCallback() {
-    this.aliveResolve && this.aliveResolve(this.props[Symbols.toObject]());
+    this.aliveResolve && this.aliveResolve(this.props[Symbols$1.toObject]());
   },
 
   /**
@@ -4459,7 +5041,7 @@ class ComponentClassGenerator {
         static usePseudo = module.usePseudo;
 
         /** @type {boolean} */
-        get [Symbols.isComponent] () {
+        get [Symbols$1.isComponent] () {
           return true;
         }
 

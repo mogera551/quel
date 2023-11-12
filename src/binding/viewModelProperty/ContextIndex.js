@@ -27,13 +27,12 @@ export class ContextIndex extends ViewModelProperty {
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
-   * @param {ViewModel} viewModel 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, viewModel, name, filters, filterFuncs) {
+  constructor(binding, name, filters, filterFuncs) {
     if (!regexp.test(name)) utils.raise(`invalid name ${name}`);
-    super(binding, viewModel, name, filters, filterFuncs);
+    super(binding, name, filters, filterFuncs);
   }
 }

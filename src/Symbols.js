@@ -15,6 +15,7 @@ export const Symbols = Object.assign({
 
   beCacheable: Symbol.for(`${myname}:viewModel.beCacheable`),
   beUncacheable: Symbol.for(`${myname}:viewModel.beUncacheable`),
+  clearCache: Symbol.for(`${myname}:viewModel.clearCache`),
 
   boundByComponent: Symbol.for(`${myname}:globalData.boundByComponent`),
 

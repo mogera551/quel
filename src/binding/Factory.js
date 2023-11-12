@@ -95,7 +95,7 @@ export class Factory {
     const binding = new Binding(
       bindingManager,
       node, nodePropertyName, classOfNodeProperty, 
-      viewModel, viewModelPropertyName, classOfViewModelProperty, 
+      viewModelPropertyName, classOfViewModelProperty, 
       filters);
     binding.initialize();
 

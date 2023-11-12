@@ -80,20 +80,19 @@ export class Binding {
    * @param {Node} node
    * @param {string} nodePropertyName
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
-   * @param {ViewModel} viewModel
    * @param {string} viewModelPropertyName
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
   constructor(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
-    viewModel, viewModelPropertyName, classOfViewModelProperty,
+    viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
     this.#id = ++Binding.seq;
     this.#bindingManager = bindingManager;
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModel, viewModelPropertyName, filters, bindingManager.component.filters.out);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);
   }
 
   /**

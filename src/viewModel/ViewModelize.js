@@ -56,7 +56,7 @@ export class ViewModelize {
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
    * @param {ViewModel} target 
-   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:any}}
+   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:ViewModel}}
    */
   static viewModelize(target) {
     let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);

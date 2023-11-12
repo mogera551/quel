@@ -1,6 +1,7 @@
 import "../types.js";
 import { NodeUpdator } from "./NodeUpdator.js";
 import { NotifyReceiver } from "./NotifyReceiver.js";
+import { Phase } from "./Phase.js";
 import { ViewModelUpdator, ProcessData } from "./ViewModelUpdator.js";
 
 /**
@@ -48,6 +49,12 @@ export class UpdateSlot {
 
   /** @type {Promise<() => void>} */
   #aliveReject;
+
+  /** @type {Phase} */
+  #phase = Phase.sleep;
+  get phase() {
+    return this.#phase;
+  }
   
   /**
    * 
@@ -100,10 +107,17 @@ export class UpdateSlot {
 
   async exec() {
     do {
+      this.#phase = Phase.updateViewModel;
       await this.#viewModelUpdator.exec();
+
+      this.#phase = Phase.gatherUpdatedProperties;
       await this.#notifyReceiver.exec();
+
+      this.#phase = Phase.applyToNode;
       await this.#nodeUpdator.exec();
     } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty || !this.#nodeUpdator.isEmpty);
+
+    this.#phase = Phase.terminate;
     this.#aliveResolve();
   }
 

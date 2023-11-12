@@ -1,5 +1,5 @@
 import "../types.js";
-import { createViewModel } from "../viewModel/Proxy.js";
+import { createViewModel } from "../viewModel/Proxy_bak.js";
 import { Symbols } from "../Symbols.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { createProps } from "./Props.js";
@@ -13,6 +13,8 @@ import { inputFilters, outputFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
 import { Context } from "../context/Context.js";
+import { createViewModels } from "../viewModel/Proxy.js";
+import { Phase } from "../thread/Phase.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -40,10 +42,12 @@ const getParentComponent = (node) => {
 const mixInComponent = {
   /** @type {ViewModelProxy} */
   get viewModel() {
-    return this._viewModel;
-  },
-  set viewModel(value) {
-    this._viewModel = value;
+    if (typeof this.updateSlot === "undefined" || 
+      (this.updateSlot.phase !== Phase.gatherUpdatedProperties && this.updateSlot.phase !== Phase.applyToNode)) {
+      return this._viewModels["writable"];
+    } else {
+      return this._viewModels["readonly"];
+    }
   },
 
   /** @type {BindingManager} */
@@ -72,11 +76,12 @@ const mixInComponent = {
         this._updateSlot = undefined;
       }, (updateSlotStatus) => {
         if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
-          this.viewModel[Symbols.beUncacheable]();
+//          this.viewModel[Symbols.beUncacheable]();
         } else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
-          this.viewModel[Symbols.beCacheable]();
+          this.viewModel[Symbols.clearCache]();
+//          this.viewModel[Symbols.beCacheable]();
         } else if (updateSlotStatus === UpdateSlotStatus.beginNodeUpdate) {
-          this.viewModel[Symbols.beCacheable]();
+//          this.viewModel[Symbols.beCacheable]();
         }
       });
       this.thread.wakeup(this._updateSlot);
@@ -191,7 +196,7 @@ const mixInComponent = {
    * @returns {void}
    */
   initialize() {
-    this._viewModel = createViewModel(this, this.constructor.ViewModel);
+    this._viewModels = createViewModels(this, this.constructor.ViewModel);
     this._rootBinding = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
@@ -254,7 +259,7 @@ const mixInComponent = {
     // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
     await this.viewModel[Symbols.connectedCallback]();
 
-    this.viewModel[Symbols.beCacheable]();
+//    this.viewModel[Symbols.beCacheable]();
 
     // Bindingツリーの構築
     this.rootBinding = BindingManager.create(this, template, Context.create());

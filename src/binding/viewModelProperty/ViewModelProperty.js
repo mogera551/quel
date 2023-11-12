@@ -8,9 +8,8 @@ import { Context, ContextParam } from "../../context/Context.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
-  #viewModel;
   get viewModel() {
-    return this.#viewModel;
+    return this.#binding.component.viewModel;
   }
 
   /** @type { string } */
@@ -95,14 +94,12 @@ export class ViewModelProperty {
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
-   * @param {ViewModel} viewModel 
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, viewModel, name, filters, filterFuncs) {
+  constructor(binding, name, filters, filterFuncs) {
     this.#binding = binding;
-    this.#viewModel = viewModel;
     this.#name = name;
     this.#filters = filters;
     this.#filterFuncs = filterFuncs;

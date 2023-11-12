@@ -23,6 +23,14 @@
  */
 
 /**
+ * @typedef {Object} ViewModelInfo
+ * @property {string[]} removeProps
+ * @property {string[]} definedProps
+ * @property {string[]} methods
+ * @property {string[]} accessorProps
+ */
+
+/**
  * @typedef {import("./binding/Binding.js").Binding} Binding
  */
 

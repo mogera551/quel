@@ -1,5 +1,5 @@
 import "../types.js";
-import { ViewModelHandler } from "../viewModel/Proxy.js";
+import { ViewModelHandlerBase } from "../viewModel/ViewModelHandlerBase.js";
 import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class NotifyReceiver {
@@ -31,7 +31,7 @@ export class NotifyReceiver {
         const notifies = this.queue.splice(0);
         const dependentPropertyAccesses = [];
         for(const propertyAccess of notifies) {
-          dependentPropertyAccesses.push(...ViewModelHandler.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
+          dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
         }
         const setOfUpdatedViewModelPropertyKeys = new Set(
           notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
