@@ -5,7 +5,7 @@ import { Phase } from "./Phase.js";
 import { ViewModelUpdator, ProcessData } from "./ViewModelUpdator.js";
 
 /**
- * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
+ * @typedef {(phase:import("./Phase.js").Phase, prevPhase:import("./Phase.js").Phase)=>{}} ChangePhaseCallback
  */
 export class UpdateSlot {
   /** @type {ViewModelUpdator} */
@@ -50,23 +50,34 @@ export class UpdateSlot {
   /** @type {Promise<() => void>} */
   #aliveReject;
 
+  /** @type {ChangePhaseCallback} */
+  #changePhaseCallback;
+
   /** @type {Phase} */
   #phase = Phase.sleep;
   get phase() {
     return this.#phase;
+  }
+  set phase(value) {
+    const oldValue = this.#phase;
+    this.#phase = value;
+    if (typeof this.#changePhaseCallback === "undefined") {
+      this.#changePhaseCallback(value, oldValue);
+    }
   }
   
   /**
    * 
    * @param {Component} component
    * @param {()=>{}?} callback
-   * @param {UpdateSlotStatusCallback?} statusCallback
+   * @param {ChangePhaseCallback?} changePhaseCallback
    */
-  constructor(component, callback = null, statusCallback = null) {
-    this.#viewModelUpdator = new ViewModelUpdator(statusCallback);
-    this.#notifyReceiver = new NotifyReceiver(component, statusCallback);
-    this.#nodeUpdator = new NodeUpdator(statusCallback);
+  constructor(component, callback = null, changePhaseCallback = null) {
+    this.#viewModelUpdator = new ViewModelUpdator();
+    this.#notifyReceiver = new NotifyReceiver(component);
+    this.#nodeUpdator = new NodeUpdator();
     this.#callback = callback;
+    this.#changePhaseCallback = changePhaseCallback;
     this.#waitPromise = new Promise((resolve, reject) => {
       this.#waitResolve = resolve;
       this.#waitReject = reject;
@@ -107,17 +118,17 @@ export class UpdateSlot {
 
   async exec() {
     do {
-      this.#phase = Phase.updateViewModel;
+      this.phase = Phase.updateViewModel;
       await this.#viewModelUpdator.exec();
 
-      this.#phase = Phase.gatherUpdatedProperties;
+      this.phase = Phase.gatherUpdatedProperties;
       await this.#notifyReceiver.exec();
 
-      this.#phase = Phase.applyToNode;
+      this.phase = Phase.applyToNode;
       await this.#nodeUpdator.exec();
     } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty || !this.#nodeUpdator.isEmpty);
 
-    this.#phase = Phase.terminate;
+    this.phase = Phase.terminate;
     this.#aliveResolve();
   }
 
@@ -160,11 +171,11 @@ export class UpdateSlot {
    * 
    * @param {Component} component
    * @param {()=>{}} callback 
-   * @param {UpdateSlotStatusCallback} statusCallback 
+   * @param {ChangePhaseCallback} changePhaseCallback 
    * @returns {UpdateSlot}
    */
-  static create(component, callback, statusCallback) {
-    return new UpdateSlot(component, callback, statusCallback);
+  static create(component, callback, changePhaseCallback) {
+    return new UpdateSlot(component, callback, changePhaseCallback);
   }
 
 }

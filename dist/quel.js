@@ -1387,29 +1387,9 @@ class Thread {
 
 }
 
-/** @enum {number} */
-const UpdateSlotStatus = {
-  beginViewModelUpdate: 1,
-  endViewMmodelUpdate: 2,
-  beginNotifyReceive: 3,
-  endNotifyReceive: 4,
-  beginNodeUpdate: 5,
-  endNodeUpdate: 6,
-};
-
 class NodeUpdator {
   /** @type {Map<import("../binding/Binding.js").Binding,any>} */
   queue = new Map;
-
-  /** @type {UpdateSlotStatusCallback} */
-  #statusCallback;
-
-  /** 
-   * @param {UpdateSlotStatusCallback} statusCallback 
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
 
   /**
    * 更新する順番を並び替える
@@ -1433,17 +1413,12 @@ class NodeUpdator {
    * @returns {void}
    */
   async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
-    try {
-      while(this.queue.size > 0) {
-        const bindings = this.reorder(Array.from(this.queue.keys()));
-        for(const binding of bindings) {
-          binding.nodeProperty.assignValue(this.queue.get(binding));
-        }
-        this.queue = new Map;
+    while(this.queue.size > 0) {
+      const bindings = this.reorder(Array.from(this.queue.keys()));
+      for(const binding of bindings) {
+        binding.nodeProperty.assignValue(this.queue.get(binding));
       }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
+      this.queue = new Map;
     }
   }
 
@@ -1480,30 +1455,15 @@ class ViewModelUpdator {
   /** @type {ProcessData[]} */
   queue = [];
 
-  /** @type {UpdateSlotStatusCallback} */
-  #statusCallback;
-
-  /**
-   * @param {UpdateSlotStatusCallback} statusCallback
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
-
   /**
    * 
    */
   async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginViewModelUpdate);
-    try {
-      while(this.queue.length > 0) {
-        const processes = this.queue.splice(0);
-        for(const process of processes) {
-          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
-        }
+    while(this.queue.length > 0) {
+      const processes = this.queue.splice(0);
+      for(const process of processes) {
+        await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
       }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endViewMmodelUpdate);
     }
   }
 
@@ -1657,40 +1617,30 @@ class NotifyReceiver {
   /** @type {PropertyAccess[]} */
   queue = [];
 
-  /** @type {UpdateSlotStatusCallback} */
-  #statusCallback;
-
   /** @type {Component} */
   #component;
 
   /**
    * @param {Component} component
-   * @param {UpdateSlotStatusCallback} statusCallback
    */
-  constructor(component, statusCallback) {
+  constructor(component) {
     this.#component = component;
-    this.#statusCallback = statusCallback;
   }
 
   /**
    * @returns {void}
    */
   async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNotifyReceive);
-    try {
-      while(this.queue.length > 0) {
-        const notifies = this.queue.splice(0);
-        const dependentPropertyAccesses = [];
-        for(const propertyAccess of notifies) {
-          dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
-        }
-        const setOfUpdatedViewModelPropertyKeys = new Set(
-          notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
-        );
-        this.#component.updateNode(setOfUpdatedViewModelPropertyKeys);
+    while(this.queue.length > 0) {
+      const notifies = this.queue.splice(0);
+      const dependentPropertyAccesses = [];
+      for(const propertyAccess of notifies) {
+        dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
       }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNotifyReceive);
+      const setOfUpdatedViewModelPropertyKeys = new Set(
+        notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
+      );
+      this.#component.updateNode(setOfUpdatedViewModelPropertyKeys);
     }
   }
 
@@ -1712,7 +1662,7 @@ const Phase = {
 };
 
 /**
- * @typedef {(status:UpdateSlotStatus)=>{}} UpdateSlotStatusCallback
+ * @typedef {(phase:import("./Phase.js").Phase, prevPhase:import("./Phase.js").Phase)=>{}} ChangePhaseCallback
  */
 class UpdateSlot {
   /** @type {ViewModelUpdator} */
@@ -1757,23 +1707,34 @@ class UpdateSlot {
   /** @type {Promise<() => void>} */
   #aliveReject;
 
+  /** @type {ChangePhaseCallback} */
+  #changePhaseCallback;
+
   /** @type {Phase} */
   #phase = Phase.sleep;
   get phase() {
     return this.#phase;
+  }
+  set phase(value) {
+    const oldValue = this.#phase;
+    this.#phase = value;
+    if (typeof this.#changePhaseCallback === "undefined") {
+      this.#changePhaseCallback(value, oldValue);
+    }
   }
   
   /**
    * 
    * @param {Component} component
    * @param {()=>{}?} callback
-   * @param {UpdateSlotStatusCallback?} statusCallback
+   * @param {ChangePhaseCallback?} changePhaseCallback
    */
-  constructor(component, callback = null, statusCallback = null) {
-    this.#viewModelUpdator = new ViewModelUpdator(statusCallback);
-    this.#notifyReceiver = new NotifyReceiver(component, statusCallback);
-    this.#nodeUpdator = new NodeUpdator(statusCallback);
+  constructor(component, callback = null, changePhaseCallback = null) {
+    this.#viewModelUpdator = new ViewModelUpdator();
+    this.#notifyReceiver = new NotifyReceiver(component);
+    this.#nodeUpdator = new NodeUpdator();
     this.#callback = callback;
+    this.#changePhaseCallback = changePhaseCallback;
     this.#waitPromise = new Promise((resolve, reject) => {
       this.#waitResolve = resolve;
       this.#waitReject = reject;
@@ -1814,17 +1775,17 @@ class UpdateSlot {
 
   async exec() {
     do {
-      this.#phase = Phase.updateViewModel;
+      this.phase = Phase.updateViewModel;
       await this.#viewModelUpdator.exec();
 
-      this.#phase = Phase.gatherUpdatedProperties;
+      this.phase = Phase.gatherUpdatedProperties;
       await this.#notifyReceiver.exec();
 
-      this.#phase = Phase.applyToNode;
+      this.phase = Phase.applyToNode;
       await this.#nodeUpdator.exec();
     } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty || !this.#nodeUpdator.isEmpty);
 
-    this.#phase = Phase.terminate;
+    this.phase = Phase.terminate;
     this.#aliveResolve();
   }
 
@@ -1867,11 +1828,11 @@ class UpdateSlot {
    * 
    * @param {Component} component
    * @param {()=>{}} callback 
-   * @param {UpdateSlotStatusCallback} statusCallback 
+   * @param {ChangePhaseCallback} changePhaseCallback 
    * @returns {UpdateSlot}
    */
-  static create(component, callback, statusCallback) {
-    return new UpdateSlot(component, callback, statusCallback);
+  static create(component, callback, changePhaseCallback) {
+    return new UpdateSlot(component, callback, changePhaseCallback);
   }
 
 }
@@ -4301,11 +4262,10 @@ const mixInComponent = {
     if (typeof this._updateSlot === "undefined") {
       this._updateSlot = UpdateSlot.create(this, () => {
         this._updateSlot = undefined;
-      }, (updateSlotStatus) => {
-        if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) ; else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
+      }, phase => {
+        if (phase === Phase.gatherUpdatedProperties) {
           this.viewModel[Symbols$1.clearCache]();
-//          this.viewModel[Symbols.beCacheable]();
-        } else ;
+        }
       });
       this.thread.wakeup(this._updateSlot);
     }
@@ -4481,8 +4441,6 @@ const mixInComponent = {
 
     // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
     await this.viewModel[Symbols$1.connectedCallback]();
-
-//    this.viewModel[Symbols.beCacheable]();
 
     // Bindingツリーの構築
     this.rootBinding = BindingManager.create(this, template, Context.create());

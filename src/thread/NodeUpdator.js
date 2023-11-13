@@ -1,18 +1,6 @@
-import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
-
 export class NodeUpdator {
   /** @type {Map<import("../binding/Binding.js").Binding,any>} */
   queue = new Map;
-
-  /** @type {UpdateSlotStatusCallback} */
-  #statusCallback;
-
-  /** 
-   * @param {UpdateSlotStatusCallback} statusCallback 
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
 
   /**
    * 更新する順番を並び替える
@@ -36,17 +24,12 @@ export class NodeUpdator {
    * @returns {void}
    */
   async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginNodeUpdate);
-    try {
-      while(this.queue.size > 0) {
-        const bindings = this.reorder(Array.from(this.queue.keys()));
-        for(const binding of bindings) {
-          binding.nodeProperty.assignValue(this.queue.get(binding));
-        }
-        this.queue = new Map;
+    while(this.queue.size > 0) {
+      const bindings = this.reorder(Array.from(this.queue.keys()));
+      for(const binding of bindings) {
+        binding.nodeProperty.assignValue(this.queue.get(binding));
       }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endNodeUpdate);
+      this.queue = new Map;
     }
   }
 

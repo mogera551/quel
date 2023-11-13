@@ -72,14 +72,9 @@ const mixInComponent = {
     if (typeof this._updateSlot === "undefined") {
       this._updateSlot = UpdateSlot.create(this, () => {
         this._updateSlot = undefined;
-      }, (updateSlotStatus) => {
-        if (updateSlotStatus === UpdateSlotStatus.beginViewModelUpdate) {
-//          this.viewModel[Symbols.beUncacheable]();
-        } else if (updateSlotStatus === UpdateSlotStatus.beginNotifyReceive) {
+      }, phase => {
+        if (phase === Phase.gatherUpdatedProperties) {
           this.viewModel[Symbols.clearCache]();
-//          this.viewModel[Symbols.beCacheable]();
-        } else if (updateSlotStatus === UpdateSlotStatus.beginNodeUpdate) {
-//          this.viewModel[Symbols.beCacheable]();
         }
       });
       this.thread.wakeup(this._updateSlot);
@@ -256,8 +251,6 @@ const mixInComponent = {
 
     // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
     await this.viewModel[Symbols.connectedCallback]();
-
-//    this.viewModel[Symbols.beCacheable]();
 
     // Bindingツリーの構築
     this.rootBinding = BindingManager.create(this, template, Context.create());

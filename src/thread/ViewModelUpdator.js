@@ -1,5 +1,4 @@
 import "../types.js";
-import { UpdateSlotStatus } from "./UpdateSLotStatus.js";
 
 export class ProcessData {
   /** @type {()=>void} */
@@ -28,30 +27,15 @@ export class ViewModelUpdator {
   /** @type {ProcessData[]} */
   queue = [];
 
-  /** @type {UpdateSlotStatusCallback} */
-  #statusCallback;
-
-  /**
-   * @param {UpdateSlotStatusCallback} statusCallback
-   */
-  constructor(statusCallback) {
-    this.#statusCallback = statusCallback;
-  }
-
   /**
    * 
    */
   async exec() {
-    this.#statusCallback && this.#statusCallback(UpdateSlotStatus.beginViewModelUpdate);
-    try {
-      while(this.queue.length > 0) {
-        const processes = this.queue.splice(0);
-        for(const process of processes) {
-          await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
-        }
+    while(this.queue.length > 0) {
+      const processes = this.queue.splice(0);
+      for(const process of processes) {
+        await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
       }
-    } finally {
-      this.#statusCallback && this.#statusCallback(UpdateSlotStatus.endViewMmodelUpdate);
     }
   }
 
