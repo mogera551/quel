@@ -90,12 +90,10 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
     } else if (Api.has(prop)) {
       return Api.get(target, receiver, this, prop);
     } else {
-      do {
-        const contextParam = this.findParam(prop);
-        if (typeof contextParam === "undefined") break;
-        return this.directlyGet(target, { prop, indexes:contextParam.indexes}, receiver);
-      } while(false);
-      return super.get(target, prop, receiver);
+      const contextParam = this.findParam(prop);
+      return (typeof contextParam !== "undefined") ?
+        this.directlyGet(target, { prop, indexes:contextParam.indexes}, receiver) :
+        super.get(target, prop, receiver);
     }
   }
 
@@ -108,12 +106,10 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    do {
-      const contextParam = this.findParam(prop);
-      if (typeof contextParam === "undefined") break;
-      return this.directlySet(target, { prop, indexes:contextParam.indexes, value}, receiver);
-    } while(false);
-    return super.set(target, prop, value, receiver);
+    const contextParam = this.findParam(prop);
+    return (typeof contextParam !== "undefined") ?
+      this.directlySet(target, { prop, indexes:contextParam.indexes, value}, receiver) :
+      super.set(target, prop, value, receiver);
   }
 
 }

@@ -23,23 +23,22 @@ export class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
     if (!propName.isPrimitive) {
       !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
     }
-    let value;
     if (SpecialProp.has(propName.name)) {
       return SpecialProp.get(this.component, target, propName.name);
     } else {
       if (this.setOfAccessorProperties.has(propName.name)) {
         // アクセサプロパティの場合、キャッシュから取得する
         const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
-        value = this.#cache.get(propName, indexes);
+        let value = this.#cache.get(propName, indexes);
         if (typeof value === "undefined") {
           value = super.getByPropertyName(target, { propName }, receiver);
           this.#cache.set(propName, indexes, value);
         }
+        return value;
       } else {
-        value = super.getByPropertyName(target, { propName }, receiver);
+        return super.getByPropertyName(target, { propName }, receiver);
       }
     }
-    return value;
   }
 
   /**

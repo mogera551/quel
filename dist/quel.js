@@ -1718,7 +1718,7 @@ class UpdateSlot {
   set phase(value) {
     const oldValue = this.#phase;
     this.#phase = value;
-    if (typeof this.#changePhaseCallback === "undefined") {
+    if (typeof this.#changePhaseCallback !== "undefined") {
       this.#changePhaseCallback(value, oldValue);
     }
   }
@@ -3901,23 +3901,22 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
     if (!propName.isPrimitive) {
       !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
     }
-    let value;
     if (SpecialProp.has(propName.name)) {
       return SpecialProp.get(this.component, target, propName.name);
     } else {
       if (this.setOfAccessorProperties.has(propName.name)) {
         // アクセサプロパティの場合、キャッシュから取得する
         const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
-        value = this.#cache.get(propName, indexes);
+        let value = this.#cache.get(propName, indexes);
         if (typeof value === "undefined") {
           value = super.getByPropertyName(target, { propName }, receiver);
           this.#cache.set(propName, indexes, value);
         }
+        return value;
       } else {
-        value = super.getByPropertyName(target, { propName }, receiver);
+        return super.getByPropertyName(target, { propName }, receiver);
       }
     }
-    return value;
   }
 
   /**
@@ -4157,12 +4156,10 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
     } else if (Api.has(prop)) {
       return Api.get(target, receiver, this, prop);
     } else {
-      do {
-        const contextParam = this.findParam(prop);
-        if (typeof contextParam === "undefined") break;
-        return this.directlyGet(target, { prop, indexes:contextParam.indexes}, receiver);
-      } while(false);
-      return super.get(target, prop, receiver);
+      const contextParam = this.findParam(prop);
+      return (typeof contextParam !== "undefined") ?
+        this.directlyGet(target, { prop, indexes:contextParam.indexes}, receiver) :
+        super.get(target, prop, receiver);
     }
   }
 
@@ -4175,12 +4172,10 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    do {
-      const contextParam = this.findParam(prop);
-      if (typeof contextParam === "undefined") break;
-      return this.directlySet(target, { prop, indexes:contextParam.indexes, value}, receiver);
-    } while(false);
-    return super.set(target, prop, value, receiver);
+    const contextParam = this.findParam(prop);
+    return (typeof contextParam !== "undefined") ?
+      this.directlySet(target, { prop, indexes:contextParam.indexes, value}, receiver) :
+      super.set(target, prop, value, receiver);
   }
 
 }

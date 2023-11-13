@@ -61,7 +61,7 @@ export class UpdateSlot {
   set phase(value) {
     const oldValue = this.#phase;
     this.#phase = value;
-    if (typeof this.#changePhaseCallback === "undefined") {
+    if (typeof this.#changePhaseCallback !== "undefined") {
       this.#changePhaseCallback(value, oldValue);
     }
   }
