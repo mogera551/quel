@@ -39,6 +39,10 @@
  */
 
 /**
+ * @typedef {import("./binding/BindingSummary.js").BindingSummary} BindingSummary
+ */
+
+/**
  * @typedef {import("./thread/Thread.js").Thread} Thread
  */
 
@@ -97,6 +101,7 @@
  * @typedef {Object} ComponentBase
  * @property {ViewModel} viewModel
  * @property {BindingManager} rootBinding
+ * @property {BindingSummary} bindingSummary
  * @property {Thread} thread
  * @property {UpdateSlot} updateSlot
  * @property {Object<string,any>} props

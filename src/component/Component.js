@@ -13,6 +13,7 @@ import { BindingManager } from "../binding/Binding.js";
 import { Context } from "../context/Context.js";
 import { createViewModels } from "../viewModel/Proxy.js";
 import { Phase } from "../thread/Phase.js";
+import { BindingSummary } from "../binding/BindingSummary.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -184,6 +185,13 @@ const mixInComponent = {
     return this._filters;
   },
 
+  /**
+   * @type {BindingSummary}
+   */
+  get bindingSummary() {
+    return this._bindingSummary;
+  },
+
   /** 
    * 初期化
    * @returns {void}
@@ -215,6 +223,8 @@ const mixInComponent = {
       in: class extends inputFilters {},
       out: class extends outputFilters {},
     };
+
+    this._bindingSummary = new BindingSummary;
 
     this.initialPromise = new Promise((resolve, reject) => {
       this.initialResolve = resolve;

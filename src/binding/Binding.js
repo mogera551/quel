@@ -84,7 +84,7 @@ export class Binding {
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
-  constructor(bindingManager,
+  build(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
     viewModelPropertyName, classOfViewModelProperty,
     filters
@@ -174,6 +174,31 @@ export class Binding {
   changeContext() {
     this.#contextParam = undefined;
   }
+
+  /**
+   * 
+   * @param {BindingManager} bindingManager 
+   * @param {Node} node
+   * @param {string} nodePropertyName
+   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
+   * @param {string} viewModelPropertyName
+   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
+   * @param {Filter[]} filters
+   */
+  static create(bindingManager,
+    node, nodePropertyName, classOfNodeProperty, 
+    viewModelPropertyName, classOfViewModelProperty,
+    filters
+  ) {
+    const binding = new Binding;
+    binding.build(
+      bindingManager,
+      node, nodePropertyName, classOfNodeProperty, 
+      viewModelPropertyName, classOfViewModelProperty,
+      filters
+    );
+    return binding;
+  }
 }
 
 export class BindingManager {
@@ -234,6 +259,7 @@ export class BindingManager {
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
     const nodes = Selector.getTargetNodes(template, content);
     this.#bindings = Binder.bind(this, nodes);
+    this.#bindings.forEach(binding => component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
   }
@@ -258,6 +284,7 @@ export class BindingManager {
   removeFromParent() {
     this.nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
+      this.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
       removeBindManagers.forEach(bindingManager => bindingManager.removeFromParent());
     });
@@ -272,37 +299,28 @@ export class BindingManager {
    */
   updateNode(setOfUpdatedViewModelPropertyKeys) {
     // templateを先に展開する
-    /**
-     * 
-     * @param {Binding[]} bindings 
-     */
-    const expandableUpdateNode_ = (bindings) => {
-      for(const binding of bindings) {
-        if (binding.expandable && setOfUpdatedViewModelPropertyKeys.has(binding.viewModelProperty.key)) {
-          binding.updateNode(setOfUpdatedViewModelPropertyKeys);
-        }
-        for(const bindingManager of binding.children) {
-          expandableUpdateNode_(bindingManager.bindings);
-        }
+    const { bindingSummary } = this.component;
+    const expandableBindings = Array.from(bindingSummary.expandableBindings);
+    expandableBindings.sort((bindingA, bindingB) => {
+      const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
+      if (result !== 0) return result;
+      const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
+      return result2;
+    });
+    for(let binding of expandableBindings) {
+      if (setOfUpdatedViewModelPropertyKeys.has(binding.viewModelProperty.key)) {
+        binding.applyToNode();
       }
-    };
-    expandableUpdateNode_(this.bindings);
-
-    /**
-     * 
-     * @param {Binding[]} bindings 
-     */
-    const updateNode_ = (bindings) => {
-      for(const binding of bindings) {
-        if (!binding.expandable) {
-          binding.updateNode(setOfUpdatedViewModelPropertyKeys);
-        }
-        for(const bindingManager of binding.children) {
-          updateNode_(bindingManager.bindings);
-        }
+    }
+    for(let key of setOfUpdatedViewModelPropertyKeys) {
+      const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
+      for(let binding of bindings) {
+        binding.applyToNode();
       }
-    };
-    updateNode_(this.bindings);
+    }
+    for(let binding of bindingSummary.componentBindings) {
+      binding.nodeProperty.beforeUpdate(setOfUpdatedViewModelPropertyKeys);
+    }
   }
 
   /** @type {Map<HTMLTemplateElement,BindingManager[]>} */
