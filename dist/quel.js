@@ -3904,8 +3904,8 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
     if (SpecialProp.has(propName.name)) {
       return SpecialProp.get(this.component, target, propName.name);
     } else {
-      if (this.setOfAccessorProperties.has(propName.name)) {
-        // アクセサプロパティの場合、キャッシュから取得する
+      if (!propName.isPrimitive) {
+          // プリミティブじゃない場合、キャッシュから取得する
         const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
         let value = this.#cache.get(propName, indexes);
         if (typeof value === "undefined") {
