@@ -307,18 +307,18 @@ export class BindingManager {
       const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
       return result2;
     });
-    for(let binding of expandableBindings) {
+    for(const binding of expandableBindings) {
       if (setOfUpdatedViewModelPropertyKeys.has(binding.viewModelProperty.key)) {
         binding.applyToNode();
       }
     }
-    for(let key of setOfUpdatedViewModelPropertyKeys) {
+    for(const key of setOfUpdatedViewModelPropertyKeys) {
       const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
-      for(let binding of bindings) {
+      for(const binding of bindings) {
         binding.applyToNode();
       }
     }
-    for(let binding of bindingSummary.componentBindings) {
+    for(const binding of bindingSummary.componentBindings) {
       binding.nodeProperty.beforeUpdate(setOfUpdatedViewModelPropertyKeys);
     }
   }
