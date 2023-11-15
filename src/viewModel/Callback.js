@@ -1,5 +1,5 @@
-import { Symbols } from "../Symbols";
-import { ViewModelHandlerBase } from "./ViewModelHandlerBase";
+import { Symbols } from "../Symbols.js";
+import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
 
 const WRITE_CALLBACK = "$writeCallback";
 const CONNECTED_CALLBACK = "$connectedCallback";

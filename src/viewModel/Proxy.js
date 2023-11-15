@@ -1,7 +1,7 @@
 import "../types.js";
 import { DependentProps } from "./DependentProps.js";
 import { ReadOnlyViewModelHandler } from "./ReadOnlyViewModelHandler.js";
-import { ViewModelize } from "./ViewModelize";
+import { ViewModelize } from "./ViewModelize.js";
 import { WritableViewModelHandler } from "./WritableViewModelHandler.js";
 
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
