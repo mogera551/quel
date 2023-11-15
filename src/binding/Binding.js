@@ -157,17 +157,6 @@ export class Binding {
   }
 
   /**
-   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
-   */
-  updateNode(setOfUpdatedViewModelPropertyKeys) {
-    this.nodeProperty.beforeUpdate(setOfUpdatedViewModelPropertyKeys);
-    if (this.viewModelProperty.isUpdate(setOfUpdatedViewModelPropertyKeys)) {
-      this.applyToNode();
-    }
-  }
-
-  /**
    * コンテキスト変更処理
    * #contextParamをクリアする
    */
@@ -294,7 +283,7 @@ export class BindingManager {
   }
 
   /**
-   * updateされたviewModelのプロパティにバインドされているnodeについてプロパティを更新する
+   * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
    * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
    */
   updateNode(setOfUpdatedViewModelPropertyKeys) {
@@ -317,7 +306,9 @@ export class BindingManager {
     for(const key of setOfUpdatedViewModelPropertyKeys) {
       const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
       for(const binding of bindings) {
-        binding.applyToNode();
+        if (!binding.expandable) {
+          binding.applyToNode();
+        }
       }
     }
     for(const binding of bindingSummary.componentBindings) {
