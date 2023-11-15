@@ -264,6 +264,8 @@ const mixInComponent = {
 
     // Bindingツリーの構築
     this.rootBinding = BindingManager.create(this, template, Context.create());
+    this.bindingSummary.flush();
+
     if (this.usePseudo) {
       this.viewRootElement.insertBefore(this.rootBinding.fragment, this.pseudoNode.nextSibling)
       this.rootBinding.nodes.forEach(node => pseudoComponentByNode.set(node, this));

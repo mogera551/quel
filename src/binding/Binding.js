@@ -312,6 +312,8 @@ export class BindingManager {
         binding.applyToNode();
       }
     }
+    bindingSummary.flush();
+
     for(const key of setOfUpdatedViewModelPropertyKeys) {
       const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
       for(const binding of bindings) {
