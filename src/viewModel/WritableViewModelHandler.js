@@ -7,6 +7,10 @@ import { DirectlyCallContext } from "./DirectlyCallContext.js";
 import { SpecialProp } from "./SpecialProp.js";
 import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
 
+/**
+ * 書き込み可能なViewModelのProxyハンドラ
+ * 書き込み時、＄writeCallbacを実行し、更新通知を投げる
+ */
 export class WritableViewModelHandler extends ViewModelHandlerBase {
   /** @type {DirectlyCallContext} */
   #directlyCallContext = new DirectlyCallContext;

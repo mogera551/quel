@@ -24,7 +24,7 @@ export class Cache {
    */
   set(propName, indexes, value) {
     let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    if (!valueByIndexesString) {
+    if (typeof valueByIndexesString === "undefined") {
       valueByIndexesString = new Map;
       this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
     }

@@ -2,8 +2,10 @@ import "../types.js";
 import { Symbols } from "../Symbols.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
+/** @typedef {import("./ViewModelHandlerBase.js").ViewModelHandlerBase} ViewModelHandlerBase */
+
 /**
- * 外部から呼び出されるAPI
+ * 外部から呼び出されるViewModelのAPI
  * @type {Set<symbol>}
  */
 const setOfApiFunctions = new Set([
@@ -13,6 +15,9 @@ const setOfApiFunctions = new Set([
   Symbols.clearCache,
 ]);
 
+/**
+ * @type {Object<symbol,({viewModel:ViewModel,viewModelProxy:Proxy,handler:ViewModelHandlerBase})=>()>}
+ */
 const callFuncBySymbol = {
   [Symbols.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, context, event) => 
     handler.directlyCallback(context, async () => 

@@ -1,6 +1,9 @@
 import "../types.js";
 import { utils } from "../utils.js";
 
+/**
+ * DirectlyCall時、context情報の復帰を行う
+ */
 export class DirectlyCallContext {
   /** @type {ContextInfo} */
   #context;

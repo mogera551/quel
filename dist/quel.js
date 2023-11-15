@@ -3692,6 +3692,7 @@ const callbackNameBySymbol = {
   [Symbols$1.disconnectedCallback]: DISCONNECTED_CALLBACK,
   [Symbols$1.writeCallback]: WRITE_CALLBACK,
 };
+
 /**
  * @type {Set<symbol>}
  */
@@ -3729,8 +3730,10 @@ class Callback {
   }
 }
 
+/** @typedef {import("./ViewModelHandlerBase.js").ViewModelHandlerBase} ViewModelHandlerBase */
+
 /**
- * 外部から呼び出されるAPI
+ * 外部から呼び出されるViewModelのAPI
  * @type {Set<symbol>}
  */
 const setOfApiFunctions = new Set([
@@ -3740,6 +3743,9 @@ const setOfApiFunctions = new Set([
   Symbols$1.clearCache,
 ]);
 
+/**
+ * @type {Object<symbol,({viewModel:ViewModel,viewModelProxy:Proxy,handler:ViewModelHandlerBase})=>()>}
+ */
 const callFuncBySymbol = {
   [Symbols$1.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, context, event) => 
     handler.directlyCallback(context, async () => 
@@ -3887,7 +3893,7 @@ class Cache {
    */
   set(propName, indexes, value) {
     let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    if (!valueByIndexesString) {
+    if (typeof valueByIndexesString === "undefined") {
       valueByIndexesString = new Map;
       this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
     }
@@ -3904,6 +3910,10 @@ class Cache {
 
 }
 
+/**
+ * キャッシュが利用可能なViewModelのProxyハンドラ
+ * 書き込みはエラー
+ */
 class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
   /** @type {Cache} */
   #cache = new Cache;
@@ -4074,6 +4084,9 @@ class ViewModelize {
   
 }
 
+/**
+ * DirectlyCall時、context情報の復帰を行う
+ */
 class DirectlyCallContext {
   /** @type {ContextInfo} */
   #context;
@@ -4093,6 +4106,10 @@ class DirectlyCallContext {
 
 }
 
+/**
+ * 書き込み可能なViewModelのProxyハンドラ
+ * 書き込み時、＄writeCallbacを実行し、更新通知を投げる
+ */
 class WritableViewModelHandler extends ViewModelHandlerBase {
   /** @type {DirectlyCallContext} */
   #directlyCallContext = new DirectlyCallContext;

@@ -6,6 +6,10 @@ import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
 import { SpecialProp } from "./SpecialProp.js";
 import { Cache } from "./Cache.js";
 
+/**
+ * キャッシュが利用可能なViewModelのProxyハンドラ
+ * 書き込みはエラー
+ */
 export class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
   /** @type {Cache} */
   #cache = new Cache;

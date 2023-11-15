@@ -13,6 +13,7 @@ const callbackNameBySymbol = {
   [Symbols.disconnectedCallback]: DISCONNECTED_CALLBACK,
   [Symbols.writeCallback]: WRITE_CALLBACK,
 };
+
 /**
  * @type {Set<symbol>}
  */
