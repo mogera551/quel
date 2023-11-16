@@ -27,12 +27,14 @@ export class ElementEvent extends ElementBase {
     super(binding, node, name, filters, filterFuncs);
   }
 
+  #handler = event => this.eventHandler(event)
   /**
    * 初期化処理
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.element.addEventListener(this.eventType, event => this.eventHandler(event));
+    this.element.removeEventListener(this.eventType, this.#handler)
+    this.element.addEventListener(this.eventType, this.#handler);
   }
 
   /**

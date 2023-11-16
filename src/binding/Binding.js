@@ -224,10 +224,6 @@ export class BindingManager {
   get context() {
     return this.#context;
   }
-  set context(value) {
-    this.#context = value;
-    this.bindings.forEach(binding => binding.changeContext());
-  }
 
   /** @type {HTMLTemplateElement} */
   #template;
@@ -251,6 +247,17 @@ export class BindingManager {
     this.#bindings.forEach(binding => component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @param {ConetextInfo} context 
+   */
+  setContext(component, context) {
+    this.#component = component;
+    this.#context = context;
+    this.bindings.forEach(binding => binding.changeContext());
   }
 
   /**
@@ -329,7 +336,7 @@ export class BindingManager {
     const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
     if (bindingManagers.length > 0) {
       const bindingManager = bindingManagers.pop();
-      bindingManager.context = context;
+      bindingManager.setContext(component, context);
       /**
        * 
        * @param {Binding[]} bindings 
@@ -337,7 +344,7 @@ export class BindingManager {
        */
       const setContext = (bindings, context) => {
         for(const binding of bindings) {
-          binding.applyToNode();
+          binding.initialize();
           for(const bindingManager of binding.children) {
             setContext(bindingManager.bindings, context);
           }
