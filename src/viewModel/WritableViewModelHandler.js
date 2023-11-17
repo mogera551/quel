@@ -25,9 +25,6 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   getByPropertyName(target, { propName }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
-    }
     return (SpecialProp.has(propName.name)) ?
       SpecialProp.get(this.component, target, propName.name):
       super.getByPropertyName(target, { propName }, receiver)
@@ -41,9 +38,6 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   setByPropertyName(target, { propName, value }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
-    }
     const result = super.setByPropertyName(target, { propName, value }, receiver);
     const indexes = this.lastIndexes;
     receiver[Symbols.writeCallback](propName.name, indexes);

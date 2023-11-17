@@ -2663,14 +2663,13 @@ class ElementEvent extends ElementBase {
     super(binding, node, name, filters, filterFuncs);
   }
 
-  #handler = event => this.eventHandler(event)
   /**
    * 初期化処理
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.element.removeEventListener(this.eventType, this.#handler);
-    this.element.addEventListener(this.eventType, this.#handler);
+    const handler = event => this.eventHandler(event);
+    this.element.addEventListener(this.eventType, handler);
   }
 
   /**
@@ -3366,6 +3365,7 @@ class Binding {
    */
   applyToNode() {
     const { component, nodeProperty, viewModelProperty, expandable } = this;
+    //console.log(`binding.applyToNode() ${nodeProperty.node?.tagName} ${nodeProperty.name} ${viewModelProperty.name} ${viewModelProperty.indexesString}`);
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.isSameValue(filteredViewModelValue)) return;
@@ -3610,13 +3610,14 @@ class BindingManager {
        */
       const setContext = (bindings, context) => {
         for(const binding of bindings) {
-          binding.initialize();
+          binding.applyToNode();
           for(const bindingManager of binding.children) {
             setContext(bindingManager.bindings);
           }
         }
       };
       setContext(bindingManager.bindings);
+      bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
   
       return bindingManager;
     } else {
@@ -3630,39 +3631,11 @@ class BindingManager {
  * $dependentPropsを表現
  */
 class DependentProps {
-  /** @type {Set<string>} */
-  #setOfDefaultProps = new Set;
-
   /** @type {Map<string,Set<string>>} */
   #setOfPropsByRefProp = new Map;
   /** @type {Map<string,Set<string>>} */
   get setOfPropsByRefProp() {
     return this.#setOfPropsByRefProp;
-  }
-
-  /**
-   * @param {string} prop
-   * @returns {boolean} 
-   */
-  hasDefaultProp(prop) {
-    return this.#setOfDefaultProps.has(prop);
-  }
-
-  /**
-   * 
-   * @param {string} prop 
-   * @returns {void}
-   */
-  addDefaultProp(prop) {
-    let currentName = PropertyName.create(prop);
-    while(currentName.parentPath !== "") {
-      const parentName = PropertyName.create(currentName.parentPath);
-      if (!this.#setOfDefaultProps.has(currentName.name)) {
-        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]));
-        this.#setOfDefaultProps.add(currentName.name);
-      }
-      currentName = parentName;
-    }
   }
 
   /**
@@ -3928,9 +3901,6 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   getByPropertyName(target, { propName }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
-    }
     if (SpecialProp.has(propName.name)) {
       return SpecialProp.get(this.component, target, propName.name);
     } else {
@@ -4124,9 +4094,6 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   getByPropertyName(target, { propName }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
-    }
     return (SpecialProp.has(propName.name)) ?
       SpecialProp.get(this.component, target, propName.name):
       super.getByPropertyName(target, { propName }, receiver)
@@ -4140,9 +4107,6 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   setByPropertyName(target, { propName, value }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
-    }
     const result = super.setByPropertyName(target, { propName, value }, receiver);
     const indexes = this.lastIndexes;
     receiver[Symbols$1.writeCallback](propName.name, indexes);

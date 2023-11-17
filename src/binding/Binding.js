@@ -100,6 +100,7 @@ export class Binding {
    */
   applyToNode() {
     const { component, nodeProperty, viewModelProperty, expandable } = this;
+    //console.log(`binding.applyToNode() ${nodeProperty.node?.tagName} ${nodeProperty.name} ${viewModelProperty.name} ${viewModelProperty.indexesString}`);
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.isSameValue(filteredViewModelValue)) return;
@@ -344,13 +345,14 @@ export class BindingManager {
        */
       const setContext = (bindings, context) => {
         for(const binding of bindings) {
-          binding.initialize();
+          binding.applyToNode();
           for(const bindingManager of binding.children) {
             setContext(bindingManager.bindings, context);
           }
         }
       };
       setContext(bindingManager.bindings, context);
+      bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
   
       return bindingManager;
     } else {

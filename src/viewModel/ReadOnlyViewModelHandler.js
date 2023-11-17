@@ -24,9 +24,6 @@ export class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   getByPropertyName(target, { propName }, receiver) {
-    if (!propName.isPrimitive) {
-      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
-    }
     if (SpecialProp.has(propName.name)) {
       return SpecialProp.get(this.component, target, propName.name);
     } else {
