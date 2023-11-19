@@ -13,7 +13,7 @@ class Handler {
   /** @type {Component} */
   #component;
 
-  /** @type {Map<string,{bindProp:string,bindIndexes:number[]}>} */
+  /** @type {Map<string,{name:string,indexes:number[]}>} */
   #bindPropByThisProp = new Map();
 
   /** @type {Proxy<typeof ViewModel>} */
@@ -36,8 +36,8 @@ class Handler {
     if (this.hasParent) {
       const viewModel = this.#component.parentComponent.viewModel;
       for(const [key, bindAccess] of this.#bindPropByThisProp.entries()) {
-        const { bindProp, bindIndexes } = bindAccess;
-        retObject[key] = viewModel[Symbols.directlyGet](bindProp, bindIndexes);;
+        const { name, indexes } = bindAccess;
+        retObject[key] = viewModel[Symbols.directlyGet](name, indexes);;
       }
     } else {
       for(const [key, value] of Object.entries(this.#data)) {
@@ -63,16 +63,16 @@ class Handler {
    */
   get(target, prop, receiver) {
     if (prop === Symbols.bindProperty) {
-      return (thisProp, bindProp, bindIndexes) => 
-        this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
+      return (thisProp, propAccess) => 
+        this.#bindPropByThisProp.set(thisProp, propAccess );
     } else if (prop === Symbols.toObject) {
       return () => this.object;
     }
     const { data } = this;
     if (this.hasParent) {
-      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-      if (bindProp) {
-        return data[Symbols.directlyGet](bindProp, bindIndexes);
+      const { name, indexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (name) {
+        return data[Symbols.directlyGet](name, indexes);
       } else {
         console.error(`undefined property ${prop}`);
         return undefined;
@@ -93,9 +93,9 @@ class Handler {
   set(target, prop, value, receiver) {
     const { data } = this;
     if (this.hasParent) {
-      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-      if (bindProp) {
-        return data[Symbols.directlySet](bindProp, bindIndexes, value);
+      const { name, indexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (name) {
+        return data[Symbols.directlySet](name, indexes, value);
       } else {
         console.error(`undefined property ${prop}`);
         return false;

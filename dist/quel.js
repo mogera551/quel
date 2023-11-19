@@ -476,7 +476,7 @@ let Handler$1 = class Handler {
   /** @type {Component} */
   #component;
 
-  /** @type {Map<string,{bindProp:string,bindIndexes:number[]}>} */
+  /** @type {Map<string,{name:string,indexes:number[]}>} */
   #bindPropByThisProp = new Map();
 
   /** @type {Proxy<typeof ViewModel>} */
@@ -499,8 +499,8 @@ let Handler$1 = class Handler {
     if (this.hasParent) {
       const viewModel = this.#component.parentComponent.viewModel;
       for(const [key, bindAccess] of this.#bindPropByThisProp.entries()) {
-        const { bindProp, bindIndexes } = bindAccess;
-        retObject[key] = viewModel[Symbols$1.directlyGet](bindProp, bindIndexes);      }
+        const { name, indexes } = bindAccess;
+        retObject[key] = viewModel[Symbols$1.directlyGet](name, indexes);      }
     } else {
       for(const [key, value] of Object.entries(this.#data)) {
         retObject[key] = value;
@@ -525,16 +525,16 @@ let Handler$1 = class Handler {
    */
   get(target, prop, receiver) {
     if (prop === Symbols$1.bindProperty) {
-      return (thisProp, bindProp, bindIndexes) => 
-        this.#bindPropByThisProp.set(thisProp, { bindProp,  bindIndexes } );
+      return (thisProp, propAccess) => 
+        this.#bindPropByThisProp.set(thisProp, propAccess );
     } else if (prop === Symbols$1.toObject) {
       return () => this.object;
     }
     const { data } = this;
     if (this.hasParent) {
-      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-      if (bindProp) {
-        return data[Symbols$1.directlyGet](bindProp, bindIndexes);
+      const { name, indexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (name) {
+        return data[Symbols$1.directlyGet](name, indexes);
       } else {
         console.error(`undefined property ${prop}`);
         return undefined;
@@ -555,9 +555,9 @@ let Handler$1 = class Handler {
   set(target, prop, value, receiver) {
     const { data } = this;
     if (this.hasParent) {
-      const { bindProp, bindIndexes } = this.#bindPropByThisProp.get(prop) ?? {};
-      if (bindProp) {
-        return data[Symbols$1.directlySet](bindProp, bindIndexes, value);
+      const { name, indexes } = this.#bindPropByThisProp.get(prop) ?? {};
+      if (name) {
+        return data[Symbols$1.directlySet](name, indexes, value);
       } else {
         console.error(`undefined property ${prop}`);
         return false;
@@ -1545,6 +1545,7 @@ class ViewModelHandlerBase extends Handler$2 {
     for(const prop of setOfProps) {
       const curPropName = PropertyName.create(prop);
       if (indexes.length < curPropName.level) {
+        if (curPropName.setOfParentPaths.has(propName.name)) continue;
         const listOfIndexes = ViewModelHandlerBase.expandIndexes(viewModel, { propName:curPropName, indexes });
         propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));
       } else {
@@ -2770,6 +2771,25 @@ class ElementProperty extends ElementBase {
   }
 }
 
+class PropertyAccess {
+  get name() {
+    return this.#viewModelProperty.name;
+  }
+
+  get indexes() {
+    return this.#viewModelProperty.indexes;
+  }
+  /** @type {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} */
+  #viewModelProperty;
+  /**
+   * 
+   * @param {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelProperty
+   */
+  constructor(viewModelProperty) {
+    this.#viewModelProperty = viewModelProperty;
+  }
+}
+
 class ComponentProperty extends ElementBase {
   /** @type {string} */
   get propName() {
@@ -2804,7 +2824,7 @@ class ComponentProperty extends ElementBase {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.thisComponent.props[Symbols$1.bindProperty](this.propName, this.binding.viewModelProperty.name, this.binding.viewModelProperty.indexes);
+    this.thisComponent.props[Symbols$1.bindProperty](this.propName, new PropertyAccess(this.binding.viewModelProperty));
     Object.defineProperty(this.thisComponent.viewModel, this.propName, {
       get: ((propName) => function () { return this.$props[propName]; })(this.propName),
       set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),
@@ -3631,11 +3651,39 @@ class BindingManager {
  * $dependentPropsを表現
  */
 class DependentProps {
+  /** @type {Set<string>} */
+  #setOfDefaultProps = new Set;
+
   /** @type {Map<string,Set<string>>} */
   #setOfPropsByRefProp = new Map;
   /** @type {Map<string,Set<string>>} */
   get setOfPropsByRefProp() {
     return this.#setOfPropsByRefProp;
+  }
+
+  /**
+   * @param {string} prop
+   * @returns {boolean} 
+   */
+  hasDefaultProp(prop) {
+    return this.#setOfDefaultProps.has(prop);
+  }
+
+  /**
+   * 
+   * @param {string} prop 
+   * @returns {void}
+   */
+  addDefaultProp(prop) {
+    let currentName = PropertyName.create(prop);
+    while(currentName.parentPath !== "") {
+      const parentName = PropertyName.create(currentName.parentPath);
+      if (!this.#setOfDefaultProps.has(currentName.name)) {
+        this.#setOfPropsByRefProp.get(parentName.name)?.add(currentName.name) ?? this.#setOfPropsByRefProp.set(parentName.name, new Set([currentName.name]));
+        this.#setOfDefaultProps.add(currentName.name);
+      }
+      currentName = parentName;
+    }
   }
 
   /**
@@ -3767,7 +3815,7 @@ class Dialog {
       dialog.setAttribute(key, value);
     });
     Object.entries(data).forEach(([key, value]) => {
-      dialog.props[Symbols.bindProperty](key, key, []);
+      dialog.props[Symbols.bindProperty](key, { name:key, indexes:[] });
       dialog.props[key] = value;
     });
     document.body.appendChild(dialog);
@@ -3901,6 +3949,9 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   getByPropertyName(target, { propName }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
+    }
     if (SpecialProp.has(propName.name)) {
       return SpecialProp.get(this.component, target, propName.name);
     } else {
@@ -4094,6 +4145,9 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   getByPropertyName(target, { propName }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
+    }
     return (SpecialProp.has(propName.name)) ?
       SpecialProp.get(this.component, target, propName.name):
       super.getByPropertyName(target, { propName }, receiver)
@@ -4107,6 +4161,9 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   setByPropertyName(target, { propName, value }, receiver) {
+    if (!propName.isPrimitive) {
+      !this.dependentProps.hasDefaultProp(propName.name) && this.dependentProps.addDefaultProp(propName.name);
+    }
     const result = super.setByPropertyName(target, { propName, value }, receiver);
     const indexes = this.lastIndexes;
     receiver[Symbols$1.writeCallback](propName.name, indexes);

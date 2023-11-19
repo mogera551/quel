@@ -3,6 +3,25 @@ import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
+class PropertyAccess {
+  get name() {
+    return this.#viewModelProperty.name;
+  }
+
+  get indexes() {
+    return this.#viewModelProperty.indexes;
+  }
+  /** @type {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} */
+  #viewModelProperty;
+  /**
+   * 
+   * @param {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelProperty
+   */
+  constructor(viewModelProperty) {
+    this.#viewModelProperty = viewModelProperty;
+  }
+}
+
 export class ComponentProperty extends ElementBase {
   /** @type {string} */
   get propName() {
@@ -37,7 +56,7 @@ export class ComponentProperty extends ElementBase {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.thisComponent.props[Symbols.bindProperty](this.propName, this.binding.viewModelProperty.name, this.binding.viewModelProperty.indexes);
+    this.thisComponent.props[Symbols.bindProperty](this.propName, new PropertyAccess(this.binding.viewModelProperty));
     Object.defineProperty(this.thisComponent.viewModel, this.propName, {
       get: ((propName) => function () { return this.$props[propName]; })(this.propName),
       set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),

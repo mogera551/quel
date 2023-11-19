@@ -15,7 +15,7 @@ export class Dialog {
       dialog.setAttribute(key, value);
     });
     Object.entries(data).forEach(([key, value]) => {
-      dialog.props[Symbols.bindProperty](key, key, []);
+      dialog.props[Symbols.bindProperty](key, { name:key, indexes:[] });
       dialog.props[key] = value;
     });
     document.body.appendChild(dialog);
