@@ -14,9 +14,6 @@ import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
 export class WritableViewModelHandler extends ViewModelHandlerBase {
   /** @type {DirectlyCallContext} */
   #directlyCallContext = new DirectlyCallContext;
-  get directlyCallContext() {
-    return this.#directlyCallContext;
-  }
 
   /**
    * プロパティ情報からViewModelの値を取得する
@@ -52,14 +49,20 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
     return result;
   }
 
+  /**
+   * 
+   * @param {ContextInfo} context 
+   * @param {()=>Promise} directlyCallback 
+   * @returns {Promise}
+   */
   async directlyCallback(context, directlyCallback) {
-    return this.directlyCallContext.callback(context, async () => {
+    return this.#directlyCallContext.callback(context, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
       // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
       this.stackIndexes.push(undefined);
       try {
-        return directlyCallback();
+        return await directlyCallback();
       } finally {
         this.stackIndexes.pop();
       }
@@ -72,11 +75,11 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {ContextParam | undefined}
    */
   findParam(prop) {
-    if (typeof this.directlyCallContext.context === "undefined") return;
+    if (typeof this.#directlyCallContext.context === "undefined") return;
     if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
     const propName = PropertyName.create(prop);
     if (propName.level === 0 || prop.at(0) === "@") return;
-    const param = this.directlyCallContext.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
+    const param = this.#directlyCallContext.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
     if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
     return param;
   }

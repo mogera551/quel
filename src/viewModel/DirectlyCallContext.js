@@ -11,11 +11,17 @@ export class DirectlyCallContext {
     return this.#context;
   }
 
+  /**
+   * 
+   * @param {ContextInfo} context 
+   * @param {()=>Promise} directlyCallback 
+   * @returns {Promise}
+   */
   async callback(context, directlyCallback) {
     if (typeof this.#context !== "undefined") utils.raise("already set context");
     this.#context = context;
     try {
-      return directlyCallback();
+      return await directlyCallback();
     } finally {
       this.#context = undefined;
     }
