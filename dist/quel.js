@@ -3316,12 +3316,12 @@ class Binding {
 
   /** @type {Component} */
   get component() {
-    return this.bindingManager.component;
+    return this.#bindingManager.component;
   }
 
   /** @type {ContextInfo} */
   get context() {
-    return this.bindingManager.context;
+    return this.#bindingManager.context;
   }
 
   /** @type {ContextParam | undefined | null} コンテキスト変数情報 */
@@ -3397,7 +3397,7 @@ class Binding {
    * ViewModelへ値を反映する
    */
   applyToViewModel() {
-    const { nodeProperty, viewModelProperty } = this;
+    const { viewModelProperty } = this;
     if (!viewModelProperty.applicable) return;
     viewModelProperty.assignFromNodeValue();
   }
@@ -3492,7 +3492,7 @@ class BindingManager {
   }
 
   get lastNode() {
-    return this.nodes[this.nodes.length - 1];
+    return this.#nodes[this.#nodes.length - 1];
   }
 
   /** @type {DocumentFragment} */
@@ -3509,9 +3509,6 @@ class BindingManager {
 
   /** @type {HTMLTemplateElement} */
   #template;
-  get template() {
-    return this.#template;
-  }
 
   /**
    * 
@@ -3560,14 +3557,14 @@ class BindingManager {
    * 
    */
   removeFromParent() {
-    this.nodes.forEach(node => this.fragment.appendChild(node));
+    this.#nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
       this.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
       removeBindManagers.forEach(bindingManager => bindingManager.removeFromParent());
     });
-    const recycleBindingManagers = BindingManager.bindingsByTemplate.get(this.template) ?? 
-      BindingManager.bindingsByTemplate.set(this.template, []).get(this.template);
+    const recycleBindingManagers = BindingManager.bindingsByTemplate.get(this.#template) ?? 
+      BindingManager.bindingsByTemplate.set(this.#template, []).get(this.#template);
     recycleBindingManagers.push(this);
   }
 
