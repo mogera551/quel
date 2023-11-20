@@ -34,12 +34,6 @@ export class ContextParam {
     this.#pos = pos;
   }
 }
-/**
- * @typedef {Object} ContextParam
- * @property {PropertyName} propName
- * @property {number[]} indexes
- * @property {number} pos
- */
 
 /**
  * @type {ContextInfo}
@@ -51,7 +45,7 @@ export class ContextInfo {
     return this.#indexes;
   }
 
-  /** @type {number[]} */
+  /** @type {ContextParam[]} */
   #stack = [];
   get stack() {
     return this.#stack;

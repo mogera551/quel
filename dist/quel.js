@@ -2273,12 +2273,6 @@ class ContextParam {
     this.#pos = pos;
   }
 }
-/**
- * @typedef {Object} ContextParam
- * @property {PropertyName} propName
- * @property {number[]} indexes
- * @property {number} pos
- */
 
 /**
  * @type {ContextInfo}
@@ -2290,7 +2284,7 @@ class ContextInfo {
     return this.#indexes;
   }
 
-  /** @type {number[]} */
+  /** @type {ContextParam[]} */
   #stack = [];
   get stack() {
     return this.#stack;
@@ -3955,8 +3949,8 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
     if (SpecialProp.has(propName.name)) {
       return SpecialProp.get(this.component, target, propName.name);
     } else {
-      if (!propName.isPrimitive) {
-          // プリミティブじゃない場合、キャッシュから取得する
+      if (!propName.isPrimitive || this.setOfAccessorProperties.has(propName.name)) {
+          // プリミティブじゃないもしくはアクセサプロパティ場合、キャッシュから取得する
         const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
         let value = this.#cache.get(propName, indexes);
         if (typeof value === "undefined") {
