@@ -25,6 +25,7 @@ export class BindToSVGElement {
     const element = toSVGElement(node);
     /** @type {string} */
     const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
+    element.removeAttribute(DATASET_BIND_PROPERTY);
     /** @type {string|undefined} */
     const defaultName = undefined;
 
