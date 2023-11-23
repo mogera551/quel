@@ -1,12 +1,24 @@
-export { generateComponentClass } from "./component/Component.js";
-export { Main as default } from "./main.js";
+export { generateComponentClass, registComponentModules } from "./component/Component.js";
 export { loader } from "./loader/QuelLoader.js";
+export { config } from "./Config.js";
+import { Filter } from "./filter/Filter.js";
+import { GlobalData } from "./global/Data.js";
 
-import { Main } from "./main.js";
-export function registComponentModules(components) {
-  Main.componentModules(components);
+/**
+ * 
+ * @param {Object<string,UserFilterData>} filters 
+ */
+export function registFilters(filters) {
+  Object.entries(filters).forEach(([name, filterData]) => {
+    const { input, output } = filterData;
+    Filter.regist(name, output, input);
+  });
 }
 
-export function registConfig(config) {
-  Main.config(config);
+/**
+ * 
+ * @param {Object<string,any>} data 
+ */
+export function registGlobal(data) {
+  Object.assign(GlobalData.data, data);
 }
