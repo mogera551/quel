@@ -4,3 +4,5 @@
 /package-lock.json
 /tutorial
 /work
+/__tests__
+/coverage
