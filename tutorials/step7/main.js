@@ -5,20 +5,20 @@ const html = `
 {{ end: }}
 </ul>
 <ul>
-{{ loop:members }}
-  <li>{{ members.*.name }}({{ members.*.age }})</li>
+{{ loop:fruits }}
+  <li>{{ fruits.*.name }}({{ fruits.*.color }})</li>
 {{ end: }}
 </ul>
 `;
 
 class ViewModel {
   animals = [ "cat", "dog", "fox", "pig" ];
-  members = [
-    { name:"佐藤　一郎", age:20 },
-    { name:"鈴木　二郎", age:15 },
-    { name:"高橋　三郎", age:22 },
-    { name:"田中　四郎", age:18 },
-    { name:"伊藤　五郎", age:17 },
+  fruits = [
+    { name:"apple", color:"red" },
+    { name:"banana", color:"yellow" },
+    { name:"grape", color:"grape" },
+    { name:"orange", color:"orange" },
+    { name:"strawberry", color:"red" },
   ];
 }
 
