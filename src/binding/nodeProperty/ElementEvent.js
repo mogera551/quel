@@ -40,13 +40,16 @@ export class ElementEvent extends ElementBase {
    * 
    * @param {Event} event
    */
-  createProcessData(event) {
+  async directlyCall(event) {
     const { viewModelProperty, context } = this.binding;
-    return new ProcessData(
-      viewModelProperty.viewModel[Symbols.directlyCall], 
-      viewModelProperty.viewModel, 
-      [viewModelProperty.name, context, event]
-    );
+    return viewModelProperty.viewModel[Symbols.directlyCall](viewModelProperty.name, context, event);
+  }
+  /**
+   * 
+   * @param {Event} event
+   */
+  createProcessData(event) {
+    return new ProcessData(this.directlyCall, this, [event]);
   }
 
   /**
