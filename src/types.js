@@ -65,13 +65,15 @@
 /**
  * @typedef {Object} UserComponentModule
  * @property {string|undefined} html
+ * @property {string|undefined} css
  * @property {ViewModel.constructor|undefined} ViewModel
- * @property {HTMLTemplateElement|undefined} template
  * @property {HTMLElement.constructor|undefined} extendClass
  * @property {string|undefined} extendTag
  * @property {Object<string,UserComponentModule>} componentModules
+ * @property {Object<string,UserComponentModule>} componentModulesForRegist
  * @property {boolean|undefined} useShadowRoot
  * @property {boolean|undefined} usePseudo
+ * @property {boolean|undefined} useTagNamesapce
  */
 
 /**
@@ -115,6 +117,7 @@
  * @property {Component} parentComponent
  * @property {boolean} useShadowRoot
  * @property {boolean} usePseudo
+ * @property {boolean} useTagNamespace
  * @property {ShadowRoot|HTMLElement} viewRootElement
  * @property {()=>void} initialize
  * @property {()=>void} build

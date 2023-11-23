@@ -465,6 +465,226 @@ const Symbols$1 = Object.assign({
   isComponent: Symbol.for(`${name}:component.isComponent`),
 }, Symbols$2);
 
+let utils$1 = class utils {
+  /**
+   * 
+   * @param {string} message 
+   */
+  static raise(message) {
+    throw new Error(message);
+  }
+
+  /**
+   * 関数かどうかをチェック
+   * @param {any} obj 
+   * @returns {boolean}
+   */
+  static isFunction = (obj) => {
+    const toString = Object.prototype.toString;
+    const text = toString.call(obj).slice(8, -1).toLowerCase();
+    return (text === "function" || text === "asyncfunction");
+  }
+
+  /**
+   * 
+   * @param {HTMLElement} element 
+   * @returns {boolean}
+   */
+  static isInputableElement(element) {
+    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || 
+      (element instanceof HTMLInputElement && element.type !== "button");
+  }
+
+  /**
+   * to kebab case (upper camel, lower camel, snakeを想定)
+   * @param {string} text 
+   * @returns {string}
+   */
+  static toKebabCase = text => (typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase()) : text;
+
+  /**
+   * @returns {string}
+   */
+  static createUUID() {
+    return window?.crypto?.randomUUID ? window.crypto.randomUUID()
+     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(a) {
+        let r = (new Date().getTime() + Math.random() * 16)%16 | 0, v = a == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+  }
+};
+
+class Templates {
+  /** @type {Map<string,HTMLTemplateElement>} */
+  static templateByUUID = new Map;
+
+}
+
+const DATASET_BIND_PROPERTY$3 = "data-bind";
+const DATASET_UUID_PROPERTY = "data-uuid";
+
+class Template {
+  /**
+   * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
+   * @param {string|undefined} html 
+   * @param {string|undefined} css
+   * @param {string} componentUuid
+   * @param {string[]} customComponentNames
+   * @returns {HTMLTemplateElement}
+   */
+  static create(html, css, componentUuid, customComponentNames) {
+    const template = document.createElement("template");
+    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? this.replaceTag(html, componentUuid, customComponentNames) : "");
+    return template;
+  }
+
+  /**
+   * HTMLの変換
+   * {{loop:}}{{if:}}{{else:}}を<template>へ置換
+   * {{end:}}を</template>へ置換
+   * {{...}}を<!--@@:...-->へ置換
+   * <template>を<!--@@|...-->へ置換
+   * @param {string} html 
+   * @param {string} componentUuid
+   * @param {string[]} customComponentNames
+   * @returns {string}
+   */
+  static replaceTag(html, componentUuid, customComponentNames) {
+    const stack = [];
+    const replacedHtml =  html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+      expr = expr.trim();
+      if (expr.startsWith("loop:") || expr.startsWith("if:")) {
+        stack.push(expr);
+        return `<template data-bind="${expr}">`;
+      } else if (expr.startsWith("else:")){
+        const saveExpr = stack.at(-1);
+        return `</template><template data-bind="${saveExpr}|not">`;
+      } else if (expr.startsWith("end:")){
+        stack.pop();
+        return `</template>`;
+      } else {
+        return `<!--@@:${expr}-->`;
+      }
+    });
+    const root = document.createElement("template"); // 仮のルート
+    root.innerHTML = replacedHtml;
+    // カスタムコンポーネントの名前を変更する
+    const customComponentKebabNames = customComponentNames.map(customComponentName => utils$1.toKebabCase(customComponentName));
+    const changeCustomElementName = (element) => {
+      for(const customComponentKebabName of customComponentKebabNames) {
+        const replaceElements = Array.from(element.querySelectorAll(customComponentKebabName));
+        for(const oldElement of replaceElements) {
+          const newElement = document.createElement(`${customComponentKebabName}-${componentUuid}`);
+          oldElement.parentElement.replaceChild(newElement, oldElement);
+          if (oldElement.hasAttributes) {
+            for(const attr of oldElement.attributes) {
+              newElement.setAttribute(attr.name, attr.value);
+            }
+            newElement.setAttribute("data-orig-tag-name", customComponentKebabName);
+          }
+        }
+      }
+      const templates = Array.from(element.querySelectorAll("template"));
+      for(const template of templates) {
+        changeCustomElementName(template.content);
+      }
+    };
+    if (customComponentKebabNames.length > 0) {
+      changeCustomElementName(root.content);
+    }
+
+    // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
+    /** @type {(element:HTMLElement)=>{}} */
+    const replaceTemplate = (element) => {
+      /** @type {HTMLTemplateElement} */
+      let template;
+      while(template = element.querySelector("template")) {
+        const uuid =  utils$1.createUUID();
+        const comment = document.createComment(`@@|${uuid}`);
+        template.parentNode.replaceChild(comment, template);
+        if (template.constructor !== HTMLTemplateElement) {
+          // SVGタグ内のtemplateタグを想定
+          const newTemplate = document.createElement("template");
+          for(let childNode of Array.from(template.childNodes)) {
+            newTemplate.content.appendChild(childNode);
+          }
+          newTemplate.setAttribute(DATASET_BIND_PROPERTY$3, template.getAttribute(DATASET_BIND_PROPERTY$3));
+          template = newTemplate;
+        }
+        template.setAttribute(DATASET_UUID_PROPERTY, uuid);
+        replaceTemplate(template.content);
+        Templates.templateByUUID.set(uuid, template);
+      }
+    };
+    replaceTemplate(root.content);
+
+    return root.innerHTML;
+  }
+
+}
+
+class Module {
+  /** @type {string} */
+  #uuid = utils$1.createUUID();
+  get uuid() {
+    return this.#uuid;
+  }
+
+  /** @type {string} */
+  html;
+
+  /** @type {string} */
+  css;
+
+  /** @type {HTMLTemplateElement} */
+  get template() {
+    const customComponentNames = this.useTagNamespace ? Object.keys(this.componentModules ?? {}) : [];
+    return Template.create(this.html, this.css, this.uuid, customComponentNames);
+  }
+
+  /** @type {ViewModel.constructor} */
+  ViewModel;
+
+  /** @type {HTMLElement.constructor} */
+  extendClass;
+
+  /** @type {string} */
+  extendTag;
+
+  /** @type {boolean} */
+  usePseudo = false;
+
+  /** @type {boolean} */
+  useShadowRoot = false;
+
+  /** @type {boolean} */
+  useTagNamespace = true;
+
+  /** @type {Object<string,FilterFunc>} */
+  inputFilters;
+
+  /** @type {Object<string,FilterFunc>} */
+  outputFilters;
+
+  /** @type {Object<string,Module>} */
+  componentModules;
+
+  /** @type {Object<string,Module>} */
+  get componentModulesForRegist() {
+    if (this.useTagNamespace) {
+      const componentModules = {};
+      if (typeof this.componentModules !== "undefined") {
+        for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
+          componentModules[`${utils$1.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
+        }
+        return componentModules;
+      }
+    }
+    return this.componentModules;
+  }
+  
+}
+
 /**
  * @typedef { {prop:string,value:any} } PropsAccessor
  */
@@ -737,566 +957,11 @@ function createGlobals(component) {
   return new Proxy({}, new Handler(component));
 }
 
-let utils$1 = class utils {
-  /**
-   * 
-   * @param {string} message 
-   */
-  static raise(message) {
-    throw new Error(message);
-  }
-
-  /**
-   * 関数かどうかをチェック
-   * @param {any} obj 
-   * @returns {boolean}
-   */
-  static isFunction = (obj) => {
-    const toString = Object.prototype.toString;
-    const text = toString.call(obj).slice(8, -1).toLowerCase();
-    return (text === "function" || text === "asyncfunction");
-  }
-
-  /**
-   * 
-   * @param {HTMLElement} element 
-   * @returns {boolean}
-   */
-  static isInputableElement(element) {
-    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || 
-      (element instanceof HTMLInputElement && element.type !== "button");
-  }
-
-  /**
-   * to kebab case (upper camel, lower camel, snakeを想定)
-   * @param {string} text 
-   * @returns {string}
-   */
-  static toKebabCase = text => (typeof text === "string") ? text.replaceAll(/_/g, "-").replaceAll(/([A-Z])/g, (match,char,index) => (index > 0 ? "-" : "") + char.toLowerCase()) : text;
-
-  /**
-   * @returns {string}
-   */
-  static createUUID() {
-    return window?.crypto?.randomUUID ? window.crypto.randomUUID()
-     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(a) {
-        let r = (new Date().getTime() + Math.random() * 16)%16 | 0, v = a == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-  }
+let Config$1 = class Config {
+  debug = false;
 };
 
-class Templates {
-  /** @type {Map<string,HTMLTemplateElement>} */
-  static templateByUUID = new Map;
-
-}
-
-const DATASET_BIND_PROPERTY$3 = "data-bind";
-const DATASET_UUID_PROPERTY = "data-uuid";
-
-class Module {
-  /** @type {string} */
-  html;
-
-  /** @type {string} */
-  css;
-
-  /** @type {ViewModel.constructor} */
-  ViewModel;
-
-  /** @type {HTMLElement.constructor} */
-  extendClass;
-
-  /** @type {string} */
-  extendTag;
-
-  /** @type {boolean} */
-  usePseudo = false;
-
-  /** @type {boolean} */
-  useShadowRoot = false;
-
-  /** @type {Object<string,FilterFunc>} */
-  inputFilters;
-
-  /** @type {Object<string,FilterFunc>} */
-  outputFilters;
-
-  /** @type {Object<string,Module>} */
-  componentModules;
-
-  /** @type {HTMLTemplateElement} */
-  #template;
-  /** @type {HTMLTemplateElement} */
-  get template() {
-    if (typeof this.#template === "undefined") {
-      this.#template = Module.htmlToTemplate(this.html, this.css);
-    }
-    return this.#template;
-  }
-
-  /**
-   * HTMLの変換
-   * {{loop:}}{{if:}}{{else:}}を<template>へ置換
-   * {{end:}}を</template>へ置換
-   * {{...}}を<!--@@:...-->へ置換
-   * <template>を<!--@@|...-->へ置換
-   * @param {string} html 
-   * @returns {string}
-   */
-  static replaceTag(html) {
-    const stack = [];
-    const replacedHtml =  html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
-      expr = expr.trim();
-      if (expr.startsWith("loop:") || expr.startsWith("if:")) {
-        stack.push(expr);
-        return `<template data-bind="${expr}">`;
-      } else if (expr.startsWith("else:")){
-        const saveExpr = stack.at(-1);
-        return `</template><template data-bind="${saveExpr}|not">`;
-      } else if (expr.startsWith("end:")){
-        stack.pop();
-        return `</template>`;
-      } else {
-        return `<!--@@:${expr}-->`;
-      }
-    });
-    // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
-    const root = document.createElement("template"); // 仮のルート
-    root.innerHTML = replacedHtml;
-    /** @type {(element:HTMLElement)=>{}} */
-    const replaceTemplate = (element) => {
-      /** @type {HTMLTemplateElement} */
-      let template;
-      while(template = element.querySelector("template")) {
-        const uuid =  utils$1.createUUID();
-        const comment = document.createComment(`@@|${uuid}`);
-        template.parentNode.replaceChild(comment, template);
-        if (template.constructor !== HTMLTemplateElement) {
-          // SVGタグ内のtemplateタグを想定
-          const newTemplate = document.createElement("template");
-          for(let childNode of Array.from(template.childNodes)) {
-            newTemplate.content.appendChild(childNode);
-          }
-          newTemplate.setAttribute(DATASET_BIND_PROPERTY$3, template.getAttribute(DATASET_BIND_PROPERTY$3));
-          template = newTemplate;
-        }
-        template.setAttribute(DATASET_UUID_PROPERTY, uuid);
-        replaceTemplate(template.content);
-        Templates.templateByUUID.set(uuid, template);
-      }
-    };
-    replaceTemplate(root.content);
-
-    return root.innerHTML;
-  }
-
-  /**
-   * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
-   * @param {string?} html
-   * @param {string?} css
-   * @returns {HTMLTemplateElement}
-   */
-  static htmlToTemplate(html, css) {
-    const template = document.createElement("template");
-    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? Module.replaceTag(html) : "");
-    return template;
-  }
-}
-
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const num = (v, o, fn) => {
-  if (v == null) return v;
-  const n = Number(v);
-  return isNaN(n) ? v : fn(n, o);
-};
-
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const str = (v, o, fn) => {
-  return (v == null) ? v : fn(String(v), o);
-};
-
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const arr = (v, o, fn) => {
-  return !Array.isArray(v) ? v : fn(v, o);
-};
-
-class outputFilters {
-  static styleDisplay = (value, options) => value ? (options[0] ?? "") : "none";
-  static truthy       = (value, options) => value ? true : false;
-  static falsey       = (value, options) => !value ? true : false;
-  static not          = this.falsey;
-  static eq           = (value, options) => value == options[0];
-  static ne           = (value, options) => value != options[0];
-  static lt           = (value, options) => Number(value) < Number(options[0]);
-  static le           = (value, options) => Number(value) <= Number(options[0]);
-  static gt           = (value, options) => Number(value) > Number(options[0]);
-  static ge           = (value, options) => Number(value) >= Number(options[0]);
-  static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? "").replaceAll("%s", value)) : null;
-  static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
-  static null         = (value, options) => (value == null) ? true : false;
-  static offset       = (value, options) => Number(value) + Number(options[0]);
-  static unit         = (value, options) => String(value) + String(options[0]);
-  static inc          = this.offset;
-  static mul          = (value, options) => Number(value) * Number(options[0]);
-  static div          = (value, options) => Number(value) / Number(options[0]);
-  static mod          = (value, options) => Number(value) % Number(options[0]);
-
-  static "str.at"      = (value, options) => str(value, options, (s, o) => s.at(...o));
-  static "str.charAt"  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
-  static "str.charCodeAt"    = (value, options) => str(value, options, (s, o) => s.charCodeAt(...o));
-  static "str.codePointAt"   = (value, options) => str(value, options, (s, o) => s.codePointAt(...o));
-  static "str.concat"  = (value, options) => str(value, options, (s, o) => s.concat(...o));
-  static "str.endsWith"      = (value, options) => str(value, options, (s, o) => s.endsWith(...o));
-  static "str.includes" = (value, options) => str(value, options, (s, o) => s.includes(...o));
-  static "str.indexOf"  = (value, options) => str(value, options, (s, o) => s.indexOf(...o));
-//  static isWellFormed  = (value, options) => str(value, options, (s, o) => s.isWellFormed());
-  static "str.lastIndexOf" = (value, options) => str(value, options, (s, o) => s.lastIndexOf(...o));
-  static "str.localeCompare" = (value, options) => str(value, options, (s, o) => s.localeCompare(...o));
-  static "str.match"         = (value, options) => str(value, options, (s, o) => s.match(...o));
-//  static "str.matchAll"      = (value, options) => str(value, options, (s, o) => s.matchAll(...o));
-  static "str.normalize"     = (value, options) => str(value, options, (s, o) => s.normalize(...o));
-  static "str.padEnd"        = (value, options) => str(value, options, (s, o) => s.padEnd(...o));
-  static "str.padStart"      = (value, options) => str(value, options, (s, o) => s.padStart(...o));
-  static "str.repeat"        = (value, options) => str(value, options, (s, o) => s.repeat(...o));
-  static "str.replace"       = (value, options) => str(value, options, (s, o) => s.replace(...o));
-  static "str.replaceAll"    = (value, options) => str(value, options, (s, o) => s.replaceAll(...o));
-  static "str.search"        = (value, options) => str(value, options, (s, o) => s.search(...o));
-  static "str.slice"   = (value, options) => str(value, options, (s, o) => s.slice(...o));
-  static "str.split"         = (value, options) => str(value, options, (s, o) => s.split(...o));
-  static "str.startsWith"    = (value, options) => str(value, options, (s, o) => s.startsWith(...o));
-  static "str.substring"     = (value, options) => str(value, options, (s, o) => s.substring(...o));
-  static "str.toLocaleLowerCase" = (value, options) => str(value, options, (s, o) => s.toLocaleLowerCase(...o));
-  static "str.toLocaleUpperCase" = (value, options) => str(value, options, (s, o) => s.toLocaleUpperCase(...o));
-  static "str.toLowerCase"   = (value, options) => str(value, options, (s, o) => s.toLowerCase(...o));
-  static "str.toUpperCase"   = (value, options) => str(value, options, (s, o) => s.toUpperCase(...o));
-  //static "str.toWellFormed"  = (value, options) => str(value, options, (s, o) => s.toWellFormed(...o));
-  static "str.trim"          = (value, options) => str(value, options, (s, o) => s.trim(...o));
-  static "str.trimEnd"       = (value, options) => str(value, options, (s, o) => s.trimEnd(...o));
-  static "str.trimStart"     = (value, options) => str(value, options, (s, o) => s.trimStart(...o));
-
-  static "num.toExponential" = (value, options) => num(value, options, (n, o) => n.toExponential(...o));
-  static "num.toFixed"       = (value, options) => num(value, options, (n, o) => n.toFixed(...o));
-  static "num.toLocaleString" = (value, options) => num(value, options, (n, o) => n.toLocaleString(...o));
-  static "num.toPrecision"   = (value, options) => num(value, options, (n, o) => n.toPrecision(...o));
-  
-  static "arr.at"       = (value, options) => arr(value, options, (a, o) => a.at(...o));
-  static "arr.concat"   = (value, options) => arr(value, options, (a, o) => a.concat(...o));
-  static "arr.entries"  = (value, options) => arr(value, options, (a, o) => a.entries(...o));
-  static "arr.flat"     = (value, options) => arr(value, options, (a, o) => a.flat(...o));
-  static "arr.includes" = (value, options) => arr(value, options, (a, o) => a.includes(...o));
-  static "arr.indexOf"  = (value, options) => arr(value, options, (a, o) => a.indexOf(...o));
-  static "arr.join"     = (value, options) => arr(value, options, (a, o) => a.join(...o));
-  static "arr.keys"     = (value, options) => arr(value, options, (a, o) => a.keys(...o));
-  static "arr.lastIndexOf"    = (value, options) => arr(value, options, (a, o) => a.lastIndexOf(...o));
-  static "arr.slice"    = (value, options) => arr(value, options, (a, o) => a.slice(...o));
-  static "arr.toLocaleString" = (value, options) => arr(value, options, (a, o) => a.toLocaleString(...o));
-  static "arr.toReversed"     = (value, options) => arr(value, options, (a, o) => a.toReversed(...o));
-  static "arr.toSorted"       = (value, options) => arr(value, options, (a, o) => a.toSorted(...o));
-  static "arr.toSpliced"      = (value, options) => arr(value, options, (a, o) => a.toSpliced(...o));
-  static "arr.values"   = (value, options) => arr(value, options, (a, o) => a.values(...o));
-  static "arr.with"     = (value, options) => arr(value, options, (a, o) => a.with(...o));
-
-  static get at() {
-    return (value, options) => (Array.isArray(value) ? this["arr.at"] : this["str.at"])(value, options);
-  }
-  static get charAt() {
-    return this["str.charAt"];
-  }
-  static get charCodeAt() {
-    return this["str.charCodeAt"];
-  }
-  static get codePointAt() {
-    return this["str.codePointAt"];
-  }
-  static get concat() {
-    return (value, options) => (Array.isArray(value) ? this["arr.concat"] : this["str.concat"])(value, options);
-  }
-  static get endsWith() {
-    return this["str.endsWith"];
-  }
-  static get entries() {
-    return this["arr.entries"];
-  }
-  static get flat() {
-    return this["arr.flat"];
-  }
-  static get includes() {
-    return (value, options) => (Array.isArray(value) ? this["arr.includes"] : this["str.includes"])(value, options);
-  }
-  static get indexOf() {
-    return (value, options) => (Array.isArray(value) ? this["arr.indexOf"] : this["str.indexOf"])(value, options);
-  }
-  static get join() {
-    return this["arr.join"];
-  }
-  static get keys() {
-    return this["arr.keys"];
-  }
-  static get lastIndexOf() {
-    return (value, options) => (Array.isArray(value) ? this["arr.lastIndexOf"] : this["str.lastIndexOf"])(value, options);
-  }
-  static get localeCompare() {
-    return this["str.localeCompare"];
-  }
-  static get match() {
-    return this["str.match"];
-  }
-  //static get matchAll() {
-  //  return this["str.matchAll"];
-  //}
-  static get normalize() {
-    return this["str.normalize"];
-  }
-  static get padEnd() {
-    return this["str.padEnd"];
-  }
-  static get padStart() {
-    return this["str.padStart"];
-  }
-  static get repeat() {
-    return this["str.repeat"];
-  }
-  static get replace() {
-    return this["str.replace"];
-  }
-  static get replaceAll() {
-    return this["str.replaceAll"];
-  }
-  static get search() {
-    return this["str.search"];
-  }
-  static get slice() {
-    return (value, options) => (Array.isArray(value) ? this["arr.slice"] : this["str.slice"])(value, options);
-  }
-  static get split() {
-    return this["str.split"];
-  }
-  static get startsWith() {
-    return this["str.startsWith"];
-  }
-  static get substring() {
-    return this["str.substring"];
-  }
-  static get toExponential() {
-    return this["num.toExponential"];
-  }
-  static get toFixed() {
-    return this["num.toFixed"];
-  }
-  static get toLocaleString() {
-    return (value, options) => (Array.isArray(value) ? this["arr.toLocaleString"] : this["num.toLocaleString"])(value, options);
-  }
-  static get toLocaleLowerCase() {
-    return this["str.toLocaleLowerCase"];
-  }
-  static get toLocaleUpperCase() {
-    return this["str.toLocaleUpperCase"];
-  }
-  static get toLowerCase() {
-    return this["str.toLowerCase"];
-  }
-  static get toPrecision() {
-    return this["num.toPrecision"];
-  }
-  static get toReversed() {
-    return this["arr.toReversed"];
-  }
-  static get toSorted() {
-    return this["arr.toSorted"];
-  }
-  static get toSpliced() {
-    return this["arr.toSpliced"];
-  }
-  static get toUpperCase() {
-    return this["str.toUpperCase"];
-  }
-  //static get toWellFormed() {
-  //  return this["str.toWellFormed"];
-  //}
-  static get trim() {
-    return this["str.trim"];
-  }
-  static get trimEnd() {
-    return this["str.trimEnd"];
-  }
-  static get trimStart() {
-    return this["str.trimStart"];
-  }
-  static get values() {
-    return this["arr.values"];
-  }
-  static get with() {
-    return this["arr.with"];
-  }
-
-}
-
-class inputFilters {
-  static number       = (value, options) => value === "" ? null : Number(value);
-  static boolean      = (value, options) => value === "" ? null : Boolean(value);
-}
-
-// "property:vmProperty|toFix,2|toLocaleString;"
-// => toFix,2|toLocaleString
-
-class Filter {
-  /** @type {string} */
-  name;
-
-  /** @type {string[]} */
-  options;
-
-  /**
-   * 
-   * @param {any} value 
-   * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
-   * @returns {any}
-   */
-  static applyForInput(value, filters, inputFilterFuncs) {
-    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
-  }
-  
-  /**
-   * 
-   * @param {any} value 
-   * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} outputFilterFuncs
-   * @returns {any}
-   */
-  static applyForOutput(value, filters, outputFilterFuncs) {
-    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
-  }
-
-  /**
-   * 
-   * @param {string} name 
-   * @param {(value:any,options:string[])=>{}} outputFilter 
-   * @param {(value:any,options:string[])=>{}} inputFilter 
-   */
-  static regist(name, outputFilter, inputFilter) {
-    if (name in outputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
-    if (name in inputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
-    outputFilter && (outputFilters[name] = outputFilter);
-    inputFilter && (inputFilters[name] = inputFilter);
-  }
-}
-
-/** @typedef {class<HTMLElement>} ComponentClass */
-
-class Main {
-  /**
-   * @type {{
-   * debug:boolean,
-   * }}
-   */
-  static #config = {
-    debug: false,
-  };
-
-  /**
-   * 
-   * @param {Object<string,ComponentClass>} components 
-   * @returns {Main}
-   */
-  static components(components) {
-    Object.entries(components).forEach(([name, componentClass]) => {
-      const componentName = utils$1.toKebabCase(name);
-      customElements.define(componentName, componentClass);
-    });
-    return this;
-  }
-  /**
-   * 
-   * @param {string} customElementName 
-   * @param {UserComponentModule} componentModule 
-   */
-  static registComponentModule(customElementName, componentModule) {
-    const customElementKebabName = utils$1.toKebabCase(customElementName);
-    const componentClass = ComponentClassGenerator.generate(componentModule);
-    if (componentModule.extendTag) {
-      customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
-    } else if (typeof componentModule?.extendClass === "undefined") {
-      customElements.define(customElementKebabName, componentClass);
-    } else {
-      utils$1.raise("extendTag should be set");
-    }
-    if (componentModule.componentModules) {
-      this.componentModules(componentModule.componentModules);
-    }
-  }
-  /**
-   * 
-   * @param {Object<string,UserComponentModule>} components 
-   * @returns {Main}
-   */
-  static componentModules(components) {
-    Object.entries(components).forEach(([name, componentModule]) => {
-      this.registComponentModule(name, componentModule);
-    });
-    return this;
-  }
-  /**
-   * 
-   * @param {Object<string,UserFilterData>} filters 
-   * @returns {Main}
-   */
-  static filters(filters) {
-    Object.entries(filters).forEach(([name, filterData]) => {
-      const { input, output } = filterData;
-      Filter.regist(name, output, input);
-    });
-    return this;
-  }
-
-  /**
-   * 
-   * @param {Object<string,any>} data 
-   */
-  static globals(data) {
-    Object.assign(GlobalData.data, data);
-  }
-  /**
-   * 
-   * @param {{
-   * debug:boolean,
-   * }}  
-   * @returns {Main}
-   */
-  static config({ 
-    debug = false,
-  }) {
-    this.#config = Object.assign(this.#config, { debug });
-    return this;
-  }
-
-  /**
-   * @type {boolean}
-   */
-  static get debug() {
-    return this.#config.debug;
-  }
-}
+const config = new Config$1;
 
 class ThreadStop extends Error {
 
@@ -1357,10 +1022,10 @@ class Thread {
       try {
         const slot = await this.#sleep();
         await slot.waiting(); // queueにデータが入るまで待機
-        Main.debug && performance.mark('slot-exec:start');
+        config.debug && performance.mark('slot-exec:start');
         try {
           await slot.exec();
-          if (Main.debug) {
+          if (config.debug) {
             performance.mark('slot-exec:end');
             performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
             console.log(performance.getEntriesByType("measure"));    
@@ -1882,6 +1547,257 @@ class AttachShadow {
   }
 }
 
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
+const num = (v, o, fn) => {
+  if (v == null) return v;
+  const n = Number(v);
+  return isNaN(n) ? v : fn(n, o);
+};
+
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
+const str = (v, o, fn) => {
+  return (v == null) ? v : fn(String(v), o);
+};
+
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
+const arr = (v, o, fn) => {
+  return !Array.isArray(v) ? v : fn(v, o);
+};
+
+class outputFilters {
+  static styleDisplay = (value, options) => value ? (options[0] ?? "") : "none";
+  static truthy       = (value, options) => value ? true : false;
+  static falsey       = (value, options) => !value ? true : false;
+  static not          = this.falsey;
+  static eq           = (value, options) => value == options[0];
+  static ne           = (value, options) => value != options[0];
+  static lt           = (value, options) => Number(value) < Number(options[0]);
+  static le           = (value, options) => Number(value) <= Number(options[0]);
+  static gt           = (value, options) => Number(value) > Number(options[0]);
+  static ge           = (value, options) => Number(value) >= Number(options[0]);
+  static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? "").replaceAll("%s", value)) : null;
+  static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
+  static null         = (value, options) => (value == null) ? true : false;
+  static offset       = (value, options) => Number(value) + Number(options[0]);
+  static unit         = (value, options) => String(value) + String(options[0]);
+  static inc          = this.offset;
+  static mul          = (value, options) => Number(value) * Number(options[0]);
+  static div          = (value, options) => Number(value) / Number(options[0]);
+  static mod          = (value, options) => Number(value) % Number(options[0]);
+
+  static "str.at"      = (value, options) => str(value, options, (s, o) => s.at(...o));
+  static "str.charAt"  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
+  static "str.charCodeAt"    = (value, options) => str(value, options, (s, o) => s.charCodeAt(...o));
+  static "str.codePointAt"   = (value, options) => str(value, options, (s, o) => s.codePointAt(...o));
+  static "str.concat"  = (value, options) => str(value, options, (s, o) => s.concat(...o));
+  static "str.endsWith"      = (value, options) => str(value, options, (s, o) => s.endsWith(...o));
+  static "str.includes" = (value, options) => str(value, options, (s, o) => s.includes(...o));
+  static "str.indexOf"  = (value, options) => str(value, options, (s, o) => s.indexOf(...o));
+//  static isWellFormed  = (value, options) => str(value, options, (s, o) => s.isWellFormed());
+  static "str.lastIndexOf" = (value, options) => str(value, options, (s, o) => s.lastIndexOf(...o));
+  static "str.localeCompare" = (value, options) => str(value, options, (s, o) => s.localeCompare(...o));
+  static "str.match"         = (value, options) => str(value, options, (s, o) => s.match(...o));
+//  static "str.matchAll"      = (value, options) => str(value, options, (s, o) => s.matchAll(...o));
+  static "str.normalize"     = (value, options) => str(value, options, (s, o) => s.normalize(...o));
+  static "str.padEnd"        = (value, options) => str(value, options, (s, o) => s.padEnd(...o));
+  static "str.padStart"      = (value, options) => str(value, options, (s, o) => s.padStart(...o));
+  static "str.repeat"        = (value, options) => str(value, options, (s, o) => s.repeat(...o));
+  static "str.replace"       = (value, options) => str(value, options, (s, o) => s.replace(...o));
+  static "str.replaceAll"    = (value, options) => str(value, options, (s, o) => s.replaceAll(...o));
+  static "str.search"        = (value, options) => str(value, options, (s, o) => s.search(...o));
+  static "str.slice"   = (value, options) => str(value, options, (s, o) => s.slice(...o));
+  static "str.split"         = (value, options) => str(value, options, (s, o) => s.split(...o));
+  static "str.startsWith"    = (value, options) => str(value, options, (s, o) => s.startsWith(...o));
+  static "str.substring"     = (value, options) => str(value, options, (s, o) => s.substring(...o));
+  static "str.toLocaleLowerCase" = (value, options) => str(value, options, (s, o) => s.toLocaleLowerCase(...o));
+  static "str.toLocaleUpperCase" = (value, options) => str(value, options, (s, o) => s.toLocaleUpperCase(...o));
+  static "str.toLowerCase"   = (value, options) => str(value, options, (s, o) => s.toLowerCase(...o));
+  static "str.toUpperCase"   = (value, options) => str(value, options, (s, o) => s.toUpperCase(...o));
+  //static "str.toWellFormed"  = (value, options) => str(value, options, (s, o) => s.toWellFormed(...o));
+  static "str.trim"          = (value, options) => str(value, options, (s, o) => s.trim(...o));
+  static "str.trimEnd"       = (value, options) => str(value, options, (s, o) => s.trimEnd(...o));
+  static "str.trimStart"     = (value, options) => str(value, options, (s, o) => s.trimStart(...o));
+
+  static "num.toExponential" = (value, options) => num(value, options, (n, o) => n.toExponential(...o));
+  static "num.toFixed"       = (value, options) => num(value, options, (n, o) => n.toFixed(...o));
+  static "num.toLocaleString" = (value, options) => num(value, options, (n, o) => n.toLocaleString(...o));
+  static "num.toPrecision"   = (value, options) => num(value, options, (n, o) => n.toPrecision(...o));
+  
+  static "arr.at"       = (value, options) => arr(value, options, (a, o) => a.at(...o));
+  static "arr.concat"   = (value, options) => arr(value, options, (a, o) => a.concat(...o));
+  static "arr.entries"  = (value, options) => arr(value, options, (a, o) => a.entries(...o));
+  static "arr.flat"     = (value, options) => arr(value, options, (a, o) => a.flat(...o));
+  static "arr.includes" = (value, options) => arr(value, options, (a, o) => a.includes(...o));
+  static "arr.indexOf"  = (value, options) => arr(value, options, (a, o) => a.indexOf(...o));
+  static "arr.join"     = (value, options) => arr(value, options, (a, o) => a.join(...o));
+  static "arr.keys"     = (value, options) => arr(value, options, (a, o) => a.keys(...o));
+  static "arr.lastIndexOf"    = (value, options) => arr(value, options, (a, o) => a.lastIndexOf(...o));
+  static "arr.slice"    = (value, options) => arr(value, options, (a, o) => a.slice(...o));
+  static "arr.toLocaleString" = (value, options) => arr(value, options, (a, o) => a.toLocaleString(...o));
+  static "arr.toReversed"     = (value, options) => arr(value, options, (a, o) => a.toReversed(...o));
+  static "arr.toSorted"       = (value, options) => arr(value, options, (a, o) => a.toSorted(...o));
+  static "arr.toSpliced"      = (value, options) => arr(value, options, (a, o) => a.toSpliced(...o));
+  static "arr.values"   = (value, options) => arr(value, options, (a, o) => a.values(...o));
+  static "arr.with"     = (value, options) => arr(value, options, (a, o) => a.with(...o));
+
+  static get at() {
+    return (value, options) => (Array.isArray(value) ? this["arr.at"] : this["str.at"])(value, options);
+  }
+  static get charAt() {
+    return this["str.charAt"];
+  }
+  static get charCodeAt() {
+    return this["str.charCodeAt"];
+  }
+  static get codePointAt() {
+    return this["str.codePointAt"];
+  }
+  static get concat() {
+    return (value, options) => (Array.isArray(value) ? this["arr.concat"] : this["str.concat"])(value, options);
+  }
+  static get endsWith() {
+    return this["str.endsWith"];
+  }
+  static get entries() {
+    return this["arr.entries"];
+  }
+  static get flat() {
+    return this["arr.flat"];
+  }
+  static get includes() {
+    return (value, options) => (Array.isArray(value) ? this["arr.includes"] : this["str.includes"])(value, options);
+  }
+  static get indexOf() {
+    return (value, options) => (Array.isArray(value) ? this["arr.indexOf"] : this["str.indexOf"])(value, options);
+  }
+  static get join() {
+    return this["arr.join"];
+  }
+  static get keys() {
+    return this["arr.keys"];
+  }
+  static get lastIndexOf() {
+    return (value, options) => (Array.isArray(value) ? this["arr.lastIndexOf"] : this["str.lastIndexOf"])(value, options);
+  }
+  static get localeCompare() {
+    return this["str.localeCompare"];
+  }
+  static get match() {
+    return this["str.match"];
+  }
+  //static get matchAll() {
+  //  return this["str.matchAll"];
+  //}
+  static get normalize() {
+    return this["str.normalize"];
+  }
+  static get padEnd() {
+    return this["str.padEnd"];
+  }
+  static get padStart() {
+    return this["str.padStart"];
+  }
+  static get repeat() {
+    return this["str.repeat"];
+  }
+  static get replace() {
+    return this["str.replace"];
+  }
+  static get replaceAll() {
+    return this["str.replaceAll"];
+  }
+  static get search() {
+    return this["str.search"];
+  }
+  static get slice() {
+    return (value, options) => (Array.isArray(value) ? this["arr.slice"] : this["str.slice"])(value, options);
+  }
+  static get split() {
+    return this["str.split"];
+  }
+  static get startsWith() {
+    return this["str.startsWith"];
+  }
+  static get substring() {
+    return this["str.substring"];
+  }
+  static get toExponential() {
+    return this["num.toExponential"];
+  }
+  static get toFixed() {
+    return this["num.toFixed"];
+  }
+  static get toLocaleString() {
+    return (value, options) => (Array.isArray(value) ? this["arr.toLocaleString"] : this["num.toLocaleString"])(value, options);
+  }
+  static get toLocaleLowerCase() {
+    return this["str.toLocaleLowerCase"];
+  }
+  static get toLocaleUpperCase() {
+    return this["str.toLocaleUpperCase"];
+  }
+  static get toLowerCase() {
+    return this["str.toLowerCase"];
+  }
+  static get toPrecision() {
+    return this["num.toPrecision"];
+  }
+  static get toReversed() {
+    return this["arr.toReversed"];
+  }
+  static get toSorted() {
+    return this["arr.toSorted"];
+  }
+  static get toSpliced() {
+    return this["arr.toSpliced"];
+  }
+  static get toUpperCase() {
+    return this["str.toUpperCase"];
+  }
+  //static get toWellFormed() {
+  //  return this["str.toWellFormed"];
+  //}
+  static get trim() {
+    return this["str.trim"];
+  }
+  static get trimEnd() {
+    return this["str.trimEnd"];
+  }
+  static get trimStart() {
+    return this["str.trimStart"];
+  }
+  static get values() {
+    return this["arr.values"];
+  }
+  static get with() {
+    return this["arr.with"];
+  }
+
+}
+
+class inputFilters {
+  static number       = (value, options) => value === "" ? null : Number(value);
+  static boolean      = (value, options) => value === "" ? null : Boolean(value);
+}
+
 const SELECTOR = "[data-bind]";
 
 /**
@@ -1961,6 +1877,52 @@ class Selector {
 
   }
 
+}
+
+// "property:vmProperty|toFix,2|toLocaleString;"
+// => toFix,2|toLocaleString
+
+class Filter {
+  /** @type {string} */
+  name;
+
+  /** @type {string[]} */
+  options;
+
+  /**
+   * 
+   * @param {any} value 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   * @returns {any}
+   */
+  static applyForInput(value, filters, inputFilterFuncs) {
+    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
+  }
+  
+  /**
+   * 
+   * @param {any} value 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} outputFilterFuncs
+   * @returns {any}
+   */
+  static applyForOutput(value, filters, outputFilterFuncs) {
+    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {(value:any,options:string[])=>{}} outputFilter 
+   * @param {(value:any,options:string[])=>{}} inputFilter 
+   */
+  static regist(name, outputFilter, inputFilter) {
+    if (name in outputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
+    if (name in inputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
+    outputFilter && (outputFilters[name] = outputFilter);
+    inputFilter && (inputFilters[name] = inputFilter);
+  }
 }
 
 class NodeProperty {
@@ -2671,13 +2633,16 @@ class ElementEvent extends ElementBase {
    * 
    * @param {Event} event
    */
-  createProcessData(event) {
+  async directlyCall(event) {
     const { viewModelProperty, context } = this.binding;
-    return new ProcessData(
-      viewModelProperty.viewModel[Symbols$1.directlyCall], 
-      viewModelProperty.viewModel, 
-      [viewModelProperty.name, context, event]
-    );
+    return viewModelProperty.viewModel[Symbols$1.directlyCall](viewModelProperty.name, context, event);
+  }
+  /**
+   * 
+   * @param {Event} event
+   */
+  createProcessData(event) {
+    return new ProcessData(this.directlyCall, this, [event]);
   }
 
   /**
@@ -3114,6 +3079,7 @@ class BindToHTMLElement {
     const element = toHTMLElement(node);
     /** @type {string} */
     const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2);
+    element.removeAttribute(DATASET_BIND_PROPERTY$2);
     /** @type {string} */
     const defaultName = getDefaultProperty(element);
 
@@ -3183,6 +3149,7 @@ class BindToSVGElement {
     const element = toSVGElement(node);
     /** @type {string} */
     const bindText = element.getAttribute(DATASET_BIND_PROPERTY$1);
+    element.removeAttribute(DATASET_BIND_PROPERTY$1);
     /** @type {string|undefined} */
     const defaultName = undefined;
 
@@ -4497,6 +4464,11 @@ const mixInComponent = {
     return this._usePseudo;
   },
 
+  /** @type {boolean} タグネームスペースを使う */
+  get useTagNamesapce() {
+    return this._useTagNamesapce;
+  },
+
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
     return this.usePseudo ? this.pseudoParentNode : (this.shadowRoot ?? this);
@@ -4549,6 +4521,7 @@ const mixInComponent = {
 
     this._useShadowRoot = this.constructor.useShadowRoot;
     this._usePseudo = this.constructor.usePseudo;
+    this._useTagNamespace = this.constructor.useTagNamespace;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
@@ -4698,6 +4671,9 @@ class ComponentClassGenerator {
         static usePseudo = module.usePseudo;
 
         /** @type {boolean} */
+        static useTagNamespace = module.useTagNamespace;
+
+        /** @type {boolean} */
         get [Symbols$1.isComponent] () {
           return true;
         }
@@ -4730,6 +4706,8 @@ class ComponentClassGenerator {
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
+
+    registComponentModules(module.componentModulesForRegist);
     return componentClass;
   }
 }
@@ -4740,6 +4718,33 @@ class ComponentClassGenerator {
  */
 function generateComponentClass(componentModule) {
   return ComponentClassGenerator.generate(componentModule);
+}
+
+/**
+ * 
+ * @param {string} customElementName 
+ * @param {UserComponentModule} componentModule 
+ */
+function registComponentModule(customElementName, componentModule) {
+  const customElementKebabName = utils$1.toKebabCase(customElementName);
+  const componentClass = ComponentClassGenerator.generate(componentModule);
+  if (componentModule.extendTag) {
+    customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
+  } else if (typeof componentModule?.extendClass === "undefined") {
+    customElements.define(customElementKebabName, componentClass);
+  } else {
+    utils$1.raise("extendTag should be set");
+  }
+}
+
+/**
+ * 
+ * @param {Object<string,UserComponentModule>} componentModules 
+ */
+function registComponentModules(componentModules) {
+  for(const [customElementName, userComponentModule] of Object.entries(componentModules ?? {})) {
+    registComponentModule(customElementName, userComponentModule);
+  }
 }
 
 class Registrar {
@@ -5196,19 +5201,30 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input } = module;
       Filter.regist(filterName, output, input);
     } else {
-      Main.registComponentModule(name, module);
+      registComponentModule(name, module);
     }
   }
 }
 
 const loader = Loader.create(QuelModuleRegistrar);
 
-function registComponentModules(components) {
-  Main.componentModules(components);
+/**
+ * 
+ * @param {Object<string,UserFilterData>} filters 
+ */
+function registFilters(filters) {
+  Object.entries(filters).forEach(([name, filterData]) => {
+    const { input, output } = filterData;
+    Filter.regist(name, output, input);
+  });
 }
 
-function registConfig(config) {
-  Main.config(config);
+/**
+ * 
+ * @param {Object<string,any>} data 
+ */
+function registGlobal(data) {
+  Object.assign(GlobalData.data, data);
 }
 
-export { Main as default, generateComponentClass, loader, registComponentModules, registConfig };
+export { config, generateComponentClass, loader, registComponentModules, registFilters, registGlobal };
