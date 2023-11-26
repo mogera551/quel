@@ -54,16 +54,30 @@ export class Template {
     const customComponentKebabNames = customComponentNames.map(customComponentName => utils.toKebabCase(customComponentName));
     const changeCustomElementName = (element) => {
       for(const customComponentKebabName of customComponentKebabNames) {
+        /** @type {Element[]} */
         const replaceElements = Array.from(element.querySelectorAll(customComponentKebabName));
         for(const oldElement of replaceElements) {
           const newElement = document.createElement(`${customComponentKebabName}-${componentUuid}`);
-          oldElement.parentElement.replaceChild(newElement, oldElement);
           if (oldElement.hasAttributes) {
             for(const attr of oldElement.attributes) {
               newElement.setAttribute(attr.name, attr.value);
             }
             newElement.setAttribute("data-orig-tag-name", customComponentKebabName);
           }
+          oldElement.parentNode.replaceChild(newElement, oldElement);
+        }
+        /** @type {Element[]} */
+        const changeIsElements = Array.from(element.querySelectorAll(`[is="${customComponentKebabName}"]`));
+        for(const oldElement of changeIsElements) {
+          const newElement = document.createElement(oldElement.tagName, { is:`${customComponentKebabName}-${componentUuid}` });
+          if (oldElement.hasAttributes) {
+            for(const attr of oldElement.attributes) {
+              if (attr.name === "is") continue;
+              newElement.setAttribute(attr.name, attr.value);
+            }
+            newElement.setAttribute("data-orig-is", customComponentKebabName);
+          }
+          oldElement.parentNode.replaceChild(newElement, oldElement);
         }
       }
       const templates = Array.from(element.querySelectorAll("template"));
