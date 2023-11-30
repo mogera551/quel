@@ -118,6 +118,7 @@
  * @property {boolean} useShadowRoot
  * @property {boolean} usePseudo
  * @property {boolean} useTagNamespace
+ * @property {boolean} useKeyed
  * @property {ShadowRoot|HTMLElement} viewRootElement
  * @property {()=>void} initialize
  * @property {()=>void} build
