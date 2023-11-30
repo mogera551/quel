@@ -276,6 +276,14 @@ export class BindingManager {
    * 
    */
   removeFromParent() {
+    if (this.component.useKeyed) {
+      this.#removeFromParentOnKeyed();
+    } else {
+      this.#removeFromParentOnNonKeyed();
+    }
+  }
+
+  #removeFromParentOnNonKeyed() {
     this.#nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
       this.component.bindingSummary.delete(binding);
@@ -285,6 +293,16 @@ export class BindingManager {
     const recycleBindingManagers = BindingManager.bindingsByTemplate.get(this.#template) ?? 
       BindingManager.bindingsByTemplate.set(this.#template, []).get(this.#template);
     recycleBindingManagers.push(this);
+  }
+
+  #removeFromParentOnKeyed() {
+    // 再利用を考慮しない
+    this.#nodes.forEach(node => node.parentNode.removeChild(node));
+    this.bindings.forEach(binding => {
+      this.component.bindingSummary.delete(binding);
+      const removeBindManagers = binding.children.splice(0);
+      removeBindManagers.forEach(bindingManager => bindingManager.removeFromParent());
+    });
   }
 
   /**
@@ -331,30 +349,31 @@ export class BindingManager {
    * @param {ContextInfo} context
    */
   static create(component, template, context) {
-    const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
-    if (bindingManagers.length > 0) {
-      const bindingManager = bindingManagers.pop();
-      bindingManager.setContext(component, context);
-      /**
-       * 
-       * @param {Binding[]} bindings 
-       * @param {ContextInfo} context 
-       */
-      const setContext = (bindings, context) => {
-        for(const binding of bindings) {
-          binding.applyToNode();
-          for(const bindingManager of binding.children) {
-            setContext(bindingManager.bindings, context);
+    if (!component.useKeyed) {
+      const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
+      if (bindingManagers.length > 0) {
+        const bindingManager = bindingManagers.pop();
+        bindingManager.setContext(component, context);
+        /**
+         * 
+         * @param {Binding[]} bindings 
+         * @param {ContextInfo} context 
+         */
+        const setContext = (bindings, context) => {
+          for(const binding of bindings) {
+            binding.applyToNode();
+            for(const bindingManager of binding.children) {
+              setContext(bindingManager.bindings, context);
+            }
           }
-        }
-      };
-      setContext(bindingManager.bindings, context);
-      bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
-  
-      return bindingManager;
-    } else {
-      return new BindingManager(component, template, context);
-    }
+        };
+        setContext(bindingManager.bindings, context);
+        bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
+    
+        return bindingManager;
+      }
+    } 
+    return new BindingManager(component, template, context);
   }
 
 }

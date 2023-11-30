@@ -15,6 +15,7 @@ import { ElementAttribute } from "./nodeProperty/ElementAttribute.js";
 import { ElementStyle } from "./nodeProperty/ElementStyle.js";
 import { ElementProperty } from "./nodeProperty/ElementProperty.js";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty.js";
+import { RepeatKeyed } from "./nodeProperty/RepeatKeyed.js";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -30,7 +31,6 @@ export class Factory {
       this.#classOfNodePropertyByNameByIsComment = {
         true: {
           "if": Branch,
-          "loop": Repeat,
         },
         false: {
           "class": ElementClassName,
@@ -76,6 +76,10 @@ export class Factory {
       const isComment = node instanceof Comment;
       classOfNodeProperty = this.classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
       if (typeof classOfNodeProperty !== "undefined") break;
+      if (isComment && nodePropertyName === "loop") {
+        classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
+        break;
+      }
       if (isComment) utils.raise(`unknown node property ${nodePropertyName}`);
       const nameElements = nodePropertyName.split(".");
       classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];

@@ -674,6 +674,9 @@ class Module {
   /** @type {boolean} */
   useTagNamespace = true;
 
+  /** @type {boolean|undefined} */
+  useKeyed;
+
   /** @type {Object<string,FilterFunc>} */
   inputFilters;
 
@@ -973,6 +976,7 @@ function createGlobals(component) {
 
 let Config$1 = class Config {
   debug = false;
+  useKeyed = false;
 };
 
 const config = new Config$1;
@@ -2099,7 +2103,7 @@ class TemplateProperty extends NodeProperty {
  * @param {BindingManager} bindingManager 
  * @returns 
  */
-const applyToNodeFunc = bindingManager => bindingManager.applyToNode();
+const applyToNodeFunc$1 = bindingManager => bindingManager.applyToNode();
 
 class Repeat extends TemplateProperty {
   /** @type {number} */
@@ -2109,7 +2113,7 @@ class Repeat extends TemplateProperty {
   set value(value) {
     if (!Array.isArray(value)) utils$1.raise("value is not array");
     if (this.value < value.length) {
-      this.binding.children.forEach(applyToNodeFunc);
+      this.binding.children.forEach(applyToNodeFunc$1);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
         const bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
@@ -2117,10 +2121,10 @@ class Repeat extends TemplateProperty {
       }
     } else if (this.value > value.length) {
       const removeBindingManagers = this.binding.children.splice(value.length);
-      this.binding.children.forEach(applyToNodeFunc);
+      this.binding.children.forEach(applyToNodeFunc$1);
       removeBindingManagers.forEach(bindingManager => bindingManager.removeFromParent());
     } else {
-      this.binding.children.forEach(applyToNodeFunc);
+      this.binding.children.forEach(applyToNodeFunc$1);
     }
   }
 
@@ -2834,6 +2838,69 @@ class ComponentProperty extends ElementBase {
   
 }
 
+/**
+ * 
+ * @param {BindingManager} bindingManager 
+ * @returns 
+ */
+const applyToNodeFunc = bindingManager => bindingManager.applyToNode();
+
+class RepeatKeyed extends Repeat {
+  /** @type {any[]} */
+  #lastValue = [];
+
+  /** @type {number} */
+  get value() {
+    return this.#lastValue;
+  }
+  set value(values) {
+    if (!Array.isArray(values)) utils$1.raise("value is not array");
+    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
+    const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+    const lastIndexByNewIndex = new Map;
+    const insertOrMoveIndexes = [];
+    const lastIndexes = new Set;
+    /** @type {BindingManager[]} */
+    const newBindingManagers = values.map((value, newIndex) => {
+      const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
+      let bindingManager;
+      if (lastIndex === -1 || lastIndex === false) {
+        // 元のインデックスにない場合（新規）
+        lastIndexByNewIndex.set(newIndex, undefined);
+        insertOrMoveIndexes.push(newIndex);
+        bindingManager = BindingManager.create(this.binding.component, this.template, createNewContext(newIndex));
+      } else {
+        // 元のインデックスがある場合（既存）
+        bindingManager = this.binding.children[lastIndex];
+        fromIndexByValue.set(value, lastIndex + 1); // 
+        lastIndexByNewIndex.set(newIndex, lastIndex);
+        lastIndexes.add(lastIndex);
+        if (newIndex !== lastIndex) {
+          bindingManager.setContext(this.binding.component, createNewContext(newIndex));
+        }
+        const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
+        if (newIndex !== 0 && (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex)) {
+          insertOrMoveIndexes.push(newIndex);
+        }
+      }
+      return bindingManager;
+    });
+    for(let i = 0; i < this.binding.children.length; i++) {
+      if (lastIndexes.has(i)) continue;
+      this.binding.children[i].removeFromParent();
+    }
+    for(const index of insertOrMoveIndexes) {
+      const bindingManager = newBindingManagers[index];
+      const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
+      beforeNode.after(...bindingManager.nodes);
+    }
+    this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
+    this.binding.children.forEach(applyToNodeFunc);
+    this.#lastValue = values.slice();
+  }
+
+}
+
 const regexp = RegExp(/^\$[0-9]+$/);
 
 class Factory {
@@ -2848,7 +2915,6 @@ class Factory {
       this.#classOfNodePropertyByNameByIsComment = {
         true: {
           "if": Branch,
-          "loop": Repeat,
         },
         false: {
           "class": ElementClassName,
@@ -2894,6 +2960,10 @@ class Factory {
       const isComment = node instanceof Comment;
       classOfNodeProperty = this.classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
       if (typeof classOfNodeProperty !== "undefined") break;
+      if (isComment && nodePropertyName === "loop") {
+        classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
+        break;
+      }
       if (isComment) utils$1.raise(`unknown node property ${nodePropertyName}`);
       const nameElements = nodePropertyName.split(".");
       classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];
@@ -3539,6 +3609,14 @@ class BindingManager {
    * 
    */
   removeFromParent() {
+    if (this.component.useKeyed) {
+      this.#removeFromParentOnKeyed();
+    } else {
+      this.#removeFromParentOnNonKeyed();
+    }
+  }
+
+  #removeFromParentOnNonKeyed() {
     this.#nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
       this.component.bindingSummary.delete(binding);
@@ -3548,6 +3626,16 @@ class BindingManager {
     const recycleBindingManagers = BindingManager.bindingsByTemplate.get(this.#template) ?? 
       BindingManager.bindingsByTemplate.set(this.#template, []).get(this.#template);
     recycleBindingManagers.push(this);
+  }
+
+  #removeFromParentOnKeyed() {
+    // 再利用を考慮しない
+    this.#nodes.forEach(node => node.parentNode.removeChild(node));
+    this.bindings.forEach(binding => {
+      this.component.bindingSummary.delete(binding);
+      const removeBindManagers = binding.children.splice(0);
+      removeBindManagers.forEach(bindingManager => bindingManager.removeFromParent());
+    });
   }
 
   /**
@@ -3594,30 +3682,31 @@ class BindingManager {
    * @param {ContextInfo} context
    */
   static create(component, template, context) {
-    const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
-    if (bindingManagers.length > 0) {
-      const bindingManager = bindingManagers.pop();
-      bindingManager.setContext(component, context);
-      /**
-       * 
-       * @param {Binding[]} bindings 
-       * @param {ContextInfo} context 
-       */
-      const setContext = (bindings, context) => {
-        for(const binding of bindings) {
-          binding.applyToNode();
-          for(const bindingManager of binding.children) {
-            setContext(bindingManager.bindings);
+    if (!component.useKeyed) {
+      const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
+      if (bindingManagers.length > 0) {
+        const bindingManager = bindingManagers.pop();
+        bindingManager.setContext(component, context);
+        /**
+         * 
+         * @param {Binding[]} bindings 
+         * @param {ContextInfo} context 
+         */
+        const setContext = (bindings, context) => {
+          for(const binding of bindings) {
+            binding.applyToNode();
+            for(const bindingManager of binding.children) {
+              setContext(bindingManager.bindings);
+            }
           }
-        }
-      };
-      setContext(bindingManager.bindings);
-      bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
-  
-      return bindingManager;
-    } else {
-      return new BindingManager(component, template, context);
-    }
+        };
+        setContext(bindingManager.bindings);
+        bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
+    
+        return bindingManager;
+      }
+    } 
+    return new BindingManager(component, template, context);
   }
 
 }
@@ -4243,25 +4332,27 @@ function createViewModels(component, viewModelClass) {
 
 class BindingSummary {
 
-  /** @type {Map<string,Set<Binding>>} */
+  /** @type {Map<string,Set<Binding>>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
   #bindingsByKey = new Map;
   get bindingsByKey() {
     return this.#bindingsByKey;
   }
 
-  /** @type {Set<Binding>} */
+  /** @type {Set<Binding>} if/loopを持つbinding */
   #expandableBindings = new Set;
   get expandableBindings() {
     return this.#expandableBindings;
   }
 
-  /** @type {Set<Binding} */
+  /** @type {Set<Binding} componentを持つbinding */
   #componentBindings = new Set;
   get componentBindings() {
     return this.#componentBindings;
   }
 
+  /** @type {Set<Binding>} 仮削除用のbinding、flush()でこのbindingの削除処理をする */
   #deleteBindings = new Set;
+  /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
 
   /**
@@ -4483,6 +4574,11 @@ const mixInComponent = {
     return this._useTagNamesapce;
   },
 
+  /** @type {boolean} keyedを使う */
+  get useKeyed() {
+    return this._useKeyed;
+  },
+
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
     return this.usePseudo ? this.pseudoParentNode : (this.shadowRoot ?? this);
@@ -4536,6 +4632,7 @@ const mixInComponent = {
     this._useShadowRoot = this.constructor.useShadowRoot;
     this._usePseudo = this.constructor.usePseudo;
     this._useTagNamespace = this.constructor.useTagNamespace;
+    this._useKeyed = this.constructor.useKeyed;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
@@ -4686,6 +4783,9 @@ class ComponentClassGenerator {
 
         /** @type {boolean} */
         static useTagNamespace = module.useTagNamespace;
+
+        /** @type {boolean} */
+        static useKeyed = module.useKeyed ?? config.useKeyed;
 
         /** @type {boolean} */
         get [Symbols$1.isComponent] () {
