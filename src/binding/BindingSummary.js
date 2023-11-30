@@ -4,25 +4,27 @@ import { ComponentProperty } from "./nodeProperty/ComponentProperty.js";
 
 export class BindingSummary {
 
-  /** @type {Map<string,Set<Binding>>} */
+  /** @type {Map<string,Set<Binding>>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
   #bindingsByKey = new Map;
   get bindingsByKey() {
     return this.#bindingsByKey;
   }
 
-  /** @type {Set<Binding>} */
+  /** @type {Set<Binding>} if/loopを持つbinding */
   #expandableBindings = new Set;
   get expandableBindings() {
     return this.#expandableBindings;
   }
 
-  /** @type {Set<Binding} */
+  /** @type {Set<Binding} componentを持つbinding */
   #componentBindings = new Set;
   get componentBindings() {
     return this.#componentBindings;
   }
 
+  /** @type {Set<Binding>} 仮削除用のbinding、flush()でこのbindingの削除処理をする */
   #deleteBindings = new Set;
+  /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
 
   /**
