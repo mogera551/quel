@@ -3,6 +3,7 @@ import { Symbols } from "../Symbols.js";
 import { Module } from "./Module.js";
 import { mixInComponent } from "./MixInComponent.js";
 import { utils } from "../utils.js";
+import { config } from "../Config.js";
 
 /**
  * コンポーネントクラスを生成するクラス
@@ -40,6 +41,9 @@ export class ComponentClassGenerator {
 
         /** @type {boolean} */
         static useTagNamespace = module.useTagNamespace;
+
+        /** @type {boolean} */
+        static useKeyed = module.useKeyed ?? config.useKeyed;
 
         /** @type {boolean} */
         get [Symbols.isComponent] () {

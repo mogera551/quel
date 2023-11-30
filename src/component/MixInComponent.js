@@ -12,8 +12,6 @@ import { Context } from "../context/Context.js";
 import { createViewModels } from "../viewModel/Proxy.js";
 import { Phase } from "../thread/Phase.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
-import { Module } from "./Module.js";
-import { Template } from "./Template.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -168,6 +166,11 @@ export const mixInComponent = {
     return this._useTagNamesapce;
   },
 
+  /** @type {boolean} keyedを使う */
+  get useKeyed() {
+    return this._useKeyed;
+  },
+
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
     return this.usePseudo ? this.pseudoParentNode : (this.shadowRoot ?? this);
@@ -221,6 +224,7 @@ export const mixInComponent = {
     this._useShadowRoot = this.constructor.useShadowRoot;
     this._usePseudo = this.constructor.usePseudo;
     this._useTagNamespace = this.constructor.useTagNamespace;
+    this._useKeyed = this.constructor.useKeyed;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;

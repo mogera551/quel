@@ -39,6 +39,9 @@ export class Module {
   /** @type {boolean} */
   useTagNamespace = true;
 
+  /** @type {boolean|undefined} */
+  useKeyed;
+
   /** @type {Object<string,FilterFunc>} */
   inputFilters;
 
