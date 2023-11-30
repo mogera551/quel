@@ -2858,8 +2858,8 @@ class RepeatKeyed extends Repeat {
     const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
     const lastIndexByNewIndex = new Map;
-    const insertOrMoveIndexes = [];
     const lastIndexes = new Set;
+    
     /** @type {BindingManager[]} */
     const newBindingManagers = values.map((value, newIndex) => {
       const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
@@ -2878,10 +2878,6 @@ class RepeatKeyed extends Repeat {
         if (newIndex !== lastIndex) {
           bindingManager.setContext(this.binding.component, createNewContext(newIndex));
         }
-        const prevLastIndex = lastIndexByNewIndex.get(newIndex - 1);
-        if (newIndex !== 0 && (typeof prevLastIndex === "undefined" || prevLastIndex > lastIndex)) {
-          insertOrMoveIndexes.push(newIndex);
-        }
       }
       return bindingManager;
     });
@@ -2889,11 +2885,15 @@ class RepeatKeyed extends Repeat {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].removeFromParent();
     }
-    for(const index of insertOrMoveIndexes) {
-      const bindingManager = newBindingManagers[index];
-      const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
-      beforeNode.after(...bindingManager.nodes);
-    }
+    newBindingManagers.forEach((bindingManager, index) => {
+      const node = bindingManager.nodes[0];
+      if (typeof node !== "undefined") {
+        const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
+        if (node.previousSibling !== beforeNode) {
+          beforeNode.after(...bindingManager.nodes);
+        }
+      }
+    });
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
     this.binding.children.forEach(applyToNodeFunc);
     this.#lastValue = values.slice();
