@@ -1,9 +1,10 @@
+import "../../types.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
-class PropertyAccess {
+class BindingPropertyAccess {
   get name() {
     return this.#viewModelProperty.name;
   }
@@ -56,7 +57,7 @@ export class ComponentProperty extends ElementBase {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.thisComponent.props[Symbols.bindProperty](this.propName, new PropertyAccess(this.binding.viewModelProperty));
+    this.thisComponent.props[Symbols.bindProperty](this.propName, new BindingPropertyAccess(this.binding.viewModelProperty));
     Object.defineProperty(this.thisComponent.viewModel, this.propName, {
       get: ((propName) => function () { return this.$props[propName]; })(this.propName),
       set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),
@@ -66,20 +67,18 @@ export class ComponentProperty extends ElementBase {
 
   /**
    * 更新前処理
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+  beforeUpdate(propertyAccessByViewModelPropertyKey) {
     const viewModelProperty = this.binding.viewModelProperty.name;
     const propName = this.propName;
-    for(const key of setOfUpdatedViewModelPropertyKeys) {
-      const [ name, indexesString ] = key.split("\t");
-      if (name === viewModelProperty || PropertyName.create(name).setOfParentPaths.has(viewModelProperty)) {
-        const remain = name.slice(viewModelProperty.length);
-        const indexes = ((indexesString || null)?.split(",") ?? []).map(i => Number(i));
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`$props.${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, indexes);
+    for(const [key, propertyAccess] of propertyAccessByViewModelPropertyKey.entries()) {
+      if (propertyAccess.propName.name === viewModelProperty || propertyAccess.propName.setOfParentPaths.has(viewModelProperty)) {
+        const remain = propertyAccess.propName.name.slice(viewModelProperty.length);
+        this.thisComponent.viewModel?.[Symbols.writeCallback](`$props.${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.viewModel?.[Symbols.writeCallback](`${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, propertyAccess.indexes);
       }
     }
   }

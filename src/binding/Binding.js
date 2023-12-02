@@ -307,9 +307,9 @@ export class BindingManager {
 
   /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  updateNode(setOfUpdatedViewModelPropertyKeys) {
+  updateNode(propertyAccessByViewModelPropertyKey) {
     // templateを先に展開する
     const { bindingSummary } = this.component;
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
@@ -320,13 +320,13 @@ export class BindingManager {
       return result2;
     });
     for(const binding of expandableBindings) {
-      if (setOfUpdatedViewModelPropertyKeys.has(binding.viewModelProperty.key)) {
+      if (propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) {
         binding.applyToNode();
       }
     }
     bindingSummary.flush();
 
-    for(const key of setOfUpdatedViewModelPropertyKeys) {
+    for(const key of propertyAccessByViewModelPropertyKey.keys()) {
       const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
       for(const binding of bindings) {
         if (!binding.expandable) {
@@ -335,7 +335,7 @@ export class BindingManager {
       }
     }
     for(const binding of bindingSummary.componentBindings) {
-      binding.nodeProperty.beforeUpdate(setOfUpdatedViewModelPropertyKeys);
+      binding.nodeProperty.beforeUpdate(propertyAccessByViewModelPropertyKey);
     }
   }
 

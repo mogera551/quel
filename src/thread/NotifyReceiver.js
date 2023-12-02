@@ -25,6 +25,13 @@ export class NotifyReceiver {
       for(const propertyAccess of notifies) {
         dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
       }
+      const propertyAccessByViewModelPropertyKey = notifies.concat(dependentPropertyAccesses).reduce(
+        (/** @type {Map<string,PropertyAccess>} */ map, propertyAccess) => 
+          map.set(propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString(), propertyAccess), 
+        new Map  
+      );
+
+
       const setOfUpdatedViewModelPropertyKeys = new Set(
         notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
       );

@@ -95,9 +95,9 @@ export class NodeProperty {
 
   /**
    * 更新前処理
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+  beforeUpdate(propertyAccessByViewModelPropertyKey) {
   }
 
   /** 

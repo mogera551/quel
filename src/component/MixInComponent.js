@@ -332,9 +332,9 @@ export const mixInComponent = {
   /**
    * ノード更新処理
    * UpdateSlotのNotifyReceiverから呼び出される
-   * @param {Set<string>} setOfViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  updateNode(setOfViewModelPropertyKeys) {
-    this.rootBinding?.updateNode(setOfViewModelPropertyKeys);
+  updateNode(propertyAccessByViewModelPropertyKey) {
+    this.rootBinding?.updateNode(propertyAccessByViewModelPropertyKey);
   },
 }

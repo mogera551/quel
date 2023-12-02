@@ -1321,6 +1321,13 @@ class NotifyReceiver {
       for(const propertyAccess of notifies) {
         dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
       }
+      notifies.concat(dependentPropertyAccesses).reduce(
+        (/** @type {Map<string,PropertyAccess>} */ map, propertyAccess) => 
+          map.set(propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString(), propertyAccess), 
+        new Map  
+      );
+
+
       const setOfUpdatedViewModelPropertyKeys = new Set(
         notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
       );
@@ -2036,9 +2043,9 @@ class NodeProperty {
 
   /**
    * 更新前処理
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+  beforeUpdate(propertyAccessByViewModelPropertyKey) {
   }
 
   /** 
@@ -2748,7 +2755,7 @@ class ElementProperty extends ElementBase {
   }
 }
 
-class PropertyAccess {
+class BindingPropertyAccess {
   get name() {
     return this.#viewModelProperty.name;
   }
@@ -2801,7 +2808,7 @@ class ComponentProperty extends ElementBase {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    this.thisComponent.props[Symbols$1.bindProperty](this.propName, new PropertyAccess(this.binding.viewModelProperty));
+    this.thisComponent.props[Symbols$1.bindProperty](this.propName, new BindingPropertyAccess(this.binding.viewModelProperty));
     Object.defineProperty(this.thisComponent.viewModel, this.propName, {
       get: ((propName) => function () { return this.$props[propName]; })(this.propName),
       set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),
@@ -2811,20 +2818,18 @@ class ComponentProperty extends ElementBase {
 
   /**
    * 更新前処理
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  beforeUpdate(setOfUpdatedViewModelPropertyKeys) {
+  beforeUpdate(propertyAccessByViewModelPropertyKey) {
     const viewModelProperty = this.binding.viewModelProperty.name;
     const propName = this.propName;
-    for(const key of setOfUpdatedViewModelPropertyKeys) {
-      const [ name, indexesString ] = key.split("\t");
-      if (name === viewModelProperty || PropertyName.create(name).setOfParentPaths.has(viewModelProperty)) {
-        const remain = name.slice(viewModelProperty.length);
-        const indexes = ((indexesString || null)?.split(",") ?? []).map(i => Number(i));
-        this.thisComponent.viewModel?.[Symbols$1.writeCallback](`$props.${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols$1.writeCallback](`${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols$1.notifyForDependentProps](`$props.${propName}${remain}`, indexes);
-        this.thisComponent.viewModel?.[Symbols$1.notifyForDependentProps](`${propName}${remain}`, indexes);
+    for(const [key, propertyAccess] of propertyAccessByViewModelPropertyKey.entries()) {
+      if (propertyAccess.propName.name === viewModelProperty || propertyAccess.propName.setOfParentPaths.has(viewModelProperty)) {
+        const remain = propertyAccess.propName.name.slice(viewModelProperty.length);
+        this.thisComponent.viewModel?.[Symbols$1.writeCallback](`$props.${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.viewModel?.[Symbols$1.writeCallback](`${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.viewModel?.[Symbols$1.notifyForDependentProps](`$props.${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.viewModel?.[Symbols$1.notifyForDependentProps](`${propName}${remain}`, propertyAccess.indexes);
       }
     }
   }
@@ -2857,7 +2862,6 @@ class RepeatKeyed extends Repeat {
     if (!Array.isArray(values)) utils$1.raise("value is not array");
     const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
-    const lastIndexByNewIndex = new Map;
     const lastIndexes = new Set;
     
     /** @type {BindingManager[]} */
@@ -2866,14 +2870,11 @@ class RepeatKeyed extends Repeat {
       let bindingManager;
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
-        lastIndexByNewIndex.set(newIndex, undefined);
-        insertOrMoveIndexes.push(newIndex);
         bindingManager = BindingManager.create(this.binding.component, this.template, createNewContext(newIndex));
       } else {
         // 元のインデックスがある場合（既存）
         bindingManager = this.binding.children[lastIndex];
         fromIndexByValue.set(value, lastIndex + 1); // 
-        lastIndexByNewIndex.set(newIndex, lastIndex);
         lastIndexes.add(lastIndex);
         if (newIndex !== lastIndex) {
           bindingManager.setContext(this.binding.component, createNewContext(newIndex));
@@ -2890,6 +2891,7 @@ class RepeatKeyed extends Repeat {
       if (typeof node !== "undefined") {
         const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
         if (node.previousSibling !== beforeNode) {
+          console.log(`beforeNode.after`, node.previousSibling, beforeNode);
           beforeNode.after(...bindingManager.nodes);
         }
       }
@@ -3640,9 +3642,9 @@ class BindingManager {
 
   /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  updateNode(setOfUpdatedViewModelPropertyKeys) {
+  updateNode(propertyAccessByViewModelPropertyKey) {
     // templateを先に展開する
     const { bindingSummary } = this.component;
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
@@ -3653,13 +3655,13 @@ class BindingManager {
       return result2;
     });
     for(const binding of expandableBindings) {
-      if (setOfUpdatedViewModelPropertyKeys.has(binding.viewModelProperty.key)) {
+      if (propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) {
         binding.applyToNode();
       }
     }
     bindingSummary.flush();
 
-    for(const key of setOfUpdatedViewModelPropertyKeys) {
+    for(const key of propertyAccessByViewModelPropertyKey.keys()) {
       const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
       for(const binding of bindings) {
         if (!binding.expandable) {
@@ -3668,7 +3670,7 @@ class BindingManager {
       }
     }
     for(const binding of bindingSummary.componentBindings) {
-      binding.nodeProperty.beforeUpdate(setOfUpdatedViewModelPropertyKeys);
+      binding.nodeProperty.beforeUpdate(propertyAccessByViewModelPropertyKey);
     }
   }
 
@@ -4740,10 +4742,10 @@ const mixInComponent = {
   /**
    * ノード更新処理
    * UpdateSlotのNotifyReceiverから呼び出される
-   * @param {Set<string>} setOfViewModelPropertyKeys 
+   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  updateNode(setOfViewModelPropertyKeys) {
-    this.rootBinding?.updateNode(setOfViewModelPropertyKeys);
+  updateNode(propertyAccessByViewModelPropertyKey) {
+    this.rootBinding?.updateNode(propertyAccessByViewModelPropertyKey);
   },
 };
 
