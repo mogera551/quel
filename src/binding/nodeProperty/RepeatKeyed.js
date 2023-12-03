@@ -46,6 +46,7 @@ export class RepeatKeyed extends Repeat {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].removeFromParent();
     }
+    // ToDo:要検討 レーベンシュタイン距離を求めるアルゴリズムを参考にできないか
     newBindingManagers.forEach((bindingManager, index) => {
       const node = bindingManager.nodes[0];
       if (typeof node !== "undefined") {
@@ -61,4 +62,24 @@ export class RepeatKeyed extends Repeat {
     this.#lastValue = values.slice();
   }
 
+  /**
+   * @param {Set<number>} setOfIndex
+   */
+  applyToChildNodes(setOfIndex) {
+    const bindingManagerByOldValue = new Map;
+    for(const index of setOfIndex) {
+      const bindingManager = this.binding.children[index];
+      bindingManager.removeFromParent();
+      const oldValue = this.#lastValue[index];
+      if (typeof oldValue !== "undefined") {
+        bindingManagerByOldValue.set(oldValue, bindingManager);
+      }
+    }
+    for(const index of setOfIndex) {
+      
+    }
+
+
+
+  }
 }

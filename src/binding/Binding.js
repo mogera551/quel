@@ -113,6 +113,14 @@ export class Binding {
   }
 
   /**
+   * 
+   * @param {Set<number>} setOfIndex 
+   */
+  applyToChildNodes(setOfIndex) {
+
+  }
+
+  /**
    * ViewModelへ値を反映する
    */
   applyToViewModel() {
@@ -297,7 +305,7 @@ export class BindingManager {
 
   #removeFromParentOnKeyed() {
     // 再利用を考慮しない
-    this.#nodes.forEach(node => node.parentNode.removeChild(node));
+    this.#nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
       this.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
@@ -320,18 +328,35 @@ export class BindingManager {
       return result2;
     });
     for(const binding of expandableBindings) {
-      if (propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) {
-        binding.applyToNode();
-      }
+      if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
+      binding.applyToNode();
     }
     bindingSummary.flush();
+
+    const setOfIndexByParentKey = new Map;
+    for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
+      const lastIndex = propertyAccess.indexes.at(-1);
+      if (typeof lastIndex === "undefined") continue;
+      const parentKey = propertyAccess.propName.name + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
+      /** @type {Set<number>} */
+      let setOfIndex;
+      setOfIndex = setOfIndexByParentKey.get(parentKey) ?? (setOfIndex = new Set, setOfIndexByParentKey.set(parentKey, setOfIndex), setOfIndex);
+      setOfIndex.add(lastIndex);
+    }
+    for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
+      const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
+      for(const binding of bindings) {
+        if (!binding.expandable) continue;
+        binding.applyToChildNodes(setOfIndex);
+      }
+
+    }
 
     for(const key of propertyAccessByViewModelPropertyKey.keys()) {
       const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
       for(const binding of bindings) {
-        if (!binding.expandable) {
-          binding.applyToNode();
-        }
+        if (binding.expandable) continue;
+        binding.applyToNode();
       }
     }
     for(const binding of bindingSummary.componentBindings) {

@@ -146,4 +146,12 @@ export class ViewModelProperty {
   assignValue(value) {
     this.value = value;
   }
+
+  getChildValue(index) {
+    return this.viewModel[Symbols.directlyGet](`${this.name}.*` , this.indexes.concat(index));
+  }
+
+  setChildValue(index, value) {
+    return this.viewModel[Symbols.directlySet](`${this.name}.*` , this.indexes.concat(index), value);
+  }
 }
