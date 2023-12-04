@@ -66,17 +66,22 @@ export class RepeatKeyed extends Repeat {
    * @param {Set<number>} setOfIndex
    */
   applyToChildNodes(setOfIndex) {
-    const bindingManagerByOldValue = new Map;
+    /** @type {Map<any,BindingManager>} */
+    const bindingManagerByValue = new Map;
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       bindingManager.removeFromParent();
       const oldValue = this.#lastValue[index];
       if (typeof oldValue !== "undefined") {
-        bindingManagerByOldValue.set(oldValue, bindingManager);
+        bindingManagerByValue.set(oldValue, bindingManager);
       }
     }
-    for(const index of setOfIndex) {
-      
+    for(const index of Array.from(setOfIndex).sort()) {
+      const newValue = this.binding.viewModelProperty.getChildValue(index);
+      const bindingManager =
+        bindingManagerByValue.get(newValue) ?? 
+        BindingManager.create(this.binding.component, this.template, createNewContext(index));
+      this.binding.replaceChild(index, bindingManager);
     }
 
 

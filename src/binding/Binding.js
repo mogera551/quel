@@ -166,6 +166,20 @@ export class Binding {
   }
 
   /**
+   * 
+   * @param {number} index 
+   * @param {BindingManager} bindingManager 
+   */
+  replaceChild(index, bindingManager) {
+    if (!this.expandable) utils.raise("not expandable");
+    const lastChild = this.children[index - 1];
+    this.children[index] = bindingManager;
+    const parentNode = this.nodeProperty.node.parentNode;
+    const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
+    parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+  }
+
+  /**
    * コンテキスト変更処理
    * #contextParamをクリアする
    */
@@ -372,6 +386,7 @@ export class BindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {ContextInfo} context
+   * @returns {BindingManager}
    */
   static create(component, template, context) {
     if (!component.useKeyed) {
