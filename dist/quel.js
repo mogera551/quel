@@ -1321,17 +1321,12 @@ class NotifyReceiver {
       for(const propertyAccess of notifies) {
         dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
       }
-      notifies.concat(dependentPropertyAccesses).reduce(
+      const propertyAccessByViewModelPropertyKey = notifies.concat(dependentPropertyAccesses).reduce(
         (/** @type {Map<string,PropertyAccess>} */ map, propertyAccess) => 
           map.set(propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString(), propertyAccess), 
         new Map  
       );
-
-
-      const setOfUpdatedViewModelPropertyKeys = new Set(
-        notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
-      );
-      this.#component.updateNode(setOfUpdatedViewModelPropertyKeys);
+      this.#component.updateNode(propertyAccessByViewModelPropertyKey);
     }
   }
 
@@ -2062,6 +2057,12 @@ class NodeProperty {
   assignValue(value) {
     this.value = value;
   }
+
+  /**
+   * @param {Set<number>} setOfIndex
+   */
+  applyToChildNodes(setOfIndex) {
+  }
 }
 
 class TemplateProperty extends NodeProperty {
@@ -2449,6 +2450,14 @@ class ViewModelProperty {
 
   assignValue(value) {
     this.value = value;
+  }
+
+  getChildValue(index) {
+    return this.viewModel[Symbols$1.directlyGet](`${this.name}.*` , this.indexes.concat(index));
+  }
+
+  setChildValue(index, value) {
+    return this.viewModel[Symbols$1.directlySet](`${this.name}.*` , this.indexes.concat(index), value);
   }
 }
 
@@ -2886,12 +2895,13 @@ class RepeatKeyed extends Repeat {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].removeFromParent();
     }
+    // ToDo:要検討 レーベンシュタイン距離を求めるアルゴリズムを参考にできないか
     newBindingManagers.forEach((bindingManager, index) => {
       const node = bindingManager.nodes[0];
       if (typeof node !== "undefined") {
         const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
         if (node.previousSibling !== beforeNode) {
-          console.log(`beforeNode.after`, node.previousSibling, beforeNode);
+          //console.log(`beforeNode.after`, node.previousSibling, beforeNode);
           beforeNode.after(...bindingManager.nodes);
         }
       }
@@ -2901,6 +2911,28 @@ class RepeatKeyed extends Repeat {
     this.#lastValue = values.slice();
   }
 
+  /**
+   * @param {Set<number>} setOfIndex
+   */
+  applyToChildNodes(setOfIndex) {
+    /** @type {Map<any,BindingManager>} */
+    const bindingManagerByValue = new Map;
+    for(const index of setOfIndex) {
+      const bindingManager = this.binding.children[index];
+      bindingManager.removeFromParent();
+      const oldValue = this.#lastValue[index];
+      if (typeof oldValue !== "undefined") {
+        bindingManagerByValue.set(oldValue, bindingManager);
+      }
+    }
+    for(const index of Array.from(setOfIndex).sort()) {
+      const newValue = this.binding.viewModelProperty.getChildValue(index);
+      const bindingManager =
+        bindingManagerByValue.get(newValue) ?? 
+        BindingManager.create(this.binding.component, this.template, createNewContext(index));
+      this.binding.replaceChild(index, bindingManager);
+    }
+  }
 }
 
 const regexp = RegExp(/^\$[0-9]+$/);
@@ -3448,6 +3480,15 @@ class Binding {
   }
 
   /**
+   * 
+   * @param {Set<number>} setOfIndex 
+   */
+  applyToChildNodes(setOfIndex) {
+    this.nodeProperty.applyToChildNodes(setOfIndex);
+
+  }
+
+  /**
    * ViewModelへ値を反映する
    */
   applyToViewModel() {
@@ -3487,6 +3528,20 @@ class Binding {
     if (!this.expandable) utils$1.raise("not expandable");
     const lastChild = this.children[this.children.length - 1];
     this.children.push(bindingManager);
+    const parentNode = this.nodeProperty.node.parentNode;
+    const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
+    parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+  }
+
+  /**
+   * 
+   * @param {number} index 
+   * @param {BindingManager} bindingManager 
+   */
+  replaceChild(index, bindingManager) {
+    if (!this.expandable) utils$1.raise("not expandable");
+    const lastChild = this.children[index - 1];
+    this.children[index] = bindingManager;
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
@@ -3632,7 +3687,7 @@ class BindingManager {
 
   #removeFromParentOnKeyed() {
     // 再利用を考慮しない
-    this.#nodes.forEach(node => node.parentNode.removeChild(node));
+    this.#nodes.forEach(node => this.fragment.appendChild(node));
     this.bindings.forEach(binding => {
       this.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
@@ -3655,18 +3710,36 @@ class BindingManager {
       return result2;
     });
     for(const binding of expandableBindings) {
-      if (propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) {
-        binding.applyToNode();
-      }
+      if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
+      binding.applyToNode();
     }
     bindingSummary.flush();
+
+    const setOfIndexByParentKey = new Map;
+    for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
+      if (propertyAccess.propName.lastPathName !== "*") continue;
+      const lastIndex = propertyAccess.indexes?.at(-1);
+      if (typeof lastIndex === "undefined") continue;
+      const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
+      /** @type {Set<number>} */
+      let setOfIndex;
+      setOfIndex = setOfIndexByParentKey.get(parentKey) ?? (setOfIndex = new Set, setOfIndexByParentKey.set(parentKey, setOfIndex), setOfIndex);
+      setOfIndex.add(lastIndex);
+    }
+    for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
+      const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
+      for(const binding of bindings) {
+        if (!binding.expandable) continue;
+        binding.applyToChildNodes(setOfIndex);
+      }
+
+    }
 
     for(const key of propertyAccessByViewModelPropertyKey.keys()) {
       const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
       for(const binding of bindings) {
-        if (!binding.expandable) {
-          binding.applyToNode();
-        }
+        if (binding.expandable) continue;
+        binding.applyToNode();
       }
     }
     for(const binding of bindingSummary.componentBindings) {
@@ -3682,6 +3755,7 @@ class BindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {ContextInfo} context
+   * @returns {BindingManager}
    */
   static create(component, template, context) {
     if (!component.useKeyed) {

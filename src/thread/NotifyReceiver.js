@@ -30,12 +30,7 @@ export class NotifyReceiver {
           map.set(propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString(), propertyAccess), 
         new Map  
       );
-
-
-      const setOfUpdatedViewModelPropertyKeys = new Set(
-        notifies.concat(dependentPropertyAccesses).map(propertyAccess => propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString())
-      );
-      this.#component.updateNode(setOfUpdatedViewModelPropertyKeys);
+      this.#component.updateNode(propertyAccessByViewModelPropertyKey);
     }
   }
 

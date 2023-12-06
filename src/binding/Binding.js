@@ -117,6 +117,7 @@ export class Binding {
    * @param {Set<number>} setOfIndex 
    */
   applyToChildNodes(setOfIndex) {
+    this.nodeProperty.applyToChildNodes(setOfIndex);
 
   }
 
@@ -349,9 +350,10 @@ export class BindingManager {
 
     const setOfIndexByParentKey = new Map;
     for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
-      const lastIndex = propertyAccess.indexes.at(-1);
+      if (propertyAccess.propName.lastPathName !== "*") continue;
+      const lastIndex = propertyAccess.indexes?.at(-1);
       if (typeof lastIndex === "undefined") continue;
-      const parentKey = propertyAccess.propName.name + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
+      const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
       /** @type {Set<number>} */
       let setOfIndex;
       setOfIndex = setOfIndexByParentKey.get(parentKey) ?? (setOfIndex = new Set, setOfIndexByParentKey.set(parentKey, setOfIndex), setOfIndex);

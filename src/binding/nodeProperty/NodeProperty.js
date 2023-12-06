@@ -114,4 +114,10 @@ export class NodeProperty {
   assignValue(value) {
     this.value = value;
   }
+
+  /**
+   * @param {Set<number>} setOfIndex
+   */
+  applyToChildNodes(setOfIndex) {
+  }
 }

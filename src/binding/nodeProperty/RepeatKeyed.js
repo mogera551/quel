@@ -52,7 +52,7 @@ export class RepeatKeyed extends Repeat {
       if (typeof node !== "undefined") {
         const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
         if (node.previousSibling !== beforeNode) {
-          console.log(`beforeNode.after`, node.previousSibling, beforeNode);
+          //console.log(`beforeNode.after`, node.previousSibling, beforeNode);
           beforeNode.after(...bindingManager.nodes);
         }
       }
@@ -68,6 +68,9 @@ export class RepeatKeyed extends Repeat {
   applyToChildNodes(setOfIndex) {
     /** @type {Map<any,BindingManager>} */
     const bindingManagerByValue = new Map;
+    /** 
+     * ToDo: BindingSummaryの書き換えをしないといけない
+     */
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       bindingManager.removeFromParent();
@@ -83,8 +86,5 @@ export class RepeatKeyed extends Repeat {
         BindingManager.create(this.binding.component, this.template, createNewContext(index));
       this.binding.replaceChild(index, bindingManager);
     }
-
-
-
   }
 }

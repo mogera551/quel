@@ -2,6 +2,16 @@ import { Symbols } from "../Symbols.js";
 import "../types.js";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty.js";
 
+/**
+ * BindingSummary
+ * ToDo:ツリーを保持する必要がある
+ * list
+ *   +-- list.*
+ *         +-- list.*.id
+ *         +-- list.*.name
+ *         +-- list.*.email
+ * ToDo:相対パスで参照できればよいかな
+ */
 export class BindingSummary {
 
   /** @type {Map<string,Set<Binding>>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
