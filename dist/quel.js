@@ -2917,6 +2917,10 @@ class RepeatKeyed extends Repeat {
   applyToChildNodes(setOfIndex) {
     /** @type {Map<any,BindingManager>} */
     const bindingManagerByValue = new Map;
+    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
+    /** 
+     * ToDo: BindingSummaryの書き換えをしないといけない
+     */
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       bindingManager.removeFromParent();
@@ -2927,9 +2931,28 @@ class RepeatKeyed extends Repeat {
     }
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
-      const bindingManager =
-        bindingManagerByValue.get(newValue) ?? 
-        BindingManager.create(this.binding.component, this.template, createNewContext(index));
+      const newContext = createNewContext(index);
+      let bindingManager = bindingManagerByValue.get(newValue);
+      if (typeof bindingManager !== "undefined") {
+        bindingManager.setContext(this.binding.component, newContext);
+        /**
+         * 
+         * @param {Binding[]} bindings 
+         * @param {ContextInfo} context 
+         */
+        const setContext = (bindings, context) => {
+          for(const binding of bindings) {
+            binding.applyToNode();
+            for(const bindingManager of binding.children) {
+              setContext(bindingManager.bindings);
+            }
+          }
+        };
+        setContext(bindingManager.bindings);
+        bindingManager.bindings.forEach(binding => this.binding.component.bindingSummary.add(binding));
+      } else {
+        bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
+      }
       this.binding.replaceChild(index, bindingManager);
     }
   }
@@ -4406,6 +4429,16 @@ function createViewModels(component, viewModelClass) {
   };
 }
 
+/**
+ * BindingSummary
+ * ToDo:ツリーを保持する必要がある
+ * list
+ *   +-- list.*
+ *         +-- list.*.id
+ *         +-- list.*.name
+ *         +-- list.*.email
+ * ToDo:相対パスで参照できればよいかな
+ */
 class BindingSummary {
 
   /** @type {Map<string,Set<Binding>>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */

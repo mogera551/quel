@@ -68,9 +68,6 @@ export class RepeatKeyed extends Repeat {
   applyToChildNodes(setOfIndex) {
     /** @type {Map<any,BindingManager>} */
     const bindingManagerByValue = new Map;
-    /** 
-     * ToDo: BindingSummaryの書き換えをしないといけない
-     */
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       bindingManager.removeFromParent();
@@ -79,11 +76,31 @@ export class RepeatKeyed extends Repeat {
         bindingManagerByValue.set(oldValue, bindingManager);
       }
     }
+    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
-      const bindingManager =
-        bindingManagerByValue.get(newValue) ?? 
-        BindingManager.create(this.binding.component, this.template, createNewContext(index));
+      const newContext = createNewContext(index);
+      let bindingManager = bindingManagerByValue.get(newValue);
+      if (typeof bindingManager !== "undefined") {
+        bindingManager.setContext(this.binding.component, newContext);
+        /**
+         * 
+         * @param {Binding[]} bindings 
+         * @param {ContextInfo} context 
+         */
+        const setContext = (bindings, context) => {
+          for(const binding of bindings) {
+            binding.applyToNode();
+            for(const bindingManager of binding.children) {
+              setContext(bindingManager.bindings, context);
+            }
+          }
+        };
+        setContext(bindingManager.bindings, newContext);
+        bindingManager.bindings.forEach(binding => this.binding.component.bindingSummary.add(binding));
+      } else {
+        bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
+      }
       this.binding.replaceChild(index, bindingManager);
     }
   }
