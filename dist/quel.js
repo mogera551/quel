@@ -2874,12 +2874,16 @@ class RepeatKeyed extends Repeat {
     const lastIndexes = new Set;
     
     /** @type {BindingManager[]} */
+    let beforeBindingManager;
     const newBindingManagers = values.map((value, newIndex) => {
       const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
       let bindingManager;
+      const beforeNode = beforeBindingManager?.lastNode ?? this.node;
+      const parentNode = this.node.parentNode;
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
         bindingManager = BindingManager.create(this.binding.component, this.template, createNewContext(newIndex));
+        parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);        
       } else {
         // 元のインデックスがある場合（既存）
         bindingManager = this.binding.children[lastIndex];
@@ -2888,26 +2892,17 @@ class RepeatKeyed extends Repeat {
         if (newIndex !== lastIndex) {
           bindingManager.setContext(this.binding.component, createNewContext(newIndex));
         }
+        applyToNodeFunc(bindingManager);
+        beforeNode.after(...bindingManager.nodes);
       }
+      beforeBindingManager = bindingManager;
       return bindingManager;
     });
     for(let i = 0; i < this.binding.children.length; i++) {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].removeFromParent();
     }
-    // ToDo:要検討 レーベンシュタイン距離を求めるアルゴリズムを参考にできないか
-    newBindingManagers.forEach((bindingManager, index) => {
-      const node = bindingManager.nodes[0];
-      if (typeof node !== "undefined") {
-        const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
-        if (node.previousSibling !== beforeNode) {
-          //console.log(`beforeNode.after`, node.previousSibling, beforeNode);
-          beforeNode.after(...bindingManager.nodes);
-        }
-      }
-    });
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
-    this.binding.children.forEach(applyToNodeFunc);
     this.#lastValue = values.slice();
   }
 
@@ -2917,10 +2912,6 @@ class RepeatKeyed extends Repeat {
   applyToChildNodes(setOfIndex) {
     /** @type {Map<any,BindingManager>} */
     const bindingManagerByValue = new Map;
-    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
-    /** 
-     * ToDo: BindingSummaryの書き換えをしないといけない
-     */
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       bindingManager.removeFromParent();
@@ -2929,6 +2920,7 @@ class RepeatKeyed extends Repeat {
         bindingManagerByValue.set(oldValue, bindingManager);
       }
     }
+    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       const newContext = createNewContext(index);
@@ -2942,6 +2934,7 @@ class RepeatKeyed extends Repeat {
          */
         const setContext = (bindings, context) => {
           for(const binding of bindings) {
+            binding.component.bindingSummary.add(binding);
             binding.applyToNode();
             for(const bindingManager of binding.children) {
               setContext(bindingManager.bindings);
@@ -2949,7 +2942,6 @@ class RepeatKeyed extends Repeat {
           }
         };
         setContext(bindingManager.bindings);
-        bindingManager.bindings.forEach(binding => this.binding.component.bindingSummary.add(binding));
       } else {
         bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
       }
@@ -3689,11 +3681,14 @@ class BindingManager {
    * 
    */
   removeFromParent() {
+    this.#removeFromParentOnNonKeyed();
+/*
     if (this.component.useKeyed) {
       this.#removeFromParentOnKeyed();
     } else {
       this.#removeFromParentOnNonKeyed();
     }
+*/
   }
 
   #removeFromParentOnNonKeyed() {
@@ -3718,11 +3713,23 @@ class BindingManager {
     });
   }
 
+  dispose(isRoot = true) {
+    if (isRoot) {
+      this.#nodes.forEach(node => node.parentNode.removeChild(node));
+    }
+    this.bindings.forEach(binding => {
+      this.component.bindingSummary.delete(binding);
+      const removeBindManagers = binding.children.splice(0);
+      removeBindManagers.forEach(bindingManager => bindingManager.dispose(false));
+    });
+  }
+
   /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
+
     // templateを先に展開する
     const { bindingSummary } = this.component;
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
@@ -3732,11 +3739,17 @@ class BindingManager {
       const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
       return result2;
     });
+    performance.mark('updateNode:start');
     for(const binding of expandableBindings) {
       if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
       binding.applyToNode();
     }
     bindingSummary.flush();
+    performance.mark('updateNode:end');
+    performance.measure('updateNode', 'updateNode:start', 'updateNode:end');
+    console.log(performance.getEntriesByType("measure"));    
+    performance.clearMeasures('updateNode');
+    performance.clearMarks('updateNode:start', 'updateNode:end');
 
     const setOfIndexByParentKey = new Map;
     for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
@@ -3755,7 +3768,6 @@ class BindingManager {
         if (!binding.expandable) continue;
         binding.applyToChildNodes(setOfIndex);
       }
-
     }
 
     for(const key of propertyAccessByViewModelPropertyKey.keys()) {
@@ -3768,6 +3780,7 @@ class BindingManager {
     for(const binding of bindingSummary.componentBindings) {
       binding.nodeProperty.beforeUpdate(propertyAccessByViewModelPropertyKey);
     }
+
   }
 
   /** @type {Map<HTMLTemplateElement,BindingManager[]>} */
@@ -3781,7 +3794,7 @@ class BindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, context) {
-    if (!component.useKeyed) {
+    {
       const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
       if (bindingManagers.length > 0) {
         const bindingManager = bindingManagers.pop();

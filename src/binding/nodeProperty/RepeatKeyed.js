@@ -25,12 +25,16 @@ export class RepeatKeyed extends Repeat {
     const lastIndexes = new Set;
     
     /** @type {BindingManager[]} */
+    let beforeBindingManager;
     const newBindingManagers = values.map((value, newIndex) => {
       const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
       let bindingManager;
+      const beforeNode = beforeBindingManager?.lastNode ?? this.node;
+      const parentNode = this.node.parentNode;
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
         bindingManager = BindingManager.create(this.binding.component, this.template, createNewContext(newIndex));
+        parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);        
       } else {
         // 元のインデックスがある場合（既存）
         bindingManager = this.binding.children[lastIndex];
@@ -39,26 +43,17 @@ export class RepeatKeyed extends Repeat {
         if (newIndex !== lastIndex) {
           bindingManager.setContext(this.binding.component, createNewContext(newIndex));
         }
+        applyToNodeFunc(bindingManager);
+        beforeNode.after(...bindingManager.nodes);
       }
+      beforeBindingManager = bindingManager;
       return bindingManager;
     });
     for(let i = 0; i < this.binding.children.length; i++) {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].removeFromParent();
     }
-    // ToDo:要検討 レーベンシュタイン距離を求めるアルゴリズムを参考にできないか
-    newBindingManagers.forEach((bindingManager, index) => {
-      const node = bindingManager.nodes[0];
-      if (typeof node !== "undefined") {
-        const beforeNode = newBindingManagers[index - 1]?.lastNode ?? this.binding.nodeProperty.node;
-        if (node.previousSibling !== beforeNode) {
-          //console.log(`beforeNode.after`, node.previousSibling, beforeNode);
-          beforeNode.after(...bindingManager.nodes);
-        }
-      }
-    })
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
-    this.binding.children.forEach(applyToNodeFunc);
     this.#lastValue = values.slice();
   }
 
@@ -90,6 +85,7 @@ export class RepeatKeyed extends Repeat {
          */
         const setContext = (bindings, context) => {
           for(const binding of bindings) {
+            binding.component.bindingSummary.add(binding);
             binding.applyToNode();
             for(const bindingManager of binding.children) {
               setContext(bindingManager.bindings, context);
@@ -97,7 +93,6 @@ export class RepeatKeyed extends Repeat {
           }
         };
         setContext(bindingManager.bindings, newContext);
-        bindingManager.bindings.forEach(binding => this.binding.component.bindingSummary.add(binding));
       } else {
         bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
       }

@@ -251,6 +251,9 @@ export class BindingManager {
 
   /** @type {HTMLTemplateElement} */
   #template;
+  get template() {
+    return this.#template;
+  }
 
   /**
    * 
@@ -299,11 +302,14 @@ export class BindingManager {
    * 
    */
   removeFromParent() {
+    this.#removeFromParentOnNonKeyed();
+/*
     if (this.component.useKeyed) {
       this.#removeFromParentOnKeyed();
     } else {
       this.#removeFromParentOnNonKeyed();
     }
+*/
   }
 
   #removeFromParentOnNonKeyed() {
@@ -328,11 +334,23 @@ export class BindingManager {
     });
   }
 
+  dispose(isRoot = true) {
+    if (isRoot) {
+      this.#nodes.forEach(node => node.parentNode.removeChild(node));
+    }
+    this.bindings.forEach(binding => {
+      this.component.bindingSummary.delete(binding);
+      const removeBindManagers = binding.children.splice(0);
+      removeBindManagers.forEach(bindingManager => bindingManager.dispose(false));
+    });
+  }
+
   /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
+
     // templateを先に展開する
     const { bindingSummary } = this.component;
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
@@ -342,11 +360,17 @@ export class BindingManager {
       const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
       return result2;
     });
+    performance.mark('updateNode:start');
     for(const binding of expandableBindings) {
       if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
       binding.applyToNode();
     }
     bindingSummary.flush();
+    performance.mark('updateNode:end')
+    performance.measure('updateNode', 'updateNode:start', 'updateNode:end');
+    console.log(performance.getEntriesByType("measure"));    
+    performance.clearMeasures('updateNode');
+    performance.clearMarks('updateNode:start', 'updateNode:end');
 
     const setOfIndexByParentKey = new Map;
     for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
@@ -365,7 +389,6 @@ export class BindingManager {
         if (!binding.expandable) continue;
         binding.applyToChildNodes(setOfIndex);
       }
-
     }
 
     for(const key of propertyAccessByViewModelPropertyKey.keys()) {
@@ -378,6 +401,7 @@ export class BindingManager {
     for(const binding of bindingSummary.componentBindings) {
       binding.nodeProperty.beforeUpdate(propertyAccessByViewModelPropertyKey);
     }
+
   }
 
   /** @type {Map<HTMLTemplateElement,BindingManager[]>} */
@@ -391,7 +415,7 @@ export class BindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, context) {
-    if (!component.useKeyed) {
+    if (true) {
       const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
       if (bindingManagers.length > 0) {
         const bindingManager = bindingManagers.pop();
