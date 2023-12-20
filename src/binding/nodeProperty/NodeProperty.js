@@ -107,10 +107,17 @@ export class NodeProperty {
     return this.value === value;
   }
 
+  /**
+   * 
+   */
   assignFromViewModelValue() {
-    this.value = this.binding.viewModelProperty.filteredValue ?? "";
+    this.assignValue(this.binding.viewModelProperty.filteredValue ?? "");
   }
 
+  /**
+   * 
+   * @param {any} value 
+   */
   assignValue(value) {
     this.value = value;
   }

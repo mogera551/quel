@@ -26,6 +26,12 @@ export class BindingSummary {
     return this.#expandableBindings;
   }
 
+  /** @type {Set<Binding>} select.valueを持つbinding */
+  #selectBindings = new Set;
+  get selectBindings() {
+    return this.#selectBindings;
+  }
+
   /** @type {Set<Binding} componentを持つbinding */
   #componentBindings = new Set;
   get componentBindings() {
@@ -52,6 +58,9 @@ export class BindingSummary {
     if (binding.nodeProperty.expandable) {
       this.#expandableBindings.add(binding);
     }
+    if (binding.nodeProperty.node.constructor === HTMLSelectElement && binding.nodeProperty.name === "value") {
+      this.#selectBindings.add(binding);
+    }
     if (binding.nodeProperty.constructor === ComponentProperty) {
       this.#componentBindings.add(binding);
     }
@@ -72,6 +81,7 @@ export class BindingSummary {
       bindings.delete(binding);
     }
     this.#expandableBindings.delete(binding);
+    this.#selectBindings.delete(binding);
     this.#componentBindings.delete(binding);
   }
 
@@ -99,6 +109,7 @@ export class BindingSummary {
     this.#allBindings = new Set;
     this.#bindingsByKey = new Map;
     this.#expandableBindings = new Set;
+    this.#selectBindings = new Set;
     this.#componentBindings = new Set;
   }
 }

@@ -74,6 +74,15 @@ export class Binding {
     return this.nodeProperty.isSelectValue;
   }
 
+  /** @type {boolean} */
+  #updated;
+  get updated() {
+    return this.#updated;
+  }
+  set updated(value) {
+    this.#updated = value;
+  }
+
   /**
    * 
    * @param {BindingManager} bindingManager 
@@ -104,12 +113,7 @@ export class Binding {
     if (!nodeProperty.applicable) return;
     const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
     if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-    /**
-     * 展開可能（branchもしくはrepeat）な場合、変更スロットに入れずに展開する
-     * 展開可能でない場合、変更スロットに変更処理を入れる
-     * ※変更スロットに入れるのは、selectとoptionの値を入れる処理の順序をつけるため
-     */
-    expandable ? nodeProperty.assignFromViewModelValue() : component.updateSlot.addNodeUpdate(this, filteredViewModelValue);
+    nodeProperty.assignFromViewModelValue();
   }
 
   /**
@@ -151,7 +155,7 @@ export class Binding {
   initialize() {
     this.nodeProperty.initialize();
     this.viewModelProperty.initialize();
-    this.applyToNode();
+//    this.applyToNode();
   }
 
   /**
@@ -284,9 +288,6 @@ export class BindingManager {
     this.bindings.forEach(binding => binding.changeContext());
   }
 
-  /**
-   * 
-   */
   applyToNode() {
     this.bindings.forEach(binding => binding.applyToNode());
   }
@@ -378,10 +379,7 @@ export class BindingManager {
       const lastIndex = propertyAccess.indexes?.at(-1);
       if (typeof lastIndex === "undefined") continue;
       const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
-      /** @type {Set<number>} */
-      let setOfIndex;
-      setOfIndex = setOfIndexByParentKey.get(parentKey) ?? (setOfIndex = new Set, setOfIndexByParentKey.set(parentKey, setOfIndex), setOfIndex);
-      setOfIndex.add(lastIndex);
+      setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
     }
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
       const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
