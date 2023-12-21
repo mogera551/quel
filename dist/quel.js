@@ -3326,7 +3326,11 @@ class ReuseBindingManager {
    * @param {import("./Binding.js").BindingManager} bindingManager 
    */
   static dispose(bindingManager) {
-    bindingManager.removeFromParent();
+    if (bindingManager.component.useKeyed) {
+      bindingManager.nodes.forEach(node => node.parentNode.removeChild(node));
+    } else {
+      bindingManager.removeFromParent();
+    }
     bindingManager.bindings.forEach(binding => {
       bindingManager.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
