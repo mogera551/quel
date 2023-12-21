@@ -40,7 +40,7 @@ export const mixInComponent = {
   /** @type {ViewModelProxy} */
   get viewModel() {
     if (typeof this.updateSlot === "undefined" || 
-      (this.updateSlot.phase !== Phase.gatherUpdatedProperties && this.updateSlot.phase !== Phase.applyToNode)) {
+      (this.updateSlot.phase !== Phase.gatherUpdatedProperties)) {
       return this._viewModels["writable"];
     } else {
       return this._viewModels["readonly"];

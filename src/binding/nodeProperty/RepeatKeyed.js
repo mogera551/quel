@@ -51,7 +51,7 @@ export class RepeatKeyed extends Repeat {
     });
     for(let i = 0; i < this.binding.children.length; i++) {
       if (lastIndexes.has(i)) continue;
-      this.binding.children[i].removeFromParent();
+      this.binding.children[i].dispose();
     }
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
     this.#lastValue = values.slice();
@@ -65,7 +65,8 @@ export class RepeatKeyed extends Repeat {
     const bindingManagerByValue = new Map;
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
-      bindingManager.removeFromParent();
+      if (typeof bindingManager === "undefined") continue;
+      bindingManager.dispose();
       const oldValue = this.#lastValue[index];
       if (typeof oldValue !== "undefined") {
         bindingManagerByValue.set(oldValue, bindingManager);
@@ -74,25 +75,12 @@ export class RepeatKeyed extends Repeat {
     const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
+      if (typeof newValue === "undefined") continue;
       const newContext = createNewContext(index);
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager !== "undefined") {
         bindingManager.setContext(this.binding.component, newContext);
-        /**
-         * 
-         * @param {Binding[]} bindings 
-         * @param {ContextInfo} context 
-         */
-        const setContext = (bindings, context) => {
-          for(const binding of bindings) {
-            binding.component.bindingSummary.add(binding);
-            binding.applyToNode();
-            for(const bindingManager of binding.children) {
-              setContext(bindingManager.bindings, context);
-            }
-          }
-        };
-        setContext(bindingManager.bindings, newContext);
+        bindingManager.applyToNode();
       } else {
         bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
       }

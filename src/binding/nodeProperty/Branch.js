@@ -20,7 +20,7 @@ export class Branch extends TemplateProperty {
         this.binding.appendChild(bindingManager);
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
-        removeBindingManagers.forEach(bindingManager => bindingManager.removeFromParent());
+        removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
       }
     } else {
       this.binding.children.forEach(bindings => bindings.applyToNode());

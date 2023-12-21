@@ -1,5 +1,4 @@
 import "../types.js";
-import { NodeUpdator } from "./NodeUpdator.js";
 import { NotifyReceiver } from "./NotifyReceiver.js";
 import { Phase } from "./Phase.js";
 import { ViewModelUpdator, ProcessData } from "./ViewModelUpdator.js";
@@ -20,13 +19,6 @@ export class UpdateSlot {
   /** @type {NotifyReceiver} */
   get notifyReceiver() {
     return this.#notifyReceiver;
-  }
-
-  /** @type {NodeUpdator} */
-  #nodeUpdator;
-  /** @type {NodeUpdator} */
-  get nodeUpdator() {
-    return this.#nodeUpdator;
   }
 
   /** @type {()=>void} */
@@ -75,7 +67,6 @@ export class UpdateSlot {
   constructor(component, callback = null, changePhaseCallback = null) {
     this.#viewModelUpdator = new ViewModelUpdator();
     this.#notifyReceiver = new NotifyReceiver(component);
-    this.#nodeUpdator = new NodeUpdator();
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
     this.#waitPromise = new Promise((resolve, reject) => {
@@ -113,7 +104,7 @@ export class UpdateSlot {
 
   /** @type {boolean} */
   get isEmpty() {
-    return this.#viewModelUpdator.isEmpty && this.#notifyReceiver.isEmpty && this.#nodeUpdator.isEmpty;
+    return this.#viewModelUpdator.isEmpty && this.#notifyReceiver.isEmpty;
   }
 
   async exec() {
@@ -124,9 +115,7 @@ export class UpdateSlot {
       this.phase = Phase.gatherUpdatedProperties;
       await this.#notifyReceiver.exec();
 
-      this.phase = Phase.applyToNode;
-      await this.#nodeUpdator.exec();
-    } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty || !this.#nodeUpdator.isEmpty);
+    } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty);
 
     this.phase = Phase.terminate;
     this.#aliveResolve();
@@ -147,16 +136,6 @@ export class UpdateSlot {
    */
   async addNotify(notifyData) {
     this.#notifyReceiver.queue.push(notifyData);
-    this.#waitResolve(true); // waitingを解除する
-  }
-
-  /**
-   * 
-   * @param {import("../binding/Binding.js").Binding} binding 
-   * @param {any} value
-   */
-  async addNodeUpdate(binding, value) {
-    this.#nodeUpdator.queue.set(binding, value);
     this.#waitResolve(true); // waitingを解除する
   }
 

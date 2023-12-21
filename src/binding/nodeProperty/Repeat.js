@@ -26,7 +26,7 @@ export class Repeat extends TemplateProperty {
     } else if (this.value > value.length) {
       const removeBindingManagers = this.binding.children.splice(value.length);
       this.binding.children.forEach(applyToNodeFunc);
-      removeBindingManagers.forEach(bindingManager => bindingManager.removeFromParent());
+      removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
     } else {
       this.binding.children.forEach(applyToNodeFunc);
     }

@@ -4,6 +4,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { utils } from "../utils.js";
 import { Selector } from "../binder/Selector.js";
 import { Binder } from "../binder/Binder.js";
+import { ReuseBindingManager } from "./ReuseBindingManager.js";
 
 export class Binding {
   /** @type {number} */
@@ -214,6 +215,7 @@ export class Binding {
       viewModelPropertyName, classOfViewModelProperty,
       filters
     );
+    binding.initialize();
     return binding;
   }
 }
@@ -289,7 +291,13 @@ export class BindingManager {
   }
 
   applyToNode() {
-    this.bindings.forEach(binding => binding.applyToNode());
+    const selectBindings = new Set;
+    for(const binding of this.bindings) {
+      binding.isSelectValue ? selectBindings.add(binding) : binding.applyToNode();
+    }
+    for(const binding of selectBindings) {
+      binding.applyToNode();
+    }
   }
 
   /**
@@ -303,47 +311,11 @@ export class BindingManager {
    * 
    */
   removeFromParent() {
-    this.#removeFromParentOnNonKeyed();
-/*
-    if (this.component.useKeyed) {
-      this.#removeFromParentOnKeyed();
-    } else {
-      this.#removeFromParentOnNonKeyed();
-    }
-*/
-  }
-
-  #removeFromParentOnNonKeyed() {
     this.#nodes.forEach(node => this.fragment.appendChild(node));
-    this.bindings.forEach(binding => {
-      this.component.bindingSummary.delete(binding);
-      const removeBindManagers = binding.children.splice(0);
-      removeBindManagers.forEach(bindingManager => bindingManager.removeFromParent());
-    });
-    const recycleBindingManagers = BindingManager.bindingsByTemplate.get(this.#template) ?? 
-      BindingManager.bindingsByTemplate.set(this.#template, []).get(this.#template);
-    recycleBindingManagers.push(this);
   }
 
-  #removeFromParentOnKeyed() {
-    // 再利用を考慮しない
-    this.#nodes.forEach(node => this.fragment.appendChild(node));
-    this.bindings.forEach(binding => {
-      this.component.bindingSummary.delete(binding);
-      const removeBindManagers = binding.children.splice(0);
-      removeBindManagers.forEach(bindingManager => bindingManager.removeFromParent());
-    });
-  }
-
-  dispose(isRoot = true) {
-    if (isRoot) {
-      this.#nodes.forEach(node => node.parentNode.removeChild(node));
-    }
-    this.bindings.forEach(binding => {
-      this.component.bindingSummary.delete(binding);
-      const removeBindManagers = binding.children.splice(0);
-      removeBindManagers.forEach(bindingManager => bindingManager.dispose(false));
-    });
+  dispose() {
+    ReuseBindingManager.dispose(this);
   }
 
   /**
@@ -389,21 +361,21 @@ export class BindingManager {
       }
     }
 
+    const selectBindings = new Set;
     for(const key of propertyAccessByViewModelPropertyKey.keys()) {
-      const bindings = bindingSummary.bindingsByKey.get(key) ?? new Set;
-      for(const binding of bindings) {
+      for(const binding of bindingSummary.bindingsByKey.get(key) ?? new Set) {
         if (binding.expandable) continue;
-        binding.applyToNode();
+        binding.isSelectValue ? selectBindings.add(binding) : binding.applyToNode();
       }
+    }
+    for(const binding of selectBindings) {
+      binding.applyToNode();
     }
     for(const binding of bindingSummary.componentBindings) {
       binding.nodeProperty.beforeUpdate(propertyAccessByViewModelPropertyKey);
     }
 
   }
-
-  /** @type {Map<HTMLTemplateElement,BindingManager[]>} */
-  static bindingsByTemplate = new Map;
 
   /**
    * 
@@ -413,31 +385,9 @@ export class BindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, context) {
-    if (true) {
-      const bindingManagers = this.bindingsByTemplate.get(template) ?? [];
-      if (bindingManagers.length > 0) {
-        const bindingManager = bindingManagers.pop();
-        bindingManager.setContext(component, context);
-        /**
-         * 
-         * @param {Binding[]} bindings 
-         * @param {ContextInfo} context 
-         */
-        const setContext = (bindings, context) => {
-          for(const binding of bindings) {
-            binding.applyToNode();
-            for(const bindingManager of binding.children) {
-              setContext(bindingManager.bindings, context);
-            }
-          }
-        };
-        setContext(bindingManager.bindings, context);
-        bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
-    
-        return bindingManager;
-      }
-    } 
-    return new BindingManager(component, template, context);
+    const bindingManager = ReuseBindingManager.create(component, template, context);
+    bindingManager.applyToNode();
+    return bindingManager;
   }
 
 }

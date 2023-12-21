@@ -11,8 +11,7 @@ export class Cache {
    * @returns {any}
    */
   get(propName, indexes) {
-    const valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    return valueByIndexesString ? valueByIndexesString.get(indexes.toString()) : undefined;
+    return this.#valueByIndexesStringByPropertyName.get(propName)?.get(indexes.toString()) ?? undefined;
   }
 
   /**
@@ -23,12 +22,8 @@ export class Cache {
    * @returns {any}
    */
   set(propName, indexes, value) {
-    let valueByIndexesString = this.#valueByIndexesStringByPropertyName.get(propName);
-    if (typeof valueByIndexesString === "undefined") {
-      valueByIndexesString = new Map;
-      this.#valueByIndexesStringByPropertyName.set(propName, valueByIndexesString);
-    }
-    valueByIndexesString.set(indexes.toString(), value);
+    this.#valueByIndexesStringByPropertyName.get(propName)?.set(indexes.toString(), value) ?? 
+      this.#valueByIndexesStringByPropertyName.set(propName, new Map([[indexes.toString(), value]]));
     return value;
   }
 

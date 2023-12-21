@@ -95,14 +95,10 @@ export class Factory {
       }
     } while(false);
     
-    /** @type {Binding} */
-    const binding = Binding.create(
+    return Binding.create(
       bindingManager,
       node, nodePropertyName, classOfNodeProperty, 
       viewModelPropertyName, classOfViewModelProperty, 
       filters);
-    binding.initialize();
-
-    return binding;
   }
 }
