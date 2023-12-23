@@ -52,7 +52,7 @@ export class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   setByPropertyName(target, { propName, value }, receiver) {
-    utils.raise("viewModel is read only");
+    utils.raise("ReadOnlyViewModelHandler: viewModel is read only");
   }
 
   /**
@@ -81,6 +81,6 @@ export class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    utils.raise("viewModel is read only");
+    utils.raise("ReadOnlyViewModelHandler: viewModel is read only");
   }
 }

@@ -13,10 +13,10 @@ export class Branch extends TemplateProperty {
     return this.binding.children.length > 0;
   }
   set value(value) {
-    if (typeof value !== "boolean") utils.raise("value is not boolean");
+    if (typeof value !== "boolean") utils.raise("Branch: value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.context);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.loopContext);
         this.binding.appendChild(bindingManager);
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
@@ -36,7 +36,7 @@ export class Branch extends TemplateProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (name !== "if") utils.raise(`invalid property name ${name}`);
+    if (name !== "if") utils.raise(`Branch: invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 

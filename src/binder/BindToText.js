@@ -9,7 +9,7 @@ const DEFAULT_PROPERTY = "textContent";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+const toComment = node => (node instanceof Comment) ? node : utils.raise("BindToText: not Comment");
 
 export class BindToText {
   /**

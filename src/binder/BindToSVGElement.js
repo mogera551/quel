@@ -9,7 +9,7 @@ const DATASET_BIND_PROPERTY = "data-bind";
  * @param {Node} node 
  * @returns {SVGElement}
  */
-const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`not SVGElement`);
+const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`BindToSVGElement: not SVGElement`);
 
 export class BindToSVGElement {
   /**

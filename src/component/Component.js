@@ -107,7 +107,7 @@ export function registComponentModule(customElementName, componentModule) {
   } else if (typeof componentModule?.extendClass === "undefined") {
     customElements.define(customElementKebabName, componentClass);
   } else {
-    utils.raise("extendTag should be set");
+    utils.raise("registComponentModule: extendTag should be set");
   }
 }
 

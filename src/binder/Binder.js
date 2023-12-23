@@ -18,7 +18,7 @@ export class Binder {
       (node instanceof HTMLElement) ? BindToHTMLElement.bind(bindingManager, node) :
       (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(bindingManager, node) : 
       (node instanceof SVGElement) ? BindToSVGElement.bind(bindingManager, node) :
-      utils.raise(`unknown node type`)
+      utils.raise(`Binder: unknown node type`, node)
     );
   }
 

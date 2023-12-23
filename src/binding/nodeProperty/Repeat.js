@@ -1,6 +1,7 @@
 import { BindingManager } from "../Binding.js";
 import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
+import { LoopContext } from "../../loopContext/LoopContext.js";
 
 /**
  * 
@@ -15,12 +16,12 @@ export class Repeat extends TemplateProperty {
     return this.binding.children.length;
   }
   set value(value) {
-    if (!Array.isArray(value)) utils.raise("value is not array");
+    if (!Array.isArray(value)) utils.raise("Repeat: value is not array");
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
-        const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
-        const bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
+        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
         this.binding.appendChild(bindingManager);
       }
     } else if (this.value > value.length) {
@@ -41,7 +42,7 @@ export class Repeat extends TemplateProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (name !== "loop") utils.raise(`invalid property name ${name}`);
+    if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
     super(binding, node, name, filters, filterFuncs);
   }
 

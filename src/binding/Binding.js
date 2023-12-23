@@ -5,6 +5,7 @@ import { utils } from "../utils.js";
 import { Selector } from "../binder/Selector.js";
 import { Binder } from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
+import { LoopContext } from "../loopContext/LoopContext.js";
 
 export class Binding {
   /** @type {number} */
@@ -39,24 +40,9 @@ export class Binding {
     return this.#bindingManager.component;
   }
 
-  /** @type {ContextInfo} */
-  get context() {
-    return this.#bindingManager.context;
-  }
-
-  /** @type {ContextParam | undefined | null} コンテキスト変数情報 */
-  #contextParam;
-  /** @type {ContextParam | null} コンテキスト変数情報 */
-  get contextParam() {
-    if (typeof this.#contextParam === "undefined") {
-      const propName = PropertyName.create(this.viewModelProperty.name);
-      if (propName.level > 0) {
-        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-      } else {
-        this.#contextParam = null;
-      }
-    }
-    return this.#contextParam;
+  /** @type {LoopContext|undefined} */
+  get loopContext() {
+    return this.#bindingManager.loopContext;
   }
 
   /** @type { BindingManager[] } */
@@ -163,7 +149,7 @@ export class Binding {
    * @param {BindingManager} bindingManager
    */
   appendChild(bindingManager) {
-    if (!this.expandable) utils.raise("not expandable");
+    if (!this.expandable) utils.raise("Binding.appendChild: not expandable");
     const lastChild = this.children[this.children.length - 1];
     this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
@@ -177,20 +163,12 @@ export class Binding {
    * @param {BindingManager} bindingManager 
    */
   replaceChild(index, bindingManager) {
-    if (!this.expandable) utils.raise("not expandable");
+    if (!this.expandable) utils.raise("Binding.replaceChild: not expandable");
     const lastChild = this.children[index - 1];
     this.children[index] = bindingManager;
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
-  }
-
-  /**
-   * コンテキスト変更処理
-   * #contextParamをクリアする
-   */
-  changeContext() {
-    this.#contextParam = undefined;
   }
 
   /**
@@ -249,10 +227,10 @@ export class BindingManager {
     return this.#fragment;
   }
 
-  /** @type {ContextInfo} */
-  #context;
-  get context() {
-    return this.#context;
+  /** @type {LoopContext|undefined} */
+  #loopContext;
+  get loopContext() {
+    return this.#loopContext;
   }
 
   /** @type {HTMLTemplateElement} */
@@ -265,10 +243,10 @@ export class BindingManager {
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {ContextInfo} context
+   * @param {LoopContext|undefined} loopContext
    */
-  constructor(component, template, context) {
-    this.#context = context;
+  constructor(component, template, loopContext) {
+    this.#loopContext = loopContext;
     this.#component = component;
     this.#template = template;
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
@@ -277,17 +255,6 @@ export class BindingManager {
     this.#bindings.forEach(binding => component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
-  }
-
-  /**
-   * 
-   * @param {Component} component 
-   * @param {ConetextInfo} context 
-   */
-  setContext(component, context) {
-    this.#component = component;
-    this.#context = context;
-    this.bindings.forEach(binding => binding.changeContext());
   }
 
   applyToNode() {
@@ -319,6 +286,35 @@ export class BindingManager {
   }
 
   /**
+   * 
+   * @param {Set<LoopContext>} loopContexts 
+   */
+  updateLoopContext(loopContexts = new Set) {
+    if (!loopContexts.has(this.loopContext)) {
+      if (this.loopContext.directDirty) {
+        this.loopContext.clearDirectIndexes();
+      }
+      if (this.loopContext.dirty) {
+        this.loopContext.clearIndexes();
+      }
+      loopContexts.add(this.loopContext);
+    }
+    for(const binding of this.#bindings) {
+      for(const bindingManager of binding.children) {
+        bindingManager.updateLoopContext(loopContexts);
+      }
+    }
+  }
+
+  /**
+   * 
+   * @param {LoopContext} loopContext 
+   */
+  replaceLoopContext(loopContext) {
+    this.#loopContext = loopContext;
+  }
+
+  /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
@@ -333,17 +329,11 @@ export class BindingManager {
       const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
       return result2;
     });
-    performance.mark('updateNode:start');
     for(const binding of expandableBindings) {
       if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
       binding.applyToNode();
     }
     bindingSummary.flush();
-    performance.mark('updateNode:end')
-    performance.measure('updateNode', 'updateNode:start', 'updateNode:end');
-    console.log(performance.getEntriesByType("measure"));    
-    performance.clearMeasures('updateNode');
-    performance.clearMarks('updateNode:start', 'updateNode:end');
 
     const setOfIndexByParentKey = new Map;
     for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
@@ -381,11 +371,11 @@ export class BindingManager {
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {ContextInfo} context
+   * @param {LoopContext|undefined} loopContext
    * @returns {BindingManager}
    */
-  static create(component, template, context) {
-    const bindingManager = ReuseBindingManager.create(component, template, context);
+  static create(component, template, loopContext) {
+    const bindingManager = ReuseBindingManager.create(component, template, loopContext);
     bindingManager.applyToNode();
     return bindingManager;
   }

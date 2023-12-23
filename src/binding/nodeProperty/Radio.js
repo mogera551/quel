@@ -40,8 +40,8 @@ export class Radio extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
-    if (node.type !== "radio") utils.raise("not radio");
+    if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
+    if (node.type !== "radio") utils.raise("Radio: not radio");
     super(binding, node, name, filters, filterFuncs);
   }
 

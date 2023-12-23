@@ -45,8 +45,8 @@ export class Checkbox extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof HTMLInputElement)) utils.raise("not htmlInputElement");
-    if (node.type !== "checkbox") utils.raise("not checkbox");
+    if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
+    if (node.type !== "checkbox") utils.raise("Checkbox: not checkbox");
     super(binding, node, name, filters, filterFuncs);
   }
 

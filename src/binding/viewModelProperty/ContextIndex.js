@@ -11,7 +11,7 @@ export class ContextIndex extends ViewModelProperty {
 
   /** @type {number} */
   get value() {
-    return this.binding.context.indexes[this.index];
+    return this.binding.loopContext.indexes[this.index];
   }
 
   /** @type {number[]} */
@@ -32,7 +32,7 @@ export class ContextIndex extends ViewModelProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, name, filters, filterFuncs) {
-    if (!regexp.test(name)) utils.raise(`invalid name ${name}`);
+    if (!regexp.test(name)) utils.raise(`ContextIndex: invalid name ${name}`);
     super(binding, name, filters, filterFuncs);
   }
 }

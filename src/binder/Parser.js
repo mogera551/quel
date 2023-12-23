@@ -73,7 +73,7 @@ const parseBindText = (text, defaultName) => {
     let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
     viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
-    typeof nodeProperty === "undefined" && utils.raise("default property undefined");
+    typeof nodeProperty === "undefined" && utils.raise("parseBindText: default property undefined");
     return { nodeProperty, viewModelProperty, filters };
   });
 };

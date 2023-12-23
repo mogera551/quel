@@ -9,7 +9,7 @@ const DATASET_BIND_PROPERTY = "data-bind";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment = node => (node instanceof Comment) ? node : utils.raise("not Comment");
+const toComment = node => (node instanceof Comment) ? node : utils.raise("BindToTemplate: not Comment");
 
 export class BindToTemplate {
   /**

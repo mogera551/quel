@@ -76,7 +76,7 @@ export class NodeProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof Node)) utils.raise("not Node");
+    if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;

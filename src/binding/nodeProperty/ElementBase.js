@@ -16,7 +16,7 @@ export class ElementBase extends NodeProperty {
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
   constructor(binding, node, name, filters, inputFilterFuncs) {
-    if (!(node instanceof Element)) utils.raise("not element");
+    if (!(node instanceof Element)) utils.raise("ElementBase: not element");
     super(binding, node, name, filters, inputFilterFuncs);
   }
 }

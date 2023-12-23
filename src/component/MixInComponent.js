@@ -8,7 +8,6 @@ import { AttachShadow } from "./AttachShadow.js";
 import { inputFilters, outputFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
-import { Context } from "../context/Context.js";
 import { createViewModels } from "../viewModel/Proxy.js";
 import { Phase } from "../thread/Phase.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
@@ -178,7 +177,7 @@ export const mixInComponent = {
 
   /** @type {Node} 親要素（usePseudo以外では使わないこと） */
   get pseudoParentNode() {
-    return this.usePseudo ? this._pseudoParentNode : utils.raise("not usePseudo");
+    return this.usePseudo ? this._pseudoParentNode : utils.raise("mixInComponent: not usePseudo");
   },
 
   /** @type {Node} 代替要素（usePseudo以外では使わないこと） */
@@ -252,13 +251,13 @@ export const mixInComponent = {
     // フィルターの設定
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
-        if (name in this.filters.in) utils.raise(`already exists filter ${name}`);
+        if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
         this.filters.in[name] = filterFunc;
       }
     }
     if (typeof outputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(outputFilters)) {
-        if (name in this.filters.out) utils.raise(`already exists filter ${name}`);
+        if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
         this.filters.out[name] = filterFunc;
       }
     }
@@ -273,7 +272,7 @@ export const mixInComponent = {
     await this.viewModel[Symbols.connectedCallback]();
 
     // Bindingツリーの構築
-    this.rootBinding = BindingManager.create(this, template, Context.create());
+    this.rootBinding = BindingManager.create(this, template);
     this.bindingSummary.flush();
 
     if (this.usePseudo) {

@@ -1,3 +1,4 @@
+import { LoopContext } from "../loopContext/LoopContext.js";
 import "../types.js";
 import { utils } from "../utils.js";
 
@@ -5,25 +6,25 @@ import { utils } from "../utils.js";
  * DirectlyCall時、context情報の復帰を行う
  */
 export class DirectlyCallContext {
-  /** @type {ContextInfo} */
-  #context;
-  get context() {
-    return this.#context;
+  /** @type {LoopContext} */
+  #loopContext;
+  get loopContext() {
+    return this.#loopContext;
   }
 
   /**
    * 
-   * @param {ContextInfo} context 
+   * @param {LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async callback(context, directlyCallback) {
-    if (typeof this.#context !== "undefined") utils.raise("already set context");
-    this.#context = context;
+  async callback(loopContext, directlyCallback) {
+    if (typeof this.#loopContext !== "undefined") utils.raise("DirectlyCallContext: already set loopContext");
+    this.#loopContext = loopContext;
     try {
       return await directlyCallback();
     } finally {
-      this.#context = undefined;
+      this.#loopContext = undefined;
     }
   }
 

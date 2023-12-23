@@ -14,7 +14,7 @@ const DEFAULT_PROPERTY = "textContent";
  * @param {Node} node 
  * @returns {HTMLElement}
  */
-const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`not HTMLElement`);
+const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`BindToHTMLElement: not HTMLElement`);
 
 /**
  * HTML要素のデフォルトプロパティを取得

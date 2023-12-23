@@ -465,7 +465,7 @@ const Symbols$1 = Object.assign({
   isComponent: Symbol.for(`${name}:component.isComponent`),
 }, Symbols$2);
 
-let utils$1 = class utils {
+class utils {
   /**
    * 
    * @param {string} message 
@@ -512,7 +512,7 @@ let utils$1 = class utils {
         return v.toString(16);
       });
   }
-};
+}
 
 class Templates {
   /** @type {Map<string,HTMLTemplateElement>} */
@@ -569,7 +569,7 @@ class Template {
     const root = document.createElement("template"); // 仮のルート
     root.innerHTML = replacedHtml;
     // カスタムコンポーネントの名前を変更する
-    const customComponentKebabNames = customComponentNames.map(customComponentName => utils$1.toKebabCase(customComponentName));
+    const customComponentKebabNames = customComponentNames.map(customComponentName => utils.toKebabCase(customComponentName));
     const changeCustomElementName = (element) => {
       for(const customComponentKebabName of customComponentKebabNames) {
         /** @type {Element[]} */
@@ -613,7 +613,7 @@ class Template {
       /** @type {HTMLTemplateElement} */
       let template;
       while(template = element.querySelector("template")) {
-        const uuid =  utils$1.createUUID();
+        const uuid =  utils.createUUID();
         const comment = document.createComment(`@@|${uuid}`);
         template.parentNode.replaceChild(comment, template);
         if (template.constructor !== HTMLTemplateElement) {
@@ -639,7 +639,7 @@ class Template {
 
 class Module {
   /** @type {string} */
-  #uuid = utils$1.createUUID();
+  #uuid = utils.createUUID();
   get uuid() {
     return this.#uuid;
   }
@@ -692,7 +692,7 @@ class Module {
       const componentModules = {};
       if (typeof this.componentModules !== "undefined") {
         for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
-          componentModules[`${utils$1.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
+          componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
         }
         return componentModules;
       }
@@ -1877,8 +1877,8 @@ class Filter {
    * @param {(value:any,options:string[])=>{}} inputFilter 
    */
   static regist(name, outputFilter, inputFilter) {
-    if (name in outputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
-    if (name in inputFilters) utils$1.raise(`regist filter error duplicate name (${name})`);
+    if (name in outputFilters) utils.raise(`regist filter error duplicate name (${name})`);
+    if (name in inputFilters) utils.raise(`regist filter error duplicate name (${name})`);
     outputFilter && (outputFilters[name] = outputFilter);
     inputFilter && (inputFilters[name] = inputFilter);
   }
@@ -1958,7 +1958,7 @@ class NodeProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof Node)) utils$1.raise("not Node");
+    if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
@@ -2045,10 +2045,125 @@ class TemplateProperty extends NodeProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof Comment)) utils$1.raise("not Comment");
+    if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     const uuid = TemplateProperty.getUUID(node);
-    if (typeof uuid === "undefined") utils$1.raise(`invalid uuid ${uuid}`);
+    if (typeof uuid === "undefined") utils.raise(`TemplateProperty: invalid uuid ${uuid}`);
     super(binding, node, name, filters, filterFuncs);
+  }
+}
+
+class LoopContext {
+  /** @type {LoopContext} */
+  #parent;
+  get parent() {
+    return this.#parent;
+  }
+
+  /** @type {LoopContext} */
+  #directParent;
+  get directParent() {
+    return this.#directParent;
+  }
+
+  /** @type {string} */
+  #name;
+  get name() {
+    return this.#name;
+  }
+
+  /** @type {number} */
+  #index;
+  get index() {
+    return this.#index;
+  }
+  set index(value) {
+    this.#index = value;
+    this.#updated = true;
+  }
+
+  /** @type {boolean} */
+  #updated = false;
+  /**
+   * 
+   */
+  clearUpdated() {
+    this.#updated = false;
+  }
+
+  /** @type {boolean} */
+  get dirty() {
+    return this.#updated || (this.#parent?.dirty ?? false);
+  }
+
+  /** @type {boolean} */
+  get directDirty() {
+    return this.#updated || (this.#directParent?.directDirty ?? false);
+  }
+
+  /** @type {number[]} */
+  #directIndexes;
+  get directIndexes() {
+    if (typeof this.#directIndexes === "undefined") {
+      this.#directIndexes = this.#directParent?.directIndexes.concat(this.#index) ?? [this.#index];
+    }
+    return this.#directIndexes;
+  }
+  /**
+   * 
+   */
+  clearDirectIndexes() {
+    this.#directIndexes = undefined;
+  }
+
+  /** @type {number[]} */
+  #indexes;
+  get indexes() {
+    if (typeof this.#indexes === "undefined") {
+      this.#indexes = this.#parent?.indexes.concat(this.#index) ?? [this.#index];
+    }
+    return this.#indexes;
+  }
+  /**
+   * 
+   */
+  clearIndexes() {
+    this.#indexes = undefined;
+  }
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {number} index 
+   * @param {LoopContext} parent 
+   */
+  constructor(name, index, parent) {
+    this.#name = name;
+    this.#index = index;
+    this.#parent = parent;
+    const prop = PropertyName.create(name);
+    if (prop.level > 0) {
+      let curParent = parent;
+      while(typeof curParent !== "undefined") {
+        if (curParent.name === prop.nearestWildcardParentName) {
+          this.#directParent = curParent;
+          break;
+        }
+        curParent = curParent.parent;
+      }
+    }
+  }
+
+
+  /**
+   * 
+   * @param {string} name 
+   */
+  find(name) {
+    let loopContext = this;
+    while(typeof loopContext !== "undefined") {
+      if (loopContext.name === name) return loopContext;
+      loopContext = loopContext.directParent;
+    }
   }
 }
 
@@ -2065,12 +2180,12 @@ class Repeat extends TemplateProperty {
     return this.binding.children.length;
   }
   set value(value) {
-    if (!Array.isArray(value)) utils$1.raise("value is not array");
+    if (!Array.isArray(value)) utils.raise("Repeat: value is not array");
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc$1);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
-        const newContext = this.binding.viewModelProperty.createChildContext(newIndex);
-        const bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
+        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
         this.binding.appendChild(bindingManager);
       }
     } else if (this.value > value.length) {
@@ -2091,7 +2206,7 @@ class Repeat extends TemplateProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (name !== "loop") utils$1.raise(`invalid property name ${name}`);
+    if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2114,10 +2229,10 @@ class Branch extends TemplateProperty {
     return this.binding.children.length > 0;
   }
   set value(value) {
-    if (typeof value !== "boolean") utils$1.raise("value is not boolean");
+    if (typeof value !== "boolean") utils.raise("Branch: value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.context);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.loopContext);
         this.binding.appendChild(bindingManager);
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
@@ -2137,7 +2252,7 @@ class Branch extends TemplateProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (name !== "if") utils$1.raise(`invalid property name ${name}`);
+    if (name !== "if") utils.raise(`Branch: invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2173,90 +2288,6 @@ class MultiValue {
   }
 }
 
-/**
- * @type {ContextParam}
- */
-class ContextParam {
-  /** @type {PropertyName} */
-  #propName;
-  get propName() {
-    return this.#propName;
-  }
-
-  /** @type {number[]} */
-  #indexes = [];
-  get indexes() {
-    return this.#indexes;
-  }
-
-  /** @type {number} */
-  #pos;
-  get pos() {
-    return this.#pos;
-  }
-
-  /**
-   * 
-   * @param {PropertyName} propName 
-   * @param {number[]} indexes 
-   * @param {number} pos 
-   */
-  constructor(propName, indexes, pos) {
-    this.#propName = propName;
-    this.#indexes = indexes;
-    this.#pos = pos;
-  }
-}
-
-/**
- * @type {ContextInfo}
- */
-class ContextInfo {
-  /** @type {number[]} */
-  #indexes = [];
-  get indexes() {
-    return this.#indexes;
-  }
-
-  /** @type {ContextParam[]} */
-  #stack = [];
-  get stack() {
-    return this.#stack;
-  }
-
-  /**
-   * 
-   * @param {ContextInfo} src 
-   */
-  copy(src) {
-    this.#indexes = src.indexes.slice();
-    this.#stack = src.stack.slice();
-  }
-
-}
-
-class Context {
-
-  /**
-   * 空のコンテクスト情報を生成
-   * @returns {ContextInfo}
-   */
-  static create() {
-    return new ContextInfo;
-  }
-
-  /**
-   * コンテクスト情報をクローン
-   * @param {ContextInfo} src 
-   * @returns {ContextInfo}
-   */
-  static clone(src) {
-    const contextInfo = new ContextInfo;
-    contextInfo.copy(src);
-    return contextInfo;
-  }
-}
-
 class ViewModelProperty {
   /** @type { ViewModel } */
   get viewModel() {
@@ -2276,7 +2307,7 @@ class ViewModelProperty {
 
   /** @type {number[]} */
   get indexes() {
-    return this.binding.contextParam?.indexes ?? [];
+    return this.binding.loopContext?.directIndexes ?? [];
   }
 
   /** @type {string} */
@@ -2357,23 +2388,6 @@ class ViewModelProperty {
   }
 
   /**
-   * 
-   * @param {number} newIndex
-   * @returns {ContextInfo} 
-   */
-  createChildContext(newIndex) {
-    const pos = this.binding.context.indexes.length;
-    const propName = this.propertyName;
-    const parentIndexes = this.binding.contextParam?.indexes ?? [];
-
-    const newContext = Context.clone(this.binding.context);
-    newContext.indexes.push(newIndex);
-    newContext.stack.push(new ContextParam(propName, parentIndexes.concat(newIndex), pos));
-
-    return newContext;
-  }
-
-  /**
    * 初期化処理
    * 特に何もしない
    * @param {import("../Binding.js").Binding} binding
@@ -2417,7 +2431,7 @@ class ContextIndex extends ViewModelProperty {
 
   /** @type {number} */
   get value() {
-    return this.binding.context.indexes[this.index];
+    return this.binding.loopContext.indexes[this.index];
   }
 
   /** @type {number[]} */
@@ -2438,7 +2452,7 @@ class ContextIndex extends ViewModelProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, name, filters, filterFuncs) {
-    if (!regexp$1.test(name)) utils$1.raise(`invalid name ${name}`);
+    if (!regexp$1.test(name)) utils.raise(`ContextIndex: invalid name ${name}`);
     super(binding, name, filters, filterFuncs);
   }
 }
@@ -2458,7 +2472,7 @@ class ElementBase extends NodeProperty {
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
   constructor(binding, node, name, filters, inputFilterFuncs) {
-    if (!(node instanceof Element)) utils$1.raise("not element");
+    if (!(node instanceof Element)) utils.raise("ElementBase: not element");
     super(binding, node, name, filters, inputFilterFuncs);
   }
 }
@@ -2515,8 +2529,8 @@ class Checkbox extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof HTMLInputElement)) utils$1.raise("not htmlInputElement");
-    if (node.type !== "checkbox") utils$1.raise("not checkbox");
+    if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
+    if (node.type !== "checkbox") utils.raise("Checkbox: not checkbox");
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2563,8 +2577,8 @@ class Radio extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof HTMLInputElement)) utils$1.raise("not htmlInputElement");
-    if (node.type !== "radio") utils$1.raise("not radio");
+    if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
+    if (node.type !== "radio") utils.raise("Radio: not radio");
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2596,7 +2610,7 @@ class ElementEvent extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!name.startsWith("on")) utils$1.raise(`invalid property name ${name}`);
+    if (!name.startsWith("on")) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2614,8 +2628,8 @@ class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   async directlyCall(event) {
-    const { viewModelProperty, context } = this.binding;
-    return viewModelProperty.viewModel[Symbols$1.directlyCall](viewModelProperty.name, context, event);
+    const { viewModelProperty, loopContext } = this.binding;
+    return viewModelProperty.viewModel[Symbols$1.directlyCall](viewModelProperty.name, loopContext, event);
   }
   /**
    * 
@@ -2694,7 +2708,7 @@ class ElementStyle extends ElementBase {
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
   constructor(binding, node, name, filters, inputFilterFuncs) {
-    if (!(node instanceof HTMLElement)) utils$1.raise("not htmlElement");
+    if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");
     super(binding, node, name, filters, inputFilterFuncs);
   }
 }
@@ -2754,7 +2768,7 @@ class ComponentProperty extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node[Symbols$1.isComponent])) utils$1.raise("not Component");
+    if (!(node[Symbols$1.isComponent])) utils.raise("ComponentProperty: not Component");
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2814,8 +2828,7 @@ class RepeatKeyed extends Repeat {
     return this.#lastValue;
   }
   set value(values) {
-    if (!Array.isArray(values)) utils$1.raise("value is not array");
-    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
+    if (!Array.isArray(values)) utils.raise("RepeatKeyed: value is not array");
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
     const lastIndexes = new Set;
     
@@ -2828,7 +2841,8 @@ class RepeatKeyed extends Repeat {
       const parentNode = this.node.parentNode;
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
-        bindingManager = BindingManager.create(this.binding.component, this.template, createNewContext(newIndex));
+        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
+        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);        
       } else {
         // 元のインデックスがある場合（既存）
@@ -2836,7 +2850,8 @@ class RepeatKeyed extends Repeat {
         fromIndexByValue.set(value, lastIndex + 1); // 
         lastIndexes.add(lastIndex);
         if (newIndex !== lastIndex) {
-          bindingManager.setContext(this.binding.component, createNewContext(newIndex));
+          bindingManager.loopContext.index = newIndex;
+          bindingManager.updateLoopContext();
         }
         applyToNodeFunc(bindingManager);
         beforeNode.after(...bindingManager.nodes);
@@ -2861,23 +2876,23 @@ class RepeatKeyed extends Repeat {
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       if (typeof bindingManager === "undefined") continue;
-      bindingManager.dispose();
+      bindingManager.removeFromParent();
       const oldValue = this.#lastValue[index];
       if (typeof oldValue !== "undefined") {
         bindingManagerByValue.set(oldValue, bindingManager);
       }
     }
-    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
-      const newContext = createNewContext(index);
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager !== "undefined") {
-        bindingManager.setContext(this.binding.component, newContext);
+        bindingManager.loopContext.index = index;
+        bindingManager.updateLoopContext();
         bindingManager.applyToNode();
       } else {
-        bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
+        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
+        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
       }
       this.binding.replaceChild(index, bindingManager);
     }
@@ -2947,7 +2962,7 @@ class Factory {
         classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
         break;
       }
-      if (isComment) utils$1.raise(`unknown node property ${nodePropertyName}`);
+      if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
       const nameElements = nodePropertyName.split(".");
       classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];
       if (typeof classOfNodeProperty !== "undefined") break;
@@ -3042,7 +3057,7 @@ const parseBindText = (text, defaultName) => {
     let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
     viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
-    typeof nodeProperty === "undefined" && utils$1.raise("default property undefined");
+    typeof nodeProperty === "undefined" && utils.raise("parseBindText: default property undefined");
     return { nodeProperty, viewModelProperty, filters };
   });
 };
@@ -3101,7 +3116,7 @@ const DEFAULT_PROPERTY$1 = "textContent";
  * @param {Node} node 
  * @returns {HTMLElement}
  */
-const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils$1.raise(`not HTMLElement`);
+const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`BindToHTMLElement: not HTMLElement`);
 
 /**
  * HTML要素のデフォルトプロパティを取得
@@ -3196,7 +3211,7 @@ const DATASET_BIND_PROPERTY$1 = "data-bind";
  * @param {Node} node 
  * @returns {SVGElement}
  */
-const toSVGElement = node => (node instanceof SVGElement) ? node : utils$1.raise(`not SVGElement`);
+const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`BindToSVGElement: not SVGElement`);
 
 class BindToSVGElement {
   /**
@@ -3232,7 +3247,7 @@ const DEFAULT_PROPERTY = "textContent";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment$1 = node => (node instanceof Comment) ? node : utils$1.raise("not Comment");
+const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("BindToText: not Comment");
 
 class BindToText {
   /**
@@ -3269,7 +3284,7 @@ const DATASET_BIND_PROPERTY = "data-bind";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment = node => (node instanceof Comment) ? node : utils$1.raise("not Comment");
+const toComment = node => (node instanceof Comment) ? node : utils.raise("BindToTemplate: not Comment");
 
 class BindToTemplate {
   /**
@@ -3311,7 +3326,7 @@ class Binder {
       (node instanceof HTMLElement) ? BindToHTMLElement.bind(bindingManager, node) :
       (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(bindingManager, node) : 
       (node instanceof SVGElement) ? BindToSVGElement.bind(bindingManager, node) :
-      utils$1.raise(`unknown node type`)
+      utils.raise(`Binder: unknown node type`, node)
     );
   }
 
@@ -3326,11 +3341,7 @@ class ReuseBindingManager {
    * @param {import("./Binding.js").BindingManager} bindingManager 
    */
   static dispose(bindingManager) {
-    if (bindingManager.component.useKeyed) {
-      bindingManager.nodes.forEach(node => node.parentNode.removeChild(node));
-    } else {
-      bindingManager.removeFromParent();
-    }
+    bindingManager.removeFromParent();
     bindingManager.bindings.forEach(binding => {
       bindingManager.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
@@ -3345,15 +3356,15 @@ class ReuseBindingManager {
   /**
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {ContextInfo} context
+   * @param {LoopContext} loopContext
    * @returns {BindingManager}
    */
-  static create(component, template, context) {
+  static create(component, template, loopContext) {
     let bindingManager = !component.useKeyed && this.#bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
-      bindingManager = new BindingManager(component, template, context);
+      bindingManager = new BindingManager(component, template, loopContext);
     } else {
-      bindingManager.setContext(component, context);
+      bindingManager.replaceLoopContext(loopContext);
       bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
     }
     return bindingManager;
@@ -3394,24 +3405,9 @@ class Binding {
     return this.#bindingManager.component;
   }
 
-  /** @type {ContextInfo} */
-  get context() {
-    return this.#bindingManager.context;
-  }
-
-  /** @type {ContextParam | undefined | null} コンテキスト変数情報 */
-  #contextParam;
-  /** @type {ContextParam | null} コンテキスト変数情報 */
-  get contextParam() {
-    if (typeof this.#contextParam === "undefined") {
-      const propName = PropertyName.create(this.viewModelProperty.name);
-      if (propName.level > 0) {
-        this.#contextParam = this.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-      } else {
-        this.#contextParam = null;
-      }
-    }
-    return this.#contextParam;
+  /** @type {LoopContext|undefined} */
+  get loopContext() {
+    return this.#bindingManager.loopContext;
   }
 
   /** @type { BindingManager[] } */
@@ -3518,7 +3514,7 @@ class Binding {
    * @param {BindingManager} bindingManager
    */
   appendChild(bindingManager) {
-    if (!this.expandable) utils$1.raise("not expandable");
+    if (!this.expandable) utils.raise("Binding.appendChild: not expandable");
     const lastChild = this.children[this.children.length - 1];
     this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
@@ -3532,20 +3528,12 @@ class Binding {
    * @param {BindingManager} bindingManager 
    */
   replaceChild(index, bindingManager) {
-    if (!this.expandable) utils$1.raise("not expandable");
+    if (!this.expandable) utils.raise("Binding.replaceChild: not expandable");
     const lastChild = this.children[index - 1];
     this.children[index] = bindingManager;
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
-  }
-
-  /**
-   * コンテキスト変更処理
-   * #contextParamをクリアする
-   */
-  changeContext() {
-    this.#contextParam = undefined;
   }
 
   /**
@@ -3604,10 +3592,10 @@ class BindingManager {
     return this.#fragment;
   }
 
-  /** @type {ContextInfo} */
-  #context;
-  get context() {
-    return this.#context;
+  /** @type {LoopContext|undefined} */
+  #loopContext;
+  get loopContext() {
+    return this.#loopContext;
   }
 
   /** @type {HTMLTemplateElement} */
@@ -3620,10 +3608,10 @@ class BindingManager {
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {ContextInfo} context
+   * @param {LoopContext|undefined} loopContext
    */
-  constructor(component, template, context) {
-    this.#context = context;
+  constructor(component, template, loopContext) {
+    this.#loopContext = loopContext;
     this.#component = component;
     this.#template = template;
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
@@ -3632,17 +3620,6 @@ class BindingManager {
     this.#bindings.forEach(binding => component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
-  }
-
-  /**
-   * 
-   * @param {Component} component 
-   * @param {ConetextInfo} context 
-   */
-  setContext(component, context) {
-    this.#component = component;
-    this.#context = context;
-    this.bindings.forEach(binding => binding.changeContext());
   }
 
   applyToNode() {
@@ -3674,6 +3651,35 @@ class BindingManager {
   }
 
   /**
+   * 
+   * @param {Set<LoopContext>} loopContexts 
+   */
+  updateLoopContext(loopContexts = new Set) {
+    if (!loopContexts.has(this.loopContext)) {
+      if (this.loopContext.directDirty) {
+        this.loopContext.clearDirectIndexes();
+      }
+      if (this.loopContext.dirty) {
+        this.loopContext.clearIndexes();
+      }
+      loopContexts.add(this.loopContext);
+    }
+    for(const binding of this.#bindings) {
+      for(const bindingManager of binding.children) {
+        bindingManager.updateLoopContext(loopContexts);
+      }
+    }
+  }
+
+  /**
+   * 
+   * @param {LoopContext} loopContext 
+   */
+  replaceLoopContext(loopContext) {
+    this.#loopContext = loopContext;
+  }
+
+  /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
@@ -3688,17 +3694,11 @@ class BindingManager {
       const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
       return result2;
     });
-    performance.mark('updateNode:start');
     for(const binding of expandableBindings) {
       if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
       binding.applyToNode();
     }
     bindingSummary.flush();
-    performance.mark('updateNode:end');
-    performance.measure('updateNode', 'updateNode:start', 'updateNode:end');
-    console.log(performance.getEntriesByType("measure"));    
-    performance.clearMeasures('updateNode');
-    performance.clearMarks('updateNode:start', 'updateNode:end');
 
     const setOfIndexByParentKey = new Map;
     for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
@@ -3736,11 +3736,11 @@ class BindingManager {
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {ContextInfo} context
+   * @param {LoopContext|undefined} loopContext
    * @returns {BindingManager}
    */
-  static create(component, template, context) {
-    const bindingManager = ReuseBindingManager.create(component, template, context);
+  static create(component, template, loopContext) {
+    const bindingManager = ReuseBindingManager.create(component, template, loopContext);
     bindingManager.applyToNode();
     return bindingManager;
   }
@@ -3868,9 +3868,9 @@ const setOfApiFunctions = new Set([
  * @type {Object<symbol,({viewModel:ViewModel,viewModelProxy:Proxy,handler:ViewModelHandlerBase})=>()>}
  */
 const callFuncBySymbol = {
-  [Symbols$1.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, context, event) => 
-    handler.directlyCallback(context, async () => 
-      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...context.indexes])
+  [Symbols$1.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, loopContext, event) => 
+    handler.directlyCallback(loopContext, async () => 
+      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...(loopContext?.indexes ?? [])])
     ),
   [Symbols$1.notifyForDependentProps]:({viewModel, viewModelProxy, handler}) => (prop, indexes) => 
     handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
@@ -4072,7 +4072,7 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
    * @param {Proxy} receiver 
    */
   setByPropertyName(target, { propName, value }, receiver) {
-    utils$1.raise("viewModel is read only");
+    utils.raise("ReadOnlyViewModelHandler: viewModel is read only");
   }
 
   /**
@@ -4101,7 +4101,7 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    utils$1.raise("viewModel is read only");
+    utils.raise("ReadOnlyViewModelHandler: viewModel is read only");
   }
 }
 
@@ -4204,25 +4204,25 @@ class ViewModelize {
  * DirectlyCall時、context情報の復帰を行う
  */
 class DirectlyCallContext {
-  /** @type {ContextInfo} */
-  #context;
-  get context() {
-    return this.#context;
+  /** @type {LoopContext} */
+  #loopContext;
+  get loopContext() {
+    return this.#loopContext;
   }
 
   /**
    * 
-   * @param {ContextInfo} context 
+   * @param {LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async callback(context, directlyCallback) {
-    if (typeof this.#context !== "undefined") utils$1.raise("already set context");
-    this.#context = context;
+  async callback(loopContext, directlyCallback) {
+    if (typeof this.#loopContext !== "undefined") utils.raise("DirectlyCallContext: already set loopContext");
+    this.#loopContext = loopContext;
     try {
       return await directlyCallback();
     } finally {
-      this.#context = undefined;
+      this.#loopContext = undefined;
     }
   }
 
@@ -4272,12 +4272,12 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
 
   /**
    * 
-   * @param {ContextInfo} context 
+   * @param {LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async directlyCallback(context, directlyCallback) {
-    return this.#directlyCallContext.callback(context, async () => {
+  async directlyCallback(loopContext, directlyCallback) {
+    return this.#directlyCallContext.callback(loopContext, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
       // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
@@ -4293,16 +4293,16 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {ContextParam | undefined}
+   * @returns {LoopContext | undefined}
    */
-  findParam(prop) {
-    if (typeof this.#directlyCallContext.context === "undefined") return;
+  findLoopContext(prop) {
+    if (typeof this.#directlyCallContext.loopContext === "undefined") return;
     if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
     const propName = PropertyName.create(prop);
     if (propName.level === 0 || prop.at(0) === "@") return;
-    const param = this.#directlyCallContext.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-    if (typeof param === "undefined") utils$1.raise(`${prop} is outside loop`);
-    return param;
+    const loopContext = this.#directlyCallContext.loopContext.find(propName.nearestWildcardParentName);
+    if (typeof loopContext === "undefined") utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
+    return loopContext;
   }
 
   /**
@@ -4318,9 +4318,9 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
     } else if (Api.has(prop)) {
       return Api.get(target, receiver, this, prop);
     } else {
-      const contextParam = this.findParam(prop);
-      return (typeof contextParam !== "undefined") ?
-        this.directlyGet(target, { prop, indexes:contextParam.indexes}, receiver) :
+      const loopContext = this.findLoopContext(prop);
+      return (typeof loopContext !== "undefined") ?
+        this.directlyGet(target, { prop, indexes:loopContext.indexes}, receiver) :
         super.get(target, prop, receiver);
     }
   }
@@ -4334,9 +4334,9 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    const contextParam = this.findParam(prop);
-    return (typeof contextParam !== "undefined") ?
-      this.directlySet(target, { prop, indexes:contextParam.indexes, value}, receiver) :
+    const loopContext = this.findLoopContext(prop);
+    return (typeof loopContext !== "undefined") ?
+      this.directlySet(target, { prop, indexes:loopContext.indexes, value}, receiver) :
       super.set(target, prop, value, receiver);
   }
 
@@ -4363,13 +4363,6 @@ function createViewModels(component, viewModelClass) {
 
 /**
  * BindingSummary
- * ToDo:ツリーを保持する必要がある
- * list
- *   +-- list.*
- *         +-- list.*.id
- *         +-- list.*.name
- *         +-- list.*.email
- * ToDo:相対パスで参照できればよいかな
  */
 class BindingSummary {
 
@@ -4638,7 +4631,7 @@ const mixInComponent = {
 
   /** @type {Node} 親要素（usePseudo以外では使わないこと） */
   get pseudoParentNode() {
-    return this.usePseudo ? this._pseudoParentNode : utils$1.raise("not usePseudo");
+    return this.usePseudo ? this._pseudoParentNode : utils.raise("mixInComponent: not usePseudo");
   },
 
   /** @type {Node} 代替要素（usePseudo以外では使わないこと） */
@@ -4712,13 +4705,13 @@ const mixInComponent = {
     // フィルターの設定
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
-        if (name in this.filters.in) utils$1.raise(`already exists filter ${name}`);
+        if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
         this.filters.in[name] = filterFunc;
       }
     }
     if (typeof outputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(outputFilters)) {
-        if (name in this.filters.out) utils$1.raise(`already exists filter ${name}`);
+        if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
         this.filters.out[name] = filterFunc;
       }
     }
@@ -4733,7 +4726,7 @@ const mixInComponent = {
     await this.viewModel[Symbols$1.connectedCallback]();
 
     // Bindingツリーの構築
-    this.rootBinding = BindingManager.create(this, template, Context.create());
+    this.rootBinding = BindingManager.create(this, template);
     this.bindingSummary.flush();
 
     if (this.usePseudo) {
@@ -4892,14 +4885,14 @@ function generateComponentClass(componentModule) {
  * @param {UserComponentModule} componentModule 
  */
 function registComponentModule(customElementName, componentModule) {
-  const customElementKebabName = utils$1.toKebabCase(customElementName);
+  const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = ComponentClassGenerator.generate(componentModule);
   if (componentModule.extendTag) {
     customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
   } else if (typeof componentModule?.extendClass === "undefined") {
     customElements.define(customElementKebabName, componentClass);
   } else {
-    utils$1.raise("extendTag should be set");
+    utils.raise("registComponentModule: extendTag should be set");
   }
 }
 

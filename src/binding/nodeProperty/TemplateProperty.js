@@ -36,9 +36,9 @@ export class TemplateProperty extends NodeProperty {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node instanceof Comment)) utils.raise("not Comment");
+    if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     const uuid = TemplateProperty.getUUID(node);
-    if (typeof uuid === "undefined") utils.raise(`invalid uuid ${uuid}`);
+    if (typeof uuid === "undefined") utils.raise(`TemplateProperty: invalid uuid ${uuid}`);
     super(binding, node, name, filters, filterFuncs);
   }
 }

@@ -23,7 +23,7 @@ export class ElementEvent extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!name.startsWith("on")) utils.raise(`invalid property name ${name}`);
+    if (!name.startsWith("on")) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -41,8 +41,8 @@ export class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   async directlyCall(event) {
-    const { viewModelProperty, context } = this.binding;
-    return viewModelProperty.viewModel[Symbols.directlyCall](viewModelProperty.name, context, event);
+    const { viewModelProperty, loopContext } = this.binding;
+    return viewModelProperty.viewModel[Symbols.directlyCall](viewModelProperty.name, loopContext, event);
   }
   /**
    * 

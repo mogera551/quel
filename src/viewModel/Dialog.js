@@ -1,4 +1,5 @@
 import "../types.js";
+import { utils } from "../utils.js";
 
 export class Dialog {
   /**

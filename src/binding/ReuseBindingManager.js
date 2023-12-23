@@ -1,3 +1,4 @@
+import { LoopContext } from "../loopContext/LoopContext.js";
 import { BindingManager } from "./Binding.js";
 
 export class ReuseBindingManager {
@@ -9,11 +10,7 @@ export class ReuseBindingManager {
    * @param {import("./Binding.js").BindingManager} bindingManager 
    */
   static dispose(bindingManager) {
-    if (bindingManager.component.useKeyed) {
-      bindingManager.nodes.forEach(node => node.parentNode.removeChild(node));
-    } else {
-      bindingManager.removeFromParent();
-    }
+    bindingManager.removeFromParent();
     bindingManager.bindings.forEach(binding => {
       bindingManager.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
@@ -28,15 +25,15 @@ export class ReuseBindingManager {
   /**
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {ContextInfo} context
+   * @param {LoopContext} loopContext
    * @returns {BindingManager}
    */
-  static create(component, template, context) {
+  static create(component, template, loopContext) {
     let bindingManager = !component.useKeyed && this.#bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
-      bindingManager = new BindingManager(component, template, context);
+      bindingManager = new BindingManager(component, template, loopContext);
     } else {
-      bindingManager.setContext(component, context);
+      bindingManager.replaceLoopContext(loopContext);
       bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
     }
     return bindingManager;

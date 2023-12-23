@@ -2,6 +2,7 @@ import { BindingManager } from "../Binding.js";
 import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
 import { Repeat } from "./Repeat.js";
+import { LoopContext } from "../../loopContext/LoopContext.js";
 
 /**
  * 
@@ -19,8 +20,7 @@ export class RepeatKeyed extends Repeat {
     return this.#lastValue;
   }
   set value(values) {
-    if (!Array.isArray(values)) utils.raise("value is not array");
-    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
+    if (!Array.isArray(values)) utils.raise("RepeatKeyed: value is not array");
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
     const lastIndexes = new Set;
     
@@ -33,7 +33,8 @@ export class RepeatKeyed extends Repeat {
       const parentNode = this.node.parentNode;
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
-        bindingManager = BindingManager.create(this.binding.component, this.template, createNewContext(newIndex));
+        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
+        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);        
       } else {
         // 元のインデックスがある場合（既存）
@@ -41,7 +42,8 @@ export class RepeatKeyed extends Repeat {
         fromIndexByValue.set(value, lastIndex + 1); // 
         lastIndexes.add(lastIndex);
         if (newIndex !== lastIndex) {
-          bindingManager.setContext(this.binding.component, createNewContext(newIndex));
+          bindingManager.loopContext.index = newIndex;
+          bindingManager.updateLoopContext();
         }
         applyToNodeFunc(bindingManager);
         beforeNode.after(...bindingManager.nodes);
@@ -66,23 +68,23 @@ export class RepeatKeyed extends Repeat {
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       if (typeof bindingManager === "undefined") continue;
-      bindingManager.dispose();
+      bindingManager.removeFromParent();
       const oldValue = this.#lastValue[index];
       if (typeof oldValue !== "undefined") {
         bindingManagerByValue.set(oldValue, bindingManager);
       }
     }
-    const createNewContext = index => this.binding.viewModelProperty.createChildContext(index);
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
-      const newContext = createNewContext(index);
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager !== "undefined") {
-        bindingManager.setContext(this.binding.component, newContext);
+        bindingManager.loopContext.index = index;
+        bindingManager.updateLoopContext();
         bindingManager.applyToNode();
       } else {
-        bindingManager = BindingManager.create(this.binding.component, this.template, newContext);
+        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
+        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
       }
       this.binding.replaceChild(index, bindingManager);
     }

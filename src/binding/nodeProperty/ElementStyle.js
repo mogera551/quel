@@ -29,7 +29,7 @@ export class ElementStyle extends ElementBase {
    * @param {Object<string,FilterFunc>} inputFilterFuncs
    */
   constructor(binding, node, name, filters, inputFilterFuncs) {
-    if (!(node instanceof HTMLElement)) utils.raise("not htmlElement");
+    if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");
     super(binding, node, name, filters, inputFilterFuncs);
   }
 }

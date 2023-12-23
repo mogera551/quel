@@ -1,5 +1,6 @@
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../Symbols.js";
+import { LoopContext } from "../loopContext/LoopContext.js";
 import { utils } from "../utils.js";
 import { Api } from "./Api.js";
 import { Callback } from "./Callback.js";
@@ -51,12 +52,12 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
 
   /**
    * 
-   * @param {ContextInfo} context 
+   * @param {LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async directlyCallback(context, directlyCallback) {
-    return this.#directlyCallContext.callback(context, async () => {
+  async directlyCallback(loopContext, directlyCallback) {
+    return this.#directlyCallContext.callback(loopContext, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
       // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
@@ -72,16 +73,16 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {ContextParam | undefined}
+   * @returns {LoopContext | undefined}
    */
-  findParam(prop) {
-    if (typeof this.#directlyCallContext.context === "undefined") return;
+  findLoopContext(prop) {
+    if (typeof this.#directlyCallContext.loopContext === "undefined") return;
     if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
     const propName = PropertyName.create(prop);
     if (propName.level === 0 || prop.at(0) === "@") return;
-    const param = this.#directlyCallContext.context.stack.find(param => param.propName.name === propName.nearestWildcardParentName);
-    if (typeof param === "undefined") utils.raise(`${prop} is outside loop`);
-    return param;
+    const loopContext = this.#directlyCallContext.loopContext.find(propName.nearestWildcardParentName);
+    if (typeof loopContext === "undefined") utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
+    return loopContext;
   }
 
   /**
@@ -97,9 +98,9 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
     } else if (Api.has(prop)) {
       return Api.get(target, receiver, this, prop);
     } else {
-      const contextParam = this.findParam(prop);
-      return (typeof contextParam !== "undefined") ?
-        this.directlyGet(target, { prop, indexes:contextParam.indexes}, receiver) :
+      const loopContext = this.findLoopContext(prop);
+      return (typeof loopContext !== "undefined") ?
+        this.directlyGet(target, { prop, indexes:loopContext.indexes}, receiver) :
         super.get(target, prop, receiver);
     }
   }
@@ -113,9 +114,9 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    const contextParam = this.findParam(prop);
-    return (typeof contextParam !== "undefined") ?
-      this.directlySet(target, { prop, indexes:contextParam.indexes, value}, receiver) :
+    const loopContext = this.findLoopContext(prop);
+    return (typeof loopContext !== "undefined") ?
+      this.directlySet(target, { prop, indexes:loopContext.indexes, value}, receiver) :
       super.set(target, prop, value, receiver);
   }
 

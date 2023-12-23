@@ -80,7 +80,7 @@ export class Factory {
         classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
         break;
       }
-      if (isComment) utils.raise(`unknown node property ${nodePropertyName}`);
+      if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
       const nameElements = nodePropertyName.split(".");
       classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];
       if (typeof classOfNodeProperty !== "undefined") break;

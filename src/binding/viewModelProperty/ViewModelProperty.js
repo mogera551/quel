@@ -4,7 +4,6 @@ import { MultiValue } from "../nodeProperty/MultiValue.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils.js";
-import { Context, ContextParam } from "../../context/Context.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -25,7 +24,7 @@ export class ViewModelProperty {
 
   /** @type {number[]} */
   get indexes() {
-    return this.binding.contextParam?.indexes ?? [];
+    return this.binding.loopContext?.directIndexes ?? [];
   }
 
   /** @type {string} */
@@ -103,23 +102,6 @@ export class ViewModelProperty {
     this.#name = name;
     this.#filters = filters;
     this.#filterFuncs = filterFuncs;
-  }
-
-  /**
-   * 
-   * @param {number} newIndex
-   * @returns {ContextInfo} 
-   */
-  createChildContext(newIndex) {
-    const pos = this.binding.context.indexes.length;
-    const propName = this.propertyName;
-    const parentIndexes = this.binding.contextParam?.indexes ?? [];
-
-    const newContext = Context.clone(this.binding.context);
-    newContext.indexes.push(newIndex);
-    newContext.stack.push(new ContextParam(propName, parentIndexes.concat(newIndex), pos));
-
-    return newContext;
   }
 
   /**
