@@ -20,8 +20,8 @@ export class Repeat extends TemplateProperty {
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
-        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        const bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
+        const [ name, index ] = [this.binding.viewModelProperty.name, newIndex]; 
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
         this.binding.appendChild(bindingManager);
       }
     } else if (this.value > value.length) {

@@ -70,6 +70,11 @@ export class Binding {
     this.#updated = value;
   }
 
+  /** @type {LoopContext} */
+  get loopContext() {
+    return this.#bindingManager.loopContext;
+  }
+
   /**
    * 
    * @param {BindingManager} bindingManager 
@@ -95,12 +100,19 @@ export class Binding {
    * Nodeへ値を反映する
    */
   applyToNode() {
-    const { component, nodeProperty, viewModelProperty, expandable } = this;
+    const { component, nodeProperty, viewModelProperty } = this;
+    if (component.bindingSummary.updatedBindings.has(this)) {
+      return;
+    } 
     //console.log(`binding.applyToNode() ${nodeProperty.node?.tagName} ${nodeProperty.name} ${viewModelProperty.name} ${viewModelProperty.indexesString}`);
-    if (!nodeProperty.applicable) return;
-    const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
-    if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-    nodeProperty.assignFromViewModelValue();
+    try {
+      if (!nodeProperty.applicable) return;
+      const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
+      if (nodeProperty.isSameValue(filteredViewModelValue)) return;
+      nodeProperty.assignFromViewModelValue();
+    } finally {
+      component.bindingSummary.updatedBindings.add(this);
+    }
   }
 
   /**
@@ -230,7 +242,7 @@ export class BindingManager {
   /** @type {LoopContext|undefined} */
   #loopContext;
   get loopContext() {
-    return this.#loopContext;
+    return this.#loopContext ?? this.#parentBinding?.loopContext;
   }
 
   /** @type {HTMLTemplateElement} */
@@ -239,14 +251,25 @@ export class BindingManager {
     return this.#template;
   }
 
+  /** @type {Binding} */
+  #parentBinding;
+  get parentBinding() {
+    return this.#parentBinding;
+  }
+  set parentBinding(value) {
+    this.#parentBinding = value;
+  }
+
   /**
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {LoopContext|undefined} loopContext
+   * @param {Binding|undefined} parentBinding
+   * @param {{name:string,index:number}|undefined} loopInfo
    */
-  constructor(component, template, loopContext) {
-    this.#loopContext = loopContext;
+  constructor(component, template, parentBinding, loopInfo) {
+    this.#parentBinding = parentBinding;
+    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
     this.#component = component;
     this.#template = template;
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
@@ -319,9 +342,10 @@ export class BindingManager {
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
+    const { bindingSummary } = this.component;
+    bindingSummary.updatedBindings.clear();
 
     // templateを先に展開する
-    const { bindingSummary } = this.component;
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
     expandableBindings.sort((bindingA, bindingB) => {
       const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
@@ -346,6 +370,7 @@ export class BindingManager {
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
       const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
       for(const binding of bindings) {
+        if (bindingSummary.updatedBindings.has(binding)) continue;
         if (!binding.expandable) continue;
         binding.applyToChildNodes(setOfIndex);
       }
@@ -371,11 +396,12 @@ export class BindingManager {
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
-   * @param {LoopContext|undefined} loopContext
+   * @param {Binding|undefined} parentBinding
+   * @param {{name:string,index:number}|undefined} loopInfo
    * @returns {BindingManager}
    */
-  static create(component, template, loopContext) {
-    const bindingManager = ReuseBindingManager.create(component, template, loopContext);
+  static create(component, template, parentBinding, loopInfo) {
+    const bindingManager = ReuseBindingManager.create(component, template, parentBinding, loopInfo);
     bindingManager.applyToNode();
     return bindingManager;
   }

@@ -36,6 +36,12 @@ export class BindingSummary {
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
 
+  /** @type {Set<Binding>} 更新したbinding */
+  #updatedBindings = new Set;
+  get updatedBindings() {
+    return this.#updatedBindings;
+  }
+
   /**
    * 
    * @param {Binding} binding 

@@ -16,7 +16,7 @@ export class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("Branch: value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.loopContext);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         this.binding.appendChild(bindingManager);
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);

@@ -26,35 +26,56 @@ export class RepeatKeyed extends Repeat {
     
     /** @type {BindingManager[]} */
     let beforeBindingManager;
-    const newBindingManagers = values.map((value, newIndex) => {
+    /** @type {Set<number>} */
+    const setOfNewIndexes = new Set;
+    /** @type {Map<number,number>} */
+    const lastIndexByNewIndex = new Map;
+    for(let newIndex = 0; newIndex < values.length; newIndex++) {
+      const value = this.binding.viewModelProperty.getChildValue(newIndex);
       const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
-      let bindingManager;
-      const beforeNode = beforeBindingManager?.lastNode ?? this.node;
-      const parentNode = this.node.parentNode;
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
-        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
-        parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);        
+        setOfNewIndexes.add(newIndex);
       } else {
         // 元のインデックスがある場合（既存）
-        bindingManager = this.binding.children[lastIndex];
         fromIndexByValue.set(value, lastIndex + 1); // 
         lastIndexes.add(lastIndex);
-        if (newIndex !== lastIndex) {
-          bindingManager.loopContext.index = newIndex;
-          bindingManager.updateLoopContext();
-        }
-        applyToNodeFunc(bindingManager);
-        beforeNode.after(...bindingManager.nodes);
+        lastIndexByNewIndex.set(newIndex, lastIndex);
       }
-      beforeBindingManager = bindingManager;
-      return bindingManager;
-    });
+    }
     for(let i = 0; i < this.binding.children.length; i++) {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].dispose();
     }
+    const newBindingManagers = values.map((value, newIndex) => {
+      let bindingManager;
+      const beforeNode = beforeBindingManager?.lastNode ?? this.node;
+      const parentNode = this.node.parentNode;
+      if (setOfNewIndexes.has(newIndex)) {
+        // 元のインデックスにない場合（新規）
+        const [ name, index ] = [ this.binding.viewModelProperty.name, newIndex ];
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
+        parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+      } else {
+        // 元のインデックスがある場合（既存）
+        const lastIndex = lastIndexByNewIndex.get(newIndex);
+        bindingManager = this.binding.children[lastIndex];
+        if (lastIndex !== newIndex) {
+          bindingManager.loopContext.index = newIndex;
+          bindingManager.updateLoopContext();
+        }
+        applyToNodeFunc(bindingManager);
+        if (bindingManager.nodes) {
+          if (bindingManager.nodes[0].previousSibling !== beforeNode) {
+            bindingManager.removeFromParent();
+            parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+          }
+        }
+      }
+      beforeBindingManager = bindingManager;
+      return bindingManager;
+    });
+
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
     this.#lastValue = values.slice();
   }

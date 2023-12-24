@@ -67,7 +67,7 @@ export class LoopContext {
   #indexes;
   get indexes() {
     if (typeof this.#indexes === "undefined") {
-      this.#indexes = this.#parent?.indexes.concat(this.#index) ?? [this.#index];
+      this.#indexes = this.#bindingManager.parentBinding?.loopContext?.indexes.concat(this.#index) ?? [this.#index];
     }
     return this.#indexes;
   }
@@ -78,25 +78,34 @@ export class LoopContext {
     this.#indexes = undefined;
   }
 
+  /** @param {import("../binding/Binding.js").BindingManager} */
+  #bindingManager;
+  get bindingManager() {
+    return this.#bindingManager;
+  } 
+  set bindingManager(value) {
+    this.#bindingManager = value;
+  } 
+    
   /**
    * 
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager 
    * @param {string} name 
    * @param {number} index 
-   * @param {LoopContext} parent 
    */
-  constructor(name, index, parent) {
+  constructor(bindingManager, name, index, parent) {
+    this.#bindingManager = bindingManager;
     this.#name = name;
     this.#index = index;
-    this.#parent = parent;
     const prop = PropertyName.create(name);
     if (prop.level > 0) {
-      let curParent = parent;
+      let curParent = this.bindingManager.parentBinding.loopContext;
       while(typeof curParent !== "undefined") {
         if (curParent.name === prop.nearestWildcardParentName) {
           this.#directParent = curParent;
           break;
         }
-        curParent = curParent.parent;
+        curParent = curParent.bindingManager.parentBinding.loopContext;
       }
     }
   }

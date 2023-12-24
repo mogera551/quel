@@ -2185,7 +2185,7 @@ class Repeat extends TemplateProperty {
       this.binding.children.forEach(applyToNodeFunc$1);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        const bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, loopContext);
         this.binding.appendChild(bindingManager);
       }
     } else if (this.value > value.length) {
@@ -2232,7 +2232,7 @@ class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise("Branch: value is not boolean");
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding.loopContext);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         this.binding.appendChild(bindingManager);
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
@@ -2834,35 +2834,56 @@ class RepeatKeyed extends Repeat {
     
     /** @type {BindingManager[]} */
     let beforeBindingManager;
-    const newBindingManagers = values.map((value, newIndex) => {
+    /** @type {Set<number>} */
+    const setOfNewIndexes = new Set;
+    /** @type {Map<number,number>} */
+    const lastIndexByNewIndex = new Map;
+    for(let newIndex = 0; newIndex < values.length; newIndex++) {
+      const value = this.binding.viewModelProperty.getChildValue(newIndex);
       const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
-      let bindingManager;
-      const beforeNode = beforeBindingManager?.lastNode ?? this.node;
-      const parentNode = this.node.parentNode;
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
-        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
-        parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);        
+        setOfNewIndexes.add(newIndex);
       } else {
         // 元のインデックスがある場合（既存）
-        bindingManager = this.binding.children[lastIndex];
         fromIndexByValue.set(value, lastIndex + 1); // 
         lastIndexes.add(lastIndex);
-        if (newIndex !== lastIndex) {
-          bindingManager.loopContext.index = newIndex;
-          bindingManager.updateLoopContext();
-        }
-        applyToNodeFunc(bindingManager);
-        beforeNode.after(...bindingManager.nodes);
+        lastIndexByNewIndex.set(newIndex, lastIndex);
       }
-      beforeBindingManager = bindingManager;
-      return bindingManager;
-    });
+    }
     for(let i = 0; i < this.binding.children.length; i++) {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].dispose();
     }
+    const newBindingManagers = values.map((value, newIndex) => {
+      let bindingManager;
+      const beforeNode = beforeBindingManager?.lastNode ?? this.node;
+      const parentNode = this.node.parentNode;
+      if (setOfNewIndexes.has(newIndex)) {
+        // 元のインデックスにない場合（新規）
+        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, loopContext);
+        parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+      } else {
+        // 元のインデックスがある場合（既存）
+        const lastIndex = lastIndexByNewIndex.get(newIndex);
+        bindingManager = this.binding.children[lastIndex];
+        if (lastIndex !== newIndex) {
+          bindingManager.loopContext.index = newIndex;
+          bindingManager.updateLoopContext();
+        }
+        applyToNodeFunc(bindingManager);
+        if (bindingManager.nodes) {
+          if (bindingManager.nodes[0].previousSibling !== beforeNode) {
+            bindingManager.removeFromParent();
+            parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+          }
+        }
+      }
+      beforeBindingManager = bindingManager;
+      return bindingManager;
+    });
+
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
     this.#lastValue = values.slice();
   }
@@ -3347,7 +3368,7 @@ class ReuseBindingManager {
       const removeBindManagers = binding.children.splice(0);
       removeBindManagers.forEach(bindingManager => this.dispose(bindingManager));
     });
-    if (!bindingManager.component.useKeyed) {
+    {
       this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
         this.#bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
@@ -3356,14 +3377,16 @@ class ReuseBindingManager {
   /**
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {Binding|undefined} parentBinding
    * @param {LoopContext} loopContext
    * @returns {BindingManager}
    */
-  static create(component, template, loopContext) {
-    let bindingManager = !component.useKeyed && this.#bindingManagersByTemplate.get(template)?.pop();
+  static create(component, template, parentBinding, loopContext) {
+    let bindingManager = this.#bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
-      bindingManager = new BindingManager(component, template, loopContext);
+      bindingManager = new BindingManager(component, template, parentBinding, loopContext);
     } else {
+      bindingManager.parentBinding = parentBinding;
       bindingManager.replaceLoopContext(loopContext);
       bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
     }
@@ -3435,6 +3458,11 @@ class Binding {
     this.#updated = value;
   }
 
+  /** @type {LoopContext} */
+  get loopContext() {
+    return this.#bindingManager.loopContext;
+  }
+
   /**
    * 
    * @param {BindingManager} bindingManager 
@@ -3460,12 +3488,19 @@ class Binding {
    * Nodeへ値を反映する
    */
   applyToNode() {
-    const { component, nodeProperty, viewModelProperty, expandable } = this;
+    const { component, nodeProperty, viewModelProperty } = this;
+    if (component.bindingSummary.updatedBindings.has(this)) {
+      return;
+    } 
     //console.log(`binding.applyToNode() ${nodeProperty.node?.tagName} ${nodeProperty.name} ${viewModelProperty.name} ${viewModelProperty.indexesString}`);
-    if (!nodeProperty.applicable) return;
-    const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
-    if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-    nodeProperty.assignFromViewModelValue();
+    try {
+      if (!nodeProperty.applicable) return;
+      const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
+      if (nodeProperty.isSameValue(filteredViewModelValue)) return;
+      nodeProperty.assignFromViewModelValue();
+    } finally {
+      component.bindingSummary.updatedBindings.add(this);
+    }
   }
 
   /**
@@ -3595,7 +3630,7 @@ class BindingManager {
   /** @type {LoopContext|undefined} */
   #loopContext;
   get loopContext() {
-    return this.#loopContext;
+    return this.#loopContext ?? this.#parentBinding?.loopContext;
   }
 
   /** @type {HTMLTemplateElement} */
@@ -3604,13 +3639,24 @@ class BindingManager {
     return this.#template;
   }
 
+  /** @type {Binding} */
+  #parentBinding;
+  get parentBinding() {
+    return this.#parentBinding;
+  }
+  set parentBinding(value) {
+    this.#parentBinding = value;
+  }
+
   /**
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {Binding|undefined} parentBinding
    * @param {LoopContext|undefined} loopContext
    */
-  constructor(component, template, loopContext) {
+  constructor(component, template, parentBinding, loopContext) {
+    this.#parentBinding = parentBinding;
     this.#loopContext = loopContext;
     this.#component = component;
     this.#template = template;
@@ -3684,9 +3730,10 @@ class BindingManager {
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
+    const { bindingSummary } = this.component;
+    bindingSummary.updatedBindings.clear();
 
     // templateを先に展開する
-    const { bindingSummary } = this.component;
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
     expandableBindings.sort((bindingA, bindingB) => {
       const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
@@ -3711,6 +3758,7 @@ class BindingManager {
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
       const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
       for(const binding of bindings) {
+        if (bindingSummary.updatedBindings.has(binding)) continue;
         if (!binding.expandable) continue;
         binding.applyToChildNodes(setOfIndex);
       }
@@ -3736,11 +3784,12 @@ class BindingManager {
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {Binding|undefined} parentBinding
    * @param {LoopContext|undefined} loopContext
    * @returns {BindingManager}
    */
-  static create(component, template, loopContext) {
-    const bindingManager = ReuseBindingManager.create(component, template, loopContext);
+  static create(component, template, parentBinding, loopContext) {
+    const bindingManager = ReuseBindingManager.create(component, template, parentBinding, loopContext);
     bindingManager.applyToNode();
     return bindingManager;
   }
@@ -4394,6 +4443,12 @@ class BindingSummary {
   #deleteBindings = new Set;
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
+
+  /** @type {Set<Binding>} 更新したbinding */
+  #updatedBindings = new Set;
+  get updatedBindings() {
+    return this.#updatedBindings;
+  }
 
   /**
    * 
