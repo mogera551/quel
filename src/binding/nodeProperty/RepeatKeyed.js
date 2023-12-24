@@ -99,13 +99,13 @@ export class RepeatKeyed extends Repeat {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
       let bindingManager = bindingManagerByValue.get(newValue);
+      const name = this.binding.viewModelProperty.name;
       if (typeof bindingManager !== "undefined") {
         bindingManager.loopContext.index = index;
         bindingManager.updateLoopContext();
         bindingManager.applyToNode();
       } else {
-        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
+        bindingManager = BindingManager.create(this.binding.component, this.template, {name, index});
       }
       this.binding.replaceChild(index, bindingManager);
     }

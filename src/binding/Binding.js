@@ -138,6 +138,10 @@ export class Binding {
    * @param {Event} event 
    */
   execDefaultEventHandler(event) {
+    if (!this.component.bindingSummary.allBindings.has(this)) {
+      //console.log(`binding(${this.id}) is already deleted`);
+      return;
+    }
     event.stopPropagation();
     const process = new ProcessData(this.applyToViewModel, this, []);
     this.component.updateSlot.addProcess(process);
@@ -331,10 +335,10 @@ export class BindingManager {
 
   /**
    * 
-   * @param {LoopContext} loopContext 
+   * @param {{name:string,index:number}|undefined} loopInfo 
    */
-  replaceLoopContext(loopContext) {
-    this.#loopContext = loopContext;
+  replaceLoopContext(loopInfo) {
+    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
   }
 
   /**

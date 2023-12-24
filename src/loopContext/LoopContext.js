@@ -7,10 +7,21 @@ export class LoopContext {
     return this.#parent;
   }
 
-  /** @type {LoopContext} */
-  #directParent;
+  /** @type {LoopContext|undefined} */
+//  #directParent;
   get directParent() {
-    return this.#directParent;
+    const prop = PropertyName.create(this.name);
+    if (prop.level > 0) {
+      let curContext = this.bindingManager.parentBinding.loopContext;
+      while(typeof curContext !== "undefined") {
+        if (curContext.name === prop.nearestWildcardParentName) {
+          return curContext;
+          break;
+        }
+        curContext = curContext.bindingManager.parentBinding.loopContext;
+      }
+    }
+    return;
   }
 
   /** @type {string} */
@@ -45,22 +56,19 @@ export class LoopContext {
 
   /** @type {boolean} */
   get directDirty() {
-    return this.#updated || (this.#directParent?.directDirty ?? false);
+    return this.#updated || (this.directParent?.directDirty ?? false);
   }
 
   /** @type {number[]} */
-  #directIndexes;
+  // #directIndexes;
   get directIndexes() {
-    if (typeof this.#directIndexes === "undefined") {
-      this.#directIndexes = this.#directParent?.directIndexes.concat(this.#index) ?? [this.#index];
-    }
-    return this.#directIndexes;
+    return this.directParent?.directIndexes.concat(this.#index) ?? [this.#index];
   }
   /**
    * 
    */
   clearDirectIndexes() {
-    this.#directIndexes = undefined;
+//    this.#directIndexes = undefined;
   }
 
   /** @type {number[]} */
@@ -93,21 +101,10 @@ export class LoopContext {
    * @param {string} name 
    * @param {number} index 
    */
-  constructor(bindingManager, name, index, parent) {
+  constructor(bindingManager, name, index) {
     this.#bindingManager = bindingManager;
     this.#name = name;
     this.#index = index;
-    const prop = PropertyName.create(name);
-    if (prop.level > 0) {
-      let curParent = this.bindingManager.parentBinding.loopContext;
-      while(typeof curParent !== "undefined") {
-        if (curParent.name === prop.nearestWildcardParentName) {
-          this.#directParent = curParent;
-          break;
-        }
-        curParent = curParent.bindingManager.parentBinding.loopContext;
-      }
-    }
   }
 
 

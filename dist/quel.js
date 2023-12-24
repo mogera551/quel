@@ -2059,10 +2059,20 @@ class LoopContext {
     return this.#parent;
   }
 
-  /** @type {LoopContext} */
-  #directParent;
+  /** @type {LoopContext|undefined} */
+//  #directParent;
   get directParent() {
-    return this.#directParent;
+    const prop = PropertyName.create(this.name);
+    if (prop.level > 0) {
+      let curContext = this.bindingManager.parentBinding.loopContext;
+      while(typeof curContext !== "undefined") {
+        if (curContext.name === prop.nearestWildcardParentName) {
+          return curContext;
+        }
+        curContext = curContext.bindingManager.parentBinding.loopContext;
+      }
+    }
+    return;
   }
 
   /** @type {string} */
@@ -2097,29 +2107,26 @@ class LoopContext {
 
   /** @type {boolean} */
   get directDirty() {
-    return this.#updated || (this.#directParent?.directDirty ?? false);
+    return this.#updated || (this.directParent?.directDirty ?? false);
   }
 
   /** @type {number[]} */
-  #directIndexes;
+  // #directIndexes;
   get directIndexes() {
-    if (typeof this.#directIndexes === "undefined") {
-      this.#directIndexes = this.#directParent?.directIndexes.concat(this.#index) ?? [this.#index];
-    }
-    return this.#directIndexes;
+    return this.directParent?.directIndexes.concat(this.#index) ?? [this.#index];
   }
   /**
    * 
    */
   clearDirectIndexes() {
-    this.#directIndexes = undefined;
+//    this.#directIndexes = undefined;
   }
 
   /** @type {number[]} */
   #indexes;
   get indexes() {
     if (typeof this.#indexes === "undefined") {
-      this.#indexes = this.#parent?.indexes.concat(this.#index) ?? [this.#index];
+      this.#indexes = this.#bindingManager.parentBinding?.loopContext?.indexes.concat(this.#index) ?? [this.#index];
     }
     return this.#indexes;
   }
@@ -2130,27 +2137,25 @@ class LoopContext {
     this.#indexes = undefined;
   }
 
+  /** @param {import("../binding/Binding.js").BindingManager} */
+  #bindingManager;
+  get bindingManager() {
+    return this.#bindingManager;
+  } 
+  set bindingManager(value) {
+    this.#bindingManager = value;
+  } 
+    
   /**
    * 
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager 
    * @param {string} name 
    * @param {number} index 
-   * @param {LoopContext} parent 
    */
-  constructor(name, index, parent) {
+  constructor(bindingManager, name, index) {
+    this.#bindingManager = bindingManager;
     this.#name = name;
     this.#index = index;
-    this.#parent = parent;
-    const prop = PropertyName.create(name);
-    if (prop.level > 0) {
-      let curParent = parent;
-      while(typeof curParent !== "undefined") {
-        if (curParent.name === prop.nearestWildcardParentName) {
-          this.#directParent = curParent;
-          break;
-        }
-        curParent = curParent.parent;
-      }
-    }
   }
 
 
@@ -2184,8 +2189,8 @@ class Repeat extends TemplateProperty {
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc$1);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
-        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, loopContext);
+        const [ name, index ] = [this.binding.viewModelProperty.name, newIndex]; 
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
         this.binding.appendChild(bindingManager);
       }
     } else if (this.value > value.length) {
@@ -2644,6 +2649,10 @@ class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   eventHandler(event) {
+    if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) {
+      //console.log(`binding(${this.binding.id}) is already deleted`);
+      return;
+    }
     event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
@@ -2861,8 +2870,8 @@ class RepeatKeyed extends Repeat {
       const parentNode = this.node.parentNode;
       if (setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
-        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, loopContext);
+        const [ name, index ] = [ this.binding.viewModelProperty.name, newIndex ];
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
       } else {
         // 元のインデックスがある場合（既存）
@@ -2907,13 +2916,13 @@ class RepeatKeyed extends Repeat {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
       let bindingManager = bindingManagerByValue.get(newValue);
+      const name = this.binding.viewModelProperty.name;
       if (typeof bindingManager !== "undefined") {
         bindingManager.loopContext.index = index;
         bindingManager.updateLoopContext();
         bindingManager.applyToNode();
       } else {
-        const loopContext = new LoopContext(this.binding.viewModelProperty.name, newIndex, this.binding.loopContext);
-        bindingManager = BindingManager.create(this.binding.component, this.template, loopContext);
+        bindingManager = BindingManager.create(this.binding.component, this.template, {name, index});
       }
       this.binding.replaceChild(index, bindingManager);
     }
@@ -3363,6 +3372,7 @@ class ReuseBindingManager {
    */
   static dispose(bindingManager) {
     bindingManager.removeFromParent();
+    bindingManager.parentBinding = undefined;
     bindingManager.bindings.forEach(binding => {
       bindingManager.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
@@ -3378,16 +3388,16 @@ class ReuseBindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {LoopContext} loopContext
+   * @param {{name:string,index:number}|undefined} loopInfo
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding, loopContext) {
+  static create(component, template, parentBinding, loopInfo) {
     let bindingManager = this.#bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
-      bindingManager = new BindingManager(component, template, parentBinding, loopContext);
+      bindingManager = new BindingManager(component, template, parentBinding, loopInfo);
     } else {
       bindingManager.parentBinding = parentBinding;
-      bindingManager.replaceLoopContext(loopContext);
+      bindingManager.replaceLoopContext(loopInfo);
       bindingManager.bindings.forEach(binding => component.bindingSummary.add(binding));
     }
     return bindingManager;
@@ -3526,6 +3536,10 @@ class Binding {
    * @param {Event} event 
    */
   execDefaultEventHandler(event) {
+    if (!this.component.bindingSummary.allBindings.has(this)) {
+      //console.log(`binding(${this.id}) is already deleted`);
+      return;
+    }
     event.stopPropagation();
     const process = new ProcessData(this.applyToViewModel, this, []);
     this.component.updateSlot.addProcess(process);
@@ -3653,11 +3667,11 @@ class BindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {LoopContext|undefined} loopContext
+   * @param {{name:string,index:number}|undefined} loopInfo
    */
-  constructor(component, template, parentBinding, loopContext) {
+  constructor(component, template, parentBinding, loopInfo) {
     this.#parentBinding = parentBinding;
-    this.#loopContext = loopContext;
+    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
     this.#component = component;
     this.#template = template;
     const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
@@ -3719,10 +3733,10 @@ class BindingManager {
 
   /**
    * 
-   * @param {LoopContext} loopContext 
+   * @param {{name:string,index:number}|undefined} loopInfo 
    */
-  replaceLoopContext(loopContext) {
-    this.#loopContext = loopContext;
+  replaceLoopContext(loopInfo) {
+    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
   }
 
   /**
@@ -3785,11 +3799,11 @@ class BindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {LoopContext|undefined} loopContext
+   * @param {{name:string,index:number}|undefined} loopInfo
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding, loopContext) {
-    const bindingManager = ReuseBindingManager.create(component, template, parentBinding, loopContext);
+  static create(component, template, parentBinding, loopInfo) {
+    const bindingManager = ReuseBindingManager.create(component, template, parentBinding, loopInfo);
     bindingManager.applyToNode();
     return bindingManager;
   }
@@ -4443,6 +4457,9 @@ class BindingSummary {
   #deleteBindings = new Set;
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
+  get allBindings() {
+    return this.#allBindings;
+  }
 
   /** @type {Set<Binding>} 更新したbinding */
   #updatedBindings = new Set;
@@ -4455,6 +4472,10 @@ class BindingSummary {
    * @param {Binding} binding 
    */
   add(binding) {
+    if (this.#deleteBindings.has(binding)) {
+      this.#deleteBindings.delete(binding);
+      return;
+    }
     this.#allBindings.add(binding);
     const bindings = this.#bindingsByKey.get(binding.viewModelProperty.key);
     if (typeof bindings !== "undefined") {

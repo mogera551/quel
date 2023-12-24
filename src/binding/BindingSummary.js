@@ -35,6 +35,9 @@ export class BindingSummary {
   #deleteBindings = new Set;
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
+  get allBindings() {
+    return this.#allBindings;
+  }
 
   /** @type {Set<Binding>} 更新したbinding */
   #updatedBindings = new Set;
@@ -47,6 +50,10 @@ export class BindingSummary {
    * @param {Binding} binding 
    */
   add(binding) {
+    if (this.#deleteBindings.has(binding)) {
+      this.#deleteBindings.delete(binding);
+      return;
+    }
     this.#allBindings.add(binding);
     const bindings = this.#bindingsByKey.get(binding.viewModelProperty.key);
     if (typeof bindings !== "undefined") {

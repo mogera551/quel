@@ -11,6 +11,7 @@ export class ReuseBindingManager {
    */
   static dispose(bindingManager) {
     bindingManager.removeFromParent();
+    bindingManager.parentBinding = undefined;
     bindingManager.bindings.forEach(binding => {
       bindingManager.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);

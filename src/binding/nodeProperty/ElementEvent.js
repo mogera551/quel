@@ -57,6 +57,10 @@ export class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   eventHandler(event) {
+    if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) {
+      //console.log(`binding(${this.binding.id}) is already deleted`);
+      return;
+    }
     event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
