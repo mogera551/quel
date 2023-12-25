@@ -2,26 +2,27 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 export class LoopContext {
   /** @type {LoopContext} */
-  #parent;
   get parent() {
-    return this.#parent;
+    return this.#bindingManager.parentBinding?.loopContext;
   }
 
   /** @type {LoopContext|undefined} */
-//  #directParent;
+  #directParent;
   get directParent() {
-    const prop = PropertyName.create(this.name);
-    if (prop.level > 0) {
-      let curContext = this.bindingManager.parentBinding.loopContext;
-      while(typeof curContext !== "undefined") {
-        if (curContext.name === prop.nearestWildcardParentName) {
-          return curContext;
-          break;
+    if (typeof this.parent !== "undefined" && typeof this.#directParent === "undefined") {
+      const prop = PropertyName.create(this.name);
+      if (prop.level > 0) {
+        let parent = this.parent;
+        while(typeof parent !== "undefined") {
+          if (parent.name === prop.nearestWildcardParentName) {
+            this.#directParent = parent;
+            break;
+          }
+          parent = parent.parent;
         }
-        curContext = curContext.bindingManager.parentBinding.loopContext;
       }
     }
-    return;
+    return this.#directParent;
   }
 
   /** @type {string} */
@@ -51,7 +52,7 @@ export class LoopContext {
 
   /** @type {boolean} */
   get dirty() {
-    return this.#updated || (this.#parent?.dirty ?? false);
+    return this.#updated || (this.parent?.dirty ?? false);
   }
 
   /** @type {boolean} */
@@ -60,22 +61,25 @@ export class LoopContext {
   }
 
   /** @type {number[]} */
-  // #directIndexes;
+  #directIndexes;
   get directIndexes() {
-    return this.directParent?.directIndexes.concat(this.#index) ?? [this.#index];
+    if (typeof this.#directIndexes === "undefined") {
+      this.#directIndexes = this.directParent?.directIndexes.concat(this.#index) ?? [this.#index];
+    }
+    return this.#directIndexes;
   }
   /**
    * 
    */
   clearDirectIndexes() {
-//    this.#directIndexes = undefined;
+    this.#directIndexes = undefined;
   }
 
   /** @type {number[]} */
   #indexes;
   get indexes() {
     if (typeof this.#indexes === "undefined") {
-      this.#indexes = this.#bindingManager.parentBinding?.loopContext?.indexes.concat(this.#index) ?? [this.#index];
+      this.#indexes = this.parent?.indexes.concat(this.#index) ?? [this.#index];
     }
     return this.#indexes;
   }
@@ -84,6 +88,12 @@ export class LoopContext {
    */
   clearIndexes() {
     this.#indexes = undefined;
+  }
+
+  clear() {
+    this.clearDirectIndexes();
+    this.clearIndexes();
+    this.#directParent = undefined;
   }
 
   /** @param {import("../binding/Binding.js").BindingManager} */

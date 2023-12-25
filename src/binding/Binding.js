@@ -312,23 +312,18 @@ export class BindingManager {
     ReuseBindingManager.dispose(this);
   }
 
-  /**
-   * 
-   * @param {Set<LoopContext>} loopContexts 
-   */
-  updateLoopContext(loopContexts = new Set) {
-    if (!loopContexts.has(this.loopContext)) {
-      if (this.loopContext.directDirty) {
-        this.loopContext.clearDirectIndexes();
+  updateLoopContext() {
+    if (typeof this.#loopContext !== "undefined") {
+      if (this.#loopContext.directDirty) {
+        this.#loopContext.clearDirectIndexes();
       }
-      if (this.loopContext.dirty) {
-        this.loopContext.clearIndexes();
+      if (this.#loopContext.dirty) {
+        this.#loopContext.clearIndexes();
       }
-      loopContexts.add(this.loopContext);
     }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {
-        bindingManager.updateLoopContext(loopContexts);
+        bindingManager.updateLoopContext();
       }
     }
   }
