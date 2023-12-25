@@ -2052,143 +2052,12 @@ class TemplateProperty extends NodeProperty {
   }
 }
 
-class LoopContext {
-  /** @type {LoopContext} */
-  get parent() {
-    return this.#bindingManager.parentBinding?.loopContext;
-  }
-
-  /** @type {LoopContext|undefined} */
-  #directParent;
-  get directParent() {
-    if (typeof this.parent !== "undefined" && typeof this.#directParent === "undefined") {
-      const prop = PropertyName.create(this.name);
-      if (prop.level > 0) {
-        let parent = this.parent;
-        while(typeof parent !== "undefined") {
-          if (parent.name === prop.nearestWildcardParentName) {
-            this.#directParent = parent;
-            break;
-          }
-          parent = parent.parent;
-        }
-      }
-    }
-    return this.#directParent;
-  }
-
-  /** @type {string} */
-  #name;
-  get name() {
-    return this.#name;
-  }
-
-  /** @type {number} */
-  #index;
-  get index() {
-    return this.#index;
-  }
-  set index(value) {
-    this.#index = value;
-    this.#updated = true;
-  }
-
-  /** @type {boolean} */
-  #updated = false;
-  /**
-   * 
-   */
-  clearUpdated() {
-    this.#updated = false;
-  }
-
-  /** @type {boolean} */
-  get dirty() {
-    return this.#updated || (this.parent?.dirty ?? false);
-  }
-
-  /** @type {boolean} */
-  get directDirty() {
-    return this.#updated || (this.directParent?.directDirty ?? false);
-  }
-
-  /** @type {number[]} */
-  #directIndexes;
-  get directIndexes() {
-    if (typeof this.#directIndexes === "undefined") {
-      this.#directIndexes = this.directParent?.directIndexes.concat(this.#index) ?? [this.#index];
-    }
-    return this.#directIndexes;
-  }
-  /**
-   * 
-   */
-  clearDirectIndexes() {
-    this.#directIndexes = undefined;
-  }
-
-  /** @type {number[]} */
-  #indexes;
-  get indexes() {
-    if (typeof this.#indexes === "undefined") {
-      this.#indexes = this.parent?.indexes.concat(this.#index) ?? [this.#index];
-    }
-    return this.#indexes;
-  }
-  /**
-   * 
-   */
-  clearIndexes() {
-    this.#indexes = undefined;
-  }
-
-  clear() {
-    this.clearDirectIndexes();
-    this.clearIndexes();
-    this.#directParent = undefined;
-  }
-
-  /** @param {import("../binding/Binding.js").BindingManager} */
-  #bindingManager;
-  get bindingManager() {
-    return this.#bindingManager;
-  } 
-  set bindingManager(value) {
-    this.#bindingManager = value;
-  } 
-    
-  /**
-   * 
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager 
-   * @param {string} name 
-   * @param {number} index 
-   */
-  constructor(bindingManager, name, index) {
-    this.#bindingManager = bindingManager;
-    this.#name = name;
-    this.#index = index;
-  }
-
-
-  /**
-   * 
-   * @param {string} name 
-   */
-  find(name) {
-    let loopContext = this;
-    while(typeof loopContext !== "undefined") {
-      if (loopContext.name === name) return loopContext;
-      loopContext = loopContext.directParent;
-    }
-  }
-}
-
 /**
  * 
  * @param {BindingManager} bindingManager 
  * @returns 
  */
-const applyToNodeFunc$1 = bindingManager => bindingManager.applyToNode();
+const applyToNodeFunc = bindingManager => bindingManager.applyToNode();
 
 class Repeat extends TemplateProperty {
   /** @type {number} */
@@ -2198,7 +2067,7 @@ class Repeat extends TemplateProperty {
   set value(value) {
     if (!Array.isArray(value)) utils.raise("Repeat: value is not array");
     if (this.value < value.length) {
-      this.binding.children.forEach(applyToNodeFunc$1);
+      this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const [ name, index ] = [this.binding.viewModelProperty.name, newIndex]; 
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
@@ -2206,10 +2075,10 @@ class Repeat extends TemplateProperty {
       }
     } else if (this.value > value.length) {
       const removeBindingManagers = this.binding.children.splice(value.length);
-      this.binding.children.forEach(applyToNodeFunc$1);
+      this.binding.children.forEach(applyToNodeFunc);
       removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
     } else {
-      this.binding.children.forEach(applyToNodeFunc$1);
+      this.binding.children.forEach(applyToNodeFunc);
     }
   }
 
@@ -2832,13 +2701,6 @@ class ComponentProperty extends ElementBase {
   
 }
 
-/**
- * 
- * @param {BindingManager} bindingManager 
- * @returns 
- */
-const applyToNodeFunc = bindingManager => bindingManager.applyToNode();
-
 class RepeatKeyed extends Repeat {
   /** @type {any[]} */
   #lastValue = [];
@@ -2876,6 +2738,7 @@ class RepeatKeyed extends Repeat {
       this.binding.children[i].dispose();
     }
     const newBindingManagers = values.map((value, newIndex) => {
+      /** @type {BindingManager} */
       let bindingManager;
       const beforeNode = beforeBindingManager?.lastNode ?? this.node;
       const parentNode = this.node.parentNode;
@@ -2889,10 +2752,9 @@ class RepeatKeyed extends Repeat {
         const lastIndex = lastIndexByNewIndex.get(newIndex);
         bindingManager = this.binding.children[lastIndex];
         if (lastIndex !== newIndex) {
-          bindingManager.loopContext.index = newIndex;
-          bindingManager.updateLoopContext();
+          bindingManager.thisLoopContext.index = newIndex;
         }
-        applyToNodeFunc(bindingManager);
+        bindingManager.applyToNode();
         if (bindingManager.nodes) {
           if (bindingManager.nodes[0].previousSibling !== beforeNode) {
             bindingManager.removeFromParent();
@@ -2929,8 +2791,7 @@ class RepeatKeyed extends Repeat {
       let bindingManager = bindingManagerByValue.get(newValue);
       const name = this.binding.viewModelProperty.name;
       if (typeof bindingManager !== "undefined") {
-        bindingManager.loopContext.index = index;
-        bindingManager.updateLoopContext();
+        bindingManager.thisLoopContext.index = index;
         bindingManager.applyToNode();
       } else {
         bindingManager = BindingManager.create(this.binding.component, this.template, {name, index});
@@ -3416,6 +3277,139 @@ class ReuseBindingManager {
 
 }
 
+class LoopContext {
+  /** @type {LoopContext} */
+  get parent() {
+    return this.#bindingManager.parentBinding?.loopContext;
+  }
+
+  /** @type {LoopContext|undefined} */
+  #directParent;
+  get directParent() {
+    if (typeof this.parent !== "undefined" && typeof this.#directParent === "undefined") {
+      const prop = PropertyName.create(this.name);
+      if (prop.level > 0) {
+        let parent = this.parent;
+        while(typeof parent !== "undefined") {
+          if (parent.name === prop.nearestWildcardParentName) {
+            this.#directParent = parent;
+            break;
+          }
+          parent = parent.parent;
+        }
+      }
+    }
+    return this.#directParent;
+  }
+
+  /** @type {string} */
+  #name;
+  get name() {
+    return this.#name;
+  }
+
+  /** @type {number} */
+  #index;
+  get index() {
+    return this.#index;
+  }
+  set index(value) {
+    this.#index = value;
+    try {
+      this.#updated = true;
+      this.#bindingManager.updateLoopContext();
+    } finally {
+      this.#updated = false;
+    }
+  }
+
+  /** @type {boolean} */
+  #updated = false;
+
+  /** @type {boolean} */
+  get dirty() {
+    return this.#updated || (this.parent?.dirty ?? false);
+  }
+
+  /** @type {boolean} */
+  get directDirty() {
+    return this.#updated || (this.directParent?.directDirty ?? false);
+  }
+
+  /** @type {number[]} */
+  #indexes;
+  get indexes() {
+    if (typeof this.#indexes === "undefined") {
+      this.#indexes = this.parent?.indexes.concat(this.#index) ?? [this.#index];
+    }
+    return this.#indexes;
+  }
+
+  /** @type {number[]} */
+  #directIndexes;
+  get directIndexes() {
+    if (typeof this.#directIndexes === "undefined") {
+      this.#directIndexes = this.directParent?.directIndexes.concat(this.#index) ?? [this.#index];
+    }
+    return this.#directIndexes;
+  }
+
+  /**
+   * 
+   */
+  clear() {
+    this.#directIndexes = undefined;
+    this.#indexes = undefined;
+    this.#directParent = undefined;
+  }
+
+  /**
+   * 
+   */
+  updateDirty() {
+    if (this.directDirty) {
+      this.#directIndexes = undefined;
+    }
+    if (this.dirty) {
+      this.#indexes = undefined;
+    }
+  }
+
+  /** @param {import("../binding/Binding.js").BindingManager} */
+  #bindingManager;
+  get bindingManager() {
+    return this.#bindingManager;
+  } 
+  set bindingManager(value) {
+    this.#bindingManager = value;
+  } 
+    
+  /**
+   * 
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager 
+   * @param {string} name 
+   * @param {number} index 
+   */
+  constructor(bindingManager, name, index) {
+    this.#bindingManager = bindingManager;
+    this.#name = name;
+    this.#index = index;
+  }
+
+
+  /**
+   * 
+   * @param {string} name 
+   */
+  find(name) {
+    let loopContext = this;
+    while(typeof loopContext !== "undefined") {
+      if (loopContext.name === name) return loopContext;
+      loopContext = loopContext.directParent;
+    }
+  }
+}
+
 class Binding {
   /** @type {number} */
   static seq = 0;
@@ -3658,6 +3652,11 @@ class BindingManager {
     return this.#loopContext ?? this.#parentBinding?.loopContext;
   }
 
+  /** @type {LoopContext|undefined} */
+  get thisLoopContext() {
+    return this.#loopContext;
+  }
+
   /** @type {HTMLTemplateElement} */
   #template;
   get template() {
@@ -3693,6 +3692,9 @@ class BindingManager {
     this.#fragment = content;
   }
 
+  /**
+   * 
+   */
   applyToNode() {
     const selectBindings = new Set;
     for(const binding of this.bindings) {
@@ -3721,14 +3723,12 @@ class BindingManager {
     ReuseBindingManager.dispose(this);
   }
 
+  /**
+   * 
+   */
   updateLoopContext() {
     if (typeof this.#loopContext !== "undefined") {
-      if (this.#loopContext.directDirty) {
-        this.#loopContext.clearDirectIndexes();
-      }
-      if (this.#loopContext.dirty) {
-        this.#loopContext.clearIndexes();
-      }
+      this.#loopContext.updateDirty();
     }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {
@@ -4341,7 +4341,7 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
 
   /**
    * 
-   * @param {LoopContext} loopContext 
+   * @param {import("../loopContext/LoopContext.js").LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
@@ -4362,7 +4362,7 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {LoopContext | undefined}
+   * @returns {import("../loopContext/LoopContext.js").LoopContext | undefined}
    */
   findLoopContext(prop) {
     if (typeof this.#directlyCallContext.loopContext === "undefined") return;

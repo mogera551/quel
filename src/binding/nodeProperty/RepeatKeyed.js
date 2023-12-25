@@ -1,15 +1,6 @@
 import { BindingManager } from "../Binding.js";
-import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
 import { Repeat } from "./Repeat.js";
-import { LoopContext } from "../../loopContext/LoopContext.js";
-
-/**
- * 
- * @param {BindingManager} bindingManager 
- * @returns 
- */
-const applyToNodeFunc = bindingManager => bindingManager.applyToNode();
 
 export class RepeatKeyed extends Repeat {
   /** @type {any[]} */
@@ -48,6 +39,7 @@ export class RepeatKeyed extends Repeat {
       this.binding.children[i].dispose();
     }
     const newBindingManagers = values.map((value, newIndex) => {
+      /** @type {BindingManager} */
       let bindingManager;
       const beforeNode = beforeBindingManager?.lastNode ?? this.node;
       const parentNode = this.node.parentNode;
@@ -61,10 +53,9 @@ export class RepeatKeyed extends Repeat {
         const lastIndex = lastIndexByNewIndex.get(newIndex);
         bindingManager = this.binding.children[lastIndex];
         if (lastIndex !== newIndex) {
-          bindingManager.loopContext.index = newIndex;
-          bindingManager.updateLoopContext();
+          bindingManager.thisLoopContext.index = newIndex;
         }
-        applyToNodeFunc(bindingManager);
+        bindingManager.applyToNode();
         if (bindingManager.nodes) {
           if (bindingManager.nodes[0].previousSibling !== beforeNode) {
             bindingManager.removeFromParent();
@@ -101,8 +92,7 @@ export class RepeatKeyed extends Repeat {
       let bindingManager = bindingManagerByValue.get(newValue);
       const name = this.binding.viewModelProperty.name;
       if (typeof bindingManager !== "undefined") {
-        bindingManager.loopContext.index = index;
-        bindingManager.updateLoopContext();
+        bindingManager.thisLoopContext.index = index;
         bindingManager.applyToNode();
       } else {
         bindingManager = BindingManager.create(this.binding.component, this.template, {name, index});

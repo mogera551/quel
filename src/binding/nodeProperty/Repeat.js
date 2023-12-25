@@ -1,7 +1,6 @@
 import { BindingManager } from "../Binding.js";
 import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
-import { LoopContext } from "../../loopContext/LoopContext.js";
 
 /**
  * 

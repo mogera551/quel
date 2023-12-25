@@ -249,6 +249,11 @@ export class BindingManager {
     return this.#loopContext ?? this.#parentBinding?.loopContext;
   }
 
+  /** @type {LoopContext|undefined} */
+  get thisLoopContext() {
+    return this.#loopContext;
+  }
+
   /** @type {HTMLTemplateElement} */
   #template;
   get template() {
@@ -284,6 +289,9 @@ export class BindingManager {
     this.#fragment = content;
   }
 
+  /**
+   * 
+   */
   applyToNode() {
     const selectBindings = new Set;
     for(const binding of this.bindings) {
@@ -312,14 +320,12 @@ export class BindingManager {
     ReuseBindingManager.dispose(this);
   }
 
+  /**
+   * 
+   */
   updateLoopContext() {
     if (typeof this.#loopContext !== "undefined") {
-      if (this.#loopContext.directDirty) {
-        this.#loopContext.clearDirectIndexes();
-      }
-      if (this.#loopContext.dirty) {
-        this.#loopContext.clearIndexes();
-      }
+      this.#loopContext.updateDirty();
     }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {

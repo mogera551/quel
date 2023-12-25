@@ -1,6 +1,5 @@
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../Symbols.js";
-import { LoopContext } from "../loopContext/LoopContext.js";
 import { utils } from "../utils.js";
 import { Api } from "./Api.js";
 import { Callback } from "./Callback.js";
@@ -52,7 +51,7 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
 
   /**
    * 
-   * @param {LoopContext} loopContext 
+   * @param {import("../loopContext/LoopContext.js").LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
@@ -73,7 +72,7 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {LoopContext | undefined}
+   * @returns {import("../loopContext/LoopContext.js").LoopContext | undefined}
    */
   findLoopContext(prop) {
     if (typeof this.#directlyCallContext.loopContext === "undefined") return;

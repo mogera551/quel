@@ -1,4 +1,3 @@
-import { LoopContext } from "../loopContext/LoopContext.js";
 import { BindingManager } from "./Binding.js";
 
 export class ReuseBindingManager {
