@@ -2757,7 +2757,7 @@ class RepeatKeyed extends Repeat {
         bindingManager.applyToNode();
         if (bindingManager.nodes) {
           if (bindingManager.nodes[0].previousSibling !== beforeNode) {
-            bindingManager.removeFromParent();
+            bindingManager.removeNodes();
             parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
           }
         }
@@ -2779,7 +2779,7 @@ class RepeatKeyed extends Repeat {
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       if (typeof bindingManager === "undefined") continue;
-      bindingManager.removeFromParent();
+      bindingManager.removeNodes();
       const oldValue = this.#lastValue[index];
       if (typeof oldValue !== "undefined") {
         bindingManagerByValue.set(oldValue, bindingManager);
@@ -2789,11 +2789,11 @@ class RepeatKeyed extends Repeat {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
       let bindingManager = bindingManagerByValue.get(newValue);
-      const name = this.binding.viewModelProperty.name;
       if (typeof bindingManager !== "undefined") {
         bindingManager.thisLoopContext.index = index;
         bindingManager.applyToNode();
       } else {
+        const name = this.binding.viewModelProperty.name;
         bindingManager = BindingManager.create(this.binding.component, this.template, {name, index});
       }
       this.binding.replaceChild(index, bindingManager);
@@ -3243,7 +3243,7 @@ class ReuseBindingManager {
    * @param {import("./Binding.js").BindingManager} bindingManager 
    */
   static dispose(bindingManager) {
-    bindingManager.removeFromParent();
+    bindingManager.removeNodes();
     bindingManager.parentBinding = undefined;
     bindingManager.bindings.forEach(binding => {
       bindingManager.component.bindingSummary.delete(binding);
@@ -3715,10 +3715,13 @@ class BindingManager {
   /**
    * 
    */
-  removeFromParent() {
+  removeNodes() {
     this.#nodes.forEach(node => this.fragment.appendChild(node));
   }
 
+  /**
+   * 
+   */
   dispose() {
     ReuseBindingManager.dispose(this);
   }

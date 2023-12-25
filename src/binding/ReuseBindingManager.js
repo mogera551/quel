@@ -9,7 +9,7 @@ export class ReuseBindingManager {
    * @param {import("./Binding.js").BindingManager} bindingManager 
    */
   static dispose(bindingManager) {
-    bindingManager.removeFromParent();
+    bindingManager.removeNodes();
     bindingManager.parentBinding = undefined;
     bindingManager.bindings.forEach(binding => {
       bindingManager.component.bindingSummary.delete(binding);

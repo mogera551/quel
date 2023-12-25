@@ -312,10 +312,13 @@ export class BindingManager {
   /**
    * 
    */
-  removeFromParent() {
+  removeNodes() {
     this.#nodes.forEach(node => this.fragment.appendChild(node));
   }
 
+  /**
+   * 
+   */
   dispose() {
     ReuseBindingManager.dispose(this);
   }

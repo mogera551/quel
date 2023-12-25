@@ -58,7 +58,7 @@ export class RepeatKeyed extends Repeat {
         bindingManager.applyToNode();
         if (bindingManager.nodes) {
           if (bindingManager.nodes[0].previousSibling !== beforeNode) {
-            bindingManager.removeFromParent();
+            bindingManager.removeNodes();
             parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
           }
         }
@@ -80,7 +80,7 @@ export class RepeatKeyed extends Repeat {
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       if (typeof bindingManager === "undefined") continue;
-      bindingManager.removeFromParent();
+      bindingManager.removeNodes();
       const oldValue = this.#lastValue[index];
       if (typeof oldValue !== "undefined") {
         bindingManagerByValue.set(oldValue, bindingManager);
@@ -90,11 +90,11 @@ export class RepeatKeyed extends Repeat {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
       let bindingManager = bindingManagerByValue.get(newValue);
-      const name = this.binding.viewModelProperty.name;
       if (typeof bindingManager !== "undefined") {
         bindingManager.thisLoopContext.index = index;
         bindingManager.applyToNode();
       } else {
+        const name = this.binding.viewModelProperty.name;
         bindingManager = BindingManager.create(this.binding.component, this.template, {name, index});
       }
       this.binding.replaceChild(index, bindingManager);
