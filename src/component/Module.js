@@ -31,13 +31,13 @@ export class Module {
   extendTag;
 
   /** @type {boolean} */
-  usePseudo = false;
+  useWebComponent;
 
   /** @type {boolean} */
-  useShadowRoot = false;
+  useShadowRoot;
 
   /** @type {boolean} */
-  useTagNamespace = true;
+  useTagNamespace;
 
   /** @type {boolean|undefined} */
   useKeyed;

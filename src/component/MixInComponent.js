@@ -156,13 +156,13 @@ export const mixInComponent = {
   },
 
   /** @type {boolean} 仮想コンポーネントを使う */
-  get usePseudo() {
-    return this._usePseudo;
+  get useWebComponent() {
+    return this._useWebComponent;
   },
 
   /** @type {boolean} タグネームスペースを使う */
-  get useTagNamesapce() {
-    return this._useTagNamesapce;
+  get useTagNamespace() {
+    return this._useTagNamespace;
   },
 
   /** @type {boolean} keyedを使う */
@@ -172,15 +172,15 @@ export const mixInComponent = {
 
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
-    return this.usePseudo ? this.pseudoParentNode : (this.shadowRoot ?? this);
+    return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
   },
 
-  /** @type {Node} 親要素（usePseudo以外では使わないこと） */
+  /** @type {Node} 親要素（useWebComponentがfalse以外では使わないこと） */
   get pseudoParentNode() {
-    return this.usePseudo ? this._pseudoParentNode : utils.raise("mixInComponent: not usePseudo");
+    return !this.useWebComponent ? this._pseudoParentNode : utils.raise("mixInComponent: useWebComponent must be false");
   },
 
-  /** @type {Node} 代替要素（usePseudo以外では使わないこと） */
+  /** @type {Node} 代替要素（useWebComponentがfalse以外では使わないこと） */
   get pseudoNode() {
     return this._pseudoNode;
   },
@@ -221,7 +221,7 @@ export const mixInComponent = {
     this._parentComponent = undefined;
 
     this._useShadowRoot = this.constructor.useShadowRoot;
-    this._usePseudo = this.constructor.usePseudo;
+    this._useWebComponent = this.constructor.useWebComponent;
     this._useTagNamespace = this.constructor.useTagNamespace;
     this._useKeyed = this.constructor.useKeyed;
 
@@ -262,7 +262,7 @@ export const mixInComponent = {
       }
     }
     // シャドウルートの作成
-    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && !this.usePseudo) {
+    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
     }
     // スレッドの生成
@@ -275,7 +275,7 @@ export const mixInComponent = {
     this.rootBinding = BindingManager.create(this, template);
     this.bindingSummary.flush();
 
-    if (this.usePseudo) {
+    if (!this.useWebComponent) {
       this.viewRootElement.insertBefore(this.rootBinding.fragment, this.pseudoNode.nextSibling)
       this.rootBinding.nodes.forEach(node => pseudoComponentByNode.set(node, this));
     } else {
@@ -301,7 +301,7 @@ export const mixInComponent = {
       } else {
       }
 
-      if (this.usePseudo) {
+      if (!this.useWebComponent) {
         const comment = document.createComment(`@@/${this.tagName}`);
         this._pseudoParentNode = this.parentNode;
         this._pseudoNode = comment;

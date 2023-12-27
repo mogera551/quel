@@ -34,13 +34,13 @@ export class ComponentClassGenerator {
         static outputFilters = module.outputFilters;
 
         /** @type {boolean} */
-        static useShadowRoot = module.useShadowRoot;
+        static useShadowRoot = module.useShadowRoot ?? config.useShadowRoot;
 
         /** @type {boolean} */
-        static usePseudo = module.usePseudo;
+        static useWebComponent = module.useWebComponent ?? config.useWebComponent;
 
         /** @type {boolean} */
-        static useTagNamespace = module.useTagNamespace;
+        static useTagNamespace = module.useTagNamespace ?? config.useTagNamespace;
 
         /** @type {boolean} */
         static useKeyed = module.useKeyed ?? config.useKeyed;

@@ -72,8 +72,8 @@
  * @property {Object<string,UserComponentModule>} componentModules
  * @property {Object<string,UserComponentModule>} componentModulesForRegist
  * @property {boolean|undefined} useShadowRoot
- * @property {boolean|undefined} usePseudo
- * @property {boolean|undefined} useTagNamesapce
+ * @property {boolean|undefined} useWebComponent
+ * @property {boolean|undefined} useTagNamespace
  */
 
  
@@ -104,7 +104,7 @@
  * @property {Promise} alivePromise
  * @property {Component} parentComponent
  * @property {boolean} useShadowRoot
- * @property {boolean} usePseudo
+ * @property {boolean} useWebComponent
  * @property {boolean} useTagNamespace
  * @property {boolean} useKeyed
  * @property {ShadowRoot|HTMLElement} viewRootElement

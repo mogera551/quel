@@ -666,13 +666,13 @@ class Module {
   extendTag;
 
   /** @type {boolean} */
-  usePseudo = false;
+  useWebComponent;
 
   /** @type {boolean} */
-  useShadowRoot = false;
+  useShadowRoot;
 
   /** @type {boolean} */
-  useTagNamespace = true;
+  useTagNamespace;
 
   /** @type {boolean|undefined} */
   useKeyed;
@@ -974,12 +974,22 @@ function createGlobals(component) {
   return new Proxy({}, new Handler(component));
 }
 
-let Config$1 = class Config {
-  debug = false;
-  useKeyed = false;
+/**
+ * @type {{
+ *   debug:Boolean,
+ *   useShadowRoot:Boolean,
+ *   useKeyed:Boolean,
+ *   useWebComponent:Boolean,
+ *   useTagNamespace:Boolean,
+ * }}
+ */
+const config = {
+  debug: false,
+  useShadowRoot: false,
+  useKeyed: true,
+  useWebComponent: true,
+  useTagNamespace: true,
 };
-
-const config = new Config$1;
 
 class ThreadStop extends Error {
 
@@ -4634,13 +4644,13 @@ const mixInComponent = {
   },
 
   /** @type {boolean} 仮想コンポーネントを使う */
-  get usePseudo() {
-    return this._usePseudo;
+  get useWebComponent() {
+    return this._useWebComponent;
   },
 
   /** @type {boolean} タグネームスペースを使う */
-  get useTagNamesapce() {
-    return this._useTagNamesapce;
+  get useTagNamespace() {
+    return this._useTagNamespace;
   },
 
   /** @type {boolean} keyedを使う */
@@ -4650,15 +4660,15 @@ const mixInComponent = {
 
   /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
   get viewRootElement() {
-    return this.usePseudo ? this.pseudoParentNode : (this.shadowRoot ?? this);
+    return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
   },
 
-  /** @type {Node} 親要素（usePseudo以外では使わないこと） */
+  /** @type {Node} 親要素（useWebComponentがfalse以外では使わないこと） */
   get pseudoParentNode() {
-    return this.usePseudo ? this._pseudoParentNode : utils.raise("mixInComponent: not usePseudo");
+    return !this.useWebComponent ? this._pseudoParentNode : utils.raise("mixInComponent: useWebComponent must be false");
   },
 
-  /** @type {Node} 代替要素（usePseudo以外では使わないこと） */
+  /** @type {Node} 代替要素（useWebComponentがfalse以外では使わないこと） */
   get pseudoNode() {
     return this._pseudoNode;
   },
@@ -4699,7 +4709,7 @@ const mixInComponent = {
     this._parentComponent = undefined;
 
     this._useShadowRoot = this.constructor.useShadowRoot;
-    this._usePseudo = this.constructor.usePseudo;
+    this._useWebComponent = this.constructor.useWebComponent;
     this._useTagNamespace = this.constructor.useTagNamespace;
     this._useKeyed = this.constructor.useKeyed;
 
@@ -4740,7 +4750,7 @@ const mixInComponent = {
       }
     }
     // シャドウルートの作成
-    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && !this.usePseudo) {
+    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
     }
     // スレッドの生成
@@ -4753,7 +4763,7 @@ const mixInComponent = {
     this.rootBinding = BindingManager.create(this, template);
     this.bindingSummary.flush();
 
-    if (this.usePseudo) {
+    if (!this.useWebComponent) {
       this.viewRootElement.insertBefore(this.rootBinding.fragment, this.pseudoNode.nextSibling);
       this.rootBinding.nodes.forEach(node => pseudoComponentByNode.set(node, this));
     } else {
@@ -4779,7 +4789,7 @@ const mixInComponent = {
       } else {
       }
 
-      if (this.usePseudo) {
+      if (!this.useWebComponent) {
         const comment = document.createComment(`@@/${this.tagName}`);
         this._pseudoParentNode = this.parentNode;
         this._pseudoNode = comment;
@@ -4845,13 +4855,13 @@ class ComponentClassGenerator {
         static outputFilters = module.outputFilters;
 
         /** @type {boolean} */
-        static useShadowRoot = module.useShadowRoot;
+        static useShadowRoot = module.useShadowRoot ?? config.useShadowRoot;
 
         /** @type {boolean} */
-        static usePseudo = module.usePseudo;
+        static useWebComponent = module.useWebComponent ?? config.useWebComponent;
 
         /** @type {boolean} */
-        static useTagNamespace = module.useTagNamespace;
+        static useTagNamespace = module.useTagNamespace ?? config.useTagNamespace;
 
         /** @type {boolean} */
         static useKeyed = module.useKeyed ?? config.useKeyed;
