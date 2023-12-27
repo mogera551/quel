@@ -12,9 +12,10 @@ export class ReuseBindingManager {
     bindingManager.removeNodes();
     bindingManager.parentBinding = undefined;
     bindingManager.bindings.forEach(binding => {
+      binding.nodeProperty.clearValue();
       bindingManager.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
-      removeBindManagers.forEach(bindingManager => this.dispose(bindingManager));
+      removeBindManagers.forEach(bindingManager => bindingManager.dispose());
     });
     if (true || !bindingManager.component.useKeyed) {
       this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??

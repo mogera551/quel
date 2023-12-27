@@ -1994,6 +1994,9 @@ class NodeProperty {
    */
   applyToChildNodes(setOfIndex) {
   }
+
+  clearValue() {
+  }
 }
 
 class TemplateProperty extends NodeProperty {
@@ -2763,6 +2766,10 @@ class RepeatKeyed extends Repeat {
       this.binding.replaceChild(index, bindingManager);
     }
   }
+
+  clearValue() {
+    this.#lastValue = [];
+  }
 }
 
 const regexp = RegExp(/^\$[0-9]+$/);
@@ -3210,9 +3217,10 @@ class ReuseBindingManager {
     bindingManager.removeNodes();
     bindingManager.parentBinding = undefined;
     bindingManager.bindings.forEach(binding => {
+      binding.nodeProperty.clearValue();
       bindingManager.component.bindingSummary.delete(binding);
       const removeBindManagers = binding.children.splice(0);
-      removeBindManagers.forEach(bindingManager => this.dispose(bindingManager));
+      removeBindManagers.forEach(bindingManager => bindingManager.dispose());
     });
     {
       this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??

@@ -112,4 +112,7 @@ export class NodeProperty {
    */
   applyToChildNodes(setOfIndex) {
   }
+
+  clearValue() {
+  }
 }

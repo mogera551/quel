@@ -100,4 +100,8 @@ export class RepeatKeyed extends Repeat {
       this.binding.replaceChild(index, bindingManager);
     }
   }
+
+  clearValue() {
+    this.#lastValue = [];
+  }
 }
