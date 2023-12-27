@@ -112,23 +112,6 @@ export class ViewModelProperty {
   initialize() {
   }
 
-  /**
-   * このバインドが更新対象かどうか
-   * @param {Set<string>} setOfUpdatedViewModelPropertyKeys 
-   */
-  isUpdate(setOfUpdatedViewModelPropertyKeys) {
-    return setOfUpdatedViewModelPropertyKeys.has(this.key) && 
-      !this.binding.component.updateSlot.nodeUpdator.queue.has(this);
-  }
-
-  assignFromNodeValue() {
-    this.value = this.binding.nodeProperty.filteredValue;
-  }
-
-  assignValue(value) {
-    this.value = value;
-  }
-
   getChildValue(index) {
     return this.viewModel[Symbols.directlyGet](`${this.name}.*` , this.indexes.concat(index));
   }

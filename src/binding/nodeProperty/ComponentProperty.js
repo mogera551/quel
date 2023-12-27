@@ -69,7 +69,7 @@ export class ComponentProperty extends ElementBase {
    * 更新前処理
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  beforeUpdate(propertyAccessByViewModelPropertyKey) {
+  postUpdate(propertyAccessByViewModelPropertyKey) {
     const viewModelProperty = this.binding.viewModelProperty.name;
     const propName = this.propName;
     for(const [key, propertyAccess] of propertyAccessByViewModelPropertyKey.entries()) {

@@ -11,47 +11,47 @@ export class Binding {
   /** @type {number} */
   static seq = 0;
 
-  /** @type {number} */
+  /** @type {number} id */
   #id;
   get id() {
     return this.#id;
   }
 
-  /** @type {BindingManager} */
+  /** @type {BindingManager} parent binding manager */
   #bindingManager;
   get bindingManager() {
     return this.#bindingManager;
   }
 
-  /** @type { import("./nodeProperty/NodeProperty.js").NodeProperty } */
+  /** @type { import("./nodeProperty/NodeProperty.js").NodeProperty } node property */
   #nodeProperty;
   get nodeProperty() {
     return this.#nodeProperty
   }
 
-  /** @type { import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty } */
+  /** @type { import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty } viewmodel property */
   #viewModelProperty;
   get viewModelProperty() {
     return this.#viewModelProperty;
   }
 
-  /** @type {Component} */
+  /** @type {Component} component */
   get component() {
     return this.#bindingManager.component;
   }
 
-  /** @type {LoopContext|undefined} */
+  /** @type {LoopContext|undefined} loop context */
   get loopContext() {
     return this.#bindingManager.loopContext;
   }
 
-  /** @type { BindingManager[] } */
+  /** @type { BindingManager[] } child bindingManager for branch/repeat */
   #children = [];
   get children() {
     return this.#children;
   }
 
-  /** @type {boolean} */
+  /** @type {boolean} branch/repeat is true */
   get expandable() {
     return this.nodeProperty.expandable;
   }
@@ -59,20 +59,6 @@ export class Binding {
   /** @type {boolean} */
   get isSelectValue() {
     return this.nodeProperty.isSelectValue;
-  }
-
-  /** @type {boolean} */
-  #updated;
-  get updated() {
-    return this.#updated;
-  }
-  set updated(value) {
-    this.#updated = value;
-  }
-
-  /** @type {LoopContext} */
-  get loopContext() {
-    return this.#bindingManager.loopContext;
   }
 
   /**
@@ -85,7 +71,7 @@ export class Binding {
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
    * @param {Filter[]} filters
    */
-  build(bindingManager,
+  constructor(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
     viewModelPropertyName, classOfViewModelProperty,
     filters
@@ -97,19 +83,16 @@ export class Binding {
   }
 
   /**
-   * Nodeへ値を反映する
+   * apply value to node
    */
   applyToNode() {
     const { component, nodeProperty, viewModelProperty } = this;
-    if (component.bindingSummary.updatedBindings.has(this)) {
-      return;
-    } 
-    //console.log(`binding.applyToNode() ${nodeProperty.node?.tagName} ${nodeProperty.name} ${viewModelProperty.name} ${viewModelProperty.indexesString}`);
+    if (component.bindingSummary.updatedBindings.has(this)) return;
     try {
       if (!nodeProperty.applicable) return;
       const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
       if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-      nodeProperty.assignFromViewModelValue();
+      nodeProperty.value = filteredViewModelValue;
     } finally {
       component.bindingSummary.updatedBindings.add(this);
     }
@@ -130,7 +113,7 @@ export class Binding {
   applyToViewModel() {
     const { viewModelProperty } = this;
     if (!viewModelProperty.applicable) return;
-    viewModelProperty.assignFromNodeValue();
+    viewModelProperty.value = this.binding.nodeProperty.filteredValue;
   }
 
   /**
@@ -138,10 +121,7 @@ export class Binding {
    * @param {Event} event 
    */
   execDefaultEventHandler(event) {
-    if (!this.component.bindingSummary.allBindings.has(this)) {
-      //console.log(`binding(${this.id}) is already deleted`);
-      return;
-    }
+    if (!this.component.bindingSummary.allBindings.has(this)) return;
     event.stopPropagation();
     const process = new ProcessData(this.applyToViewModel, this, []);
     this.component.updateSlot.addProcess(process);
@@ -153,12 +133,11 @@ export class Binding {
   }
 
   /**
-   * 初期化
+   * initialize
    */
   initialize() {
     this.nodeProperty.initialize();
     this.viewModelProperty.initialize();
-//    this.applyToNode();
   }
 
   /**
@@ -202,8 +181,7 @@ export class Binding {
     viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
-    const binding = new Binding;
-    binding.build(
+    const binding = new Binding(
       bindingManager,
       node, nodePropertyName, classOfNodeProperty, 
       viewModelPropertyName, classOfViewModelProperty,
@@ -395,7 +373,7 @@ export class BindingManager {
       binding.applyToNode();
     }
     for(const binding of bindingSummary.componentBindings) {
-      binding.nodeProperty.beforeUpdate(propertyAccessByViewModelPropertyKey);
+      binding.nodeProperty.postUpdate(propertyAccessByViewModelPropertyKey);
     }
 
   }

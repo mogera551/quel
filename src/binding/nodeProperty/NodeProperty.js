@@ -94,10 +94,10 @@ export class NodeProperty {
   }
 
   /**
-   * 更新前処理
+   * 更新後処理
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  beforeUpdate(propertyAccessByViewModelPropertyKey) {
+  postUpdate(propertyAccessByViewModelPropertyKey) {
   }
 
   /** 
@@ -105,21 +105,6 @@ export class NodeProperty {
    */
   isSameValue(value) {
     return this.value === value;
-  }
-
-  /**
-   * 
-   */
-  assignFromViewModelValue() {
-    this.assignValue(this.binding.viewModelProperty.filteredValue ?? "");
-  }
-
-  /**
-   * 
-   * @param {any} value 
-   */
-  assignValue(value) {
-    this.value = value;
   }
 
   /**
