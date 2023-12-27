@@ -3,7 +3,6 @@ import { Filter } from "../../filter/Filter.js";
 import { MultiValue } from "../nodeProperty/MultiValue.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
-import { utils } from "../../utils.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -33,7 +32,6 @@ export class ViewModelProperty {
   }
 
   /** @type {string} */
-  #key;
   get key() {
     return this.name + "\t" + this.indexesString;
   }

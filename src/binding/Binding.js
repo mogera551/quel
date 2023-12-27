@@ -111,9 +111,9 @@ export class Binding {
    * ViewModelへ値を反映する
    */
   applyToViewModel() {
-    const { viewModelProperty } = this;
+    const { viewModelProperty, nodeProperty } = this;
     if (!viewModelProperty.applicable) return;
-    viewModelProperty.value = this.binding.nodeProperty.filteredValue;
+    viewModelProperty.value = nodeProperty.filteredValue;
   }
 
   /**

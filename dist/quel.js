@@ -2186,7 +2186,6 @@ class ViewModelProperty {
   }
 
   /** @type {string} */
-  #key;
   get key() {
     return this.name + "\t" + this.indexesString;
   }
@@ -2497,10 +2496,7 @@ class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   eventHandler(event) {
-    if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) {
-      //console.log(`binding(${this.binding.id}) is already deleted`);
-      return;
-    }
+    if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
@@ -3482,9 +3478,9 @@ class Binding {
    * ViewModelへ値を反映する
    */
   applyToViewModel() {
-    const { viewModelProperty } = this;
+    const { viewModelProperty, nodeProperty } = this;
     if (!viewModelProperty.applicable) return;
-    viewModelProperty.value = this.binding.nodeProperty.filteredValue;
+    viewModelProperty.value = nodeProperty.filteredValue;
   }
 
   /**
@@ -4396,12 +4392,6 @@ class BindingSummary {
     return this.#expandableBindings;
   }
 
-  /** @type {Set<Binding>} select.valueを持つbinding */
-  #selectBindings = new Set;
-  get selectBindings() {
-    return this.#selectBindings;
-  }
-
   /** @type {Set<Binding} componentを持つbinding */
   #componentBindings = new Set;
   get componentBindings() {
@@ -4441,9 +4431,6 @@ class BindingSummary {
     if (binding.nodeProperty.expandable) {
       this.#expandableBindings.add(binding);
     }
-    if (binding.nodeProperty.node.constructor === HTMLSelectElement && binding.nodeProperty.name === "value") {
-      this.#selectBindings.add(binding);
-    }
     if (binding.nodeProperty.constructor === ComponentProperty) {
       this.#componentBindings.add(binding);
     }
@@ -4464,7 +4451,6 @@ class BindingSummary {
       bindings.delete(binding);
     }
     this.#expandableBindings.delete(binding);
-    this.#selectBindings.delete(binding);
     this.#componentBindings.delete(binding);
   }
 
@@ -4492,7 +4478,6 @@ class BindingSummary {
     this.#allBindings = new Set;
     this.#bindingsByKey = new Map;
     this.#expandableBindings = new Set;
-    this.#selectBindings = new Set;
     this.#componentBindings = new Set;
   }
 }
