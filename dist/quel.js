@@ -3250,7 +3250,7 @@ class ReuseBindingManager {
 }
 
 class LoopContext {
-  /** @type {LoopContext} */
+  /** @type {LoopContext|undefined} */
   get parent() {
     return this.#bindingManager.parentBinding?.loopContext;
   }
@@ -3289,7 +3289,7 @@ class LoopContext {
     this.#index = value;
     try {
       this.#updated = true;
-      this.#bindingManager.updateLoopContext();
+      this.#bindingManager.postUpdateIndexForLoopContext();
     } finally {
       this.#updated = false;
     }
@@ -3299,13 +3299,13 @@ class LoopContext {
   #updated = false;
 
   /** @type {boolean} */
-  get dirty() {
-    return this.#updated || (this.parent?.dirty ?? false);
+  get updated() {
+    return this.#updated || (this.parent?.updated ?? false);
   }
 
   /** @type {boolean} */
-  get directDirty() {
-    return this.#updated || (this.directParent?.directDirty ?? false);
+  get directUpdated() {
+    return this.#updated || (this.directParent?.directUpdated ?? false);
   }
 
   /** @type {number[]} */
@@ -3338,11 +3338,11 @@ class LoopContext {
   /**
    * 
    */
-  updateDirty() {
-    if (this.directDirty) {
+  postUpdateIndex() {
+    if (this.directUpdated) {
       this.#directIndexes = undefined;
     }
-    if (this.dirty) {
+    if (this.updated) {
       this.#indexes = undefined;
     }
   }
@@ -3679,13 +3679,13 @@ class BindingManager {
   /**
    * 
    */
-  updateLoopContext() {
+  postUpdateIndexForLoopContext() {
     if (typeof this.#loopContext !== "undefined") {
-      this.#loopContext.updateDirty();
+      this.#loopContext.postUpdateIndex();
     }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {
-        bindingManager.updateLoopContext();
+        bindingManager.postUpdateIndexForLoopContext();
       }
     }
   }

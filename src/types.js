@@ -76,19 +76,7 @@
  * @property {boolean|undefined} useTagNamesapce
  */
 
-/**
- * @typedef {Object} ContextParam
- * @property {PropertyName} propName
- * @property {number[]} indexes
- * @property {number} pos
- */
  
-/**
- * @typedef {Object} ContextInfo
- * @property {number[]} indexes
- * @property {ContextParam[]} stack
- */
-
 /**
  * @typedef {(value:any,options:string[])=>any} FilterFunc
  */

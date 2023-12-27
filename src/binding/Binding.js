@@ -304,13 +304,13 @@ export class BindingManager {
   /**
    * 
    */
-  updateLoopContext() {
+  postUpdateIndexForLoopContext() {
     if (typeof this.#loopContext !== "undefined") {
-      this.#loopContext.updateDirty();
+      this.#loopContext.postUpdateIndex();
     }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {
-        bindingManager.updateLoopContext();
+        bindingManager.postUpdateIndexForLoopContext();
       }
     }
   }
