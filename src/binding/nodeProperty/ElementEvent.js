@@ -3,10 +3,12 @@ import { ProcessData } from "../../thread/ViewModelUpdator.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
+const PREFIX = "on";
+
 export class ElementEvent extends ElementBase {
   /** @type {string} nameのonの後ろを取得する */
   get eventType() {
-    return this.name.slice(2); // on～
+    return this.name.slice(PREFIX.length); // on～
   }
 
   /** @type {boolean} applyToNode()の対象かどうか */
@@ -23,7 +25,7 @@ export class ElementEvent extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!name.startsWith("on")) utils.raise(`ElementEvent: invalid property name ${name}`);
+    if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
