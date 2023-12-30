@@ -1,7 +1,7 @@
 import "../types.js";
 import { ViewModelHandlerBase } from "../viewModel/ViewModelHandlerBase.js";
 
-export class NotifyReceiver {
+export class NodeUpdator {
   /** @type {PropertyAccess[]} */
   queue = [];
 

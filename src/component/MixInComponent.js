@@ -330,7 +330,7 @@ export const mixInComponent = {
 
   /**
    * ノード更新処理
-   * UpdateSlotのNotifyReceiverから呼び出される
+   * UpdateSlotのNodeUpdatorから呼び出される
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {

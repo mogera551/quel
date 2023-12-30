@@ -1,5 +1,5 @@
 import "../types.js";
-import { NotifyReceiver } from "./NotifyReceiver.js";
+import { NodeUpdator } from "./NodeUpdator.js";
 import { Phase } from "./Phase.js";
 import { ViewModelUpdator, ProcessData } from "./ViewModelUpdator.js";
 
@@ -14,11 +14,11 @@ export class UpdateSlot {
     return this.#viewModelUpdator;
   }
 
-  /** @type {NotifyReceiver} */
-  #notifyReceiver;
-  /** @type {NotifyReceiver} */
-  get notifyReceiver() {
-    return this.#notifyReceiver;
+  /** @type {NodeUpdator} */
+  #nodeUpdator;
+  /** @type {NodeUpdator} */
+  get nodeUpdator() {
+    return this.#nodeUpdator;
   }
 
   /** @type {()=>void} */
@@ -66,7 +66,7 @@ export class UpdateSlot {
    */
   constructor(component, callback = null, changePhaseCallback = null) {
     this.#viewModelUpdator = new ViewModelUpdator();
-    this.#notifyReceiver = new NotifyReceiver(component);
+    this.#nodeUpdator = new NodeUpdator(component);
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
     this.#waitPromise = new Promise((resolve, reject) => {
@@ -104,7 +104,7 @@ export class UpdateSlot {
 
   /** @type {boolean} */
   get isEmpty() {
-    return this.#viewModelUpdator.isEmpty && this.#notifyReceiver.isEmpty;
+    return this.#viewModelUpdator.isEmpty && this.#nodeUpdator.isEmpty;
   }
 
   async exec() {
@@ -113,9 +113,9 @@ export class UpdateSlot {
       await this.#viewModelUpdator.exec();
 
       this.phase = Phase.gatherUpdatedProperties;
-      await this.#notifyReceiver.exec();
+      await this.#nodeUpdator.exec();
 
-    } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty);
+    } while(!this.#viewModelUpdator.isEmpty || !this.#nodeUpdator.isEmpty);
 
     this.phase = Phase.terminate;
     this.#aliveResolve();
@@ -135,7 +135,7 @@ export class UpdateSlot {
    * @param {PropertyAccess} notifyData 
    */
   async addNotify(notifyData) {
-    this.#notifyReceiver.queue.push(notifyData);
+    this.#nodeUpdator.queue.push(notifyData);
     this.#waitResolve(true); // waitingを解除する
   }
 
