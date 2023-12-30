@@ -49,12 +49,10 @@ export class BindingSummary {
       return;
     }
     this.#allBindings.add(binding);
-    const bindings = this.#bindingsByKey.get(binding.viewModelProperty.key);
-    if (typeof bindings !== "undefined") {
-      bindings.add(binding)
-    } else {
-      this.#bindingsByKey.set(binding.viewModelProperty.key, new Set([binding]));
-    }
+
+    const key = binding.viewModelProperty.key;
+    this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
+
     if (binding.nodeProperty.expandable) {
       this.#expandableBindings.add(binding);
     }
@@ -73,10 +71,7 @@ export class BindingSummary {
 
   #delete(binding) {
     this.#allBindings.delete(binding);
-    const bindings = this.#bindingsByKey.get(binding.viewModelProperty.key);
-    if (typeof bindings !== "undefined") {
-      bindings.delete(binding);
-    }
+    this.#bindingsByKey.get(binding.viewModelProperty.key)?.delete(binding);
     this.#expandableBindings.delete(binding);
     this.#componentBindings.delete(binding);
   }
