@@ -1,3 +1,4 @@
+import { config } from "../Config.js";
 import "../types.js";
 import { utils } from "../utils.js";
 import { Template } from "./Template.js";
@@ -12,50 +13,50 @@ export class Module {
   /** @type {string} */
   html;
 
-  /** @type {string} */
+  /** @type {string|undefined} */
   css;
 
   /** @type {HTMLTemplateElement} */
   get template() {
-    const customComponentNames = this.useTagNamespace ? Object.keys(this.componentModules ?? {}) : [];
+    const customComponentNames = (this.useTagNamespace ?? config.useTagNamespace) ? Object.keys(this.componentModules ?? {}) : [];
     return Template.create(this.html, this.css, this.uuid, customComponentNames);
   }
 
   /** @type {ViewModel.constructor} */
   ViewModel;
 
-  /** @type {HTMLElement.constructor} */
+  /** @type {HTMLElement.constructor|undefined} */
   extendClass;
 
-  /** @type {string} */
+  /** @type {string|undefined} */
   extendTag;
 
-  /** @type {boolean} */
+  /** @type {boolean|undefined} */
   useWebComponent;
 
-  /** @type {boolean} */
+  /** @type {boolean|undefined} */
   useShadowRoot;
 
-  /** @type {boolean} */
+  /** @type {boolean|undefined} */
   useTagNamespace;
 
   /** @type {boolean|undefined} */
   useKeyed;
 
-  /** @type {Object<string,FilterFunc>} */
+  /** @type {Object<string,FilterFunc>|undefined} */
   inputFilters;
 
-  /** @type {Object<string,FilterFunc>} */
+  /** @type {Object<string,FilterFunc>|undefined} */
   outputFilters;
 
-  /** @type {Object<string,Module>} */
+  /** @type {Object<string,Module>|undefined} */
   componentModules;
 
-  /** @type {Object<string,Module>} */
+  /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegist() {
-    if (this.useTagNamespace) {
-      const componentModules = {};
+    if (this.useTagNamespace ?? config.useTagNamespace) {
       if (typeof this.componentModules !== "undefined") {
+        const componentModules = {};
         for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
           componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
         }
