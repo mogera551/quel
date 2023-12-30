@@ -59,8 +59,7 @@ export class ViewModelHandlerBase extends Handler {
    * 
    * @param {ViewModel} viewModel 
    * @param {PropertyAccess} propertyAccess
-   * @param {string} prop 
-   * @param {number[]} indexes 
+   * @param {Set<PropertyAccess>} setOfSavePropertyAccessKeys 
    * @returns {PropertyAccess[]}
    */
   static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
