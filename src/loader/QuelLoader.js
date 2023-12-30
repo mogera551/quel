@@ -3,6 +3,8 @@ import { Loader, Registrar } from "../../modules/vanilla-module-loader/vanilla_m
 import { Filter } from "../filter/Filter.js";
 import { registComponentModule } from "../component/Component.js";
 
+const PREFIX = "filter-";
+
 class QuelModuleRegistrar extends Registrar {
   /**
    * 
@@ -11,8 +13,8 @@ class QuelModuleRegistrar extends Registrar {
    * @returns {void}
    */
   static regist(name, module) {
-    if (name.startsWith("filter-")) {
-      const filterName = name.slice("filter-".length);
+    if (name.startsWith(PREFIX)) {
+      const filterName = name.slice(PREFIX.length);
       const { output, input } = module;
       Filter.regist(filterName, output, input);
     } else {
