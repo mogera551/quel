@@ -4,11 +4,6 @@ import { BindingManager } from "../Binding.js";
 
 export class Branch extends TemplateProperty {
   /** @type {boolean} */
-  get isSelectValue() {
-    return false;
-  }
-
-  /** @type {boolean} */
   get value() {
     return this.binding.children.length > 0;
   }

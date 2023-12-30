@@ -4,11 +4,6 @@ import { Filter } from "../../filter/Filter.js";
 import { utils } from "../../utils.js";
 
 export class Checkbox extends ElementBase {
-  /** @type {boolean} */
-  get isSelectValue() {
-    return false;
-  }
-
   /** @type {HTMLInputElement} */
   get inputElement() {
     return this.node;
