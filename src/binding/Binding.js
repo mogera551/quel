@@ -325,10 +325,11 @@ export class BindingManager {
 
   /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
+   * @param {BindingManager} bindingManager
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  updateNode(propertyAccessByViewModelPropertyKey) {
-    const { bindingSummary } = this.component;
+  static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
+    const { bindingSummary } = bindingManager.component;
     bindingSummary.updatedBindings.clear();
 
     // templateを先に展開する

@@ -125,7 +125,7 @@ export class UpdateSlot {
    * 
    * @param {ProcessData} processData 
    */
-  async addProcess(processData) {
+  addProcess(processData) {
     this.#viewModelUpdator.queue.push(processData);
     this.#waitResolve(true); // waitingを解除する
   }
@@ -134,7 +134,7 @@ export class UpdateSlot {
    * 
    * @param {PropertyAccess} notifyData 
    */
-  async addNotify(notifyData) {
+  addNotify(notifyData) {
     this.#nodeUpdator.queue.push(notifyData);
     this.#waitResolve(true); // waitingを解除する
   }

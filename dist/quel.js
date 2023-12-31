@@ -465,6 +465,23 @@ const Symbols$1 = Object.assign({
   isComponent: Symbol.for(`${name}:component.isComponent`),
 }, Symbols$2);
 
+/**
+ * @type {{
+ *   debug:Boolean,
+ *   useShadowRoot:Boolean,
+ *   useKeyed:Boolean,
+ *   useWebComponent:Boolean,
+ *   useTagNamespace:Boolean,
+ * }}
+ */
+const config = {
+  debug: false,
+  useShadowRoot: false,
+  useKeyed: true,
+  useWebComponent: true,
+  useTagNamespace: true,
+};
+
 class utils {
   /**
    * 
@@ -647,50 +664,50 @@ class Module {
   /** @type {string} */
   html;
 
-  /** @type {string} */
+  /** @type {string|undefined} */
   css;
 
   /** @type {HTMLTemplateElement} */
   get template() {
-    const customComponentNames = this.useTagNamespace ? Object.keys(this.componentModules ?? {}) : [];
+    const customComponentNames = (this.useTagNamespace ?? config.useTagNamespace) ? Object.keys(this.componentModules ?? {}) : [];
     return Template.create(this.html, this.css, this.uuid, customComponentNames);
   }
 
   /** @type {ViewModel.constructor} */
   ViewModel;
 
-  /** @type {HTMLElement.constructor} */
+  /** @type {HTMLElement.constructor|undefined} */
   extendClass;
 
-  /** @type {string} */
+  /** @type {string|undefined} */
   extendTag;
 
-  /** @type {boolean} */
+  /** @type {boolean|undefined} */
   useWebComponent;
 
-  /** @type {boolean} */
+  /** @type {boolean|undefined} */
   useShadowRoot;
 
-  /** @type {boolean} */
+  /** @type {boolean|undefined} */
   useTagNamespace;
 
   /** @type {boolean|undefined} */
   useKeyed;
 
-  /** @type {Object<string,FilterFunc>} */
+  /** @type {Object<string,FilterFunc>|undefined} */
   inputFilters;
 
-  /** @type {Object<string,FilterFunc>} */
+  /** @type {Object<string,FilterFunc>|undefined} */
   outputFilters;
 
-  /** @type {Object<string,Module>} */
+  /** @type {Object<string,Module>|undefined} */
   componentModules;
 
-  /** @type {Object<string,Module>} */
+  /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegist() {
-    if (this.useTagNamespace) {
-      const componentModules = {};
+    if (this.useTagNamespace ?? config.useTagNamespace) {
       if (typeof this.componentModules !== "undefined") {
+        const componentModules = {};
         for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
           componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
         }
@@ -974,23 +991,6 @@ function createGlobals(component) {
   return new Proxy({}, new Handler(component));
 }
 
-/**
- * @type {{
- *   debug:Boolean,
- *   useShadowRoot:Boolean,
- *   useKeyed:Boolean,
- *   useWebComponent:Boolean,
- *   useTagNamespace:Boolean,
- * }}
- */
-const config = {
-  debug: false,
-  useShadowRoot: false,
-  useKeyed: true,
-  useWebComponent: true,
-  useTagNamespace: true,
-};
-
 class ThreadStop extends Error {
 
 }
@@ -1181,8 +1181,7 @@ class ViewModelHandlerBase extends Handler$2 {
    * 
    * @param {ViewModel} viewModel 
    * @param {PropertyAccess} propertyAccess
-   * @param {string} prop 
-   * @param {number[]} indexes 
+   * @param {Set<PropertyAccess>} setOfSavePropertyAccessKeys 
    * @returns {PropertyAccess[]}
    */
   static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
@@ -1266,7 +1265,7 @@ class ViewModelHandlerBase extends Handler$2 {
   }
 }
 
-class NotifyReceiver {
+class NodeUpdator {
   /** @type {PropertyAccess[]} */
   queue = [];
 
@@ -1327,11 +1326,11 @@ class UpdateSlot {
     return this.#viewModelUpdator;
   }
 
-  /** @type {NotifyReceiver} */
-  #notifyReceiver;
-  /** @type {NotifyReceiver} */
-  get notifyReceiver() {
-    return this.#notifyReceiver;
+  /** @type {NodeUpdator} */
+  #nodeUpdator;
+  /** @type {NodeUpdator} */
+  get nodeUpdator() {
+    return this.#nodeUpdator;
   }
 
   /** @type {()=>void} */
@@ -1379,7 +1378,7 @@ class UpdateSlot {
    */
   constructor(component, callback = null, changePhaseCallback = null) {
     this.#viewModelUpdator = new ViewModelUpdator();
-    this.#notifyReceiver = new NotifyReceiver(component);
+    this.#nodeUpdator = new NodeUpdator(component);
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
     this.#waitPromise = new Promise((resolve, reject) => {
@@ -1417,7 +1416,7 @@ class UpdateSlot {
 
   /** @type {boolean} */
   get isEmpty() {
-    return this.#viewModelUpdator.isEmpty && this.#notifyReceiver.isEmpty;
+    return this.#viewModelUpdator.isEmpty && this.#nodeUpdator.isEmpty;
   }
 
   async exec() {
@@ -1426,9 +1425,9 @@ class UpdateSlot {
       await this.#viewModelUpdator.exec();
 
       this.phase = Phase.gatherUpdatedProperties;
-      await this.#notifyReceiver.exec();
+      await this.#nodeUpdator.exec();
 
-    } while(!this.#viewModelUpdator.isEmpty || !this.#notifyReceiver.isEmpty);
+    } while(!this.#viewModelUpdator.isEmpty || !this.#nodeUpdator.isEmpty);
 
     this.phase = Phase.terminate;
     this.#aliveResolve();
@@ -1438,7 +1437,7 @@ class UpdateSlot {
    * 
    * @param {ProcessData} processData 
    */
-  async addProcess(processData) {
+  addProcess(processData) {
     this.#viewModelUpdator.queue.push(processData);
     this.#waitResolve(true); // waitingを解除する
   }
@@ -1447,8 +1446,8 @@ class UpdateSlot {
    * 
    * @param {PropertyAccess} notifyData 
    */
-  async addNotify(notifyData) {
-    this.#notifyReceiver.queue.push(notifyData);
+  addNotify(notifyData) {
+    this.#nodeUpdator.queue.push(notifyData);
     this.#waitResolve(true); // waitingを解除する
   }
 
@@ -2103,11 +2102,6 @@ class Repeat extends TemplateProperty {
 
 class Branch extends TemplateProperty {
   /** @type {boolean} */
-  get isSelectValue() {
-    return false;
-  }
-
-  /** @type {boolean} */
   get value() {
     return this.binding.children.length > 0;
   }
@@ -2353,11 +2347,6 @@ class ElementClassName extends ElementBase {
 }
 
 class Checkbox extends ElementBase {
-  /** @type {boolean} */
-  get isSelectValue() {
-    return false;
-  }
-
   /** @type {HTMLInputElement} */
   get inputElement() {
     return this.node;
@@ -2455,10 +2444,12 @@ class Radio extends ElementBase {
   }
 }
 
+const PREFIX$1 = "on";
+
 class ElementEvent extends ElementBase {
   /** @type {string} nameのonの後ろを取得する */
   get eventType() {
-    return this.name.slice(2); // on～
+    return this.name.slice(PREFIX$1.length); // on～
   }
 
   /** @type {boolean} applyToNode()の対象かどうか */
@@ -2475,7 +2466,7 @@ class ElementEvent extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!name.startsWith("on")) utils.raise(`ElementEvent: invalid property name ${name}`);
+    if (!name.startsWith(PREFIX$1)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -3710,10 +3701,11 @@ class BindingManager {
 
   /**
    * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
+   * @param {BindingManager} bindingManager
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  updateNode(propertyAccessByViewModelPropertyKey) {
-    const { bindingSummary } = this.component;
+  static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
+    const { bindingSummary } = bindingManager.component;
     bindingSummary.updatedBindings.clear();
 
     // templateを先に展開する
@@ -4440,12 +4432,10 @@ class BindingSummary {
       return;
     }
     this.#allBindings.add(binding);
-    const bindings = this.#bindingsByKey.get(binding.viewModelProperty.key);
-    if (typeof bindings !== "undefined") {
-      bindings.add(binding);
-    } else {
-      this.#bindingsByKey.set(binding.viewModelProperty.key, new Set([binding]));
-    }
+
+    const key = binding.viewModelProperty.key;
+    this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
+
     if (binding.nodeProperty.expandable) {
       this.#expandableBindings.add(binding);
     }
@@ -4464,10 +4454,7 @@ class BindingSummary {
 
   #delete(binding) {
     this.#allBindings.delete(binding);
-    const bindings = this.#bindingsByKey.get(binding.viewModelProperty.key);
-    if (typeof bindings !== "undefined") {
-      bindings.delete(binding);
-    }
+    this.#bindingsByKey.get(binding.viewModelProperty.key)?.delete(binding);
     this.#expandableBindings.delete(binding);
     this.#componentBindings.delete(binding);
   }
@@ -4818,11 +4805,11 @@ const mixInComponent = {
 
   /**
    * ノード更新処理
-   * UpdateSlotのNotifyReceiverから呼び出される
+   * UpdateSlotのNodeUpdatorから呼び出される
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
-    this.rootBinding?.updateNode(propertyAccessByViewModelPropertyKey);
+    this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
   },
 };
 
@@ -5381,6 +5368,8 @@ class Loader {
 
 }
 
+const PREFIX = "filter-";
+
 class QuelModuleRegistrar extends Registrar {
   /**
    * 
@@ -5389,8 +5378,8 @@ class QuelModuleRegistrar extends Registrar {
    * @returns {void}
    */
   static regist(name, module) {
-    if (name.startsWith("filter-")) {
-      const filterName = name.slice("filter-".length);
+    if (name.startsWith(PREFIX)) {
+      const filterName = name.slice(PREFIX.length);
       const { output, input } = module;
       Filter.regist(filterName, output, input);
     } else {

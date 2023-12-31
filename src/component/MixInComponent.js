@@ -334,6 +334,6 @@ export const mixInComponent = {
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
-    this.rootBinding?.updateNode(propertyAccessByViewModelPropertyKey);
+    this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
   },
 }
