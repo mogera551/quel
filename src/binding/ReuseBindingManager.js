@@ -34,6 +34,7 @@ export class ReuseBindingManager {
     let bindingManager = this.#bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
       bindingManager = new BindingManager(component, template, parentBinding, loopInfo);
+      bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
       bindingManager.replaceLoopContext(loopInfo);

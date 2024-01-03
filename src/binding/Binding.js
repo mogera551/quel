@@ -128,8 +128,12 @@ export class Binding {
   }
 
   /** @type {(event:Event)=>void} */
+  #defaultEventHandler;
   get defaultEventHandler() {
-    return (binding => event => binding.execDefaultEventHandler(event))(this);
+    if (typeof this.#defaultEventHandler === "undefined") {
+      this.#defaultEventHandler = (binding => event => binding.execDefaultEventHandler(event))(this);
+    }
+    return this.#defaultEventHandler;
   }
 
   /**
@@ -259,8 +263,14 @@ export class BindingManager {
     this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
     this.#component = component;
     this.#template = template;
-    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(template, content);
+  }
+
+  /**
+   * 
+   */
+  initialize() {
+    const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(this.#template, content);
     this.#bindings = Binder.bind(this, nodes);
     this.#bindings.forEach(binding => component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
