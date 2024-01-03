@@ -24,7 +24,9 @@ export class BindToSVGElement {
     /** @type {SVGElement} */
     const element = toSVGElement(node);
     /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+    (typeof bindText === "undefined") && utils.raise(`BindToSVGElement: data-bind is not defined`);
+
     element.removeAttribute(DATASET_BIND_PROPERTY);
     /** @type {string|undefined} */
     const defaultName = undefined;

@@ -7,10 +7,10 @@ import { BindToTemplate } from "./BindToTemplate.js";
 
 export class Binder {
   /**
-   * DOMのプロパティとViewModelプロパティのバインドを行う
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager
-   * @param {Node[]} nodes
-   * @returns {import("../binding/Binding.js").Binding[]}
+   * Generate a list of binding objects from a list of nodes
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager parent binding manager
+   * @param {Node[]} nodes node list having data-bind attribute
+   * @returns {import("../binding/Binding.js").Binding[]} generate a list of binding objects 
    */
   static bind(bindingManager, nodes) {
     return nodes.flatMap(node => 
@@ -18,7 +18,7 @@ export class Binder {
       (node instanceof HTMLElement) ? BindToHTMLElement.bind(bindingManager, node) :
       (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(bindingManager, node) : 
       (node instanceof SVGElement) ? BindToSVGElement.bind(bindingManager, node) :
-      utils.raise(`Binder: unknown node type`, node)
+      utils.raise(`Binder: unknown node type`)
     );
   }
 

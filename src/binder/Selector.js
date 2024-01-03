@@ -1,3 +1,4 @@
+import { utils } from "../utils.js";
 const SELECTOR = "[data-bind]";
 
 /**
@@ -11,7 +12,7 @@ const SELECTOR = "[data-bind]";
 const getNodeRoute = node => {
   /** @type {number[]} */
   let routeIndexes = [];
-  while(node.parentNode != null) {
+  while(node.parentNode !== null) {
     routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
     node = node.parentNode;
   }
@@ -50,21 +51,23 @@ export class Selector {
   static listOfRouteIndexesByTemplate = new Map();
 
   /**
-   * テンプレートからバインドする対象のノードを取得する
-   * @param {HTMLTemplateElement} template 
-   * @param {HTMLElement} rootElement
+   * Get target node list from template
+   * @param {HTMLTemplateElement|undefined} template 
+   * @param {HTMLElement|undefined} rootElement
    * @returns {Node[]}
    */
   static getTargetNodes(template, rootElement) {
+    (typeof template === "undefined") && utils.raise("Selector: template is undefined");
+    (typeof rootElement === "undefined") && utils.raise("Selector: rootElement is undefined");
 
     /** @type {Node[]} */
     let nodes;
 
-    if (this.listOfRouteIndexesByTemplate.has(template)) {
+    /** @type {number[][]} */
+    const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
+    if (typeof listOfRouteIndexes !== "undefined") {
       // キャッシュがある場合
       // querySelectorAllを行わずにNodeの位置を特定できる
-      /** @type {number[][]} */
-      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
       nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
     } else {
       // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する

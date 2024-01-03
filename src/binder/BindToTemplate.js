@@ -27,8 +27,10 @@ export class BindToTemplate {
     const uuid = comment.textContent.slice(3);
     /** @type {HTMLTemplateElement} */
     const template = Templates.templateByUUID.get(uuid);
+    (typeof template === "undefined") && utils.raise(`BindToTemplate: template not found`);
     /** @type {string} */
-    const bindText = template.getAttribute(DATASET_BIND_PROPERTY);
+    const bindText = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+    (typeof bindText === "undefined") && utils.raise(`BindToTemplate: data-bind is not defined`);
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */

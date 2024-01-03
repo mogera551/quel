@@ -37,7 +37,7 @@ const getDefaultProperty = element => {
  * @returns { boolean }
  */
 const isInputableElement = node => node instanceof HTMLElement && 
-  (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
+  (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
 
 
 export class BindToHTMLElement {
@@ -54,7 +54,8 @@ export class BindToHTMLElement {
     /** @type {HTMLElement}  */
     const element = toHTMLElement(node);
     /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY);
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+    (typeof bindText === "undefined") && utils.raise(`BindToHTMLElement: data-bind is not defined`);
     element.removeAttribute(DATASET_BIND_PROPERTY);
     /** @type {string} */
     const defaultName = getDefaultProperty(element);
@@ -88,9 +89,13 @@ export class BindToHTMLElement {
       element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
     }
     if (radioBinding) {
-      setDefaultEventHandler(radioBinding);
+      if (!hasDefaultEvent) {
+        setDefaultEventHandler(radioBinding);
+      }
     } else if (checkboxBinding) {
-      setDefaultEventHandler(checkboxBinding);
+      if (!hasDefaultEvent) {
+        setDefaultEventHandler(checkboxBinding);
+      }
     } else if (defaultBinding && !hasDefaultEvent && isInputableElement(node)) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ

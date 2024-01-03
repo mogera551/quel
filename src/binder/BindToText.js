@@ -25,11 +25,14 @@ export class BindToText {
     const viewModel = bindingManager.component.viewModel;
     /** @type {Comment} */
     const comment = toComment(node);
+    const parentNode = comment.parentNode ?? undefined;
+    (typeof parentNode === "undefined") && utils.raise("BindToText: no parent");
     /** @type {string} */
     const bindText = comment.textContent.slice(3); // @@:をスキップ
+    if (bindText.trim() === "") return [];
     /** @type {Text} */
     const textNode = document.createTextNode("");
-    comment.parentNode.replaceChild(textNode, comment);
+    parentNode.replaceChild(textNode, comment);
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */

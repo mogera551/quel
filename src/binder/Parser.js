@@ -92,6 +92,8 @@ export class Parser {
    * @returns {BindTextInfo[]}
    */
   static parse(text, defaultName) {
+    (typeof text === "undefined") && utils.raise("Parser: text is undefined");
+    if (text.trim() === "") return [];
     /** @type {string} */
     const key = text + "\t" + defaultName;
     /** @type {BindTextInfo[] | undefined} */
