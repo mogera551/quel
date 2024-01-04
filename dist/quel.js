@@ -1779,7 +1779,7 @@ const SELECTOR = "[data-bind]";
 const getNodeRoute = node => {
   /** @type {number[]} */
   let routeIndexes = [];
-  while(node.parentNode != null) {
+  while(node.parentNode !== null) {
     routeIndexes = [ Array.from(node.parentNode.childNodes).indexOf(node) ].concat(routeIndexes);
     node = node.parentNode;
   }
@@ -1818,21 +1818,23 @@ class Selector {
   static listOfRouteIndexesByTemplate = new Map();
 
   /**
-   * テンプレートからバインドする対象のノードを取得する
-   * @param {HTMLTemplateElement} template 
-   * @param {HTMLElement} rootElement
+   * Get target node list from template
+   * @param {HTMLTemplateElement|undefined} template 
+   * @param {HTMLElement|undefined} rootElement
    * @returns {Node[]}
    */
   static getTargetNodes(template, rootElement) {
+    (typeof template === "undefined") && utils.raise("Selector: template is undefined");
+    (typeof rootElement === "undefined") && utils.raise("Selector: rootElement is undefined");
 
     /** @type {Node[]} */
     let nodes;
 
-    if (this.listOfRouteIndexesByTemplate.has(template)) {
+    /** @type {number[][]} */
+    const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
+    if (typeof listOfRouteIndexes !== "undefined") {
       // キャッシュがある場合
       // querySelectorAllを行わずにNodeの位置を特定できる
-      /** @type {number[][]} */
-      const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
       nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
     } else {
       // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
@@ -2950,6 +2952,8 @@ class Parser {
    * @returns {BindTextInfo[]}
    */
   static parse(text, defaultName) {
+    (typeof text === "undefined") && utils.raise("Parser: text is undefined");
+    if (text.trim() === "") return [];
     /** @type {string} */
     const key = text + "\t" + defaultName;
     /** @type {BindTextInfo[] | undefined} */
@@ -2965,15 +2969,17 @@ class Parser {
 
 class BindToDom {
   /**
-   * data-bind属性のテキストからバインド情報を生成
+   * Generate a list of binding objects from a string
    * @param {import("../binding/Binding.js").BindingManager} bindingManager 
-   * @param {Node} node 
-   * @param {ViewModel} viewModel 
-   * @param {string} text data-bind属性値
-   * @param {string|undefined} defaultName nodeのデフォルトプロパティ名
+   * @param {Node} node node
+   * @param {ViewModel} viewModel view model
+   * @param {string|undefined} text the string specified in the "data-bind" attribute.
+   * @param {string|undefined} defaultName default property name of node
    * @returns {import("../binding/Binding.js").Binding[]}
    */
   static parseBindText = (bindingManager, node, viewModel, text, defaultName) => {
+    (typeof text === "undefined") && utils.raise(`BindToDom: text is undefined`);
+    if (text.trim() === "") return [];
     return Parser.parse(text, defaultName).map(info => 
       Factory.create(bindingManager, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters));
   }
@@ -3013,7 +3019,7 @@ const getDefaultProperty = element => {
  * @returns { boolean }
  */
 const isInputableElement = node => node instanceof HTMLElement && 
-  (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement);
+  (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
 
 
 class BindToHTMLElement {
@@ -3030,7 +3036,8 @@ class BindToHTMLElement {
     /** @type {HTMLElement}  */
     const element = toHTMLElement(node);
     /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2);
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2) ?? undefined;
+    (typeof bindText === "undefined") && utils.raise(`BindToHTMLElement: data-bind is not defined`);
     element.removeAttribute(DATASET_BIND_PROPERTY$2);
     /** @type {string} */
     const defaultName = getDefaultProperty(element);
@@ -3064,9 +3071,13 @@ class BindToHTMLElement {
       element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
     };
     if (radioBinding) {
-      setDefaultEventHandler(radioBinding);
+      if (!hasDefaultEvent) {
+        setDefaultEventHandler(radioBinding);
+      }
     } else if (checkboxBinding) {
-      setDefaultEventHandler(checkboxBinding);
+      if (!hasDefaultEvent) {
+        setDefaultEventHandler(checkboxBinding);
+      }
     } else if (defaultBinding && !hasDefaultEvent && isInputableElement(node)) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
@@ -3100,7 +3111,9 @@ class BindToSVGElement {
     /** @type {SVGElement} */
     const element = toSVGElement(node);
     /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$1);
+    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$1) ?? undefined;
+    (typeof bindText === "undefined") && utils.raise(`BindToSVGElement: data-bind is not defined`);
+
     element.removeAttribute(DATASET_BIND_PROPERTY$1);
     /** @type {string|undefined} */
     const defaultName = undefined;
@@ -3137,11 +3150,14 @@ class BindToText {
     const viewModel = bindingManager.component.viewModel;
     /** @type {Comment} */
     const comment = toComment$1(node);
+    const parentNode = comment.parentNode ?? undefined;
+    (typeof parentNode === "undefined") && utils.raise("BindToText: no parent");
     /** @type {string} */
     const bindText = comment.textContent.slice(3); // @@:をスキップ
+    if (bindText.trim() === "") return [];
     /** @type {Text} */
     const textNode = document.createTextNode("");
-    comment.parentNode.replaceChild(textNode, comment);
+    parentNode.replaceChild(textNode, comment);
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
@@ -3176,8 +3192,10 @@ class BindToTemplate {
     const uuid = comment.textContent.slice(3);
     /** @type {HTMLTemplateElement} */
     const template = Templates.templateByUUID.get(uuid);
+    (typeof template === "undefined") && utils.raise(`BindToTemplate: template not found`);
     /** @type {string} */
-    const bindText = template.getAttribute(DATASET_BIND_PROPERTY);
+    const bindText = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+    (typeof bindText === "undefined") && utils.raise(`BindToTemplate: data-bind is not defined`);
 
     // パース
     /** @type {import("../binding/Binding.js").Binding[]} */
@@ -3189,10 +3207,10 @@ class BindToTemplate {
 
 class Binder {
   /**
-   * DOMのプロパティとViewModelプロパティのバインドを行う
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager
-   * @param {Node[]} nodes
-   * @returns {import("../binding/Binding.js").Binding[]}
+   * Generate a list of binding objects from a list of nodes
+   * @param {import("../binding/Binding.js").BindingManager} bindingManager parent binding manager
+   * @param {Node[]} nodes node list having data-bind attribute
+   * @returns {import("../binding/Binding.js").Binding[]} generate a list of binding objects 
    */
   static bind(bindingManager, nodes) {
     return nodes.flatMap(node => 
@@ -3200,7 +3218,7 @@ class Binder {
       (node instanceof HTMLElement) ? BindToHTMLElement.bind(bindingManager, node) :
       (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(bindingManager, node) : 
       (node instanceof SVGElement) ? BindToSVGElement.bind(bindingManager, node) :
-      utils.raise(`Binder: unknown node type`, node)
+      utils.raise(`Binder: unknown node type`)
     );
   }
 
@@ -3240,6 +3258,7 @@ class ReuseBindingManager {
     let bindingManager = this.#bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
       bindingManager = new BindingManager(component, template, parentBinding, loopInfo);
+      bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
       bindingManager.replaceLoopContext(loopInfo);
@@ -3504,8 +3523,12 @@ class Binding {
   }
 
   /** @type {(event:Event)=>void} */
+  #defaultEventHandler;
   get defaultEventHandler() {
-    return (binding => event => binding.execDefaultEventHandler(event))(this);
+    if (typeof this.#defaultEventHandler === "undefined") {
+      this.#defaultEventHandler = (binding => event => binding.execDefaultEventHandler(event))(this);
+    }
+    return this.#defaultEventHandler;
   }
 
   /**
@@ -3635,8 +3658,14 @@ class BindingManager {
     this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
     this.#component = component;
     this.#template = template;
-    const content = document.importNode(template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(template, content);
+  }
+
+  /**
+   * 
+   */
+  initialize() {
+    const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
+    const nodes = Selector.getTargetNodes(this.#template, content);
     this.#bindings = Binder.bind(this, nodes);
     this.#bindings.forEach(binding => component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
