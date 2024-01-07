@@ -1,11 +1,11 @@
 import { jest } from '@jest/globals';
 import { BindToDom } from '../../src/binder/BindToDom.js';
 import { BindToHTMLElement } from '../../src/binder/BindToHTMLElement.js';
+import { Binding } from '../../src/binding/Binding.js';
 import { Radio } from '../../src/binding/nodeProperty/Radio.js';
 import { Checkbox } from '../../src/binding/nodeProperty/Checkbox.js';
-import { Binding } from '../../src/binding/Binding';
-import { ViewModelProperty } from '../../src/binding/viewModelProperty/ViewModelProperty';
-import { ElementProperty } from '../../src/binding/nodeProperty/ElementProperty';
+import { ViewModelProperty } from '../../src/binding/viewModelProperty/ViewModelProperty.js';
+import { ElementProperty } from '../../src/binding/nodeProperty/ElementProperty.js';
 import { ElementEvent } from '../../src/binding/nodeProperty/ElementEvent.js';
 
 const BindToDom_parseBindText = jest.spyOn(BindToDom, "parseBindText").mockImplementation((bindingManager, node, viewModel, text, defaultName) => {
