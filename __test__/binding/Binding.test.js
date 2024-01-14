@@ -35,6 +35,7 @@ describe('src/binding/Binding.Binding', () => {
         bindings: new Set(),
         updatedBindings: new Set(),
       },
+      updateSlot: {},
     },
     loopContext: undefined
   }
@@ -90,6 +91,35 @@ describe('src/binding/Binding.Binding', () => {
     expect(bindingManager.component.bindingSummary.updatedBindings.has(binding)).toBe(true);
     binding.applyToNode();
     expect(binding.nodeProperty.value).toBe("100");
+    bindingManager.component.bindingSummary.updatedBindings.clear();
+    expect(bindingManager.component.bindingSummary.updatedBindings.has(binding)).toBe(false);
+    binding.applyToNode();
+    expect(binding.nodeProperty.value).toBe("100");
+    expect(bindingManager.component.bindingSummary.updatedBindings.has(binding)).toBe(true);
+  });
+  test("applyToNode no applicable", () => {
+    const nodeProperty_applicable = jest.spyOn(binding.nodeProperty, "applicable", "get").mockImplementation(() => {
+      return false;
+    });
+    bindingManager.component.bindingSummary.updatedBindings.clear();
+    binding.nodeProperty.node.textContent = "";
+    expect(binding.nodeProperty.applicable).toBe(false);
+    expect(binding.nodeProperty.isSameValue(binding.viewModelProperty.filteredValue)).toBe(false);
+    expect(bindingManager.component.bindingSummary.updatedBindings.has(binding)).toBe(false);
+    binding.applyToNode();
+    expect(binding.nodeProperty.value).toBe("");
+    expect(binding.nodeProperty.isSameValue(binding.viewModelProperty.filteredValue)).toBe(false);
+    expect(bindingManager.component.bindingSummary.updatedBindings.has(binding)).toBe(true);
+  });
+
+  test("applyToChildNodes", () => {
+    const nodeProperty_applyToChildNodes = jest.spyOn(binding.nodeProperty, "applyToChildNodes").mockImplementation(() => {
+      return;
+    });
+    binding.applyToChildNodes(new Set([0]));
+    expect(nodeProperty_applyToChildNodes.mock.calls.length).toBe(1);
+    expect(nodeProperty_applyToChildNodes.mock.calls[0]).toEqual([new Set([0])]);
+    nodeProperty_applyToChildNodes.mockRestore();
   });
 
 });
