@@ -17,6 +17,17 @@ export class ElementEvent extends ElementBase {
   }
 
   /**
+   * @type {(event:Event)=>{}} イベントハンドラ
+   */
+  #handler;
+  get handler() {
+    if (typeof this.#handler === "undefined") {
+      this.#handler = event => this.eventHandler(event);
+    }
+    return this.#handler;
+  }
+
+  /**
    * 
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
@@ -34,8 +45,7 @@ export class ElementEvent extends ElementBase {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    const handler = event => this.eventHandler(event);
-    this.element.addEventListener(this.eventType, handler);
+    this.element.addEventListener(this.eventType, this.handler);
   }
 
   /**
@@ -59,6 +69,7 @@ export class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   eventHandler(event) {
+    // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     event.stopPropagation();
     const processData = this.createProcessData(event);
