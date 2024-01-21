@@ -6,22 +6,21 @@ import { ElementBase } from "./ElementBase.js";
 export class Radio extends ElementBase {
   /** @type {HTMLInputElement} */
   get inputElement() {
-    return this.node;
+    return this.element;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get value() {
     return new MultiValue(this.inputElement.value, this.inputElement.checked);
   }
   set value(value) {
-    /** @type {Array} */
-    const array = value;
+    if (!(value instanceof MultiValue)) utils.raise("Radio: not MultiValue");
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
     this.inputElement.checked = (value === multiValue.value) ? true : false;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;
