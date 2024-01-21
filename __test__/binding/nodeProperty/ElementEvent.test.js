@@ -3,6 +3,7 @@ import { Symbols } from "../../../src/Symbols.js";
 import { ElementEvent } from "../../../src/binding/nodeProperty/ElementEvent.js";
 
 describe("ElementEvent", () => {
+  /** @type {ElementEvent} */
   let elementEvent;
   let binding;
   let node;
@@ -31,7 +32,7 @@ describe("ElementEvent", () => {
     const filters = []; // Mock filters array
     const filterFuncs = {}; // Mock filter functions object
     elementEvent = new ElementEvent(binding, node, name, filters, filterFuncs);
-    binding.component.bindingSummary.allBindings.add(elementEvent);
+    binding.component.bindingSummary.allBindings.add(binding);
   });
 
   it("should have the correct eventType", () => {
@@ -48,7 +49,9 @@ describe("ElementEvent", () => {
 
   it("should have the correct handler", () => {
     // Test the getter method for handler
-    expect(typeof elementEvent.handler).toBe("function");
+    const handler = elementEvent.handler;
+    expect(typeof handler).toBe("function");
+    expect(elementEvent.handler).toBe(handler); // cached
   });
 
   it("should initialize the DOM element with event handlers", () => {
@@ -87,7 +90,8 @@ describe("ElementEvent", () => {
   it("should handle the event", () => {
     // Create a mock event for testing
     const event = {
-      stopPropagation: () => {},
+      stopPropagation: () => {
+      },
     }; // Mock event
     const event_stopPropagation = jest.spyOn(event, "stopPropagation").mockImplementation(() => {});
     const updateSlot_addProcess = jest.spyOn(binding.component.updateSlot, "addProcess").mockImplementation((processData) => {});
@@ -104,5 +108,48 @@ describe("ElementEvent", () => {
     }]);
   });
 
+  test ("should not handle the event if the binding has been removed", () => {
+    // Create a mock event for testing
+    const event = {
+      stopPropagation: () => {
+      },
+    }; // Mock event
+    const event_stopPropagation = jest.spyOn(event, "stopPropagation").mockImplementation(() => {});
+    const updateSlot_addProcess = jest.spyOn(binding.component.updateSlot, "addProcess").mockImplementation((processData) => {});
+    // Remove the binding from the component's binding summary
+    binding.component.bindingSummary.allBindings.delete(binding);
+    // Test the eventHandler method
+    elementEvent.eventHandler(event);
+    // Assert that the event has not been handled
+    expect(event_stopPropagation.mock.calls.length).toBe(0);
+    expect(updateSlot_addProcess.mock.calls.length).toBe(0);
+  });
+
+  test("not event property", () => {
+    expect(() => {
+      new ElementEvent(binding, node, "notEvent", [], {});
+    }).toThrow("ElementEvent: invalid property name notEvent");
+  });
+
+  it("should handle the event", () => {
+    // Create a mock event for testing
+    const event = {
+      stopPropagation: () => {
+      },
+    }; // Mock event
+    const event_stopPropagation = jest.spyOn(event, "stopPropagation").mockImplementation(() => {});
+    const updateSlot_addProcess = jest.spyOn(binding.component.updateSlot, "addProcess").mockImplementation((processData) => {});
+    // Test the eventHandler method
+    elementEvent.handler(event);
+    // Assert that the event has been handled correctly
+    expect(event_stopPropagation.mock.calls.length).toBe(1);
+    expect(event_stopPropagation.mock.calls[0]).toEqual([]);
+    expect(updateSlot_addProcess.mock.calls.length).toBe(1);
+    expect(updateSlot_addProcess.mock.calls[0]).toEqual([{
+      target: elementEvent.directlyCall,
+      thisArgument: elementEvent,
+      argumentsList: [event],
+    }]);
+  });
 
 });

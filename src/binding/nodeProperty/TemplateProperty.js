@@ -2,6 +2,8 @@ import { NodeProperty } from "./NodeProperty.js";
 import { Templates } from "../../view/Templates.js";
 import { utils } from "../../utils.js";
 
+const PREFIX = "@@|";
+
 export class TemplateProperty extends NodeProperty {
   /** @type {HTMLTemplateElement | undefined} */
   get template() {
@@ -19,7 +21,7 @@ export class TemplateProperty extends NodeProperty {
    * @returns {string}
    */
   static getUUID(node) {
-    return node.textContent.slice(3)
+    return node.textContent.slice(PREFIX.length);
   }
   
   /** @type {Boolean} */
@@ -38,7 +40,8 @@ export class TemplateProperty extends NodeProperty {
   constructor(binding, node, name, filters, filterFuncs) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     const uuid = TemplateProperty.getUUID(node);
-    if (typeof uuid === "undefined") utils.raise(`TemplateProperty: invalid uuid ${uuid}`);
+    const template = Templates.templateByUUID.get(uuid);
+    if (typeof template === "undefined") utils.raise(`TemplateProperty: invalid uuid ${uuid}`);
     super(binding, node, name, filters, filterFuncs);
   }
 }
