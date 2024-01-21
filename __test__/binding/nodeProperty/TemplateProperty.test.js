@@ -63,7 +63,6 @@ describe("TemplateProperty", () => {
     const name = "if:node"; // Mock property name
     const filters = []; // Mock filters array
     const inputFilterFuncs = {}; // Mock input filter functions object
-    console.log(TemplateProperty.getUUID(node));
 
     expect(() => {
       new TemplateProperty(binding, node, name, filters, inputFilterFuncs);
