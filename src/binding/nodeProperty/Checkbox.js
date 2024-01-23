@@ -9,19 +9,20 @@ export class Checkbox extends ElementBase {
     return this.node;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get value() {
     return new MultiValue(this.inputElement.value, this.inputElement.checked);
   }
+
+  /** @param {Array} value */
   set value(value) {
-    /** @type {Array} */
-    const array = value;
+    if (!Array.isArray(value)) utils.raise("Checkbox: value is not array");
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
-    this.inputElement.checked = array.find(v => v === multiValue.value) ? true : false;
+    this.inputElement.checked = value.find(v => v === multiValue.value) ? true : false;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;

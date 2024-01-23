@@ -13,8 +13,8 @@ export class Radio extends ElementBase {
   get value() {
     return new MultiValue(this.inputElement.value, this.inputElement.checked);
   }
+  /** @param {any} value */
   set value(value) {
-    if (!(value instanceof MultiValue)) utils.raise("Radio: not MultiValue");
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
     this.inputElement.checked = (value === multiValue.value) ? true : false;
