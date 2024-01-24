@@ -66,7 +66,7 @@ export class ComponentProperty extends ElementBase {
   }
 
   /**
-   * 更新前処理
+   * 更新後処理
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   postUpdate(propertyAccessByViewModelPropertyKey) {

@@ -34,3 +34,17 @@ describe("ElementClassName", () => {
     }).toThrow("ElementClassName: value is not array");
   });
 });
+
+describe("ElementClass invalid name", () => {
+  test("should throw error for invalid name", () => {
+    const binding = {}; // Mock binding object
+    const node = document.createElement("div"); // Mock element node
+    const name = "invalidName"; // Mock property name
+    const filters = []; // Mock filters array
+    const inputFilterFuncs = {}; // Mock input filter functions object
+
+    expect(() => {
+      new ElementClassName(binding, node, name, filters, inputFilterFuncs);
+    }).toThrow("ElementClassName: invalid property name invalidName");
+  });
+});

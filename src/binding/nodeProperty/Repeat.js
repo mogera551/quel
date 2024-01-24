@@ -14,6 +14,7 @@ export class Repeat extends TemplateProperty {
   get value() {
     return this.binding.children.length;
   }
+  /** @param {Array} value */
   set value(value) {
     if (!Array.isArray(value)) utils.raise("Repeat: value is not array");
     if (this.value < value.length) {

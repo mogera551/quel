@@ -7,6 +7,7 @@ export class Branch extends TemplateProperty {
   get value() {
     return this.binding.children.length > 0;
   }
+  /** @param {boolean} value */
   set value(value) {
     if (typeof value !== "boolean") utils.raise("Branch: value is not boolean");
     if (this.value !== value) {
@@ -18,7 +19,7 @@ export class Branch extends TemplateProperty {
         removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
       }
     } else {
-      this.binding.children.forEach(bindings => bindings.applyToNode());
+      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
     }
   }
 
