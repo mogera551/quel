@@ -17,7 +17,7 @@ describe("TemplateProperty", () => {
     Templates.templateByUUID.set(utils.createUUID(), template2);
     // Create a new instance of TemplateProperty before each test
     const commentNode = document.createComment(`@@|${uuid}`);
-    const name = "if:node"; // Mock property name
+    const name = "if"; // Mock property name
     const filters = []; // Mock filters array
     const inputFilterFuncs = {}; // Mock input filter functions object
     templateProperty = new TemplateProperty(binding, commentNode, name, filters, inputFilterFuncs);
