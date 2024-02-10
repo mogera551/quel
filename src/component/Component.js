@@ -40,7 +40,7 @@ export class ComponentClassGenerator {
         static useWebComponent = module.useWebComponent ?? config.useWebComponent;
 
         /** @type {boolean} */
-        static useTagNamespace = module.useTagNamespace ?? config.useTagNamespace;
+        static useLocalTagName = module.useLocalTagName ?? config.useLocalTagName;
 
         /** @type {boolean} */
         static useKeyed = module.useKeyed ?? config.useKeyed;

@@ -5,7 +5,7 @@
  *   useShadowRoot:Boolean,
  *   useKeyed:Boolean,
  *   useWebComponent:Boolean,
- *   useTagNamespace:Boolean,
+ *   useLocalTagName:Boolean,
  * }}
  */
 export const config = {
@@ -13,5 +13,5 @@ export const config = {
   useShadowRoot: false,
   useKeyed: true,
   useWebComponent: true,
-  useTagNamespace: true,
+  useLocalTagName: true,
 };

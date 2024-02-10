@@ -161,8 +161,8 @@ export const mixInComponent = {
   },
 
   /** @type {boolean} タグネームスペースを使う */
-  get useTagNamespace() {
-    return this._useTagNamespace;
+  get useLocalTagName() {
+    return this._useLocalTagName;
   },
 
   /** @type {boolean} keyedを使う */
@@ -222,7 +222,7 @@ export const mixInComponent = {
 
     this._useShadowRoot = this.constructor.useShadowRoot;
     this._useWebComponent = this.constructor.useWebComponent;
-    this._useTagNamespace = this.constructor.useTagNamespace;
+    this._useLocalTagName = this.constructor.useLocalTagName;
     this._useKeyed = this.constructor.useKeyed;
 
     this._pseudoParentNode = undefined;

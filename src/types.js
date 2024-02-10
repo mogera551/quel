@@ -73,7 +73,7 @@
  * @property {Object<string,UserComponentModule>} componentModulesForRegist
  * @property {boolean|undefined} useShadowRoot
  * @property {boolean|undefined} useWebComponent
- * @property {boolean|undefined} useTagNamespace
+ * @property {boolean|undefined} useLocalTagName
  */
 
  
@@ -105,7 +105,7 @@
  * @property {Component} parentComponent
  * @property {boolean} useShadowRoot
  * @property {boolean} useWebComponent
- * @property {boolean} useTagNamespace
+ * @property {boolean} useLocalTagName
  * @property {boolean} useKeyed
  * @property {ShadowRoot|HTMLElement} viewRootElement
  * @property {()=>void} initialize

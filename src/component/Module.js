@@ -18,7 +18,7 @@ export class Module {
 
   /** @type {HTMLTemplateElement} */
   get template() {
-    const customComponentNames = (this.useTagNamespace ?? config.useTagNamespace) ? Object.keys(this.componentModules ?? {}) : [];
+    const customComponentNames = (this.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
     return Template.create(this.html, this.css, this.uuid, customComponentNames);
   }
 
@@ -38,7 +38,7 @@ export class Module {
   useShadowRoot;
 
   /** @type {boolean|undefined} */
-  useTagNamespace;
+  useLocalTagName;
 
   /** @type {boolean|undefined} */
   useKeyed;
@@ -54,7 +54,7 @@ export class Module {
 
   /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegist() {
-    if (this.useTagNamespace ?? config.useTagNamespace) {
+    if (this.useLocalTagName ?? config.useLocalTagName) {
       if (typeof this.componentModules !== "undefined") {
         const componentModules = {};
         for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
