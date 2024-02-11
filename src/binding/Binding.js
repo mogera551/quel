@@ -272,7 +272,7 @@ export class BindingManager {
     const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     const nodes = Selector.getTargetNodes(this.#template, content);
     this.#bindings = Binder.bind(this, nodes);
-    this.#bindings.forEach(binding => component.bindingSummary.add(binding));
+    this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
   }
