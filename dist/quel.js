@@ -492,27 +492,6 @@ class utils {
   }
 
   /**
-   * 関数かどうかをチェック
-   * @param {any} obj 
-   * @returns {boolean}
-   */
-  static isFunction = (obj) => {
-    const toString = Object.prototype.toString;
-    const text = toString.call(obj).slice(8, -1).toLowerCase();
-    return (text === "function" || text === "asyncfunction");
-  }
-
-  /**
-   * 
-   * @param {HTMLElement} element 
-   * @returns {boolean}
-   */
-  static isInputableElement(element) {
-    return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || 
-      (element instanceof HTMLInputElement && element.type !== "button");
-  }
-
-  /**
    * to kebab case (upper camel, lower camel, snakeを想定)
    * @param {string} text 
    * @returns {string}
@@ -3676,7 +3655,7 @@ class BindingManager {
     const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     const nodes = Selector.getTargetNodes(this.#template, content);
     this.#bindings = Binder.bind(this, nodes);
-    this.#bindings.forEach(binding => component.bindingSummary.add(binding));
+    this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
   }
@@ -4511,18 +4490,18 @@ class BindingSummary {
   }
 
   rebuild(bindings) {
-    this.clear();
-    for(const binding of bindings) {
-      this.add(binding);
+    this.#allBindings = new Set(bindings);
+    this.#bindingsByKey = new Map;
+    this.#expandableBindings = new Set(bindings.filter(binding => binding.nodeProperty.expandable));
+    this.#componentBindings = new Set(bindings.filter(binding => binding.nodeProperty.constructor === ComponentProperty));
+    for(let i in bindings) {
+      const binding = bindings[i];
+      const key = binding.viewModelProperty.key;
+      this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
     }
+    this.#deleteBindings = new Set;
   }
 
-  clear() {
-    this.#allBindings = new Set;
-    this.#bindingsByKey = new Map;
-    this.#expandableBindings = new Set;
-    this.#componentBindings = new Set;
-  }
 }
 
 /** @type {WeakMap<Node,Component>} */
