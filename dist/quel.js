@@ -471,15 +471,15 @@ const Symbols$1 = Object.assign({
  *   useShadowRoot:Boolean,
  *   useKeyed:Boolean,
  *   useWebComponent:Boolean,
- *   useTagNamespace:Boolean,
+ *   useLocalTagName:Boolean,
  * }}
  */
 const config = {
-  debug: false,
-  useShadowRoot: false,
-  useKeyed: true,
-  useWebComponent: true,
-  useTagNamespace: true,
+  debug: false, // debug mode
+  useShadowRoot: false, // use shadowroot
+  useKeyed: true, // use keyed
+  useWebComponent: true, // use web component
+  useLocalTagName: true, // use local tag name
 };
 
 class utils {
@@ -669,7 +669,7 @@ class Module {
 
   /** @type {HTMLTemplateElement} */
   get template() {
-    const customComponentNames = (this.useTagNamespace ?? config.useTagNamespace) ? Object.keys(this.componentModules ?? {}) : [];
+    const customComponentNames = (this.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
     return Template.create(this.html, this.css, this.uuid, customComponentNames);
   }
 
@@ -689,7 +689,7 @@ class Module {
   useShadowRoot;
 
   /** @type {boolean|undefined} */
-  useTagNamespace;
+  useLocalTagName;
 
   /** @type {boolean|undefined} */
   useKeyed;
@@ -705,7 +705,7 @@ class Module {
 
   /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegist() {
-    if (this.useTagNamespace ?? config.useTagNamespace) {
+    if (this.useLocalTagName ?? config.useLocalTagName) {
       if (typeof this.componentModules !== "undefined") {
         const componentModules = {};
         for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
@@ -996,11 +996,8 @@ class ThreadStop extends Error {
 }
 
 class Thread {
-  /** @type {Promise<(value:any)=>void>} */
-  #resolve;
-
-  /** @type {Promise<()=>void>} */
-  #reject;
+  /** @type {Resolvers} */
+  #resolvers;
 
   /** @type {boolean} */
   #alive = true;
@@ -1021,17 +1018,15 @@ class Thread {
    * @returns {Promise<UpdateSlot>}
    */
   async #sleep() {
-    return new Promise((resolve, reject) => {
-      this.#resolve = resolve;
-      this.#reject = reject;
-    });
+    this.#resolvers = Promise.withResolvers();
+    return this.#resolvers.promise;
   }
 
   /**
    * @returns {void}
    */
   stop() {
-    this.#reject(new ThreadStop("stop"));
+    this.#resolvers.reject(new ThreadStop("stop"));
   }
 
   /**
@@ -1039,7 +1034,7 @@ class Thread {
    * @returns {void}
    */
   wakeup(slot) {
-    this.#resolve(slot);
+    this.#resolvers.resolve(slot);
   }
 
   /**
@@ -1048,8 +1043,8 @@ class Thread {
   async main() {
     do {
       try {
-        const slot = await this.#sleep();
-        await slot.waiting(); // queueにデータが入るまで待機
+        const slot = await this.#sleep(); // wakeup(slot)が呼ばれるまで待機
+        await slot.waitResolvers.promise; // queueにデータが入るまで待機
         config.debug && performance.mark('slot-exec:start');
         try {
           await slot.exec();
@@ -1336,23 +1331,17 @@ class UpdateSlot {
   /** @type {()=>void} */
   #callback;
 
-  /** @type {Promise<void>} */
-  #waitPromise;
+  /** @type {Resolvers} */
+  #waitResolvers;
+  get waitResolvers() {
+    return this.#waitResolvers;
+  }
 
-  /** @type {Promise<void>} */
-  #alivePromise;
-
-  /** @type {Promise<(value)=>void>} */
-  #waitResolve;
-
-  /** @type {Promise<() => void>} */
-  #waitReject;
-
-  /** @type {Promise<(value) => void>} */
-  #aliveResolve;
-
-  /** @type {Promise<() => void>} */
-  #aliveReject;
+  /** @type {Resolvers} */
+  #aliveResolvers;
+  get aliveResolvers() {
+    return this.#aliveResolvers;
+  }
 
   /** @type {ChangePhaseCallback} */
   #changePhaseCallback;
@@ -1381,37 +1370,8 @@ class UpdateSlot {
     this.#nodeUpdator = new NodeUpdator(component);
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
-    this.#waitPromise = new Promise((resolve, reject) => {
-      this.#waitResolve = resolve;
-      this.#waitReject = reject;
-    });
-    this.#alivePromise = new Promise((resolve, reject) => {
-      this.#aliveResolve = resolve;
-      this.#aliveReject = reject;
-    });
-  }
-
-  /**
-   * 
-   * @returns {Promise<void>}
-   */
-  async waiting() {
-    return this.#waitPromise;
-  }
-
-  waitResolve(value) {
-    this.#waitResolve(value);
-  }
-  waitReject() {
-    this.#waitReject();
-  }
-
-  /**
-   * 
-   * @returns {Promise<void>}
-   */
-  async alive() {
-    return this.#alivePromise;
+    this.#waitResolvers = Promise.withResolvers();
+    this.#aliveResolvers = Promise.withResolvers();
   }
 
   /** @type {boolean} */
@@ -1430,7 +1390,7 @@ class UpdateSlot {
     } while(!this.#viewModelUpdator.isEmpty || !this.#nodeUpdator.isEmpty);
 
     this.phase = Phase.terminate;
-    this.#aliveResolve();
+    this.#aliveResolvers.resolve();
   }
 
   /**
@@ -1439,7 +1399,7 @@ class UpdateSlot {
    */
   addProcess(processData) {
     this.#viewModelUpdator.queue.push(processData);
-    this.#waitResolve(true); // waitingを解除する
+    this.#waitResolvers.resolve(true); // waitingを解除する
   }
   
   /**
@@ -1448,7 +1408,7 @@ class UpdateSlot {
    */
   addNotify(notifyData) {
     this.#nodeUpdator.queue.push(notifyData);
-    this.#waitResolve(true); // waitingを解除する
+    this.#waitResolvers.resolve(true); // waitingを解除する
   }
 
   /** 
@@ -2010,6 +1970,8 @@ class NodeProperty {
   }
 }
 
+const PREFIX$3 = "@@|";
+
 class TemplateProperty extends NodeProperty {
   /** @type {HTMLTemplateElement | undefined} */
   get template() {
@@ -2027,7 +1989,7 @@ class TemplateProperty extends NodeProperty {
    * @returns {string}
    */
   static getUUID(node) {
-    return node.textContent.slice(3)
+    return node.textContent.slice(PREFIX$3.length);
   }
   
   /** @type {Boolean} */
@@ -2046,7 +2008,8 @@ class TemplateProperty extends NodeProperty {
   constructor(binding, node, name, filters, filterFuncs) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     const uuid = TemplateProperty.getUUID(node);
-    if (typeof uuid === "undefined") utils.raise(`TemplateProperty: invalid uuid ${uuid}`);
+    const template = Templates.templateByUUID.get(uuid);
+    if (typeof template === "undefined") utils.raise(`TemplateProperty: invalid uuid ${uuid}`);
     super(binding, node, name, filters, filterFuncs);
   }
 }
@@ -2063,6 +2026,7 @@ class Repeat extends TemplateProperty {
   get value() {
     return this.binding.children.length;
   }
+  /** @param {Array} value */
   set value(value) {
     if (!Array.isArray(value)) utils.raise("Repeat: value is not array");
     if (this.value < value.length) {
@@ -2107,6 +2071,7 @@ class Branch extends TemplateProperty {
   get value() {
     return this.binding.children.length > 0;
   }
+  /** @param {boolean} value */
   set value(value) {
     if (typeof value !== "boolean") utils.raise("Branch: value is not boolean");
     if (this.value !== value) {
@@ -2118,7 +2083,7 @@ class Branch extends TemplateProperty {
         removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
       }
     } else {
-      this.binding.children.forEach(bindings => bindings.applyToNode());
+      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
     }
   }
 
@@ -2338,13 +2303,29 @@ class ElementBase extends NodeProperty {
   }
 }
 
+const NAME = "class";
+
 class ElementClassName extends ElementBase {
   /** @type {any} */
   get value() {
     return this.element.className.length > 0 ? this.element.className.split(" ") : [];
   }
+  /** @param {Array} value */
   set value(value) {
+    if (!Array.isArray(value)) utils.raise("ElementClassName: value is not array");
     this.element.className = value.join(" ");
+  }
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {HTMLInputElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (name !== NAME) utils.raise(`ElementClassName: invalid property name ${name}`);
+    super(binding, node, name, filters, filterFuncs);
   }
 }
 
@@ -2354,19 +2335,20 @@ class Checkbox extends ElementBase {
     return this.node;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get value() {
     return new MultiValue(this.inputElement.value, this.inputElement.checked);
   }
+
+  /** @param {Array} value */
   set value(value) {
-    /** @type {Array} */
-    const array = value;
+    if (!Array.isArray(value)) utils.raise("Checkbox: value is not array");
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
-    this.inputElement.checked = array.find(v => v === multiValue.value) ? true : false;
+    this.inputElement.checked = value.find(v => v === multiValue.value) ? true : false;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;
@@ -2401,20 +2383,21 @@ class Checkbox extends ElementBase {
 class Radio extends ElementBase {
   /** @type {HTMLInputElement} */
   get inputElement() {
-    return this.node;
+    return this.element;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get value() {
     return new MultiValue(this.inputElement.value, this.inputElement.checked);
   }
+  /** @param {any} value */
   set value(value) {
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
     this.inputElement.checked = (value === multiValue.value) ? true : false;
   }
 
-  /** @type {any} */
+  /** @type {MultiValue} */
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;
@@ -2446,17 +2429,28 @@ class Radio extends ElementBase {
   }
 }
 
-const PREFIX$1 = "on";
+const PREFIX$2 = "on";
 
 class ElementEvent extends ElementBase {
   /** @type {string} nameのonの後ろを取得する */
   get eventType() {
-    return this.name.slice(PREFIX$1.length); // on～
+    return this.name.slice(PREFIX$2.length); // on～
   }
 
   /** @type {boolean} applyToNode()の対象かどうか */
   get applicable() {
     return false;
+  }
+
+  /**
+   * @type {(event:Event)=>{}} イベントハンドラ
+   */
+  #handler;
+  get handler() {
+    if (typeof this.#handler === "undefined") {
+      this.#handler = event => this.eventHandler(event);
+    }
+    return this.#handler;
   }
 
   /**
@@ -2468,7 +2462,7 @@ class ElementEvent extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!name.startsWith(PREFIX$1)) utils.raise(`ElementEvent: invalid property name ${name}`);
+    if (!name.startsWith(PREFIX$2)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -2477,8 +2471,7 @@ class ElementEvent extends ElementBase {
    * DOM要素にイベントハンドラの設定を行う
    */
   initialize() {
-    const handler = event => this.eventHandler(event);
-    this.element.addEventListener(this.eventType, handler);
+    this.element.addEventListener(this.eventType, this.handler);
   }
 
   /**
@@ -2502,12 +2495,15 @@ class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   eventHandler(event) {
+    // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
   }
 }
+
+const PREFIX$1 = "class.";
 
 class ElementClass extends ElementBase {
   /** @type {string} */
@@ -2521,6 +2517,19 @@ class ElementClass extends ElementBase {
   }
   set value(value) {
     value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {HTMLInputElement} node 
+   * @param {string} name 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} filterFuncs
+   */
+  constructor(binding, node, name, filters, filterFuncs) {
+    if (!name.startsWith(PREFIX$1)) utils.raise(`ElementClass: invalid property name ${name}`);
+    super(binding, node, name, filters, filterFuncs);
   }
 }
 
@@ -2645,7 +2654,7 @@ class ComponentProperty extends ElementBase {
   }
 
   /**
-   * 更新前処理
+   * 更新後処理
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   postUpdate(propertyAccessByViewModelPropertyKey) {
@@ -3972,7 +3981,7 @@ class Dialog {
       dialog.props[key] = value;
     });
     document.body.appendChild(dialog);
-    return dialog.alivePromise;
+    return dialog.aliveResolvers.promise;
   }
 
   /**
@@ -4598,52 +4607,20 @@ const mixInComponent = {
     return this._globals;
   },
 
-  /** @type {(...args) => void} */
-  get initialResolve() {
-    return this._initialResolve;
+  /** @type {Resolvers} */
+  get initialResolvers() {
+    return this._initialResolvers;
   },
-  set initialResolve(value) {
-    this._initialResolve = value;
-  },
-
-  /** @type {() => void} */
-  get initialReject() {
-    return this._initialReject;
-  },
-  set initialReject(value) {
-    this._initialReject = value;
+  set initialResolvers(value) {
+    this._initialResolvers = value;
   },
 
-  /** @type {Promise} 初期化確認用プロミス */
-  get initialPromise() {
-    return this._initialPromise;
+  /** @type {Resolvers} */
+  get aliveResolvers() {
+    return this._aliveResolvers;
   },
-  set initialPromise(value) {
-    this._initialPromise = value;
-  },
-
-  /** @type {(...args) => void} */
-  get aliveResolve() {
-    return this._aliveResolve;
-  },
-  set aliveResolve(value) {
-    this._aliveResolve = value;
-  },
-
-  /** @type {() => void} */
-  get aliveReject() {
-    return this._aliveReject;
-  },
-  set aliveReject(value) {
-    this._aliveReject = value;
-  },
-
-  /** @type {Promise} 生存確認用プロミス */
-  get alivePromise() {
-    return this._alivePromise;
-  },
-  set alivePromise(value) {
-    this._alivePromise = value;
+  set aliveResolvers(value) {
+    this._aliveResolvers = value;
   },
 
   /** @type {Component} 親コンポーネント */
@@ -4665,8 +4642,8 @@ const mixInComponent = {
   },
 
   /** @type {boolean} タグネームスペースを使う */
-  get useTagNamespace() {
-    return this._useTagNamespace;
+  get useLocalTagName() {
+    return this._useLocalTagName;
   },
 
   /** @type {boolean} keyedを使う */
@@ -4714,19 +4691,14 @@ const mixInComponent = {
     this._updateSlot = undefined;
     this._props = createProps(this);
     this._globals = createGlobals();
-    this._initialPromise = undefined;
-    this._initialResolve = undefined;
-    this._initialReject = undefined;
-
-    this._alivePromise = undefined;
-    this._aliveResolve = undefined;
-    this._aliveReject = undefined;
+    this._initialResolvers = undefined;
+    this._aliveResolvers = undefined;
 
     this._parentComponent = undefined;
 
     this._useShadowRoot = this.constructor.useShadowRoot;
     this._useWebComponent = this.constructor.useWebComponent;
-    this._useTagNamespace = this.constructor.useTagNamespace;
+    this._useLocalTagName = this.constructor.useLocalTagName;
     this._useKeyed = this.constructor.useKeyed;
 
     this._pseudoParentNode = undefined;
@@ -4739,10 +4711,7 @@ const mixInComponent = {
 
     this._bindingSummary = new BindingSummary;
 
-    this.initialPromise = new Promise((resolve, reject) => {
-      this.initialResolve = resolve;
-      this.initialReject = reject;
-    });
+    this.initialResolvers = Promise.withResolvers();
   },
 
   /**
@@ -4787,9 +4756,9 @@ const mixInComponent = {
     }
 
     if (this.updateSlot.isEmpty) {
-      this.updateSlot.waitResolve(true);
+      this.updateSlot.waitResolvers.resolve(true);
     }
-    await this.updateSlot.alive();
+    await this.updateSlot.aliveResolvers.promise;
   },
 
   /**
@@ -4801,7 +4770,7 @@ const mixInComponent = {
     try {
       // 親要素の初期化処理の終了を待つ
       if (this.parentComponent) {
-        await this.parentComponent.initialPromise;
+        await this.parentComponent.initialResolvers.promise;
       } else {
       }
 
@@ -4812,15 +4781,12 @@ const mixInComponent = {
         this.pseudoParentNode.replaceChild(comment, this);
       }
       // 生存確認用プロミスの生成
-      this.alivePromise = new Promise((resolve, reject) => {
-        this.aliveResolve = resolve;
-        this.aliveReject = reject;
-      });
+      this.aliveResolvers = Promise.withResolvers();
 
       await this.build();
       
     } finally {
-      this.initialResolve && this.initialResolve();
+      this.initialResolvers?.resolve && this.initialResolvers.resolve();
     }
   },
 
@@ -4829,7 +4795,7 @@ const mixInComponent = {
    * @returns {void}
    */
   disconnectedCallback() {
-    this.aliveResolve && this.aliveResolve(this.props[Symbols$1.toObject]());
+    this.aliveResolvers?.resolve && this.aliveResolvers.resolve(this.props[Symbols$1.toObject]());
   },
 
   /**
@@ -4877,7 +4843,7 @@ class ComponentClassGenerator {
         static useWebComponent = module.useWebComponent ?? config.useWebComponent;
 
         /** @type {boolean} */
-        static useTagNamespace = module.useTagNamespace ?? config.useTagNamespace;
+        static useLocalTagName = module.useLocalTagName ?? config.useLocalTagName;
 
         /** @type {boolean} */
         static useKeyed = module.useKeyed ?? config.useKeyed;

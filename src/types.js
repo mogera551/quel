@@ -55,10 +55,6 @@
  */
 
 /**
- * @typedef {import("./thread/UpdateSlot.js").UpdateSlotStatusCallback} UpdateSlotStatusCallback
- */
-
-/**
  * @typedef {import("./filter/Filter.js").Filter} Filter
  */
 

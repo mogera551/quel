@@ -53,7 +53,7 @@ export class Thread {
   async main() {
     do {
       try {
-        const slot = await this.#sleep();
+        const slot = await this.#sleep(); // wakeup(slot)が呼ばれるまで待機
         await slot.waitResolvers.promise; // queueにデータが入るまで待機
         config.debug && performance.mark('slot-exec:start');
         try {
