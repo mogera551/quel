@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { BindingSummary } from "../../src/binding/BindingSummary.js";
 import { NodeProperty } from "../../src/binding/nodeProperty/NodeProperty.js";
 import { ComponentProperty } from "../../src/binding/nodeProperty/ComponentProperty";
@@ -10,7 +11,6 @@ describe("BindingSummary", () => {
   });
 
   afterEach(() => {
-    bindingSummary.clear();
   });
 
   test("should add a binding, witout expandable, no ComponentProperty", () => {
@@ -192,24 +192,39 @@ describe("BindingSummary", () => {
       };
       bindings.push(binding);
     }
+    for(let i = 0; i < 10; i++) {
+      const binding = {
+        viewModelProperty: {
+          key: "key1"
+        },
+        nodeProperty: {
+          expandable: true,
+          constructor: NodeProperty
+        }
+      };
+      bindings.push(binding);
+    }
+    for(let i = 0; i < 10; i++) {
+      const binding = {
+        viewModelProperty: {
+          key: "key1"
+        },
+        nodeProperty: {
+          expandable: false,
+          constructor: ComponentProperty
+        }
+      };
+      bindings.push(binding);
+    }
     bindingSummary.rebuild(bindings);
-    expect(bindingSummary.allBindings.size).toBe(bindings.length);
-    bindingSummary.rebuild(bindings.filter((_, index) => index < 5));
-    expect(bindingSummary.allBindings.size).toBe(5);
+    expect(bindingSummary.allBindings.size).toBe(30);
+    expect(bindingSummary.allBindings.size).toBe(30);
+    expect(bindingSummary.expandableBindings.size).toBe(10);
+    expect(bindingSummary.componentBindings.size).toBe(10);
+    bindingSummary.rebuild(bindings.filter((_, index) => (index % 2) === 0));
+    expect(bindingSummary.allBindings.size).toBe(15);
+    expect(bindingSummary.expandableBindings.size).toBe(5);
+    expect(bindingSummary.componentBindings.size).toBe(5);
   });
 
-  test("should clear all bindings", () => {
-    const binding = {
-      viewModelProperty: {
-        key: "key1"
-      },
-      nodeProperty: {
-        expandable: false,
-        constructor: NodeProperty
-      }
-    };
-    bindingSummary.add(binding);
-    bindingSummary.clear();
-    expect(bindingSummary.allBindings.size).toBe(0);
-  });
 });

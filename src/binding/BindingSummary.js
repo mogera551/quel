@@ -90,16 +90,16 @@ export class BindingSummary {
   }
 
   rebuild(bindings) {
-    this.clear();
-    for(const binding of bindings) {
-      this.add(binding);
+    this.#allBindings = new Set(bindings);
+    this.#bindingsByKey = new Map;
+    this.#expandableBindings = new Set(bindings.filter(binding => binding.nodeProperty.expandable));
+    this.#componentBindings = new Set(bindings.filter(binding => binding.nodeProperty.constructor === ComponentProperty));
+    for(let i in bindings) {
+      const binding = bindings[i];
+      const key = binding.viewModelProperty.key;
+      this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
     }
+    this.#deleteBindings = new Set;
   }
 
-  clear() {
-    this.#allBindings = new Set;
-    this.#bindingsByKey = new Map;
-    this.#expandableBindings = new Set;
-    this.#componentBindings = new Set;
-  }
 }
