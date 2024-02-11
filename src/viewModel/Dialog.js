@@ -20,7 +20,7 @@ export class Dialog {
       dialog.props[key] = value;
     });
     document.body.appendChild(dialog);
-    return dialog.alivePromise;
+    return dialog.aliveResolvers.promise;
   }
 
   /**

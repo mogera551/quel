@@ -88,6 +88,13 @@
  */
 
 /**
+ * @typedef {Object} Resolvers
+ * @property {Promise} promise
+ * @property {(...args)=>void} resolve
+ * @property {()=>void} reject
+ */
+
+/**
  * @typedef {Object} ComponentBase
  * @property {ViewModel} viewModel
  * @property {BindingManager} rootBinding
@@ -96,12 +103,8 @@
  * @property {UpdateSlot} updateSlot
  * @property {Object<string,any>} props
  * @property {Object<string,any>} globals
- * @property {(...args)=>void} initialResolve
- * @property {()=>void} initialReject
- * @property {Promise} initialPromise
- * @property {(...args)=>void} aliveResolve
- * @property {()=>void} aliveReject
- * @property {Promise} alivePromise
+ * @property {Resolvers} initialResolvers
+ * @property {Resolvers} aliveResolvers
  * @property {Component} parentComponent
  * @property {boolean} useShadowRoot
  * @property {boolean} useWebComponent

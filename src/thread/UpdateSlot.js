@@ -24,23 +24,17 @@ export class UpdateSlot {
   /** @type {()=>void} */
   #callback;
 
-  /** @type {Promise<void>} */
-  #waitPromise;
+  /** @type {Resolvers} */
+  #waitResolvers;
+  get waitResolvers() {
+    return this.#waitResolvers;
+  }
 
-  /** @type {Promise<void>} */
-  #alivePromise;
-
-  /** @type {Promise<(value)=>void>} */
-  #waitResolve;
-
-  /** @type {Promise<() => void>} */
-  #waitReject;
-
-  /** @type {Promise<(value) => void>} */
-  #aliveResolve;
-
-  /** @type {Promise<() => void>} */
-  #aliveReject;
+  /** @type {Resolvers} */
+  #aliveResolvers;
+  get aliveResolvers() {
+    return this.#aliveResolvers;
+  }
 
   /** @type {ChangePhaseCallback} */
   #changePhaseCallback;
@@ -69,37 +63,8 @@ export class UpdateSlot {
     this.#nodeUpdator = new NodeUpdator(component);
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
-    this.#waitPromise = new Promise((resolve, reject) => {
-      this.#waitResolve = resolve;
-      this.#waitReject = reject;
-    });
-    this.#alivePromise = new Promise((resolve, reject) => {
-      this.#aliveResolve = resolve;
-      this.#aliveReject = reject;
-    });
-  }
-
-  /**
-   * 
-   * @returns {Promise<void>}
-   */
-  async waiting() {
-    return this.#waitPromise;
-  }
-
-  waitResolve(value) {
-    this.#waitResolve(value);
-  }
-  waitReject() {
-    this.#waitReject();
-  }
-
-  /**
-   * 
-   * @returns {Promise<void>}
-   */
-  async alive() {
-    return this.#alivePromise;
+    this.#waitResolvers = Promise.withResolvers();
+    this.#aliveResolvers = Promise.withResolvers();
   }
 
   /** @type {boolean} */
@@ -118,7 +83,7 @@ export class UpdateSlot {
     } while(!this.#viewModelUpdator.isEmpty || !this.#nodeUpdator.isEmpty);
 
     this.phase = Phase.terminate;
-    this.#aliveResolve();
+    this.#aliveResolvers.resolve();
   }
 
   /**
@@ -127,7 +92,7 @@ export class UpdateSlot {
    */
   addProcess(processData) {
     this.#viewModelUpdator.queue.push(processData);
-    this.#waitResolve(true); // waitingを解除する
+    this.#waitResolvers.resolve(true); // waitingを解除する
   }
   
   /**
@@ -136,7 +101,7 @@ export class UpdateSlot {
    */
   addNotify(notifyData) {
     this.#nodeUpdator.queue.push(notifyData);
-    this.#waitResolve(true); // waitingを解除する
+    this.#waitResolvers.resolve(true); // waitingを解除する
   }
 
   /** 

@@ -94,52 +94,20 @@ export const mixInComponent = {
     return this._globals;
   },
 
-  /** @type {(...args) => void} */
-  get initialResolve() {
-    return this._initialResolve;
+  /** @type {Resolvers} */
+  get initialResolvers() {
+    return this._initialResolvers;
   },
-  set initialResolve(value) {
-    this._initialResolve = value;
-  },
-
-  /** @type {() => void} */
-  get initialReject() {
-    return this._initialReject;
-  },
-  set initialReject(value) {
-    this._initialReject = value;
+  set initialResolvers(value) {
+    this._initialResolvers = value;
   },
 
-  /** @type {Promise} 初期化確認用プロミス */
-  get initialPromise() {
-    return this._initialPromise;
+  /** @type {Resolvers} */
+  get aliveResolvers() {
+    return this._aliveResolvers;
   },
-  set initialPromise(value) {
-    this._initialPromise = value;
-  },
-
-  /** @type {(...args) => void} */
-  get aliveResolve() {
-    return this._aliveResolve;
-  },
-  set aliveResolve(value) {
-    this._aliveResolve = value;
-  },
-
-  /** @type {() => void} */
-  get aliveReject() {
-    return this._aliveReject;
-  },
-  set aliveReject(value) {
-    this._aliveReject = value;
-  },
-
-  /** @type {Promise} 生存確認用プロミス */
-  get alivePromise() {
-    return this._alivePromise;
-  },
-  set alivePromise(value) {
-    this._alivePromise = value;
+  set aliveResolvers(value) {
+    this._aliveResolvers = value;
   },
 
   /** @type {Component} 親コンポーネント */
@@ -210,13 +178,8 @@ export const mixInComponent = {
     this._updateSlot = undefined;
     this._props = createProps(this);
     this._globals = createGlobals();
-    this._initialPromise = undefined;
-    this._initialResolve = undefined;
-    this._initialReject = undefined;
-
-    this._alivePromise = undefined;
-    this._aliveResolve = undefined;
-    this._aliveReject = undefined;
+    this._initialResolvers = undefined;
+    this._aliveResolvers = undefined;
 
     this._parentComponent = undefined;
 
@@ -235,10 +198,7 @@ export const mixInComponent = {
 
     this._bindingSummary = new BindingSummary;
 
-    this.initialPromise = new Promise((resolve, reject) => {
-      this.initialResolve = resolve;
-      this.initialReject = reject;
-    });
+    this.initialResolvers = Promise.withResolvers();
   },
 
   /**
@@ -283,9 +243,9 @@ export const mixInComponent = {
     }
 
     if (this.updateSlot.isEmpty) {
-      this.updateSlot.waitResolve(true);
+      this.updateSlot.waitResolvers.resolve(true);
     }
-    await this.updateSlot.alive();
+    await this.updateSlot.aliveResolvers.promise;
   },
 
   /**
@@ -297,7 +257,7 @@ export const mixInComponent = {
     try {
       // 親要素の初期化処理の終了を待つ
       if (this.parentComponent) {
-        await this.parentComponent.initialPromise;
+        await this.parentComponent.initialResolvers.promise;
       } else {
       }
 
@@ -308,15 +268,12 @@ export const mixInComponent = {
         this.pseudoParentNode.replaceChild(comment, this);
       }
       // 生存確認用プロミスの生成
-      this.alivePromise = new Promise((resolve, reject) => {
-        this.aliveResolve = resolve;
-        this.aliveReject = reject;
-      });
+      this.aliveResolvers = Promise.withResolvers();
 
       await this.build();
       
     } finally {
-      this.initialResolve && this.initialResolve();
+      this.initialResolvers?.resolve && this.initialResolvers.resolve();
     }
   },
 
@@ -325,7 +282,7 @@ export const mixInComponent = {
    * @returns {void}
    */
   disconnectedCallback() {
-    this.aliveResolve && this.aliveResolve(this.props[Symbols.toObject]());
+    this.aliveResolvers?.resolve && this.aliveResolvers.resolve(this.props[Symbols.toObject]());
   },
 
   /**
