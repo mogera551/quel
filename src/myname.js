@@ -1,2 +1,1 @@
-const name = "quel";
-export default name;
+export const name = "quel";
