@@ -55,6 +55,8 @@ export class Module {
   /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegist() {
     if (this.useLocalTagName ?? config.useLocalTagName) {
+      // case of use local name with true,
+      // then subcompnent's tag name convert to append uuid
       if (typeof this.componentModules !== "undefined") {
         const componentModules = {};
         for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {

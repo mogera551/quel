@@ -25,15 +25,15 @@ export class UpdateSlot {
   #callback;
 
   /** @type {Resolvers} */
-  #waitResolvers;
-  get waitResolvers() {
-    return this.#waitResolvers;
+  #waitPromises;
+  get waitPromises() {
+    return this.#waitPromises;
   }
 
   /** @type {Resolvers} */
-  #aliveResolvers;
-  get aliveResolvers() {
-    return this.#aliveResolvers;
+  #alivePromises;
+  get alivePromises() {
+    return this.#alivePromises;
   }
 
   /** @type {ChangePhaseCallback} */
@@ -63,8 +63,8 @@ export class UpdateSlot {
     this.#nodeUpdator = new NodeUpdator(component);
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
-    this.#waitResolvers = Promise.withResolvers();
-    this.#aliveResolvers = Promise.withResolvers();
+    this.#waitPromises = Promise.withResolvers();
+    this.#alivePromises = Promise.withResolvers();
   }
 
   /** @type {boolean} */
@@ -83,7 +83,7 @@ export class UpdateSlot {
     } while(!this.#viewModelUpdator.isEmpty || !this.#nodeUpdator.isEmpty);
 
     this.phase = Phase.terminate;
-    this.#aliveResolvers.resolve();
+    this.#alivePromises.resolve();
   }
 
   /**
@@ -92,7 +92,7 @@ export class UpdateSlot {
    */
   addProcess(processData) {
     this.#viewModelUpdator.queue.push(processData);
-    this.#waitResolvers.resolve(true); // waitingを解除する
+    this.#waitPromises.resolve(true); // waitingを解除する
   }
   
   /**
@@ -101,7 +101,7 @@ export class UpdateSlot {
    */
   addNotify(notifyData) {
     this.#nodeUpdator.queue.push(notifyData);
-    this.#waitResolvers.resolve(true); // waitingを解除する
+    this.#waitPromises.resolve(true); // waitingを解除する
   }
 
   /** 

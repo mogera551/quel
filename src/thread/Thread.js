@@ -6,8 +6,8 @@ class ThreadStop extends Error {
 }
 
 export class Thread {
-  /** @type {Resolvers} */
-  #resolvers;
+  /** @type {Promises} */
+  #promises;
 
   /** @type {boolean} */
   #alive = true;
@@ -28,15 +28,15 @@ export class Thread {
    * @returns {Promise<UpdateSlot>}
    */
   async #sleep() {
-    this.#resolvers = Promise.withResolvers();
-    return this.#resolvers.promise;
+    this.#promises = Promise.withResolvers();
+    return this.#promises.promise;
   }
 
   /**
    * @returns {void}
    */
   stop() {
-    this.#resolvers.reject(new ThreadStop("stop"));
+    this.#promises.reject(new ThreadStop("stop"));
   }
 
   /**
@@ -44,7 +44,7 @@ export class Thread {
    * @returns {void}
    */
   wakeup(slot) {
-    this.#resolvers.resolve(slot);
+    this.#promises.resolve(slot);
   }
 
   /**
@@ -54,7 +54,7 @@ export class Thread {
     do {
       try {
         const slot = await this.#sleep(); // wakeup(slot)が呼ばれるまで待機
-        await slot.waitResolvers.promise; // queueにデータが入るまで待機
+        await slot.waitPromises.promise; // queueにデータが入るまで待機
         config.debug && performance.mark('slot-exec:start');
         try {
           await slot.exec();

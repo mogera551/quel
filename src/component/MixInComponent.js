@@ -36,7 +36,7 @@ const getParentComponent = (node) => {
 
 /** @type {ComponentBase} */
 export const mixInComponent = {
-  /** @type {ViewModelProxy} */
+  /** @type {ViewModelProxy} view model proxy */
   get viewModel() {
     if (typeof this.updateSlot === "undefined" || 
       (this.updateSlot.phase !== Phase.gatherUpdatedProperties)) {
@@ -54,7 +54,7 @@ export const mixInComponent = {
     this._rootBinding = value;
   },
 
-  /** @type {Thread} 更新スレッド */
+  /** @type {Thread} thread */
   get thread() {
     return this._thread;
   },
@@ -62,7 +62,7 @@ export const mixInComponent = {
     this._thread = value;
   },
 
-  /** @type {UpdateSlot} 更新処理用スロット */
+  /** @type {UpdateSlot} update slot */
   get updateSlot() {
     if (typeof this._thread === "undefined") {
       return undefined;
@@ -79,38 +79,35 @@ export const mixInComponent = {
     }
     return this._updateSlot;
   },
-  // 単体テストのモック用
+  // for unit test mock
   set updateSlot(value) {
     this._updateSlot = value;
   },
 
-  /** @type {Object<string,any>} */
+  /** @type {Object<string,any>} parent component property */
   get props() {
     return this._props;
   },
 
-  /** @type {Object<string,any>} */
+  /** @type {Object<string,any>} global object */
   get globals() {
     return this._globals;
   },
 
-  /** @type {Resolvers} */
-  get initialResolvers() {
-    return this._initialResolvers;
-  },
-  set initialResolvers(value) {
-    this._initialResolvers = value;
+  /** @type {Promises} initial promises */
+  get initialPromises() {
+    return this._initialPromises;
   },
 
-  /** @type {Resolvers} */
-  get aliveResolvers() {
-    return this._aliveResolvers;
+  /** @type {Promises} alive promises */
+  get alivePromises() {
+    return this._alivePromises;
   },
-  set aliveResolvers(value) {
-    this._aliveResolvers = value;
+  set alivePromises(value) {
+    this._alivePromises = value;
   },
 
-  /** @type {Component} 親コンポーネント */
+  /** @type {Component} parent component */
   get parentComponent() {
     if (typeof this._parentComponent === "undefined") {
       this._parentComponent = getParentComponent(this);
@@ -118,68 +115,67 @@ export const mixInComponent = {
     return this._parentComponent;
   },
 
-  /** @type {boolean} shadowRootを使ってカプセル化をする(true) */
+  /** @type {boolean} use shadowRoot */
   get useShadowRoot() {
     return this._useShadowRoot;
   },
 
-  /** @type {boolean} 仮想コンポーネントを使う */
+  /** @type {boolean} use web component */
   get useWebComponent() {
     return this._useWebComponent;
   },
 
-  /** @type {boolean} タグネームスペースを使う */
+  /** @type {boolean} use local tag name */
   get useLocalTagName() {
     return this._useLocalTagName;
   },
 
-  /** @type {boolean} keyedを使う */
+  /** @type {boolean} use keyed */
   get useKeyed() {
     return this._useKeyed;
   },
 
-  /** @type {ShadowRoot|HTMLElement} viewのルートとなる要素 */
+  /** @type {ShadowRoot|HTMLElement} view root element */
   get viewRootElement() {
     return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
   },
 
-  /** @type {Node} 親要素（useWebComponentがfalse以外では使わないこと） */
+  /** @type {Node} parent node（use, case of useWebComponent is false） */
   get pseudoParentNode() {
     return !this.useWebComponent ? this._pseudoParentNode : utils.raise("mixInComponent: useWebComponent must be false");
   },
 
-  /** @type {Node} 代替要素（useWebComponentがfalse以外では使わないこと） */
+  /** @type {Node} pseudo node（use, case of useWebComponent is false） */
   get pseudoNode() {
     return this._pseudoNode;
   },
 
-  /**
-   * @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}}
-   */
+  /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}} filters */
   get filters() {
     return this._filters;
   },
 
-  /**
-   * @type {BindingSummary}
-   */
+  /** @type {BindingSummary} binding summary */
   get bindingSummary() {
     return this._bindingSummary;
   },
 
   /** 
-   * 初期化
+   * initialize
    * @returns {void}
    */
   initialize() {
-    this._viewModels = createViewModels(this, this.constructor.ViewModel);
+    /**
+     * set members
+     */
+    this._viewModels = createViewModels(this, this.constructor.ViewModel); // create view model
     this._rootBinding = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
-    this._props = createProps(this);
-    this._globals = createGlobals();
-    this._initialResolvers = undefined;
-    this._aliveResolvers = undefined;
+    this._props = createProps(this); // create property for parent component connection
+    this._globals = createGlobals(); // create property for global connection
+    this._initialPromises = undefined;
+    this._alivePromises = undefined;
 
     this._parentComponent = undefined;
 
@@ -198,17 +194,17 @@ export const mixInComponent = {
 
     this._bindingSummary = new BindingSummary;
 
-    this.initialResolvers = Promise.withResolvers();
+    this._initialPromises = Promise.withResolvers(); // promises for initialize
   },
 
   /**
-   * コンポーネント構築処理（connectedCallbackで呼ばれる）
+   * build component (called from connectedCallback)
    * @returns {void}
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    const { template, inputFilters, outputFilters } = this.constructor; // staticから取得
-    // フィルターの設定
+    const { template, inputFilters, outputFilters } = this.constructor; // from static members
+    // setting filters
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
         if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
@@ -221,73 +217,83 @@ export const mixInComponent = {
         this.filters.out[name] = filterFunc;
       }
     }
-    // シャドウルートの作成
+    // create and attach shadowRoot
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
     }
-    // スレッドの生成
+
+    // create thread
     this.thread = new Thread;
 
-    // ViewModelの初期化処理（viewModelの$connectedCallbackを実行）
+    // inialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols.connectedCallback]();
 
-    // Bindingツリーの構築
+    // buid binding tree and dom 
     this.rootBinding = BindingManager.create(this, template);
     this.bindingSummary.flush();
 
     if (!this.useWebComponent) {
-      this.viewRootElement.insertBefore(this.rootBinding.fragment, this.pseudoNode.nextSibling)
+      // case of no useWebComponent, 
+      // then insert fragment block before pseudo node nextSibling
+      this.viewRootElement.insertBefore(this.rootBinding.fragment, this.pseudoNode.nextSibling);
+      // child nodes add pseudoComponentByNode
       this.rootBinding.nodes.forEach(node => pseudoComponentByNode.set(node, this));
     } else {
+      // case of useWebComponent,
+      // then append fragment block to viewRootElement
       this.viewRootElement.appendChild(this.rootBinding.fragment);
     }
 
+    // update slot wakeup
     if (this.updateSlot.isEmpty) {
-      this.updateSlot.waitResolvers.resolve(true);
+      this.updateSlot.waitPromises.resolve(true);
     }
-    await this.updateSlot.aliveResolvers.promise;
+    // wait for update slot
+    await this.updateSlot.alivePromises.promise;
   },
 
   /**
-   * DOMツリーへ追加時呼ばれる
+   * callback on adding this component to DOM tree
    * @returns {void}
    */
   async connectedCallback() {
 //    console.log(`components[${this.tagName}].connectedCallback`);
     try {
-      // 親要素の初期化処理の終了を待つ
+      // wait for parent component initialize
       if (this.parentComponent) {
-        await this.parentComponent.initialResolvers.promise;
+        await this.parentComponent.initialPromises.promise;
       } else {
       }
 
       if (!this.useWebComponent) {
+        // case of no useWebComponent
         const comment = document.createComment(`@@/${this.tagName}`);
         this._pseudoParentNode = this.parentNode;
         this._pseudoNode = comment;
         this.pseudoParentNode.replaceChild(comment, this);
       }
-      // 生存確認用プロミスの生成
-      this.aliveResolvers = Promise.withResolvers();
+
+      // promises for alive
+      this.alivePromises = Promise.withResolvers();
 
       await this.build();
       
     } finally {
-      this.initialResolvers?.resolve && this.initialResolvers.resolve();
+      this.initialPromises?.resolve && this.initialPromises.resolve();
     }
   },
 
   /**
-   * DOMツリーから削除で呼ばれる
+   * callback on deleting this component from DOM tree
    * @returns {void}
    */
   disconnectedCallback() {
-    this.aliveResolvers?.resolve && this.aliveResolvers.resolve(this.props[Symbols.toObject]());
+    this.alivePromises?.resolve && this.alivePromises.resolve(this.props[Symbols.toObject]());
   },
 
   /**
-   * ノード更新処理
-   * UpdateSlotのNodeUpdatorから呼び出される
+   * update binding nodes
+   * called from update slot's node updator
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   updateNode(propertyAccessByViewModelPropertyKey) {

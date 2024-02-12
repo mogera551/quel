@@ -84,7 +84,7 @@
  */
 
 /**
- * @typedef {Object} Resolvers
+ * @typedef {Object} Promises
  * @property {Promise} promise
  * @property {(...args)=>void} resolve
  * @property {()=>void} reject
@@ -99,8 +99,8 @@
  * @property {UpdateSlot} updateSlot
  * @property {Object<string,any>} props
  * @property {Object<string,any>} globals
- * @property {Resolvers} initialResolvers
- * @property {Resolvers} aliveResolvers
+ * @property {Promises} initialPromises
+ * @property {Promises} alivePromises
  * @property {Component} parentComponent
  * @property {boolean} useShadowRoot
  * @property {boolean} useWebComponent
