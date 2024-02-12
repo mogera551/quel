@@ -8,6 +8,15 @@ describe("BindingSummary", () => {
 
   beforeEach(() => {
     bindingSummary = new BindingSummary();
+    Map.groupBy = (array, func) => {
+      const map = new Map;
+      for(const value of array) {
+        const key = func(value);
+        map.get(key)?.push(value) ?? map.set(key, [value]);
+    
+      }
+      return map;
+    };
   });
 
   afterEach(() => {

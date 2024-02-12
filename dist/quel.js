@@ -4469,6 +4469,10 @@ class BindingSummary {
     this.#deleteBindings.add(binding);
   }
 
+  /**
+   * 
+   * @param {Binding} binding 
+   */
   #delete(binding) {
     this.#allBindings.delete(binding);
     this.#bindingsByKey.get(binding.viewModelProperty.key)?.delete(binding);
@@ -4489,18 +4493,23 @@ class BindingSummary {
     this.#deleteBindings = new Set;
   }
 
+  /**
+   * 
+   * @param {Binding[]} bindings 
+   */
   rebuild(bindings) {
     this.#allBindings = new Set(bindings);
-    this.#bindingsByKey = new Map;
+    /** @type {Map<string,Binding[]>} */
+    const bindingsByKey = Map.groupBy(bindings, binding => binding.viewModelProperty.key);
+    this.#bindingsByKey = new Map(
+      Array.from(bindingsByKey.entries()).map(([key, bindings]) => ([key, new Set(bindings)]))
+    );
     this.#expandableBindings = new Set(bindings.filter(binding => binding.nodeProperty.expandable));
     this.#componentBindings = new Set(bindings.filter(binding => binding.nodeProperty.constructor === ComponentProperty));
-    for(let i in bindings) {
-      const binding = bindings[i];
-      const key = binding.viewModelProperty.key;
-      this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
-    }
     this.#deleteBindings = new Set;
   }
+
+
 
 }
 
