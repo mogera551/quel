@@ -199,6 +199,10 @@ export const mixInComponent = {
 
   /**
    * build component (called from connectedCallback)
+   * setting filters
+   * create and attach shadowRoot
+   * create thread
+   * initialize view model
    * @returns {void}
    */
   async build() {
@@ -225,7 +229,7 @@ export const mixInComponent = {
     // create thread
     this.thread = new Thread;
 
-    // inialize ViewModel（call viewModel's $connectedCallback）
+    // initialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols.connectedCallback]();
 
     // buid binding tree and dom 

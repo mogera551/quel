@@ -55,11 +55,12 @@ export class Module {
   /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegist() {
     if (this.useLocalTagName ?? config.useLocalTagName) {
-      // case of use local name with true,
-      // then subcompnent's tag name convert to append uuid
+      // case of useLocalName with true,
+      // subcompnents tag name convert to the name with uuid
       if (typeof this.componentModules !== "undefined") {
+        /** @type {Object<string,Module>} */
         const componentModules = {};
-        for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
+        for(const [customElementName, componentModule] of Object.entries(this.componentModules)) {
           componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
         }
         return componentModules;

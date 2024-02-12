@@ -6,13 +6,13 @@ import { utils } from "../utils.js";
 import { config } from "../Config.js";
 
 /**
- * コンポーネントクラスを生成するクラス
- * ※customElements.defineでタグに対して、ユニークなクラスを登録する必要があるため
+ * generate unique comonent class
+ * for customElements.define
  */
 export class ComponentClassGenerator {
   
   /**
-   * コンポーネントクラスを生成
+   * generate unique component class
    * @param {UserComponentModule} componentModule 
    * @returns {Component.constructor}
    */
@@ -62,13 +62,13 @@ export class ComponentClassGenerator {
     /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
 
-    // カスタムコンポーネントには同一クラスを登録できないため新しいクラスを生成する
+    // generate new class, for customElements not define same class
     const componentClass = getBaseClass(module);
     if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") {
-      // 自律型カスタム要素
+      // case of autonomous custom element
     } else {
-      // カスタマイズされた組み込み要素
-      // classのextendsを書き換える
+      // case of customized built-in element
+      // change class extends to extendClass or extendTag constructor
       // See http://var.blog.jp/archives/75174484.html
       /** @type {HTMLElement.constructor} */
       const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
@@ -76,17 +76,20 @@ export class ComponentClassGenerator {
       componentClass.__proto__ = extendClass;
     }
   
-    // 生成したコンポーネントクラスにComponentの機能を追加する（mix in） 
+    // mix in component
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
 
+    // regist component's subcomponents 
     registComponentModules(module.componentModulesForRegist);
+
     return componentClass;
   }
 }
+
 /**
- * コンポーネントクラスを生成する
+ * function for generate unique component class
  * @param {UserComponentModule} componentModule 
  * @returns {Component.constructor}
  */
@@ -95,7 +98,8 @@ export function generateComponentClass(componentModule) {
 }
 
 /**
- * 
+ * regist component class with tag name, call customElements.define
+ * generate component class from componentModule
  * @param {string} customElementName 
  * @param {UserComponentModule} componentModule 
  */
