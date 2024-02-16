@@ -10,6 +10,27 @@ describe("Module", () => {
     module.ViewModel = class {};
   });
 
+  test("should have default property's value", () => {
+    module = new Module();
+    expect(module.uuid).toBeDefined();
+    expect(module.html).toBe("");
+    expect(module.css).toBeUndefined();
+    expect(module.template).toBeDefined();
+    expect(module.template instanceof HTMLTemplateElement).toBe(true);
+    expect(module.template.content instanceof DocumentFragment).toBe(true);
+    expect(module.template.innerHTML).toBe("");
+    expect(module.ViewModel).toBeDefined();
+    expect(module.extendTag).toBeUndefined();
+    expect(module.useWebComponent).toBeUndefined();
+    expect(module.useShadowRoot).toBeUndefined();
+    expect(module.useLocalTagName).toBeUndefined();
+    expect(module.useKeyed).toBeUndefined();
+    expect(module.inputFilters).toBeUndefined();
+    expect(module.outputFilters).toBeUndefined();
+    expect(module.componentModules).toBeUndefined();
+    expect(module.componentModulesForRegist).toBeUndefined();
+  });
+
   test("should have a unique UUID", () => {
     expect(module.uuid).toBeDefined();
     expect(typeof module.uuid).toBe("string");
@@ -95,12 +116,6 @@ describe("Module", () => {
   test("should have a ViewModel property", () => {
     expect(module.ViewModel).toBeDefined();
     expect(typeof module.ViewModel).toBe("function");
-  });
-
-  test("should have an optional extendClass property", () => {
-    expect(module.extendClass).toBeUndefined();
-    module.extendClass = "HTMLElement";
-    expect(module.extendClass).toBeDefined();
   });
 
   test("should have an optional extendTag property", () => {

@@ -11,7 +11,7 @@ export class Module {
   }
 
   /** @type {string} */
-  html;
+  html = "";
 
   /** @type {string|undefined} */
   css;
@@ -23,10 +23,7 @@ export class Module {
   }
 
   /** @type {ViewModel.constructor} */
-  ViewModel;
-
-  /** @type {HTMLElement.constructor|undefined} */
-  extendClass;
+  ViewModel = class {};
 
   /** @type {string|undefined} */
   extendTag;
