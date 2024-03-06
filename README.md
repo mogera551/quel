@@ -967,6 +967,12 @@ class ViewModel {
 
 ### memo
 
+install @rollup/plugin-terser
+
+```
+npm install @rollup/plugin-terser --save-dev
+```
+
 bundle
 
 ```

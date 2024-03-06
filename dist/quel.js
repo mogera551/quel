@@ -641,7 +641,7 @@ class Module {
   }
 
   /** @type {string} */
-  html;
+  html = "";
 
   /** @type {string|undefined} */
   css;
@@ -653,10 +653,7 @@ class Module {
   }
 
   /** @type {ViewModel.constructor} */
-  ViewModel;
-
-  /** @type {HTMLElement.constructor|undefined} */
-  extendClass;
+  ViewModel = class {};
 
   /** @type {string|undefined} */
   extendTag;
@@ -685,11 +682,12 @@ class Module {
   /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegist() {
     if (this.useLocalTagName ?? config.useLocalTagName) {
-      // case of use local name with true,
-      // then subcompnent's tag name convert to append uuid
+      // case of useLocalName with true,
+      // subcompnents tag name convert to the name with uuid
       if (typeof this.componentModules !== "undefined") {
+        /** @type {Object<string,Module>} */
         const componentModules = {};
-        for(const [customElementName, componentModule] of Object.entries(this.componentModules ?? {})) {
+        for(const [customElementName, componentModule] of Object.entries(this.componentModules)) {
           componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
         }
         return componentModules;
@@ -4702,6 +4700,10 @@ const mixInComponent = {
 
   /**
    * build component (called from connectedCallback)
+   * setting filters
+   * create and attach shadowRoot
+   * create thread
+   * initialize view model
    * @returns {void}
    */
   async build() {
@@ -4728,7 +4730,7 @@ const mixInComponent = {
     // create thread
     this.thread = new Thread;
 
-    // inialize ViewModel（call viewModel's $connectedCallback）
+    // initialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols$1.connectedCallback]();
 
     // buid binding tree and dom 
@@ -4805,13 +4807,13 @@ const mixInComponent = {
 };
 
 /**
- * コンポーネントクラスを生成するクラス
- * ※customElements.defineでタグに対して、ユニークなクラスを登録する必要があるため
+ * generate unique comonent class
+ * for customElements.define
  */
 class ComponentClassGenerator {
   
   /**
-   * コンポーネントクラスを生成
+   * generate unique component class
    * @param {UserComponentModule} componentModule 
    * @returns {Component.constructor}
    */
@@ -4861,29 +4863,32 @@ class ComponentClassGenerator {
     /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
 
-    // カスタムコンポーネントには同一クラスを登録できないため新しいクラスを生成する
+    // generate new class, for customElements not define same class
     const componentClass = getBaseClass(module);
-    if (typeof module.extendClass === "undefined" && typeof module.extendTag === "undefined") ; else {
-      // カスタマイズされた組み込み要素
-      // classのextendsを書き換える
+    if (typeof module.extendTag === "undefined") ; else {
+      // case of customized built-in element
+      // change class extends to extendClass or extendTag constructor
       // See http://var.blog.jp/archives/75174484.html
       /** @type {HTMLElement.constructor} */
-      const extendClass = module.extendClass ?? document.createElement(module.extendTag).constructor;
+      const extendClass = document.createElement(module.extendTag).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
     }
   
-    // 生成したコンポーネントクラスにComponentの機能を追加する（mix in） 
+    // mix in component
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
 
+    // regist component's subcomponents 
     registComponentModules(module.componentModulesForRegist);
+
     return componentClass;
   }
 }
+
 /**
- * コンポーネントクラスを生成する
+ * function for generate unique component class
  * @param {UserComponentModule} componentModule 
  * @returns {Component.constructor}
  */
@@ -4892,19 +4897,18 @@ function generateComponentClass(componentModule) {
 }
 
 /**
- * 
+ * regist component class with tag name, call customElements.define
+ * generate component class from componentModule
  * @param {string} customElementName 
  * @param {UserComponentModule} componentModule 
  */
 function registComponentModule(customElementName, componentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = ComponentClassGenerator.generate(componentModule);
-  if (componentModule.extendTag) {
-    customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
-  } else if (typeof componentModule?.extendClass === "undefined") {
+  if (typeof componentModule.extendTag === "undefined") {
     customElements.define(customElementKebabName, componentClass);
   } else {
-    utils.raise("registComponentModule: extendTag should be set");
+    customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
   }
 }
 
