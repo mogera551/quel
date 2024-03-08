@@ -2124,13 +2124,19 @@ class ViewModelProperty {
   }
 
   /** @type {PropertyName} */
+  #propertyName;
   get propertyName() {
-    return PropertyName.create(this.name);
+    return this.#propertyName;
+  }
+
+  #level;
+  get level() {
+    return this.#level;
   }
 
   /** @type {number[]} */
   get indexes() {
-    return this.binding.loopContext?.directIndexes ?? [];
+    return this.binding.loopContext?.directIndexes.slice(0 , this.level) ?? [];
   }
 
   /** @type {string} */
@@ -2207,6 +2213,8 @@ class ViewModelProperty {
     this.#name = name;
     this.#filters = filters;
     this.#filterFuncs = filterFuncs;
+    this.#propertyName = PropertyName.create(this.name);
+    this.#level = this.#propertyName.level;
   }
 
   /**
