@@ -17,7 +17,7 @@ export class ReuseBindingManager {
       const removeBindManagers = binding.children.splice(0);
       removeBindManagers.forEach(bindingManager => bindingManager.dispose());
     });
-    if (true || !bindingManager.component.useKeyed) {
+    if (!bindingManager.component.useKeyed) {
       this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
         this.#bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
