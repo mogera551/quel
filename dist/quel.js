@@ -1170,7 +1170,7 @@ class ViewModelHandlerBase extends Handler$2 {
     for(const prop of setOfProps) {
       const curPropName = PropertyName.create(prop);
       if (indexes.length < curPropName.level) {
-        if (curPropName.setOfParentPaths.has(propName.name)) continue;
+        //if (curPropName.setOfParentPaths.has(propName.name)) continue;
         const listOfIndexes = ViewModelHandlerBase.expandIndexes(viewModel, { propName:curPropName, indexes });
         propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));
       } else {
