@@ -4,7 +4,7 @@ import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
-class BindingPropertyAccess {
+export class BindingPropertyAccess {
   get name() {
     return this.#viewModelProperty.name;
   }

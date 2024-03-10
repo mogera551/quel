@@ -1,5 +1,6 @@
 import "../types.js";
 import { utils } from "../utils.js";
+import { Symbols } from "../Symbols.js";
 
 export class Dialog {
   /**
