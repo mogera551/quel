@@ -5412,4 +5412,8 @@ function registGlobal(data) {
   Object.assign(GlobalData.data, data);
 }
 
-export { config, generateComponentClass, loader, registComponentModules, registFilters, registGlobal };
+async function openDialog(dialogName, data, attributes) {
+  return Dialog.open(dialogName, data, attributes);
+}
+
+export { config, generateComponentClass, loader, openDialog, registComponentModules, registFilters, registGlobal };

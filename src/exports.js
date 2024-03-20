@@ -3,6 +3,7 @@ export { loader } from "./loader/QuelLoader.js";
 export { config } from "./Config.js";
 import { Filter } from "./filter/Filter.js";
 import { GlobalData } from "./global/Data.js";
+import { Dialog } from "./viewModel/Dialog.js";
 
 /**
  * 
@@ -21,4 +22,8 @@ export function registFilters(filters) {
  */
 export function registGlobal(data) {
   Object.assign(GlobalData.data, data);
+}
+
+export async function openDialog(dialogName, data, attributes) {
+  return Dialog.open(dialogName, data, attributes);
 }
