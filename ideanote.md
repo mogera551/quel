@@ -2,6 +2,7 @@
 # ノードプロパティの型変換の自動化
 
 # ダイアログタグへの対応
+   * connected後のバインド
 ```
 Dialog.open = async function (tagName, {}) {
   
