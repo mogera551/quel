@@ -64,14 +64,14 @@ export class ComponentClassGenerator {
 
     // generate new class, for customElements not define same class
     const componentClass = getBaseClass(module);
-    if (typeof module.extendTag === "undefined") {
+    if (typeof module.extends === "undefined") {
       // case of autonomous custom element
     } else {
       // case of customized built-in element
-      // change class extends to extendClass or extendTag constructor
+      // change class extends to extends constructor
       // See http://var.blog.jp/archives/75174484.html
       /** @type {HTMLElement.constructor} */
-      const extendClass = document.createElement(module.extendTag).constructor;
+      const extendClass = document.createElement(module.extends).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
     }
@@ -106,10 +106,10 @@ export function generateComponentClass(componentModule) {
 export function registComponentModule(customElementName, componentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = ComponentClassGenerator.generate(componentModule);
-  if (typeof componentModule.extendTag === "undefined") {
+  if (typeof componentModule.extends === "undefined") {
     customElements.define(customElementKebabName, componentClass);
   } else {
-    customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
+    customElements.define(customElementKebabName, componentClass, { extends:componentModule.extends });
   }
 }
 

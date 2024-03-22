@@ -63,8 +63,7 @@
  * @property {string|undefined} html
  * @property {string|undefined} css
  * @property {ViewModel.constructor|undefined} ViewModel
- * @property {HTMLElement.constructor|undefined} extendClass
- * @property {string|undefined} extendTag
+ * @property {string|undefined} extends
  * @property {Object<string,UserComponentModule>} componentModules
  * @property {Object<string,UserComponentModule>} componentModulesForRegist
  * @property {boolean|undefined} useShadowRoot
@@ -116,7 +115,7 @@
  * @property {ViewModel.constructor} Component.ViewModel
  * @property {HTMLTemplateElement} Component.template
  * @property {HTMLElement.constructor} Component.extendClass
- * @property {string} Component.extendTag
+ * @property {string} Component.extends
  * @property {Object<string,FilterFunc>} Component.inputFilters
  * @property {Object<string,FilterFunc>} Component.outputFilters
  */

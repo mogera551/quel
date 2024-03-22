@@ -88,6 +88,11 @@ export const mixInComponent = {
   get props() {
     return this._props;
   },
+  set props(value) {
+    for(const [key, keyValue] of Object.entries(value)) {
+      this._props[key] = keyValue;
+    }
+  },
 
   /** @type {Object<string,any>} global object */
   get globals() {

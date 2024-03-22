@@ -159,15 +159,15 @@ class ViewModel {
 
 #### エクスポート
 コンポーネントモジュールを１つのファイルに記述する場合、`export`します。
-カスタマイズドビルトイン要素の場合、拡張するタグ`extendTag`の指定が必要になります。
+カスタマイズドビルトイン要素の場合、拡張するタグ`extends`の指定が必要になります。
 
 `main.js`の`export`部分
 ```js
 // コンポーネントモジュールのexport
 export default { html, ViewModel };
 
-// カスタマイズドビルトイン要素の場合、拡張するタグ(extendTag)の指定が必要
-export default { html, ViewModel, extendTag:"div" };
+// カスタマイズドビルトイン要素の場合、拡張するタグ(extends)の指定が必要
+export default { html, ViewModel, extends:"div" };
 ```
 ### カスタム要素とコンポーネントモジュールを対応付ける
 作成したコンポーネントモジュールを登録する側で`import`します。ここでは、`index.html`になります。

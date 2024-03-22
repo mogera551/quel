@@ -90,7 +90,7 @@ describe("registComponentModule", () => {
 
   it("should register a component module with a custom element name, customized built-in element", () => {
     expect(customElements.get("custom-element-name-4")).toBeUndefined();
-    registComponentModule("custom-element-name-4", { extendTag: "div" });
+    registComponentModule("custom-element-name-4", { extends: "div" });
     expect(customElements.get("custom-element-name-4")).toBeDefined();
     const element4 = document.createElement("div", { is: "custom-element-name-4" });
     expect(element4 instanceof HTMLElement).toBe(true);
