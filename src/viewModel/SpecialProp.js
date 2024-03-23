@@ -1,11 +1,8 @@
 import "../types.js";
-import { Dialog } from "./Dialog.js";
 
 const PROPS_PROPERTY = "$props";
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
-const OPEN_DIALOG_METHOD = "$openDialog";
-const CLOSE_DIALOG_METHOD = "$closeDialog";
 const COMPONENT_PROPERTY = "$component";
 
 /**
@@ -15,8 +12,6 @@ export const setOfProperties = new Set([
   PROPS_PROPERTY,
   GLOBALS_PROPERTY,
   DEPENDENT_PROPS_PROPERTY,
-  OPEN_DIALOG_METHOD,
-  CLOSE_DIALOG_METHOD,
   COMPONENT_PROPERTY,
 ]);
 
@@ -27,9 +22,7 @@ const getFuncByName = {
   [PROPS_PROPERTY]: ({component}) => component.props,
   [GLOBALS_PROPERTY]: ({component}) => component.globals,
   [DEPENDENT_PROPS_PROPERTY]: ({viewModel}) => viewModel[DEPENDENT_PROPS_PROPERTY],
-  [OPEN_DIALOG_METHOD]: () => async (name, data = {}, attributes = {}) => Dialog.open(name, data, attributes),
   [COMPONENT_PROPERTY]: ({component}) => component,
-  [CLOSE_DIALOG_METHOD]: ({component}) => (data = {}) => Dialog.close(component, data),
 }
 
 export class SpecialProp {

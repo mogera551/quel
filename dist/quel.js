@@ -3960,48 +3960,9 @@ class Api {
 
 }
 
-class Dialog {
-  /**
-   * コンポーネントを動的に表示し、消滅するまで待つ
-   * @param {string} dialogName 
-   * @param {Object<string,any>} data 
-   * @param {Object<string,any>} attributes 
-   * @returns {Promise<boolean>}
-   */
-  static async open(dialogName, data, attributes) {
-    const tagName = utils.toKebabCase(dialogName);
-    const dialog = document.createElement(tagName);
-    Object.entries(attributes).forEach(([key, value]) => {
-      dialog.setAttribute(key, value);
-    });
-    Object.entries(data).forEach(([key, value]) => {
-      dialog.props[Symbols.bindProperty](key, { name:key, indexes:[] });
-      dialog.props[key] = value;
-    });
-    document.body.appendChild(dialog);
-    return dialog.alivePromises.promise;
-  }
-
-  /**
-   * 動的に表示されたコンポーネントを閉じる
-   * @param {Component} dialog 
-   * @param {Object<string,any>} data 
-   */
-  static close(dialog, data) {
-    Object.entries(data).forEach(([key, value]) => {
-      dialog.props[key] = value;
-    });
-    dialog.parentNode.removeChild(dialog);
-  }
-
-
-}
-
 const PROPS_PROPERTY = "$props";
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY$1 = "$dependentProps";
-const OPEN_DIALOG_METHOD = "$openDialog";
-const CLOSE_DIALOG_METHOD = "$closeDialog";
 const COMPONENT_PROPERTY = "$component";
 
 /**
@@ -4011,8 +3972,6 @@ const setOfProperties = new Set([
   PROPS_PROPERTY,
   GLOBALS_PROPERTY,
   DEPENDENT_PROPS_PROPERTY$1,
-  OPEN_DIALOG_METHOD,
-  CLOSE_DIALOG_METHOD,
   COMPONENT_PROPERTY,
 ]);
 
@@ -4023,9 +3982,7 @@ const getFuncByName = {
   [PROPS_PROPERTY]: ({component}) => component.props,
   [GLOBALS_PROPERTY]: ({component}) => component.globals,
   [DEPENDENT_PROPS_PROPERTY$1]: ({viewModel}) => viewModel[DEPENDENT_PROPS_PROPERTY$1],
-  [OPEN_DIALOG_METHOD]: () => async (name, data = {}, attributes = {}) => Dialog.open(name, data, attributes),
   [COMPONENT_PROPERTY]: ({component}) => component,
-  [CLOSE_DIALOG_METHOD]: ({component}) => (data = {}) => Dialog.close(component, data),
 };
 
 class SpecialProp {
@@ -5460,8 +5417,4 @@ function registGlobal(data) {
   Object.assign(GlobalData.data, data);
 }
 
-async function openDialog(dialogName, data, attributes) {
-  return Dialog.open(dialogName, data, attributes);
-}
-
-export { config, generateComponentClass, loader, openDialog, registComponentModules, registFilters, registGlobal };
+export { config, generateComponentClass, loader, registComponentModules, registFilters, registGlobal };
