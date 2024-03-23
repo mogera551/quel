@@ -758,8 +758,18 @@ let Handler$1 = class Handler {
    */
   get(target, prop, receiver) {
     if (prop === Symbols.bindProperty) {
-      return (thisProp, propAccess) => 
+      return ((object) => (thisProp, propAccess) => {
         this.#bindPropByThisProp.set(thisProp, propAccess );
+        if (typeof this.#component.viewModel !== "undefined") {
+          Object.defineProperty(this.#component.viewModel, thisProp, {
+            get: ((prop) => function () { return object[prop]; })(thisProp),
+            set: ((prop) => function (value) { object[prop] = value; })(thisProp),
+            configurable: true,
+          });
+  
+        }
+    
+      })(receiver);
     } else if (prop === Symbols.toObject) {
       return () => this.object;
     }
@@ -796,7 +806,13 @@ let Handler$1 = class Handler {
         return false;
       }
     } else {
-      return Reflect.set(data, prop, value);
+      if (typeof data[prop] === "undefined") {
+        receiver[Symbols.bindProperty](prop, { name: prop, indexes: [] });
+      }
+      const retValue = Reflect.set(data, prop, value);
+      this.#component.viewModel?.[Symbols.writeCallback](`$props.${prop}`, []);
+      this.#component.viewModel?.[Symbols.notifyForDependentProps](`${prop}`, []);
+      return retValue;
     }
   }
 };
@@ -2633,11 +2649,6 @@ class ComponentProperty extends ElementBase {
    */
   initialize() {
     this.thisComponent.props[Symbols.bindProperty](this.propName, new BindingPropertyAccess(this.binding.viewModelProperty));
-    Object.defineProperty(this.thisComponent.viewModel, this.propName, {
-      get: ((propName) => function () { return this.$props[propName]; })(this.propName),
-      set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),
-      configurable: true,
-    });
   }
 
   /**
@@ -4816,6 +4827,38 @@ const mixInComponent = {
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
     this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
+  },
+
+  /**
+   * dialog popup
+   * @param {Object<string,any>} props 
+   * @param {boolean} modal 
+   * @returns 
+   */
+  async popup(props, modal = true) {
+    if (!(this instanceof HTMLDialogElement)) {
+      utils.raise("mixInComponent: popup is only for HTMLDialogElement");
+    }
+    this.returnValue = "";
+    const promises = Promise.withResolvers();
+    const closedEvent = new CustomEvent("closed");
+    this.addEventListener("closed", () => {
+      if (this.returnValue === "") {
+        promises.reject();
+      } else {
+        promises.resolve(this.props[Symbols.toObject]());
+      }
+    });
+    this.addEventListener("close", () => {
+      this.dispatchEvent(closedEvent);
+    });
+    this.props = props;
+    if (modal) {
+      this.showModal();
+    } else {
+      this.show();
+    }
+    return promises.promise;
   },
 };
 

@@ -308,4 +308,36 @@ export const mixInComponent = {
   updateNode(propertyAccessByViewModelPropertyKey) {
     this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
   },
+
+  /**
+   * dialog popup
+   * @param {Object<string,any>} props 
+   * @param {boolean} modal 
+   * @returns 
+   */
+  async popup(props, modal = true) {
+    if (!(this instanceof HTMLDialogElement)) {
+      utils.raise("mixInComponent: popup is only for HTMLDialogElement");
+    }
+    this.returnValue = "";
+    const promises = Promise.withResolvers();
+    const closedEvent = new CustomEvent("closed");
+    this.addEventListener("closed", () => {
+      if (this.returnValue === "") {
+        promises.reject();
+      } else {
+        promises.resolve(this.props[Symbols.toObject]());
+      }
+    });
+    this.addEventListener("close", () => {
+      this.dispatchEvent(closedEvent);
+    });
+    this.props = props;
+    if (modal) {
+      this.showModal();
+    } else {
+      this.show();
+    }
+    return promises.promise;
+  },
 }

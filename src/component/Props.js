@@ -63,8 +63,18 @@ class Handler {
    */
   get(target, prop, receiver) {
     if (prop === Symbols.bindProperty) {
-      return (thisProp, propAccess) => 
+      return ((object) => (thisProp, propAccess) => {
         this.#bindPropByThisProp.set(thisProp, propAccess );
+        if (typeof this.#component.viewModel !== "undefined") {
+          Object.defineProperty(this.#component.viewModel, thisProp, {
+            get: ((prop) => function () { return object[prop]; })(thisProp),
+            set: ((prop) => function (value) { object[prop] = value; })(thisProp),
+            configurable: true,
+          });
+  
+        }
+    
+      })(receiver);
     } else if (prop === Symbols.toObject) {
       return () => this.object;
     }
@@ -101,7 +111,13 @@ class Handler {
         return false;
       }
     } else {
-      return Reflect.set(data, prop, value);
+      if (typeof data[prop] === "undefined") {
+        receiver[Symbols.bindProperty](prop, { name: prop, indexes: [] });
+      }
+      const retValue = Reflect.set(data, prop, value);
+      this.#component.viewModel?.[Symbols.writeCallback](`$props.${prop}`, []);
+      this.#component.viewModel?.[Symbols.notifyForDependentProps](`${prop}`, []);
+      return retValue;
     }
   }
 }

@@ -58,11 +58,6 @@ export class ComponentProperty extends ElementBase {
    */
   initialize() {
     this.thisComponent.props[Symbols.bindProperty](this.propName, new BindingPropertyAccess(this.binding.viewModelProperty));
-    Object.defineProperty(this.thisComponent.viewModel, this.propName, {
-      get: ((propName) => function () { return this.$props[propName]; })(this.propName),
-      set: ((propName) => function (value) { this.$props[propName] = value; })(this.propName),
-      configurable: true,
-    });
   }
 
   /**
