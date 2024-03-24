@@ -7,3 +7,7 @@ https://developer.mozilla.org/ja/docs/Web/API/Popover_API
 
 # <details>: 詳細折りたたみ要素への対応
 https://developer.mozilla.org/ja/docs/Web/HTML/Element/details
+
+# validationへの対応
+
+# form submitの推奨される実装
