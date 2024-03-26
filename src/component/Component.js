@@ -46,6 +46,9 @@ export class ComponentClassGenerator {
         static useKeyed = module.useKeyed ?? config.useKeyed;
 
         /** @type {boolean} */
+        static useBufferedBind = module.useBufferedBind ?? config.useBufferedBind;
+
+        /** @type {boolean} */
         get [Symbols.isComponent] () {
           return true;
         }
@@ -54,7 +57,23 @@ export class ComponentClassGenerator {
          */
         constructor() {
           super();
-          this.initialize();
+          const options = {};
+          const setOptionFromAttribute = (name, flagName, options) => {
+            if (this.hasAttribute(name)) {
+              options[flagName] = true;
+            } else if (this.hasAttribute("no-" + name)) {
+              options[flagName] = false;
+            } else {
+              options[flagName] = this.constructor[flagName];
+            }
+          }
+          setOptionFromAttribute("shadow-root", "useShadowRoot", options);
+          setOptionFromAttribute("web-component", "useWebComponent", options);
+          setOptionFromAttribute("local-tag-name", "useLocalTagName", options);
+          setOptionFromAttribute("keyed", "useKeyed", options);
+          setOptionFromAttribute("buffered-bind", "useBufferedBind", options);
+
+          this.initialize(options);
         }
       };
     };

@@ -40,6 +40,9 @@ export class Module {
   /** @type {boolean|undefined} */
   useKeyed;
 
+  /** @type {boolean|undefined} */
+  useBufferedBind;
+
   /** @type {Object<string,FilterFunc>|undefined} */
   inputFilters;
 

@@ -140,6 +140,11 @@ export const mixInComponent = {
     return this._useKeyed;
   },
 
+  /** @type {boolean} use buffered bind */
+  get useBufferedBind() {
+    return this._useBufferedBind;
+  },
+
   /** @type {ShadowRoot|HTMLElement} view root element */
   get viewRootElement() {
     return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
@@ -167,9 +172,18 @@ export const mixInComponent = {
 
   /** 
    * initialize
+   * @param {{
+   * useWebComponent: boolean,
+   * useShadowRoot: boolean,
+   * useLocalTagName: boolean,
+   * useKeyed: boolean,
+   * useBufferedBind: boolean
+   * }} param0
    * @returns {void}
    */
-  initialize() {
+  initialize({
+    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
+  }) {
     /**
      * set members
      */
@@ -184,10 +198,11 @@ export const mixInComponent = {
 
     this._parentComponent = undefined;
 
-    this._useShadowRoot = this.constructor.useShadowRoot;
-    this._useWebComponent = this.constructor.useWebComponent;
-    this._useLocalTagName = this.constructor.useLocalTagName;
-    this._useKeyed = this.constructor.useKeyed;
+    this._useShadowRoot = useShadowRoot;
+    this._useWebComponent = useWebComponent;
+    this._useLocalTagName = useLocalTagName;
+    this._useKeyed = useKeyed;
+    this._useBufferedBind = useBufferedBind;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;

@@ -670,6 +670,9 @@ class Module {
   /** @type {boolean|undefined} */
   useKeyed;
 
+  /** @type {boolean|undefined} */
+  useBufferedBind;
+
   /** @type {Object<string,FilterFunc>|undefined} */
   inputFilters;
 
@@ -4617,6 +4620,11 @@ const mixInComponent = {
     return this._useKeyed;
   },
 
+  /** @type {boolean} use buffered bind */
+  get useBufferedBind() {
+    return this._useBufferedBind;
+  },
+
   /** @type {ShadowRoot|HTMLElement} view root element */
   get viewRootElement() {
     return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
@@ -4644,9 +4652,18 @@ const mixInComponent = {
 
   /** 
    * initialize
+   * @param {{
+   * useWebComponent: boolean,
+   * useShadowRoot: boolean,
+   * useLocalTagName: boolean,
+   * useKeyed: boolean,
+   * useBufferedBind: boolean
+   * }} param0
    * @returns {void}
    */
-  initialize() {
+  initialize({
+    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
+  }) {
     /**
      * set members
      */
@@ -4661,10 +4678,11 @@ const mixInComponent = {
 
     this._parentComponent = undefined;
 
-    this._useShadowRoot = this.constructor.useShadowRoot;
-    this._useWebComponent = this.constructor.useWebComponent;
-    this._useLocalTagName = this.constructor.useLocalTagName;
-    this._useKeyed = this.constructor.useKeyed;
+    this._useShadowRoot = useShadowRoot;
+    this._useWebComponent = useWebComponent;
+    this._useLocalTagName = useLocalTagName;
+    this._useKeyed = useKeyed;
+    this._useBufferedBind = useBufferedBind;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
@@ -4860,6 +4878,9 @@ class ComponentClassGenerator {
         static useKeyed = module.useKeyed ?? config.useKeyed;
 
         /** @type {boolean} */
+        static useBufferedBind = module.useBufferedBind ?? config.useBufferedBind;
+
+        /** @type {boolean} */
         get [Symbols.isComponent] () {
           return true;
         }
@@ -4868,7 +4889,23 @@ class ComponentClassGenerator {
          */
         constructor() {
           super();
-          this.initialize();
+          const options = {};
+          const setOptionFromAttribute = (name, flagName, options) => {
+            if (this.hasAttribute(name)) {
+              options[flagName] = true;
+            } else if (this.hasAttribute("no-" + name)) {
+              options[flagName] = false;
+            } else {
+              options[flagName] = this.constructor[flagName];
+            }
+          };
+          setOptionFromAttribute("shadow-root", "useShadowRoot", options);
+          setOptionFromAttribute("web-component", "useWebComponent", options);
+          setOptionFromAttribute("local-tag-name", "useLocalTagName", options);
+          setOptionFromAttribute("keyed", "useKeyed", options);
+          setOptionFromAttribute("buffered-bind", "useBufferedBind", options);
+
+          this.initialize(options);
         }
       };
     };

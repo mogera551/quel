@@ -12,11 +12,11 @@ https://developer.mozilla.org/ja/docs/Web/API/Popover_API
   →ポップオーバー、ダイアログで対応が異なるので注意
 
 # カスタムコンポーネントのオプションを属性で上書きできるようにする
-* data-web-component
-* data-shadow-root
-* data-local-tag-name
-* data-keyed
-* data-buffered-bind
+* [web-component], no-web-component
+* shadow-root, [no-shadow-root]
+* [local-tag-name], no-local-tag-name
+* [keyed], no-keyed
+* buffered-bind, [no-buffered-bind]
 
 # <details>: 詳細折りたたみ要素への対応
 https://developer.mozilla.org/ja/docs/Web/HTML/Element/details
