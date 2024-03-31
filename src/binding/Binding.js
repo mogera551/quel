@@ -61,7 +61,7 @@ export class Binding {
     return this.nodeProperty.loopable;
   }
 
-  /** @type {boolean} */
+  /** @type {boolean} for select tag value */
   get isSelectValue() {
     return this.nodeProperty.isSelectValue;
   }
@@ -104,7 +104,7 @@ export class Binding {
   }
 
   /**
-   * 
+   * apply value to child nodes
    * @param {Set<number>} setOfIndex 
    */
   applyToChildNodes(setOfIndex) {
@@ -114,6 +114,7 @@ export class Binding {
 
   /**
    * ViewModelへ値を反映する
+   * apply value to ViewModel
    */
   applyToViewModel() {
     const { viewModelProperty, nodeProperty } = this;
@@ -176,7 +177,7 @@ export class Binding {
   }
 
   /**
-   * 
+   * create Binding
    * @param {BindingManager} bindingManager 
    * @param {Node} node
    * @param {string} nodePropertyName
@@ -277,14 +278,14 @@ export class BindingManager {
   }
 
   /**
-   * 
+   * regist bindings to summary
    */
   registBindingsToSummary() {
     this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
   }
 
   /**
-   * 
+   * apply value to node
    */
   applyToNode() {
     const selectBindings = new Set;
@@ -297,14 +298,14 @@ export class BindingManager {
   }
 
   /**
-   * 
+   * apply value to ViewModel
    */
   applyToViewModel() {
     this.bindings.forEach(binding => binding.applyToViewModel());
   }
 
   /**
-   * 
+   * remove nodes, append to fragment
    */
   removeNodes() {
     this.#nodes.forEach(node => this.fragment.appendChild(node));
@@ -318,18 +319,7 @@ export class BindingManager {
   }
 
   /**
-   * 
-   */
-  postUpdateIndexForLoopContext() {
-    for(const binding of this.#bindings) {
-      for(const bindingManager of binding.children) {
-        bindingManager.postUpdateIndexForLoopContext();
-      }
-    }
-  }
-
-  /**
-   * updateされたviewModelのプロパティをバインドしているnodeのプロパティを更新する
+   * updated viewModel properties are updated to node properties
    * @param {BindingManager} bindingManager
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
@@ -337,8 +327,8 @@ export class BindingManager {
     const { bindingSummary } = bindingManager.component;
     bindingSummary.initUpdate();
 
-    // expandableを先に展開する
-    // バインドのツリー構造が確定する
+    // expandable bindings are expanded first
+    // bind tree structure is determined
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
     expandableBindings.sort((bindingA, bindingB) => {
       const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
@@ -386,7 +376,7 @@ export class BindingManager {
   }
 
   /**
-   * 
+   * create BindingManager
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
