@@ -19,6 +19,7 @@ export const Symbols = Object.assign({
 
   bindProperty: Symbol.for(`${myname}:props.bindProperty`),
   toObject: Symbol.for(`${myname}:props.toObject`),
+  propInitialize: Symbol.for(`${myname}:props.initialize`),
 
   isComponent: Symbol.for(`${myname}:component.isComponent`),
 }, DotNotationSymbols);

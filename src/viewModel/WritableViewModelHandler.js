@@ -51,12 +51,12 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
 
   /**
    * 
-   * @param {import("../loopContext/LoopContext.js").LoopContext} loopContext 
+   * @param {import("../loopContext/NewLoopContext.js").NewLoopContext} newLoopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async directlyCallback(loopContext, directlyCallback) {
-    return this.#directlyCallContext.callback(loopContext, async () => {
+  async directlyCallback(newLoopContext, directlyCallback) {
+    return this.#directlyCallContext.callback(newLoopContext, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
       // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
@@ -72,16 +72,16 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {import("../loopContext/LoopContext.js").LoopContext | undefined}
+   * @returns {import("../loopContext/NewLoopContext.js").NewLoopContext | undefined}
    */
   findLoopContext(prop) {
-    if (typeof this.#directlyCallContext.loopContext === "undefined") return;
+    if (typeof this.#directlyCallContext.newLoopContext === "undefined") return;
     if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
     const propName = PropertyName.create(prop);
     if (propName.level === 0 || prop.at(0) === "@") return;
-    const loopContext = this.#directlyCallContext.loopContext.find(propName.nearestWildcardParentName);
-    if (typeof loopContext === "undefined") utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
-    return loopContext;
+    const newLoopContext = this.#directlyCallContext.newLoopContext.find(propName.nearestWildcardParentName);
+    if (typeof newLoopContext === "undefined") utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
+    return newLoopContext;
   }
 
   /**
@@ -97,9 +97,9 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
     } else if (Api.has(prop)) {
       return Api.get(target, receiver, this, prop);
     } else {
-      const loopContext = this.findLoopContext(prop);
-      return (typeof loopContext !== "undefined") ?
-        this.directlyGet(target, { prop, indexes:loopContext.indexes}, receiver) :
+      const newLoopContext = this.findLoopContext(prop);
+      return (typeof newLoopContext !== "undefined") ?
+        this.directlyGet(target, { prop, indexes:newLoopContext.allIndexes}, receiver) :
         super.get(target, prop, receiver);
     }
   }
@@ -113,9 +113,9 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    const loopContext = this.findLoopContext(prop);
-    return (typeof loopContext !== "undefined") ?
-      this.directlySet(target, { prop, indexes:loopContext.indexes, value}, receiver) :
+    const newLoopContext = this.findLoopContext(prop);
+    return (typeof newLoopContext !== "undefined") ?
+      this.directlySet(target, { prop, indexes:newLoopContext.allIndexes, value}, receiver) :
       super.set(target, prop, value, receiver);
   }
 

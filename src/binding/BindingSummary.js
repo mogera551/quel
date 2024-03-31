@@ -48,9 +48,17 @@ export class BindingSummary {
       this.#deleteBindings.delete(binding);
       return;
     }
-    this.#allBindings.add(binding);
 
-    const key = binding.viewModelProperty.key;
+    const oldKey = binding.viewModelProperty.oldKey;
+    const key = binding.viewModelProperty.getKey();
+    console.log("add", binding.id, key, oldKey);
+    if (typeof oldKey !== "undefined" && oldKey !== key) {
+      console.log("change key", binding.id, key, oldKey);
+      this.#bindingsByKey.get(oldKey)?.delete(binding);
+      this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
+      return;
+    }
+    this.#allBindings.add(binding);
     this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
 
     if (binding.nodeProperty.expandable) {
@@ -66,6 +74,7 @@ export class BindingSummary {
    * @param {Binding} binding 
    */
   delete(binding) {
+    console.log("delete", binding.id);
     this.#deleteBindings.add(binding);
   }
 
@@ -74,13 +83,15 @@ export class BindingSummary {
    * @param {Binding} binding 
    */
   #delete(binding) {
+    console.log("#delete", binding.id, binding.viewModelProperty.oldKey);
     this.#allBindings.delete(binding);
-    this.#bindingsByKey.get(binding.viewModelProperty.key)?.delete(binding);
+    this.#bindingsByKey.get(binding.viewModelProperty.oldKey)?.delete(binding);
     this.#expandableBindings.delete(binding);
     this.#componentBindings.delete(binding);
   }
 
   flush() {
+    console.log("flush");
     const remain = this.#allBindings.size - this.#deleteBindings.size;
     if(this.#deleteBindings.size > remain * 10) {
       const bindings = Array.from(this.#allBindings).filter(binding => !this.#deleteBindings.has(binding));
@@ -88,6 +99,13 @@ export class BindingSummary {
     } else {
       for(const binding of this.#deleteBindings) {
         this.#delete(binding);
+      }
+    }
+    for(const binding of this.#allBindings) {
+      if (binding.viewModelProperty.isChagedKey) {
+        this.#bindingsByKey.get(binding.viewModelProperty.oldKey)?.delete(binding);
+        const key = binding.viewModelProperty.getKey();
+        this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
       }
     }
     this.#deleteBindings = new Set;
@@ -108,7 +126,4 @@ export class BindingSummary {
     this.#componentBindings = new Set(bindings.filter(binding => binding.nodeProperty.constructor === ComponentProperty));
     this.#deleteBindings = new Set;
   }
-
-
-
 }

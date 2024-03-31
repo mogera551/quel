@@ -14,13 +14,13 @@ export class Branch extends TemplateProperty {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         this.binding.appendChild(bindingManager);
+        bindingManager.registBindingsToSummary();
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
         removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
       }
-    } else {
-      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
     }
+    this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
   }
 
   /**

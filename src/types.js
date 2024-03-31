@@ -63,7 +63,7 @@
  * @property {string|undefined} html
  * @property {string|undefined} css
  * @property {ViewModel.constructor|undefined} ViewModel
- * @property {string|undefined} extends
+ * @property {string|undefined} extendTag
  * @property {Object<string,UserComponentModule>} componentModules
  * @property {Object<string,UserComponentModule>} componentModulesForRegist
  * @property {boolean|undefined} useShadowRoot
@@ -92,6 +92,9 @@
 /**
  * @typedef {Object} ComponentBase
  * @property {ViewModel} viewModel
+ * @property {ViewModel} baseViewModel
+ * @property {ViewModel} writableViewModel
+ * @property {ViewModel} readOnlyViewModel
  * @property {BindingManager} rootBinding
  * @property {BindingSummary} bindingSummary
  * @property {Thread} thread
@@ -105,6 +108,7 @@
  * @property {boolean} useWebComponent
  * @property {boolean} useLocalTagName
  * @property {boolean} useKeyed
+ * @property {boolean} useBufferedBind
  * @property {ShadowRoot|HTMLElement} viewRootElement
  * @property {()=>void} initialize
  * @property {()=>void} build
@@ -115,7 +119,7 @@
  * @property {ViewModel.constructor} Component.ViewModel
  * @property {HTMLTemplateElement} Component.template
  * @property {HTMLElement.constructor} Component.extendClass
- * @property {string} Component.extends
+ * @property {string} Component.extendTag
  * @property {Object<string,FilterFunc>} Component.inputFilters
  * @property {Object<string,FilterFunc>} Component.outputFilters
  */

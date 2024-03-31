@@ -26,7 +26,7 @@ export class Module {
   ViewModel = class {};
 
   /** @type {string|undefined} */
-  extends;
+  extendTag;
 
   /** @type {boolean|undefined} */
   useWebComponent;

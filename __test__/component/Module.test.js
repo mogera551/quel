@@ -20,7 +20,7 @@ describe("Module", () => {
     expect(module.template.content instanceof DocumentFragment).toBe(true);
     expect(module.template.innerHTML).toBe("");
     expect(module.ViewModel).toBeDefined();
-    expect(module.extends).toBeUndefined();
+    expect(module.extendTag).toBeUndefined();
     expect(module.useWebComponent).toBeUndefined();
     expect(module.useShadowRoot).toBeUndefined();
     expect(module.useLocalTagName).toBeUndefined();
@@ -118,10 +118,10 @@ describe("Module", () => {
     expect(typeof module.ViewModel).toBe("function");
   });
 
-  test("should have an optional extends property", () => {
-    expect(module.extends).toBeUndefined();
-    module.extends = "div";
-    expect(module.extends).toBeDefined();
+  test("should have an optional extendTag property", () => {
+    expect(module.extendTag).toBeUndefined();
+    module.extendTag = "div";
+    expect(module.extendTag).toBeDefined();
   });
 
   test("should have an optional useWebComponent property", () => {

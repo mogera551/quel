@@ -48,7 +48,7 @@ export class ComponentProperty extends ElementBase {
    * @param {Object<string,FilterFunc>} filterFuncs
    */
   constructor(binding, node, name, filters, filterFuncs) {
-    if (!(node[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");
+    if (!(node.constructor[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");
     super(binding, node, name, filters, filterFuncs);
   }
 
@@ -70,9 +70,7 @@ export class ComponentProperty extends ElementBase {
     for(const [key, propertyAccess] of propertyAccessByViewModelPropertyKey.entries()) {
       if (propertyAccess.propName.name === viewModelProperty || propertyAccess.propName.setOfParentPaths.has(viewModelProperty)) {
         const remain = propertyAccess.propName.name.slice(viewModelProperty.length);
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`$props.${propName}${remain}`, propertyAccess.indexes);
         this.thisComponent.viewModel?.[Symbols.writeCallback](`${propName}${remain}`, propertyAccess.indexes);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`$props.${propName}${remain}`, propertyAccess.indexes);
         this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, propertyAccess.indexes);
       }
     }

@@ -29,7 +29,7 @@ export class ViewModelProperty {
 
   /** @type {number[]} */
   get indexes() {
-    return this.binding.loopContext?.directIndexes.slice(0 , this.level) ?? [];
+    return this.binding.newLoopContext?.indexes.slice(0 , this.level) ?? [];
   }
 
   /** @type {string} */
@@ -42,8 +42,23 @@ export class ViewModelProperty {
     return this.name + "\t" + this.indexesString;
   }
 
+  #oldKey;
+  get oldKey() {
+    return this.#oldKey;
+  }
+
+  get isChagedKey() {
+    return this.#oldKey !== this.key;
+  }
+
+  getKey() {
+    this.#oldKey = this.key;
+    return this.key;
+  }
+
   /** @type {any} */
   get value() {
+    console.log("ViewModelProperty get value", this.binding.id)
     return this.viewModel[Symbols.directlyGet](this.name, this.indexes);
   }
   set value(value) {

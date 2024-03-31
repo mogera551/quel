@@ -20,5 +20,6 @@ export function createViewModels(component, viewModelClass) {
   return {
     "readonly": new Proxy(viewModel, new ReadOnlyViewModelHandler(component, setOfAccessorProperties, dependentProps)),
     "writable": new Proxy(viewModel, new WritableViewModelHandler(component, setOfAccessorProperties, dependentProps)),
+    "base": viewModel,
   };
 }

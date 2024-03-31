@@ -1,6 +1,6 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { createProps } from "./Props.js";
+import { createProps } from "./NewProps.js";
 import { createGlobals } from "./Globals.js";
 import { Thread } from "../thread/Thread.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";
@@ -24,9 +24,9 @@ const getParentComponent = (node) => {
   do {
     node = node.parentNode;
     if (node == null) return null;
-    if (node[Symbols.isComponent]) return node;
+    if (node.constructor[Symbols.isComponent]) return node;
     if (node instanceof ShadowRoot) {
-      if (node.host[Symbols.isComponent]) return node.host;
+      if (node.host.constructor[Symbols.isComponent]) return node.host;
       node = node.host;
     }
     const component = pseudoComponentByNode.get(node);
@@ -37,12 +37,24 @@ const getParentComponent = (node) => {
 /** @type {ComponentBase} */
 export const mixInComponent = {
   /** @type {ViewModelProxy} view model proxy */
+  get baseViewModel() {
+    return this._viewModels["base"];
+  },
+  /** @type {ViewModelProxy} view model proxy */
+  get writableViewModel() {
+    return this._viewModels["writable"];
+  },
+  /** @type {ViewModelProxy} view model proxy */
+  get readOnlyViewModel() {
+    return this._viewModels["readonly"];
+  },
+  /** @type {ViewModelProxy} view model proxy */
   get viewModel() {
     if (typeof this.updateSlot === "undefined" || 
       (this.updateSlot.phase !== Phase.gatherUpdatedProperties)) {
-      return this._viewModels["writable"];
+      return this.writableViewModel;
     } else {
-      return this._viewModels["readonly"];
+      return this.readOnlyViewModel;
     }
   },
 
@@ -254,6 +266,8 @@ export const mixInComponent = {
 
     // buid binding tree and dom 
     this.rootBinding = BindingManager.create(this, template);
+    this.rootBinding.registBindingsToSummary();
+    this.rootBinding.applyToNode();
     this.bindingSummary.flush();
 
     if (!this.useWebComponent) {

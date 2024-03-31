@@ -3,6 +3,11 @@ import { utils } from "../../utils.js";
 import { Repeat } from "./Repeat.js";
 
 export class RepeatKeyed extends Repeat {
+  /** @type {boolean} */
+  get loopable() {
+    return true;
+  }
+
   /** @type {any[]} */
   #lastValue = [];
 
@@ -55,7 +60,6 @@ export class RepeatKeyed extends Repeat {
         if (lastIndex !== newIndex) {
           bindingManager.thisLoopContext.index = newIndex;
         }
-        bindingManager.applyToNode();
         if (bindingManager.nodes) {
           if (bindingManager.nodes[0].previousSibling !== beforeNode) {
             bindingManager.removeNodes();
@@ -68,6 +72,10 @@ export class RepeatKeyed extends Repeat {
     });
 
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
+    newBindingManagers.forEach(bindingManager => {
+      bindingManager.registBindingsToSummary();
+      bindingManager.applyToNode()
+    });
     this.#lastValue = values.slice();
   }
 
@@ -92,12 +100,13 @@ export class RepeatKeyed extends Repeat {
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager !== "undefined") {
         bindingManager.thisLoopContext.index = index;
-        bindingManager.applyToNode();
       } else {
         const name = this.binding.viewModelProperty.name;
-        bindingManager = BindingManager.create(this.binding.component, this.template, {name, index});
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, {name, index});
       }
       this.binding.replaceChild(index, bindingManager);
+      bindingManager.registBindingsToSummary();
+      bindingManager.applyToNode();
     }
   }
 

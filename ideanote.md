@@ -35,6 +35,10 @@ $bufferWriteback(component, buffer) {
 * buffered-bind, [no-buffered-bind]
 
 # 外部からpropsプロパティでViewModelへアクセスできるようにする
+* propsプロパティの意味を変更する
+   * 現在は、上位コンポーネントとのバインドのための中継みたいな位置づけ
+   * viewmodelへアクセスするためのインターフェースとする
+   * propsへの代入は、viewModelへのシャロウコピー？
 
 # <details>: 詳細折りたたみ要素への対応
 https://developer.mozilla.org/ja/docs/Web/HTML/Element/details

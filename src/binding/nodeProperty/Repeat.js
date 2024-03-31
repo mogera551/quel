@@ -10,6 +10,11 @@ import { utils } from "../../utils.js";
 const applyToNodeFunc = bindingManager => bindingManager.applyToNode();
 
 export class Repeat extends TemplateProperty {
+  /** @type {boolean} */
+  get loopable() {
+    return true;
+  }
+
   /** @type {number} */
   get value() {
     return this.binding.children.length;
@@ -23,6 +28,8 @@ export class Repeat extends TemplateProperty {
         const [ name, index ] = [this.binding.viewModelProperty.name, newIndex]; 
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
         this.binding.appendChild(bindingManager);
+        bindingManager.registBindingsToSummary();
+        bindingManager.applyToNode();
       }
     } else if (this.value > value.length) {
       const removeBindingManagers = this.binding.children.splice(value.length);

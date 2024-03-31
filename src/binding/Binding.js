@@ -6,6 +6,7 @@ import { Selector } from "../binder/Selector.js";
 import { Binder } from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
+import { NewLoopContext } from "../loopContext/NewLoopContext.js";
 
 export class Binding {
   /** @type {number} */
@@ -45,6 +46,11 @@ export class Binding {
     return this.#bindingManager.loopContext;
   }
 
+  /** @type {NewLoopContext} new loop context */
+  get newLoopContext() {
+    return this.#bindingManager.newLoopContext;
+  }
+
   /** @type { BindingManager[] } child bindingManager for branch/repeat */
   #children = [];
   get children() {
@@ -54,6 +60,11 @@ export class Binding {
   /** @type {boolean} branch/repeat is true */
   get expandable() {
     return this.nodeProperty.expandable;
+  }
+
+  /** @type {boolean} repeat is true */
+  get loopable() {
+    return this.nodeProperty.loopable;
   }
 
   /** @type {boolean} */
@@ -236,6 +247,12 @@ export class BindingManager {
     return this.#loopContext;
   }
 
+  /** @type {NewLoopContext} */
+  #newLoopContext;
+  get newLoopContext() {
+    return this.#newLoopContext;
+  }
+
   /** @type {HTMLTemplateElement} */
   #template;
   get template() {
@@ -263,6 +280,7 @@ export class BindingManager {
     this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
     this.#component = component;
     this.#template = template;
+    this.#newLoopContext = new NewLoopContext(this);
   }
 
   /**
@@ -272,9 +290,15 @@ export class BindingManager {
     const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     const nodes = Selector.getTargetNodes(this.#template, content);
     this.#bindings = Binder.bind(this, nodes);
-    this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
+  }
+
+  /**
+   * 
+   */
+  registBindingsToSummary() {
+    this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
   }
 
   /**
@@ -315,9 +339,9 @@ export class BindingManager {
    * 
    */
   postUpdateIndexForLoopContext() {
-    if (typeof this.#loopContext !== "undefined") {
-      this.#loopContext.postUpdateIndex();
-    }
+//    if (typeof this.#loopContext !== "undefined") {
+//      this.#loopContext.postUpdateIndex();
+//    }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {
         bindingManager.postUpdateIndexForLoopContext();
@@ -399,7 +423,6 @@ export class BindingManager {
    */
   static create(component, template, parentBinding, loopInfo) {
     const bindingManager = ReuseBindingManager.create(component, template, parentBinding, loopInfo);
-    bindingManager.applyToNode();
     return bindingManager;
   }
 

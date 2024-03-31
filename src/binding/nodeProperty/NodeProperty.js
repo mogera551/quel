@@ -67,6 +67,11 @@ export class NodeProperty {
     return false;
   }
 
+  /** @type {boolean} */
+  get loopable() {
+    return false;
+  }
+
   /**
    * 
    * @param {import("../Binding.js").Binding} binding

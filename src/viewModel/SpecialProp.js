@@ -1,6 +1,5 @@
 import "../types.js";
 
-const PROPS_PROPERTY = "$props";
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
 const COMPONENT_PROPERTY = "$component";
@@ -9,7 +8,6 @@ const COMPONENT_PROPERTY = "$component";
  * @type {Set<string>}
  */
 export const setOfProperties = new Set([
-  PROPS_PROPERTY,
   GLOBALS_PROPERTY,
   DEPENDENT_PROPS_PROPERTY,
   COMPONENT_PROPERTY,
@@ -19,7 +17,6 @@ export const setOfProperties = new Set([
  * @type {Object<string,({component:Component, viewModel:ViewModel})=>{}>}
  */
 const getFuncByName = {
-  [PROPS_PROPERTY]: ({component}) => component.props,
   [GLOBALS_PROPERTY]: ({component}) => component.globals,
   [DEPENDENT_PROPS_PROPERTY]: ({viewModel}) => viewModel[DEPENDENT_PROPS_PROPERTY],
   [COMPONENT_PROPERTY]: ({component}) => component,

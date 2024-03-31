@@ -11,7 +11,7 @@ export class ContextIndex extends ViewModelProperty {
 
   /** @type {number} */
   get value() {
-    return this.binding.loopContext.indexes[this.index];
+    return this.binding.newLoopContext.allIndexes[this.index];
   }
 
   /** @type {number[]} */

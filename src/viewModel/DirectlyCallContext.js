@@ -1,4 +1,4 @@
-import { LoopContext } from "../loopContext/LoopContext.js";
+import { NewLoopContext } from "../loopContext/NewLoopContext.js";
 import "../types.js";
 import { utils } from "../utils.js";
 
@@ -7,24 +7,24 @@ import { utils } from "../utils.js";
  */
 export class DirectlyCallContext {
   /** @type {LoopContext} */
-  #loopContext;
-  get loopContext() {
-    return this.#loopContext;
+  #newLoopContext;
+  get newLoopContext() {
+    return this.#newLoopContext;
   }
 
   /**
    * 
-   * @param {LoopContext} loopContext 
+   * @param {NewLoopContext} newLoopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async callback(loopContext, directlyCallback) {
-    if (typeof this.#loopContext !== "undefined") utils.raise("DirectlyCallContext: already set loopContext");
-    this.#loopContext = loopContext;
+  async callback(newLoopContext, directlyCallback) {
+    if (typeof this.#newLoopContext !== "undefined") utils.raise("DirectlyCallContext: already set newLoopContext");
+    this.#newLoopContext = newLoopContext;
     try {
       return await directlyCallback();
     } finally {
-      this.#loopContext = undefined;
+      this.#newLoopContext = undefined;
     }
   }
 
