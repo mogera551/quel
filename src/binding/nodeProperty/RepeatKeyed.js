@@ -57,9 +57,6 @@ export class RepeatKeyed extends Repeat {
         // 元のインデックスがある場合（既存）
         const lastIndex = lastIndexByNewIndex.get(newIndex);
         bindingManager = this.binding.children[lastIndex];
-        if (lastIndex !== newIndex) {
-          bindingManager.thisLoopContext.index = newIndex;
-        }
         if (bindingManager.nodes) {
           if (bindingManager.nodes[0].previousSibling !== beforeNode) {
             bindingManager.removeNodes();
@@ -98,9 +95,7 @@ export class RepeatKeyed extends Repeat {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
       let bindingManager = bindingManagerByValue.get(newValue);
-      if (typeof bindingManager !== "undefined") {
-        bindingManager.thisLoopContext.index = index;
-      } else {
+      if (typeof bindingManager === "undefined") {
         const name = this.binding.viewModelProperty.name;
         bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, {name, index});
       }

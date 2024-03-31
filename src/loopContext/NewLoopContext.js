@@ -1,5 +1,5 @@
 import "../types.js";
-import { PropertyName } from "../../modules/dot-notation/dot-notation";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 export class NewLoopContext {
   /** @type {import("../binding/Binding.js").BindingManager} */
@@ -100,10 +100,10 @@ export class NewLoopContext {
    * @returns {NewLoopContext|undefined}
    */
   find(name) {
-    let loopContext = this;
-    while(typeof loopContext !== "undefined") {
-      if (loopContext.name === name) return loopContext;
-      loopContext = loopContext.parentBindingManager.newLoopContext;
+    let newLoopContext = this;
+    while(typeof newLoopContext !== "undefined") {
+      if (newLoopContext.name === name) return newLoopContext;
+      newLoopContext = newLoopContext.parentBindingManager.newLoopContext;
     }
   }
 }

@@ -5,7 +5,6 @@ import { utils } from "../utils.js";
 import { Selector } from "../binder/Selector.js";
 import { Binder } from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
-import { LoopContext } from "../loopContext/LoopContext.js";
 import { NewLoopContext } from "../loopContext/NewLoopContext.js";
 
 export class Binding {
@@ -39,11 +38,6 @@ export class Binding {
   /** @type {Component} component */
   get component() {
     return this.#bindingManager.component;
-  }
-
-  /** @type {LoopContext|undefined} loop context */
-  get loopContext() {
-    return this.#bindingManager.loopContext;
   }
 
   /** @type {NewLoopContext} new loop context */
@@ -236,17 +230,6 @@ export class BindingManager {
     return this.#fragment;
   }
 
-  /** @type {LoopContext|undefined} */
-  #loopContext;
-  get loopContext() {
-    return this.#loopContext ?? this.#parentBinding?.loopContext;
-  }
-
-  /** @type {LoopContext|undefined} */
-  get thisLoopContext() {
-    return this.#loopContext;
-  }
-
   /** @type {NewLoopContext} */
   #newLoopContext;
   get newLoopContext() {
@@ -277,7 +260,6 @@ export class BindingManager {
    */
   constructor(component, template, parentBinding, loopInfo) {
     this.#parentBinding = parentBinding;
-    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
     this.#component = component;
     this.#template = template;
     this.#newLoopContext = new NewLoopContext(this);
@@ -339,22 +321,11 @@ export class BindingManager {
    * 
    */
   postUpdateIndexForLoopContext() {
-//    if (typeof this.#loopContext !== "undefined") {
-//      this.#loopContext.postUpdateIndex();
-//    }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {
         bindingManager.postUpdateIndexForLoopContext();
       }
     }
-  }
-
-  /**
-   * 
-   * @param {{name:string,index:number}|undefined} loopInfo 
-   */
-  replaceLoopContext(loopInfo) {
-    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
   }
 
   /**

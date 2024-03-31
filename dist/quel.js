@@ -2715,9 +2715,6 @@ class RepeatKeyed extends Repeat {
         // 元のインデックスがある場合（既存）
         const lastIndex = lastIndexByNewIndex.get(newIndex);
         bindingManager = this.binding.children[lastIndex];
-        if (lastIndex !== newIndex) {
-          bindingManager.thisLoopContext.index = newIndex;
-        }
         if (bindingManager.nodes) {
           if (bindingManager.nodes[0].previousSibling !== beforeNode) {
             bindingManager.removeNodes();
@@ -2756,9 +2753,7 @@ class RepeatKeyed extends Repeat {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
       if (typeof newValue === "undefined") continue;
       let bindingManager = bindingManagerByValue.get(newValue);
-      if (typeof bindingManager !== "undefined") {
-        bindingManager.thisLoopContext.index = index;
-      } else {
+      if (typeof bindingManager === "undefined") {
         const name = this.binding.viewModelProperty.name;
         bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, {name, index});
       }
@@ -3259,144 +3254,10 @@ class ReuseBindingManager {
       bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
-//      bindingManager.replaceLoopContext(loopInfo);
     }
     return bindingManager;
   }
 
-}
-
-class LoopContext {
-  /** @type {LoopContext|undefined} */
-  get parent() {
-    return this.#bindingManager.parentBinding?.loopContext;
-  }
-
-  /** @type {LoopContext|undefined} */
-  #directParent;
-  get directParent() {
-    if (typeof this.parent !== "undefined" && typeof this.#directParent === "undefined") {
-      const prop = PropertyName.create(this.name);
-      if (prop.level > 0) {
-        let parent = this.parent;
-        while(typeof parent !== "undefined") {
-          if (parent.name === prop.nearestWildcardParentName) {
-            this.#directParent = parent;
-            break;
-          }
-          parent = parent.parent;
-        }
-      }
-    }
-    return this.#directParent;
-  }
-
-  /** @type {string} */
-  #name;
-  get name() {
-    return this.#name;
-  }
-
-  /** @type {number} */
-  #index;
-  get index() {
-    return this.#index;
-  }
-  set index(value) {
-    this.#index = value;
-    try {
-      this.#updated = true;
-      this.#bindingManager.postUpdateIndexForLoopContext();
-    } finally {
-      this.#updated = false;
-    }
-  }
-
-  /** @type {boolean} */
-  #updated = false;
-
-  /** @type {boolean} */
-  get updated() {
-    return this.#updated || (this.parent?.updated ?? false);
-  }
-
-  /** @type {boolean} */
-  get directUpdated() {
-    return this.#updated || (this.directParent?.directUpdated ?? false);
-  }
-
-  /** @type {number[]} */
-  #indexes;
-  get indexes() {
-    if (typeof this.#indexes === "undefined") {
-      this.#indexes = this.parent?.indexes.concat(this.#index) ?? [this.#index];
-    }
-    return this.#indexes;
-  }
-
-  /** @type {number[]} */
-  #directIndexes;
-  get directIndexes() {
-    if (typeof this.#directIndexes === "undefined") {
-      this.#directIndexes = this.directParent?.directIndexes.concat(this.#index) ?? [this.#index];
-    }
-    return this.#directIndexes;
-  }
-
-  /**
-   * 
-   */
-  clear() {
-    this.#directIndexes = undefined;
-    this.#indexes = undefined;
-    this.#directParent = undefined;
-  }
-
-  /**
-   * 
-   */
-  postUpdateIndex() {
-    if (this.directUpdated) {
-      this.#directIndexes = undefined;
-    }
-    if (this.updated) {
-      this.#indexes = undefined;
-    }
-  }
-
-  /** @param {import("../binding/Binding.js").BindingManager} */
-  #bindingManager;
-  get bindingManager() {
-    return this.#bindingManager;
-  } 
-  set bindingManager(value) {
-    this.#bindingManager = value;
-  } 
-    
-  /**
-   * 
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager 
-   * @param {string} name 
-   * @param {number} index 
-   */
-  constructor(bindingManager, name, index) {
-    this.#bindingManager = bindingManager;
-    this.#name = name;
-    this.#index = index;
-  }
-
-
-  /**
-   * 
-   * @param {string} name 
-   */
-  find(name) {
-    let loopContext = this;
-    while(typeof loopContext !== "undefined") {
-      if (loopContext.name === name) return loopContext;
-      loopContext = loopContext.directParent;
-    }
-  }
 }
 
 class NewLoopContext {
@@ -3498,10 +3359,10 @@ class NewLoopContext {
    * @returns {NewLoopContext|undefined}
    */
   find(name) {
-    let loopContext = this;
-    while(typeof loopContext !== "undefined") {
-      if (loopContext.name === name) return loopContext;
-      loopContext = loopContext.parentBindingManager.newLoopContext;
+    let newLoopContext = this;
+    while(typeof newLoopContext !== "undefined") {
+      if (newLoopContext.name === name) return newLoopContext;
+      newLoopContext = newLoopContext.parentBindingManager.newLoopContext;
     }
   }
 }
@@ -3537,11 +3398,6 @@ class Binding {
   /** @type {Component} component */
   get component() {
     return this.#bindingManager.component;
-  }
-
-  /** @type {LoopContext|undefined} loop context */
-  get loopContext() {
-    return this.#bindingManager.loopContext;
   }
 
   /** @type {NewLoopContext} new loop context */
@@ -3734,17 +3590,6 @@ class BindingManager {
     return this.#fragment;
   }
 
-  /** @type {LoopContext|undefined} */
-  #loopContext;
-  get loopContext() {
-    return this.#loopContext ?? this.#parentBinding?.loopContext;
-  }
-
-  /** @type {LoopContext|undefined} */
-  get thisLoopContext() {
-    return this.#loopContext;
-  }
-
   /** @type {NewLoopContext} */
   #newLoopContext;
   get newLoopContext() {
@@ -3775,7 +3620,6 @@ class BindingManager {
    */
   constructor(component, template, parentBinding, loopInfo) {
     this.#parentBinding = parentBinding;
-    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
     this.#component = component;
     this.#template = template;
     this.#newLoopContext = new NewLoopContext(this);
@@ -3837,22 +3681,11 @@ class BindingManager {
    * 
    */
   postUpdateIndexForLoopContext() {
-//    if (typeof this.#loopContext !== "undefined") {
-//      this.#loopContext.postUpdateIndex();
-//    }
     for(const binding of this.#bindings) {
       for(const bindingManager of binding.children) {
         bindingManager.postUpdateIndexForLoopContext();
       }
     }
-  }
-
-  /**
-   * 
-   * @param {{name:string,index:number}|undefined} loopInfo 
-   */
-  replaceLoopContext(loopInfo) {
-    this.#loopContext = loopInfo ? new LoopContext(this, loopInfo.name, loopInfo.index) : undefined;
   }
 
   /**

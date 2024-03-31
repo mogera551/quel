@@ -11,11 +11,11 @@ describe("ElementEvent", () => {
   beforeEach(() => {
     // Create a mock binding, node, name, filters, and filterFuncs for testing
     binding = {
-      loopContext: {},
+      newLoopContext: {},
       viewModelProperty: {
         name: "methodName",
         viewModel: {
-          [Symbols.directlyCall]: (name, loopContext, event) => {},
+          [Symbols.directlyCall]: (name, newLoopContext, event) => {},
         },
       },
       component: {
@@ -65,7 +65,7 @@ describe("ElementEvent", () => {
   });
 
   it("should directly call the event handler", async () => {
-    const viewModel_directlyCall = jest.spyOn(binding.viewModelProperty.viewModel, Symbols.directlyCall).mockImplementation((name, loopContext, event) => {});
+    const viewModel_directlyCall = jest.spyOn(binding.viewModelProperty.viewModel, Symbols.directlyCall).mockImplementation((name, newLoopContext, event) => {});
 
     // Create a mock event for testing
     const event = {}; // Mock event
@@ -73,7 +73,7 @@ describe("ElementEvent", () => {
     await elementEvent.directlyCall(event);
     // Assert that the event handler has been called correctly
     expect(viewModel_directlyCall.mock.calls.length).toBe(1);
-    expect(viewModel_directlyCall.mock.calls[0]).toEqual([binding.viewModelProperty.name, binding.loopContext, event]);
+    expect(viewModel_directlyCall.mock.calls[0]).toEqual([binding.viewModelProperty.name, binding.newLoopContext, event]);
   });
 
   it("should create process data for the event", () => {

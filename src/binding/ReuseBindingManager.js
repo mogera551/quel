@@ -37,7 +37,6 @@ export class ReuseBindingManager {
       bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
-//      bindingManager.replaceLoopContext(loopInfo);
     }
     return bindingManager;
   }
