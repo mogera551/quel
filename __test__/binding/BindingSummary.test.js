@@ -39,7 +39,7 @@ describe("BindingSummary", () => {
     expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     expect(bindingSummary.expandableBindings.size).toBe(0);
     expect(bindingSummary.componentBindings.size).toBe(0);
 
@@ -61,7 +61,7 @@ describe("BindingSummary", () => {
     expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     expect(bindingSummary.expandableBindings.size).toBe(1);
     expect(bindingSummary.componentBindings.size).toBe(0);
   });
@@ -82,12 +82,12 @@ describe("BindingSummary", () => {
     expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     expect(bindingSummary.expandableBindings.size).toBe(1);
     expect(bindingSummary.componentBindings.size).toBe(1);
     bindingSummary.delete(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     expect(bindingSummary.expandableBindings.size).toBe(1);
     expect(bindingSummary.componentBindings.size).toBe(1);
     bindingSummary.flush();
@@ -110,10 +110,10 @@ describe("BindingSummary", () => {
     };
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     bindingSummary.delete(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     bindingSummary.flush();
     expect(bindingSummary.allBindings.size).toBe(0);
     expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
@@ -131,16 +131,16 @@ describe("BindingSummary", () => {
     };
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     bindingSummary.delete(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     bindingSummary.flush();
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([binding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
   });
 
   test("should flush, case of delete binding >= remain bindings * 10  ", () => {
@@ -162,7 +162,7 @@ describe("BindingSummary", () => {
     deleteBindings.forEach(binding => bindingSummary.delete(binding));
     bindingSummary.flush();
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([lastBinding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([lastBinding]);
   });
 
   test("should flush, case of delete binding < remain bindings * 10  ", () => {
@@ -184,7 +184,7 @@ describe("BindingSummary", () => {
     deleteBindings.forEach(binding => bindingSummary.delete(binding));
     bindingSummary.flush();
     expect(bindingSummary.allBindings.size).toBe(1);
-    expect(bindingSummary.bindingsByKey.get("key1")).toEqual(new Set([lastBinding]));
+    expect(bindingSummary.bindingsByKey.get("key1")).toEqual([lastBinding]);
   });
 
   test("should rebuild bindings", () => {

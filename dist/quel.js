@@ -2150,7 +2150,6 @@ class ViewModelProperty {
 
   /** @type {any} */
   get value() {
-    console.log("ViewModelProperty get value", this.binding.id);
     return this.viewModel[Symbols.directlyGet](this.name, this.indexes);
   }
   set value(value) {
@@ -3695,9 +3694,10 @@ class BindingManager {
    */
   static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
     const { bindingSummary } = bindingManager.component;
-    bindingSummary.updatedBindings.clear();
+    bindingSummary.initUpdate();
 
-    // templateを先に展開する
+    // expandableを先に展開する
+    // バインドのツリー構造が確定する
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
     expandableBindings.sort((bindingA, bindingB) => {
       const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
@@ -4332,8 +4332,22 @@ function createViewModels(component, viewModelClass) {
  * BindingSummary
  */
 class BindingSummary {
+  /** @type {boolean} */
+  #updated = false;
+  get updated() {
+    return this.#updated;
+  }
+  set updated(value) {
+    this.#updated = value;
+  }
 
-  /** @type {Map<string,Set<Binding>>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
+  /** @type {number} */
+  #updateRevision = 0;
+  get updateRevision() {
+    return this.#updateRevision;
+  }
+
+  /** @type {Map<string,Binding[]>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
   #bindingsByKey = new Map;
   get bindingsByKey() {
     return this.#bindingsByKey;
@@ -4353,6 +4367,7 @@ class BindingSummary {
 
   /** @type {Set<Binding>} 仮削除用のbinding、flush()でこのbindingの削除処理をする */
   #deleteBindings = new Set;
+
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
   get allBindings() {
@@ -4367,32 +4382,24 @@ class BindingSummary {
 
   /**
    * 
+   */
+  initUpdate() {
+    this.#updated = false;
+    this.#updateRevision++;
+    this.#updatedBindings = new Set;
+  }
+  
+  /**
+   * 
    * @param {Binding} binding 
    */
   add(binding) {
+    this.#updated = true;
     if (this.#deleteBindings.has(binding)) {
       this.#deleteBindings.delete(binding);
       return;
     }
-
-    const oldKey = binding.viewModelProperty.oldKey;
-    const key = binding.viewModelProperty.getKey();
-    console.log("add", binding.id, key, oldKey);
-    if (typeof oldKey !== "undefined" && oldKey !== key) {
-      console.log("change key", binding.id, key, oldKey);
-      this.#bindingsByKey.get(oldKey)?.delete(binding);
-      this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
-      return;
-    }
     this.#allBindings.add(binding);
-    this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
-
-    if (binding.nodeProperty.expandable) {
-      this.#expandableBindings.add(binding);
-    }
-    if (binding.nodeProperty.constructor === ComponentProperty) {
-      this.#componentBindings.add(binding);
-    }
   }
 
   /**
@@ -4400,41 +4407,33 @@ class BindingSummary {
    * @param {Binding} binding 
    */
   delete(binding) {
-    console.log("delete", binding.id);
+    this.#updated = true;
     this.#deleteBindings.add(binding);
   }
 
   /**
    * 
-   * @param {Binding} binding 
    */
-  #delete(binding) {
-    console.log("#delete", binding.id, binding.viewModelProperty.oldKey);
-    this.#allBindings.delete(binding);
-    this.#bindingsByKey.get(binding.viewModelProperty.oldKey)?.delete(binding);
-    this.#expandableBindings.delete(binding);
-    this.#componentBindings.delete(binding);
-  }
-
   flush() {
-    console.log("flush");
-    const remain = this.#allBindings.size - this.#deleteBindings.size;
-    if(this.#deleteBindings.size > remain * 10) {
+    config.debug && performance.mark('BindingSummary.flush:start');
+    try {
+      if (!this.#updated) {
+        return;
+      }
       const bindings = Array.from(this.#allBindings).filter(binding => !this.#deleteBindings.has(binding));
       this.rebuild(bindings);
-    } else {
-      for(const binding of this.#deleteBindings) {
-        this.#delete(binding);
+      this.#deleteBindings = new Set;
+    } finally {
+      if (config.debug) {
+        performance.mark('BindingSummary.flush:end');
+        performance.measure('BindingSummary.flush', 'BindingSummary.flush:start', 'BindingSummary.flush:end');
+        console.log(performance.getEntriesByType("measure"));    
+        performance.clearMeasures('BindingSummary.flush');
+        performance.clearMarks('BindingSummary.flush:start');
+        performance.clearMarks('BindingSummary.flush:end');
       }
+
     }
-    for(const binding of this.#allBindings) {
-      if (binding.viewModelProperty.isChagedKey) {
-        this.#bindingsByKey.get(binding.viewModelProperty.oldKey)?.delete(binding);
-        const key = binding.viewModelProperty.getKey();
-        this.#bindingsByKey.get(key)?.add(binding) ?? this.#bindingsByKey.set(key, new Set([binding]));
-      }
-    }
-    this.#deleteBindings = new Set;
   }
 
   /**
@@ -4443,11 +4442,7 @@ class BindingSummary {
    */
   rebuild(bindings) {
     this.#allBindings = new Set(bindings);
-    /** @type {Map<string,Binding[]>} */
-    const bindingsByKey = Map.groupBy(bindings, binding => binding.viewModelProperty.key);
-    this.#bindingsByKey = new Map(
-      Array.from(bindingsByKey.entries()).map(([key, bindings]) => ([key, new Set(bindings)]))
-    );
+    this.#bindingsByKey = Map.groupBy(bindings, binding => binding.viewModelProperty.key);
     this.#expandableBindings = new Set(bindings.filter(binding => binding.nodeProperty.expandable));
     this.#componentBindings = new Set(bindings.filter(binding => binding.nodeProperty.constructor === ComponentProperty));
     this.#deleteBindings = new Set;

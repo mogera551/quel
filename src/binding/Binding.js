@@ -335,9 +335,10 @@ export class BindingManager {
    */
   static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
     const { bindingSummary } = bindingManager.component;
-    bindingSummary.updatedBindings.clear();
+    bindingSummary.initUpdate();
 
-    // templateを先に展開する
+    // expandableを先に展開する
+    // バインドのツリー構造が確定する
     const expandableBindings = Array.from(bindingSummary.expandableBindings);
     expandableBindings.sort((bindingA, bindingB) => {
       const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;

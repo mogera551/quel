@@ -58,7 +58,6 @@ export class ViewModelProperty {
 
   /** @type {any} */
   get value() {
-    console.log("ViewModelProperty get value", this.binding.id)
     return this.viewModel[Symbols.directlyGet](this.name, this.indexes);
   }
   set value(value) {
