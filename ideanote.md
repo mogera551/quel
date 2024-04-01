@@ -27,6 +27,31 @@ $bufferWriteback(component, buffer) {
 }
 ```
 
+```
+onopenclick() {
+  const dialog = this.$component.querySelector("detail-dialog");
+  dialog.showModal();
+}
+
+onshowmodal(e) {
+  const buffer = {};
+  buffer.xxxx = this.xxxx;
+  buffer.yyyy = this.yyyy;
+  e.target.props.beffered(buffer);
+}
+
+onhidemodal(e) {
+  const buffer = e.target.props.getBuffer();
+  if (!e.target.cancelled) {
+    this.xxxx = buffer.xxxx;
+    this.yyyy = buffer.yyyy;
+  }
+}
+
+```
+
+
+
 # カスタムコンポーネントのオプションを属性で上書きできるようにする
 * [web-component], no-web-component
 * shadow-root, [no-shadow-root]
