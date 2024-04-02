@@ -31,6 +31,8 @@ $bufferWriteback(component, buffer) {
 onopenclick() {
   const dialog = this.$component.querySelector("detail-dialog");
   dialog.showModal();
+  const {xxxx, yyyy} = this;
+  dialog.props = {xxxx, yyyy};
 }
 
 onopenclick() {
@@ -45,13 +47,7 @@ onopenclick() {
   }
 }
 
-
-onshowmodal(e) {
-  const {xxxx, yyyy} = this;
-  e.target.props = {xxxx, yyyy};
-}
-
-onhidemodal(e) {
+onclose(e) {
   const {xxxx, yyyy} = e.target.props;
   Object.assign(this, {xxxx, yyyy});
 }
