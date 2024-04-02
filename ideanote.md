@@ -33,19 +33,27 @@ onopenclick() {
   dialog.showModal();
 }
 
+onopenclick() {
+  const {xxxx, yyyy} = this;
+  const dialog = this.$component.querySelector("detail-dialog");
+
+  try {
+    const buffer = await dialog.asyncShowModal({xxxx, yyyy});
+    Object.assign(this, buffer);
+  } catch(e) {
+    // cancel
+  }
+}
+
+
 onshowmodal(e) {
-  const buffer = {};
-  buffer.xxxx = this.xxxx;
-  buffer.yyyy = this.yyyy;
-  e.target.props.beffered(buffer);
+  const {xxxx, yyyy} = this;
+  e.target.props = {xxxx, yyyy};
 }
 
 onhidemodal(e) {
-  const buffer = e.target.props.getBuffer();
-  if (!e.target.cancelled) {
-    this.xxxx = buffer.xxxx;
-    this.yyyy = buffer.yyyy;
-  }
+  const {xxxx, yyyy} = e.target.props;
+  Object.assign(this, {xxxx, yyyy});
 }
 
 ```

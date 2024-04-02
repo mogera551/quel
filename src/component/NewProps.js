@@ -3,6 +3,7 @@ import { Symbols } from "../Symbols.js";
 
 class Handler {
   #component;
+  #buffer;
 
   /**
    * 
@@ -44,6 +45,18 @@ class Handler {
       configurable: true,
     });
 
+  }
+
+  #setBuffer(buffer) {
+    this.#buffer = buffer;
+  }
+
+  #getBuffer() {
+    return this.#buffer;
+  }
+
+  #clearBuffer() {
+    this.#buffer = undefined;
   }
   /**
    * Proxy.get
