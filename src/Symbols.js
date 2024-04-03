@@ -18,6 +18,11 @@ export const Symbols = Object.assign({
   bindTo: Symbol.for(`${myname}:componentModule.bindTo`),
 
   bindProperty: Symbol.for(`${myname}:props.bindProperty`),
+  setBuffer: Symbol.for(`${myname}:props.setBuffer`),
+  getBuffer: Symbol.for(`${myname}:props.getBuffer`),
+  clearBuffer: Symbol.for(`${myname}:props.clearBuffer`),
+  createBuffer: Symbol.for(`${myname}:props.createBuffer`),
+  flushBuffer: Symbol.for(`${myname}:props.flushBuffer`),
   toObject: Symbol.for(`${myname}:props.toObject`),
   propInitialize: Symbol.for(`${myname}:props.initialize`),
 

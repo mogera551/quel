@@ -25,6 +25,36 @@ $bufferWriteback(component, buffer) {
 }
 ```
 
+example 
+  dialog
+
+```
+const html = `
+<div>{{ name }}</div>
+<div>{{ email }}</div>
+<button data-bind="openDialog">edit</button>
+<dialog is="member-edit" id="member-edit"></dialog>
+`;
+
+class ViewModel {
+  name;
+  email;
+  async openDialog() {
+    try {
+      const dialog = this.$component.querySelector("#member-edit");
+      const { name, email } = this;
+      Object.assign(this, await dialog.asyncShowModal({ name, email }));
+    } catch(e) {
+      // cancel
+    }
+
+  }
+}
+
+
+```
+
+
 ```
 onopenclick() {
   const dialog = this.$component.querySelector("detail-dialog");
@@ -34,8 +64,8 @@ onopenclick() {
 }
 
 onopenclick() {
-  const {xxxx, yyyy} = this;
   const dialog = this.$component.querySelector("detail-dialog");
+  const {xxxx, yyyy} = this;
 
   try {
     const buffer = await dialog.asyncShowModal({xxxx, yyyy});
@@ -49,6 +79,8 @@ onclose(e) {
   const {xxxx, yyyy} = e.target.props;
   Object.assign(this, {xxxx, yyyy});
 }
+
+
 
 ```
 

@@ -4,6 +4,7 @@ import { Module } from "./Module.js";
 import { mixInComponent } from "./MixInComponent.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
+import { mixInDialog } from "./MixInDialog.js";
 
 /**
  * generate unique comonent class
@@ -97,6 +98,9 @@ export class ComponentClassGenerator {
   
     // mix in component
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
+      Object.defineProperty(componentClass.prototype, key, desc);
+    }
+    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInDialog))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
 
