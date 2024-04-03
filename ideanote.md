@@ -12,18 +12,16 @@ https://developer.mozilla.org/ja/docs/Web/API/Popover_API
   →ポップオーバー、ダイアログで対応が異なるので注意
 * バッファ開始、ループコンテキストが使用できる
 ```
-$bufferCreate(component, binds) {
-  const buffer = {};
-  buffer.xxxx = this.xxxx;
-  buffer.yyyy = this.yyyy;
-  return buffer;
+$bufferCreate(component) {
+  const { xxxx, yyyy } = this;
+  return { xxxx, yyyy };
 }
 ```
 * バッファ書き出し、ループコンテキストが使用できる
 ```
 $bufferWriteback(component, buffer) {
-  this.xxxx = buffer.xxxx;
-  this.yyyy = buffer.yyyy;
+  const { xxxx, yyyy } = buffer;
+  Object.assign(this, { xxxx, yyyy });
 }
 ```
 
