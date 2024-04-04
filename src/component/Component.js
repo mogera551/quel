@@ -126,7 +126,7 @@ export function generateComponentClass(componentModule) {
  * @param {string} customElementName 
  * @param {UserComponentModule} componentModule 
  */
-export function registComponentModule(customElementName, componentModule) {
+export function registerComponentModule(customElementName, componentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = ComponentClassGenerator.generate(componentModule);
   if (typeof componentModule.extendTag === "undefined") {
@@ -142,6 +142,6 @@ export function registComponentModule(customElementName, componentModule) {
  */
 export function registerComponentModules(componentModules) {
   for(const [customElementName, userComponentModule] of Object.entries(componentModules ?? {})) {
-    registComponentModule(customElementName, userComponentModule);
+    registerComponentModule(customElementName, userComponentModule);
   }
 }

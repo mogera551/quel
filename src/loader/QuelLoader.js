@@ -1,7 +1,7 @@
 import "../types.js";
 import { Loader, Registrar } from "../../modules/vanilla-module-loader/vanilla_module_loader.js";
 import { Filter } from "../filter/Filter.js";
-import { registComponentModule } from "../component/Component.js";
+import { registerComponentModule } from "../component/Component.js";
 
 const PREFIX = "filter-";
 
@@ -18,7 +18,7 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input } = module;
       Filter.register(filterName, output, input);
     } else {
-      registComponentModule(name, module);
+      registerComponentModule(name, module);
     }
   }
 }

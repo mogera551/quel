@@ -5110,7 +5110,7 @@ function generateComponentClass(componentModule) {
  * @param {string} customElementName 
  * @param {UserComponentModule} componentModule 
  */
-function registComponentModule(customElementName, componentModule) {
+function registerComponentModule(customElementName, componentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = ComponentClassGenerator.generate(componentModule);
   if (typeof componentModule.extendTag === "undefined") {
@@ -5126,7 +5126,7 @@ function registComponentModule(customElementName, componentModule) {
  */
 function registerComponentModules(componentModules) {
   for(const [customElementName, userComponentModule] of Object.entries(componentModules ?? {})) {
-    registComponentModule(customElementName, userComponentModule);
+    registerComponentModule(customElementName, userComponentModule);
   }
 }
 
@@ -5586,7 +5586,7 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input } = module;
       Filter.register(filterName, output, input);
     } else {
-      registComponentModule(name, module);
+      registerComponentModule(name, module);
     }
   }
 }
