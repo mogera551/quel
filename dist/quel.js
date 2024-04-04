@@ -460,6 +460,11 @@ const Symbols = Object.assign({
   bindTo: Symbol.for(`${name}:componentModule.bindTo`),
 
   bindProperty: Symbol.for(`${name}:props.bindProperty`),
+  setBuffer: Symbol.for(`${name}:props.setBuffer`),
+  getBuffer: Symbol.for(`${name}:props.getBuffer`),
+  clearBuffer: Symbol.for(`${name}:props.clearBuffer`),
+  createBuffer: Symbol.for(`${name}:props.createBuffer`),
+  flushBuffer: Symbol.for(`${name}:props.flushBuffer`),
   toObject: Symbol.for(`${name}:props.toObject`),
   propInitialize: Symbol.for(`${name}:props.initialize`),
 
@@ -704,6 +709,8 @@ class Module {
 
 let Handler$1 = class Handler {
   #component;
+  #buffer;
+  #binds = [];
 
   /**
    * 
@@ -713,38 +720,91 @@ let Handler$1 = class Handler {
     this.#component = component;
   }
 
+  get component() {
+    return this.#component;
+  }
+
+  get buffer() {
+    return this.#buffer;
+  }
+
   /**
    * bind parent component's property
    * @param {string} prop 
-   * @param {{name:string,indexes:number[]}} propAccesss 
+   * @param {{name:string,indexes:number[]}|undefined} propAccess 
    */
-  #bindProperty(prop, propAccesss) {
+  #bindProperty(prop, propAccess) {
     /**
      * return parent component's property getter function
-     * @param {Component} component 
+     * @param {Handler} handler 
+     * @param {string} name
      * @param {{name:string,indexes:number[]}} props 
      * @returns {()=>any}
      */
-    const getFunc = (component, props) => function () { 
-      return component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, props.indexes);
+    const getFunc = (handler, name, props) => function () {
+      if (typeof handler.buffer !== "undefined") {
+        return handler.buffer[name];
+      } else {
+        return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, props.indexes);
+      }
     };
     /**
      * return parent component's property setter function
-     * @param {Component} component 
+     * @param {Handler} handler 
+     * @param {string} name
      * @param {{name:string,indexes:number[]}} props 
      * @returns {(value:any)=>true}
      */
-    const setFunc = (component, props) => function (value) { 
-      component.parentComponent.writableViewModel[Symbols.directlySet](props.name, props.indexes, value);
+    const setFunc = (handler, name, props) => function (value) {
+      if (typeof handler.buffer !== "undefined") {
+        handler.buffer[name] = value;
+      } else {
+        handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, props.indexes, value);
+      }
       return true;
     };
     // define component's property
     Object.defineProperty(this.#component.baseViewModel, prop, {
-      get: getFunc(this.#component, propAccesss),
-      set: setFunc(this.#component, propAccesss),
+      get: getFunc(this, prop, propAccess),
+      set: setFunc(this, prop, propAccess),
       configurable: true,
     });
+    if (typeof propAccess !== "undefined") {
+      this.#binds.push({ prop, propAccess });
+    }
 
+  }
+
+  #setBuffer(buffer) {
+    this.#buffer = buffer;
+    for(const key in buffer) {
+      this.#bindProperty(key);
+      this.#component.viewModel[Symbols.notifyForDependentProps](key, []);
+    }
+  }
+
+  #getBuffer() {
+    return this.#buffer;
+  }
+
+  #clearBuffer() {
+    this.#buffer = undefined;
+  }
+
+  #createBuffer() {
+    const buffer = {};
+    this.#binds.forEach(({ prop, propAccess }) => {
+      buffer[prop] = this.#component.parentComponent.writableViewModel[Symbols.directlyGet](propAccess.name, propAccess.indexes);     
+    });
+    return buffer;
+  }
+
+  #flushBuffer() {
+    if (typeof this.#buffer !== "undefined") {
+      this.#binds.forEach(({ prop, propAccess }) => {
+        this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, propAccess.indexes, this.#buffer[prop]);     
+      });
+    }
   }
   /**
    * Proxy.get
@@ -756,6 +816,16 @@ let Handler$1 = class Handler {
   get(target, prop, receiver) {
     if (prop === Symbols.bindProperty) {
       return (prop, propAccess) => this.#bindProperty(prop, propAccess);
+    } else if (prop === Symbols.setBuffer) {
+      return (buffer) => this.#setBuffer(buffer);
+    } else if (prop === Symbols.getBuffer) {
+      return () => this.#getBuffer();
+    } else if (prop === Symbols.clearBuffer) {
+      return () => this.#clearBuffer();
+    } else if (prop === Symbols.createBuffer) {
+      return () => this.#createBuffer();
+    } else if (prop === Symbols.flushBuffer) {
+      return () => this.#flushBuffer();
     }
     return this.#component.viewModel[prop];
   }
@@ -4798,6 +4868,130 @@ const mixInComponent = {
   },
 };
 
+const mixInDialog = {
+  /** @type {boolean} */
+  get mixInDialogInitialized() {
+    return this._mixInDialogInitialized ?? false;
+  },
+  set mixInDialogInitialized(value) {
+    this._mixInDialogInitialized = value;
+  },
+  /** @type {Promise<unknown>} */
+  get mixInDialogPromises() {
+    return this._mixInDialogPromises;
+  },
+  set mixInDialogPromises(value) {
+    this._mixInDialogPromises = value;
+  },
+  /**
+   * 
+   */
+  mixInDialogInit() {
+    this.mixInDialogInitialized = true;
+    this.addEventListener("closed", () => {
+      if (typeof this.mixInDialogPromises !== "undefined") {
+        if (this.returnValue === "") {
+          this.mixInDialogPromises.reject();
+        } else {
+          const buffer = this.props[Symbols.getBuffer]();
+          this.props[Symbols.clearBuffer]();
+          this.mixInDialogPromises.resolve(buffer);
+        }
+        this.mixInDialogPromises = undefined;
+      }
+      if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+        if (this.returnValue !== "") {
+          this.props[Symbols.flushBuffer]();
+        }
+      }
+    });
+    this.addEventListener("close", () => {
+      const closedEvent = new CustomEvent("closed");
+      this.dispatchEvent(closedEvent);
+    });
+  },
+  /**
+   * 
+   * @param {Object<string,any} props 
+   * @param {boolean} modal 
+   * @returns 
+   */
+  async _show(props, modal = true) {
+    this.returnValue = "";
+    this.mixInDialogPromises = Promise.withResolvers();
+    if (!this.mixInDialogInitialized) {
+      this.mixInDialogInit();
+    }
+    this.props[Symbols.setBuffer](props);
+    if (modal) {
+      HTMLDialogElement.prototype.showModal.apply(this);
+    } else {
+      HTMLDialogElement.prototype.show.apply(this);
+    }
+    return this.mixInDialogPromises.promise;
+  },
+  /**
+   * 
+   * @param {Object<string,any>} props 
+   * @returns 
+   */
+  async asyncShowModal(props) {
+    if (!(this instanceof HTMLDialogElement)) {
+      utils.raise("mixInDialog: asyncShowModal is only for HTMLDialogElement");
+    }
+    return this._show(props, true);
+  },
+  /**
+   * 
+   * @param {Object<string,any>} props 
+   * @returns 
+   */
+  async asyncShow(props) {
+    if (!(this instanceof HTMLDialogElement)) {
+      utils.raise("mixInDialog: asyncShow is only for HTMLDialogElement");
+    }
+    return this._show(props, false);
+  },
+  showModal() {
+    if (!(this instanceof HTMLDialogElement)) {
+      utils.raise("mixInDialog: showModal is only for HTMLDialogElement");
+    }
+    if (!this.mixInDialogInitialized) {
+      this.mixInDialogInit();
+    }
+    if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+      this.returnValue = "";
+      const buffer = this.props[Symbols.createBuffer]();
+      this.props[Symbols.setBuffer](buffer);
+    }
+    const returnValue = HTMLDialogElement.prototype.showModal.apply(this);
+    return returnValue;
+  },
+  show() {
+    if (!(this instanceof HTMLDialogElement)) {
+      utils.raise("mixInDialog: show is only for HTMLDialogElement");
+    }
+    if (!this.mixInDialogInitialized) {
+      this.mixInDialogInit();
+    }
+    if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+      this.returnValue = "";
+      const buffer = this.props[Symbols.createBuffer]();
+      this.props[Symbols.setBuffer](buffer);
+    }
+    const returnValue = HTMLDialogElement.prototype.show.apply(this);
+    return returnValue;
+  },
+  close(returnValueByClose) {
+    if (!(this instanceof HTMLDialogElement)) {
+      utils.raise("mixInDialog: close is only for HTMLDialogElement");
+    }
+    const returnValue = HTMLDialogElement.prototype.close.apply(this, [returnValueByClose]);
+    return returnValue;
+  },
+
+};
+
 /**
  * generate unique comonent class
  * for customElements.define
@@ -4888,6 +5082,9 @@ class ComponentClassGenerator {
   
     // mix in component
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
+      Object.defineProperty(componentClass.prototype, key, desc);
+    }
+    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInDialog))) {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
 
