@@ -193,7 +193,7 @@ export const mixInComponent = {
    * }} param0
    * @returns {void}
    */
-  initialize({
+  initializeCallback({
     useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
   }) {
     /**
@@ -227,6 +227,8 @@ export const mixInComponent = {
     this._bindingSummary = new BindingSummary;
 
     this._initialPromises = Promise.withResolvers(); // promises for initialize
+
+    console.log("mixInComponent:initializeCallback");
   },
 
   /**

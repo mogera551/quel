@@ -4690,7 +4690,7 @@ const mixInComponent = {
    * }} param0
    * @returns {void}
    */
-  initialize({
+  initializeCallback({
     useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
   }) {
     /**
@@ -4724,6 +4724,8 @@ const mixInComponent = {
     this._bindingSummary = new BindingSummary;
 
     this._initialPromises = Promise.withResolvers(); // promises for initialize
+
+    console.log("mixInComponent:initializeCallback");
   },
 
   /**
@@ -4868,36 +4870,38 @@ const mixInComponent = {
   },
 };
 
-const mixInDialog = {
-  /** @type {boolean} */
-  get mixInDialogInitialized() {
-    return this._mixInDialogInitialized ?? false;
-  },
-  set mixInDialogInitialized(value) {
-    this._mixInDialogInitialized = value;
-  },
+const dialogMixIn = {
   /** @type {Promise<unknown>} */
-  get mixInDialogPromises() {
-    return this._mixInDialogPromises;
+  get dialogPromises() {
+    return this._dialogPromises;
   },
-  set mixInDialogPromises(value) {
-    this._mixInDialogPromises = value;
+  set dialogPromises(value) {
+    this._dialogPromises = value;
   },
-  /**
-   * 
+  /** 
+   * initialize
+   * @param {{
+   * useWebComponent: boolean,
+   * useShadowRoot: boolean,
+   * useLocalTagName: boolean,
+   * useKeyed: boolean,
+   * useBufferedBind: boolean
+   * }} param0
+   * @returns {void}
    */
-  mixInDialogInit() {
-    this.mixInDialogInitialized = true;
+  initializeCallback({
+    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
+  }) {
     this.addEventListener("closed", () => {
-      if (typeof this.mixInDialogPromises !== "undefined") {
+      if (typeof this.dialogPromises !== "undefined") {
         if (this.returnValue === "") {
-          this.mixInDialogPromises.reject();
+          this.dialogPromises.reject();
         } else {
           const buffer = this.props[Symbols.getBuffer]();
           this.props[Symbols.clearBuffer]();
-          this.mixInDialogPromises.resolve(buffer);
+          this.dialogPromises.resolve(buffer);
         }
-        this.mixInDialogPromises = undefined;
+        this.dialogPromises = undefined;
       }
       if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
         if (this.returnValue !== "") {
@@ -4909,6 +4913,7 @@ const mixInDialog = {
       const closedEvent = new CustomEvent("closed");
       this.dispatchEvent(closedEvent);
     });
+    console.log("mixInDialog:initializeCallback");
   },
   /**
    * 
@@ -4918,17 +4923,14 @@ const mixInDialog = {
    */
   async _show(props, modal = true) {
     this.returnValue = "";
-    this.mixInDialogPromises = Promise.withResolvers();
-    if (!this.mixInDialogInitialized) {
-      this.mixInDialogInit();
-    }
+    this.dialogPromises = Promise.withResolvers();
     this.props[Symbols.setBuffer](props);
     if (modal) {
       HTMLDialogElement.prototype.showModal.apply(this);
     } else {
       HTMLDialogElement.prototype.show.apply(this);
     }
-    return this.mixInDialogPromises.promise;
+    return this.dialogPromises.promise;
   },
   /**
    * 
@@ -4952,42 +4954,46 @@ const mixInDialog = {
     }
     return this._show(props, false);
   },
+  /**
+   * 
+   * @returns 
+   */
   showModal() {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: showModal is only for HTMLDialogElement");
     }
-    if (!this.mixInDialogInitialized) {
-      this.mixInDialogInit();
-    }
     if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
       this.returnValue = "";
       const buffer = this.props[Symbols.createBuffer]();
       this.props[Symbols.setBuffer](buffer);
     }
-    const returnValue = HTMLDialogElement.prototype.showModal.apply(this);
-    return returnValue;
+    return HTMLDialogElement.prototype.showModal.apply(this);
   },
+  /**
+   * 
+   * @returns 
+   */
   show() {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: show is only for HTMLDialogElement");
     }
-    if (!this.mixInDialogInitialized) {
-      this.mixInDialogInit();
-    }
     if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
       this.returnValue = "";
       const buffer = this.props[Symbols.createBuffer]();
       this.props[Symbols.setBuffer](buffer);
     }
-    const returnValue = HTMLDialogElement.prototype.show.apply(this);
-    return returnValue;
+    return HTMLDialogElement.prototype.show.apply(this);
   },
-  close(returnValueByClose) {
+  /**
+   * 
+   * @param {string} returnValue 
+   * @returns 
+   */
+  close(returnValue) {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: close is only for HTMLDialogElement");
     }
-    const returnValue = HTMLDialogElement.prototype.close.apply(this, [returnValueByClose]);
-    return returnValue;
+    return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
   },
 
 };
@@ -5040,6 +5046,9 @@ class ComponentClassGenerator {
           return true;
         }
 
+        /**  */
+        static initializeCallbacks = [];
+
         /**
          */
         constructor() {
@@ -5062,6 +5071,10 @@ class ComponentClassGenerator {
 
           this.initialize(options);
         }
+
+        initialize(options) {
+          this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, [options]));
+        }
       };
     };
   
@@ -5081,12 +5094,17 @@ class ComponentClassGenerator {
     }
   
     // mix in component
-    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
-      Object.defineProperty(componentClass.prototype, key, desc);
-    }
-    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInDialog))) {
-      Object.defineProperty(componentClass.prototype, key, desc);
-    }
+    const mixIn = (mixIn) => {
+      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixIn))) {
+        if (key === "initializeCallback") {
+          componentClass.initializeCallbacks.push(mixIn.initializeCallback);
+        } else {
+          Object.defineProperty(componentClass.prototype, key, desc);
+        }
+      }
+    };
+    mixIn(mixInComponent);
+    mixIn(dialogMixIn);
 
     // register component's subcomponents 
     registerComponentModules(module.componentModulesForRegist);

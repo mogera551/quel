@@ -1,36 +1,38 @@
 import { Symbols } from "../Symbols.js";
 import { utils } from "../utils.js";
 
-export const mixInDialog = {
-  /** @type {boolean} */
-  get mixInDialogInitialized() {
-    return this._mixInDialogInitialized ?? false;
-  },
-  set mixInDialogInitialized(value) {
-    this._mixInDialogInitialized = value;
-  },
+export const dialogMixIn = {
   /** @type {Promise<unknown>} */
-  get mixInDialogPromises() {
-    return this._mixInDialogPromises;
+  get dialogPromises() {
+    return this._dialogPromises;
   },
-  set mixInDialogPromises(value) {
-    this._mixInDialogPromises = value;
+  set dialogPromises(value) {
+    this._dialogPromises = value;
   },
-  /**
-   * 
+  /** 
+   * initialize
+   * @param {{
+   * useWebComponent: boolean,
+   * useShadowRoot: boolean,
+   * useLocalTagName: boolean,
+   * useKeyed: boolean,
+   * useBufferedBind: boolean
+   * }} param0
+   * @returns {void}
    */
-  mixInDialogInit() {
-    this.mixInDialogInitialized = true;
+  initializeCallback({
+    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
+  }) {
     this.addEventListener("closed", () => {
-      if (typeof this.mixInDialogPromises !== "undefined") {
+      if (typeof this.dialogPromises !== "undefined") {
         if (this.returnValue === "") {
-          this.mixInDialogPromises.reject();
+          this.dialogPromises.reject();
         } else {
           const buffer = this.props[Symbols.getBuffer]();
           this.props[Symbols.clearBuffer]();
-          this.mixInDialogPromises.resolve(buffer);
+          this.dialogPromises.resolve(buffer);
         }
-        this.mixInDialogPromises = undefined;
+        this.dialogPromises = undefined;
       }
       if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
         if (this.returnValue !== "") {
@@ -42,6 +44,7 @@ export const mixInDialog = {
       const closedEvent = new CustomEvent("closed");
       this.dispatchEvent(closedEvent);
     });
+    console.log("mixInDialog:initializeCallback");
   },
   /**
    * 
@@ -51,17 +54,14 @@ export const mixInDialog = {
    */
   async _show(props, modal = true) {
     this.returnValue = "";
-    this.mixInDialogPromises = Promise.withResolvers();
-    if (!this.mixInDialogInitialized) {
-      this.mixInDialogInit();
-    }
+    this.dialogPromises = Promise.withResolvers();
     this.props[Symbols.setBuffer](props);
     if (modal) {
       HTMLDialogElement.prototype.showModal.apply(this);
     } else {
       HTMLDialogElement.prototype.show.apply(this);
     }
-    return this.mixInDialogPromises.promise;
+    return this.dialogPromises.promise;
   },
   /**
    * 
@@ -85,42 +85,46 @@ export const mixInDialog = {
     }
     return this._show(props, false);
   },
+  /**
+   * 
+   * @returns 
+   */
   showModal() {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: showModal is only for HTMLDialogElement");
     }
-    if (!this.mixInDialogInitialized) {
-      this.mixInDialogInit();
-    }
     if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
       this.returnValue = "";
       const buffer = this.props[Symbols.createBuffer]();
       this.props[Symbols.setBuffer](buffer);
     }
-    const returnValue = HTMLDialogElement.prototype.showModal.apply(this);
-    return returnValue;
+    return HTMLDialogElement.prototype.showModal.apply(this);
   },
+  /**
+   * 
+   * @returns 
+   */
   show() {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: show is only for HTMLDialogElement");
     }
-    if (!this.mixInDialogInitialized) {
-      this.mixInDialogInit();
-    }
     if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
       this.returnValue = "";
       const buffer = this.props[Symbols.createBuffer]();
       this.props[Symbols.setBuffer](buffer);
     }
-    const returnValue = HTMLDialogElement.prototype.show.apply(this);
-    return returnValue;
+    return HTMLDialogElement.prototype.show.apply(this);
   },
-  close(returnValueByClose) {
+  /**
+   * 
+   * @param {string} returnValue 
+   * @returns 
+   */
+  close(returnValue) {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: close is only for HTMLDialogElement");
     }
-    const returnValue = HTMLDialogElement.prototype.close.apply(this, [returnValueByClose]);
-    return returnValue;
+    return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
   },
 
 }

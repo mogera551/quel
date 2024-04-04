@@ -4,7 +4,7 @@ import { Module } from "./Module.js";
 import { mixInComponent } from "./MixInComponent.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
-import { mixInDialog } from "./MixInDialog.js";
+import { dialogMixIn } from "./DialogMixIn.js";
 
 /**
  * generate unique comonent class
@@ -54,6 +54,9 @@ export class ComponentClassGenerator {
           return true;
         }
 
+        /**  */
+        static initializeCallbacks = [];
+
         /**
          */
         constructor() {
@@ -76,6 +79,10 @@ export class ComponentClassGenerator {
 
           this.initialize(options);
         }
+
+        initialize(options) {
+          this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, [options]));
+        }
       };
     };
   
@@ -97,12 +104,17 @@ export class ComponentClassGenerator {
     }
   
     // mix in component
-    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInComponent))) {
-      Object.defineProperty(componentClass.prototype, key, desc);
+    const mixIn = (mixIn) => {
+      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixIn))) {
+        if (key === "initializeCallback") {
+          componentClass.initializeCallbacks.push(mixIn.initializeCallback);
+        } else {
+          Object.defineProperty(componentClass.prototype, key, desc);
+        }
+      }
     }
-    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixInDialog))) {
-      Object.defineProperty(componentClass.prototype, key, desc);
-    }
+    mixIn(mixInComponent);
+    mixIn(dialogMixIn);
 
     // register component's subcomponents 
     registerComponentModules(module.componentModulesForRegist);
