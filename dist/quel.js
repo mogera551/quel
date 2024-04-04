@@ -4825,7 +4825,7 @@ const mixInComponent = {
    * @returns {void}
    */
   disconnectedCallback() {
-    this.alivePromises?.resolve && this.alivePromises.resolve(this.props[Symbols.toObject]());
+    this.alivePromises?.resolve && this.alivePromises.resolve(this.props);
   },
 
   /**
@@ -4854,7 +4854,7 @@ const mixInComponent = {
       if (this.returnValue === "") {
         promises.reject();
       } else {
-        promises.resolve(this.props[Symbols.toObject]());
+        promises.resolve(this.props);
       }
     });
     this.addEventListener("close", () => {
