@@ -5,6 +5,7 @@ import { mixInComponent } from "./MixInComponent.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
 import { dialogMixIn } from "./DialogMixIn.js";
+import { popoverMixIn } from "./PopoverMixIn.js";
 
 /**
  * generate unique comonent class
@@ -115,6 +116,7 @@ export class ComponentClassGenerator {
     }
     mixIn(mixInComponent);
     mixIn(dialogMixIn);
+    mixIn(popoverMixIn);
 
     // register component's subcomponents 
     registerComponentModules(module.componentModulesForRegist);
