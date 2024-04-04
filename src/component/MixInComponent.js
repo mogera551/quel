@@ -266,7 +266,7 @@ export const mixInComponent = {
 
     // buid binding tree and dom 
     this.rootBinding = BindingManager.create(this, template);
-    this.rootBinding.registBindingsToSummary();
+    this.rootBinding.registerBindingsToSummary();
     this.rootBinding.applyToNode();
     this.bindingSummary.flush();
 

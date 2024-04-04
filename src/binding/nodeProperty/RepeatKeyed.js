@@ -70,7 +70,7 @@ export class RepeatKeyed extends Repeat {
 
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
     newBindingManagers.forEach(bindingManager => {
-      bindingManager.registBindingsToSummary();
+      bindingManager.registerBindingsToSummary();
       bindingManager.applyToNode()
     });
     this.#lastValue = values.slice();
@@ -100,7 +100,7 @@ export class RepeatKeyed extends Repeat {
         bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, {name, index});
       }
       this.binding.replaceChild(index, bindingManager);
-      bindingManager.registBindingsToSummary();
+      bindingManager.registerBindingsToSummary();
       bindingManager.applyToNode();
     }
   }

@@ -1869,9 +1869,9 @@ class Filter {
    * @param {(value:any,options:string[])=>{}} outputFilter 
    * @param {(value:any,options:string[])=>{}} inputFilter 
    */
-  static regist(name, outputFilter, inputFilter) {
-    if (name in outputFilters) utils.raise(`regist filter error duplicate name (${name})`);
-    if (name in inputFilters) utils.raise(`regist filter error duplicate name (${name})`);
+  static register(name, outputFilter, inputFilter) {
+    if (name in outputFilters) utils.raise(`register filter error duplicate name (${name})`);
+    if (name in inputFilters) utils.raise(`register filter error duplicate name (${name})`);
     outputFilter && (outputFilters[name] = outputFilter);
     inputFilter && (inputFilters[name] = inputFilter);
   }
@@ -2067,7 +2067,7 @@ class Repeat extends TemplateProperty {
         const [ name, index ] = [this.binding.viewModelProperty.name, newIndex]; 
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
         this.binding.appendChild(bindingManager);
-        bindingManager.registBindingsToSummary();
+        bindingManager.registerBindingsToSummary();
         bindingManager.applyToNode();
       }
     } else if (this.value > value.length) {
@@ -2112,7 +2112,7 @@ class Branch extends TemplateProperty {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         this.binding.appendChild(bindingManager);
-        bindingManager.registBindingsToSummary();
+        bindingManager.registerBindingsToSummary();
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
         removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
@@ -2797,7 +2797,7 @@ class RepeatKeyed extends Repeat {
 
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
     newBindingManagers.forEach(bindingManager => {
-      bindingManager.registBindingsToSummary();
+      bindingManager.registerBindingsToSummary();
       bindingManager.applyToNode();
     });
     this.#lastValue = values.slice();
@@ -2827,7 +2827,7 @@ class RepeatKeyed extends Repeat {
         bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, {name, index});
       }
       this.binding.replaceChild(index, bindingManager);
-      bindingManager.registBindingsToSummary();
+      bindingManager.registerBindingsToSummary();
       bindingManager.applyToNode();
     }
   }
@@ -3707,9 +3707,9 @@ class BindingManager {
   }
 
   /**
-   * regist bindings to summary
+   * register bindings to summary
    */
-  registBindingsToSummary() {
+  registerBindingsToSummary() {
     this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
   }
 
@@ -4763,7 +4763,7 @@ const mixInComponent = {
 
     // buid binding tree and dom 
     this.rootBinding = BindingManager.create(this, template);
-    this.rootBinding.registBindingsToSummary();
+    this.rootBinding.registerBindingsToSummary();
     this.rootBinding.applyToNode();
     this.bindingSummary.flush();
 
@@ -5088,8 +5088,8 @@ class ComponentClassGenerator {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
 
-    // regist component's subcomponents 
-    registComponentModules(module.componentModulesForRegist);
+    // register component's subcomponents 
+    registerComponentModules(module.componentModulesForRegist);
 
     return componentClass;
   }
@@ -5105,7 +5105,7 @@ function generateComponentClass(componentModule) {
 }
 
 /**
- * regist component class with tag name, call customElements.define
+ * register component class with tag name, call customElements.define
  * generate component class from componentModule
  * @param {string} customElementName 
  * @param {UserComponentModule} componentModule 
@@ -5124,7 +5124,7 @@ function registComponentModule(customElementName, componentModule) {
  * 
  * @param {Object<string,UserComponentModule>} componentModules 
  */
-function registComponentModules(componentModules) {
+function registerComponentModules(componentModules) {
   for(const [customElementName, userComponentModule] of Object.entries(componentModules ?? {})) {
     registComponentModule(customElementName, userComponentModule);
   }
@@ -5137,7 +5137,7 @@ class Registrar {
    * @param {any} module 
    * @static
    */
-  static regist(name, module) {
+  static register(name, module) {
 
   }
 }
@@ -5555,7 +5555,7 @@ class Loader {
       } else {
         moduleData = module.default;
       }
-      this.#registrar.regist(loadName, moduleData);
+      this.#registrar.register(loadName, moduleData);
     }
     return this;
   }
@@ -5580,11 +5580,11 @@ class QuelModuleRegistrar extends Registrar {
    * @param {Object<string,any>} module 
    * @returns {void}
    */
-  static regist(name, module) {
+  static register(name, module) {
     if (name.startsWith(PREFIX)) {
       const filterName = name.slice(PREFIX.length);
       const { output, input } = module;
-      Filter.regist(filterName, output, input);
+      Filter.register(filterName, output, input);
     } else {
       registComponentModule(name, module);
     }
@@ -5597,10 +5597,10 @@ const loader = Loader.create(QuelModuleRegistrar);
  * 
  * @param {Object<string,UserFilterData>} filters 
  */
-function registFilters(filters) {
+function registerFilters(filters) {
   Object.entries(filters).forEach(([name, filterData]) => {
     const { input, output } = filterData;
-    Filter.regist(name, output, input);
+    Filter.register(name, output, input);
   });
 }
 
@@ -5608,8 +5608,8 @@ function registFilters(filters) {
  * 
  * @param {Object<string,any>} data 
  */
-function registGlobal(data) {
+function registerGlobal(data) {
   Object.assign(GlobalData.data, data);
 }
 
-export { config, generateComponentClass, loader, registComponentModules, registFilters, registGlobal };
+export { config, generateComponentClass, loader, registerComponentModules, registerFilters, registerGlobal };

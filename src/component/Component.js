@@ -104,8 +104,8 @@ export class ComponentClassGenerator {
       Object.defineProperty(componentClass.prototype, key, desc);
     }
 
-    // regist component's subcomponents 
-    registComponentModules(module.componentModulesForRegist);
+    // register component's subcomponents 
+    registerComponentModules(module.componentModulesForRegist);
 
     return componentClass;
   }
@@ -121,7 +121,7 @@ export function generateComponentClass(componentModule) {
 }
 
 /**
- * regist component class with tag name, call customElements.define
+ * register component class with tag name, call customElements.define
  * generate component class from componentModule
  * @param {string} customElementName 
  * @param {UserComponentModule} componentModule 
@@ -140,7 +140,7 @@ export function registComponentModule(customElementName, componentModule) {
  * 
  * @param {Object<string,UserComponentModule>} componentModules 
  */
-export function registComponentModules(componentModules) {
+export function registerComponentModules(componentModules) {
   for(const [customElementName, userComponentModule] of Object.entries(componentModules ?? {})) {
     registComponentModule(customElementName, userComponentModule);
   }

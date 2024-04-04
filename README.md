@@ -18,14 +18,14 @@ Quelを使うには、`import`宣言で、CDNもしくはダウンロードし�
 CDNの例
 ```html
 <script type="module">
-import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 </script>
 ```
 
 ダウンロードしたファイルの例
 ```html
 <script type="module">
-import { registComponentModules } from "./path/to/quel.min.js"; // ファイル
+import { registerComponentModules } from "./path/to/quel.min.js"; // ファイル
 </script>
 ```
 
@@ -40,7 +40,7 @@ import { registComponentModules } from "./path/to/quel.min.js"; // ファイル
 <myapp-main></myapp-main>
 
 <script type="module">
-import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 
 const html = `
 <div>{{ message }}</div>
@@ -50,7 +50,7 @@ class ViewModel {
   message = "Welcome to Quel";
 }
 
-registComponentModules({ myappMain:{ html, ViewModel } });
+registerComponentModules({ myappMain:{ html, ViewModel } });
 </script>
 </html>
 ```
@@ -81,7 +81,7 @@ registComponentModules({ myappMain:{ html, ViewModel } });
 <div is="myapp-main"></div>
 
 <script type="module">
-import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 </script>
 
 </html>
@@ -171,22 +171,22 @@ export default { html, ViewModel, extends:"div" };
 ```
 ### カスタム要素とコンポーネントモジュールを対応付ける
 作成したコンポーネントモジュールを登録する側で`import`します。ここでは、`index.html`になります。
-`registComponentModules`関数を使って、コンポーネントモジュールとカスタム要素名と対応付けます。
+`registerComponentModules`関数を使って、コンポーネントモジュールとカスタム要素名と対応付けます。
 
 `index.html`の`javascript`の内容
 ```js
-import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 // コンポーネントモジュールのimport
 import myappMain from "./main.js";
 
 // カスタム要素名とコンポーネントモジュールと対応付ける。
-registComponentModules({ "myapp-main":myappMain });
+registerComponentModules({ "myapp-main":myappMain });
 
 // カスタム要素名はキャメルケースでもOK。
-registComponentModules({ "myappMain":myappMain });
+registerComponentModules({ "myappMain":myappMain });
 
 // オブジェクトリテラルの省略記法でより簡単に記述できます。
-registComponentModules({ myappMain });
+registerComponentModules({ myappMain });
 ```
 
 ## チュートリアル
@@ -201,9 +201,9 @@ registComponentModules({ myappMain });
 
 `index.html`は、  
 * カスタム要素(`<myapp-main/>`)の記述
-* `registComponentModules`関数の`import`
+* `registerComponentModules`関数の`import`
 * `main`コンポーネントモジュールの`import`
-* `registComponentModules`関数を使ってコンポーネントモジュールとカスタム要素名と対応付け
+* `registerComponentModules`関数を使ってコンポーネントモジュールとカスタム要素名と対応付け
 
 を行います。  
 断りがなければ、チュートリアルでは、下記の`index.html`の内容を使用することとします。
@@ -217,10 +217,10 @@ registComponentModules({ myappMain });
 <myapp-main></myapp-main>
 
 <script type="module">
-import { registComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
+import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 import myappMain from "./main.js";
 
-registComponentModules({ myappMain });
+registerComponentModules({ myappMain });
 </script>
 </html>
 ```

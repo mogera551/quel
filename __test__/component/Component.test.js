@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { ComponentClassGenerator, generateComponentClass, registComponentModule, registComponentModules } from "../../src/component/Component.js";
+import { ComponentClassGenerator, generateComponentClass, registComponentModule, registerComponentModules } from "../../src/component/Component.js";
 import { Symbols } from '../../src/Symbols.js';
 
 Promise.withResolvers = () => {
@@ -106,7 +106,7 @@ describe("registComponentModule", () => {
   });
 });
 
-describe("registComponentModules", () => {
+describe("registerComponentModules", () => {
   it("should register multiple component modules", () => {
     const componentModules = {
       "custom-element-name-1": { },
@@ -114,7 +114,7 @@ describe("registComponentModules", () => {
     };
     expect(customElements.get("custom-element-name-1")).toBeUndefined();
     expect(customElements.get("custom-element-name-2")).toBeUndefined();
-    registComponentModules(componentModules);
+    registerComponentModules(componentModules);
     expect(customElements.get("custom-element-name-1")).toBeDefined();
     expect(customElements.get("custom-element-name-2")).toBeDefined();
     const element1 = document.createElement("custom-element-name-1");

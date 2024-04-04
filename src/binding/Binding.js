@@ -278,9 +278,9 @@ export class BindingManager {
   }
 
   /**
-   * regist bindings to summary
+   * register bindings to summary
    */
-  registBindingsToSummary() {
+  registerBindingsToSummary() {
     this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
   }
 

@@ -12,11 +12,11 @@ class QuelModuleRegistrar extends Registrar {
    * @param {Object<string,any>} module 
    * @returns {void}
    */
-  static regist(name, module) {
+  static register(name, module) {
     if (name.startsWith(PREFIX)) {
       const filterName = name.slice(PREFIX.length);
       const { output, input } = module;
-      Filter.regist(filterName, output, input);
+      Filter.register(filterName, output, input);
     } else {
       registComponentModule(name, module);
     }

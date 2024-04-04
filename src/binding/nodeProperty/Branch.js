@@ -14,7 +14,7 @@ export class Branch extends TemplateProperty {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         this.binding.appendChild(bindingManager);
-        bindingManager.registBindingsToSummary();
+        bindingManager.registerBindingsToSummary();
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
         removeBindingManagers.forEach(bindingManager => bindingManager.dispose());

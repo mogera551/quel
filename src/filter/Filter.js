@@ -40,9 +40,9 @@ export class Filter {
    * @param {(value:any,options:string[])=>{}} outputFilter 
    * @param {(value:any,options:string[])=>{}} inputFilter 
    */
-  static regist(name, outputFilter, inputFilter) {
-    if (name in outputFilters) utils.raise(`regist filter error duplicate name (${name})`);
-    if (name in inputFilters) utils.raise(`regist filter error duplicate name (${name})`);
+  static register(name, outputFilter, inputFilter) {
+    if (name in outputFilters) utils.raise(`register filter error duplicate name (${name})`);
+    if (name in inputFilters) utils.raise(`register filter error duplicate name (${name})`);
     outputFilter && (outputFilters[name] = outputFilter);
     inputFilter && (inputFilters[name] = inputFilter);
   }

@@ -28,7 +28,7 @@ export class Repeat extends TemplateProperty {
         const [ name, index ] = [this.binding.viewModelProperty.name, newIndex]; 
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
         this.binding.appendChild(bindingManager);
-        bindingManager.registBindingsToSummary();
+        bindingManager.registerBindingsToSummary();
         bindingManager.applyToNode();
       }
     } else if (this.value > value.length) {
