@@ -1,7 +1,7 @@
 import "../types.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
-export class NewLoopContext {
+export class LoopContext {
   /** @type {import("../binding/Binding.js").BindingManager} */
   #bindingManager;
 
@@ -28,16 +28,16 @@ export class NewLoopContext {
     const searchName = parentProp.name; // ex. "list"
     let curBindingManager = this.parentBindingManager;
     while(typeof curBindingManager !== "undefined") {
-      if (curBindingManager.newLoopContext.binding.viewModelProperty.name === searchName) {
+      if (curBindingManager.loopContext.binding.viewModelProperty.name === searchName) {
         return curBindingManager;
       }
-      curBindingManager = curBindingManager.newLoopContext.parentBindingManager;
+      curBindingManager = curBindingManager.loopContext.parentBindingManager;
     }
   }
 
   /** @type {NewLoopContext|undefined} */
   get nearestLoopContext() {
-    return this.nearestBindingManager?.newLoopContext;
+    return this.nearestBindingManager?.loopContext;
   }
 
   /** @type {number} */
@@ -51,7 +51,7 @@ export class NewLoopContext {
       return this._index;
     } else {
       // 上位のループコンテキストのインデックスを取得
-      const parentLoopContext = this.parentBindingManager?.newLoopContext;
+      const parentLoopContext = this.parentBindingManager?.loopContext;
       return parentLoopContext?.index ?? -1;
     }
   }
@@ -62,7 +62,7 @@ export class NewLoopContext {
       return this.binding.viewModelProperty.name;
     } else {
       // 上位のループコンテキストの名前を取得
-      const parentLoopContext = this.parentBindingManager?.newLoopContext;
+      const parentLoopContext = this.parentBindingManager?.loopContext;
       return parentLoopContext?.name ?? "";
     }
   }
@@ -73,7 +73,7 @@ export class NewLoopContext {
       return this.nearestLoopContext?.indexes.concat(this.index) ?? [this.index];
     } else {
       // 上位のループコンテキストのインデクッス配列を取得
-      const parentLoopContext = this.parentBindingManager?.newLoopContext;
+      const parentLoopContext = this.parentBindingManager?.loopContext;
       return parentLoopContext?.indexes ?? [];
     }
   }
@@ -82,7 +82,7 @@ export class NewLoopContext {
   get allIndexes() {
     if (typeof this.binding === "undefined") return [];
     const index = (this.binding.loopable) ? this._index : -1;
-    const indexes = this.parentBindingManager.newLoopContext.allIndexes;
+    const indexes = this.parentBindingManager.loopContext.allIndexes;
     return (index >= 0) ? indexes.concat(index) : indexes;
   }
 
@@ -100,10 +100,10 @@ export class NewLoopContext {
    * @returns {NewLoopContext|undefined}
    */
   find(name) {
-    let newLoopContext = this;
-    while(typeof newLoopContext !== "undefined") {
-      if (newLoopContext.name === name) return newLoopContext;
-      newLoopContext = newLoopContext.parentBindingManager.newLoopContext;
+    let loopContext = this;
+    while(typeof loopContext !== "undefined") {
+      if (loopContext.name === name) return loopContext;
+      loopContext = loopContext.parentBindingManager.loopContext;
     }
   }
 }

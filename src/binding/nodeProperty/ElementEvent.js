@@ -53,8 +53,8 @@ export class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   async directlyCall(event) {
-    const { viewModelProperty, newLoopContext } = this.binding;
-    return viewModelProperty.viewModel[Symbols.directlyCall](viewModelProperty.name, newLoopContext, event);
+    const { viewModelProperty, loopContext } = this.binding;
+    return viewModelProperty.viewModel[Symbols.directlyCall](viewModelProperty.name, loopContext, event);
   }
   /**
    * 

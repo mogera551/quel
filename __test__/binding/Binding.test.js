@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import { Binding, BindingManager } from '../../src/binding/Binding';
 import { ElementProperty } from '../../src/binding/nodeProperty/ElementProperty';
 import { ViewModelProperty } from '../../src/binding/viewModelProperty/ViewModelProperty';
-import { NewLoopContext } from '../../src/loopContext/NewLoopContext';
+import { LoopContext } from '../../src/loopContext/LoopContext';
 import { Symbols } from '../../src/Symbols';
 
 describe('src/binding/Binding.Binding', () => {
@@ -37,7 +37,7 @@ describe('src/binding/Binding.Binding', () => {
       },
       updateSlot: {},
     },
-    newLoopContext: undefined
+    loopContext: undefined
   }
   const div = document.createElement("div");
   const binding = new Binding(bindingManager, div, "textContent", ElementProperty, "value", ViewModelProperty, []);
@@ -58,7 +58,7 @@ describe('src/binding/Binding.Binding', () => {
     expect(binding.viewModelProperty.filterFuncs).toEqual({});
     expect(binding.viewModelProperty.filters).toEqual([]);
     expect(binding.component).toBe(bindingManager.component);
-    expect(binding.newLoopContext).toBe(undefined);
+    expect(binding.loopContext).toBe(undefined);
     expect(binding.children).toEqual([]);
     expect(binding.expandable).toEqual(false);
     expect(binding.isSelectValue).toEqual(false);

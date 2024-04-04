@@ -5,7 +5,7 @@ import { utils } from "../utils.js";
 import { Selector } from "../binder/Selector.js";
 import { Binder } from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
-import { NewLoopContext } from "../loopContext/NewLoopContext.js";
+import { LoopContext } from "../loopContext/LoopContext.js";
 
 export class Binding {
   /** @type {number} */
@@ -40,9 +40,9 @@ export class Binding {
     return this.#bindingManager.component;
   }
 
-  /** @type {NewLoopContext} new loop context */
-  get newLoopContext() {
-    return this.#bindingManager.newLoopContext;
+  /** @type {LoopContext} new loop context */
+  get loopContext() {
+    return this.#bindingManager.loopContext;
   }
 
   /** @type { BindingManager[] } child bindingManager for branch/repeat */
@@ -231,10 +231,10 @@ export class BindingManager {
     return this.#fragment;
   }
 
-  /** @type {NewLoopContext} */
-  #newLoopContext;
-  get newLoopContext() {
-    return this.#newLoopContext;
+  /** @type {LoopContext} */
+  #loopContext;
+  get loopContext() {
+    return this.#loopContext;
   }
 
   /** @type {HTMLTemplateElement} */
@@ -263,7 +263,7 @@ export class BindingManager {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
-    this.#newLoopContext = new NewLoopContext(this);
+    this.#loopContext = new LoopContext(this);
   }
 
   /**

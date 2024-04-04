@@ -29,7 +29,7 @@ export class ViewModelProperty {
 
   /** @type {number[]} */
   get indexes() {
-    return this.binding.newLoopContext?.indexes.slice(0 , this.level) ?? [];
+    return this.binding.loopContext?.indexes.slice(0 , this.level) ?? [];
   }
 
   /** @type {string} */

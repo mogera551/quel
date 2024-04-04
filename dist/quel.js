@@ -2191,7 +2191,7 @@ class ViewModelProperty {
 
   /** @type {number[]} */
   get indexes() {
-    return this.binding.newLoopContext?.indexes.slice(0 , this.level) ?? [];
+    return this.binding.loopContext?.indexes.slice(0 , this.level) ?? [];
   }
 
   /** @type {string} */
@@ -2313,7 +2313,7 @@ class ContextIndex extends ViewModelProperty {
 
   /** @type {number} */
   get value() {
-    return this.binding.newLoopContext.allIndexes[this.index];
+    return this.binding.loopContext.allIndexes[this.index];
   }
 
   /** @type {number[]} */
@@ -2535,8 +2535,8 @@ class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   async directlyCall(event) {
-    const { viewModelProperty, newLoopContext } = this.binding;
-    return viewModelProperty.viewModel[Symbols.directlyCall](viewModelProperty.name, newLoopContext, event);
+    const { viewModelProperty, loopContext } = this.binding;
+    return viewModelProperty.viewModel[Symbols.directlyCall](viewModelProperty.name, loopContext, event);
   }
   /**
    * 
@@ -3329,7 +3329,7 @@ class ReuseBindingManager {
 
 }
 
-class NewLoopContext {
+class LoopContext {
   /** @type {import("../binding/Binding.js").BindingManager} */
   #bindingManager;
 
@@ -3356,16 +3356,16 @@ class NewLoopContext {
     const searchName = parentProp.name; // ex. "list"
     let curBindingManager = this.parentBindingManager;
     while(typeof curBindingManager !== "undefined") {
-      if (curBindingManager.newLoopContext.binding.viewModelProperty.name === searchName) {
+      if (curBindingManager.loopContext.binding.viewModelProperty.name === searchName) {
         return curBindingManager;
       }
-      curBindingManager = curBindingManager.newLoopContext.parentBindingManager;
+      curBindingManager = curBindingManager.loopContext.parentBindingManager;
     }
   }
 
   /** @type {NewLoopContext|undefined} */
   get nearestLoopContext() {
-    return this.nearestBindingManager?.newLoopContext;
+    return this.nearestBindingManager?.loopContext;
   }
 
   /** @type {number} */
@@ -3379,7 +3379,7 @@ class NewLoopContext {
       return this._index;
     } else {
       // 上位のループコンテキストのインデックスを取得
-      const parentLoopContext = this.parentBindingManager?.newLoopContext;
+      const parentLoopContext = this.parentBindingManager?.loopContext;
       return parentLoopContext?.index ?? -1;
     }
   }
@@ -3390,7 +3390,7 @@ class NewLoopContext {
       return this.binding.viewModelProperty.name;
     } else {
       // 上位のループコンテキストの名前を取得
-      const parentLoopContext = this.parentBindingManager?.newLoopContext;
+      const parentLoopContext = this.parentBindingManager?.loopContext;
       return parentLoopContext?.name ?? "";
     }
   }
@@ -3401,7 +3401,7 @@ class NewLoopContext {
       return this.nearestLoopContext?.indexes.concat(this.index) ?? [this.index];
     } else {
       // 上位のループコンテキストのインデクッス配列を取得
-      const parentLoopContext = this.parentBindingManager?.newLoopContext;
+      const parentLoopContext = this.parentBindingManager?.loopContext;
       return parentLoopContext?.indexes ?? [];
     }
   }
@@ -3410,7 +3410,7 @@ class NewLoopContext {
   get allIndexes() {
     if (typeof this.binding === "undefined") return [];
     const index = (this.binding.loopable) ? this._index : -1;
-    const indexes = this.parentBindingManager.newLoopContext.allIndexes;
+    const indexes = this.parentBindingManager.loopContext.allIndexes;
     return (index >= 0) ? indexes.concat(index) : indexes;
   }
 
@@ -3428,10 +3428,10 @@ class NewLoopContext {
    * @returns {NewLoopContext|undefined}
    */
   find(name) {
-    let newLoopContext = this;
-    while(typeof newLoopContext !== "undefined") {
-      if (newLoopContext.name === name) return newLoopContext;
-      newLoopContext = newLoopContext.parentBindingManager.newLoopContext;
+    let loopContext = this;
+    while(typeof loopContext !== "undefined") {
+      if (loopContext.name === name) return loopContext;
+      loopContext = loopContext.parentBindingManager.loopContext;
     }
   }
 }
@@ -3469,9 +3469,9 @@ class Binding {
     return this.#bindingManager.component;
   }
 
-  /** @type {NewLoopContext} new loop context */
-  get newLoopContext() {
-    return this.#bindingManager.newLoopContext;
+  /** @type {LoopContext} new loop context */
+  get loopContext() {
+    return this.#bindingManager.loopContext;
   }
 
   /** @type { BindingManager[] } child bindingManager for branch/repeat */
@@ -3660,10 +3660,10 @@ class BindingManager {
     return this.#fragment;
   }
 
-  /** @type {NewLoopContext} */
-  #newLoopContext;
-  get newLoopContext() {
-    return this.#newLoopContext;
+  /** @type {LoopContext} */
+  #loopContext;
+  get loopContext() {
+    return this.#loopContext;
   }
 
   /** @type {HTMLTemplateElement} */
@@ -3692,7 +3692,7 @@ class BindingManager {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
-    this.#newLoopContext = new NewLoopContext(this);
+    this.#loopContext = new LoopContext(this);
   }
 
   /**
@@ -3940,9 +3940,9 @@ const setOfApiFunctions = new Set([
  * @type {Object<symbol,({viewModel:ViewModel,viewModelProxy:Proxy,handler:ViewModelHandlerBase})=>()>}
  */
 const callFuncBySymbol = {
-  [Symbols.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, newLoopContext, event) => 
-    handler.directlyCallback(newLoopContext, async () => 
-      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...(newLoopContext?.allIndexes ?? [])])
+  [Symbols.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, loopContext, event) => 
+    handler.directlyCallback(loopContext, async () => 
+      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...(loopContext?.allIndexes ?? [])])
     ),
   [Symbols.notifyForDependentProps]:({viewModel, viewModelProxy, handler}) => (prop, indexes) => 
     handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
@@ -4231,24 +4231,24 @@ class ViewModelize {
  */
 class DirectlyCallContext {
   /** @type {LoopContext} */
-  #newLoopContext;
-  get newLoopContext() {
-    return this.#newLoopContext;
+  #loopContext;
+  get loopContext() {
+    return this.#loopContext;
   }
 
   /**
    * 
-   * @param {NewLoopContext} newLoopContext 
+   * @param {LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async callback(newLoopContext, directlyCallback) {
-    if (typeof this.#newLoopContext !== "undefined") utils.raise("DirectlyCallContext: already set newLoopContext");
-    this.#newLoopContext = newLoopContext;
+  async callback(loopContext, directlyCallback) {
+    if (typeof this.#loopContext !== "undefined") utils.raise("DirectlyCallContext: already set loopContext");
+    this.#loopContext = loopContext;
     try {
       return await directlyCallback();
     } finally {
-      this.#newLoopContext = undefined;
+      this.#loopContext = undefined;
     }
   }
 
@@ -4298,12 +4298,12 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
 
   /**
    * 
-   * @param {import("../loopContext/NewLoopContext.js").NewLoopContext} newLoopContext 
+   * @param {import("../loopContext/LoopContext.js").LoopContext} loopContext 
    * @param {()=>Promise} directlyCallback 
    * @returns {Promise}
    */
-  async directlyCallback(newLoopContext, directlyCallback) {
-    return this.#directlyCallContext.callback(newLoopContext, async () => {
+  async directlyCallback(loopContext, directlyCallback) {
+    return this.#directlyCallContext.callback(loopContext, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
       // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
@@ -4319,16 +4319,16 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
   /**
    * 
    * @param {string} prop 
-   * @returns {import("../loopContext/NewLoopContext.js").NewLoopContext | undefined}
+   * @returns {import("../loopContext/LoopContext.js").LoopContext | undefined}
    */
   findLoopContext(prop) {
-    if (typeof this.#directlyCallContext.newLoopContext === "undefined") return;
+    if (typeof this.#directlyCallContext.loopContext === "undefined") return;
     if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
     const propName = PropertyName.create(prop);
     if (propName.level === 0 || prop.at(0) === "@") return;
-    const newLoopContext = this.#directlyCallContext.newLoopContext.find(propName.nearestWildcardParentName);
-    if (typeof newLoopContext === "undefined") utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
-    return newLoopContext;
+    const loopContext = this.#directlyCallContext.loopContext.find(propName.nearestWildcardParentName);
+    if (typeof loopContext === "undefined") utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
+    return loopContext;
   }
 
   /**
@@ -4344,9 +4344,9 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
     } else if (Api.has(prop)) {
       return Api.get(target, receiver, this, prop);
     } else {
-      const newLoopContext = this.findLoopContext(prop);
-      return (typeof newLoopContext !== "undefined") ?
-        this.directlyGet(target, { prop, indexes:newLoopContext.allIndexes}, receiver) :
+      const loopContext = this.findLoopContext(prop);
+      return (typeof loopContext !== "undefined") ?
+        this.directlyGet(target, { prop, indexes:loopContext.allIndexes}, receiver) :
         super.get(target, prop, receiver);
     }
   }
@@ -4360,9 +4360,9 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    const newLoopContext = this.findLoopContext(prop);
-    return (typeof newLoopContext !== "undefined") ?
-      this.directlySet(target, { prop, indexes:newLoopContext.allIndexes, value}, receiver) :
+    const loopContext = this.findLoopContext(prop);
+    return (typeof loopContext !== "undefined") ?
+      this.directlySet(target, { prop, indexes:loopContext.allIndexes, value}, receiver) :
       super.set(target, prop, value, receiver);
   }
 

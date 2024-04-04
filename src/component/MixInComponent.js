@@ -1,6 +1,6 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { createProps } from "./NewProps.js";
+import { createProps } from "./Props.js";
 import { createGlobals } from "./Globals.js";
 import { Thread } from "../thread/Thread.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";

@@ -19,9 +19,9 @@ const setOfApiFunctions = new Set([
  * @type {Object<symbol,({viewModel:ViewModel,viewModelProxy:Proxy,handler:ViewModelHandlerBase})=>()>}
  */
 const callFuncBySymbol = {
-  [Symbols.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, newLoopContext, event) => 
-    handler.directlyCallback(newLoopContext, async () => 
-      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...(newLoopContext?.allIndexes ?? [])])
+  [Symbols.directlyCall]:({viewModel, viewModelProxy, handler}) => async (prop, loopContext, event) => 
+    handler.directlyCallback(loopContext, async () => 
+      Reflect.apply(viewModel[prop], viewModelProxy, [event, ...(loopContext?.allIndexes ?? [])])
     ),
   [Symbols.notifyForDependentProps]:({viewModel, viewModelProxy, handler}) => (prop, indexes) => 
     handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
