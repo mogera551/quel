@@ -3650,6 +3650,12 @@ class BindingManager {
     return this.#nodes;
   }
 
+  /** @type {Element[]} */
+  get elements() {
+    return this.#nodes.filter(node => node.nodeType === Node.ELEMENT_NODE);
+  }
+
+  /** @type {Node} */
   get lastNode() {
     return this.#nodes[this.#nodes.length - 1];
   }
@@ -3817,6 +3823,48 @@ class BindingManager {
     return bindingManager;
   }
 
+  /**
+   * 
+   * @param {Component} component 
+   * @returns {BindingManager|undefined}
+   */
+  static getByComponent(component) {
+    if (component.parentComponent === null) return;
+    /**
+     * traverse binding tree
+     * @param {BindingManager} bindingManager 
+     * @param {Map<Element,BindingManager>} bindingManagerByElement 
+     */
+    const traverse = function(bindingManager, bindingManagerByElement) {
+      bindingManager.elements.forEach(element => {
+        bindingManagerByElement.set(element, bindingManager);
+      });
+      for(const binding of bindingManager.bindings) {
+        binding.children.forEach(childBindingManager => traverse(childBindingManager, bindingManagerByElement));
+      }
+    };
+    const bindingManagerByElement = new Map;
+    traverse(component.parentComponent.rootBinding, bindingManagerByElement);
+    /**
+     * element to parent component
+     * @param {Component} component 
+     * @param {Element} element 
+     * @returns {Element[]}
+     */
+    function getPath(component, element) {
+      const path = [];
+      while(element !== null && element !== component) {
+        path.push(element);
+        element = element.parentElement;
+      }
+      return path;
+    }
+    const path = getPath(component.parentComponent, component);
+    for(const element of path) {
+      const bindingManager = bindingManagerByElement.get(element);
+      if (typeof bindingManager !== "undefined") return bindingManager;
+    }
+  }
 }
 
 /**
@@ -4913,7 +4961,7 @@ const dialogMixIn = {
       const closedEvent = new CustomEvent("closed");
       this.dispatchEvent(closedEvent);
     });
-    console.log("mixInDialog:initializeCallback");
+    console.log("dialogMixIn:initializeCallback");
   },
   /**
    * 
@@ -4999,6 +5047,14 @@ const dialogMixIn = {
 };
 
 const popoverMixIn = {
+  /** @type {boolean} */
+  get canceled() {
+    return this._canceled ?? false;
+  },
+  set canceled(value) {
+    this._canceled = value;
+  },
+
   /** @type {Promise<unknown>} */
   get popoverPromises() {
     return this._popoverPromises;
@@ -5020,6 +5076,26 @@ const popoverMixIn = {
   initializeCallback({
     useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
   }) {
+    this.addEventListener("hidden", () => {
+      if (typeof this.popoverPromises !== "undefined") {
+        if (this.canceled) {
+          this.popoverPromises.reject();
+        } else {
+          const buffer = this.props[Symbols.getBuffer]();
+          this.props[Symbols.clearBuffer]();
+          this.popoverPromises.resolve(buffer);
+        }
+        this.popoverPromises = undefined;
+        this.canceled = false;
+      }
+    });
+    this.addEventListener("toggle", e => {
+      if (e.newState === "closed") {
+        const hiddenEvent = new CustomEvent("hidden");
+        this.dispatchEvent(hiddenEvent);
+      }
+    });
+    console.log("popoverMixIn:initializeCallback");
   },
   /**
    * 
@@ -5027,19 +5103,18 @@ const popoverMixIn = {
    * @returns 
    */
   async asyncShowPopover(props) {
+    this.canceled = false;
     this.popoverPromises = Promise.withResolvers();
     this.props[Symbols.setBuffer](props);
     HTMLElement.prototype.showPopover.apply(this);
-    return this.popoverPromises;
+    return this.popoverPromises.promise;
   },
   hidePopover() {
     HTMLElement.prototype.hidePopover.apply(this);
-    if (!this.hasAttribute("popover") && typeof this.popoverPromises !== "undefined") {
-      const buffer = this.props[Symbols.getBuffer]();
-      this.props[Symbols.clearBuffer]();
-      this.popoverPromises.resolve(buffer);
-      this.popoverPromises = undefined;
-    }
+  },
+  cancelPopover() {
+    this.canceled = true;
+    HTMLElement.prototype.hidePopover.apply(this);
   }
 
 };

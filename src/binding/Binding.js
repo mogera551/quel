@@ -221,6 +221,12 @@ export class BindingManager {
     return this.#nodes;
   }
 
+  /** @type {Element[]} */
+  get elements() {
+    return this.#nodes.filter(node => node.nodeType === Node.ELEMENT_NODE);
+  }
+
+  /** @type {Node} */
   get lastNode() {
     return this.#nodes[this.#nodes.length - 1];
   }
@@ -388,4 +394,46 @@ export class BindingManager {
     return bindingManager;
   }
 
+  /**
+   * 
+   * @param {Component} component 
+   * @returns {BindingManager|undefined}
+   */
+  static getByComponent(component) {
+    if (component.parentComponent === null) return;
+    /**
+     * traverse binding tree
+     * @param {BindingManager} bindingManager 
+     * @param {Map<Element,BindingManager>} bindingManagerByElement 
+     */
+    const traverse = function(bindingManager, bindingManagerByElement) {
+      bindingManager.elements.forEach(element => {
+        bindingManagerByElement.set(element, bindingManager);
+      });
+      for(const binding of bindingManager.bindings) {
+        binding.children.forEach(childBindingManager => traverse(childBindingManager, bindingManagerByElement));
+      }
+    }
+    const bindingManagerByElement = new Map;
+    traverse(component.parentComponent.rootBinding, bindingManagerByElement);
+    /**
+     * element to parent component
+     * @param {Component} component 
+     * @param {Element} element 
+     * @returns {Element[]}
+     */
+    function getPath(component, element) {
+      const path = [];
+      while(element !== null && element !== component) {
+        path.push(element);
+        element = element.parentElement;
+      }
+      return path;
+    }
+    const path = getPath(component.parentComponent, component);
+    for(const element of path) {
+      const bindingManager = bindingManagerByElement.get(element);
+      if (typeof bindingManager !== "undefined") return bindingManager;
+    }
+  }
 }

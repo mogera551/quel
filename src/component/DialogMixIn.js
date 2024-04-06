@@ -44,7 +44,7 @@ export const dialogMixIn = {
       const closedEvent = new CustomEvent("closed");
       this.dispatchEvent(closedEvent);
     });
-    console.log("mixInDialog:initializeCallback");
+    console.log("dialogMixIn:initializeCallback");
   },
   /**
    * 
