@@ -40,13 +40,28 @@ export const popoverMixIn = {
           this.popoverPromises.resolve(buffer);
         }
         this.popoverPromises = undefined;
-        this.canceled = false;
+        this.canceled = true;
+      }
+      if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+        if (!this.canceled) {
+          this.props[Symbols.flushBuffer]();
+        }
+      }
+    });
+    this.addEventListener("shown", () => {
+      this.canceled = true;
+      if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+        const buffer = this.props[Symbols.createBuffer]();
+        this.props[Symbols.setBuffer](buffer);
       }
     });
     this.addEventListener("toggle", e => {
       if (e.newState === "closed") {
         const hiddenEvent = new CustomEvent("hidden");
         this.dispatchEvent(hiddenEvent);
+      } else if (e.newState === "open") {
+        const shownEvent = new CustomEvent("shown");
+        this.dispatchEvent(shownEvent);
       }
     });
     console.log("popoverMixIn:initializeCallback");
@@ -57,17 +72,22 @@ export const popoverMixIn = {
    * @returns 
    */
   async asyncShowPopover(props) {
-    this.canceled = false;
     this.popoverPromises = Promise.withResolvers();
     this.props[Symbols.setBuffer](props);
     HTMLElement.prototype.showPopover.apply(this);
     return this.popoverPromises.promise;
   },
+  /**
+   * 
+   */
   hidePopover() {
+    this.canceled = false;
     HTMLElement.prototype.hidePopover.apply(this);
   },
+  /**
+   * 
+   */
   cancelPopover() {
-    this.canceled = true;
     HTMLElement.prototype.hidePopover.apply(this);
   }
 
