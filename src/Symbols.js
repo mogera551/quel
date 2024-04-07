@@ -12,6 +12,8 @@ export const Symbols = Object.assign({
   clearCache: Symbol.for(`${myname}:viewModel.clearCache`),
   directlyCall: Symbol.for(`${myname}:viewModel.directCall`),
   notifyForDependentProps: Symbol.for(`${myname}:viewModel.notifyForDependentProps`),
+  createBuffer: Symbol.for(`${myname}:viewModel.createBuffer`),
+  flushBuffer: Symbol.for(`${myname}:viewModel.flushBuffer`),
 
   boundByComponent: Symbol.for(`${myname}:globalData.boundByComponent`),
 

@@ -4,6 +4,9 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /** @typedef {import("./ViewModelHandlerBase.js").ViewModelHandlerBase} ViewModelHandlerBase */
 
+const CREATE_BUFFER_METHOD = "$createBuffer";
+const FLUSH_BUFFER_METHOD = "$flushBuffer";
+
 /**
  * 外部から呼び出されるViewModelのAPI
  * @type {Set<symbol>}
@@ -13,6 +16,8 @@ const setOfApiFunctions = new Set([
   Symbols.getDependentProps,
   Symbols.notifyForDependentProps,
   Symbols.clearCache,
+  Symbols.createBuffer,
+  Symbols.flushBuffer,
 ]);
 
 /**
@@ -27,6 +32,8 @@ const callFuncBySymbol = {
     handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
   [Symbols.getDependentProps]:({handler}) => () => handler.dependentProps,
   [Symbols.clearCache]:({handler}) => () => handler.cache.clear(),
+  [Symbols.createBuffer]:({viewModelProxy}) => (component) => viewModelProxy[CREATE_BUFFER_METHOD]?.apply(viewModelProxy, [component]),
+  [Symbols.flushBuffer]:({viewModelProxy}) => (component, buffer) => viewModelProxy[FLUSH_BUFFER_METHOD]?.apply(viewModelProxy, [buffer, component]),
 }
 
 export class Api {

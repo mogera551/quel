@@ -454,6 +454,8 @@ const Symbols = Object.assign({
   clearCache: Symbol.for(`${name}:viewModel.clearCache`),
   directlyCall: Symbol.for(`${name}:viewModel.directCall`),
   notifyForDependentProps: Symbol.for(`${name}:viewModel.notifyForDependentProps`),
+  createBuffer: Symbol.for(`${name}:viewModel.createBuffer`),
+  flushBuffer: Symbol.for(`${name}:viewModel.flushBuffer`),
 
   boundByComponent: Symbol.for(`${name}:globalData.boundByComponent`),
 
@@ -792,7 +794,12 @@ let Handler$1 = class Handler {
   }
 
   #createBuffer() {
-    const buffer = {};
+    let buffer;
+    buffer = this.#component.parentComponent.writableViewModel[Symbols.createBuffer](this.#component);
+    if (typeof buffer !== "undefined") {
+      return buffer;
+    }
+    buffer = {};
     this.#binds.forEach(({ prop, propAccess }) => {
       buffer[prop] = this.#component.parentComponent.writableViewModel[Symbols.directlyGet](propAccess.name, propAccess.indexes);     
     });
@@ -801,9 +808,12 @@ let Handler$1 = class Handler {
 
   #flushBuffer() {
     if (typeof this.#buffer !== "undefined") {
-      this.#binds.forEach(({ prop, propAccess }) => {
-        this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, propAccess.indexes, this.#buffer[prop]);     
-      });
+      const result = this.#component.parentComponent.writableViewModel[Symbols.flushBuffer](this.#buffer, this.#component);
+      if (result !== true) {
+        this.#binds.forEach(({ prop, propAccess }) => {
+          this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, propAccess.indexes, this.#buffer[prop]);     
+        });
+      }
     }
   }
   /**
@@ -3973,6 +3983,9 @@ class Callback {
 
 /** @typedef {import("./ViewModelHandlerBase.js").ViewModelHandlerBase} ViewModelHandlerBase */
 
+const CREATE_BUFFER_METHOD = "$createBuffer";
+const FLUSH_BUFFER_METHOD = "$flushBuffer";
+
 /**
  * 外部から呼び出されるViewModelのAPI
  * @type {Set<symbol>}
@@ -3982,6 +3995,8 @@ const setOfApiFunctions = new Set([
   Symbols.getDependentProps,
   Symbols.notifyForDependentProps,
   Symbols.clearCache,
+  Symbols.createBuffer,
+  Symbols.flushBuffer,
 ]);
 
 /**
@@ -3996,6 +4011,8 @@ const callFuncBySymbol = {
     handler.addNotify(viewModel, { propName:PropertyName.create(prop), indexes }, viewModelProxy),
   [Symbols.getDependentProps]:({handler}) => () => handler.dependentProps,
   [Symbols.clearCache]:({handler}) => () => handler.cache.clear(),
+  [Symbols.createBuffer]:({viewModelProxy}) => (component) => viewModelProxy[CREATE_BUFFER_METHOD]?.apply(viewModelProxy, [component]),
+  [Symbols.flushBuffer]:({viewModelProxy}) => (component, buffer) => viewModelProxy[FLUSH_BUFFER_METHOD]?.apply(viewModelProxy, [buffer, component]),
 };
 
 class Api {
@@ -5086,13 +5103,13 @@ const popoverMixIn = {
           this.popoverPromises.resolve(buffer);
         }
         this.popoverPromises = undefined;
-        this.canceled = true;
       }
       if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
         if (!this.canceled) {
           this.props[Symbols.flushBuffer]();
         }
       }
+      this.canceled = true;
     });
     this.addEventListener("shown", () => {
       this.canceled = true;

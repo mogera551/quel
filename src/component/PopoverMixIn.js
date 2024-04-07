@@ -40,13 +40,13 @@ export const popoverMixIn = {
           this.popoverPromises.resolve(buffer);
         }
         this.popoverPromises = undefined;
-        this.canceled = true;
       }
       if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
         if (!this.canceled) {
           this.props[Symbols.flushBuffer]();
         }
       }
+      this.canceled = true;
     });
     this.addEventListener("shown", () => {
       this.canceled = true;

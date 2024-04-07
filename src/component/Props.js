@@ -86,7 +86,12 @@ class Handler {
   }
 
   #createBuffer() {
-    const buffer = {};
+    let buffer;
+    buffer = this.#component.parentComponent.writableViewModel[Symbols.createBuffer](this.#component);
+    if (typeof buffer !== "undefined") {
+      return buffer;
+    }
+    buffer = {};
     this.#binds.forEach(({ prop, propAccess }) => {
       buffer[prop] = this.#component.parentComponent.writableViewModel[Symbols.directlyGet](propAccess.name, propAccess.indexes);     
     });
@@ -95,9 +100,12 @@ class Handler {
 
   #flushBuffer() {
     if (typeof this.#buffer !== "undefined") {
-      this.#binds.forEach(({ prop, propAccess }) => {
-        this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, propAccess.indexes, this.#buffer[prop]);     
-      });
+      const result = this.#component.parentComponent.writableViewModel[Symbols.flushBuffer](this.#buffer, this.#component);
+      if (result !== true) {
+        this.#binds.forEach(({ prop, propAccess }) => {
+          this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, propAccess.indexes, this.#buffer[prop]);     
+        });
+      }
     }
   }
   /**
