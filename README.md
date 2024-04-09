@@ -176,26 +176,24 @@ registerComponentModules({ "myappMain":myappMain });
 registerComponentModules({ myappMain });
 ```
 
-## チュートリアル
+## Tutorial
 ### 前提
-チュートリアルで使うファイル構成は、
+The file structure used in the tutorial is as follows.
 ```
 --+-- index.html
   |
   +-- main.js
 ```
-とします。  
 
-`index.html`は、  
-* カスタム要素(`<myapp-main/>`)の記述
-* `registerComponentModules`関数の`import`
-* `main`コンポーネントモジュールの`import`
-* `registerComponentModules`関数を使ってコンポーネントモジュールとカスタム要素名と対応付け
+In `index.html`
+* Describe the custom element (<myapp-main/>)
+* Import `registerComponentModules` function
+* Import `main` component module
+* associate the component module with the custom element name using the `registerComponentModules` function
 
-を行います。  
-断りがなければ、チュートリアルでは、下記の`index.html`の内容を使用することとします。
+Unless otherwise stated, the tutorial will use the contents of the following index.html.
 
-`index.html`の内容
+`index.html`
 ```html
 <!DOCTYPE html>
 <html lang="ja">
@@ -205,54 +203,48 @@ registerComponentModules({ myappMain });
 
 <script type="module">
 import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
-import myappMain from "./main.js";
+import * as myappMain from "./main.js";
 
 registerComponentModules({ myappMain });
 </script>
 </html>
 ```
 
-`main.js`は、
-* `html`変数で、テンプレートとなるHTMLを定義します。
-* `ViewModel`クラスで、状態を保存、操作するクラスを定義します。
-* コンポーネントモジュールを`export`します。
-* `Quel`関連の機能は`import`しません。
+In `main.js`,
+* You define the HTML template in the `html` variable, `export` it
+* In the `ViewModel` class, you define a class that stores and manipulates state, `export` it.
 
-します。  
-チュートリアルでは、主に`main.js`について述べます。
+In the tutorial, we will mainly discuss `main.js`.
 
-`main.js`の内容
+`main.js`
 ```js
-const html = `
-(テンプレートとなるHTMLの内容)
+export const html = `
+(HTML Tempate)
 `;
 
-class ViewModel {
-  // (状態を保存)
+export class ViewModel {
+  // (State)
 
-  // (状態を操作する)
+  // (Manupilate)
 
 }
-
-// exportする
-export default { html, ViewModel };
 ```
 
-### Step.1 プロパティの埋め込み
-* `html`で、埋め込むプロパティ`message`を`{{ }}`で括ります。→ `{{ message }}`
-* `ViewModel`クラスで、状態保存するプロパティ`message`をフィールド宣言し、初期値`welcome to quel`を与えます。
-* `ViewModel`クラスは、実体化されたあと`Proxy`で拡張されるため、`ViewModel`クラスでは`private`フィールドを使うことはできません。
+### Step.1 Embedding properties
+* In `html`, enclose the property `message` to be embedded in `{{ }}`
+* In `ViewModel`, declare the property `message` that stores the state as a field, and give it an initial value of `welcome to quel`
+* The `ViewModel` class is extended by a Proxy after it is instantiated, so you cannot use private fields in the ViewModel class
 
-`main.js`の変数`html`の内容
+The content of the `html` variable in `main.js`
 ```html
 <div>{{ message }}</div>
 ```
 
-`main.js`の`ViewModel`クラス
+The `ViewModel` class in `main.js`
 ```js
 class ViewModel {
   message = "welcome to quel";
-  // #message NG ← privateフィールドは使えません
+  // #message NG, cannnot use private fields
 }
 ```
 
