@@ -13,6 +13,31 @@ This is declarative, simple, easy, pure javascript framework.
 * WebComponent-based
 * **Property description by dot notation**
 
+Simple template
+```html
+<ul>
+  {{ loop:tickets }}
+  <li><a data-bind="choose">{{ tickets.*.name }}, {{ tickets.*.price }}</a></li>
+  {{ end: }}
+</ul>
+```
+
+Simple class 
+```js
+class ViewModel {
+  tickets = [
+    { name:'first class', price:1000 },
+    { name:'business', price:500 },
+    { name:'economy', price:100 },
+  ];
+  choose() {
+    alert(`choose ${this["tickets.*.name"]}`);
+  }
+}
+```
+
+
+
 ## Getting Start
 To use Quel, import the necessary functions from the CDN or the downloaded file using the import declaration.
 * An `import` declaration is required, so the `script` tag needs `type="module"`.
