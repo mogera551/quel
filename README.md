@@ -1,36 +1,38 @@
 
-# Quelって何？
-簡単に使えるJavaScriptフレームワークです。
+# What is Quel
+This is declarative, simple, easy, pure javascript framework.
 
-## 主な特徴
-* ルール、作法を少なく、なるべく直感的に
-* 宣言的なViewの記述
-* 他のライブラリ不要
-* トランスパイル不要
-* コンポーネントベース
-* **ドット記法によるプロパティ記述**
+## The motivation for development
+"Antithesis to the increasingly complex JavaScript development."
 
-## はじめよう
-Quelを使うには、`import`宣言で、CDNもしくはダウンロードしたファイルから必要な関数を読み込みます。
-* `import`宣言をするので、`script`タグには、`type="module"`が必要です。
-* トランスパイルやツールチェインは特に要りません。
+## The main features
+* Minimal rules and conventions, as intuitive as possible
+* Declarative view descriptions
+* No need for other libraries
+* No need for transpiling
+* WebComponent-based
+* **Property description by dot notation**
 
-CDNの例
+## Getting Start
+To use Quel, import the necessary functions from the CDN or the downloaded file using the import declaration.
+* An `import` declaration is required, so the `script` tag needs `type="module"`.
+
+Example for CDN
 ```html
 <script type="module">
 import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 </script>
 ```
 
-ダウンロードしたファイルの例
+Example for downloaded file
 ```html
 <script type="module">
-import { registerComponentModules } from "./path/to/quel.min.js"; // ファイル
+import { registerComponentModules } from "./path/to/quel.min.js"; // path to downloaded file
 </script>
 ```
 
-### 簡単なテスト
-`Welcome to Quel`と画面に表示されます。
+### Install Test
+Display `Welcome to Quel`.
 
 ```html
 <!DOCTYPE html>
@@ -55,66 +57,63 @@ registerComponentModules({ myappMain:{ html, ViewModel } });
 </html>
 ```
 
-## 開発の流れ
-コンポーネントベースの開発で、以下の手順で開発していくことになります。
-* カスタム要素をHTMLに記述
-* 対応するコンポーネントモジュールの作成
-   * テンプレートとなるHTMLを定義
-   * 状態を保存、操作するクラスを定義
-* カスタム要素とコンポーネントモジュールを対応付け
+## The development flow
+In component-based development, you will proceed with the following steps:
+* Write custom elements in HTML
+* Create corresponding component modules
+   * Define the HTML template
+   * Define the class to store and manipulate state
+* Associate custom elements with component modules
 
-### カスタム要素をHTMLに記述
-カスタム要素は自律カスタム要素(autonomous custom element)、
-カスタマイズドビルトイン要素(customized built-in element)が利用できます。
-カスタム要素名には、ダッシュ`-`を含める必要があります。
+### Write custom elements in HTML
+You can use autonomous custom elements and customized built-in elements for custom elements. 
+The custom element name must include a dash `-`.
 
-`index.html`の内容
+Example for custom elements
+`index.html`
 ```html
 <!DOCTYPE html>
 <html lang="ja">
 <meta charset="utf-8">
 
-<!-- 自律カスタム要素(autonomous custom element) -->
+<!-- autonomous custom element -->
 <myapp-main><myapp-main>
 
-<!-- カスタマイズドビルトイン要素(customized built-in element) -->
+<!-- customized built-in element -->
 <div is="myapp-main"></div>
-
-<script type="module">
-import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
-</script>
 
 </html>
 ```
 
-### 対応するコンポーネントモジュールの作成
-コンポーネントモジュールは、テンプレートのHTMLと、状態を保存、操作するクラスで構成されます。
-１つのコンポーネントモジュールは、１つのファイルに記述したほうが管理しやすいです。
-ここでは、`main.js`としています。
+### Create corresponding component modules
+A component module consists of an HTML template, and a class that stores and manipulates state.
+It is easier to manage if one component module is described in one file.
+Here, it is referred to as `main.js`.
 
-#### テンプレートとなるHTMLを定義
-コンポーネントで使用するDOMのテンプレートとなるHTMLを定義します。
-`ViewModel`クラスで定義するプロパティの埋め込み、`html`の要素の属性値の関連付け、イベントの関連付けや条件分岐、繰り返しを記述できます。
-`html`という変数名で宣言すると、`export`するときに便利です。
+#### Define the HTML template.
+Define the HTML that will serve as the content of the component.
+You describe the embedding of properties defined in the ViewModel class, the association of attribute values of html elements, the association of events, conditional branching, and repetition.
+Declare with the variable name `html` and `export` it.
 
-`main.js`の`html`変数部分
+Example for HTML template of component module
+`main.js`
 ```js
-const html = `
-<!-- 埋め込み -->
+export const html = `
+<!-- embed -->
 <div>{{ count }}</div>
 
-<!-- 要素の属性値の関連付け -->
+<!-- association of attribute -->
 <input data-bind="value:message">
 
-<!-- イベントの関連付け -->
+<!-- association of events -->
 <button data-bind="onclick:countUp">count up</button>
 
-<!-- 条件分岐 -->
+<!-- conditional branching -->
 {{ if:is5Times }}
-  <div>5回以上押されたよ</div>
+  <div>It has been pressed more than 5 times.</div>
 {{ end: }}
 
-<!-- 繰り返し -->
+<!-- repetition -->
 <ul>
   {{ loop:animals }}
     <li>{{ animals.* }}</li>
@@ -123,69 +122,57 @@ const html = `
 `;
 ```
 
-#### 状態を保存、操作するクラスを定義
-コンポーネントの状態を保存、操作する`ViewModel`クラスを定義します。
-状態を保存するメンバをクラスの中でフィールド宣言することで、状態をクラスのプロパティとして扱います。
-状態を操作するメソッドをクラスの中に作成します。
-`ViewModel`というクラス名で宣言すると、`export`するときに便利です。
-getterを使った、アクセサプロパティを利用することもできます。
-※アクセサプロパティを使う場合、依存関係の定義をすることが必要です。
+#### Define the class to store and manipulate state
+Define the ViewModel class that stores and manipulates the state of the component.
+By declaring members that store state as fields within the class, you can handle the state as properties of the class.
+Create methods within the class to manipulate the state.
+Declare with the class name `ViewModel` and `export` it.
+You can also use accessor properties using getters.
+note:When using accessor properties, it is necessary to define dependencies.
 
-`main.js`の`ViewModel`クラス部分
+Example for ViewModel class of component module
+`main.js`
 ```js
-class ViewModel {
-  /* 状態の保存 */
+export class ViewModel {
+  // state
   count = 0;
   message = "welcome to quel";
   animals = [ "cat", "dog", "fox", "pig" ];
 
-// getterを使った、アクセサプロパティ
+  // accessor properties using getters
   get is5Times() {
     return this.count >= 5;
   }
 
-  /* 状態を操作するメソッド */
+  // manipulate the state
   countUp() {
     this.count++;
   }
 
-  /* 依存関係を定義 */
-  /* アクセサプロパティを使う場合必要になります。 */
+  // define dependencies
+  // when using accessor properties
   $dependentProps = {
     "is5Times": [ "count" ],
   }
 }
 ```
 
-#### エクスポート
-コンポーネントモジュールを１つのファイルに記述する場合、`export`します。
-カスタマイズドビルトイン要素の場合、拡張するタグ`extends`の指定が必要になります。
+### Associate custom elements with component modules
+You `import` the created component module.
+You associate the component module with the custom element name using the registerComponentModules function.
 
-`main.js`の`export`部分
-```js
-// コンポーネントモジュールのexport
-export default { html, ViewModel };
-
-// カスタマイズドビルトイン要素の場合、拡張するタグ(extends)の指定が必要
-export default { html, ViewModel, extends:"div" };
-```
-### カスタム要素とコンポーネントモジュールを対応付ける
-作成したコンポーネントモジュールを登録する側で`import`します。ここでは、`index.html`になります。
-`registerComponentModules`関数を使って、コンポーネントモジュールとカスタム要素名と対応付けます。
-
-`index.html`の`javascript`の内容
+`index.html`
 ```js
 import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
-// コンポーネントモジュールのimport
-import myappMain from "./main.js";
+import * as myappMain from "./main.js"; // import the created component module
 
-// カスタム要素名とコンポーネントモジュールと対応付ける。
+// Associate the component module with the custom element name
 registerComponentModules({ "myapp-main":myappMain });
 
-// カスタム要素名はキャメルケースでもOK。
+// The custom element name can also be in camel case
 registerComponentModules({ "myappMain":myappMain });
 
-// オブジェクトリテラルの省略記法でより簡単に記述できます。
+// You can describe it more simply using the shorthand notation for object literals
 registerComponentModules({ myappMain });
 ```
 
