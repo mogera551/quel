@@ -16,12 +16,12 @@ Quel is declarative, simple, easy, pure javascript framework.
 Simple template
 ```html
 <div>
-  <input type="text" data-bind="task">
-  <button type="button" data-bind="add; disabled:task|falsey">add</button>
+  <input data-bind="task">
+  <button data-bind="add; disabled:task|falsey">add</button>
 </div>
 <ul>
   {{ loop:taskList }}
-  <li>{{ taskList.* }}, <button type="button" data-bind="delete">X</button></li>
+  <li>{{ taskList.* }}, <button data-bind="delete">X</button></li>
   {{ end: }}
 </ul>
 ```
