@@ -277,7 +277,8 @@ The `ViewModel` class in `main.js`
 ```js
 class ViewModel {
   message = "welcome to quel";
-  // #message NG, cannnot use private fields
+  // #message NG, cannot use private fields
+  // $message NG, cannot use name starting with $ 
 }
 ```
 
