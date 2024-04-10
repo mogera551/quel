@@ -1,6 +1,6 @@
 
 # What is Quel
-This is declarative, simple, easy, pure javascript framework.
+Quel is declarative, simple, easy, pure javascript framework.
 
 ## The motivation for development
 "Antithesis to the increasingly complex JavaScript development."
@@ -10,7 +10,7 @@ This is declarative, simple, easy, pure javascript framework.
 * Declarative view descriptions
 * No need for other libraries
 * No need for transpiling
-* WebComponent-based
+* Component-based
 * **Property description by dot notation**
 
 Simple template
@@ -35,8 +35,6 @@ class ViewModel {
   }
 }
 ```
-
-
 
 ## Getting Start
 To use Quel, import the necessary functions from the CDN or the downloaded file using the import declaration.
