@@ -28,7 +28,7 @@ Simple template
 
 Simple class to store and manipulate state
 ```js
-export class ViewModel {
+class ViewModel {
   task = "";
   taskList = [];
 
@@ -42,6 +42,8 @@ export class ViewModel {
   }
 }
 ```
+
+See [todo list sample](https://codepen.io/mogera551/pen/MWRGNBr)
 
 ## Getting Start
 To use Quel, import the necessary functions from the CDN or the downloaded file using the import declaration.
