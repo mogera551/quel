@@ -15,23 +15,30 @@ Quel is declarative, simple, easy, pure javascript framework.
 
 Simple template
 ```html
+<div>
+  <input type="text" data-bind="task">
+  <button type="button" data-bind="add; disabled:task|falsey">add</button>
+</div>
 <ul>
-  {{ loop:tickets }}
-  <li><a data-bind="choose">{{ tickets.*.name }}, {{ tickets.*.price }}</a></li>
+  {{ loop:taskList }}
+  <li>{{ taskList.* }}, <button type="button" data-bind="delete">X</button></li>
   {{ end: }}
 </ul>
 ```
 
-Simple class 
+Simple class to store and manipulate state
 ```js
-class ViewModel {
-  tickets = [
-    { name:'first class', price:1000 },
-    { name:'business', price:500 },
-    { name:'economy', price:100 },
-  ];
-  choose() {
-    alert(`choose ${this["tickets.*.name"]}`);
+export class ViewModel {
+  task = "";
+  taskList = [];
+
+  add() {
+    this.taskList = this.taskList.concat(this.task);
+    this.task = "";
+  }
+
+  delete(e, $1) {
+    this.taskList = this.taskList.toSpliced($1, 1);
   }
 }
 ```
