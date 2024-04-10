@@ -263,9 +263,10 @@ export class ViewModel {
 ```
 
 ### Step.1 Embedding properties
-* In `html`, enclose the property `message` to be embedded in `{{ }}`
-* In `ViewModel`, declare the property `message` that stores the state as a field, and give it an initial value of `welcome to quel`
-* The `ViewModel` class is extended by a Proxy after it is instantiated, so you cannot use private fields in the ViewModel class
+* In `html`, enclose the property `message` to be embedded in `{{ }}`.
+* In `ViewModel`, declare the property `message` that stores the state as a field, and give it an initial value of `welcome to quel`.
+* The `ViewModel` class is extended by a Proxy after it is instantiated, so you cannot use private fields in the ViewModel class.
+* Property names starting with `$` are assigned to special properties, so you cannot use them.
 
 The content of the `html` variable in `main.js`
 ```html
