@@ -280,28 +280,29 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/KKrbPjJ)
+See [result](https://codepen.io/mogera551/pen/KKrbPjJ)
 
 
-### Step.2 プロパティのバインド
-* `html`の要素のプロパティと`ViewModel`クラスのプロパティを関連付けます（バインドする）。
-* 要素の`data-bind`属性に`(要素のプロパティ名):(ViewModelクラスのプロパティ名)`と指定します。
-   `textContent:message`、`value:message`、`value:season`、`textContent:season`、`disabled:buttonDisable`、`checked:buttonDisable`
-* 複数のバインドを指定する場合、セミコロン`;`で区切ります。`disabled:buttonDisable; textContent:season;`
-* `ViewModel`クラスのプロパティが更新されると、自動的に`html`の要素のプロパティへ更新が反映されます。
-* 入力系要素の場合、入力値に応じて`ViewModel`クラスのプロパティが更新されます。（双方向バインドを参照）
+### Step.2 Property Binding
+* Associate the properties of the html elements in template with the properties of the `ViewModel` class.
+* Specify (element property name):(ViewModel class property name) in the data-bind attribute of the element.
+`textContent:message`,`value:message`,`value:season`...
+* If you specify multiple bindings, separate them with a semicolon `;`.
+`disabled:buttonDisable; textContent:season;`
+* When a property of the `ViewModel` class is updated, the update is automatically reflected in the property of the html element.
+* For input elements, the property of the ViewModel class is updated according to the input value. (See bidirectional binding)
 
-`main.js`の変数`html`の内容
+The content of the `html` variable in `main.js`
 ```html
 <div>
   <div>{{ message }}</div>
   <div data-bind="textContent:message"></div>
-  <!-- 入力系要素 -->
+  <!-- input element -->
   <input type="text" data-bind="value:message">
 </div>
 <div>
   <div>{{ season }}</div>
-  <!-- 入力系要素 -->
+  <!-- input element -->
   <select data-bind="value:season">
     <option value="spring">spring</option>
     <option value="summer">summer</option>
@@ -312,14 +313,14 @@ class ViewModel {
 <div>
   <button data-bind="disabled:buttonDisable; textContent:season;"></button>
   <label>
-    <!-- 入力系要素 -->
+    <!-- input element -->
     <input type="checkbox" data-bind="checked:buttonDisable">
     button disable
   </label>
 </div>
 ```
 
-`main.js`の`ViewModel`クラス
+The `ViewModel` class in `main.js`
 ```js
 class ViewModel {
   message = "welcome to quel";
@@ -328,7 +329,7 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/QWzWPzg)
+See [result](https://codepen.io/mogera551/pen/QWzWPzg)
 
 ### Step.3 イベントのバインド
 * `html`の要素のイベントプロパティ(on～)と`ViewModel`クラスのメソッドを関連付けます。
