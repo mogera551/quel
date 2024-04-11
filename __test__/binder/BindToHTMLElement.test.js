@@ -248,6 +248,21 @@ describe("src/binder/BindToHTMLElement.js", () => {
     expect(input_addEventListener.mock.calls.length).toBe(0);
     input_addEventListener.mockReset();
   });
+  test("bind form", () =>{
+    BindToDom_parseBindText.mockClear();
+    const form = document.createElement("form");
+    form.setAttribute("data-bind", "textContent:value");
+    const input_addEventListener = jest.spyOn(form, "addEventListener").mockImplementation((event, listener) => {});
+    const binds = BindToHTMLElement.bind(bindingManager, form);
+    expect(BindToDom_parseBindText.mock.calls.length).toBe(1);
+    expect(BindToDom_parseBindText.mock.calls[0]).toEqual([bindingManager, form, bindingManager.component.viewModel, "textContent:value", "onsubmit"]);
+    expect(binds.length).toEqual(1);
+    expect(binds[0].nodeProperty.node).toBe(form);
+    expect(binds[0].nodeProperty.name).toBe("textContent");
+    expect(binds[0].viewModelProperty.name).toBe("value");
+    expect(input_addEventListener.mock.calls.length).toBe(0);
+    input_addEventListener.mockReset();
+  });
   test("bind select", () =>{
     BindToDom_parseBindText.mockClear();
     const select = document.createElement("select");

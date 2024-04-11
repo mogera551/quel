@@ -3080,6 +3080,7 @@ const getDefaultProperty = element => {
   return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
   element instanceof HTMLButtonElement ? "onclick" : 
   element instanceof HTMLAnchorElement ? "onclick" : 
+  element instanceof HTMLFormElement ? "onsubmit" : 
   element instanceof HTMLInputElement ? ((element.type === "radio" || element.type === "checkbox") ? "checked" : (element.type === "button" ? "onclick" : "value")) : 
   DEFAULT_PROPERTY$1;
   

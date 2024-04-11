@@ -7,7 +7,7 @@ export const html = `
   }
 </style>
 <div>
-  <form data-bind="onsubmit:add">
+  <form data-bind="add">
     <input type="text" data-bind="content">
     <button data-bind="disabled:content|falsey">追加</button>
   </form>
