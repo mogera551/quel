@@ -1292,6 +1292,10 @@ class ViewModelHandlerBase extends Handler$2 {
   }
 }
 
+function key() {
+  return this.propName.name + "\t" + this.indexes.toString();
+}
+
 class NodeUpdator {
   /** @type {PropertyAccess[]} */
   queue = [];
@@ -1316,11 +1320,8 @@ class NodeUpdator {
       for(const propertyAccess of notifies) {
         dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
       }
-      const propertyAccessByViewModelPropertyKey = notifies.concat(dependentPropertyAccesses).reduce(
-        (/** @type {Map<string,PropertyAccess>} */ map, propertyAccess) => 
-          map.set(propertyAccess.propName.name + "\t" + propertyAccess.indexes.toString(), propertyAccess), 
-        new Map  
-      );
+      const propertyAccessByViewModelPropertyKey = 
+        new Map(notifies.concat(dependentPropertyAccesses).map(propertyAccess => [key.apply(propertyAccess), propertyAccess]));
       this.#component.updateNode(propertyAccessByViewModelPropertyKey);
     }
   }
