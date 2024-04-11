@@ -36,6 +36,7 @@ describe("Branch", () => {
     const retBindingManager = {
       dispose: () => {},
       applyToNode: () => {},
+      registerBindingsToSummary: () => {},
     }
     const bindingManager_create = jest.spyOn(BindingManager, "create").mockImplementation((component, template, binding) => {
       return retBindingManager;
@@ -44,6 +45,8 @@ describe("Branch", () => {
     });
     const bindingManager_applyToNode = jest.spyOn(retBindingManager, "applyToNode").mockImplementation(() => {
     });
+    const bindingManager_registerBindingsToSummary = jest.spyOn(retBindingManager, "registerBindingsToSummary").mockImplementation(() => {
+    });
     const binding_appendChild = jest.spyOn(binding, "appendChild").mockImplementation((bindingManager) => {
       binding.children.push(bindingManager);
     });
@@ -51,6 +54,7 @@ describe("Branch", () => {
     bindingManager_create.mockClear();
     bindingManager_dispose.mockClear();
     bindingManager_applyToNode.mockClear();
+    bindingManager_registerBindingsToSummary.mockClear();
     binding_appendChild.mockClear();
     const trueValue = true;
     branch.value = trueValue;
@@ -59,7 +63,10 @@ describe("Branch", () => {
     expect(bindingManager_create.mock.calls[0]).toEqual([binding.component, template1, binding]);
     expect(binding_appendChild.mock.calls.length).toBe(1);
     expect(binding_appendChild.mock.calls[0]).toEqual([retBindingManager]);
-    expect(bindingManager_applyToNode.mock.calls.length).toBe(0);
+    expect(bindingManager_registerBindingsToSummary.mock.calls.length).toBe(1);
+    expect(bindingManager_registerBindingsToSummary.mock.calls[0]).toEqual([]);
+    expect(bindingManager_applyToNode.mock.calls.length).toBe(1);
+    expect(bindingManager_applyToNode.mock.calls[0]).toEqual([]);
     expect(bindingManager_dispose.mock.calls.length).toBe(0);
     expect(binding.children.length).toBe(1);
     expect(binding.children[0]).toBe(retBindingManager);

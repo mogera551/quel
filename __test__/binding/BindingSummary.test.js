@@ -39,6 +39,11 @@ describe("BindingSummary", () => {
     expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
+    expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
+    expect(bindingSummary.expandableBindings.size).toBe(0);
+    expect(bindingSummary.componentBindings.size).toBe(0);
+    bindingSummary.flush();
+    expect(bindingSummary.allBindings.size).toBe(1);
     expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     expect(bindingSummary.expandableBindings.size).toBe(0);
     expect(bindingSummary.componentBindings.size).toBe(0);
@@ -61,6 +66,11 @@ describe("BindingSummary", () => {
     expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
+    expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
+    expect(bindingSummary.expandableBindings.size).toBe(0);
+    expect(bindingSummary.componentBindings.size).toBe(0);
+    bindingSummary.flush();
+    expect(bindingSummary.allBindings.size).toBe(1);
     expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     expect(bindingSummary.expandableBindings.size).toBe(1);
     expect(bindingSummary.componentBindings.size).toBe(0);
@@ -81,6 +91,11 @@ describe("BindingSummary", () => {
     expect(bindingSummary.componentBindings.size).toBe(0);
     expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
     bindingSummary.add(binding);
+    expect(bindingSummary.allBindings.size).toBe(1);
+    expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
+    expect(bindingSummary.expandableBindings.size).toBe(0);
+    expect(bindingSummary.componentBindings.size).toBe(0);
+    bindingSummary.flush();
     expect(bindingSummary.allBindings.size).toBe(1);
     expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     expect(bindingSummary.expandableBindings.size).toBe(1);
@@ -110,6 +125,9 @@ describe("BindingSummary", () => {
     };
     bindingSummary.add(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
+    expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
+    bindingSummary.flush();
+    expect(bindingSummary.allBindings.size).toBe(1);
     expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     bindingSummary.delete(binding);
     expect(bindingSummary.allBindings.size).toBe(1);
@@ -130,6 +148,9 @@ describe("BindingSummary", () => {
       }
     };
     bindingSummary.add(binding);
+    expect(bindingSummary.allBindings.size).toBe(1);
+    expect(bindingSummary.bindingsByKey.get("key1")).toBe(undefined);
+    bindingSummary.flush();
     expect(bindingSummary.allBindings.size).toBe(1);
     expect(bindingSummary.bindingsByKey.get("key1")).toEqual([binding]);
     bindingSummary.delete(binding);

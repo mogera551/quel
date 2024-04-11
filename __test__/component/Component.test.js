@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { ComponentClassGenerator, generateComponentClass, registComponentModule, registerComponentModules } from "../../src/component/Component.js";
+import { ComponentClassGenerator, generateComponentClass, registerComponentModule, registerComponentModules } from "../../src/component/Component.js";
 import { Symbols } from '../../src/Symbols.js';
 
 Promise.withResolvers = () => {
@@ -77,10 +77,10 @@ describe("generateComponentClass", () => {
   });
 });
 
-describe("registComponentModule", () => {
+describe("registerComponentModule", () => {
   it("should register a component module with a custom element name, autonomous custom element", () => {
     expect(customElements.get("custom-element-name-3")).toBeUndefined();
-    registComponentModule("custom-element-name-3", {});
+    registerComponentModule("custom-element-name-3", {});
     expect(customElements.get("custom-element-name-3")).toBeDefined();
     const element3 = document.createElement("custom-element-name-3");
     expect(element3 instanceof HTMLElement).toBe(true);
@@ -90,7 +90,7 @@ describe("registComponentModule", () => {
 
   it("should register a component module with a custom element name, customized built-in element", () => {
     expect(customElements.get("custom-element-name-4")).toBeUndefined();
-    registComponentModule("custom-element-name-4", { extendTag: "div" });
+    registerComponentModule("custom-element-name-4", { extendTag: "div" });
     expect(customElements.get("custom-element-name-4")).toBeDefined();
     const element4 = document.createElement("div", { is: "custom-element-name-4" });
     expect(element4 instanceof HTMLElement).toBe(true);
@@ -99,7 +99,7 @@ describe("registComponentModule", () => {
 
   it("should register a component module with a custom element snake name, autonomous custom element", () => {
     expect(customElements.get("custom-element-name5")).toBeUndefined();
-    registComponentModule("customElementName5", {});
+    registerComponentModule("customElementName5", {});
     expect(customElements.get("custom-element-name5")).toBeDefined();
     const element5 = document.createElement("custom-element-name5");
     expect(element5 instanceof HTMLElement).toBe(true);
