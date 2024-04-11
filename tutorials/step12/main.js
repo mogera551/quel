@@ -1,4 +1,5 @@
-const html = `
+
+export const html = `
 <style>
 .over {
   color:red;
@@ -9,7 +10,7 @@ const html = `
 <div data-bind="class.over:isOver">{{ num }}</div>
 `;
 
-class ViewModel {
+export class ViewModel {
   num = 5;
   get isOver() {
     return this.num > 10;
@@ -19,5 +20,3 @@ class ViewModel {
     "isOver": ["num"]
   }
 }
-
-export default { html, ViewModel }

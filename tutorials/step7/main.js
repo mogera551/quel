@@ -1,4 +1,5 @@
-const html = `
+
+export const html = `
 <ul>
 {{ loop:animals }}
   <li>{{ animals.* }}</li>
@@ -11,7 +12,7 @@ const html = `
 </ul>
 `;
 
-class ViewModel {
+export class ViewModel {
   animals = [ "cat", "dog", "fox", "pig" ];
   fruits = [
     { name:"apple", color:"red" },
@@ -21,5 +22,3 @@ class ViewModel {
     { name:"strawberry", color:"red" },
   ];
 }
-
-export default { html, ViewModel }

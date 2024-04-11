@@ -1,4 +1,5 @@
-const html = `
+
+export const html = `
 <select data-bind="value:per_page">
   <option value="3">3</option>
   <option value="4">4</option>
@@ -13,7 +14,7 @@ const html = `
 </ul>
 `;
 
-class ViewModel {
+export class ViewModel {
   per_page = "3";
   commits = [];
 
@@ -30,5 +31,3 @@ class ViewModel {
     }
   }
 }
-
-export default { html, ViewModel }

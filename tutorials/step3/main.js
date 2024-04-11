@@ -1,11 +1,10 @@
-const html = `
+
+export const html = `
 <button type="button" data-bind="onclick:popup">popup</button>
 `;
 
-class ViewModel {
+export class ViewModel {
   popup() {
     alert("popup!!!");
   }
 }
-
-export default { html, ViewModel }

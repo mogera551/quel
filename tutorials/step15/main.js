@@ -1,19 +1,23 @@
-const html = `
+
+export const html = `
 <style>
   .completed {
     text-decoration: line-through;
+    color: grey;
   }
 </style>
 <div>
-  <input type="text" data-bind="content">
-  <button type="button" data-bind="onclick:add; disabled:content|falsey">追加</button>
+  <form data-bind="onsubmit:add">
+    <input type="text" data-bind="content">
+    <button data-bind="disabled:content|falsey">追加</button>
+  </form>
 </div>
 <ul>
   {{ loop:todoItems }}
   <li>
     <input type="checkbox" data-bind="todoItems.*.completed">
     <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
-    <button type="button" data-bind="onclick:delete">削除</button>
+    <button type="button" data-bind="delete">削除</button>
   </li>
   {{ end: }}
 </ul>
@@ -27,10 +31,11 @@ class TodoItem {
   }
 }
 
-class ViewModel {
+export class ViewModel {
   content = ""; // 入力欄のテキスト
   todoItems = []; // ToDoリスト、初期値には空の配列をセットする
-  add() {
+  add(e) {
+    e.preventDefault();
     this.todoItems = this.todoItems.concat(new TodoItem(this.content));
     this.content = "";
   }
@@ -38,5 +43,3 @@ class ViewModel {
     this.todoItems = this.todoItems.toSpliced($1, 1);
   }
 }
-
-export default { html, ViewModel }

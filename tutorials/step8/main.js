@@ -1,4 +1,5 @@
-const html = `
+
+export const html = `
 <ul>
   {{ loop:commits }}
   <li>
@@ -8,7 +9,7 @@ const html = `
 </ul>
 `;
 
-class ViewModel {
+export class ViewModel {
   commits = [];
 
   async $connectedCallback() {
@@ -16,5 +17,3 @@ class ViewModel {
     this.commits = await response.json();
   }
 }
-
-export default { html, ViewModel }

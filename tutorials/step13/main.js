@@ -1,4 +1,5 @@
-const html = `
+
+export const html = `
 <style>
 .adult {
   color:red;
@@ -13,7 +14,7 @@ const html = `
 {{ end: }}
 `;
 
-class ViewModel {
+export class ViewModel {
   members = [
     { name:"佐藤　一郎", age:20 },
     { name:"鈴木　二郎", age:15 },
@@ -42,6 +43,3 @@ class ViewModel {
     // →省略
   }
 }
-
-export default { html, ViewModel }
-

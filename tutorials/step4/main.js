@@ -1,10 +1,11 @@
-const html = `
+
+export const html = `
 <div>{{ counter }}</div>
 <div>{{ doubled }}</div>
 <button type="button" data-bind="onclick:countUp">count up</button>
 `;
 
-class ViewModel {
+export class ViewModel {
   counter = 1;
   get doubled() {
     return this.counter * 2;
@@ -17,5 +18,3 @@ class ViewModel {
     "doubled": [ "counter" ],
   };
 }
-
-export default { html, ViewModel }

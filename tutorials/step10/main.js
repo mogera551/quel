@@ -1,4 +1,5 @@
-const html = `
+
+export const html = `
 <div data-bind="message"></div>
 <div>
   <input type="text" data-bind="message">
@@ -23,7 +24,7 @@ const html = `
 </div>
 `;
 
-class ViewModel {
+export class ViewModel {
   num = 1;
   message = "";
   get double() {
@@ -34,5 +35,3 @@ class ViewModel {
     "double": ["num"]
   }
 }
-
-export default { html, ViewModel }

@@ -1,4 +1,5 @@
-const html = `
+
+export const html = `
 <div>
   <div>{{ message }}</div>
   <div data-bind="textContent:message"></div>
@@ -14,9 +15,7 @@ const html = `
 </div>
 `;
 
-class ViewModel {
+export class ViewModel {
   message = "welcome to quel";
   val = "1";
 }
-
-export default { html, ViewModel }
