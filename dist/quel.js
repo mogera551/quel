@@ -1554,7 +1554,7 @@ class outputFilters {
   static le           = (value, options) => Number(value) <= Number(options[0]);
   static gt           = (value, options) => Number(value) > Number(options[0]);
   static ge           = (value, options) => Number(value) >= Number(options[0]);
-  static embed        = (value, options) => (value != null) ? decodeURIComponent((options[0] ?? "").replaceAll("%s", value)) : null;
+  static embed        = (value, options) => (value != null) ? (options[0] ?? "").replaceAll("%s", value) : null;
   static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
   static null         = (value, options) => (value == null) ? true : false;
   static offset       = (value, options) => Number(value) + Number(options[0]);
@@ -2960,6 +2960,8 @@ const trim = s => s.trim();
  */
 const has = s => s.length > 0;
 
+const decode = s => decodeURIComponent(s);
+
 /**
  * フィルターのパース
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
@@ -2968,7 +2970,7 @@ const has = s => s.length > 0;
  */
 const parseFilter = text => {
   const [name, ...options] = text.split(",").map(trim);
-  return Object.assign(new Filter, {name, options});
+  return Object.assign(new Filter, {name, options:options.map(decode)});
 };
 
 /**

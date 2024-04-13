@@ -27,6 +27,8 @@ const trim = s => s.trim();
  */
 const has = s => s.length > 0;
 
+const decode = s => decodeURIComponent(s);
+
 /**
  * フィルターのパース
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
@@ -35,7 +37,7 @@ const has = s => s.length > 0;
  */
 const parseFilter = text => {
   const [name, ...options] = text.split(",").map(trim);
-  return Object.assign(new Filter, {name, options});
+  return Object.assign(new Filter, {name, options:options.map(decode)});
 };
 
 /**
