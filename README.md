@@ -275,7 +275,7 @@ The content of the `html` variable in `main.js`
 
 The `ViewModel` class in `main.js`
 ```js
-class ViewModel {
+export class ViewModel {
   message = "welcome to quel";
   // #message NG, cannot use private fields
   // $message NG, cannot use name starting with $ 
@@ -324,7 +324,7 @@ The content of the `html` variable in `main.js`
 
 The `ViewModel` class in `main.js`
 ```js
-class ViewModel {
+export class ViewModel {
   message = "welcome to quel";
   season = "spring";
   buttonDisable = false;
@@ -333,12 +333,12 @@ class ViewModel {
 
 See [result](https://codepen.io/mogera551/pen/QWzWPzg)
 
-### Step.3 イベントのバインド
-* `html`の要素のイベントプロパティ(on～)と`ViewModel`クラスのメソッドを関連付けます。
-* 要素の`data-bind`属性に`(要素のイベントプロパティ名):(ViewModelクラスのメソッド名)`と指定します。→`onclick:popup`
-* `ViewModel`クラスのメソッドは`Event`オブジェクトを引数に取ります。`checked(e)`
+### Step.3 Event Binding
+* Associate the event properties (`on~`) of the html elements with the methods of the `ViewModel` class.
+* Specify `(element event property name):(ViewModel class method name)` in the `data-bind` attribute of the element. ->`onclick:popup`
+* The methods of the `ViewModel` class take an Event object as an argument. ->`checked(e)`
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <button type="button" data-bind="onclick:popup">click here</button>
 <label>
@@ -346,22 +346,15 @@ See [result](https://codepen.io/mogera551/pen/QWzWPzg)
 </label>
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
-class ViewModel {
-  /**
-   * 「click here」ボタンをクリックしたときの処理
-   * 「popup!!!」とポップアップ表示
-   */
+export class ViewModel {
   popup() {
     alert("popup!!!");
   }
 
   /**
-   * 「checked」チェックボックスをクリックしたときの処理
-   * チェックボックスの状態により「checked on」もしくは「checked off」とポップアップ表示
-   * チェックボックスの状態は、引数で渡されるEventオブジェクトのtarget要素のcheckedプロパティから取得する
-   * @param {Event} e Eventオブジェクト
+   * @param {Event} e Event object
    */
   checked(e) {
     alert(`checked ${e.target.checked ? "on" : "off"}`);
@@ -369,7 +362,7 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/ZEVYWER)
+See [result](https://codepen.io/mogera551/pen/ZEVYWER)
 
 ### Step.4 アクセサプロパティ
 * `get`を使ったアクセサプロパティも埋め込みや、バインドすることができます。
@@ -383,7 +376,7 @@ class ViewModel {
 <div>{{ counter }}</div>
 <div>{{ doubled }}</div>
 <!-- 5回以上はボタンを押せなくする -->
-<button type="button" data-bind="onclick:countUp; disabled:is5times;">count up</button>
+<button type="button" data-bind="onclick:countUp; disabled:over5times;">count up</button>
 ```
 
 `main.js`の`ViewModel`クラス
@@ -403,7 +396,7 @@ class ViewModel {
    * counterの値が５以上の場合、真を返します。
    * @type {boolean}
    */
-  get is5times() {
+  get over5times() {
     return this.counter >= 5;
   }
 
@@ -617,9 +610,12 @@ class ViewModel {
 |input|上記以外|value|
 |select||value|
 |textarea||value|
+|button||onclick|
+|a||onclick|
+|form||onsubmit|
 |上記以外||textContent|
 
-* `html`の入力系要素のデフォルトプロパティと`ViewModel`クラスのプロパティをバインドする場合、入力系DOMのプロパティが更新されると自動的に`ViewModel`クラスのプロパティも更新されます。（双方向バインド）
+* `html`の入力系要素のデフォルトプロパティと`ViewModel`クラスのプロパティをバインドする場合、入力系HTML要素のプロパティが更新されると自動的に`ViewModel`クラスのプロパティも更新されます。（双方向バインド）
 * 対象となる入力系要素は、`input` `select` `textarea`
 * 双方向バインドの場合、出力のためのフィルタは指定しません。必要であれば型変換のための入力フィルタ`number`を指定します。`data-bind="num|number"`
 * 入力フィルタの指定方法は、通常のフィルタと同じです。
