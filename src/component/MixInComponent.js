@@ -11,6 +11,7 @@ import { BindingManager } from "../binding/Binding.js";
 import { createViewModels } from "../viewModel/Proxy.js";
 import { Phase } from "../thread/Phase.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -232,6 +233,26 @@ export const mixInComponent = {
   },
 
   /**
+   * 
+   * @param {MutationRecord[]} mutations 
+   */
+  attributeChange(mutations) {
+    mutations.forEach(mutation => {
+      if (mutation.type !== "attributes") return;
+      const [prefix, name] = mutation.attributeName.split(":");
+      if (prefix !== "props") return;
+      if (typeof this.updateSlot === "undefined") return;
+      const changePropsEvent = new CustomEvent("changeprops");
+      changePropsEvent.propName = name;
+      changePropsEvent.propValue = this.props[name];
+      this.dispatchEvent(changePropsEvent);
+      if (this.updateSlot.phase !== Phase.updateViewModel) {
+        this.viewModel[Symbols.notifyForDependentProps](name, []);
+      }
+    });
+  },
+
+  /**
    * build component (called from connectedCallback)
    * setting filters
    * create and attach shadowRoot
@@ -262,6 +283,24 @@ export const mixInComponent = {
 
     // create thread
     this.thread = new Thread;
+
+    // attribue
+    if (this.useWebComponent) {
+      let useAttribute = false
+      for(let i = 0; i < this.attributes.length; i++) {
+        const attr = this.attributes[i];
+        const [prefix, name] = attr.name.split(":");
+        if (prefix === "props") {
+          this.props[Symbols.bindProperty](name);
+          useAttribute = true;
+        }
+      }
+      // observation of attribute change
+      if (useAttribute) {
+        const observer = new MutationObserver(mutations => this.attributeChange(mutations));
+        observer.observe(this, { attributes: true });
+      }
+    }
 
     // initialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols.connectedCallback]();

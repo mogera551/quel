@@ -730,6 +730,10 @@ let Handler$1 = class Handler {
     return this.#buffer;
   }
 
+  get binds() {
+    return this.#binds;
+  }
+
   /**
    * bind parent component's property
    * @param {string} prop 
@@ -746,6 +750,8 @@ let Handler$1 = class Handler {
     const getFunc = (handler, name, props) => function () {
       if (typeof handler.buffer !== "undefined") {
         return handler.buffer[name];
+      } else if (handler.binds.length === 0) {
+        return handler.component.getAttribute(`props:${name}`);
       } else {
         return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, props.indexes);
       }
@@ -760,6 +766,8 @@ let Handler$1 = class Handler {
     const setFunc = (handler, name, props) => function (value) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
+      } else if (handler.binds.length === 0) {
+        handler.component.setAttribute(`props:${name}`, value);
       } else {
         handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, props.indexes, value);
       }
@@ -4798,6 +4806,26 @@ const mixInComponent = {
   },
 
   /**
+   * 
+   * @param {MutationRecord[]} mutations 
+   */
+  attributeChange(mutations) {
+    mutations.forEach(mutation => {
+      if (mutation.type !== "attributes") return;
+      const [prefix, name] = mutation.attributeName.split(":");
+      if (prefix !== "props") return;
+      if (typeof this.updateSlot === "undefined") return;
+      const changePropsEvent = new CustomEvent("changeprops");
+      changePropsEvent.propName = name;
+      changePropsEvent.propValue = this.props[name];
+      this.dispatchEvent(changePropsEvent);
+      if (this.updateSlot.phase !== Phase.updateViewModel) {
+        this.viewModel[Symbols.notifyForDependentProps](name, []);
+      }
+    });
+  },
+
+  /**
    * build component (called from connectedCallback)
    * setting filters
    * create and attach shadowRoot
@@ -4828,6 +4856,24 @@ const mixInComponent = {
 
     // create thread
     this.thread = new Thread;
+
+    // attribue
+    if (this.useWebComponent) {
+      let useAttribute = false;
+      for(let i = 0; i < this.attributes.length; i++) {
+        const attr = this.attributes[i];
+        const [prefix, name] = attr.name.split(":");
+        if (prefix === "props") {
+          this.props[Symbols.bindProperty](name);
+          useAttribute = true;
+        }
+      }
+      // observation of attribute change
+      if (useAttribute) {
+        const observer = new MutationObserver(mutations => this.attributeChange(mutations));
+        observer.observe(this, { attributes: true });
+      }
+    }
 
     // initialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols.connectedCallback]();

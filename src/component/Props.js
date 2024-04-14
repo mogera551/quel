@@ -22,6 +22,10 @@ class Handler {
     return this.#buffer;
   }
 
+  get binds() {
+    return this.#binds;
+  }
+
   /**
    * bind parent component's property
    * @param {string} prop 
@@ -38,6 +42,8 @@ class Handler {
     const getFunc = (handler, name, props) => function () {
       if (typeof handler.buffer !== "undefined") {
         return handler.buffer[name];
+      } else if (handler.binds.length === 0) {
+        return handler.component.getAttribute(`props:${name}`);
       } else {
         return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, props.indexes);
       }
@@ -52,6 +58,8 @@ class Handler {
     const setFunc = (handler, name, props) => function (value) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
+      } else if (handler.binds.length === 0) {
+        handler.component.setAttribute(`props:${name}`, value);
       } else {
         handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, props.indexes, value);
       }
