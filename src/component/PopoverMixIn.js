@@ -64,7 +64,7 @@ export const popoverMixIn = {
         this.dispatchEvent(shownEvent);
       }
     });
-    console.log("popoverMixIn:initializeCallback");
+    //console.log("popoverMixIn:initializeCallback");
   },
   /**
    * 

@@ -229,7 +229,7 @@ export const mixInComponent = {
 
     this._initialPromises = Promise.withResolvers(); // promises for initialize
 
-    console.log("mixInComponent:initializeCallback");
+    //console.log("mixInComponent:initializeCallback");
   },
 
   /**

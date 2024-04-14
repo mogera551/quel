@@ -4802,7 +4802,7 @@ const mixInComponent = {
 
     this._initialPromises = Promise.withResolvers(); // promises for initialize
 
-    console.log("mixInComponent:initializeCallback");
+    //console.log("mixInComponent:initializeCallback");
   },
 
   /**
@@ -5028,7 +5028,7 @@ const dialogMixIn = {
       const closedEvent = new CustomEvent("closed");
       this.dispatchEvent(closedEvent);
     });
-    console.log("dialogMixIn:initializeCallback");
+    //console.log("dialogMixIn:initializeCallback");
   },
   /**
    * 
@@ -5177,7 +5177,7 @@ const popoverMixIn = {
         this.dispatchEvent(shownEvent);
       }
     });
-    console.log("popoverMixIn:initializeCallback");
+    //console.log("popoverMixIn:initializeCallback");
   },
   /**
    * 
