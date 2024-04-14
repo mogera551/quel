@@ -102,9 +102,7 @@ export const mixInComponent = {
     return this._props;
   },
   set props(value) {
-    for(const [key, keyValue] of Object.entries(value)) {
-      this._props[key] = keyValue;
-    }
+    this._props[Symbols.setBuffer](value);
   },
 
   /** @type {Object<string,any>} global object */

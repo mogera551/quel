@@ -33,7 +33,7 @@ const callFuncBySymbol = {
   [Symbols.getDependentProps]:({handler}) => () => handler.dependentProps,
   [Symbols.clearCache]:({handler}) => () => handler.cache.clear(),
   [Symbols.createBuffer]:({viewModelProxy}) => (component) => viewModelProxy[CREATE_BUFFER_METHOD]?.apply(viewModelProxy, [component]),
-  [Symbols.flushBuffer]:({viewModelProxy}) => (component, buffer) => viewModelProxy[FLUSH_BUFFER_METHOD]?.apply(viewModelProxy, [buffer, component]),
+  [Symbols.flushBuffer]:({viewModelProxy}) => (buffer, component) => viewModelProxy[FLUSH_BUFFER_METHOD]?.apply(viewModelProxy, [buffer, component]),
 }
 
 export class Api {

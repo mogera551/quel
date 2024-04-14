@@ -766,6 +766,10 @@ let Handler$1 = class Handler {
     const setFunc = (handler, name, props) => function (value) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
+        const changePropsEvent = new CustomEvent("changeprops");
+        changePropsEvent.propName = name;
+        changePropsEvent.propValue = value;
+        handler.component.dispatchEvent(changePropsEvent);
       } else if (handler.binds.length === 0) {
         handler.component.setAttribute(`props:${name}`, value);
       } else {
@@ -778,6 +782,7 @@ let Handler$1 = class Handler {
       get: getFunc(this, prop, propAccess),
       set: setFunc(this, prop, propAccess),
       configurable: true,
+      enumerable: true,
     });
     if (typeof propAccess !== "undefined") {
       this.#binds.push({ prop, propAccess });
@@ -859,6 +864,39 @@ let Handler$1 = class Handler {
   set(target, prop, value, receiver) {
     this.#component.viewModel[prop] = value;
     return true;
+  }
+
+  /**
+   * Proxy.ownKeys
+   * @param {any} target
+   * @param {Proxy<Handler>} receiver 
+   * @returns {string[]}
+   */
+  ownKeys(target, receiver) {
+    if (typeof this.buffer !== "undefined") {
+      return Reflect.ownKeys(this.buffer);
+    } else if (this.binds.length === 0) {
+      return Array.from(this.component.attributes())
+        .filter(attribute => attribute.name.startsWith("props:"))
+        .map(attribute => attribute.name.slice(6));
+    } else {
+      return this.#binds.map(({ prop }) => prop);
+    }
+  }
+
+  /**
+   * Proxy.getOwnPropertyDescriptor
+   * @param {any} target
+   * @param {string} prop
+   * @param {Proxy<Handler>} receiver
+   * @returns {PropertyDescriptor}
+   */
+  getOwnPropertyDescriptor(target, prop, receiver) { // プロパティ毎に呼ばれます
+    return {
+      enumerable: true,
+      configurable: true
+      /* ...other flags, probable "value:..."" */
+    };
   }
 };
 
@@ -4024,7 +4062,7 @@ const callFuncBySymbol = {
   [Symbols.getDependentProps]:({handler}) => () => handler.dependentProps,
   [Symbols.clearCache]:({handler}) => () => handler.cache.clear(),
   [Symbols.createBuffer]:({viewModelProxy}) => (component) => viewModelProxy[CREATE_BUFFER_METHOD]?.apply(viewModelProxy, [component]),
-  [Symbols.flushBuffer]:({viewModelProxy}) => (component, buffer) => viewModelProxy[FLUSH_BUFFER_METHOD]?.apply(viewModelProxy, [buffer, component]),
+  [Symbols.flushBuffer]:({viewModelProxy}) => (buffer, component) => viewModelProxy[FLUSH_BUFFER_METHOD]?.apply(viewModelProxy, [buffer, component]),
 };
 
 class Api {
@@ -4675,9 +4713,7 @@ const mixInComponent = {
     return this._props;
   },
   set props(value) {
-    for(const [key, keyValue] of Object.entries(value)) {
-      this._props[key] = keyValue;
-    }
+    this._props[Symbols.setBuffer](value);
   },
 
   /** @type {Object<string,any>} global object */
@@ -5104,7 +5140,7 @@ const dialogMixIn = {
    * @param {string} returnValue 
    * @returns 
    */
-  close(returnValue) {
+  close(returnValue = "") {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: close is only for HTMLDialogElement");
     }

@@ -120,7 +120,7 @@ export const dialogMixIn = {
    * @param {string} returnValue 
    * @returns 
    */
-  close(returnValue) {
+  close(returnValue = "") {
     if (!(this instanceof HTMLDialogElement)) {
       utils.raise("mixInDialog: close is only for HTMLDialogElement");
     }

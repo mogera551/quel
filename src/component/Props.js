@@ -58,6 +58,10 @@ class Handler {
     const setFunc = (handler, name, props) => function (value) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
+        const changePropsEvent = new CustomEvent("changeprops");
+        changePropsEvent.propName = name;
+        changePropsEvent.propValue = value;
+        handler.component.dispatchEvent(changePropsEvent);
       } else if (handler.binds.length === 0) {
         handler.component.setAttribute(`props:${name}`, value);
       } else {
@@ -70,6 +74,7 @@ class Handler {
       get: getFunc(this, prop, propAccess),
       set: setFunc(this, prop, propAccess),
       configurable: true,
+      enumerable: true,
     });
     if (typeof propAccess !== "undefined") {
       this.#binds.push({ prop, propAccess });
@@ -151,6 +156,39 @@ class Handler {
   set(target, prop, value, receiver) {
     this.#component.viewModel[prop] = value;
     return true;
+  }
+
+  /**
+   * Proxy.ownKeys
+   * @param {any} target
+   * @param {Proxy<Handler>} receiver 
+   * @returns {string[]}
+   */
+  ownKeys(target, receiver) {
+    if (typeof this.buffer !== "undefined") {
+      return Reflect.ownKeys(this.buffer);
+    } else if (this.binds.length === 0) {
+      return Array.from(this.component.attributes())
+        .filter(attribute => attribute.name.startsWith("props:"))
+        .map(attribute => attribute.name.slice(6));
+    } else {
+      return this.#binds.map(({ prop }) => prop);
+    }
+  }
+
+  /**
+   * Proxy.getOwnPropertyDescriptor
+   * @param {any} target
+   * @param {string} prop
+   * @param {Proxy<Handler>} receiver
+   * @returns {PropertyDescriptor}
+   */
+  getOwnPropertyDescriptor(target, prop, receiver) { // プロパティ毎に呼ばれます
+    return {
+      enumerable: true,
+      configurable: true
+      /* ...other flags, probable "value:..."" */
+    };
   }
 }
 
