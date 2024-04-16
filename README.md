@@ -12,14 +12,16 @@ The development goal is to simplify the increasingly complex frontend developmen
 * No need for transpiling
 * Component-based
 * Portability
-* Web standard
+* Compliant with web standards
 * **Property description by dot notation**
 
-Simple template
+Simple and declarative view
 ```html
 <div>
-  <input data-bind="task">
-  <button data-bind="add; disabled:task|falsey">add</button>
+  <form data-bind="add">
+    <input data-bind="task">
+    <button data-bind="disabled:task|falsey">add</button>
+  </form>
 </div>
 <ul>
   {{ loop:taskList }}
@@ -34,7 +36,8 @@ class ViewModel {
   task = "";
   taskList = [];
 
-  add() {
+  add(e) {
+    e.preventDefault();
     this.taskList = this.taskList.concat(this.task);
     this.task = "";
   }
@@ -211,7 +214,7 @@ registerComponentModules({ myappMain });
 ```
 
 ## Tutorial
-### 前提
+### First
 The file structure used in the tutorial is as follows.
 ```
 --+-- index.html
@@ -403,7 +406,7 @@ class ViewModel {
   }
 
   /**
-   * increment count
+   * Increment count
    */
   countUp() {
     this.counter++;
@@ -420,20 +423,20 @@ class ViewModel {
 
 See [result](https://codepen.io/mogera551/pen/abPzKwx)
 
-### Step.5 フィルタ 
-* `ViewModel`のプロパティに、出力フィルタを使うことができます。
-* プロパティの後ろにパイプ`|`、フィルタ名を記述します。
-* フィルタ名の後ろにカンマ`,`で区切ってオプションを指定できます。
-* フィルタはパイプ`|`を使って、複数指定できます。
-* フィルタは、`String` `Number` `Array`のイミュータブルなメソッドが用意されています。
+### Step 5. Filters 
+* You can use output filters on the properties of `ViewModel`.
+* Write the pipe `|` and the filter name after the property in html.
+* You can specify options after the filter name, separated by a comma `,`.
+* You can specify multiple filters using the pipe `|`.
+* Filters are provided as immutable methods of `String`, `Number`, and `Array`.
 
-プロパティの加工という点ではアクセサプロパティと似ていますが、以下の点が異なります。
+In terms of processing properties, it is similar to accessor properties, but differs in the following points.
 
-フィルタの特徴（アクセサプロパティとの違い）
-* 依存関係を書く必要がありません。(`$dependentProps`を書かなくていい。)
-* 単一のプロパティの出力のみフィルタできます。→フィルタは、複数のプロパティを扱うことはできません。
+Features of filters (differences from accessor properties)
+* There is no need to write dependencies. (You don't need to write $dependentProps.)
+* Only the output of a single property can be filtered. Filters cannot handle multiple properties.
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <div>{{ message }}</div>
 <div>{{ message|substring,4,15|toUpperCase }}<!-- QUICK BROWN --></div>
@@ -442,7 +445,7 @@ See [result](https://codepen.io/mogera551/pen/abPzKwx)
 <div>{{ price|toLocaleString }}<!-- 19,800 --></div>
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   message = "The quick brown fox jumps over the lazy dog";
@@ -450,7 +453,7 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/rNoVevQ)
+See [result](https://codepen.io/mogera551/pen/rNoVevQ)
 
 ### Step.6 条件分岐ブロック 
 * `ViewModel`のプロパティを条件として、表示を制御することができます。
