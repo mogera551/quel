@@ -1,9 +1,9 @@
 
 # What is Quel
-Quel is declarative, simple, easy, pure javascript framework.
+Quel is declarative, simple, easy, pure javascript frontend framework.
 
-## The motivation for development
-"Antithesis to the increasingly complex JavaScript development."
+## Our goal
+The development goal is to simplify the increasingly complex frontend development.
 
 ## The main features
 * Minimal rules and conventions, as intuitive as possible
@@ -11,6 +11,8 @@ Quel is declarative, simple, easy, pure javascript framework.
 * No need for other libraries
 * No need for transpiling
 * Component-based
+* Portability
+* Web standard
 * **Property description by dot notation**
 
 Simple template
@@ -262,7 +264,7 @@ export class ViewModel {
 }
 ```
 
-### Step.1 Embedding properties
+### Step 1. Embedding properties
 * In `html`, enclose the property `message` to be embedded in `{{ }}`.
 * In `ViewModel`, declare the property `message` that stores the state as a field, and give it an initial value of `welcome to quel`.
 * The `ViewModel` class is extended by a Proxy after it is instantiated, so you cannot use private fields in the ViewModel class.
@@ -285,7 +287,7 @@ export class ViewModel {
 See [result](https://codepen.io/mogera551/pen/KKrbPjJ)
 
 
-### Step.2 Property Binding
+### Step 2. Property Binding
 * Associate the properties of the html elements in template with the properties of the `ViewModel` class.
 * Specify (element property name):(ViewModel class property name) in the data-bind attribute of the element.
 `textContent:message`,`value:message`,`value:season`...
@@ -333,7 +335,7 @@ export class ViewModel {
 
 See [result](https://codepen.io/mogera551/pen/QWzWPzg)
 
-### Step.3 Event Binding
+### Step 3. Event Binding
 * Associate the event properties (`on~`) of the html elements with the methods of the `ViewModel` class.
 * Specify `(element event property name):(ViewModel class method name)` in the `data-bind` attribute of the element. ->`onclick:popup`
 * The methods of the `ViewModel` class take an Event object as an argument. ->`checked(e)`
@@ -364,36 +366,36 @@ export class ViewModel {
 
 See [result](https://codepen.io/mogera551/pen/ZEVYWER)
 
-### Step.4 アクセサプロパティ
-* `get`を使ったアクセサプロパティも埋め込みや、バインドすることができます。
-* アクセサプロパティを使う場合、`ViewModel`クラスの`$dependentProps`に依存関係を記述する必要があります。
-* 依存関係は、`(アクセサプロパティ名):(参照しているプロパティの列挙)`と記述します。
-  `"doubled": [ "counter" ]`、`"is5times": [ "counter" ]`
-* 依存関係を記述しないと、`html`の要素の更新が行われません。
+### Step 4. Accessor Properties
+* You can also embed and bind accessor properties using `get`.
+* When using accessor properties, you need to describe the dependencies in the `$dependentProps` of the `ViewModel` class.
+* Dependencies are described as `(accessor property name):(enumeration of referenced properties)`.
+  `"doubled": [ "counter" ]`, `"is5times": [ "counter" ]`
+* If you do not describe the dependencies, the html elements will not be updated.
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <div>{{ counter }}</div>
 <div>{{ doubled }}</div>
-<!-- 5回以上はボタンを押せなくする -->
+<!-- Disable the button after 5 presses -->
 <button type="button" data-bind="onclick:countUp; disabled:over5times;">count up</button>
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   counter = 1;
 
-  // アクセサプロパティ
+  // Accessor property
   /**
-   * counterの値を２倍します。
+   * Doubles the value of counter.
    * @type {number}
    */
   get doubled() {
     return this.counter * 2;
   }
   /**
-   * counterの値が５以上の場合、真を返します。
+   * Returns true if the value of counter is 5 or more.
    * @type {boolean}
    */
   get over5times() {
@@ -401,23 +403,22 @@ class ViewModel {
   }
 
   /**
-   * 「count up」をクリックしたときの処理
-   * countを＋１加算する
+   * increment count
    */
   countUp() {
     this.counter++;
   }
 
-  // 依存関係を記述します
+  // dependencies
   $dependentProps = {
-    // アクセサプロパティ名:[参照するプロパティ, ... ]
+    // (accessor property name):(enumeration of referenced properties)
     "doubled": [ "counter" ],
     "is5times": [ "counter" ],
   };
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/abPzKwx)
+See [result](https://codepen.io/mogera551/pen/abPzKwx)
 
 ### Step.5 フィルタ 
 * `ViewModel`のプロパティに、出力フィルタを使うことができます。
