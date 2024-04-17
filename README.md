@@ -287,8 +287,9 @@ export class ViewModel {
 }
 ```
 
-See [result](https://codepen.io/mogera551/pen/KKrbPjJ)
+See [result](https://codepen.io/mogera551/pen/KKrbPjJ).
 
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step1).
 
 ### Step 2. Property Binding
 * Associate the properties of the html elements in template with the properties of the `ViewModel` class.
@@ -336,7 +337,9 @@ export class ViewModel {
 }
 ```
 
-See [result](https://codepen.io/mogera551/pen/QWzWPzg)
+See [result](https://codepen.io/mogera551/pen/QWzWPzg).
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step2).
 
 ### Step 3. Event Binding
 * Associate the event properties (`on~`) of the html elements with the methods of the `ViewModel` class.
@@ -367,7 +370,9 @@ export class ViewModel {
 }
 ```
 
-See [result](https://codepen.io/mogera551/pen/ZEVYWER)
+See [result](https://codepen.io/mogera551/pen/ZEVYWER).
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step3).
 
 ### Step 4. Accessor Properties
 * You can also embed and bind accessor properties using `get`.
@@ -421,7 +426,9 @@ class ViewModel {
 }
 ```
 
-See [result](https://codepen.io/mogera551/pen/abPzKwx)
+See [result](https://codepen.io/mogera551/pen/abPzKwx).
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step4).
 
 ### Step 5. Filters 
 * You can use output filters on the properties of `ViewModel`.
@@ -453,7 +460,9 @@ class ViewModel {
 }
 ```
 
-See [result](https://codepen.io/mogera551/pen/rNoVevQ)
+See [result](https://codepen.io/mogera551/pen/rNoVevQ).
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step5).
 
 ### Step 6. Conditional Branch Block
 * You can control the display using the properties of `ViewModel` as conditions.
@@ -482,7 +491,9 @@ class ViewModel {
 }
 ```
 
-See [result](https://codepen.io/mogera551/pen/xxmGadX)
+See [result](https://codepen.io/mogera551/pen/xxmGadX).
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step6).
 
 ### Step.7 繰り返しブロック 
 * `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
