@@ -455,14 +455,14 @@ class ViewModel {
 
 See [result](https://codepen.io/mogera551/pen/rNoVevQ)
 
-### Step.6 条件分岐ブロック 
-* `ViewModel`のプロパティを条件として、表示を制御することができます。
-* 制御するブロック（要素の集合）を`{{ if:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。→`{{ if:val }}`～`{{ end: }}`
-* `{{ else }}`を使って、偽の条件を表示します。
-* `else if`はありません。
-* 単一のプロパティを条件とします。→条件は、複数のプロパティを扱うことはできません。
+### Step 6. Conditional Branch Block
+* You can control the display using the properties of `ViewModel` as conditions.
+* Enclose the block to be controlled (a set of elements) with `{{ if:(ViewModel property) }} ... {{ end: }}`. -> `{{ if:val }} ... {{ end: }}`
+* Use `{{ else }}` to display false conditions.
+* There is no `else if`.
+* A single property is used as a condition. -> Conditions cannot handle multiple properties.
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <button type="button" data-bind="onclick:change">change!!!</button>
 {{ if:val }}
@@ -472,7 +472,7 @@ See [result](https://codepen.io/mogera551/pen/rNoVevQ)
 {{ end: }}
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   val = true;
@@ -482,7 +482,7 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/xxmGadX)
+See [result](https://codepen.io/mogera551/pen/xxmGadX)
 
 ### Step.7 繰り返しブロック 
 * `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
