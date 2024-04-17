@@ -24,7 +24,8 @@ export class NodeUpdator {
    */
   async exec() {
     while(this.queue.length > 0) {
-      const notifies = this.queue.splice(0);
+      const notifies = this.queue;
+      this.queue = [];
       const dependentPropertyAccesses = [];
       for(const propertyAccess of notifies) {
         dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));

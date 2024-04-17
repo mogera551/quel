@@ -1185,7 +1185,8 @@ class ViewModelUpdator {
    */
   async exec() {
     while(this.queue.length > 0) {
-      const processes = this.queue.splice(0);
+      const processes = this.queue;
+      this.queue = [];
       for(const process of processes) {
         await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
       }
@@ -1361,7 +1362,8 @@ class NodeUpdator {
    */
   async exec() {
     while(this.queue.length > 0) {
-      const notifies = this.queue.splice(0);
+      const notifies = this.queue;
+      this.queue = [];
       const dependentPropertyAccesses = [];
       for(const propertyAccess of notifies) {
         dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
