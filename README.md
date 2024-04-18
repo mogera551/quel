@@ -495,17 +495,17 @@ See [result](https://codepen.io/mogera551/pen/xxmGadX).
 
 See [source](https://github.com/mogera551/quel/tree/main/tutorials/step6).
 
-### Step.7 繰り返しブロック 
-* `ViewModel`のプロパティを配列として、表示を繰り返すことができます。
-* 繰り返すブロック（要素の集合）を`{{ loop:(ViewModelのプロパティ) }}`～`{{ end: }}`で括ります。
-   * `{{ loop:animals }}`～`{{ end: }}`
-   * `{{ loop:fruits }}`～`{{ end: }}`
-* 繰り返すブロック内では配列要素をワイルドカードを用いたドット記法`(ViewModelのプロパティ).*`で記述します。
+### Step 7. Loop Block
+* You can repeat the display block using the array properties of `ViewModel`.
+* Enclose the block to be repeated (a set of elements) with `{{ loop:(ViewModel property) }} ... {{ end: }}` in html.
+   * `{{ loop:animals }} ... {{ end: }}`
+   * `{{ loop:fruits }} ... {{ end: }}`
+* Within the repeating block, describe the array elements using wildcard dot notation `(ViewModel property).*`.
    * `animals.*`
    * `fruits.*.name`
    * `fruits.*.age`
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <ul>
 {{ loop:animals }}
@@ -519,7 +519,7 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step6).
 </ul>
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   animals = [ "cat", "dog", "fox", "pig" ];
@@ -533,27 +533,29 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/eYbpzMw)
+See [result](https://codepen.io/mogera551/pen/eYbpzMw)
 
-### Step.8 初期化イベントハンドラ
-* `ViewModel`クラスに、初期化イベントハンドラであるコールバックメソッド`$connectedCallback`を設定できます。
-* 初期化イベントは、コンポーネント生成時に発生します。
-* コールバックメソッドに非同期`async`を指定することができます。
-* コールバックメソッドの引数はありません。
-* サンプルでは、GitHubのAPIでレポジトリの情報を取得しています。
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step7).
 
-`main.js`の変数`html`の内容
+### Step 8. Initialization Event Handler
+* You can set the callback method `$connectedCallback`, which is an initialization event handler, in the `ViewModel` class.
+* The initialization event occurs when a component is created.
+* You can specify `async` for the callback method.
+* The callback method does not have any arguments.
+* In the sample, it fetches repository information from GitHub's API.
+
+Content of the `html` variable in `main.js`
 ```html
 <ul>
   {{ loop:commits }}
   <li>
-    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.message }} by {{ commits.*.commit.author.name }}
+    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
   </li>
   {{ end: }}
 </ul>
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   commits = [];
@@ -564,7 +566,9 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/vYvLQVX)
+See [result](https://codepen.io/mogera551/pen/vYvLQVX)
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step8).
 
 ### Step.9 書き込みイベントハンドラ
 * `ViewModel`クラスに、書き込みイベントハンドラであるコールバックメソッド`$writeCallback`を設定できます。
