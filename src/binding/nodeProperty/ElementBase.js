@@ -13,10 +13,11 @@ export class ElementBase extends NodeProperty {
    * @param {Element} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, inputFilterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof Element)) utils.raise("ElementBase: not element");
-    super(binding, node, name, filters, inputFilterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 }

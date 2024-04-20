@@ -47,10 +47,11 @@ export class Repeat extends TemplateProperty {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /** 

@@ -46,10 +46,11 @@ export class ComponentProperty extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node.constructor[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /**

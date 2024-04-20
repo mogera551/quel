@@ -5,7 +5,7 @@ import { createGlobals } from "./Globals.js";
 import { Thread } from "../thread/Thread.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";
 import { AttachShadow } from "./AttachShadow.js";
-import { inputFilters, outputFilters } from "../filter/Builtin.js";
+import { inputFilters, outputFilters, eventFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
 import { createViewModels } from "../viewModel/Proxy.js";
@@ -171,7 +171,7 @@ export const mixInComponent = {
     return this._pseudoNode;
   },
 
-  /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}} filters */
+  /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>,event:Object<string,EventFilterFunc>}} filters */
   get filters() {
     return this._filters;
   },
@@ -221,6 +221,7 @@ export const mixInComponent = {
     this._filters = {
       in: class extends inputFilters {},
       out: class extends outputFilters {},
+      event: class extends eventFilters {},
     };
 
     this._bindingSummary = new BindingSummary;
@@ -231,7 +232,7 @@ export const mixInComponent = {
   },
 
   /**
-   * 
+   * observe attribute change
    * @param {MutationRecord[]} mutations 
    */
   attributeChange(mutations) {
@@ -260,7 +261,7 @@ export const mixInComponent = {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    const { template, inputFilters, outputFilters } = this.constructor; // from static members
+    const { template, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members
     // setting filters
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
@@ -272,6 +273,12 @@ export const mixInComponent = {
       for(const [name, filterFunc] of Object.entries(outputFilters)) {
         if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
         this.filters.out[name] = filterFunc;
+      }
+    }
+    if (typeof eventFilters !== "undefined") {
+      for(const [name, filterFunc] of Object.entries(eventFilters)) {
+        if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
+        this.filters.event[name] = filterFunc;
       }
     }
     // create and attach shadowRoot

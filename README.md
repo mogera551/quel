@@ -18,7 +18,7 @@ The development goal is to simplify the increasingly complex frontend developmen
 Simple and declarative view
 ```html
 <div>
-  <form data-bind="add">
+  <form data-bind="add|preventDefault">
     <input data-bind="task">
     <button data-bind="disabled:task|falsey">add</button>
   </form>
@@ -37,7 +37,6 @@ class ViewModel {
   taskList = [];
 
   add(e) {
-    e.preventDefault();
     this.taskList = this.taskList.concat(this.task);
     this.task = "";
   }

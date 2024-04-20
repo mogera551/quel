@@ -41,6 +41,12 @@ export class NodeProperty {
     return this.#filterFuncs;
   }
 
+  /** @type {Object<string,EventFilterFunc>} */
+  #eventFilterFuncs;
+  get eventFilterFuncs() {
+    return this.#eventFilterFuncs;
+  }
+
   /** @type {any} */
   get filteredValue() {
     return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
@@ -79,8 +85,9 @@ export class NodeProperty {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
@@ -88,6 +95,7 @@ export class NodeProperty {
     this.#nameElements = name.split(".");
     this.#filters = filters;
     this.#filterFuncs = filterFuncs;
+    this.#eventFilterFuncs = eventFilterFuncs;
   }
 
   /**

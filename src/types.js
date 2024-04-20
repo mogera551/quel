@@ -73,9 +73,12 @@
  * @property {boolean|undefined} useBufferedBind
  */
 
- 
 /**
  * @typedef {(value:any,options:string[])=>any} FilterFunc
+ */
+
+/**
+ * @typedef {(event:Event,options:string[])=>any} EventFilterFunc
  */
 
 /**
@@ -117,13 +120,14 @@
  * @property {()=>void} connectedCallback
  * @property {()=>void} disconnectedCallback
  * @property {(setOfViewModelPropertyKeys:Set<String>)=>void} updateNode
- * @property {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}} filters
+ * @property {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>,event:Object<string,EventFilterFunc>}} filters
  * @property {ViewModel.constructor} Component.ViewModel
  * @property {HTMLTemplateElement} Component.template
  * @property {HTMLElement.constructor} Component.extendClass
  * @property {string} Component.extendTag
  * @property {Object<string,FilterFunc>} Component.inputFilters
  * @property {Object<string,FilterFunc>} Component.outputFilters
+ * @property {Object<string,EventFilterFunc>} Component.eventFilters
  */
 
 /**

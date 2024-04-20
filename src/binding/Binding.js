@@ -83,7 +83,7 @@ export class Binding {
   ) {
     this.#id = ++Binding.seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in);
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in, bindingManager.component.filters.event);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);
   }
 

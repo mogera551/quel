@@ -24,9 +24,10 @@ export class ElementClass extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementClass: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 }

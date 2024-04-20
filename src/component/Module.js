@@ -49,6 +49,9 @@ export class Module {
   /** @type {Object<string,FilterFunc>|undefined} */
   outputFilters;
 
+  /** @type {Object<string,EventFilterFunc>|undefined} */
+  eventFilters;
+
   /** @type {Object<string,Module>|undefined} */
   componentModules;
 

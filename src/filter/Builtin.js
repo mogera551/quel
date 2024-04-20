@@ -250,3 +250,11 @@ export class inputFilters {
   static number       = (value, options) => value === "" ? null : Number(value);
   static boolean      = (value, options) => value === "" ? null : Boolean(value);
 }
+
+export class eventFilters {
+  static preventDefault = (event, options) => {
+    event.preventDefault();
+    return event;
+  }
+  static pd = this.preventDefault;
+}

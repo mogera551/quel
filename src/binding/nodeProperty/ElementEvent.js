@@ -1,4 +1,5 @@
 import { Symbols } from "../../Symbols.js";
+import { Filter } from "../../filter/Filter.js";
 import { ProcessData } from "../../thread/ViewModelUpdator.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
@@ -34,10 +35,11 @@ export class ElementEvent extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /**
@@ -72,6 +74,7 @@ export class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     event.stopPropagation();
+    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters, this.eventFilterFuncs) : event;
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
   }

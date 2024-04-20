@@ -35,6 +35,9 @@ export class ComponentClassGenerator {
         /** @type {Object<string,FilterFunc>} */
         static outputFilters = module.outputFilters;
 
+        /** @type {Object<string,EventFilterFunc>} */
+        static eventFilters = module.eventFilters;
+
         /** @type {boolean} */
         static useShadowRoot = module.useShadowRoot ?? config.useShadowRoot;
 

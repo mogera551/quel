@@ -687,6 +687,9 @@ class Module {
   /** @type {Object<string,FilterFunc>|undefined} */
   outputFilters;
 
+  /** @type {Object<string,EventFilterFunc>|undefined} */
+  eventFilters;
+
   /** @type {Object<string,Module>|undefined} */
   componentModules;
 
@@ -1807,6 +1810,14 @@ class inputFilters {
   static boolean      = (value, options) => value === "" ? null : Boolean(value);
 }
 
+class eventFilters {
+  static preventDefault = (event, options) => {
+    event.preventDefault();
+    return event;
+  }
+  static pd = this.preventDefault;
+}
+
 const SELECTOR = "[data-bind]";
 
 /**
@@ -1924,15 +1935,29 @@ class Filter {
 
   /**
    * 
+   * @param {Event} event 
+   * @param {Filter[]} filters 
+   * @param {Object<string,FilterFunc>} eventFilterFuncs
+   * @returns {any}
+   */
+  static applyForEvent(event, filters, eventFilterFuncs) {
+    return filters.reduce((e, f) => (f.name in eventFilterFuncs) ? eventFilterFuncs[f.name](e, f.options) : e, event);
+  }
+
+  /**
+   * 
    * @param {string} name 
    * @param {(value:any,options:string[])=>{}} outputFilter 
    * @param {(value:any,options:string[])=>{}} inputFilter 
+   * @param {(event:Event,options:string[])=>{}} eventFilter
    */
-  static register(name, outputFilter, inputFilter) {
+  static register(name, outputFilter, inputFilter, eventFilter) {
     if (name in outputFilters) utils.raise(`register filter error duplicate name (${name})`);
     if (name in inputFilters) utils.raise(`register filter error duplicate name (${name})`);
+    if (name in eventFilters) utils.raise(`register filter error duplicate name (${name})`);
     outputFilter && (outputFilters[name] = outputFilter);
     inputFilter && (inputFilters[name] = inputFilter);
+    eventFilter && (eventFilters[name] = eventFilter);
   }
 }
 
@@ -1975,6 +2000,12 @@ class NodeProperty {
     return this.#filterFuncs;
   }
 
+  /** @type {Object<string,EventFilterFunc>} */
+  #eventFilterFuncs;
+  get eventFilterFuncs() {
+    return this.#eventFilterFuncs;
+  }
+
   /** @type {any} */
   get filteredValue() {
     return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
@@ -2013,8 +2044,9 @@ class NodeProperty {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
@@ -2022,6 +2054,7 @@ class NodeProperty {
     this.#nameElements = name.split(".");
     this.#filters = filters;
     this.#filterFuncs = filterFuncs;
+    this.#eventFilterFuncs = eventFilterFuncs;
   }
 
   /**
@@ -2090,13 +2123,14 @@ class TemplateProperty extends NodeProperty {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     const uuid = TemplateProperty.getUUID(node);
     const template = Templates.templateByUUID.get(uuid);
     if (typeof template === "undefined") utils.raise(`TemplateProperty: invalid uuid ${uuid}`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 }
 
@@ -2145,10 +2179,11 @@ class Repeat extends TemplateProperty {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /** 
@@ -2187,10 +2222,11 @@ class Branch extends TemplateProperty {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (name !== "if") utils.raise(`Branch: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /** 
@@ -2410,11 +2446,12 @@ class ElementBase extends NodeProperty {
    * @param {Element} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, inputFilterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof Element)) utils.raise("ElementBase: not element");
-    super(binding, node, name, filters, inputFilterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 }
 
@@ -2437,10 +2474,11 @@ class ElementClassName extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (name !== NAME) utils.raise(`ElementClassName: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 }
 
@@ -2480,11 +2518,12 @@ class Checkbox extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
     if (node.type !== "checkbox") utils.raise("Checkbox: not checkbox");
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /** 
@@ -2529,11 +2568,12 @@ class Radio extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
     if (node.type !== "radio") utils.raise("Radio: not radio");
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /** 
@@ -2575,10 +2615,11 @@ class ElementEvent extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!name.startsWith(PREFIX$2)) utils.raise(`ElementEvent: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /**
@@ -2613,6 +2654,7 @@ class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     event.stopPropagation();
+    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters, this.eventFilterFuncs) : event;
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
   }
@@ -2641,10 +2683,11 @@ class ElementClass extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!name.startsWith(PREFIX$1)) utils.raise(`ElementClass: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 }
 
@@ -2688,11 +2731,12 @@ class ElementStyle extends ElementBase {
    * @param {HTMLElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
+   * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, inputFilterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");
-    super(binding, node, name, filters, inputFilterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 }
 
@@ -2749,10 +2793,11 @@ class ComponentProperty extends ElementBase {
    * @param {string} name 
    * @param {Filter[]} filters 
    * @param {Object<string,FilterFunc>} filterFuncs
+   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs) {
+  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node.constructor[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");
-    super(binding, node, name, filters, filterFuncs);
+    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
   /**
@@ -3574,7 +3619,7 @@ class Binding {
   ) {
     this.#id = ++Binding.seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in);
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in, bindingManager.component.filters.event);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);
   }
 
@@ -4784,7 +4829,7 @@ const mixInComponent = {
     return this._pseudoNode;
   },
 
-  /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>}} filters */
+  /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>,event:Object<string,EventFilterFunc>}} filters */
   get filters() {
     return this._filters;
   },
@@ -4834,6 +4879,7 @@ const mixInComponent = {
     this._filters = {
       in: class extends inputFilters {},
       out: class extends outputFilters {},
+      event: class extends eventFilters {},
     };
 
     this._bindingSummary = new BindingSummary;
@@ -4844,7 +4890,7 @@ const mixInComponent = {
   },
 
   /**
-   * 
+   * observe attribute change
    * @param {MutationRecord[]} mutations 
    */
   attributeChange(mutations) {
@@ -4873,7 +4919,7 @@ const mixInComponent = {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    const { template, inputFilters, outputFilters } = this.constructor; // from static members
+    const { template, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members
     // setting filters
     if (typeof inputFilters !== "undefined") {
       for(const [name, filterFunc] of Object.entries(inputFilters)) {
@@ -4885,6 +4931,12 @@ const mixInComponent = {
       for(const [name, filterFunc] of Object.entries(outputFilters)) {
         if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
         this.filters.out[name] = filterFunc;
+      }
+    }
+    if (typeof eventFilters !== "undefined") {
+      for(const [name, filterFunc] of Object.entries(eventFilters)) {
+        if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
+        this.filters.event[name] = filterFunc;
       }
     }
     // create and attach shadowRoot
@@ -5271,6 +5323,9 @@ class ComponentClassGenerator {
 
         /** @type {Object<string,FilterFunc>} */
         static outputFilters = module.outputFilters;
+
+        /** @type {Object<string,EventFilterFunc>} */
+        static eventFilters = module.eventFilters;
 
         /** @type {boolean} */
         static useShadowRoot = module.useShadowRoot ?? config.useShadowRoot;
