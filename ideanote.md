@@ -37,3 +37,7 @@ ex.
   <div>{{ list.*.name }}, <button type="button" invoketarget="detail-edit" invokeaction="open">edit</button>
 {{ end: }}
 <dialog is="detail-edit" id="detail-edit" data-bind="props.name:list.*.name"></dialog>
+
+フォームコントロールと見なされる要素
+https://developer.mozilla.org/ja/docs/Web/API/HTMLFormElement
+
