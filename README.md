@@ -857,8 +857,10 @@ class ViewModel {
 </style>
 <!-- 入力部分 -->
 <div>
-  <input type="text">
-  <button type="button">追加</button>
+  <form data-bind="add">
+    <input type="text">
+    <button>追加</button>
+  </form>
 </div>
 <!-- リスト部分 -->
 <ul>
@@ -881,13 +883,11 @@ class ViewModel {
 * ToDoの内容`content`
 * 完了フラグ`completed`
 ```js
-class TodoItem {
-  content; // ToDoの内容
-  completed = false; // 完了フラグ
-  constructor(content) {
-    this.content = content;
-  }
-}
+/**
+ * @typedef {Object} TodoItem
+ * @property {string} content
+ * @property {completed} false;
+ */
 ```
 
 #### ViewModelクラスで保持する情報
@@ -896,22 +896,26 @@ class TodoItem {
    * 配列を保持する場合、初期値として空の配列を入れる
 ```js
 class ViewModel {
-  content = ""; // 入力欄のテキスト
-  todoItems = []; // ToDoリスト、初期値には空の配列をセットする
+  /** @type {string} input text */
+  content = "";
+  /** @type {TodoItem[]} todo list, initial value empty array */
+  todoItems = [];
 }
 ```
 
 #### htmlの入力部分
 * モックの入力部分を元にして作成
 * 入力欄と`ViewModel`クラスの`content`をバインド。`data-bind="content"`
-* 追加ボタンを押すと`ViewModel`クラスの`add`メソッドを呼び出す。`data-bind="onclick:add"`
-* 入力欄に入力がない場合追加ボタンは非活性化`data-bind="disabled:content|falsey"`
+* `submit`時、`ViewModel`クラスの`add`メソッドを呼び出す。呼び出し時、`preventDefault`フィルタで、`event.preventDefault()`を実行する。`data-bind="add|preventDefault"`
+* 入力欄に入力がない場合追加ボタンは非活性化。`data-bind="disabled:content|falsey"`
    * 追加ボタンの`disabled`プロパティと`ViewModel`クラスの`content|falsey`をバインド
    * `content|falsey`は、`!content`と同じ意味
 ```html
 <div>
-  <input type="text" data-bind="content">
-  <button type="button" data-bind="onclick:add; disabled:content|falsey">追加</button>
+  <form data-bind="add|preventDefault">
+    <input data-bind="content">
+    <button data-bind="disabled:content|falsey">追加</button>
+  </form>
 </div>
 ```
 
@@ -921,8 +925,12 @@ class ViewModel {
 * 追加後、入力欄のテキストをクリア`this.content = ""`
 ```js
 class ViewModel {
+  /**
+   * add todo item
+   */
   add() {
-    this.todoItems = this.todoItems.concat(new TodoItem(this.content));
+    const { content } = this;
+    this.todoItems = this.todoItems.concat({ content, completed:false });
     this.content = "";
   }
 }
@@ -934,14 +942,14 @@ class ViewModel {
 * チェックボックスのチェック状態とToDoの完了フラグをバインドする。`data-bind="todoItems.*.completed"`
 * ToDoの内容の表示`{{ todoItems.*.content }}`
 * ToDoの完了フラグの状態によりクラス属性にcompletedを追加、削除する。`data-bind="class.completed:todoItems.*.completed"`
-* 削除ボタンを押すと`ViewModel`クラスの`delete`メソッドを呼び出す。`data-bind="onclick:delete"`
+* 削除ボタンを押すと`ViewModel`クラスの`delete`メソッドを呼び出す。`data-bind="delete"`
 ```html
 <ul>
   {{ loop:todoItems }}
   <li>
     <input type="checkbox" data-bind="todoItems.*.completed">
     <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
-    <button type="button" data-bind="onclick:delete">削除</button>
+    <button type="button" data-bind="delete">削除</button>
   </li>
   {{ end: }}
 </ul>
@@ -953,6 +961,11 @@ class ViewModel {
    * ミュータブルな`splice`ではなく`toSpliced`を使う
 ```js
 class ViewModel {
+  /**
+   * delete todo item
+   * @param {Event} e
+   * @param {number} $1 loop index
+   */
   delete(e, $1) {
     this.todoItems = this.todoItems.toSpliced($1, 1);
   }
@@ -969,35 +982,45 @@ const html = `
   }
 </style>
 <div>
-  <input type="text" data-bind="content">
-  <button type="button" data-bind="onclick:add; disabled:content|falsey">追加</button>
+  <form data-bind="add|preventDefault">
+    <input data-bind="content">
+    <button data-bind="disabled:content|falsey">追加</button>
+  </form>
 </div>
 <ul>
   {{ loop:todoItems }}
   <li>
     <input type="checkbox" data-bind="todoItems.*.completed">
     <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
-    <button type="button" data-bind="onclick:delete">削除</button>
+    <button type="button" data-bind="delete">削除</button>
   </li>
   {{ end: }}
 </ul>
 `;
 
-class TodoItem {
-  content; // ToDoの内容
-  completed = false; // 完了フラグ
-  constructor(content) {
-    this.content = content;
-  }
-}
+/**
+ * @typedef {Object} TodoItem
+ * @property {string} content
+ * @property {completed} false;
+ */
 
 class ViewModel {
-  content = ""; // 入力欄のテキスト
-  todoItems = []; // ToDoリスト、初期値には空の配列をセットする
+  /** @type {string} input text */
+  content = "";
+  /** @type {TodoItem[]} todo list, initial value empty array */
+  todoItems = [];
+  /**
+   * add todo item
+   */
   add() {
     this.todoItems = this.todoItems.concat(new TodoItem(this.content));
     this.content = "";
   }
+  /**
+   * delete todo item
+   * @param {Event} e
+   * @param {number} $1 loop index
+   */
   delete(e, $1) {
     this.todoItems = this.todoItems.toSpliced($1, 1);
   }
