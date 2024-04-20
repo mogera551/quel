@@ -1815,7 +1815,12 @@ class eventFilters {
     event.preventDefault();
     return event;
   }
+  static noStopPropagation = (event, options) => {
+    event.noStopPropagation = true;
+    return event;
+  }
   static pd = this.preventDefault;
+  static nsp = this.noStopPropagation;
 }
 
 const SELECTOR = "[data-bind]";
@@ -2653,8 +2658,9 @@ class ElementEvent extends ElementBase {
   eventHandler(event) {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
-    event.stopPropagation();
+    // event filter
     event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters, this.eventFilterFuncs) : event;
+    !(event?.noStopPropagation ?? false) && event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
   }

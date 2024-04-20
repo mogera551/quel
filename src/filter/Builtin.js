@@ -256,5 +256,10 @@ export class eventFilters {
     event.preventDefault();
     return event;
   }
+  static noStopPropagation = (event, options) => {
+    event.noStopPropagation = true;
+    return event;
+  }
   static pd = this.preventDefault;
+  static nsp = this.noStopPropagation;
 }
