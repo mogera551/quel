@@ -6,8 +6,7 @@ export const html = `
 }
 </style>
 
-<input type="number" data-bind="num|number">
-<div data-bind="class.over:isOver">{{ num }}</div>
+<input type="number" data-bind="num|number; class.over:isOver">
 `;
 
 export class ViewModel {

@@ -1,7 +1,6 @@
 
 export const html = `
-<input type="number" data-bind="num|number">
-<div data-bind="style.color:numberColor">{{ num }}</div>
+<input type="number" data-bind="num|number; style.color:numberColor">
 `;
 
 export class ViewModel {

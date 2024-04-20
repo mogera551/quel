@@ -692,16 +692,15 @@ See [result](https://codepen.io/mogera551/pen/ZEVWeEP)
 
 See [source](https://github.com/mogera551/quel/tree/main/tutorials/step10).
 
-### Step.11 スタイルのバインド
-* `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素のスタイル属性名):(ViewModelのプロパティ)`と記述します。→`style.color:numberColor`
+### Step 11. Binding Styles
+* When binding the style attribute of an html element and a property of the `ViewModel` class, write it as style.`(style attribute of the element):(property of ViewModel)`. For example, `style.color:numberColor`.
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
-<input type="number" data-bind="num|number">
-<div data-bind="style.color:numberColor">{{ num }}</div>
+<input type="number" data-bind="num|number; style.color:numberColor">
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   num = 5;
@@ -714,25 +713,26 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/mdaEmJx)
+See [result](https://codepen.io/mogera551/pen/mdaEmJx)
 
-### Step.12 クラスのバインド
-* `html`の要素のクラス属性と`ViewModel`クラスのプロパティをバインドする場合、`class.(クラス名):(ViewModelのプロパティ)`と記述します。→`class.over:isOver`
-* `ViewModel`クラスのプロパティが真の場合、要素のクラス属性にクラス名が追加されます。
-* `ViewModel`クラスのプロパティが偽の場合、要素のクラス属性からクラス名が削除されます。
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step11).
 
-`main.js`の変数`html`の内容
+### Step 12. Binding Classes
+* When binding the class attribute of an html element and a property of the `ViewModel` class, write it as class.`(class name):(property of ViewModel)`. For example, `class.over:isOver`.
+* If the property of the `ViewModel` class is true, the class name is added to the class attribute of the element.
+* If the property of the `ViewModel` class is false, the class name is removed from the class attribute of the element.
+
+Content of the `html` variable in `main.js`
 ```html
 <style>
 .over {
   color:red;
 }
 </style>
-<input type="number" data-bind="num|number">
-<div data-bind="class.over:isOver">{{ num }}</div>
+<input type="number" data-bind="num|number; class.over:isOver">
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   num = 5;
@@ -745,7 +745,9 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/LYMZypL)
+See [result](https://codepen.io/mogera551/pen/LYMZypL)
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step12).
 
 ### Step.13 繰り返しブロック内のコンテキスト変数・ワイルドカードの使用
 * 繰り返しブロック内でワイルドーカードを使ったアクセサプロパティを宣言できます。→`members.*.no` `members.*.isAdult`
