@@ -570,52 +570,55 @@ See [result](https://codepen.io/mogera551/pen/vYvLQVX)
 
 See [source](https://github.com/mogera551/quel/tree/main/tutorials/step8).
 
-### Step.9 書き込みイベントハンドラ
-* `ViewModel`クラスに、書き込みイベントハンドラであるコールバックメソッド`$writeCallback`を設定できます。
-* 書き込みイベントは、`ViewModel`のプロパティに書き込みがあった場合に発生します。
-* コールバックメソッドに非同期`async`を指定することができます。
-* コールバックメソッドの引数には、書き込みしたプロパティ名とインデックス配列が渡されます。
-* 通常、入力系DOMに関連付けられた`ViewModel`プロパティは自動的に値を更新されますが、更新後に何か他の処理を行いたいときなどに使用します。
-* サンプルでは、GitHubのAPIでレポジトリの情報を取得しています。
+### Step 9. Write Event Handler
+* You can set the callback method `$writeCallback`, which is a write event handler, in the `ViewModel` class.
+* The write event occurs when there is a write to the properties of `ViewModel`.
+* You can specify `async` for the callback method.
+* The arguments of the callback method are the written property name and the loop index array.
+* Normally, `ViewModel` properties associated with input DOMs are automatically updated, but this is used when you want to do some other processing after updating.
+* In the sample, it fetches repository information from GitHub's API.
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
-<select data-bind="value:per_page">
+display 
+<select data-bind="value:display_count">
   <option value="3">3</option>
   <option value="4">4</option>
   <option value="5">5</option>
-</select>
+</select> items.
 <ul>
   {{ loop:commits }}
   <li>
-    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.message }} by {{ commits.*.commit.author.name }}
+    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
   </li>
   {{ end: }}
 </ul>
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
-  per_page = "3";
+  display_count = "3";
   commits = [];
   async getCommits(per_page) {
     const response = await fetch(`https://api.github.com/repos/mogera551/quel/commits?per_page=${per_page}&sha=main`);
     return await response.json();
   }
   async $connectedCallback() {
-    this.commits = await this.getCommits(this.per_page);
+    this.commits = await this.getCommits(this.display_count);
   }
   async $writeCallback(name, indexes) {
-    if (name === "per_page") {
-      // per_pageに変更があったら、取得しなおす
-      this.commits = await this.getCommits(this.per_page);
+    if (name === "display_count") {
+      // when changed display_count property
+      this.commits = await this.getCommits(this.display_count);
     }
   }
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/rNoxQEE)
+See [result](https://codepen.io/mogera551/pen/rNoxQEE)
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step9).
 
 ### Step.10 デフォルトプロパティ・双方向バインド
 * `html`の要素の下表のプロパティをデフォルトプロパティとし、バインド時`html`の要素のプロパティの指定を省略することができます。

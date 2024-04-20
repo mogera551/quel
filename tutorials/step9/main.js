@@ -1,6 +1,6 @@
 
 export const html = `
-<select data-bind="value:per_page">
+<select data-bind="value:display_count">
   <option value="3">3</option>
   <option value="4">4</option>
   <option value="5">5</option>
@@ -8,14 +8,14 @@ export const html = `
 <ul>
   {{ loop:commits }}
   <li>
-    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.message }} by {{ commits.*.commit.author.name }}
+    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
   </li>
   {{ end: }}
 </ul>
 `;
 
 export class ViewModel {
-  per_page = "3";
+  display_count = "3";
   commits = [];
 
   async getCommits(per_page) {
@@ -23,11 +23,11 @@ export class ViewModel {
     return await response.json();
   }
   async $connectedCallback() {
-    this.commits = await this.getCommits(this.per_page);
+    this.commits = await this.getCommits(this.display_count);
   }
   async $writeCallback(name, indexes) {
-    if (name === "per_page") {
-      this.commits = await this.getCommits(this.per_page);
+    if (name === "display_count") {
+      this.commits = await this.getCommits(this.display_count);
     }
   }
 }
