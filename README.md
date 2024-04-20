@@ -620,29 +620,29 @@ See [result](https://codepen.io/mogera551/pen/rNoxQEE)
 
 See [source](https://github.com/mogera551/quel/tree/main/tutorials/step9).
 
-### Step.10 デフォルトプロパティ・双方向バインド
-* `html`の要素の下表のプロパティをデフォルトプロパティとし、バインド時`html`の要素のプロパティの指定を省略することができます。
-   * `data-bind="value:message"`→`data-bind="message"`
-   * `data-bind="textContent:message"`→`data-bind="message"` 
+### Step 10. Default Properties & Two-Way Binding
+* The properties of the html elements in the table below can be set as default properties, allowing you to omit the specification of the properties of the html elements when binding.
+   * `data-bind="value:message"`->`data-bind="message"`
+   * `data-bind="textContent:message"`->`data-bind="message"` 
 
-|タグ|type属性|プロパティ|
+|Tag|Type Attribute|Property|
 |----|----|----|
 |input|radio|checked|
 |input|checkbox|checked|
-|input|上記以外|value|
+|input|other than above|value|
 |select||value|
 |textarea||value|
 |button||onclick|
 |a||onclick|
 |form||onsubmit|
-|上記以外||textContent|
+|other than above||textContent|
 
-* `html`の入力系要素のデフォルトプロパティと`ViewModel`クラスのプロパティをバインドする場合、入力系HTML要素のプロパティが更新されると自動的に`ViewModel`クラスのプロパティも更新されます。（双方向バインド）
-* 対象となる入力系要素は、`input` `select` `textarea`
-* 双方向バインドの場合、出力のためのフィルタは指定しません。必要であれば型変換のための入力フィルタ`number`を指定します。`data-bind="num|number"`
-* 入力フィルタの指定方法は、通常のフィルタと同じです。
+* When binding the default properties of html input elements and the properties of the `ViewModel` class, if the properties of the input HTML elements are updated, the properties of the `ViewModel` class are also automatically updated (two-way binding).
+* The target input elements are `input`, `select`, `textarea`.
+* In the case of two-way binding, do not specify a filter for output. If necessary, specify the input filter `number` for type conversion. `data-bind="num|number"`
+* The method of specifying the input filter is the same as the normal filter.
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <div data-bind="message"></div>
 <div>
@@ -650,6 +650,9 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step9).
 </div>
 <div>
   <textarea data-bind="message"></textarea>
+</div>
+<div>
+  <button type="button" data-bind="clearMessage">clear message</button>
 </div>
 <div>
   <select data-bind="num|number">
@@ -668,7 +671,7 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step9).
 </div>
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   num = 1;
@@ -676,13 +679,18 @@ class ViewModel {
   get double() {
     return this.num + this.num;
   }
+  clearMessage() {
+    this.message = "";
+  }
   $dependentProps = {
     "double": ["num"]
   }
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/ZEVWeEP)
+See [result](https://codepen.io/mogera551/pen/ZEVWeEP)
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step10).
 
 ### Step.11 スタイルのバインド
 * `html`の要素のスタイル属性と`ViewModel`クラスのプロパティをバインドする場合、`style.(要素のスタイル属性名):(ViewModelのプロパティ)`と記述します。→`style.color:numberColor`
