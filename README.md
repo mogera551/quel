@@ -347,13 +347,14 @@ The content of the `html` variable in `main.js`
 ```html
 <div>
   <div>{{ message }}</div>
+  <!-- bind ViewModel.message to div.textContent -->
   <div data-bind="textContent:message"></div>
-  <!-- input element -->
+  <!-- input element, bind ViewModel.message to input.value -->
   <input type="text" data-bind="value:message">
 </div>
 <div>
   <div>{{ season }}</div>
-  <!-- input element -->
+  <!-- input element, bind ViewModel.season to select.value -->
   <select data-bind="value:season">
     <option value="spring">spring</option>
     <option value="summer">summer</option>
@@ -362,9 +363,11 @@ The content of the `html` variable in `main.js`
   </select>
 </div>
 <div>
+  <!-- bind ViewModel.buttonDisable to button.disabled -->
+  <!-- bind ViewModel.season to button.textContent -->
   <button data-bind="disabled:buttonDisable; textContent:season;"></button>
   <label>
-    <!-- input element -->
+    <!-- input element, bind ViewModel.buttonDisable to input.checked -->
     <input type="checkbox" data-bind="checked:buttonDisable">
     button disable
   </label>
