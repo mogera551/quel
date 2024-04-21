@@ -35,7 +35,7 @@ Simple and declarative view
 </div>
 <ul>
   {{ loop:taskList }}
-  <li data-bind="onclick:selected">
+  <li data-bind="onclick:select">
     <span data-bind="class.selected:taskList.*.selected">{{ taskList.* }}</span>, 
     <button data-bind="delete">X</button>
   </li>
@@ -79,7 +79,7 @@ class ViewModel {
    * @param {Event} e
    * @param {number} $1 loop context index
    */
-  selected(e, $1) {
+  select(e, $1) {
     this.selectedIndex = $1;
   }
 
