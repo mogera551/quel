@@ -18,6 +18,15 @@ The development goal is to simplify the increasingly complex frontend developmen
 
 Simple and declarative view
 ```html
+<style>
+  .selected {
+    color: white;
+    background-color: red;
+  }
+  li {
+    cursor: pointer;
+  }
+</style>
 <div>
   <form data-bind="add|preventDefault">
     <input data-bind="task">
@@ -26,7 +35,10 @@ Simple and declarative view
 </div>
 <ul>
   {{ loop:taskList }}
-  <li>{{ taskList.* }}, <button data-bind="delete">X</button></li>
+  <li data-bind="onclick:selected">
+    <span data-bind="class.selected:taskList.*.selected">{{ taskList.* }}</span>, 
+    <button data-bind="delete">X</button>
+  </li>
   {{ end: }}
 </ul>
 ```
@@ -38,6 +50,12 @@ class ViewModel {
   task = "";
   /** @type {string[]} */
   taskList = [];
+  /** @type {number} */
+  selectedIndex;
+  /** @type {boolean} */
+  get "taskList.*.selected"() {
+    return this.selectedIndex === this.$1;
+  }
 
   /**
    * add task to list
@@ -54,6 +72,19 @@ class ViewModel {
    */
   delete(e, $1) {
     this.taskList = this.taskList.toSpliced($1, 1);
+  }
+
+  /**
+   * select task
+   * @param {Event} e
+   * @param {number} $1 loop context index
+   */
+  selected(e, $1) {
+    this.selectedIndex = $1;
+  }
+
+  $dependentProps = {
+    "taskList.*.selected": [ "selectedIndex" ],
   }
 }
 ```
