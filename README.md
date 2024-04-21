@@ -473,7 +473,7 @@ See [result](https://codepen.io/mogera551/pen/abPzKwx).
 
 See [source](https://github.com/mogera551/quel/tree/main/tutorials/step4).
 
-### Step 5. Filters 
+### Step 5. Output Filters 
 * You can use output filters on the properties of `ViewModel`.
 * Write the pipe `|` and the filter name after the property in html.
 * You can specify options after the filter name, separated by a comma `,`.
@@ -543,7 +543,7 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step6).
 * Enclose the block to be repeated (a set of elements) with `{{ loop:(ViewModel property) }} ... {{ end: }}` in html.
    * `{{ loop:animals }} ... {{ end: }}`
    * `{{ loop:fruits }} ... {{ end: }}`
-* Within the repeating block, describe the array elements using wildcard dot notation `(ViewModel property).*`.
+* Within the repeating block, describe the array elements using dot notation with wildcard `*`.
    * `animals.*`
    * `fruits.*.name`
    * `fruits.*.age`
