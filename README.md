@@ -72,6 +72,7 @@ class ViewModel {
    */
   delete(e, $1) {
     this.taskList = this.taskList.toSpliced($1, 1);
+    this.selectedIndex = undefined;
   }
 
   /**
@@ -83,6 +84,7 @@ class ViewModel {
     this.selectedIndex = $1;
   }
 
+  /** @type {{string,string[]}} special property, describe dependent properties */
   $dependentProps = {
     "taskList.*.selected": [ "selectedIndex" ],
   }
