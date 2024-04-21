@@ -8,6 +8,7 @@ The development goal is to simplify the increasingly complex frontend developmen
 ## The main features
 * Minimal rules and conventions, as intuitive as possible
 * Declarative view descriptions
+* Support two way binding
 * No need for other libraries
 * No need for transpiling
 * Component-based
@@ -33,14 +34,24 @@ Simple and declarative view
 Simple class to store and manipulate state
 ```js
 class ViewModel {
+  /** @type {string} */
   task = "";
+  /** @type {string[]} */
   taskList = [];
 
-  add(e) {
+  /**
+   * add task to list
+   */
+  add() {
     this.taskList = this.taskList.concat(this.task);
     this.task = "";
   }
 
+  /**
+   * delete task from list
+   * @param {Event} e
+   * @param {number} $1 loop context index
+   */
   delete(e, $1) {
     this.taskList = this.taskList.toSpliced($1, 1);
   }
@@ -128,7 +139,7 @@ Here, it is referred to as `main.js`.
 
 #### Define the HTML template.
 Define the HTML that will serve as the content of the component.
-You describe the embedding of properties defined in the ViewModel class, the association of attribute values of html elements, the association of events, conditional branching, and repetition.
+You describe the embedding of properties defined in the `ViewModel` class, the association of attribute values of html elements, the association of events, conditional branching, and repetition.
 Declare with the variable name `html` and `export` it.
 
 Example for HTML template of component module
@@ -879,14 +890,14 @@ class ViewModel {
 
 [モックを見る](https://codepen.io/mogera551/pen/LYMRWVK)
 
-#### ToDo情報を格納するクラス
+#### ToDo情報を格納するオブジェクトの定義
 * ToDoの内容`content`
 * 完了フラグ`completed`
 ```js
 /**
  * @typedef {Object} TodoItem
  * @property {string} content
- * @property {completed} false;
+ * @property {boolean} completed
  */
 ```
 
@@ -898,7 +909,7 @@ class ViewModel {
 class ViewModel {
   /** @type {string} input text */
   content = "";
-  /** @type {TodoItem[]} todo list, initial value empty array */
+  /** @type {TodoItem[]} todo list, set empty array as initial value */
   todoItems = [];
 }
 ```
@@ -964,7 +975,7 @@ class ViewModel {
   /**
    * delete todo item
    * @param {Event} e
-   * @param {number} $1 loop index
+   * @param {number} $1 loop context index
    */
   delete(e, $1) {
     this.todoItems = this.todoItems.toSpliced($1, 1);

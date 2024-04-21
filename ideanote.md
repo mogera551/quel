@@ -1,6 +1,12 @@
 
 # ノードプロパティの型変換の自動化
 
+# 外部コンポーネントとして使用する
+const memberList = document.createElement("member-list");
+memberList.props.members = members;
+body.appendChild(memberList);
+
+
 # validationへの対応
 https://developer.mozilla.org/ja/docs/Learn/Forms/Form_validation
 
@@ -8,22 +14,6 @@ https://developer.mozilla.org/ja/docs/Learn/Forms/Form_validation
 https://developer.mozilla.org/ja/docs/Web/HTML/Element/details
 
 # form submitの推奨される実装
-
-# イベントフィルター
-ex.
-<button data-bind="onclick:countUp|preventDefault|stopPropagation">count up</button>
-or
-<button data-bind="onclick:countUp|pd|sp">count up</button>
-
-sp(eventfilter) {
-  eventfilter.e.stopPropagation();
-  eventfilter.next();
-}
-
-pd(eventfilter) {
-  eventfilter.e.preventDefault();
-  eventfilter.next();
-}
 
 # ループコンテキストからポップオーバー
 ex.
