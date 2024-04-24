@@ -2,10 +2,112 @@
 # ノードプロパティの型変換の自動化
 
 # 外部コンポーネントとして使用する
+## コンポーネントの定義方法
+色々なコンポーネントの登録方法
+
+コンポーネントクラスの定義、タグ名の登録を１つのファイルで行うオールインワン型
+良い点
+* scriptタグを追加するだけで、カスタムコンポーネントを利用できる
+悪い点
+* 利用する側でタグ名の変更ができない→パラメータで渡す
+* registerComponentModules関数を呼び出す必要がある
+
+`component.js`
+```js
+import { registerComponentModules } from "./path/to/quel.min.js";
+
+const html;
+
+class ViewModel {}
+
+const componentName = (new URL(import.meta.url)).search.slice(1);
+!componentName && throw "no component name";
+
+registerComponentModules({ componentName: { html, ViewModel } });
+```
+
+`index.html`
+```html
+<script type="module" src="component.js?myComponent"></script>
+
+<my-component></my-component>
+```
+
+コンポーネントクラスを定義するコンポーネント型
+良い点
+* 利用する側(index.html)でquelを呼び出す必要がない
+* 利用する側でタグ名の変更ができる
+悪い点
+* generateComponentClass関数を呼び出す必要がある
+* 呼び出す側で登録するコードが必要
+
+`component.js`
+```js
+import { generateComponentClass } from "./path/to/quel.min.js";
+
+const html;
+
+class ViewModel {}
+
+export default generateComponentClass({ html, ViewModel });
+```
+
+`index.html`
+```html
+<my-component></my-component>
+
+<script type="module">
+import myComponent from "./component.js";
+
+customElements.define("my-component", myComponent);
+</script>
+```
+
+コンポーネントモジュールを定義するコンポーネントモジュール型
+良い点
+* 利用する側でタグ名の変更ができる
+* コンポーネントを定義する側で、quelを呼び出す必要がない→ポータビリティ
+悪い点
+* 利用する側(index.html)でquelを呼び出す必要がある
+* 呼び出す側で登録するコードが必要
+
+`component.js`
+```js
+export const html;
+
+export class ViewModel {}
+
+```
+
+`index.html`
+```html
+<my-component></my-component>
+
+<script type="module">
+import { generateComponentClass } from "./path/to/quel.min.js";
+import * as myComponent from "./component";
+
+generateComponentClass({ myComponent });
+</script>
+```
+
+
+import { registerComponentModules, generateComponentClass } from "./path/to/quel.min.js";
+import * as componentModlue from "./componentModlue.js";
+
+registerComponentModules({componentModlue});
+
+const componentClass = generateComponentClass(componentModlue);
+
+
+
+
+
 const memberList = document.createElement("member-list");
 memberList.props.members = members;
 body.appendChild(memberList);
 
+# shadow rootへのcssの適用
 
 # validationへの対応
 https://developer.mozilla.org/ja/docs/Learn/Forms/Form_validation
