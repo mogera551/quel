@@ -5,41 +5,49 @@
 ## コンポーネントの定義方法
 色々なコンポーネントの登録方法
 
+### オールインワン型
 コンポーネントクラスの定義、タグ名の登録を１つのファイルで行うオールインワン型
-良い点
-* scriptタグを追加するだけで、カスタムコンポーネントを利用できる
-悪い点
-* 利用する側でタグ名の変更ができない→パラメータで渡す
-* registerComponentModules関数を呼び出す必要がある
+
+* 良い点
+  * scriptタグを追加するだけで、カスタムコンポーネントを利用できる
+* 悪い点
+  * registerComponentModules関数, getCustomTagFromImportMeta関数を呼び出す必要がある
+  * 利用する側でタグ名の変更ができない→パラメータで渡すことで解決できる
+
+どんな場面で利用するか、独立して提供されるコンポーネント
 
 `component.js`
 ```js
-import { registerComponentModules } from "./path/to/quel.min.js";
+import { registerComponentModules, getCustomTagFromImportMeta } from "./path/to/quel.min.js";
 
 const html;
 
 class ViewModel {}
 
-const componentName = (new URL(import.meta.url)).search.slice(1);
-!componentName && throw "no component name";
+const customTag = getCustomTagFromImportMeta(import.meta);
+!customTag && throw "no custom tag name";
 
-registerComponentModules({ componentName: { html, ViewModel } });
+registerComponentModules({ [customTag]: { html, ViewModel } });
 ```
 
 `index.html`
 ```html
-<script type="module" src="component.js?myComponent"></script>
+<script type="module" src="./component.js?myComponent"></script>
 
 <my-component></my-component>
 ```
 
-コンポーネントクラスを定義するコンポーネント型
-良い点
-* 利用する側(index.html)でquelを呼び出す必要がない
-* 利用する側でタグ名の変更ができる
-悪い点
-* generateComponentClass関数を呼び出す必要がある
-* 呼び出す側で登録するコードが必要
+### Webコンポーネント型
+Webコンポーネントクラスを定義するWebコンポーネント型
+* 良い点
+  * Web標準準拠のWebコンポーネントクラスを取得できる
+  * 利用する側(index.html)でquelを呼び出す必要がない
+  * 利用する側でタグ名の変更ができる
+* 悪い点
+  * generateComponentClass関数を呼び出す必要がある
+  * 呼び出す側で登録するコードが必要
+
+どんな場面で利用するか、Web標準準拠のWebコンポーネントが必要な場合
 
 `component.js`
 ```js
@@ -63,13 +71,16 @@ customElements.define("my-component", myComponent);
 </script>
 ```
 
-コンポーネントモジュールを定義するコンポーネントモジュール型
-良い点
-* 利用する側でタグ名の変更ができる
-* コンポーネントを定義する側で、quelを呼び出す必要がない→ポータビリティ
-悪い点
-* 利用する側(index.html)でquelを呼び出す必要がある
-* 呼び出す側で登録するコードが必要
+### コンポーネントモジュール型
+コンポーネントモジュールの要素だけを定義するコンポーネントモジュール型
+* 良い点
+  * 利用する側でタグ名の変更ができる
+  * コンポーネントを定義する側で、quelを呼び出す必要がない→ポータビリティ
+* 悪い点
+  * 利用する側(index.html)でquelを呼び出す必要がある
+  * 呼び出す側で登録するコードが必要
+
+どんな場面で利用するか、Quelだけでコンポーネントを構築する場合
 
 `component.js`
 ```js

@@ -1,4 +1,4 @@
-export { generateComponentClass, registerComponentModules } from "./component/Component.js";
+export { generateComponentClass, registerComponentModules, getCustomTagFromImportMeta } from "./component/Component.js";
 export { loader } from "./loader/QuelLoader.js";
 export { config } from "./Config.js";
 import { Filter } from "./filter/Filter.js";

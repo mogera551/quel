@@ -5456,6 +5456,17 @@ function registerComponentModules(componentModules) {
   }
 }
 
+/**
+ * 
+ * @param {{url:string}} importMeta 
+ * @returns {string}
+ */
+function getCustomTagFromImportMeta(importMeta) {
+  const url = new URL(importMeta.url);
+  const tagName = url.search.slice(1);
+  return tagName;
+}
+
 class Registrar {
   /**
    * 
@@ -5938,4 +5949,4 @@ function registerGlobal(data) {
   Object.assign(GlobalData.data, data);
 }
 
-export { config, generateComponentClass, loader, registerComponentModules, registerFilters, registerGlobal };
+export { config, generateComponentClass, getCustomTagFromImportMeta, loader, registerComponentModules, registerFilters, registerGlobal };

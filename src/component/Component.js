@@ -162,3 +162,14 @@ export function registerComponentModules(componentModules) {
     registerComponentModule(customElementName, userComponentModule);
   }
 }
+
+/**
+ * 
+ * @param {{url:string}} importMeta 
+ * @returns {string}
+ */
+export function getCustomTagFromImportMeta(importMeta) {
+  const url = new URL(importMeta.url);
+  const tagName = url.search.slice(1);
+  return tagName;
+}
