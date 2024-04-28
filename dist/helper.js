@@ -17,3 +17,12 @@ export function getCustomTagFromImportMeta(importMeta) {
 export async function importHtmlFromImportMeta(importMeta) {
   return await fetch(importMeta.url.replace(".js", ".html")).then(response => response.text());
 }
+
+/**
+ * 
+ * @param {{url:string}} importMeta 
+ * @returns {Promise<string>}
+ */
+export async function importCssFromImportMeta(importMeta) {
+  return await fetch(importMeta.url.replace(".js", ".css")).then(response => response.text());
+}

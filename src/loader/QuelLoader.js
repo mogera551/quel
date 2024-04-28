@@ -18,7 +18,13 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input } = module;
       Filter.register(filterName, output, input);
     } else {
-      registerComponentModule(name, module);
+      if (module instanceof HTMLElement) {
+        customElements.define(name, module);
+      } else {
+        if ("ViewModel" in module && "html" in module) {
+          registerComponentModule(name, module);
+        }
+      }
     }
   }
 }

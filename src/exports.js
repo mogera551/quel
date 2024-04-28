@@ -1,7 +1,8 @@
 export { generateComponentClass, registerComponentModules } from "./component/Component.js";
 export { loader } from "./loader/QuelLoader.js";
 export { config } from "./Config.js";
-export { getCustomTagFromImportMeta, importHtmlFromImportMeta } from "../dist/helper.js";
+export { getCustomTagFromImportMeta, importHtmlFromImportMeta, importCssFromImportMeta } from "../dist/helper.js";
+export { bootFromImportMeta } from "./Boot.js";
 import { Filter } from "./filter/Filter.js";
 import { GlobalData } from "./global/Data.js";
 

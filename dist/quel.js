@@ -5854,12 +5854,24 @@ class Loader {
       }
       let moduleData;
       if (typeof loadPaths.exportName !== "undefined") {
-        if (!(loadPaths.exportName in module)) {
+        if (typeof module.default !== "undefined") {
+          if (loadPaths.exportName in module.default) {
+            moduleData = Object.assign({}, module.default[loadPaths.exportName]);
+          }
+        } else {
+          if (loadPaths.exportName in module) {
+            moduleData = Object.assign({}, module[loadPaths.exportName]);
+          }
+        }
+        if (typeof moduleData === "undefined" ) {
           throw new Error(`${loadPaths.exportName} not found in module (exportName:${loadPaths.exportName}, ${loadPaths.filePath})`);
         }
-        moduleData = module[loadPaths.exportName];
       } else {
-        moduleData = module.default;
+        if (typeof module.default !== "undefined") {
+          moduleData = Object.assign({}, module.default);
+        } else {
+          moduleData = Object.assign({}, module);
+        }
       }
       this.#registrar.register(loadName, moduleData);
     }
@@ -5892,7 +5904,13 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input } = module;
       Filter.register(filterName, output, input);
     } else {
-      registerComponentModule(name, module);
+      if (module instanceof HTMLElement) {
+        customElements.define(name, module);
+      } else {
+        if ("ViewModel" in module && "html" in module) {
+          registerComponentModule(name, module);
+        }
+      }
     }
   }
 }
@@ -5921,6 +5939,31 @@ async function importHtmlFromImportMeta(importMeta) {
 
 /**
  * 
+ * @param {{url:string}} importMeta 
+ * @returns {Promise<string>}
+ */
+async function importCssFromImportMeta(importMeta) {
+  return await fetch(importMeta.url.replace(".js", ".css")).then(response => response.text());
+}
+
+const DEFAULT_CONFIG_PATH = "./quel.config.json";
+
+/**
+ * 
+ * @param {{url:string,resolve:(path:string)=>string}} importMeta 
+ * @param {*} configPath 
+ */
+async function bootFromImportMeta(importMeta, configPath) {
+  const response = await fetch(importMeta.resolve(configPath ?? DEFAULT_CONFIG_PATH));
+  const configData = await response.json();
+  for(let [key, value] of Object.entries(config)) {
+    config[key] = (typeof configData[key] !== "undefined") ? configData[key] : value;
+  }
+  await loader.config(configData).load();
+}
+
+/**
+ * 
  * @param {Object<string,UserFilterData>} filters 
  */
 function registerFilters(filters) {
@@ -5938,4 +5981,4 @@ function registerGlobal(data) {
   Object.assign(GlobalData.data, data);
 }
 
-export { config, generateComponentClass, getCustomTagFromImportMeta, importHtmlFromImportMeta, loader, registerComponentModules, registerFilters, registerGlobal };
+export { bootFromImportMeta, config, generateComponentClass, getCustomTagFromImportMeta, importCssFromImportMeta, importHtmlFromImportMeta, loader, registerComponentModules, registerFilters, registerGlobal };
