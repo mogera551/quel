@@ -65,7 +65,7 @@
  * @property {ViewModel.constructor|undefined} ViewModel
  * @property {string|undefined} extendTag
  * @property {Object<string,UserComponentModule>|undefined} componentModules
- * @property {Object<string,UserComponentModule>|undefined} componentModulesForRegist
+ * @property {Object<string,UserComponentModule>|undefined} componentModulesForRegister
  * @property {boolean|undefined} useShadowRoot
  * @property {boolean|undefined} useWebComponent
  * @property {boolean|undefined} useLocalTagName

@@ -122,7 +122,7 @@ export class ComponentClassGenerator {
     mixIn(popoverMixIn);
 
     // register component's subcomponents 
-    registerComponentModules(module.componentModulesForRegist);
+    registerComponentModules(module.componentModulesForRegister);
 
     return componentClass;
   }

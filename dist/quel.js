@@ -694,7 +694,7 @@ class Module {
   componentModules;
 
   /** @type {Object<string,Module>|undefined} */
-  get componentModulesForRegist() {
+  get componentModulesForRegister() {
     if (this.useLocalTagName ?? config.useLocalTagName) {
       // case of useLocalName with true,
       // subcompnents tag name convert to the name with uuid
@@ -5415,7 +5415,7 @@ class ComponentClassGenerator {
     mixIn(popoverMixIn);
 
     // register component's subcomponents 
-    registerComponentModules(module.componentModulesForRegist);
+    registerComponentModules(module.componentModulesForRegister);
 
     return componentClass;
   }
