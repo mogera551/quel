@@ -1,5 +1,5 @@
 /**
- * @typedef ViewModel
+ * @typedef {Object} ViewModel
  * @property {HTMLElement} $component
  * @property {number} $1
  * @property {number} $2

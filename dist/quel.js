@@ -5436,17 +5436,6 @@ function registerComponentModules(componentModules) {
   }
 }
 
-/**
- * 
- * @param {{url:string}} importMeta 
- * @returns {string}
- */
-function getCustomTagFromImportMeta(importMeta) {
-  const url = new URL(importMeta.url);
-  const tagName = url.search.slice(1);
-  return tagName;
-}
-
 class Registrar {
   /**
    * 
@@ -5912,6 +5901,26 @@ const loader = Loader.create(QuelModuleRegistrar);
 
 /**
  * 
+ * @param {{url:string}} importMeta 
+ * @returns {string}
+ */
+function getCustomTagFromImportMeta(importMeta) {
+  const url = new URL(importMeta.url);
+  const tagName = url.search.slice(1);
+  return tagName;
+}
+
+/**
+ * 
+ * @param {{url:string}} importMeta 
+ * @returns {Promise<string>}
+ */
+async function importHtmlFromImportMeta(importMeta) {
+  return await fetch(importMeta.url.replace(".js", ".html")).then(response => response.text());
+}
+
+/**
+ * 
  * @param {Object<string,UserFilterData>} filters 
  */
 function registerFilters(filters) {
@@ -5929,4 +5938,4 @@ function registerGlobal(data) {
   Object.assign(GlobalData.data, data);
 }
 
-export { config, generateComponentClass, getCustomTagFromImportMeta, loader, registerComponentModules, registerFilters, registerGlobal };
+export { config, generateComponentClass, getCustomTagFromImportMeta, importHtmlFromImportMeta, loader, registerComponentModules, registerFilters, registerGlobal };
