@@ -15,7 +15,7 @@ export class ComponentClassGenerator {
   
   /**
    * generate unique component class
-   * @param {UserComponentModule} componentModule 
+   * @param {ComponentModule} componentModule 
    * @returns {Component.constructor}
    */
   static generate(componentModule) {
@@ -30,28 +30,28 @@ export class ComponentClassGenerator {
         static ViewModel = module.ViewModel;
 
         /**@type {Object<string,FilterFunc>} */
-        static inputFilters = module.inputFilters;
+        static inputFilters = module.filters?.input ?? {};
 
         /** @type {Object<string,FilterFunc>} */
-        static outputFilters = module.outputFilters;
+        static outputFilters = module.filters?.output ?? {};
 
         /** @type {Object<string,EventFilterFunc>} */
-        static eventFilters = module.eventFilters;
+        static eventFilters = module.filters?.event ?? {};
 
         /** @type {boolean} */
-        static useShadowRoot = module.useShadowRoot ?? config.useShadowRoot;
+        static useShadowRoot = module.config?.useShadowRoot ?? config.useShadowRoot;
 
         /** @type {boolean} */
-        static useWebComponent = module.useWebComponent ?? config.useWebComponent;
+        static useWebComponent = module.config?.useWebComponent ?? config.useWebComponent;
 
         /** @type {boolean} */
-        static useLocalTagName = module.useLocalTagName ?? config.useLocalTagName;
+        static useLocalTagName = module.config?.useLocalTagName ?? config.useLocalTagName;
 
         /** @type {boolean} */
-        static useKeyed = module.useKeyed ?? config.useKeyed;
+        static useKeyed = module.config?.useKeyed ?? config.useKeyed;
 
         /** @type {boolean} */
-        static useBufferedBind = module.useBufferedBind ?? config.useBufferedBind;
+        static useBufferedBind = module.config?.useBufferedBind ?? false;
 
         /** @type {boolean} */
         static get [Symbols.isComponent] () {
@@ -65,44 +65,47 @@ export class ComponentClassGenerator {
          */
         constructor() {
           super();
-          const options = {};
-          const setOptionFromAttribute = (name, flagName, options) => {
+          const config = {};
+          const setConfigFromAttribute = (name, flagName, config) => {
             if (this.hasAttribute(name)) {
-              options[flagName] = true;
+              config[flagName] = true;
             } else if (this.hasAttribute("no-" + name)) {
-              options[flagName] = false;
+              config[flagName] = false;
             } else {
-              options[flagName] = this.constructor[flagName];
+              config[flagName] = this.constructor[flagName];
             }
           }
-          setOptionFromAttribute("shadow-root", "useShadowRoot", options);
-          setOptionFromAttribute("web-component", "useWebComponent", options);
-          setOptionFromAttribute("local-tag-name", "useLocalTagName", options);
-          setOptionFromAttribute("keyed", "useKeyed", options);
-          setOptionFromAttribute("buffered-bind", "useBufferedBind", options);
+          setConfigFromAttribute("shadow-root", "useShadowRoot", config);
+          setConfigFromAttribute("web-component", "useWebComponent", config);
+          setConfigFromAttribute("local-tag-name", "useLocalTagName", config);
+          setConfigFromAttribute("keyed", "useKeyed", config);
+          setConfigFromAttribute("buffered-bind", "useBufferedBind", config);
 
-          this.initialize(options);
+          this.initialize(config);
         }
 
-        initialize(options) {
-          this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, [options]));
+        initialize(config) {
+          this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, [config]));
         }
       };
     };
   
     /** @type {Module} */
     const module = Object.assign(new Module, componentModule);
+    module.filters = Object.assign({}, componentModule.filters);
+    module.config = Object.assign({}, componentModule.config);
+    module.options = Object.assign({}, componentModule.options);
 
     // generate new class, for customElements not define same class
     const componentClass = getBaseClass(module);
-    if (typeof module.extendTag === "undefined") {
+    if (typeof module.options?.extends === "undefined") {
       // case of autonomous custom element
     } else {
       // case of customized built-in element
       // change class extends to extends constructor
       // See http://var.blog.jp/archives/75174484.html
       /** @type {HTMLElement.constructor} */
-      const extendClass = document.createElement(module.extendTag).constructor;
+      const extendClass = document.createElement(module.options.extends).constructor;
       componentClass.prototype.__proto__ = extendClass.prototype;
       componentClass.__proto__ = extendClass;
     }
@@ -130,7 +133,7 @@ export class ComponentClassGenerator {
 
 /**
  * function for generate unique component class
- * @param {UserComponentModule} componentModule 
+ * @param {ComponentModule} componentModule 
  * @returns {Component.constructor}
  */
 export function generateComponentClass(componentModule) {
@@ -141,21 +144,21 @@ export function generateComponentClass(componentModule) {
  * register component class with tag name, call customElements.define
  * generate component class from componentModule
  * @param {string} customElementName 
- * @param {UserComponentModule} componentModule 
+ * @param {ComponentModule} componentModule 
  */
 export function registerComponentModule(customElementName, componentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = ComponentClassGenerator.generate(componentModule);
-  if (typeof componentModule.extendTag === "undefined") {
+  if (typeof componentModule.options?.extends === "undefined") {
     customElements.define(customElementKebabName, componentClass);
   } else {
-    customElements.define(customElementKebabName, componentClass, { extends:componentModule.extendTag });
+    customElements.define(customElementKebabName, componentClass, { extends:componentModule.options.extends });
   }
 }
 
 /**
  * 
- * @param {Object<string,UserComponentModule>} componentModules 
+ * @param {Object<string,ComponentModule>} componentModules 
  */
 export function registerComponentModules(componentModules) {
   for(const [customElementName, userComponentModule] of Object.entries(componentModules ?? {})) {

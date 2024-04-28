@@ -25,32 +25,14 @@ export class Module {
   /** @type {ViewModel.constructor} */
   ViewModel = class {};
 
-  /** @type {string|undefined} */
-  extendTag;
+  /** @type {ComponentModuleConfig} */
+  config = {};
 
-  /** @type {boolean|undefined} */
-  useWebComponent;
+  /** @type {ComponentModuleOptions} */
+  options = {};
 
-  /** @type {boolean|undefined} */
-  useShadowRoot;
-
-  /** @type {boolean|undefined} */
-  useLocalTagName;
-
-  /** @type {boolean|undefined} */
-  useKeyed;
-
-  /** @type {boolean|undefined} */
-  useBufferedBind;
-
-  /** @type {Object<string,FilterFunc>|undefined} */
-  inputFilters;
-
-  /** @type {Object<string,FilterFunc>|undefined} */
-  outputFilters;
-
-  /** @type {Object<string,EventFilterFunc>|undefined} */
-  eventFilters;
+  /** @type {ComponentModuleFilters} */
+  filters = {};
 
   /** @type {Object<string,Module>|undefined} */
   componentModules;

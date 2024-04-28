@@ -168,7 +168,7 @@ class Handler {
     if (typeof this.buffer !== "undefined") {
       return Reflect.ownKeys(this.buffer);
     } else if (this.binds.length === 0) {
-      return Array.from(this.component.attributes())
+      return Array.from(this.component.attributes)
         .filter(attribute => attribute.name.startsWith("props:"))
         .map(attribute => attribute.name.slice(6));
     } else {

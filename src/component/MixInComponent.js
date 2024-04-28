@@ -261,25 +261,20 @@ export const mixInComponent = {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    const { template, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members
+    const { template, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
+    
     // setting filters
-    if (typeof inputFilters !== "undefined") {
-      for(const [name, filterFunc] of Object.entries(inputFilters)) {
-        if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
-        this.filters.in[name] = filterFunc;
-      }
+    for(const [name, filterFunc] of Object.entries(inputFilters)) {
+      if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
+      this.filters.in[name] = filterFunc;
     }
-    if (typeof outputFilters !== "undefined") {
-      for(const [name, filterFunc] of Object.entries(outputFilters)) {
-        if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
-        this.filters.out[name] = filterFunc;
-      }
+    for(const [name, filterFunc] of Object.entries(outputFilters)) {
+      if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
+      this.filters.out[name] = filterFunc;
     }
-    if (typeof eventFilters !== "undefined") {
-      for(const [name, filterFunc] of Object.entries(eventFilters)) {
-        if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
-        this.filters.event[name] = filterFunc;
-      }
+    for(const [name, filterFunc] of Object.entries(eventFilters)) {
+      if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
+      this.filters.event[name] = filterFunc;
     }
     // create and attach shadowRoot
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {

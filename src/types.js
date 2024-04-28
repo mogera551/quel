@@ -59,21 +59,6 @@
  */
 
 /**
- * @typedef {Object} UserComponentModule
- * @property {string|undefined} html
- * @property {string|undefined} css
- * @property {ViewModel.constructor|undefined} ViewModel
- * @property {string|undefined} extendTag
- * @property {Object<string,UserComponentModule>|undefined} componentModules
- * @property {Object<string,UserComponentModule>|undefined} componentModulesForRegister
- * @property {boolean|undefined} useShadowRoot
- * @property {boolean|undefined} useWebComponent
- * @property {boolean|undefined} useLocalTagName
- * @property {boolean|undefined} useKeyed
- * @property {boolean|undefined} useBufferedBind
- */
-
-/**
  * @typedef {(value:any,options:string[])=>any} FilterFunc
  */
 
@@ -82,9 +67,42 @@
  */
 
 /**
- * @typedef {Object} UserFilterData
- * @property {FilterFunc} input
- * @property {FilterFunc} output
+ * @typedef {Object} ComponentModuleConfig
+ * @property {boolean|undefined} useShadowRoot 
+ * attach shadow root to the component, default is false
+ * @property {boolean|undefined} useWebComponent 
+ * use web component, default is true. if false then no custom element.
+ * @property {boolean|undefined} useLocalTagName 
+ * use local tag name, default is true. local custom tag is unique in the document.
+ * @property {boolean|undefined} useKeyed 
+ * use keyed, default is true. keyed is used for the component instance.
+ * @property {boolean|undefined} useBufferedBind 
+ * use buffered bind, default is false. buffered bind is used for popover or dialog.
+ */
+
+/**
+ * @typedef {Object} ComponentModuleOptions
+ * @property {string|undefined} extends
+ * for customized built-in element, like extends="button"
+ */
+
+/**
+ * @typedef {Object} ComponentModuleFilters
+ * @property {Object<string,FilterFunc>|undefined} input
+ * @property {Object<string,FilterFunc>|undefined} output
+ * @property {Object<string,EventFilterFunc>|undefined} event
+ 
+ */
+
+/**
+ * @typedef {Object} ComponentModule
+ * @property {string|undefined} html
+ * @property {string|undefined} css
+ * @property {ViewModel.constructor|undefined} ViewModel
+ * @property {Object<string,ComponentModule>|undefined} componentModules
+ * @property {ComponentModuleConfig|undefined} config
+ * @property {ComponentModuleOptions|undefined} options
+ * @property {ComponentModuleFilters|undefined} filters
  */
 
 /**
@@ -124,7 +142,7 @@
  * @property {ViewModel.constructor} Component.ViewModel
  * @property {HTMLTemplateElement} Component.template
  * @property {HTMLElement.constructor} Component.extendClass
- * @property {string} Component.extendTag
+ * @property {string} Component.extends
  * @property {Object<string,FilterFunc>} Component.inputFilters
  * @property {Object<string,FilterFunc>} Component.outputFilters
  * @property {Object<string,EventFilterFunc>} Component.eventFilters
