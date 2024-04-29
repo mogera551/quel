@@ -95,10 +95,10 @@ export class ViewModel {}
 <my-component></my-component>
 
 <script type="module">
-import { generateComponentClass } from "./path/to/quel.min.js";
+import { registerComponentModules } from "./path/to/quel.min.js";
 import * as myComponent from "./component";
 
-generateComponentClass({ myComponent });
+registerComponentModules({ myComponent });
 </script>
 ```
 
