@@ -3,7 +3,7 @@ import { Loader, Registrar } from "../../modules/vanilla-module-loader/vanilla_m
 import { Filter } from "../filter/Filter.js";
 import { registerComponentModule } from "../component/Component.js";
 
-const PREFIX = "filter-";
+const PREFIX = "*filter-";
 
 class QuelModuleRegistrar extends Registrar {
   /**
@@ -15,8 +15,8 @@ class QuelModuleRegistrar extends Registrar {
   static register(name, module) {
     if (name.startsWith(PREFIX)) {
       const filterName = name.slice(PREFIX.length);
-      const { output, input } = module;
-      Filter.register(filterName, output, input);
+      const { output, input, event } = module;
+      Filter.register(filterName, output, input, event);
     } else {
       if (module instanceof HTMLElement) {
         customElements.define(name, module);
