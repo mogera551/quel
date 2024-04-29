@@ -489,6 +489,79 @@ Features of filters (differences from accessor properties)
 * There is no need to write dependencies. (You don't need to write $dependentProps.)
 * Only the output of a single property can be filtered. Filters cannot handle multiple properties.
 
+#### List of Built-in Filter
+
+|Name|Options|Type|Memo|
+|----|----|----|----|
+|styleDisplay|[string]|||
+|truthy|||prop ? true : false|
+|falsey|||!prop ? true : false|
+|not|||!prop ? true : false|
+|eq|[any]||prop == [any]|
+|ne|[any]||prop != [any]|
+|lt|[number]||prop < [number]|
+|le|[number]||prop <= [number]|
+|gt|[number]||prop > [number]|
+|ge|[number]||prop >= [number]|
+|embed|[format]||like printf, replace %s to prop|
+|ifText|[string1][string2]||prop is true then [string1] else [string2]|
+|null|||prop == null|
+|offset|[number]||prop + [number]|
+|unit|[string]||prop + [string]|
+|inc|[number]||prop + [number]|
+|mul|[number]||prop * [number]|
+|div|[number]||prop / [number]|
+|mod|[number]||prop % [number]|
+|at|...|string||
+|charAt|...|string||
+|charCodeAt|...|string||
+|codePointAt|...|string||
+|concat|...|string||
+|endsWith|...|string||
+|includes|...|string||
+|indexOf|...|string||
+|lastIndexOf|...|string||
+|localCompare|...|string||
+|match|...|string||
+|normalize|...|string||
+|padEnd|...|string||
+|padStart|...|string||
+|repeat|...|string||
+|replace|...|string||
+|replaceAll|...|string||
+|search|...|string||
+|slice|...|string||
+|split|...|string||
+|startsWith|...|string||
+|substring|...|string||
+|toLocaleLowerCase|...|string||
+|toLocaleUpperCase|...|string||
+|toLowerCase|...|string||
+|toUpperCase|...|string||
+|trim|...|string||
+|trimEnd|...|string||
+|trimStart|...|string||
+|toExponential|...|number||
+|toFixed|...|number||
+|toLocaleString|...|number||
+|toPrecision|...|number||
+|at|...|Array||
+|concat|...|Array||
+|entries|...|Array||
+|flat|...|Array||
+|includes|...|Array||
+|indexOf|...|Array||
+|join|...|Array||
+|keys|...|Array||
+|lastIndexOf|...|Array||
+|slice|...|Array||
+|toLocaleString|...|Array||
+|toReversed|...|Array||
+|toSorted|...|Array||
+|toSpliced|...|Array||
+|values|...|Array||
+|with|...|Array||
+
 Content of the `html` variable in `main.js`
 ```html
 <div>{{ message }}</div>
