@@ -868,16 +868,16 @@ See [result](https://codepen.io/mogera551/pen/LYMZypL)
 
 See [source](https://github.com/mogera551/quel/tree/main/tutorials/step12).
 
-### Step.13 繰り返しブロック内のコンテキスト変数・ワイルドカードの使用
-* 繰り返しブロック内でワイルドーカードを使ったアクセサプロパティを宣言できます。→`members.*.no` `members.*.isAdult`
-* 繰り返しブロック内のワイルドーカードを使ったアクセサプロパティでワイルドーカードを使ったプロパティにアクセスできます。→`members.*.isAdult`内で`members.*.age`を参照している部分。
-* 繰り返しブロック内のワイルドーカードを使ったアクセサプロパティでコンテキスト変数（インデックス値）を利用することができます。
-  * プロパティ内でコンテキスト変数`this.$1`を参照します。
-* 繰り返しブロック内のイベントハンドラでインデックス値を利用することができます。
-  * インデックス値はイベントハンドラ第2引数に渡されます。→`popup(e, $1)`の`$1`
-* 繰り返しブロック内で直接コンテキスト変数（インデックス値）を利用することができます。→`$1|offset,1`
+### Step 13. Using context variables and wildcards in repeat blocks
+* You can declare accessor properties using wildcards within repeat blocks. ex. `members.*.no`, `members.*.isAdult`
+* You can access properties using wildcards within accessor properties that use wildcards in repeat blocks. ex. The part where `members.*.age` is referenced within `members.*.isAdult`.
+* You can use context variables (index values) in accessor properties that use wildcards in repeat blocks.
+  * The context variable `this.$1` is referenced within the property.
+* You can use index values in event handlers within repeat blocks.
+  * The index value is passed as the second argument to the event handler. ex. `$1` in `popup(e, $1)`
+* You can directly use context variables (index values) within repeat blocks. ex. `$1|offset,1`
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <style>
 .adult {
@@ -892,7 +892,7 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step12).
 {{ end: }}
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   members = [
@@ -922,7 +922,9 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/rNoLQWY)
+See [result](https://codepen.io/mogera551/pen/rNoLQWY)
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step12).
 
 ### Step.14 配列プロパティの操作
 * `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たな配列を作成し代入します。`add()のconcat`
