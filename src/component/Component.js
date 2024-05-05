@@ -1,11 +1,11 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
 import { Module } from "./Module.js";
-import { mixInComponent } from "./MixInComponent.js";
+import { MixedComponent } from "./MixedComponent.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
-import { dialogMixIn } from "./DialogMixIn.js";
-import { popoverMixIn } from "./PopoverMixIn.js";
+import { MixedDialog } from "./MixedDialog.js";
+import { MixedPopover } from "./MixedPopover.js";
 
 /**
  * generate unique comonent class
@@ -64,6 +64,7 @@ export class ComponentClassGenerator {
         /**
          */
         constructor() {
+          console.log(`constructor of ${module.name}`);
           super();
           const config = {};
           const setConfigFromAttribute = (name, flagName, config) => {
@@ -110,19 +111,32 @@ export class ComponentClassGenerator {
       componentClass.__proto__ = extendClass;
     }
   
-    // mix in component
-    const mixIn = (mixIn) => {
-      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixIn))) {
+    /**
+     * mix in class
+     * @param {Object.constructor} mixedClass
+     */
+    const classMixIn = (mixedClass) => {
+      // static properties and static accessors
+      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass))) {
+        // exclude name, length, prototype
+        if (!desc.enumerable && typeof desc.get === "undefined") continue;
+        Object.defineProperty(componentClass, key, desc);
+      }
+      // instance accessors and methods
+      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass.prototype))) {
+        // exclude constructor
+        if (key === "constructor") continue;
         if (key === "initializeCallback") {
-          componentClass.initializeCallbacks.push(mixIn.initializeCallback);
+          componentClass.initializeCallbacks.push(desc.value);
         } else {
           Object.defineProperty(componentClass.prototype, key, desc);
         }
       }
+  
     }
-    mixIn(mixInComponent);
-    mixIn(dialogMixIn);
-    mixIn(popoverMixIn);
+    classMixIn(MixedComponent);
+    classMixIn(MixedDialog);
+    classMixIn(MixedPopover);
 
     // register component's subcomponents 
     registerComponentModules(module.componentModulesForRegister);

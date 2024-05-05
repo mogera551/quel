@@ -4336,7 +4336,13 @@ class ViewModelize {
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
    * @param {ViewModel} target 
-   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:ViewModel}}
+   * @returns {{
+   *   definedProps:string[],
+   *   primitiveProps:string[],
+   *   methods:string[],
+   *   accessorProps:string[],
+   *   viewModel:ViewModel
+   * }}
    */
   static viewModelize(target) {
     let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
@@ -4345,12 +4351,15 @@ class ViewModelize {
       const descByNameEntries = Array.from(descByName.entries());
       const removeProps = [];
       const definedProps = [];
+      const primitiveProps = [];
       const accessorProps = [];
       const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
       this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
         definedProps.push(name);
         const propName = PropertyName.create(name);
-        if (!propName.isPrimitive) {
+        if (propName.isPrimitive) {
+          primitiveProps.push(name);
+        } else {
           if (("value" in desc) && typeof desc.value === "undefined") {
             removeProps.push(name);
           }
@@ -4359,12 +4368,13 @@ class ViewModelize {
           accessorProps.push(name);
         }
       });
-      viewModelInfo = { removeProps, definedProps, methods, accessorProps };
+      viewModelInfo = { removeProps, definedProps, primitiveProps, methods, accessorProps };
       this.viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
     }
     viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
     return {
       definedProps:viewModelInfo.definedProps, 
+      primitiveProps:viewModelInfo.primitiveProps,
       methods:viewModelInfo.methods, 
       accessorProps:viewModelInfo.accessorProps,
       viewModel:target
@@ -4682,19 +4692,22 @@ const getParentComponent = (node) => {
 };
 
 /** @type {ComponentBase} */
-const mixInComponent = {
+class MixedComponent {
   /** @type {ViewModelProxy} view model proxy */
   get baseViewModel() {
     return this._viewModels["base"];
-  },
+  }
+
   /** @type {ViewModelProxy} view model proxy */
   get writableViewModel() {
     return this._viewModels["writable"];
-  },
+  }
+
   /** @type {ViewModelProxy} view model proxy */
   get readOnlyViewModel() {
     return this._viewModels["readonly"];
-  },
+  }
+
   /** @type {ViewModelProxy} view model proxy */
   get viewModel() {
     if (typeof this.updateSlot === "undefined" || 
@@ -4703,23 +4716,23 @@ const mixInComponent = {
     } else {
       return this.readOnlyViewModel;
     }
-  },
+  }
 
   /** @type {BindingManager} */
   get rootBinding() {
     return this._rootBinding;
-  },
+  }
   set rootBinding(value) {
     this._rootBinding = value;
-  },
+  }
 
   /** @type {Thread} thread */
   get thread() {
     return this._thread;
-  },
+  }
   set thread(value) {
     this._thread = value;
-  },
+  }
 
   /** @type {UpdateSlot} update slot */
   get updateSlot() {
@@ -4737,37 +4750,37 @@ const mixInComponent = {
       this.thread.wakeup(this._updateSlot);
     }
     return this._updateSlot;
-  },
+  }
   // for unit test mock
   set updateSlot(value) {
     this._updateSlot = value;
-  },
+  }
 
   /** @type {Object<string,any>} parent component property */
   get props() {
     return this._props;
-  },
+  }
   set props(value) {
     this._props[Symbols.setBuffer](value);
-  },
+  }
 
   /** @type {Object<string,any>} global object */
   get globals() {
     return this._globals;
-  },
+  }
 
   /** @type {Promises} initial promises */
   get initialPromises() {
     return this._initialPromises;
-  },
+  }
 
   /** @type {Promises} alive promises */
   get alivePromises() {
     return this._alivePromises;
-  },
+  }
   set alivePromises(value) {
     this._alivePromises = value;
-  },
+  }
 
   /** @type {Component} parent component */
   get parentComponent() {
@@ -4775,57 +4788,57 @@ const mixInComponent = {
       this._parentComponent = getParentComponent(this);
     }
     return this._parentComponent;
-  },
+  }
 
   /** @type {boolean} use shadowRoot */
   get useShadowRoot() {
     return this._useShadowRoot;
-  },
+  }
 
   /** @type {boolean} use web component */
   get useWebComponent() {
     return this._useWebComponent;
-  },
+  }
 
   /** @type {boolean} use local tag name */
   get useLocalTagName() {
     return this._useLocalTagName;
-  },
+  }
 
   /** @type {boolean} use keyed */
   get useKeyed() {
     return this._useKeyed;
-  },
+  }
 
   /** @type {boolean} use buffered bind */
   get useBufferedBind() {
     return this._useBufferedBind;
-  },
+  }
 
   /** @type {ShadowRoot|HTMLElement} view root element */
   get viewRootElement() {
     return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
-  },
+  }
 
   /** @type {Node} parent node（use, case of useWebComponent is false） */
   get pseudoParentNode() {
     return !this.useWebComponent ? this._pseudoParentNode : utils.raise("mixInComponent: useWebComponent must be false");
-  },
+  }
 
   /** @type {Node} pseudo node（use, case of useWebComponent is false） */
   get pseudoNode() {
     return this._pseudoNode;
-  },
+  }
 
   /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>,event:Object<string,EventFilterFunc>}} filters */
   get filters() {
     return this._filters;
-  },
+  }
 
   /** @type {BindingSummary} binding summary */
   get bindingSummary() {
     return this._bindingSummary;
-  },
+  }
 
   /** 
    * initialize
@@ -4874,28 +4887,9 @@ const mixInComponent = {
 
     this._initialPromises = Promise.withResolvers(); // promises for initialize
 
+    this._setOfObservedAttributes = new Set;
     //console.log("mixInComponent:initializeCallback");
-  },
-
-  /**
-   * observe attribute change
-   * @param {MutationRecord[]} mutations 
-   */
-  attributeChange(mutations) {
-    mutations.forEach(mutation => {
-      if (mutation.type !== "attributes") return;
-      const [prefix, name] = mutation.attributeName.split(":");
-      if (prefix !== "props") return;
-      if (typeof this.updateSlot === "undefined") return;
-      const changePropsEvent = new CustomEvent("changeprops");
-      changePropsEvent.propName = name;
-      changePropsEvent.propValue = this.props[name];
-      this.dispatchEvent(changePropsEvent);
-      if (this.updateSlot.phase !== Phase.updateViewModel) {
-        this.viewModel[Symbols.notifyForDependentProps](name, []);
-      }
-    });
-  },
+  }
 
   /**
    * build component (called from connectedCallback)
@@ -4932,19 +4926,13 @@ const mixInComponent = {
 
     // attribue
     if (this.useWebComponent) {
-      let useAttribute = false;
       for(let i = 0; i < this.attributes.length; i++) {
         const attr = this.attributes[i];
         const [prefix, name] = attr.name.split(":");
         if (prefix === "props") {
           this.props[Symbols.bindProperty](name);
-          useAttribute = true;
+          this._setOfObservedAttributes.add(attr.name);
         }
-      }
-      // observation of attribute change
-      if (useAttribute) {
-        const observer = new MutationObserver(mutations => this.attributeChange(mutations));
-        observer.observe(this, { attributes: true });
       }
     }
 
@@ -4975,7 +4963,7 @@ const mixInComponent = {
     }
     // wait for update slot
     await this.updateSlot.alivePromises.promise;
-  },
+  }
 
   /**
    * callback on adding this component to DOM tree
@@ -5006,7 +4994,7 @@ const mixInComponent = {
     } finally {
       this.initialPromises?.resolve && this.initialPromises.resolve();
     }
-  },
+  }
 
   /**
    * callback on deleting this component from DOM tree
@@ -5014,7 +5002,7 @@ const mixInComponent = {
    */
   disconnectedCallback() {
     this.alivePromises?.resolve && this.alivePromises.resolve(this.props);
-  },
+  }
 
   /**
    * update binding nodes
@@ -5023,49 +5011,59 @@ const mixInComponent = {
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
     this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
-  },
+  }
 
-  /**
-   * dialog popup
-   * @param {Object<string,any>} props 
-   * @param {boolean} modal 
-   * @returns 
+  /** 
+   * @type {string[]} 
+   * @static
    */
-  async popup(props, modal = true) {
-    if (!(this instanceof HTMLDialogElement)) {
-      utils.raise("mixInComponent: popup is only for HTMLDialogElement");
+  static get observedAttributes() {
+    const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(this.ViewModel, []));
+    this._propByObservedAttribute = new Map(
+      viewModelInfo.primitiveProps
+      .filter(prop => !prop.startsWith("_"))
+      .map(prop => [`props:${utils.toKebabCase(prop)}`, prop])
+    );
+    return Array.from(this._propByObservedAttribute.keys());
+  }
+  /**
+   * @type {Map<string,string>}
+   * @static
+   */
+  static get propByObservedAttribute() {
+    return this._propByObservedAttribute;
+  }
+  /**
+   * callback for attribute changed
+   * @param {string} name 
+   * @param {string} oldValue 
+   * @param {string} newValue 
+   */
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (!this._setOfObservedAttributes.has(name)) return;
+    const propName = this.constructor.propByObservedAttribute.get(name);
+    if (typeof propName === "undefined") return;
+    if (typeof this.updateSlot === "undefined") return;
+    const changePropsEvent = new CustomEvent("changeprops");
+    changePropsEvent.propName = name;
+    changePropsEvent.propValue = newValue;
+    this.dispatchEvent(changePropsEvent);
+    if (this.updateSlot.phase !== Phase.updateViewModel) {
+      this.viewModel[Symbols.notifyForDependentProps](name, []);
     }
-    this.returnValue = "";
-    const promises = Promise.withResolvers();
-    const closedEvent = new CustomEvent("closed");
-    this.addEventListener("closed", () => {
-      if (this.returnValue === "") {
-        promises.reject();
-      } else {
-        promises.resolve(this.props);
-      }
-    });
-    this.addEventListener("close", () => {
-      this.dispatchEvent(closedEvent);
-    });
-    this.props = props;
-    if (modal) {
-      this.showModal();
-    } else {
-      this.show();
-    }
-    return promises.promise;
-  },
-};
 
-const dialogMixIn = {
+  }
+
+}
+
+class MixedDialog {
   /** @type {Promise<unknown>} */
   get dialogPromises() {
     return this._dialogPromises;
-  },
+  }
   set dialogPromises(value) {
     this._dialogPromises = value;
-  },
+  }
   /** 
    * initialize
    * @param {{
@@ -5102,7 +5100,7 @@ const dialogMixIn = {
       this.dispatchEvent(closedEvent);
     });
     //console.log("dialogMixIn:initializeCallback");
-  },
+  }
   /**
    * 
    * @param {Object<string,any} props 
@@ -5119,7 +5117,7 @@ const dialogMixIn = {
       HTMLDialogElement.prototype.show.apply(this);
     }
     return this.dialogPromises.promise;
-  },
+  }
   /**
    * 
    * @param {Object<string,any>} props 
@@ -5130,7 +5128,7 @@ const dialogMixIn = {
       utils.raise("mixInDialog: asyncShowModal is only for HTMLDialogElement");
     }
     return this._show(props, true);
-  },
+  }
   /**
    * 
    * @param {Object<string,any>} props 
@@ -5141,7 +5139,7 @@ const dialogMixIn = {
       utils.raise("mixInDialog: asyncShow is only for HTMLDialogElement");
     }
     return this._show(props, false);
-  },
+  }
   /**
    * 
    * @returns 
@@ -5156,7 +5154,7 @@ const dialogMixIn = {
       this.props[Symbols.setBuffer](buffer);
     }
     return HTMLDialogElement.prototype.showModal.apply(this);
-  },
+  }
   /**
    * 
    * @returns 
@@ -5171,7 +5169,7 @@ const dialogMixIn = {
       this.props[Symbols.setBuffer](buffer);
     }
     return HTMLDialogElement.prototype.show.apply(this);
-  },
+  }
   /**
    * 
    * @param {string} returnValue 
@@ -5182,26 +5180,26 @@ const dialogMixIn = {
       utils.raise("mixInDialog: close is only for HTMLDialogElement");
     }
     return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
-  },
+  }
 
-};
+}
 
-const popoverMixIn = {
+class MixedPopover {
   /** @type {boolean} */
   get canceled() {
     return this._canceled ?? false;
-  },
+  }
   set canceled(value) {
     this._canceled = value;
-  },
+  }
 
   /** @type {Promise<unknown>} */
   get popoverPromises() {
     return this._popoverPromises;
-  },
+  }
   set popoverPromises(value) {
     this._popoverPromises = value;
-  },
+  }
   /**
    * initialize
    * @param {{
@@ -5251,7 +5249,7 @@ const popoverMixIn = {
       }
     });
     //console.log("popoverMixIn:initializeCallback");
-  },
+  }
   /**
    * 
    * @param {Object<string,any>} props 
@@ -5262,14 +5260,14 @@ const popoverMixIn = {
     this.props[Symbols.setBuffer](props);
     HTMLElement.prototype.showPopover.apply(this);
     return this.popoverPromises.promise;
-  },
+  }
   /**
    * 
    */
   hidePopover() {
     this.canceled = false;
     HTMLElement.prototype.hidePopover.apply(this);
-  },
+  }
   /**
    * 
    */
@@ -5277,7 +5275,7 @@ const popoverMixIn = {
     HTMLElement.prototype.hidePopover.apply(this);
   }
 
-};
+}
 
 /**
  * generate unique comonent class
@@ -5336,6 +5334,7 @@ class ComponentClassGenerator {
         /**
          */
         constructor() {
+          console.log(`constructor of ${module.name}`);
           super();
           const config = {};
           const setConfigFromAttribute = (name, flagName, config) => {
@@ -5380,19 +5379,32 @@ class ComponentClassGenerator {
       componentClass.__proto__ = extendClass;
     }
   
-    // mix in component
-    const mixIn = (mixIn) => {
-      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixIn))) {
+    /**
+     * mix in class
+     * @param {Object.constructor} mixedClass
+     */
+    const classMixIn = (mixedClass) => {
+      // static properties and static accessors
+      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass))) {
+        // exclude name, length, prototype
+        if (!desc.enumerable && typeof desc.get === "undefined") continue;
+        Object.defineProperty(componentClass, key, desc);
+      }
+      // instance accessors and methods
+      for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass.prototype))) {
+        // exclude constructor
+        if (key === "constructor") continue;
         if (key === "initializeCallback") {
-          componentClass.initializeCallbacks.push(mixIn.initializeCallback);
+          componentClass.initializeCallbacks.push(desc.value);
         } else {
           Object.defineProperty(componentClass.prototype, key, desc);
         }
       }
+  
     };
-    mixIn(mixInComponent);
-    mixIn(dialogMixIn);
-    mixIn(popoverMixIn);
+    classMixIn(MixedComponent);
+    classMixIn(MixedDialog);
+    classMixIn(MixedPopover);
 
     // register component's subcomponents 
     registerComponentModules(module.componentModulesForRegister);

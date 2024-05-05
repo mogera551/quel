@@ -1,21 +1,21 @@
 import { Symbols } from "../Symbols.js";
 
-export const popoverMixIn = {
+export class MixedPopover {
   /** @type {boolean} */
   get canceled() {
     return this._canceled ?? false;
-  },
+  }
   set canceled(value) {
     this._canceled = value;
-  },
+  }
 
   /** @type {Promise<unknown>} */
   get popoverPromises() {
     return this._popoverPromises;
-  },
+  }
   set popoverPromises(value) {
     this._popoverPromises = value;
-  },
+  }
   /**
    * initialize
    * @param {{
@@ -65,7 +65,7 @@ export const popoverMixIn = {
       }
     });
     //console.log("popoverMixIn:initializeCallback");
-  },
+  }
   /**
    * 
    * @param {Object<string,any>} props 
@@ -76,14 +76,14 @@ export const popoverMixIn = {
     this.props[Symbols.setBuffer](props);
     HTMLElement.prototype.showPopover.apply(this);
     return this.popoverPromises.promise;
-  },
+  }
   /**
    * 
    */
   hidePopover() {
     this.canceled = false;
     HTMLElement.prototype.hidePopover.apply(this);
-  },
+  }
   /**
    * 
    */

@@ -56,7 +56,13 @@ export class ViewModelize {
    * ViewModel化
    * ・非プリミティブかつ初期値のないプロパティは削除する
    * @param {ViewModel} target 
-   * @returns {{definedProps:string[],methods:string[],accessorProps:string[],viewModel:ViewModel}}
+   * @returns {{
+   *   definedProps:string[],
+   *   primitiveProps:string[],
+   *   methods:string[],
+   *   accessorProps:string[],
+   *   viewModel:ViewModel
+   * }}
    */
   static viewModelize(target) {
     let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
@@ -65,12 +71,15 @@ export class ViewModelize {
       const descByNameEntries = Array.from(descByName.entries());
       const removeProps = [];
       const definedProps = [];
+      const primitiveProps = [];
       const accessorProps = [];
       const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
       this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
         definedProps.push(name);
         const propName = PropertyName.create(name);
-        if (!propName.isPrimitive) {
+        if (propName.isPrimitive) {
+          primitiveProps.push(name);
+        } else {
           if (("value" in desc) && typeof desc.value === "undefined") {
             removeProps.push(name);
           }
@@ -79,12 +88,13 @@ export class ViewModelize {
           accessorProps.push(name);
         }
       });
-      viewModelInfo = { removeProps, definedProps, methods, accessorProps };
+      viewModelInfo = { removeProps, definedProps, primitiveProps, methods, accessorProps };
       this.viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
     }
     viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
     return {
       definedProps:viewModelInfo.definedProps, 
+      primitiveProps:viewModelInfo.primitiveProps,
       methods:viewModelInfo.methods, 
       accessorProps:viewModelInfo.accessorProps,
       viewModel:target

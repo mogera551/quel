@@ -144,3 +144,8 @@ ex.
 フォームコントロールと見なされる要素
 https://developer.mozilla.org/ja/docs/Web/API/HTMLFormElement
 
+# shadowrootmodeの利用の検討
+
+# 属性変更を修正
+observedAttributes
+attributeChangedCallback

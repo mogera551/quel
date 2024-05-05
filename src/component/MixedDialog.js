@@ -1,14 +1,14 @@
 import { Symbols } from "../Symbols.js";
 import { utils } from "../utils.js";
 
-export const dialogMixIn = {
+export class MixedDialog {
   /** @type {Promise<unknown>} */
   get dialogPromises() {
     return this._dialogPromises;
-  },
+  }
   set dialogPromises(value) {
     this._dialogPromises = value;
-  },
+  }
   /** 
    * initialize
    * @param {{
@@ -45,7 +45,7 @@ export const dialogMixIn = {
       this.dispatchEvent(closedEvent);
     });
     //console.log("dialogMixIn:initializeCallback");
-  },
+  }
   /**
    * 
    * @param {Object<string,any} props 
@@ -62,7 +62,7 @@ export const dialogMixIn = {
       HTMLDialogElement.prototype.show.apply(this);
     }
     return this.dialogPromises.promise;
-  },
+  }
   /**
    * 
    * @param {Object<string,any>} props 
@@ -73,7 +73,7 @@ export const dialogMixIn = {
       utils.raise("mixInDialog: asyncShowModal is only for HTMLDialogElement");
     }
     return this._show(props, true);
-  },
+  }
   /**
    * 
    * @param {Object<string,any>} props 
@@ -84,7 +84,7 @@ export const dialogMixIn = {
       utils.raise("mixInDialog: asyncShow is only for HTMLDialogElement");
     }
     return this._show(props, false);
-  },
+  }
   /**
    * 
    * @returns 
@@ -99,7 +99,7 @@ export const dialogMixIn = {
       this.props[Symbols.setBuffer](buffer);
     }
     return HTMLDialogElement.prototype.showModal.apply(this);
-  },
+  }
   /**
    * 
    * @returns 
@@ -114,7 +114,7 @@ export const dialogMixIn = {
       this.props[Symbols.setBuffer](buffer);
     }
     return HTMLDialogElement.prototype.show.apply(this);
-  },
+  }
   /**
    * 
    * @param {string} returnValue 
@@ -125,7 +125,6 @@ export const dialogMixIn = {
       utils.raise("mixInDialog: close is only for HTMLDialogElement");
     }
     return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
-  },
+  }
 
 }
-
