@@ -64,7 +64,6 @@ export class ComponentClassGenerator {
         /**
          */
         constructor() {
-          console.log(`constructor of ${module.name}`);
           super();
           const config = {};
           const setConfigFromAttribute = (name, flagName, config) => {
