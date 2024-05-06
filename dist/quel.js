@@ -4003,7 +4003,6 @@ class BindingManager {
       if (typeof bindingManager !== "undefined") return bindingManager;
     }
   }
-
 }
 
 /**
