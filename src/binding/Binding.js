@@ -6,7 +6,7 @@ import { Selector } from "../binder/Selector.js";
 import { Binder } from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
-import { Popover } from "../Popover/Popover.js";
+import { Popover } from "../popover/Popover.js";
 
 export class Binding {
   /** @type {number} */
