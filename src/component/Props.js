@@ -44,8 +44,7 @@ class Handler {
       const propName = new PropertyName(props.name);
       if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
         const id = handler.component.getAttribute("id");
-        const loopContext = handler.component.parentComponent.popoverLoopContextById.get(id);
-        indexes = loopContext?.indexes.slice(0 , propName.level);
+        indexes = handler.component.parentComponent.popoverContextIndexesById.get(id)?.slice(0 , propName.level);
       }
       return indexes ?? props.indexes;
     }

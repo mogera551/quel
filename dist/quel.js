@@ -736,8 +736,7 @@ let Handler$1 = class Handler {
       const propName = new PropertyName(props.name);
       if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
         const id = handler.component.getAttribute("id");
-        const loopContext = handler.component.parentComponent.popoverLoopContextById.get(id);
-        indexes = loopContext?.indexes.slice(0 , propName.level);
+        indexes = handler.component.parentComponent.popoverContextIndexesById.get(id)?.slice(0 , propName.level);
       }
       return indexes ?? props.indexes;
     };
@@ -3399,6 +3398,38 @@ class Binder {
 
 }
 
+class Popover {
+
+  /**
+   * @type {Map<BindingManager,Map<string,number[]>>}
+   */
+  static setContextIndexesByIdByBindingManager = new Map;
+  /**
+   * 
+   * @param {BindingManager} bindingManager 
+   * @returns 
+   */
+  static initialize(bindingManager) {
+    const buttons = Array.from(bindingManager.fragment.querySelectorAll("[popovertarget]"));
+    if (buttons.length === 0) return;
+    buttons.forEach(button => {
+      const id = button.getAttribute("popovertarget");
+      let setContextIndexes = this.setContextIndexesByIdByBindingManager.get(bindingManager)?.get(id);
+      if (typeof setContextIndexes === "undefined") {
+        setContextIndexes = () => bindingManager.component.popoverContextIndexesById.set(id, bindingManager.loopContext.indexes);
+        this.setContextIndexesByIdByBindingManager.get(bindingManager)?.set(id, setContextIndexes) ??
+          this.setContextIndexesByIdByBindingManager.set(bindingManager, new Map([[id, setContextIndexes]]));
+      }
+      button.removeEventListener("click", setContextIndexes);
+      button.addEventListener("click", setContextIndexes);
+    });
+
+  }
+  static dispose(bindingManager) {
+    this.setContextIndexesByIdByBindingManager.delete(bindingManager);
+  }
+}
+
 class ReuseBindingManager {
   /** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
   static #bindingManagersByTemplate = new Map;
@@ -3420,6 +3451,7 @@ class ReuseBindingManager {
       this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
         this.#bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
+    Popover.dispose(bindingManager);
   }
 
   /**
@@ -3437,6 +3469,7 @@ class ReuseBindingManager {
     } else {
       bindingManager.parentBinding = parentBinding;
     }
+    Popover.initialize(bindingManager);
     return bindingManager;
   }
 
@@ -3546,30 +3579,6 @@ class LoopContext {
       if (loopContext.name === name) return loopContext;
       loopContext = loopContext.parentBindingManager.loopContext;
     }
-  }
-}
-
-class Popover {
-
-  static setLoopContextByIdByLoopContext = new Map;
-  static initialize(bindingManager, content) {
-    const buttons = Array.from(content.querySelectorAll("[popovertarget]"));
-    if (buttons.length === 0) return;
-    const loopContext = bindingManager.loopContext;
-    const component = bindingManager.component;
-    buttons.forEach(button => {
-      const id = button.getAttribute("popovertarget");
-      let setLoopContext = this.setLoopContextByIdByLoopContext.get(loopContext)?.get(id);
-      if (typeof setLoopContext === "undefined") {
-        setLoopContext = () => component.popoverLoopContextById.set(id, loopContext);
-        this.setLoopContextByIdByLoopContext.get(loopContext) ??
-          this.setLoopContextByIdByLoopContext.set(loopContext, new Map);
-        this.setLoopContextByIdByLoopContext.get(loopContext).set(id, setLoopContext);
-      }
-      button.removeEventListener("click", setLoopContext);
-      button.addEventListener("click", setLoopContext);
-    });
-
   }
 }
 
@@ -3847,7 +3856,6 @@ class BindingManager {
     this.#bindings = Binder.bind(this, nodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
-    Popover.initialize(this, content);
   }
 
   /**
@@ -5277,7 +5285,7 @@ class MixedPopover {
       // remove loop context
       const id = this.getAttribute("id");
       if (typeof id !== "undefined") {
-        this.popoverLoopContextById.delete(id);
+        this.popoverContextIndexesById.delete(id);
       }
     });
     this.addEventListener("shown", () => {
@@ -5327,14 +5335,14 @@ class MixedPopover {
   }
 
   /** 
-   * @type {Map<string,LoopContext>}
+   * @type {Map<string,BindingManager>}
    * 
    */
-  get popoverLoopContextById() {
-    if (typeof this._popoverLoopContextById === "undefined") {
-      this._popoverLoopContextById = new Map;
+  get popoverContextIndexesById() {
+    if (typeof this._popoverContextIndexesById === "undefined") {
+      this._popoverContextIndexesById = new Map;
     }
-    return this._popoverLoopContextById;
+    return this._popoverContextIndexesById;
   }
 
 }

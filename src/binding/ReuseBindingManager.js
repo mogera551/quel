@@ -1,3 +1,4 @@
+import { Popover } from "../popover/Popover.js";
 import { BindingManager } from "./Binding.js";
 
 export class ReuseBindingManager {
@@ -21,6 +22,7 @@ export class ReuseBindingManager {
       this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
         this.#bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
+    Popover.dispose(bindingManager);
   }
 
   /**
@@ -38,6 +40,7 @@ export class ReuseBindingManager {
     } else {
       bindingManager.parentBinding = parentBinding;
     }
+    Popover.initialize(bindingManager);
     return bindingManager;
   }
 

@@ -1,24 +1,32 @@
 
 export class Popover {
 
-  static setLoopContextByIdByLoopContext = new Map;
-  static initialize(bindingManager, content) {
-    const buttons = Array.from(content.querySelectorAll("[popovertarget]"));
+  /**
+   * @type {Map<BindingManager,Map<string,number[]>>}
+   */
+  static setContextIndexesByIdByBindingManager = new Map;
+  /**
+   * 
+   * @param {BindingManager} bindingManager 
+   * @returns 
+   */
+  static initialize(bindingManager) {
+    const buttons = Array.from(bindingManager.fragment.querySelectorAll("[popovertarget]"));
     if (buttons.length === 0) return;
-    const loopContext = bindingManager.loopContext;
-    const component = bindingManager.component;
     buttons.forEach(button => {
       const id = button.getAttribute("popovertarget");
-      let setLoopContext = this.setLoopContextByIdByLoopContext.get(loopContext)?.get(id);
-      if (typeof setLoopContext === "undefined") {
-        setLoopContext = () => component.popoverLoopContextById.set(id, loopContext);
-        this.setLoopContextByIdByLoopContext.get(loopContext) ??
-          this.setLoopContextByIdByLoopContext.set(loopContext, new Map);
-        this.setLoopContextByIdByLoopContext.get(loopContext).set(id, setLoopContext);
+      let setContextIndexes = this.setContextIndexesByIdByBindingManager.get(bindingManager)?.get(id);
+      if (typeof setContextIndexes === "undefined") {
+        setContextIndexes = () => bindingManager.component.popoverContextIndexesById.set(id, bindingManager.loopContext.indexes);
+        this.setContextIndexesByIdByBindingManager.get(bindingManager)?.set(id, setContextIndexes) ??
+          this.setContextIndexesByIdByBindingManager.set(bindingManager, new Map([[id, setContextIndexes]]));
       }
-      button.removeEventListener("click", setLoopContext);
-      button.addEventListener("click", setLoopContext);
+      button.removeEventListener("click", setContextIndexes);
+      button.addEventListener("click", setContextIndexes);
     });
 
+  }
+  static dispose(bindingManager) {
+    this.setContextIndexesByIdByBindingManager.delete(bindingManager);
   }
 }

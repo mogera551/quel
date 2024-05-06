@@ -52,7 +52,7 @@ export class MixedPopover {
       // remove loop context
       const id = this.getAttribute("id");
       if (typeof id !== "undefined") {
-        this.popoverLoopContextById.delete(id);
+        this.popoverContextIndexesById.delete(id);
       }
     });
     this.addEventListener("shown", () => {
@@ -102,14 +102,14 @@ export class MixedPopover {
   }
 
   /** 
-   * @type {Map<string,LoopContext>}
+   * @type {Map<string,BindingManager>}
    * 
    */
-  get popoverLoopContextById() {
-    if (typeof this._popoverLoopContextById === "undefined") {
-      this._popoverLoopContextById = new Map;
+  get popoverContextIndexesById() {
+    if (typeof this._popoverContextIndexesById === "undefined") {
+      this._popoverContextIndexesById = new Map;
     }
-    return this._popoverLoopContextById;
+    return this._popoverContextIndexesById;
   }
 
 }
