@@ -694,6 +694,22 @@ class Module {
   
 }
 
+/**
+ * 
+ * @param {Handler} handler 
+ * @param {{name:string,indexes:number[]}} props 
+ * @returns {number[]}
+ */
+const contextLoopIndexes = (handler, props) => {
+  let indexes;
+  const propName = new PropertyName(props.name);
+  if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
+    const id = handler.component.id;
+    indexes = handler.component.parentComponent.popoverContextIndexesById.get(id)?.slice(0 , propName.level);
+  }
+  return indexes ?? props.indexes;
+};
+
 let Handler$1 = class Handler {
   #component;
   #buffer;
@@ -725,21 +741,6 @@ let Handler$1 = class Handler {
    * @param {{name:string,indexes:number[]}|undefined} propAccess 
    */
   #bindProperty(prop, propAccess) {
-    /**
-     * 
-     * @param {Handler} handler 
-     * @param {{name:string,indexes:number[]}} props 
-     * @returns {number[]}
-     */
-    const contextLoopIndexes = (handler, props) => {
-      let indexes;
-      const propName = new PropertyName(props.name);
-      if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
-        const id = handler.component.getAttribute("id");
-        indexes = handler.component.parentComponent.popoverContextIndexesById.get(id)?.slice(0 , propName.level);
-      }
-      return indexes ?? props.indexes;
-    };
     /**
      * return parent component's property getter function
      * @param {Handler} handler 
@@ -816,7 +817,8 @@ let Handler$1 = class Handler {
     }
     buffer = {};
     this.#binds.forEach(({ prop, propAccess }) => {
-      buffer[prop] = this.#component.parentComponent.writableViewModel[Symbols.directlyGet](propAccess.name, propAccess.indexes);     
+      const loopIndexes = contextLoopIndexes(this, propAccess);
+      buffer[prop] = this.#component.parentComponent.writableViewModel[Symbols.directlyGet](propAccess.name, loopIndexes);     
     });
     return buffer;
   }
@@ -826,7 +828,8 @@ let Handler$1 = class Handler {
       const result = this.#component.parentComponent.writableViewModel[Symbols.flushBuffer](this.#buffer, this.#component);
       if (result !== true) {
         this.#binds.forEach(({ prop, propAccess }) => {
-          this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, propAccess.indexes, this.#buffer[prop]);     
+          const loopIndexes = contextLoopIndexes(this, propAccess);
+          this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, loopIndexes, this.#buffer[prop]);     
         });
       }
     }
@@ -5283,7 +5286,7 @@ class MixedPopover {
       }
       this.canceled = true;
       // remove loop context
-      const id = this.getAttribute("id");
+      const id = this.id;
       if (typeof id !== "undefined") {
         this.popoverContextIndexesById.delete(id);
       }

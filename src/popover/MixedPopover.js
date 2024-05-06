@@ -50,7 +50,7 @@ export class MixedPopover {
       }
       this.canceled = true;
       // remove loop context
-      const id = this.getAttribute("id");
+      const id = this.id;
       if (typeof id !== "undefined") {
         this.popoverContextIndexesById.delete(id);
       }
