@@ -5,7 +5,7 @@ import { MixedComponent } from "./MixedComponent.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
 import { MixedDialog } from "./MixedDialog.js";
-import { MixedPopover } from "./MixedPopover.js";
+import { MixedPopover } from "../Popover/MixedPopover.js";
 
 /**
  * generate unique comonent class

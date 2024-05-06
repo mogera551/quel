@@ -35,7 +35,7 @@ export class LoopContext {
     }
   }
 
-  /** @type {NewLoopContext|undefined} */
+  /** @type {LoopContext|undefined} */
   get nearestLoopContext() {
     return this.nearestBindingManager?.loopContext;
   }
@@ -97,7 +97,7 @@ export class LoopContext {
   /**
    * 
    * @param {string} name 
-   * @returns {NewLoopContext|undefined}
+   * @returns {LoopContext|undefined}
    */
   find(name) {
     let loopContext = this;

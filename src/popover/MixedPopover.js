@@ -1,4 +1,6 @@
+import "../types.js";
 import { Symbols } from "../Symbols.js";
+import { utils } from "../utils.js";
 
 export class MixedPopover {
   /** @type {boolean} */
@@ -47,12 +49,20 @@ export class MixedPopover {
         }
       }
       this.canceled = true;
+      // remove loop context
+      const id = this.getAttribute("id");
+      if (typeof id !== "undefined") {
+        this.popoverLoopContextById.delete(id);
+      }
     });
     this.addEventListener("shown", () => {
       this.canceled = true;
       if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
         const buffer = this.props[Symbols.createBuffer]();
         this.props[Symbols.setBuffer](buffer);
+      }
+      for(const key in this.props) {
+        this.viewModel[Symbols.notifyForDependentProps](key, []);
       }
     });
     this.addEventListener("toggle", e => {
@@ -89,6 +99,17 @@ export class MixedPopover {
    */
   cancelPopover() {
     HTMLElement.prototype.hidePopover.apply(this);
+  }
+
+  /** 
+   * @type {Map<string,LoopContext>}
+   * 
+   */
+  get popoverLoopContextById() {
+    if (typeof this._popoverLoopContextById === "undefined") {
+      this._popoverLoopContextById = new Map;
+    }
+    return this._popoverLoopContextById;
   }
 
 }

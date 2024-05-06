@@ -6,6 +6,7 @@ import { Selector } from "../binder/Selector.js";
 import { Binder } from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
+import { Popover } from "../popover/Popover.js";
 
 export class Binding {
   /** @type {number} */
@@ -281,6 +282,7 @@ export class BindingManager {
     this.#bindings = Binder.bind(this, nodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
+    Popover.initialize(this, content);
   }
 
   /**

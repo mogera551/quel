@@ -726,6 +726,22 @@ let Handler$1 = class Handler {
    */
   #bindProperty(prop, propAccess) {
     /**
+     * 
+     * @param {Handler} handler 
+     * @param {{name:string,indexes:number[]}} props 
+     * @returns {number[]}
+     */
+    const contextLoopIndexes = (handler, props) => {
+      let indexes;
+      const propName = new PropertyName(props.name);
+      if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
+        const id = handler.component.getAttribute("id");
+        const loopContext = handler.component.parentComponent.popoverLoopContextById.get(id);
+        indexes = loopContext?.indexes.slice(0 , propName.level);
+      }
+      return indexes ?? props.indexes;
+    };
+    /**
      * return parent component's property getter function
      * @param {Handler} handler 
      * @param {string} name
@@ -738,7 +754,8 @@ let Handler$1 = class Handler {
       } else if (handler.binds.length === 0) {
         return handler.component.getAttribute(`props:${name}`);
       } else {
-        return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, props.indexes);
+        const loopIndexes = contextLoopIndexes(handler, props);
+        return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, loopIndexes);
       }
     };
     /**
@@ -758,7 +775,8 @@ let Handler$1 = class Handler {
       } else if (handler.binds.length === 0) {
         handler.component.setAttribute(`props:${name}`, value);
       } else {
-        handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, props.indexes, value);
+        const loopIndexes = contextLoopIndexes(handler, props);
+        handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, loopIndexes, value);
       }
       return true;
     };
@@ -3458,7 +3476,7 @@ class LoopContext {
     }
   }
 
-  /** @type {NewLoopContext|undefined} */
+  /** @type {LoopContext|undefined} */
   get nearestLoopContext() {
     return this.nearestBindingManager?.loopContext;
   }
@@ -3520,7 +3538,7 @@ class LoopContext {
   /**
    * 
    * @param {string} name 
-   * @returns {NewLoopContext|undefined}
+   * @returns {LoopContext|undefined}
    */
   find(name) {
     let loopContext = this;
@@ -3528,6 +3546,30 @@ class LoopContext {
       if (loopContext.name === name) return loopContext;
       loopContext = loopContext.parentBindingManager.loopContext;
     }
+  }
+}
+
+class Popover {
+
+  static setLoopContextByIdByLoopContext = new Map;
+  static initialize(bindingManager, content) {
+    const buttons = Array.from(content.querySelectorAll("[popovertarget]"));
+    if (buttons.length === 0) return;
+    const loopContext = bindingManager.loopContext;
+    const component = bindingManager.component;
+    buttons.forEach(button => {
+      const id = button.getAttribute("popovertarget");
+      let setLoopContext = this.setLoopContextByIdByLoopContext.get(loopContext)?.get(id);
+      if (typeof setLoopContext === "undefined") {
+        setLoopContext = () => component.popoverLoopContextById.set(id, loopContext);
+        this.setLoopContextByIdByLoopContext.get(loopContext) ??
+          this.setLoopContextByIdByLoopContext.set(loopContext, new Map);
+        this.setLoopContextByIdByLoopContext.get(loopContext).set(id, setLoopContext);
+      }
+      button.removeEventListener("click", setLoopContext);
+      button.addEventListener("click", setLoopContext);
+    });
+
   }
 }
 
@@ -3805,6 +3847,7 @@ class BindingManager {
     this.#bindings = Binder.bind(this, nodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
+    Popover.initialize(this, content);
   }
 
   /**
@@ -3960,6 +4003,7 @@ class BindingManager {
       if (typeof bindingManager !== "undefined") return bindingManager;
     }
   }
+
 }
 
 /**
@@ -4897,7 +4941,7 @@ class MixedComponent {
    * create and attach shadowRoot
    * create thread
    * initialize view model
-   * @returns {void}
+   * @returns {Promise<any>}
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
@@ -5231,12 +5275,20 @@ class MixedPopover {
         }
       }
       this.canceled = true;
+      // remove loop context
+      const id = this.getAttribute("id");
+      if (typeof id !== "undefined") {
+        this.popoverLoopContextById.delete(id);
+      }
     });
     this.addEventListener("shown", () => {
       this.canceled = true;
       if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
         const buffer = this.props[Symbols.createBuffer]();
         this.props[Symbols.setBuffer](buffer);
+      }
+      for(const key in this.props) {
+        this.viewModel[Symbols.notifyForDependentProps](key, []);
       }
     });
     this.addEventListener("toggle", e => {
@@ -5273,6 +5325,17 @@ class MixedPopover {
    */
   cancelPopover() {
     HTMLElement.prototype.hidePopover.apply(this);
+  }
+
+  /** 
+   * @type {Map<string,LoopContext>}
+   * 
+   */
+  get popoverLoopContextById() {
+    if (typeof this._popoverLoopContextById === "undefined") {
+      this._popoverLoopContextById = new Map;
+    }
+    return this._popoverLoopContextById;
   }
 
 }

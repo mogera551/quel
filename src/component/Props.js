@@ -1,5 +1,6 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
+import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 class Handler {
   #component;
@@ -33,6 +34,22 @@ class Handler {
    */
   #bindProperty(prop, propAccess) {
     /**
+     * 
+     * @param {Handler} handler 
+     * @param {{name:string,indexes:number[]}} props 
+     * @returns {number[]}
+     */
+    const contextLoopIndexes = (handler, props) => {
+      let indexes;
+      const propName = new PropertyName(props.name);
+      if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
+        const id = handler.component.getAttribute("id");
+        const loopContext = handler.component.parentComponent.popoverLoopContextById.get(id);
+        indexes = loopContext?.indexes.slice(0 , propName.level);
+      }
+      return indexes ?? props.indexes;
+    }
+    /**
      * return parent component's property getter function
      * @param {Handler} handler 
      * @param {string} name
@@ -45,7 +62,8 @@ class Handler {
       } else if (handler.binds.length === 0) {
         return handler.component.getAttribute(`props:${name}`);
       } else {
-        return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, props.indexes);
+        const loopIndexes = contextLoopIndexes(handler, props);
+        return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, loopIndexes);
       }
     };
     /**
@@ -65,7 +83,8 @@ class Handler {
       } else if (handler.binds.length === 0) {
         handler.component.setAttribute(`props:${name}`, value);
       } else {
-        handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, props.indexes, value);
+        const loopIndexes = contextLoopIndexes(handler, props);
+        handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, loopIndexes, value);
       }
       return true;
     };
