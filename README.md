@@ -915,23 +915,20 @@ class ViewModel {
 
   $dependentProps = {
     "members.*.isAdult": [ "members.*.age" ]
-
-    // "members.*.no": [ "$1" ], 
-    // コンテキスト変数$1に依存するが、コンテキスト変数$1は記述しなくて良いので、省略
   }
 }
 ```
 
 See [result](https://codepen.io/mogera551/pen/rNoLQWY)
 
-See [source](https://github.com/mogera551/quel/tree/main/tutorials/step12).
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step13).
 
-### Step.14 配列プロパティの操作
-* `ViewModel`の配列プロパティを更新（追加・削除・ソート）する場合、イミュータブルなメソッドで新たな配列を作成し代入します。`add()のconcat`
-* `ViewModel`の配列プロパティの要素を更新する場合、ワイルドーカードを使って更新できます。`<input type="text" data-bind="fruits.*">`
-   * `html`への反映は自動的に行われます。
+### Step 14. Manipulating array properties
+* When updating (adding, deleting, sorting) the array properties of `ViewModel`, create a new array with an immutable method and assign it. `concat method` of `add()`
+* When updating the elements of the array properties of ViewModel, you can update using a wildcard. `<input type="text" data-bind="fruits.*">`
+* The reflection to html is done automatically.
 
-`main.js`の変数`html`の内容
+Content of the `html` variable in `main.js`
 ```html
 <button type="button" data-bind="onclick:add">add grape</button>
 <button type="button" data-bind="onclick:dump">dump fruits</button>
@@ -940,13 +937,13 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step12).
 {{ end: }}
 ```
 
-`main.js`の`ViewModel`クラス
+`ViewModel` class in `main.js`
 ```js
 class ViewModel {
   fruits = ["apple", "orange", "strawberry"];
   add() {
-    // イミュータブルなconcatで要素を追加して、fruitsプロパティへ代入
-    // ミュータブルなpushは使わない
+    // Add elements with an immutable concat and assign to the fruits property.
+    // Do not use mutable `push`.
     this.fruits = this.fruits.concat("grape");
   }
   dump() {
@@ -955,7 +952,9 @@ class ViewModel {
 }
 ```
 
-[実行結果を見る](https://codepen.io/mogera551/pen/yLGaNOm)
+See [result](https://codepen.io/mogera551/pen/yLGaNOm)
+
+See [source](https://github.com/mogera551/quel/tree/main/tutorials/step14).
 
 ### Step.15 ToDoリストを作ってみよう
 #### 仕様
