@@ -2841,6 +2841,8 @@ class ComponentProperty extends ElementBase {
   
 }
 
+const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
+
 class RepeatKeyed extends Repeat {
   /** @type {boolean} */
   get loopable() {
@@ -2924,15 +2926,18 @@ class RepeatKeyed extends Repeat {
     for(const index of setOfIndex) {
       const bindingManager = this.binding.children[index];
       if (typeof bindingManager === "undefined") continue;
-      bindingManager.removeNodes();
       const oldValue = this.#lastValue[index];
-      if (typeof oldValue !== "undefined") {
-        bindingManagerByValue.set(oldValue, bindingManager);
-      }
+      const typeofOldValue = typeof oldValue;
+      if (typeofOldValue === "undefined") continue;
+      if (setOfPrimitiveType.has(typeofOldValue)) continue;
+      bindingManager.removeNodes();
+      bindingManagerByValue.set(oldValue, bindingManager);
     }
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.viewModelProperty.getChildValue(index);
-      if (typeof newValue === "undefined") continue;
+      const typeofNewValue = typeof newValue;
+      if (typeofNewValue === "undefined") continue;
+      if (setOfPrimitiveType.has(typeofNewValue)) continue;
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager === "undefined") {
         const name = this.binding.viewModelProperty.name;
