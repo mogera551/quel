@@ -242,7 +242,7 @@ export class MixedComponent {
    * create and attach shadowRoot
    * create thread
    * initialize view model
-   * @returns {void}
+   * @returns {Promise<any>}
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
@@ -271,7 +271,6 @@ export class MixedComponent {
 
     // attribue
     if (this.useWebComponent) {
-      let useAttribute = false
       for(let i = 0; i < this.attributes.length; i++) {
         const attr = this.attributes[i];
         const [prefix, name] = attr.name.split(":");
