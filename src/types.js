@@ -31,6 +31,10 @@
  */
 
 /**
+ * @typedef {import("./loopContext/LoopContext.js").LoopContext} LoopContext
+ */
+
+/**
  * @typedef {import("./binding/Binding.js").Binding} Binding
  */
 
