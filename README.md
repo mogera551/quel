@@ -1000,7 +1000,7 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step14).
 
 [モックを見る](https://codepen.io/mogera551/pen/LYMRWVK)
 
-#### ToDo情報を格納するオブジェクトの定義
+#### ToDo情報を格納するオブジェクトの型定義
 * ToDoの内容`content`
 * 完了フラグ`completed`
 ```js
