@@ -18,7 +18,7 @@ export class Module {
 
   /** @type {HTMLTemplateElement} */
   get template() {
-    const customComponentNames = (this.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
+    const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
     return Template.create(this.html, this.css, this.uuid, customComponentNames);
   }
 
