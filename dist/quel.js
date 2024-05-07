@@ -5945,11 +5945,11 @@ class Loader {
       if (typeof loadPaths.exportName !== "undefined") {
         if (typeof module.default !== "undefined") {
           if (loadPaths.exportName in module.default) {
-            moduleData = Object.assign({}, module.default[loadPaths.exportName]);
+            moduleData = module.default[loadPaths.exportName];
           }
         } else {
           if (loadPaths.exportName in module) {
-            moduleData = Object.assign({}, module[loadPaths.exportName]);
+            moduleData = module[loadPaths.exportName];
           }
         }
         if (typeof moduleData === "undefined" ) {
@@ -5957,7 +5957,7 @@ class Loader {
         }
       } else {
         if (typeof module.default !== "undefined") {
-          moduleData = Object.assign({}, module.default);
+          moduleData = module.default;
         } else {
           moduleData = Object.assign({}, module);
         }
@@ -5980,6 +5980,16 @@ class Loader {
 
 const PREFIX = "*filter-";
 
+function extendOf(module, extendClass) {
+  if (typeof module !== "function") return false;
+  let testClass = module;
+  while (testClass) {
+    if (testClass === extendClass) return true;
+    testClass = Object.getPrototypeOf(testClass);
+  }
+  return false;
+}
+
 class QuelModuleRegistrar extends Registrar {
   /**
    * 
@@ -5993,7 +6003,7 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input, event } = module;
       Filter.register(filterName, output, input, event);
     } else {
-      if (module instanceof HTMLElement) {
+      if (extendOf(module, HTMLElement)) {
         customElements.define(name, module);
       } else {
         if ("ViewModel" in module && "html" in module) {

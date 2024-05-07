@@ -5,6 +5,16 @@ import { registerComponentModule } from "../component/Component.js";
 
 const PREFIX = "*filter-";
 
+function extendOf(module, extendClass) {
+  if (typeof module !== "function") return false;
+  let testClass = module;
+  while (testClass) {
+    if (testClass === extendClass) return true;
+    testClass = Object.getPrototypeOf(testClass);
+  }
+  return false;
+}
+
 class QuelModuleRegistrar extends Registrar {
   /**
    * 
@@ -18,7 +28,7 @@ class QuelModuleRegistrar extends Registrar {
       const { output, input, event } = module;
       Filter.register(filterName, output, input, event);
     } else {
-      if (module instanceof HTMLElement) {
+      if (extendOf(module, HTMLElement)) {
         customElements.define(name, module);
       } else {
         if ("ViewModel" in module && "html" in module) {
