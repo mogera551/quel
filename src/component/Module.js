@@ -39,7 +39,7 @@ export class Module {
 
   /** @type {Object<string,Module>|undefined} */
   get componentModulesForRegister() {
-    if (this.useLocalTagName ?? config.useLocalTagName) {
+    if (this.config.useLocalTagName ?? config.useLocalTagName) {
       // case of useLocalName with true,
       // subcompnents tag name convert to the name with uuid
       if (typeof this.componentModules !== "undefined") {
