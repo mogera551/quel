@@ -19,7 +19,7 @@ export class Checkbox extends ElementBase {
     if (!Array.isArray(value)) utils.raise("Checkbox: value is not array");
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
-    this.inputElement.checked = value.find(v => v === multiValue.value) ? true : false;
+    this.inputElement.checked = value.some(v => v === multiValue.value);
   }
 
   /** @type {MultiValue} */
