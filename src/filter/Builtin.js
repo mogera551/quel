@@ -55,6 +55,7 @@ export class outputFilters {
   static mul          = (value, options) => Number(value) * Number(options[0]);
   static div          = (value, options) => Number(value) / Number(options[0]);
   static mod          = (value, options) => Number(value) % Number(options[0]);
+  static object       = (value, options) => value[options[0]];
 
   static "str.at"      = (value, options) => str(value, options, (s, o) => s.at(...o));
   static "str.charAt"  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
