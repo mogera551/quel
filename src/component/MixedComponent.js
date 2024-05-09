@@ -13,6 +13,7 @@ import { Phase } from "../thread/Phase.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { ViewModelize } from "../viewModel/ViewModelize.js";
+import { AdoptedCss } from "./AdoptedCss.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -264,6 +265,7 @@ export class MixedComponent {
     // create and attach shadowRoot
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
+      AdoptedCss.adoptByComponent(this);
     }
 
     // create thread
