@@ -73,6 +73,8 @@ export class ViewModelProperty {
       } else {
         if (value.enabled) {
           setValue(value.value);
+        } else {
+          setValue(undefined);
         }
       }
     } else {
