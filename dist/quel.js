@@ -4737,6 +4737,20 @@ class AdoptedCss {
   static adoptedCssByTitle = new Map;
   /**
    * 
+   * @param {CSSStyleSheet} styleSheet 
+   * @param {CSSStyleSheet} adoptedStyleSheet 
+   */
+  static copyStyleRules(styleSheet, adoptedStyleSheet) {
+    Array.from(styleSheet.cssRules).map(rule => {
+      if (rule.constructor.name !== "CSSImportRule") {
+        adoptedStyleSheet.insertRule(rule.cssText, adoptedStyleSheet.cssRules.length); 
+      } else {
+        this.copyStyleRules(rule.styleSheet, adoptedStyleSheet);
+      }
+    });
+  }
+  /**
+   * 
    * @param {string[]} cssTitles 
    * @returns {CSSStyleSheet[]}
    */
@@ -4745,13 +4759,13 @@ class AdoptedCss {
     return cssTitles.map(cssTitle => {
       const  adoptedCssByMap = this.adoptedCssByTitle.get(cssTitle);
       if (adoptedCssByMap) return adoptedCssByMap;
-      const adoptedCss = new CSSStyleSheet();
-      const css = styleSheets.find(sheet => sheet.title === cssTitle);
-      if (!css) return;
-      Array.from(css.cssRules).map(rule => adoptedCss.insertRule(rule.cssText));
-      this.adoptedCssByTitle.set(cssTitle, adoptedCss);
-      return adoptedCss;
-    }).filter(css => css);
+      const adoptedStyleSheet = new CSSStyleSheet();
+      const styleSheet = styleSheets.find(sheet => sheet.title === cssTitle);
+      if (!styleSheet) return;
+      this.copyStyleRules(styleSheet, adoptedStyleSheet);
+      this.adoptedCssByTitle.set(cssTitle, adoptedStyleSheet);
+      return adoptedStyleSheet;
+    }).filter(styleSheet => styleSheet);
 
   }
   /**
