@@ -56,6 +56,8 @@ export class outputFilters {
   static div          = (value, options) => Number(value) / Number(options[0]);
   static mod          = (value, options) => Number(value) % Number(options[0]);
   static object       = (value, options) => value[options[0]];
+  static prefix       = (value, options) => String(options[0]) + String(value);
+  static suffix       = this.unit;
 
   static "str.at"      = (value, options) => str(value, options, (s, o) => s.at(...o));
   static "str.charAt"  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
