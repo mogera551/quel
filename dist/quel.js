@@ -2339,11 +2339,7 @@ class ViewModelProperty {
         value.enabled ? setOfThisValue.add(value.value) : setOfThisValue.delete(value.value);
         setValue(Array.from(setOfThisValue));
       } else {
-        if (value.enabled) {
-          setValue(value.value);
-        } else {
-          setValue(undefined);
-        }
+        setValue(value.enabled ? value.value : undefined);
       }
     } else {
       setValue(value);
