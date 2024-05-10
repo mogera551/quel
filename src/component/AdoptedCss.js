@@ -3,49 +3,65 @@ const ADOPTED_VAR_NAME = '--adopted-css';
 
 export class AdoptedCss {
   /** @type {Map<string,CSSStyleSheet>} */
-  static adoptedCssByTitle = new Map;
+  static styleSheetByName = new Map;
   /**
-   * 
-   * @param {CSSStyleSheet} styleSheet 
-   * @param {CSSStyleSheet} adoptedStyleSheet 
+   * copy style rules to adopted style sheet
+   * @param {CSSStyleSheet} fromStyleSheet 
+   * @param {CSSStyleSheet} toStyleSheet 
    */
-  static copyStyleRules(styleSheet, adoptedStyleSheet) {
-    Array.from(styleSheet.cssRules).map(rule => {
-      if (rule.constructor.name !== "CSSImportRule") {
-        adoptedStyleSheet.insertRule(rule.cssText, adoptedStyleSheet.cssRules.length) 
+  static copyStyleRules(fromStyleSheet, toStyleSheet) {
+    Array.from(fromStyleSheet.cssRules).map(rule => {
+      if (rule.constructor.name === "CSSImportRule") {
+        this.copyStyleRules(rule.styleSheet, toStyleSheet);
       } else {
-        this.copyStyleRules(rule.styleSheet, adoptedStyleSheet);
+        toStyleSheet.insertRule(rule.cssText, toStyleSheet.cssRules.length);
       }
     });
   }
   /**
-   * 
-   * @param {string[]} cssTitles 
-   * @returns {CSSStyleSheet[]}
+   * create adopted style sheet by name, and copy style rules from existing style sheet
+   * @param {string} name 
+   * @returns 
    */
-  static createAdoptedCsss(cssTitles) {
-    const styleSheets= Array.from(document.styleSheets);
-    return cssTitles.map(cssTitle => {
-      const  adoptedCssByMap = this.adoptedCssByTitle.get(cssTitle);
-      if (adoptedCssByMap) return adoptedCssByMap;
-      const adoptedStyleSheet = new CSSStyleSheet();
-      const styleSheet = styleSheets.find(sheet => sheet.title === cssTitle);
-      if (!styleSheet) return;
-      this.copyStyleRules(styleSheet, adoptedStyleSheet);
-      this.adoptedCssByTitle.set(cssTitle, adoptedStyleSheet);
-      return adoptedStyleSheet;
-    }).filter(styleSheet => styleSheet);
-
+  static createStyleSheet(name) {
+    const styleSheet = new CSSStyleSheet();
+    const matchTitle = sheet => sheet.title === name;
+    const fromStyleSheet = Array.from(document.styleSheets).find(matchTitle);
+    if (!fromStyleSheet) {
+      // ToDo: warning
+      return;
+    }
+    this.copyStyleRules(fromStyleSheet, styleSheet);
+    this.styleSheetByName.set(name, styleSheet);
+    return styleSheet;
   }
   /**
-   * 
+   * get adopted css list by names
+   * @param {string[]} names 
+   * @returns {CSSStyleSheet[]}
+   */
+  static getStyleSheetList(names) {
+      // find adopted style sheet from map, if not found, create adopted style sheet
+      const getStyleSheet = name => this.styleSheetByName.get(name) ?? this.createStyleSheet(name);
+      const excludeEmpty = styleSheet => styleSheet;
+      return names.map(getStyleSheet).filter(excludeEmpty);
+  }
+  /**
+   * adopt css by component's shadow root
    * @param {Component} component 
    */
   static adoptByComponent(component) {
-    const cssTitles = getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(css => css.trim()).filter(css => css.length > 0) ?? [];
-    if (cssTitles.length === 0) return;
-    const adoptedCsss = this.createAdoptedCsss(cssTitles);
-    if (adoptedCsss.length === 0) return;
-    component.shadowRoot.adoptedStyleSheets = adoptedCsss;
+    // get adopted css names from component style variable '--adopted-css'
+    const trim = name => name.trim();
+    const excludeEmpty = name => name.length > 0;
+    const names = getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmpty) ?? [];
+    if (names.length === 0) return;
+    // get adopted style sheet list
+    const adoptedStyleSheetList = this.getStyleSheetList(names);
+    if (adoptedStyleSheetList.length === 0) {
+      // ToDo: warning
+      return;
+    }
+    component.shadowRoot.adoptedStyleSheets = adoptedStyleSheetList;
   }
 }
