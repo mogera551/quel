@@ -41,7 +41,7 @@ export class Radio extends ElementBase {
    */
   constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
-    if (node.type !== "radio") utils.raise("Radio: not radio");
+    if (node.type !== "radio" && node.type !== "checkbox") utils.raise("Radio: not radio or checkbox");
     super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
   }
 
