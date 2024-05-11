@@ -5,15 +5,23 @@ import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
 export class BindingPropertyAccess {
+  /** @type {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} */
+  #viewModelProperty;
+
+  /** @type {string} */
   get name() {
     return this.#viewModelProperty.name;
   }
 
+  /** @type {number[]} */
   get indexes() {
     return this.#viewModelProperty.indexes;
   }
-  /** @type {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} */
-  #viewModelProperty;
+
+  /** @type {import("../../loopContext/LoopContext.js").LoopContext} */
+  get loopContext() {
+    return this.#viewModelProperty.binding.loopContext;
+  }
   /**
    * 
    * @param {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelProperty

@@ -1,6 +1,16 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
+import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
+
+/**
+ * @param {Component} component
+ * @returns {number[]|undefined}
+ */
+const getPopoverContextIndexes = (component) => {
+  const id = component.id;
+  return component.parentComponent?.popoverContextIndexesById?.get(id);
+}
+
 
 /**
  * 
@@ -12,8 +22,7 @@ const contextLoopIndexes = (handler, props) => {
   let indexes;
   const propName = new PropertyName(props.name);
   if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
-    const id = handler.component.id;
-    indexes = handler.component.parentComponent.popoverContextIndexesById.get(id)?.slice(0 , propName.level);
+    indexes = getPopoverContextIndexes(handler.component)?.slice(0 , propName.level);
   }
   return indexes ?? props.indexes;
 }
@@ -53,7 +62,7 @@ class Handler {
      * return parent component's property getter function
      * @param {Handler} handler 
      * @param {string} name
-     * @param {{name:string,indexes:number[]}} props 
+     * @param {import("../binding/nodeProperty/ComponentProperty.js").BindingPropertyAccess} props 
      * @returns {()=>any}
      */
     const getFunc = (handler, name, props) => function () {
@@ -62,8 +71,18 @@ class Handler {
       } else if (handler.binds.length === 0) {
         return handler.component.getAttribute(`props:${name}`);
       } else {
-        const loopIndexes = contextLoopIndexes(handler, props);
-        return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, loopIndexes);
+        const match = RE_CONTEXT_INDEX.exec(props.name);
+        if (match) {
+          const loopIndex = Number(match[1]) - 1;
+          let indexes = props.loopContext.indexes;
+          if (indexes.length === 0 && handler.component.hasAttribute("popover")) {
+            indexes = getPopoverContextIndexes(handler.component) ?? [];
+          }
+          return indexes[loopIndex];
+        } else {
+          const loopIndexes = contextLoopIndexes(handler, props);
+          return handler.component.parentComponent.writableViewModel[Symbols.directlyGet](props.name, loopIndexes);
+        }
       }
     };
     /**
