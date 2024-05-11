@@ -247,7 +247,7 @@ export class MixedComponent {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    const { template, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
+    const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
     for(const [name, filterFunc] of Object.entries(inputFilters)) {
@@ -263,9 +263,22 @@ export class MixedComponent {
       this.filters.event[name] = filterFunc;
     }
     // create and attach shadowRoot
+    // adopt css
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
-      AdoptedCss.adoptByComponent(this);
+      const names = AdoptedCss.getNamesFromComponent(this);
+      const styleSheets = AdoptedCss.getStyleSheetList(names);
+      if (typeof styleSheet !== "undefined" ) {
+        styleSheets.push(styleSheet);
+      }
+      this.shadowRoot.adoptedStyleSheets = styleSheets;
+    } else {
+      if (typeof styleSheet !== "undefined") {
+        const adoptedStyleSheets = Array.from(document.adoptedStyleSheets);
+        if (!adoptedStyleSheets.includes(styleSheet)) {
+          document.adoptedStyleSheets = [...adoptedStyleSheets, styleSheet];
+        }
+      }
     }
 
     // create thread

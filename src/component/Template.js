@@ -9,14 +9,13 @@ export class Template {
   /**
    * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
    * @param {string|undefined} html 
-   * @param {string|undefined} css
    * @param {string} componentUuid
    * @param {string[]} customComponentNames
    * @returns {HTMLTemplateElement}
    */
-  static create(html, css, componentUuid, customComponentNames) {
+  static create(html, componentUuid, customComponentNames) {
     const template = document.createElement("template");
-    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? this.replaceTag(html, componentUuid, customComponentNames) : "");
+    template.innerHTML = html ? this.replaceTag(html, componentUuid, customComponentNames) : "";
     return template;
   }
 

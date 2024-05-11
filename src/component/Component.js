@@ -26,6 +26,9 @@ export class ComponentClassGenerator {
         /** @type {HTMLTemplateElement} */
         static template = module.template;
 
+        /** @type {CSSStyleSheet|undefined} */
+        static styleSheet = module.styleSheet;
+
         /** @type {ViewModel.constructor} */
         static ViewModel = module.ViewModel;
 

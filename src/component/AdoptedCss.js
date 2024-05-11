@@ -46,22 +46,16 @@ export class AdoptedCss {
       const excludeEmpty = styleSheet => styleSheet;
       return names.map(getStyleSheet).filter(excludeEmpty);
   }
+
   /**
-   * adopt css by component's shadow root
+   * 
    * @param {Component} component 
+   * @returns {string[]}
    */
-  static adoptByComponent(component) {
+  static getNamesFromComponent(component) {
     // get adopted css names from component style variable '--adopted-css'
     const trim = name => name.trim();
     const excludeEmpty = name => name.length > 0;
-    const names = getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmpty) ?? [];
-    if (names.length === 0) return;
-    // get adopted style sheet list
-    const adoptedStyleSheetList = this.getStyleSheetList(names);
-    if (adoptedStyleSheetList.length === 0) {
-      // ToDo: warning
-      return;
-    }
-    component.shadowRoot.adoptedStyleSheets = adoptedStyleSheetList;
+    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmpty) ?? [];
   }
 }

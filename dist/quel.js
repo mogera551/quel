@@ -532,14 +532,13 @@ class Template {
   /**
    * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
    * @param {string|undefined} html 
-   * @param {string|undefined} css
    * @param {string} componentUuid
    * @param {string[]} customComponentNames
    * @returns {HTMLTemplateElement}
    */
-  static create(html, css, componentUuid, customComponentNames) {
+  static create(html, componentUuid, customComponentNames) {
     const template = document.createElement("template");
-    template.innerHTML = (css ? `<style>\n${css}\n</style>` : "") + (html ? this.replaceTag(html, componentUuid, customComponentNames) : "");
+    template.innerHTML = html ? this.replaceTag(html, componentUuid, customComponentNames) : "";
     return template;
   }
 
@@ -642,6 +641,36 @@ class Template {
 
 }
 
+class StyleSheet {
+  /** @type {Map<string,CSSStyleSheet>} */
+  static styleSheetByUuid = new Map;
+
+  /**
+   * create style sheet by css text
+   * @param {string} cssText 
+   * @returns {CSSStyleSheet}
+   */
+  static _create(cssText) {
+    const styleSheet = new CSSStyleSheet();
+    styleSheet.replaceSync(cssText);
+    return styleSheet;
+  }
+
+  /**
+   * get style sheet by uuid, if not found, create style sheet
+   * @param {string} cssText 
+   * @param {string} uuid 
+   * @returns {CSSStyleSheet|undefined}
+   */
+  static create(cssText, uuid) {
+    const styleSheetFromMap = this.styleSheetByUuid.get(uuid);
+    if (styleSheetFromMap) return styleSheetFromMap;
+    const styleSheet = this._create(cssText);
+    this.styleSheetByUuid.set(uuid, styleSheet);
+    return styleSheet;
+  }
+}
+
 class Module {
   /** @type {string} */
   #uuid = utils.createUUID();
@@ -658,7 +687,12 @@ class Module {
   /** @type {HTMLTemplateElement} */
   get template() {
     const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
-    return Template.create(this.html, this.css, this.uuid, customComponentNames);
+    return Template.create(this.html, this.uuid, customComponentNames);
+  }
+
+  /** @type {CSSStyleSheet|undefined} */
+  get styleSheet() {
+    return this.css ? StyleSheet.create(this.css, this.uuid) : undefined;
   }
 
   /** @type {ViewModel.constructor} */
@@ -4777,23 +4811,17 @@ class AdoptedCss {
       const excludeEmpty = styleSheet => styleSheet;
       return names.map(getStyleSheet).filter(excludeEmpty);
   }
+
   /**
-   * adopt css by component's shadow root
+   * 
    * @param {Component} component 
+   * @returns {string[]}
    */
-  static adoptByComponent(component) {
+  static getNamesFromComponent(component) {
     // get adopted css names from component style variable '--adopted-css'
     const trim = name => name.trim();
     const excludeEmpty = name => name.length > 0;
-    const names = getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmpty) ?? [];
-    if (names.length === 0) return;
-    // get adopted style sheet list
-    const adoptedStyleSheetList = this.getStyleSheetList(names);
-    if (adoptedStyleSheetList.length === 0) {
-      // ToDo: warning
-      return;
-    }
-    component.shadowRoot.adoptedStyleSheets = adoptedStyleSheetList;
+    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmpty) ?? [];
   }
 }
 
@@ -5029,7 +5057,7 @@ class MixedComponent {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    const { template, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
+    const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
     for(const [name, filterFunc] of Object.entries(inputFilters)) {
@@ -5045,9 +5073,22 @@ class MixedComponent {
       this.filters.event[name] = filterFunc;
     }
     // create and attach shadowRoot
+    // adopt css
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
-      AdoptedCss.adoptByComponent(this);
+      const names = AdoptedCss.getNamesFromComponent(this);
+      const styleSheets = AdoptedCss.getStyleSheetList(names);
+      if (typeof styleSheet !== "undefined" ) {
+        styleSheets.push(styleSheet);
+      }
+      this.shadowRoot.adoptedStyleSheets = styleSheets;
+    } else {
+      if (typeof styleSheet !== "undefined") {
+        const adoptedStyleSheets = Array.from(document.adoptedStyleSheets);
+        if (!adoptedStyleSheets.includes(styleSheet)) {
+          document.adoptedStyleSheets = [...adoptedStyleSheets, styleSheet];
+        }
+      }
     }
 
     // create thread
@@ -5443,6 +5484,9 @@ class ComponentClassGenerator {
 
         /** @type {HTMLTemplateElement} */
         static template = module.template;
+
+        /** @type {CSSStyleSheet|undefined} */
+        static styleSheet = module.styleSheet;
 
         /** @type {ViewModel.constructor} */
         static ViewModel = module.ViewModel;

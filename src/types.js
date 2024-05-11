@@ -118,6 +118,7 @@
 
 /**
  * @typedef {Object} ComponentBase
+ * @property {ShadowRoot} shadowRoot
  * @property {ViewModel} viewModel
  * @property {ViewModel} baseViewModel
  * @property {ViewModel} writableViewModel

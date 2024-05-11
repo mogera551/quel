@@ -2,6 +2,7 @@ import { config } from "../Config.js";
 import "../types.js";
 import { utils } from "../utils.js";
 import { Template } from "./Template.js";
+import { StyleSheet } from "./StyleSheet.js";
 
 export class Module {
   /** @type {string} */
@@ -19,7 +20,12 @@ export class Module {
   /** @type {HTMLTemplateElement} */
   get template() {
     const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
-    return Template.create(this.html, this.css, this.uuid, customComponentNames);
+    return Template.create(this.html, this.uuid, customComponentNames);
+  }
+
+  /** @type {CSSStyleSheet|undefined} */
+  get styleSheet() {
+    return this.css ? StyleSheet.create(this.css, this.uuid) : undefined;
   }
 
   /** @type {ViewModel.constructor} */
