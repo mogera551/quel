@@ -65,24 +65,22 @@ const getStyleSheet = name => styleSheetByName.get(name) ?? createStyleSheet(nam
  */
 const excludeEmptySheet = styleSheet => styleSheet;
 
-export class AdoptedCss {
-  /**
-   * get adopted css list by names
-   * @param {string[]} names 
-   * @returns {CSSStyleSheet[]}
-   */
-  static getStyleSheetList(names) {
-      // find adopted style sheet from map, if not found, create adopted style sheet
-      return names.map(getStyleSheet).filter(excludeEmptySheet);
-  }
+/**
+ * get adopted css list by names
+ * @param {string[]} names 
+ * @returns {CSSStyleSheet[]}
+ */
+export function getStyleSheetList(names) {
+    // find adopted style sheet from map, if not found, create adopted style sheet
+    return names.map(getStyleSheet).filter(excludeEmptySheet);
+}
 
-  /**
-   * get name list from component style variable '--adopted-css'
-   * @param {Component} component 
-   * @returns {string[]}
-   */
-  static getNamesFromComponent(component) {
-    // get adopted css names from component style variable '--adopted-css'
-    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
-  }
+/**
+ * get name list from component style variable '--adopted-css'
+ * @param {Component} component 
+ * @returns {string[]}
+ */
+export function getNamesFromComponent(component) {
+  // get adopted css names from component style variable '--adopted-css'
+  return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
 }

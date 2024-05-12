@@ -638,7 +638,7 @@ function getByUUID(uuid) {
  * @param {string[]} customComponentNames
  * @returns {HTMLTemplateElement}
  */
-function create(html, componentUuid, customComponentNames) {
+function create$1(html, componentUuid, customComponentNames) {
   const template = document.createElement("template");
   template.innerHTML = html ? replaceTag(html, componentUuid, customComponentNames) : "";
   return template;
@@ -658,20 +658,18 @@ function createStyleSheet$1(cssText) {
   return styleSheet;
 }
 
-class StyleSheet {
-  /**
-   * get style sheet by uuid, if not found, create style sheet
-   * @param {string} cssText 
-   * @param {string} uuid 
-   * @returns {CSSStyleSheet|undefined}
-   */
-  static create(cssText, uuid) {
-    const styleSheetFromMap = styleSheetByUuid.get(uuid);
-    if (styleSheetFromMap) return styleSheetFromMap;
-    const styleSheet = createStyleSheet$1(cssText);
-    styleSheetByUuid.set(uuid, styleSheet);
-    return styleSheet;
-  }
+/**
+ * get style sheet by uuid, if not found, create style sheet
+ * @param {string} cssText 
+ * @param {string} uuid 
+ * @returns {CSSStyleSheet|undefined}
+ */
+function create(cssText, uuid) {
+  const styleSheetFromMap = styleSheetByUuid.get(uuid);
+  if (styleSheetFromMap) return styleSheetFromMap;
+  const styleSheet = createStyleSheet$1(cssText);
+  styleSheetByUuid.set(uuid, styleSheet);
+  return styleSheet;
 }
 
 class Module {
@@ -690,12 +688,12 @@ class Module {
   /** @type {HTMLTemplateElement} */
   get template() {
     const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
-    return create(this.html, this.uuid, customComponentNames);
+    return create$1(this.html, this.uuid, customComponentNames);
   }
 
   /** @type {CSSStyleSheet|undefined} */
   get styleSheet() {
-    return this.css ? StyleSheet.create(this.css, this.uuid) : undefined;
+    return this.css ? create(this.css, this.uuid) : undefined;
   }
 
   /** @type {ViewModel.constructor} */
@@ -4395,101 +4393,98 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
  * @property {string[]} methods
  */
 
-class ViewModelize {
+/**
+ * オブジェクトのすべてのプロパティのデスクリプタを取得する
+ * 継承元を遡る、ただし、Objectのプロパティは取得しない
+ * @param {ViewModel} target 
+ * @returns {Map<string,PropertyDescriptor>}
+ */
+function getDescByName(target) {
   /**
-   * オブジェクトのすべてのプロパティのデスクリプタを取得する
-   * 継承元を遡る、ただし、Objectのプロパティは取得しない
-   * @param {ViewModel} target 
-   * @returns {Map<string,PropertyDescriptor>}
+   * @type {Map<string,PropertyDescriptor>}
    */
-  static getDescByName(target) {
-    /**
-     * @type {Map<string,PropertyDescriptor>}
-     */
-    const descByName = new Map;
-    let object = target;
-    while(object !== Object.prototype) {
-      const descs = Object.getOwnPropertyDescriptors(object);
-      for(const [name, desc] of Object.entries(descs)) {
-        if (descByName.has(name)) continue;
-        descByName.set(name, desc);
+  const descByName = new Map;
+  let object = target;
+  while(object !== Object.prototype) {
+    const descs = Object.getOwnPropertyDescriptors(object);
+    for(const [name, desc] of Object.entries(descs)) {
+      if (descByName.has(name)) continue;
+      descByName.set(name, desc);
+    }
+    object = Object.getPrototypeOf(object);
+  }
+  return descByName;
+}
+
+/**
+ * オブジェクト内のメソッドを取得する
+ * コンストラクタは含まない
+ * @param {[string,PropertyDescriptor][]} descByNameEntries 
+ * @returns {[string,PropertyDescriptor][]}
+ */
+function getMethods(descByNameEntries, targetClass) {
+  return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value === "function")
+}
+
+/**
+ * オブジェクト内のプロパティを取得する
+ * @param {[string,PropertyDescriptor][]} descByNameEntries 
+ * @returns {[string,PropertyDescriptor][]}
+ */
+function getProperties(descByNameEntries, targetClass) {
+  return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value !== "function")
+}
+
+/** @type {Map<typeof ViewModel,ViewModelInfo>} */
+const viewModelInfoByConstructor = new Map;
+
+/**
+ * ViewModel化
+ * ・非プリミティブかつ初期値のないプロパティは削除する
+ * @param {ViewModel} target 
+ * @returns {{
+ *   definedProps:string[],
+ *   primitiveProps:string[],
+ *   methods:string[],
+ *   accessorProps:string[],
+ *   viewModel:ViewModel
+ * }}
+ */
+function viewModelize(target) {
+  let viewModelInfo = viewModelInfoByConstructor.get(target.constructor);
+  if (!viewModelInfo) {
+    const descByName = getDescByName(target);
+    const descByNameEntries = Array.from(descByName.entries());
+    const removeProps = [];
+    const definedProps = [];
+    const primitiveProps = [];
+    const accessorProps = [];
+    const methods = getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
+    getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
+      definedProps.push(name);
+      const propName = PropertyName.create(name);
+      if (propName.isPrimitive) {
+        primitiveProps.push(name);
+      } else {
+        if (("value" in desc) && typeof desc.value === "undefined") {
+          removeProps.push(name);
+        }
       }
-      object = Object.getPrototypeOf(object);
-    }
-    return descByName;
+      if ("get" in desc && typeof desc.get !== "undefined") {
+        accessorProps.push(name);
+      }
+    });
+    viewModelInfo = { removeProps, definedProps, primitiveProps, methods, accessorProps };
+    viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
   }
-
-  /**
-   * オブジェクト内のメソッドを取得する
-   * コンストラクタは含まない
-   * @param {[string,PropertyDescriptor][]} descByNameEntries 
-   * @returns {[string,PropertyDescriptor][]}
-   */
-  static getMethods(descByNameEntries, targetClass) {
-    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value === "function")
-  }
-
-  /**
-   * オブジェクト内のプロパティを取得する
-   * @param {[string,PropertyDescriptor][]} descByNameEntries 
-   * @returns {[string,PropertyDescriptor][]}
-   */
-  static getProperties(descByNameEntries, targetClass) {
-    return descByNameEntries.filter(([ name, desc ]) => desc.value !== targetClass && typeof desc.value !== "function")
-  }
-
-  /**
-   * ViewModel化
-   * ・非プリミティブかつ初期値のないプロパティは削除する
-   * @param {ViewModel} target 
-   * @returns {{
-   *   definedProps:string[],
-   *   primitiveProps:string[],
-   *   methods:string[],
-   *   accessorProps:string[],
-   *   viewModel:ViewModel
-   * }}
-   */
-  static viewModelize(target) {
-    let viewModelInfo = this.viewModelInfoByConstructor.get(target.constructor);
-    if (!viewModelInfo) {
-      const descByName = this.getDescByName(target);
-      const descByNameEntries = Array.from(descByName.entries());
-      const removeProps = [];
-      const definedProps = [];
-      const primitiveProps = [];
-      const accessorProps = [];
-      const methods = this.getMethods(descByNameEntries, target.constructor).map(([name, desc]) => name);
-      this.getProperties(descByNameEntries, target.constructor).forEach(([name, desc]) => {
-        definedProps.push(name);
-        const propName = PropertyName.create(name);
-        if (propName.isPrimitive) {
-          primitiveProps.push(name);
-        } else {
-          if (("value" in desc) && typeof desc.value === "undefined") {
-            removeProps.push(name);
-          }
-        }
-        if ("get" in desc && typeof desc.get !== "undefined") {
-          accessorProps.push(name);
-        }
-      });
-      viewModelInfo = { removeProps, definedProps, primitiveProps, methods, accessorProps };
-      this.viewModelInfoByConstructor.set(target.constructor, viewModelInfo);
-    }
-    viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
-    return {
-      definedProps:viewModelInfo.definedProps, 
-      primitiveProps:viewModelInfo.primitiveProps,
-      methods:viewModelInfo.methods, 
-      accessorProps:viewModelInfo.accessorProps,
-      viewModel:target
-    };
-  }
-
-  /** @type {Map<typeof ViewModel,ViewModelInfo>} */
-  static viewModelInfoByConstructor = new Map;
-  
+  viewModelInfo.removeProps.forEach(propertyKey => Reflect.deleteProperty(target, propertyKey));
+  return {
+    definedProps:viewModelInfo.definedProps, 
+    primitiveProps:viewModelInfo.primitiveProps,
+    methods:viewModelInfo.methods, 
+    accessorProps:viewModelInfo.accessorProps,
+    viewModel:target
+  };
 }
 
 /**
@@ -4642,7 +4637,7 @@ const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
  * @returns {{readonly:Proxy,writable:Proxy}}
  */
 function createViewModels(component, viewModelClass) {
-  const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(viewModelClass, []));
+  const viewModelInfo = viewModelize(Reflect.construct(viewModelClass, []));
   const { viewModel, accessorProps } = viewModelInfo;
   const setOfAccessorProperties = new Set(accessorProps);
   const dependentProps = new DependentProps();
@@ -4841,26 +4836,24 @@ const getStyleSheet = name => styleSheetByName.get(name) ?? createStyleSheet(nam
  */
 const excludeEmptySheet = styleSheet => styleSheet;
 
-class AdoptedCss {
-  /**
-   * get adopted css list by names
-   * @param {string[]} names 
-   * @returns {CSSStyleSheet[]}
-   */
-  static getStyleSheetList(names) {
-      // find adopted style sheet from map, if not found, create adopted style sheet
-      return names.map(getStyleSheet).filter(excludeEmptySheet);
-  }
+/**
+ * get adopted css list by names
+ * @param {string[]} names 
+ * @returns {CSSStyleSheet[]}
+ */
+function getStyleSheetList(names) {
+    // find adopted style sheet from map, if not found, create adopted style sheet
+    return names.map(getStyleSheet).filter(excludeEmptySheet);
+}
 
-  /**
-   * get name list from component style variable '--adopted-css'
-   * @param {Component} component 
-   * @returns {string[]}
-   */
-  static getNamesFromComponent(component) {
-    // get adopted css names from component style variable '--adopted-css'
-    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
-  }
+/**
+ * get name list from component style variable '--adopted-css'
+ * @param {Component} component 
+ * @returns {string[]}
+ */
+function getNamesFromComponent(component) {
+  // get adopted css names from component style variable '--adopted-css'
+  return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
 }
 
 /** @type {WeakMap<Node,Component>} */
@@ -5114,8 +5107,8 @@ class MixedComponent {
     // adopt css
     if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
-      const names = AdoptedCss.getNamesFromComponent(this);
-      const styleSheets = AdoptedCss.getStyleSheetList(names);
+      const names = getNamesFromComponent(this);
+      const styleSheets = getStyleSheetList(names);
       if (typeof styleSheet !== "undefined" ) {
         styleSheets.push(styleSheet);
       }
@@ -5226,7 +5219,7 @@ class MixedComponent {
    * @static
    */
   static get observedAttributes() {
-    const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(this.ViewModel, []));
+    const viewModelInfo = viewModelize(Reflect.construct(this.ViewModel, []));
     this._propByObservedAttribute = new Map(
       viewModelInfo.primitiveProps
       .filter(prop => !prop.startsWith("_"))

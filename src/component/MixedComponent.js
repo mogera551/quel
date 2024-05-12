@@ -12,8 +12,8 @@ import { createViewModels } from "../viewModel/Proxy.js";
 import { Phase } from "../thread/Phase.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { ViewModelize } from "../viewModel/ViewModelize.js";
-import { AdoptedCss } from "./AdoptedCss.js";
+import { viewModelize } from "../viewModel/ViewModelize.js";
+import * as AdoptedCss from "./AdoptedCss.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -378,7 +378,7 @@ export class MixedComponent {
    * @static
    */
   static get observedAttributes() {
-    const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(this.ViewModel, []));
+    const viewModelInfo = viewModelize(Reflect.construct(this.ViewModel, []));
     this._propByObservedAttribute = new Map(
       viewModelInfo.primitiveProps
       .filter(prop => !prop.startsWith("_"))

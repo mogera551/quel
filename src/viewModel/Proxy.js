@@ -1,7 +1,7 @@
 import "../types.js";
 import { DependentProps } from "./DependentProps.js";
 import { ReadOnlyViewModelHandler } from "./ReadOnlyViewModelHandler.js";
-import { ViewModelize } from "./ViewModelize.js";
+import { viewModelize } from "./ViewModelize.js";
 import { WritableViewModelHandler } from "./WritableViewModelHandler.js";
 
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
@@ -12,7 +12,7 @@ const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
  * @returns {{readonly:Proxy,writable:Proxy}}
  */
 export function createViewModels(component, viewModelClass) {
-  const viewModelInfo = ViewModelize.viewModelize(Reflect.construct(viewModelClass, []));
+  const viewModelInfo = viewModelize(Reflect.construct(viewModelClass, []));
   const { viewModel, accessorProps } = viewModelInfo;
   const setOfAccessorProperties = new Set(accessorProps);
   const dependentProps = new DependentProps();

@@ -12,18 +12,16 @@ function createStyleSheet(cssText) {
   return styleSheet;
 }
 
-export class StyleSheet {
-  /**
-   * get style sheet by uuid, if not found, create style sheet
-   * @param {string} cssText 
-   * @param {string} uuid 
-   * @returns {CSSStyleSheet|undefined}
-   */
-  static create(cssText, uuid) {
-    const styleSheetFromMap = styleSheetByUuid.get(uuid);
-    if (styleSheetFromMap) return styleSheetFromMap;
-    const styleSheet = createStyleSheet(cssText);
-    styleSheetByUuid.set(uuid, styleSheet);
-    return styleSheet;
-  }
+/**
+ * get style sheet by uuid, if not found, create style sheet
+ * @param {string} cssText 
+ * @param {string} uuid 
+ * @returns {CSSStyleSheet|undefined}
+ */
+export function create(cssText, uuid) {
+  const styleSheetFromMap = styleSheetByUuid.get(uuid);
+  if (styleSheetFromMap) return styleSheetFromMap;
+  const styleSheet = createStyleSheet(cssText);
+  styleSheetByUuid.set(uuid, styleSheet);
+  return styleSheet;
 }

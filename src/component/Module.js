@@ -2,7 +2,7 @@ import { config } from "../Config.js";
 import "../types.js";
 import { utils } from "../utils.js";
 import * as Template from "./Template.js";
-import { StyleSheet } from "./StyleSheet.js";
+import * as StyleSheet from "./StyleSheet.js";
 
 export class Module {
   /** @type {string} */
