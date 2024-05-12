@@ -1603,15 +1603,13 @@ const setOfAttachableTags = new Set([
  */
 const isCustomTag = tagName => tagName.indexOf("-") !== -1;
 
-class AttachShadow {
-  /**
-   * タグ名がshadow rootを持つことが可能か
-   * @param {string} tagName 
-   * @returns {boolean}
-   */
-  static isAttachable(tagName) {
-    return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
-  }
+/**
+ * タグ名がshadow rootを持つことが可能か
+ * @param {string} tagName 
+ * @returns {boolean}
+ */
+function isAttachable(tagName) {
+  return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
 }
 
 /**
@@ -4582,7 +4580,7 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @param {string} prop 
    * @returns {import("../loopContext/LoopContext.js").LoopContext | undefined}
    */
-  findLoopContext(prop) {
+  #findLoopContext(prop) {
     if (typeof this.#directlyCallContext.loopContext === "undefined") return;
     if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
     const propName = PropertyName.create(prop);
@@ -4605,7 +4603,7 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
     } else if (Api.has(prop)) {
       return Api.get(target, receiver, this, prop);
     } else {
-      const loopContext = this.findLoopContext(prop);
+      const loopContext = this.#findLoopContext(prop);
       return (typeof loopContext !== "undefined") ?
         this.directlyGet(target, { prop, indexes:loopContext.allIndexes}, receiver) :
         super.get(target, prop, receiver);
@@ -4621,7 +4619,7 @@ class WritableViewModelHandler extends ViewModelHandlerBase {
    * @returns {boolean}
    */
   set(target, prop, value, receiver) {
-    const loopContext = this.findLoopContext(prop);
+    const loopContext = this.#findLoopContext(prop);
     return (typeof loopContext !== "undefined") ?
       this.directlySet(target, { prop, indexes:loopContext.allIndexes, value}, receiver) :
       super.set(target, prop, value, receiver);
@@ -5105,7 +5103,7 @@ class MixedComponent {
     }
     // create and attach shadowRoot
     // adopt css
-    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
+    if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
       const names = getNamesFromComponent(this);
       const styleSheets = getStyleSheetList(names);

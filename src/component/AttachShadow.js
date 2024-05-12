@@ -30,13 +30,11 @@ const setOfAttachableTags = new Set([
  */
 const isCustomTag = tagName => tagName.indexOf("-") !== -1;
 
-export class AttachShadow {
-  /**
-   * タグ名がshadow rootを持つことが可能か
-   * @param {string} tagName 
-   * @returns {boolean}
-   */
-  static isAttachable(tagName) {
-    return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
-  }
+/**
+ * タグ名がshadow rootを持つことが可能か
+ * @param {string} tagName 
+ * @returns {boolean}
+ */
+export function isAttachable(tagName) {
+  return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
 }

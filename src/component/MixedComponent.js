@@ -4,7 +4,7 @@ import { createProps } from "./Props.js";
 import { createGlobals } from "./Globals.js";
 import { Thread } from "../thread/Thread.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";
-import { AttachShadow } from "./AttachShadow.js";
+import { isAttachable } from "./AttachShadow.js";
 import { inputFilters, outputFilters, eventFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
@@ -264,7 +264,7 @@ export class MixedComponent {
     }
     // create and attach shadowRoot
     // adopt css
-    if (AttachShadow.isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
+    if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
       this.attachShadow({mode: 'open'});
       const names = AdoptedCss.getNamesFromComponent(this);
       const styleSheets = AdoptedCss.getStyleSheetList(names);
