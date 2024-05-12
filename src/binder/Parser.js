@@ -80,31 +80,26 @@ const parseBindText = (text, defaultName) => {
   });
 };
 
+/** @type {Object<string,BindTextInfo[]>} */
+const bindTextsByKey = {};
+
 /**
- * data-bind属性をパースする関数群
+ * data-bind属性値のパースし、BindTextInfoの配列を返す
+ * @param {string} text data-bind属性値
+ * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
+ * @returns {BindTextInfo[]}
  */
-export class Parser {
-  /** @type {Object<string,BindTextInfo[]>} */
-  static bindTextsByKey = {};
+export function parse(text, defaultName) {
+  (typeof text === "undefined") && utils.raise("Parser: text is undefined");
+  if (text.trim() === "") return [];
+  /** @type {string} */
+  const key = text + "\t" + defaultName;
+  /** @type {BindTextInfo[] | undefined} */
+  let binds = bindTextsByKey[key];
 
-  /**
-   * data-bind属性値のパースし、BindTextInfoの配列を返す
-   * @param {string} text data-bind属性値
-   * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
-   * @returns {BindTextInfo[]}
-   */
-  static parse(text, defaultName) {
-    (typeof text === "undefined") && utils.raise("Parser: text is undefined");
-    if (text.trim() === "") return [];
-    /** @type {string} */
-    const key = text + "\t" + defaultName;
-    /** @type {BindTextInfo[] | undefined} */
-    let binds = this.bindTextsByKey[key];
-
-    if (typeof binds === "undefined") {
-      binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-      this.bindTextsByKey[key] = binds;
-    }
-    return binds;
+  if (typeof binds === "undefined") {
+    binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
+    bindTextsByKey[key] = binds;
   }
+  return binds;
 }

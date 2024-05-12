@@ -528,6 +528,103 @@ class Templates {
 const DATASET_BIND_PROPERTY$3 = "data-bind";
 const DATASET_UUID_PROPERTY = "data-uuid";
 
+/**
+ * HTMLの変換
+ * {{loop:}}{{if:}}{{else:}}を<template>へ置換
+ * {{end:}}を</template>へ置換
+ * {{...}}を<!--@@:...-->へ置換
+ * <template>を<!--@@|...-->へ置換
+ * @param {string} html 
+ * @param {string} componentUuid
+ * @param {string[]} customComponentNames
+ * @returns {string}
+ */
+function replaceTag(html, componentUuid, customComponentNames) {
+  const stack = [];
+  const replacedHtml =  html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+    expr = expr.trim();
+    if (expr.startsWith("loop:") || expr.startsWith("if:")) {
+      stack.push(expr);
+      return `<template data-bind="${expr}">`;
+    } else if (expr.startsWith("else:")){
+      const saveExpr = stack.at(-1);
+      return `</template><template data-bind="${saveExpr}|not">`;
+    } else if (expr.startsWith("end:")){
+      stack.pop();
+      return `</template>`;
+    } else {
+      return `<!--@@:${expr}-->`;
+    }
+  });
+  const root = document.createElement("template"); // 仮のルート
+  root.innerHTML = replacedHtml;
+  // カスタムコンポーネントの名前を変更する
+  const customComponentKebabNames = customComponentNames.map(customComponentName => utils.toKebabCase(customComponentName));
+  const changeCustomElementName = (element) => {
+    for(const customComponentKebabName of customComponentKebabNames) {
+      /** @type {Element[]} */
+      const replaceElements = Array.from(element.querySelectorAll(customComponentKebabName));
+      for(const oldElement of replaceElements) {
+        const newElement = document.createElement(`${customComponentKebabName}-${componentUuid}`);
+        if (oldElement.hasAttributes) {
+          for(const attr of oldElement.attributes) {
+            newElement.setAttribute(attr.name, attr.value);
+          }
+          newElement.setAttribute("data-orig-tag-name", customComponentKebabName);
+        }
+        oldElement.parentNode.replaceChild(newElement, oldElement);
+      }
+      /** @type {Element[]} */
+      const changeIsElements = Array.from(element.querySelectorAll(`[is="${customComponentKebabName}"]`));
+      for(const oldElement of changeIsElements) {
+        const newElement = document.createElement(oldElement.tagName, { is:`${customComponentKebabName}-${componentUuid}` });
+        if (oldElement.hasAttributes) {
+          for(const attr of oldElement.attributes) {
+            if (attr.name === "is") continue;
+            newElement.setAttribute(attr.name, attr.value);
+          }
+          newElement.setAttribute("data-orig-is", customComponentKebabName);
+        }
+        oldElement.parentNode.replaceChild(newElement, oldElement);
+      }
+    }
+    const templates = Array.from(element.querySelectorAll("template"));
+    for(const template of templates) {
+      changeCustomElementName(template.content);
+    }
+  };
+  if (customComponentKebabNames.length > 0) {
+    changeCustomElementName(root.content);
+  }
+
+  // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
+  /** @type {(element:HTMLElement)=>{}} */
+  const replaceTemplate = (element) => {
+    /** @type {HTMLTemplateElement} */
+    let template;
+    while(template = element.querySelector("template")) {
+      const uuid =  utils.createUUID();
+      const comment = document.createComment(`@@|${uuid}`);
+      template.parentNode.replaceChild(comment, template);
+      if (template.constructor !== HTMLTemplateElement) {
+        // SVGタグ内のtemplateタグを想定
+        const newTemplate = document.createElement("template");
+        for(let childNode of Array.from(template.childNodes)) {
+          newTemplate.content.appendChild(childNode);
+        }
+        newTemplate.setAttribute(DATASET_BIND_PROPERTY$3, template.getAttribute(DATASET_BIND_PROPERTY$3));
+        template = newTemplate;
+      }
+      template.setAttribute(DATASET_UUID_PROPERTY, uuid);
+      replaceTemplate(template.content);
+      Templates.templateByUUID.set(uuid, template);
+    }
+  };
+  replaceTemplate(root.content);
+
+  return root.innerHTML;
+}
+
 class Template {
   /**
    * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
@@ -538,124 +635,28 @@ class Template {
    */
   static create(html, componentUuid, customComponentNames) {
     const template = document.createElement("template");
-    template.innerHTML = html ? this.replaceTag(html, componentUuid, customComponentNames) : "";
+    template.innerHTML = html ? replaceTag(html, componentUuid, customComponentNames) : "";
     return template;
   }
 
-  /**
-   * HTMLの変換
-   * {{loop:}}{{if:}}{{else:}}を<template>へ置換
-   * {{end:}}を</template>へ置換
-   * {{...}}を<!--@@:...-->へ置換
-   * <template>を<!--@@|...-->へ置換
-   * @param {string} html 
-   * @param {string} componentUuid
-   * @param {string[]} customComponentNames
-   * @returns {string}
-   */
-  static replaceTag(html, componentUuid, customComponentNames) {
-    const stack = [];
-    const replacedHtml =  html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
-      expr = expr.trim();
-      if (expr.startsWith("loop:") || expr.startsWith("if:")) {
-        stack.push(expr);
-        return `<template data-bind="${expr}">`;
-      } else if (expr.startsWith("else:")){
-        const saveExpr = stack.at(-1);
-        return `</template><template data-bind="${saveExpr}|not">`;
-      } else if (expr.startsWith("end:")){
-        stack.pop();
-        return `</template>`;
-      } else {
-        return `<!--@@:${expr}-->`;
-      }
-    });
-    const root = document.createElement("template"); // 仮のルート
-    root.innerHTML = replacedHtml;
-    // カスタムコンポーネントの名前を変更する
-    const customComponentKebabNames = customComponentNames.map(customComponentName => utils.toKebabCase(customComponentName));
-    const changeCustomElementName = (element) => {
-      for(const customComponentKebabName of customComponentKebabNames) {
-        /** @type {Element[]} */
-        const replaceElements = Array.from(element.querySelectorAll(customComponentKebabName));
-        for(const oldElement of replaceElements) {
-          const newElement = document.createElement(`${customComponentKebabName}-${componentUuid}`);
-          if (oldElement.hasAttributes) {
-            for(const attr of oldElement.attributes) {
-              newElement.setAttribute(attr.name, attr.value);
-            }
-            newElement.setAttribute("data-orig-tag-name", customComponentKebabName);
-          }
-          oldElement.parentNode.replaceChild(newElement, oldElement);
-        }
-        /** @type {Element[]} */
-        const changeIsElements = Array.from(element.querySelectorAll(`[is="${customComponentKebabName}"]`));
-        for(const oldElement of changeIsElements) {
-          const newElement = document.createElement(oldElement.tagName, { is:`${customComponentKebabName}-${componentUuid}` });
-          if (oldElement.hasAttributes) {
-            for(const attr of oldElement.attributes) {
-              if (attr.name === "is") continue;
-              newElement.setAttribute(attr.name, attr.value);
-            }
-            newElement.setAttribute("data-orig-is", customComponentKebabName);
-          }
-          oldElement.parentNode.replaceChild(newElement, oldElement);
-        }
-      }
-      const templates = Array.from(element.querySelectorAll("template"));
-      for(const template of templates) {
-        changeCustomElementName(template.content);
-      }
-    };
-    if (customComponentKebabNames.length > 0) {
-      changeCustomElementName(root.content);
-    }
-
-    // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
-    /** @type {(element:HTMLElement)=>{}} */
-    const replaceTemplate = (element) => {
-      /** @type {HTMLTemplateElement} */
-      let template;
-      while(template = element.querySelector("template")) {
-        const uuid =  utils.createUUID();
-        const comment = document.createComment(`@@|${uuid}`);
-        template.parentNode.replaceChild(comment, template);
-        if (template.constructor !== HTMLTemplateElement) {
-          // SVGタグ内のtemplateタグを想定
-          const newTemplate = document.createElement("template");
-          for(let childNode of Array.from(template.childNodes)) {
-            newTemplate.content.appendChild(childNode);
-          }
-          newTemplate.setAttribute(DATASET_BIND_PROPERTY$3, template.getAttribute(DATASET_BIND_PROPERTY$3));
-          template = newTemplate;
-        }
-        template.setAttribute(DATASET_UUID_PROPERTY, uuid);
-        replaceTemplate(template.content);
-        Templates.templateByUUID.set(uuid, template);
-      }
-    };
-    replaceTemplate(root.content);
-
-    return root.innerHTML;
-  }
 
 }
 
+/** @type {Map<string,CSSStyleSheet>} */
+const styleSheetByUuid = new Map;
+
+/**
+ * create style sheet by css text
+ * @param {string} cssText 
+ * @returns {CSSStyleSheet}
+ */
+function createStyleSheet$1(cssText) {
+  const styleSheet = new CSSStyleSheet();
+  styleSheet.replaceSync(cssText);
+  return styleSheet;
+}
+
 class StyleSheet {
-  /** @type {Map<string,CSSStyleSheet>} */
-  static styleSheetByUuid = new Map;
-
-  /**
-   * create style sheet by css text
-   * @param {string} cssText 
-   * @returns {CSSStyleSheet}
-   */
-  static _create(cssText) {
-    const styleSheet = new CSSStyleSheet();
-    styleSheet.replaceSync(cssText);
-    return styleSheet;
-  }
-
   /**
    * get style sheet by uuid, if not found, create style sheet
    * @param {string} cssText 
@@ -663,10 +664,10 @@ class StyleSheet {
    * @returns {CSSStyleSheet|undefined}
    */
   static create(cssText, uuid) {
-    const styleSheetFromMap = this.styleSheetByUuid.get(uuid);
+    const styleSheetFromMap = styleSheetByUuid.get(uuid);
     if (styleSheetFromMap) return styleSheetFromMap;
-    const styleSheet = this._create(cssText);
-    this.styleSheetByUuid.set(uuid, styleSheet);
+    const styleSheet = createStyleSheet$1(cssText);
+    styleSheetByUuid.set(uuid, styleSheet);
     return styleSheet;
   }
 }
@@ -1571,47 +1572,45 @@ class UpdateSlot {
 
 }
 
+/** @type {Set<string>} shadow rootが可能なタグ名一覧 */
+const setOfAttachableTags = new Set([
+  // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
+  "articles",
+  "aside",
+  "blockquote",
+  "body",
+  "div",
+  "footer",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "main",
+  "nav",
+  "p",
+  "section",
+  "span",
+]);
+
+/**
+ * タグ名がカスタム要素かどうか
+ * →ダッシュ(-)を含むかどうか
+ * @param {string} tagName 
+ * @returns {boolean}
+ */
+const isCustomTag = tagName => tagName.indexOf("-") !== -1;
+
 class AttachShadow {
-  /** @type {Set<string>} shadow rootが可能なタグ名一覧 */
-  static setOfAttachableTags = new Set([
-    // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
-    "articles",
-    "aside",
-    "blockquote",
-    "body",
-    "div",
-    "footer",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "header",
-    "main",
-    "nav",
-    "p",
-    "section",
-    "span",
-  ]);
-
-  /**
-   * タグ名がカスタム要素かどうか
-   * →ダッシュ(-)を含むかどうか
-   * @param {string} tagName 
-   * @returns {boolean}
-   */
-  static isCustomTag(tagName) {
-    return tagName.indexOf("-") !== -1;
-  }
-
   /**
    * タグ名がshadow rootを持つことが可能か
    * @param {string} tagName 
    * @returns {boolean}
    */
   static isAttachable(tagName) {
-    return this.isCustomTag(tagName) || this.setOfAttachableTags.has(tagName);
+    return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
   }
 }
 
@@ -1882,6 +1881,8 @@ class eventFilters {
   static nsp = this.noStopPropagation;
 }
 
+const moduleName$4 = "Selector";
+
 const SELECTOR = "[data-bind]";
 
 /**
@@ -1929,39 +1930,35 @@ const isCommentNode = node => node instanceof Comment && (node.textContent.start
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
-class Selector {
-  /** @type {Map<HTMLTemplateElement, number[][]>} */
-  static listOfRouteIndexesByTemplate = new Map();
+const listOfRouteIndexesByTemplate = new Map();
 
-  /**
-   * Get target node list from template
-   * @param {HTMLTemplateElement|undefined} template 
-   * @param {HTMLElement|undefined} rootElement
-   * @returns {Node[]}
-   */
-  static getTargetNodes(template, rootElement) {
-    (typeof template === "undefined") && utils.raise("Selector: template is undefined");
-    (typeof rootElement === "undefined") && utils.raise("Selector: rootElement is undefined");
+/**
+ * Get target node list from template
+ * @param {HTMLTemplateElement|undefined} template 
+ * @param {HTMLElement|undefined} rootElement
+ * @returns {Node[]}
+ */
+function getTargetNodes(template, rootElement) {
+  (typeof template === "undefined") && utils.raise(`${moduleName$4}: template is undefined`);
+  (typeof rootElement === "undefined") && utils.raise(`${moduleName$4}: rootElement is undefined`);
 
-    /** @type {Node[]} */
-    let nodes;
+  /** @type {Node[]} */
+  let nodes;
 
-    /** @type {number[][]} */
-    const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-    if (typeof listOfRouteIndexes !== "undefined") {
-      // キャッシュがある場合
-      // querySelectorAllを行わずにNodeの位置を特定できる
-      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
-    } else {
-      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
-      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+  /** @type {number[][]} */
+  const listOfRouteIndexes = listOfRouteIndexesByTemplate.get(template);
+  if (typeof listOfRouteIndexes !== "undefined") {
+    // キャッシュがある場合
+    // querySelectorAllを行わずにNodeの位置を特定できる
+    nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
+  } else {
+    // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
+    nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
 
-      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
-    }
-    return nodes;
-
+    // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
+    listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
   }
+  return nodes;
 
 }
 
@@ -3120,7 +3117,7 @@ class BindTextInfo {
  * @param {string} s 
  * @returns {string}
  */
-const trim = s => s.trim();
+const trim$1 = s => s.trim();
 
 /**
  * 長さチェック関数
@@ -3138,7 +3135,7 @@ const decode = s => decodeURIComponent(s);
  * @returns {Filter}
  */
 const parseFilter = text => {
-  const [name, ...options] = text.split(",").map(trim);
+  const [name, ...options] = text.split(",").map(trim$1);
   return Object.assign(new Filter, {name, options:options.map(decode)});
 };
 
@@ -3149,7 +3146,7 @@ const parseFilter = text => {
  * @returns {{viewModelProperty:string,filters:Filter[]}}
  */
 const parseViewModelProperty = text => {
-  const [viewModelProperty, ...filterTexts] = text.split("|").map(trim);
+  const [viewModelProperty, ...filterTexts] = text.split("|").map(trim$1);
   return {viewModelProperty, filters:filterTexts.map(text => parseFilter(text))};
 };
 
@@ -3161,7 +3158,7 @@ const parseViewModelProperty = text => {
  * @returns {BindTextInfo}
  */
 const parseExpression = (expr, defaultName) => {
-  const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
+  const [nodeProperty, viewModelPropertyText] = [defaultName].concat(...expr.split(":").map(trim$1)).splice(-2);
   const { viewModelProperty, filters } = parseViewModelProperty(viewModelPropertyText);
   return { nodeProperty, viewModelProperty, filters };
 };
@@ -3172,8 +3169,8 @@ const parseExpression = (expr, defaultName) => {
  * @param {string|undefined} defaultName prop:を省略時、デフォルトのプロパティ値
  * @returns {BindTextInfo[]}
  */
-const parseBindText = (text, defaultName) => {
-  return text.split(";").map(trim).filter(has).map(s => { 
+const parseBindText$1 = (text, defaultName) => {
+  return text.split(";").map(trim$1).filter(has).map(s => { 
     let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
     viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
@@ -3182,53 +3179,47 @@ const parseBindText = (text, defaultName) => {
   });
 };
 
+/** @type {Object<string,BindTextInfo[]>} */
+const bindTextsByKey = {};
+
 /**
- * data-bind属性をパースする関数群
+ * data-bind属性値のパースし、BindTextInfoの配列を返す
+ * @param {string} text data-bind属性値
+ * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
+ * @returns {BindTextInfo[]}
  */
-class Parser {
-  /** @type {Object<string,BindTextInfo[]>} */
-  static bindTextsByKey = {};
+function parse(text, defaultName) {
+  (typeof text === "undefined") && utils.raise("Parser: text is undefined");
+  if (text.trim() === "") return [];
+  /** @type {string} */
+  const key = text + "\t" + defaultName;
+  /** @type {BindTextInfo[] | undefined} */
+  let binds = bindTextsByKey[key];
 
-  /**
-   * data-bind属性値のパースし、BindTextInfoの配列を返す
-   * @param {string} text data-bind属性値
-   * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
-   * @returns {BindTextInfo[]}
-   */
-  static parse(text, defaultName) {
-    (typeof text === "undefined") && utils.raise("Parser: text is undefined");
-    if (text.trim() === "") return [];
-    /** @type {string} */
-    const key = text + "\t" + defaultName;
-    /** @type {BindTextInfo[] | undefined} */
-    let binds = this.bindTextsByKey[key];
-
-    if (typeof binds === "undefined") {
-      binds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-      this.bindTextsByKey[key] = binds;
-    }
-    return binds;
+  if (typeof binds === "undefined") {
+    binds = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
+    bindTextsByKey[key] = binds;
   }
+  return binds;
 }
 
-class BindToDom {
-  /**
-   * Generate a list of binding objects from a string
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager 
-   * @param {Node} node node
-   * @param {ViewModel} viewModel view model
-   * @param {string|undefined} text the string specified in the "data-bind" attribute.
-   * @param {string|undefined} defaultName default property name of node
-   * @returns {import("../binding/Binding.js").Binding[]}
-   */
-  static parseBindText = (bindingManager, node, viewModel, text, defaultName) => {
-    (typeof text === "undefined") && utils.raise(`BindToDom: text is undefined`);
-    if (text.trim() === "") return [];
-    return Parser.parse(text, defaultName).map(info => 
-      Factory.create(bindingManager, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters));
-  }
-
+/**
+ * Generate a list of binding objects from a string
+ * @param {import("../binding/Binding.js").BindingManager} bindingManager 
+ * @param {Node} node node
+ * @param {ViewModel} viewModel view model
+ * @param {string|undefined} text the string specified in the "data-bind" attribute.
+ * @param {string|undefined} defaultName default property name of node
+ * @returns {import("../binding/Binding.js").Binding[]}
+ */
+function parseBindText(bindingManager, node, viewModel, text, defaultName) {
+  (typeof text === "undefined") && utils.raise(`BindToDom: text is undefined`);
+  if (text.trim() === "") return [];
+  return parse(text, defaultName).map(info => 
+    Factory.create(bindingManager, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters));
 }
+
+const moduleName$3 = "BindToHTMLElement";
 
 const DATASET_BIND_PROPERTY$2 = "data-bind";
 const DEFAULT_EVENT = "oninput";
@@ -3240,7 +3231,7 @@ const DEFAULT_PROPERTY$1 = "textContent";
  * @param {Node} node 
  * @returns {HTMLElement}
  */
-const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`BindToHTMLElement: not HTMLElement`);
+const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`${moduleName$3}: not HTMLElement`);
 
 /**
  * HTML要素のデフォルトプロパティを取得
@@ -3267,72 +3258,72 @@ const isInputableElement = node => node instanceof HTMLElement &&
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
 
 
-class BindToHTMLElement {
-  /**
-   * バインドを実行する（ノードがHTMLElementの場合）
-   * デフォルトイベントハンドラの設定を行う
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager
-   * @param {Node} node 
-   * @returns {import("../binding/Binding.js").Binding[]}
-   */
-  static bind(bindingManager, node) {
-    /** @type {ViewModel} */
-    const viewModel = bindingManager.component.viewModel;
-    /** @type {HTMLElement}  */
-    const element = toHTMLElement(node);
-    /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2) ?? undefined;
-    (typeof bindText === "undefined") && utils.raise(`BindToHTMLElement: data-bind is not defined`);
-    element.removeAttribute(DATASET_BIND_PROPERTY$2);
-    /** @type {string} */
-    const defaultName = getDefaultProperty(element);
+/**
+ * バインドを実行する（ノードがHTMLElementの場合）
+ * デフォルトイベントハンドラの設定を行う
+ * @param {import("../binding/Binding.js").BindingManager} bindingManager
+ * @param {Node} node 
+ * @returns {import("../binding/Binding.js").Binding[]}
+ */
+function bind$4(bindingManager, node) {
+  /** @type {ViewModel} */
+  const viewModel = bindingManager.component.viewModel;
+  /** @type {HTMLElement}  */
+  const element = toHTMLElement(node);
+  /** @type {string} */
+  const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2) ?? undefined;
+  (typeof bindText === "undefined") && utils.raise(`${moduleName$3}: data-bind is not defined`);
+  element.removeAttribute(DATASET_BIND_PROPERTY$2);
+  /** @type {string} */
+  const defaultName = getDefaultProperty(element);
 
-    // パース
-    /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
+  // パース
+  /** @type {import("../binding/Binding.js").Binding[]} */
+  const bindings = parseBindText(bindingManager, node, viewModel, bindText, defaultName);
 
-    // イベントハンドラ設定
-    /** @type {boolean} デフォルトイベントを設定したかどうか */
-    let hasDefaultEvent = false;
+  // イベントハンドラ設定
+  /** @type {boolean} デフォルトイベントを設定したかどうか */
+  let hasDefaultEvent = false;
 
-    /** @type {import("../binding/Binding.js").Binding|null} */
-    let defaultBinding = null;
+  /** @type {import("../binding/Binding.js").Binding|null} */
+  let defaultBinding = null;
 
-    /** @type {import("../binding/Radio.js").Radio|null} */
-    let radioBinding = null;
+  /** @type {import("../binding/Radio.js").Radio|null} */
+  let radioBinding = null;
 
-    /** @type {import("../binding/Checkbox.js").Checkbox|null} */
-    let checkboxBinding = null;
+  /** @type {import("../binding/Checkbox.js").Checkbox|null} */
+  let checkboxBinding = null;
 
-    bindings.forEach(binding => {
-      hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
-      radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
-      checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
-      defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
-    });
+  bindings.forEach(binding => {
+    hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
+    radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
+    checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
+    defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
+  });
 
-    /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
-    const setDefaultEventHandler = (binding) => {
-      element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
-    };
-    if (radioBinding) {
-      if (!hasDefaultEvent) {
-        setDefaultEventHandler(radioBinding);
-      }
-    } else if (checkboxBinding) {
-      if (!hasDefaultEvent) {
-        setDefaultEventHandler(checkboxBinding);
-      }
-    } else if (defaultBinding && !hasDefaultEvent && isInputableElement(node)) {
-      // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
-      // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
-      // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
-      // ・nodeが入力系（input, textarea, select） → 入力系に限定
-      setDefaultEventHandler(defaultBinding);
+  /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
+  const setDefaultEventHandler = (binding) => {
+    element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
+  };
+  if (radioBinding) {
+    if (!hasDefaultEvent) {
+      setDefaultEventHandler(radioBinding);
     }
-    return bindings;
+  } else if (checkboxBinding) {
+    if (!hasDefaultEvent) {
+      setDefaultEventHandler(checkboxBinding);
+    }
+  } else if (defaultBinding && !hasDefaultEvent && isInputableElement(node)) {
+    // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
+    // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
+    // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
+    // ・nodeが入力系（input, textarea, select） → 入力系に限定
+    setDefaultEventHandler(defaultBinding);
   }
+  return bindings;
 }
+
+const moduleName$2 = "BindToSVGElement";
 
 const DATASET_BIND_PROPERTY$1 = "data-bind";
 
@@ -3341,36 +3332,35 @@ const DATASET_BIND_PROPERTY$1 = "data-bind";
  * @param {Node} node 
  * @returns {SVGElement}
  */
-const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`BindToSVGElement: not SVGElement`);
+const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`${moduleName$2}: not SVGElement`);
 
-class BindToSVGElement {
-  /**
-   * バインドを実行する（ノードがSVGElementの場合）
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager
-   * @param {Node} node 
-   * @returns {import("../binding/Binding.js").Binding[]}
-   */
-  static bind(bindingManager, node) {
-    /** @type {ViewModel} */
-    const viewModel = bindingManager.component.viewModel;
-    /** @type {SVGElement} */
-    const element = toSVGElement(node);
-    /** @type {string} */
-    const bindText = element.getAttribute(DATASET_BIND_PROPERTY$1) ?? undefined;
-    (typeof bindText === "undefined") && utils.raise(`BindToSVGElement: data-bind is not defined`);
+/**
+ * バインドを実行する（ノードがSVGElementの場合）
+ * @param {import("../binding/Binding.js").BindingManager} bindingManager
+ * @param {Node} node 
+ * @returns {import("../binding/Binding.js").Binding[]}
+ */
+function bind$3(bindingManager, node) {
+  /** @type {ViewModel} */
+  const viewModel = bindingManager.component.viewModel;
+  /** @type {SVGElement} */
+  const element = toSVGElement(node);
+  /** @type {string} */
+  const bindText = element.getAttribute(DATASET_BIND_PROPERTY$1) ?? undefined;
+  (typeof bindText === "undefined") && utils.raise(`${moduleName$2}: data-bind is not defined`);
 
-    element.removeAttribute(DATASET_BIND_PROPERTY$1);
-    /** @type {string|undefined} */
-    const defaultName = undefined;
+  element.removeAttribute(DATASET_BIND_PROPERTY$1);
+  /** @type {string|undefined} */
+  const defaultName = undefined;
 
-    // パース
-    /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
+  // パース
+  /** @type {import("../binding/Binding.js").Binding[]} */
+  const bindings = parseBindText(bindingManager, node, viewModel, bindText, defaultName);
 
-    return bindings;
-  }
-
+  return bindings;
 }
+
+const moduleName$1 = "BindToText";
 
 const DEFAULT_PROPERTY = "textContent";
 
@@ -3379,39 +3369,38 @@ const DEFAULT_PROPERTY = "textContent";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment$1 = node => (node instanceof Comment) ? node : utils.raise("BindToText: not Comment");
+const toComment$1 = node => (node instanceof Comment) ? node : utils.raise(`${moduleName$1}: not Comment`);
 
-class BindToText {
-  /**
-   * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
-   * Commentノードをテキストノードに置換する
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager
-   * @param {Node} node 
-   * @returns {import("../binding/Binding.js").Binding[]}
-   */
-  static bind(bindingManager, node) {
-    // コメントノードをテキストノードに差し替える
-    /** @type {ViewModel} */
-    const viewModel = bindingManager.component.viewModel;
-    /** @type {Comment} */
-    const comment = toComment$1(node);
-    const parentNode = comment.parentNode ?? undefined;
-    (typeof parentNode === "undefined") && utils.raise("BindToText: no parent");
-    /** @type {string} */
-    const bindText = comment.textContent.slice(3); // @@:をスキップ
-    if (bindText.trim() === "") return [];
-    /** @type {Text} */
-    const textNode = document.createTextNode("");
-    parentNode.replaceChild(textNode, comment);
+/**
+ * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
+ * Commentノードをテキストノードに置換する
+ * @param {import("../binding/Binding.js").BindingManager} bindingManager
+ * @param {Node} node 
+ * @returns {import("../binding/Binding.js").Binding[]}
+ */
+function bind$2(bindingManager, node) {
+  // コメントノードをテキストノードに差し替える
+  /** @type {ViewModel} */
+  const viewModel = bindingManager.component.viewModel;
+  /** @type {Comment} */
+  const comment = toComment$1(node);
+  const parentNode = comment.parentNode ?? undefined;
+  (typeof parentNode === "undefined") && utils.raise(`${moduleName$1}: no parent`);
+  /** @type {string} */
+  const bindText = comment.textContent.slice(3); // @@:をスキップ
+  if (bindText.trim() === "") return [];
+  /** @type {Text} */
+  const textNode = document.createTextNode("");
+  parentNode.replaceChild(textNode, comment);
 
-    // パース
-    /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(bindingManager, textNode, viewModel, bindText, DEFAULT_PROPERTY);
+  // パース
+  /** @type {import("../binding/Binding.js").Binding[]} */
+  const bindings = parseBindText(bindingManager, textNode, viewModel, bindText, DEFAULT_PROPERTY);
 
-    return bindings;
-  }
-
+  return bindings;
 }
+
+const moduleName = "BindToTemplate";
 
 const DATASET_BIND_PROPERTY = "data-bind";
 /**
@@ -3419,62 +3408,58 @@ const DATASET_BIND_PROPERTY = "data-bind";
  * @param {Node} node 
  * @returns {Comment}
  */
-const toComment = node => (node instanceof Comment) ? node : utils.raise("BindToTemplate: not Comment");
+const toComment = node => (node instanceof Comment) ? node : utils.raise(`${moduleName}: not Comment`);
 
-class BindToTemplate {
-  /**
-   * バインドを実行する（ノードがComment（Templateの置換）の場合）
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager
-   * @param {Node} node 
-   * @returns {import("../binding/Binding.js").Binding[]}
-   */
-  static bind(bindingManager, node) {
-    /** @type {ViewModel} */
-    const viewModel = bindingManager.component.viewModel;
-    /** @type {Comment} */
-    const comment = toComment(node);
-    /** @type {string} */
-    const uuid = comment.textContent.slice(3);
-    /** @type {HTMLTemplateElement} */
-    const template = Templates.templateByUUID.get(uuid);
-    (typeof template === "undefined") && utils.raise(`BindToTemplate: template not found`);
-    /** @type {string} */
-    const bindText = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
-    (typeof bindText === "undefined") && utils.raise(`BindToTemplate: data-bind is not defined`);
+/**
+ * バインドを実行する（ノードがComment（Templateの置換）の場合）
+ * @param {import("../binding/Binding.js").BindingManager} bindingManager
+ * @param {Node} node 
+ * @returns {import("../binding/Binding.js").Binding[]}
+ */
+function bind$1(bindingManager, node) {
+  /** @type {ViewModel} */
+  const viewModel = bindingManager.component.viewModel;
+  /** @type {Comment} */
+  const comment = toComment(node);
+  /** @type {string} */
+  const uuid = comment.textContent.slice(3);
+  /** @type {HTMLTemplateElement} */
+  const template = Templates.templateByUUID.get(uuid);
+  (typeof template === "undefined") && utils.raise(`${moduleName}: template not found`);
+  /** @type {string} */
+  const bindText = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+  (typeof bindText === "undefined") && utils.raise(`${moduleName}: data-bind is not defined`);
 
-    // パース
-    /** @type {import("../binding/Binding.js").Binding[]} */
-    const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, undefined);
+  // パース
+  /** @type {import("../binding/Binding.js").Binding[]} */
+  const bindings = parseBindText(bindingManager, node, viewModel, bindText, undefined);
 
-    return bindings;
-  }
+  return bindings;
 }
 
-class Binder {
-  /**
-   * Generate a list of binding objects from a list of nodes
-   * @param {import("../binding/Binding.js").BindingManager} bindingManager parent binding manager
-   * @param {Node[]} nodes node list having data-bind attribute
-   * @returns {import("../binding/Binding.js").Binding[]} generate a list of binding objects 
-   */
-  static bind(bindingManager, nodes) {
-    return nodes.flatMap(node => 
-      (node instanceof Comment && node.textContent[2] == ":") ? BindToText.bind(bindingManager, node) : 
-      (node instanceof HTMLElement) ? BindToHTMLElement.bind(bindingManager, node) :
-      (node instanceof Comment && node.textContent[2] == "|") ? BindToTemplate.bind(bindingManager, node) : 
-      (node instanceof SVGElement) ? BindToSVGElement.bind(bindingManager, node) :
-      utils.raise(`Binder: unknown node type`)
-    );
-  }
-
+/**
+ * Generate a list of binding objects from a list of nodes
+ * @param {import("../binding/Binding.js").BindingManager} bindingManager parent binding manager
+ * @param {Node[]} nodes node list having data-bind attribute
+ * @returns {import("../binding/Binding.js").Binding[]} generate a list of binding objects 
+ */
+function bind(bindingManager, nodes) {
+  return nodes.flatMap(node => 
+    (node instanceof Comment && node.textContent[2] == ":") ? bind$2(bindingManager, node) : 
+    (node instanceof HTMLElement) ? bind$4(bindingManager, node) :
+    (node instanceof Comment && node.textContent[2] == "|") ? bind$1(bindingManager, node) : 
+    (node instanceof SVGElement) ? bind$3(bindingManager, node) :
+    utils.raise(`Binder: unknown node type`)
+  );
 }
+
+/**
+ * @type {Map<BindingManager,Map<string,number[]>>}
+ */
+const setContextIndexesByIdByBindingManager = new Map;
 
 class Popover {
 
-  /**
-   * @type {Map<BindingManager,Map<string,number[]>>}
-   */
-  static setContextIndexesByIdByBindingManager = new Map;
   /**
    * 
    * @param {BindingManager} bindingManager 
@@ -3485,11 +3470,11 @@ class Popover {
     if (buttons.length === 0) return;
     buttons.forEach(button => {
       const id = button.getAttribute("popovertarget");
-      let setContextIndexes = this.setContextIndexesByIdByBindingManager.get(bindingManager)?.get(id);
+      let setContextIndexes = setContextIndexesByIdByBindingManager.get(bindingManager)?.get(id);
       if (typeof setContextIndexes === "undefined") {
         setContextIndexes = () => bindingManager.component.popoverContextIndexesById.set(id, bindingManager.loopContext.indexes);
-        this.setContextIndexesByIdByBindingManager.get(bindingManager)?.set(id, setContextIndexes) ??
-          this.setContextIndexesByIdByBindingManager.set(bindingManager, new Map([[id, setContextIndexes]]));
+        setContextIndexesByIdByBindingManager.get(bindingManager)?.set(id, setContextIndexes) ??
+          setContextIndexesByIdByBindingManager.set(bindingManager, new Map([[id, setContextIndexes]]));
       }
       button.removeEventListener("click", setContextIndexes);
       button.addEventListener("click", setContextIndexes);
@@ -3497,14 +3482,14 @@ class Popover {
 
   }
   static dispose(bindingManager) {
-    this.setContextIndexesByIdByBindingManager.delete(bindingManager);
+    setContextIndexesByIdByBindingManager.delete(bindingManager);
   }
 }
 
-class ReuseBindingManager {
-  /** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
-  static #bindingManagersByTemplate = new Map;
+/** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
+const bindingManagersByTemplate = new Map;
 
+class ReuseBindingManager {
   /**
    * 
    * @param {import("./Binding.js").BindingManager} bindingManager 
@@ -3519,8 +3504,8 @@ class ReuseBindingManager {
       removeBindManagers.forEach(bindingManager => bindingManager.dispose());
     });
     if (!bindingManager.component.useKeyed) {
-      this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
-        this.#bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
+      bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
+        bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
     Popover.dispose(bindingManager);
   }
@@ -3533,7 +3518,7 @@ class ReuseBindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, parentBinding, loopInfo) {
-    let bindingManager = this.#bindingManagersByTemplate.get(template)?.pop();
+    let bindingManager = bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
       bindingManager = new BindingManager(component, template, parentBinding, loopInfo);
       bindingManager.initialize();
@@ -3653,10 +3638,9 @@ class LoopContext {
   }
 }
 
-class Binding {
-  /** @type {number} */
-  static seq = 0;
+let seq = 0;
 
+class Binding {
   /** @type {number} id */
   #id;
   get id() {
@@ -3727,7 +3711,7 @@ class Binding {
     viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
-    this.#id = ++Binding.seq;
+    this.#id = ++seq;
     this.#bindingManager = bindingManager;
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in, bindingManager.component.filters.event);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);
@@ -3923,8 +3907,8 @@ class BindingManager {
    */
   initialize() {
     const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = Selector.getTargetNodes(this.#template, content);
-    this.#bindings = Binder.bind(this, nodes);
+    const nodes = getTargetNodes(this.#template, content);
+    this.#bindings = bind(this, nodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
   }
@@ -4093,6 +4077,7 @@ class DependentProps {
 
   /** @type {Map<string,Set<string>>} */
   #setOfPropsByRefProp = new Map;
+
   /** @type {Map<string,Set<string>>} */
   get setOfPropsByRefProp() {
     return this.#setOfPropsByRefProp;
@@ -4793,40 +4778,71 @@ class BindingSummary {
 
 const ADOPTED_VAR_NAME = '--adopted-css';
 
-class AdoptedCss {
-  /** @type {Map<string,CSSStyleSheet>} */
-  static styleSheetByName = new Map;
-  /**
-   * copy style rules to adopted style sheet
-   * @param {CSSStyleSheet} fromStyleSheet 
-   * @param {CSSStyleSheet} toStyleSheet 
-   */
-  static copyStyleRules(fromStyleSheet, toStyleSheet) {
-    Array.from(fromStyleSheet.cssRules).map(rule => {
-      if (rule.constructor.name === "CSSImportRule") {
-        this.copyStyleRules(rule.styleSheet, toStyleSheet);
-      } else {
-        toStyleSheet.insertRule(rule.cssText, toStyleSheet.cssRules.length);
-      }
-    });
-  }
-  /**
-   * create adopted style sheet by name, and copy style rules from existing style sheet
-   * @param {string} name 
-   * @returns 
-   */
-  static createStyleSheet(name) {
-    const styleSheet = new CSSStyleSheet();
-    const matchTitle = sheet => sheet.title === name;
-    const fromStyleSheet = Array.from(document.styleSheets).find(matchTitle);
-    if (!fromStyleSheet) {
-      // ToDo: warning
-      return;
+/** @type {Map<string,CSSStyleSheet>} */
+const styleSheetByName = new Map;
+
+/**
+ * copy style rules to adopted style sheet
+ * @param {CSSStyleSheet} fromStyleSheet 
+ * @param {CSSStyleSheet} toStyleSheet 
+ */
+function copyStyleRules(fromStyleSheet, toStyleSheet) {
+  Array.from(fromStyleSheet.cssRules).map(rule => {
+    if (rule.constructor.name === "CSSImportRule") {
+      copyStyleRules(rule.styleSheet, toStyleSheet);
+    } else {
+      toStyleSheet.insertRule(rule.cssText, toStyleSheet.cssRules.length);
     }
-    this.copyStyleRules(fromStyleSheet, styleSheet);
-    this.styleSheetByName.set(name, styleSheet);
-    return styleSheet;
+  });
+}
+
+/**
+ * create adopted style sheet by name, and copy style rules from existing style sheet
+ * @param {string} name 
+ * @returns 
+ */
+function createStyleSheet(name) {
+  const styleSheet = new CSSStyleSheet();
+  const matchTitle = sheet => sheet.title === name;
+  const fromStyleSheet = Array.from(document.styleSheets).find(matchTitle);
+  if (!fromStyleSheet) {
+    // ToDo: warning
+    return;
   }
+  copyStyleRules(fromStyleSheet, styleSheet);
+  styleSheetByName.set(name, styleSheet);
+  return styleSheet;
+}
+
+/**
+ * trim name
+ * @param {string} name 
+ * @returns {string}
+ */
+const trim = name => name.trim();
+
+/**
+ * exclude empty name
+ * @param {string} name 
+ * @returns {boolean}
+ */
+const excludeEmptyName = name => name.length > 0;
+
+/**
+ * 
+ * @param {string} name 
+ * @returns {CSSStyleSheet}
+ */
+const getStyleSheet = name => styleSheetByName.get(name) ?? createStyleSheet(name);
+
+/**
+ * exclude empty style sheet
+ * @param {CSSStyleSheet} styleSheet 
+ * @returns {CSSStyleSheet}
+ */
+const excludeEmptySheet = styleSheet => styleSheet;
+
+class AdoptedCss {
   /**
    * get adopted css list by names
    * @param {string[]} names 
@@ -4834,21 +4850,17 @@ class AdoptedCss {
    */
   static getStyleSheetList(names) {
       // find adopted style sheet from map, if not found, create adopted style sheet
-      const getStyleSheet = name => this.styleSheetByName.get(name) ?? this.createStyleSheet(name);
-      const excludeEmpty = styleSheet => styleSheet;
-      return names.map(getStyleSheet).filter(excludeEmpty);
+      return names.map(getStyleSheet).filter(excludeEmptySheet);
   }
 
   /**
-   * 
+   * get name list from component style variable '--adopted-css'
    * @param {Component} component 
    * @returns {string[]}
    */
   static getNamesFromComponent(component) {
     // get adopted css names from component style variable '--adopted-css'
-    const trim = name => name.trim();
-    const excludeEmpty = name => name.length > 0;
-    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmpty) ?? [];
+    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
   }
 }
 

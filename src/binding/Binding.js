@@ -1,15 +1,14 @@
 import "../types.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { utils } from "../utils.js";
-import { Selector } from "../binder/Selector.js";
-import { Binder } from "../binder/Binder.js";
+import * as Selector from "../binder/Selector.js";
+import * as Binder from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
 
-export class Binding {
-  /** @type {number} */
-  static seq = 0;
+let seq = 0;
 
+export class Binding {
   /** @type {number} id */
   #id;
   get id() {
@@ -80,7 +79,7 @@ export class Binding {
     viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
-    this.#id = ++Binding.seq;
+    this.#id = ++seq;
     this.#bindingManager = bindingManager;
     this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in, bindingManager.component.filters.event);
     this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);

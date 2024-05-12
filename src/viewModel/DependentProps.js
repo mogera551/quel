@@ -10,6 +10,7 @@ export class DependentProps {
 
   /** @type {Map<string,Set<string>>} */
   #setOfPropsByRefProp = new Map;
+
   /** @type {Map<string,Set<string>>} */
   get setOfPropsByRefProp() {
     return this.#setOfPropsByRefProp;

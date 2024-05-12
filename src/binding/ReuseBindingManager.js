@@ -1,10 +1,10 @@
 import { Popover } from "../popover/Popover.js";
 import { BindingManager } from "./Binding.js";
 
-export class ReuseBindingManager {
-  /** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
-  static #bindingManagersByTemplate = new Map;
+/** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
+const bindingManagersByTemplate = new Map;
 
+export class ReuseBindingManager {
   /**
    * 
    * @param {import("./Binding.js").BindingManager} bindingManager 
@@ -19,8 +19,8 @@ export class ReuseBindingManager {
       removeBindManagers.forEach(bindingManager => bindingManager.dispose());
     });
     if (!bindingManager.component.useKeyed) {
-      this.#bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
-        this.#bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
+      bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
+        bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
     Popover.dispose(bindingManager);
   }
@@ -33,7 +33,7 @@ export class ReuseBindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, parentBinding, loopInfo) {
-    let bindingManager = this.#bindingManagersByTemplate.get(template)?.pop();
+    let bindingManager = bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
       bindingManager = new BindingManager(component, template, parentBinding, loopInfo);
       bindingManager.initialize();

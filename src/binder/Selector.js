@@ -1,4 +1,7 @@
 import { utils } from "../utils.js";
+
+const moduleName = "Selector";
+
 const SELECTOR = "[data-bind]";
 
 /**
@@ -46,39 +49,34 @@ const isCommentNode = node => node instanceof Comment && (node.textContent.start
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
-export class Selector {
-  /** @type {Map<HTMLTemplateElement, number[][]>} */
-  static listOfRouteIndexesByTemplate = new Map();
+const listOfRouteIndexesByTemplate = new Map();
 
-  /**
-   * Get target node list from template
-   * @param {HTMLTemplateElement|undefined} template 
-   * @param {HTMLElement|undefined} rootElement
-   * @returns {Node[]}
-   */
-  static getTargetNodes(template, rootElement) {
-    (typeof template === "undefined") && utils.raise("Selector: template is undefined");
-    (typeof rootElement === "undefined") && utils.raise("Selector: rootElement is undefined");
+/**
+ * Get target node list from template
+ * @param {HTMLTemplateElement|undefined} template 
+ * @param {HTMLElement|undefined} rootElement
+ * @returns {Node[]}
+ */
+export function getTargetNodes(template, rootElement) {
+  (typeof template === "undefined") && utils.raise(`${moduleName}: template is undefined`);
+  (typeof rootElement === "undefined") && utils.raise(`${moduleName}: rootElement is undefined`);
 
-    /** @type {Node[]} */
-    let nodes;
+  /** @type {Node[]} */
+  let nodes;
 
-    /** @type {number[][]} */
-    const listOfRouteIndexes = this.listOfRouteIndexesByTemplate.get(template);
-    if (typeof listOfRouteIndexes !== "undefined") {
-      // キャッシュがある場合
-      // querySelectorAllを行わずにNodeの位置を特定できる
-      nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
-    } else {
-      // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
-      nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+  /** @type {number[][]} */
+  const listOfRouteIndexes = listOfRouteIndexesByTemplate.get(template);
+  if (typeof listOfRouteIndexes !== "undefined") {
+    // キャッシュがある場合
+    // querySelectorAllを行わずにNodeの位置を特定できる
+    nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
+  } else {
+    // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
+    nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
 
-      // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-      this.listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
-    }
-    return nodes;
-
+    // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
+    listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
   }
+  return nodes;
 
 }
-
