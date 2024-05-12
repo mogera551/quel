@@ -1,6 +1,6 @@
+import * as Template from "../component/Template.js";
 import "../types.js";
 import { utils } from "../utils.js";
-import { Templates } from "../view/Templates.js";
 import * as BindToDom from "./BindToDom.js";
 
 const moduleName = "BindToTemplate";
@@ -27,7 +27,7 @@ export function bind(bindingManager, node) {
   /** @type {string} */
   const uuid = comment.textContent.slice(3);
   /** @type {HTMLTemplateElement} */
-  const template = Templates.templateByUUID.get(uuid);
+  const template = Template.getByUUID(uuid);
   (typeof template === "undefined") && utils.raise(`${moduleName}: template not found`);
   /** @type {string} */
   const bindText = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;

@@ -1,9 +1,11 @@
 import "../types.js";
 import { utils } from "../utils.js";
-import { Templates } from "../view/Templates.js";
 
 const DATASET_BIND_PROPERTY = "data-bind";
 const DATASET_UUID_PROPERTY = "data-uuid";
+
+/** @type {Map<string,HTMLTemplateElement>} */
+const templateByUUID = new Map;
 
 /**
  * HTMLの変換
@@ -94,7 +96,7 @@ function replaceTag(html, componentUuid, customComponentNames) {
       }
       template.setAttribute(DATASET_UUID_PROPERTY, uuid);
       replaceTemplate(template.content);
-      Templates.templateByUUID.set(uuid, template);
+      templateByUUID.set(uuid, template);
     }
   };
   replaceTemplate(root.content);
@@ -102,19 +104,24 @@ function replaceTag(html, componentUuid, customComponentNames) {
   return root.innerHTML;
 }
 
-export class Template {
-  /**
-   * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
-   * @param {string|undefined} html 
-   * @param {string} componentUuid
-   * @param {string[]} customComponentNames
-   * @returns {HTMLTemplateElement}
-   */
-  static create(html, componentUuid, customComponentNames) {
-    const template = document.createElement("template");
-    template.innerHTML = html ? replaceTag(html, componentUuid, customComponentNames) : "";
-    return template;
-  }
+/**
+ * UUIDからHTMLTemplateElementオブジェクトを取得(ループや分岐条件のブロック)
+ * @param {string} uuid 
+ * @returns {HTMLTemplateElement}
+ */
+export function getByUUID(uuid) {
+  return templateByUUID.get(uuid);
+}
 
-
+/**
+ * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
+ * @param {string|undefined} html 
+ * @param {string} componentUuid
+ * @param {string[]} customComponentNames
+ * @returns {HTMLTemplateElement}
+ */
+export function create(html, componentUuid, customComponentNames) {
+  const template = document.createElement("template");
+  template.innerHTML = html ? replaceTag(html, componentUuid, customComponentNames) : "";
+  return template;
 }
