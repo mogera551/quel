@@ -2211,7 +2211,7 @@ class Repeat extends TemplateProperty {
   }
   /** @param {Array} value */
   set value(value) {
-    if (!Array.isArray(value)) utils.raise("Repeat: value is not array");
+    if (!Array.isArray(value)) utils.raise(`Repeat: ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
@@ -2259,7 +2259,7 @@ class Branch extends TemplateProperty {
   }
   /** @param {boolean} value */
   set value(value) {
-    if (typeof value !== "boolean") utils.raise("Branch: value is not boolean");
+    if (typeof value !== "boolean") utils.raise(`Branch: ViewModel['${this.binding.viewModelProperty.name}'] is not boolean`, );
     if (this.value !== value) {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
@@ -2914,7 +2914,7 @@ class RepeatKeyed extends Repeat {
     return this.#lastValue;
   }
   set value(values) {
-    if (!Array.isArray(values)) utils.raise("RepeatKeyed: value is not array");
+    if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
     const lastIndexes = new Set;
     
