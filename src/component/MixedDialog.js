@@ -11,18 +11,9 @@ export class MixedDialog {
   }
   /** 
    * initialize
-   * @param {{
-   * useWebComponent: boolean,
-   * useShadowRoot: boolean,
-   * useLocalTagName: boolean,
-   * useKeyed: boolean,
-   * useBufferedBind: boolean
-   * }} param0
    * @returns {void}
    */
-  initializeCallback({
-    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
-  }) {
+  initializeCallback() {
     this.addEventListener("closed", () => {
       if (typeof this.dialogPromises !== "undefined") {
         if (this.returnValue === "") {

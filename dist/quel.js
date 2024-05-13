@@ -4999,7 +4999,7 @@ class MixedComponent {
 
   /** @type {boolean} use buffered bind */
   get useBufferedBind() {
-    return this._useBufferedBind;
+    return this.hasAttribute("buffered-bind");
   }
 
   /** @type {ShadowRoot|HTMLElement} view root element */
@@ -5029,18 +5029,9 @@ class MixedComponent {
 
   /** 
    * initialize
-   * @param {{
-   * useWebComponent: boolean,
-   * useShadowRoot: boolean,
-   * useLocalTagName: boolean,
-   * useKeyed: boolean,
-   * useBufferedBind: boolean
-   * }} param0
    * @returns {void}
    */
-  initializeCallback({
-    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
-  }) {
+  initializeCallback() {
     /**
      * set members
      */
@@ -5055,11 +5046,10 @@ class MixedComponent {
 
     this._parentComponent = undefined;
 
-    this._useShadowRoot = useShadowRoot;
-    this._useWebComponent = useWebComponent;
-    this._useLocalTagName = useLocalTagName;
-    this._useKeyed = useKeyed;
-    this._useBufferedBind = useBufferedBind;
+    this._useShadowRoot = this.constructor.useShadowRoot;
+    this._useWebComponent = this.constructor.useWebComponent;
+    this._useLocalTagName = this.constructor.useLocalTagName;
+    this._useKeyed = this.constructor.useKeyed;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
@@ -5267,18 +5257,9 @@ class MixedDialog {
   }
   /** 
    * initialize
-   * @param {{
-   * useWebComponent: boolean,
-   * useShadowRoot: boolean,
-   * useLocalTagName: boolean,
-   * useKeyed: boolean,
-   * useBufferedBind: boolean
-   * }} param0
    * @returns {void}
    */
-  initializeCallback({
-    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
-  }) {
+  initializeCallback() {
     this.addEventListener("closed", () => {
       if (typeof this.dialogPromises !== "undefined") {
         if (this.returnValue === "") {
@@ -5401,20 +5382,12 @@ class MixedPopover {
   set popoverPromises(value) {
     this._popoverPromises = value;
   }
+
   /**
    * initialize
-   * @param {{
-   * useWebComponent: boolean,
-   * useShadowRoot: boolean,
-   * useLocalTagName: boolean,
-   * useKeyed: boolean,
-   * useBufferedBind: boolean
-   * }} param0
    * @returns {void}
    */
-  initializeCallback({
-    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
-  }) {
+  initializeCallback() {
     this.addEventListener("hidden", () => {
       if (typeof this.popoverPromises !== "undefined") {
         if (this.canceled) {
@@ -5538,9 +5511,6 @@ function generateComponentClass(componentModule) {
       static useKeyed = module.config?.useKeyed ?? config.useKeyed;
 
       /** @type {boolean} */
-      static useBufferedBind = module.config?.useBufferedBind ?? false;
-
-      /** @type {boolean} */
       static get [Symbols.isComponent] () {
         return true;
       }
@@ -5552,27 +5522,11 @@ function generateComponentClass(componentModule) {
        */
       constructor() {
         super();
-        const config = {};
-        const setConfigFromAttribute = (name, flagName, config) => {
-          if (this.hasAttribute(name)) {
-            config[flagName] = true;
-          } else if (this.hasAttribute("no-" + name)) {
-            config[flagName] = false;
-          } else {
-            config[flagName] = this.constructor[flagName];
-          }
-        };
-        setConfigFromAttribute("shadow-root", "useShadowRoot", config);
-        setConfigFromAttribute("web-component", "useWebComponent", config);
-        setConfigFromAttribute("local-tag-name", "useLocalTagName", config);
-        setConfigFromAttribute("keyed", "useKeyed", config);
-        setConfigFromAttribute("buffered-bind", "useBufferedBind", config);
-
-        this.initialize(config);
+        this.initialize();
       }
 
-      initialize(config) {
-        this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, [config]));
+      initialize() {
+        this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, []));
       }
     };
   };

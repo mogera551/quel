@@ -18,20 +18,12 @@ export class MixedPopover {
   set popoverPromises(value) {
     this._popoverPromises = value;
   }
+
   /**
    * initialize
-   * @param {{
-   * useWebComponent: boolean,
-   * useShadowRoot: boolean,
-   * useLocalTagName: boolean,
-   * useKeyed: boolean,
-   * useBufferedBind: boolean
-   * }} param0
    * @returns {void}
    */
-  initializeCallback({
-    useWebComponent, useShadowRoot, useLocalTagName, useKeyed, useBufferedBind
-  }) {
+  initializeCallback() {
     this.addEventListener("hidden", () => {
       if (typeof this.popoverPromises !== "undefined") {
         if (this.canceled) {

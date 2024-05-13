@@ -48,9 +48,6 @@ export function generateComponentClass(componentModule) {
       static useKeyed = module.config?.useKeyed ?? config.useKeyed;
 
       /** @type {boolean} */
-      static useBufferedBind = module.config?.useBufferedBind ?? false;
-
-      /** @type {boolean} */
       static get [Symbols.isComponent] () {
         return true;
       }
@@ -62,27 +59,11 @@ export function generateComponentClass(componentModule) {
        */
       constructor() {
         super();
-        const config = {};
-        const setConfigFromAttribute = (name, flagName, config) => {
-          if (this.hasAttribute(name)) {
-            config[flagName] = true;
-          } else if (this.hasAttribute("no-" + name)) {
-            config[flagName] = false;
-          } else {
-            config[flagName] = this.constructor[flagName];
-          }
-        }
-        setConfigFromAttribute("shadow-root", "useShadowRoot", config);
-        setConfigFromAttribute("web-component", "useWebComponent", config);
-        setConfigFromAttribute("local-tag-name", "useLocalTagName", config);
-        setConfigFromAttribute("keyed", "useKeyed", config);
-        setConfigFromAttribute("buffered-bind", "useBufferedBind", config);
-
-        this.initialize(config);
+        this.initialize();
       }
 
-      initialize(config) {
-        this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, [config]));
+      initialize() {
+        this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, []));
       }
     };
   };
