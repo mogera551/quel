@@ -40,12 +40,14 @@ export class outputFilters {
   static truthy       = (value, options) => value ? true : false;
   static falsey       = (value, options) => !value ? true : false;
   static not          = this.falsey;
-  static eq           = (value, options) => value == options[0];
-  static ne           = (value, options) => value != options[0];
-  static lt           = (value, options) => Number(value) < Number(options[0]);
-  static le           = (value, options) => Number(value) <= Number(options[0]);
-  static gt           = (value, options) => Number(value) > Number(options[0]);
-  static ge           = (value, options) => Number(value) >= Number(options[0]);
+  static eq           = (value, options) => value == options[0]; // equality
+  static ne           = (value, options) => value != options[0]; // inequality
+  static lt           = (value, options) => Number(value) < Number(options[0]); // less than
+  static le           = (value, options) => Number(value) <= Number(options[0]); // less than or equal
+  static gt           = (value, options) => Number(value) > Number(options[0]); // greater than
+  static ge           = (value, options) => Number(value) >= Number(options[0]); // greater than or equal
+  static oi           = (value, options) => Number(options[0]) < Number(value) && Number(value) < Number(options[1]); // open interval
+  static ci           = (value, options) => Number(options[0]) <= Number(value) && Number(value) <= Number(options[1]); // closed interval
   static embed        = (value, options) => (value != null) ? (options[0] ?? "").replaceAll("%s", value) : null;
   static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
   static null         = (value, options) => (value == null) ? true : false;
