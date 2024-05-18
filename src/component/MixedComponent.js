@@ -14,6 +14,7 @@ import { BindingSummary } from "../binding/BindingSummary.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { viewModelize } from "../viewModel/ViewModelize.js";
 import * as AdoptedCss from "./AdoptedCss.js";
+import { ProcessData } from "../thread/ViewModelUpdator.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -404,4 +405,8 @@ export class MixedComponent {
 
   }
 
+  addProcess(func, thisArg, args) {
+    const process = new ProcessData(func, thisArg, args ?? []);
+    this.updateSlot.addProcess(process);
+  }
 }

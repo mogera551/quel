@@ -5245,6 +5245,10 @@ class MixedComponent {
 
   }
 
+  addProcess(func, thisArg, args) {
+    const process = new ProcessData(func, thisArg, args ?? []);
+    this.updateSlot.addProcess(process);
+  }
 }
 
 class MixedDialog {
