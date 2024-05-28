@@ -5027,6 +5027,18 @@ class MixedComponent {
     return this._bindingSummary;
   }
 
+  /** @type {ShadowRoot|Document} find parent shadow root, or document, for adoptedCSS  */
+  get shadowRootOrDocument() {
+    let node = this.parentNode;
+    while(node) {
+      if (node instanceof ShadowRoot) {
+        return node;
+      }
+      node = node.parentNode;
+    }
+    return document;
+  }
+
   /** 
    * initialize
    * @returns {void}
@@ -5105,9 +5117,10 @@ class MixedComponent {
       this.shadowRoot.adoptedStyleSheets = styleSheets;
     } else {
       if (typeof styleSheet !== "undefined") {
-        const adoptedStyleSheets = Array.from(document.adoptedStyleSheets);
+        const shadowRootOrDocument = this.shadowRootOrDocument;
+        const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
         if (!adoptedStyleSheets.includes(styleSheet)) {
-          document.adoptedStyleSheets = [...adoptedStyleSheets, styleSheet];
+          shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, styleSheet];
         }
       }
     }
