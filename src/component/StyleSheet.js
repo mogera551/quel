@@ -25,3 +25,32 @@ export function create(cssText, uuid) {
   styleSheetByUuid.set(uuid, styleSheet);
   return styleSheet;
 }
+
+/**
+ * 
+ * @param {CSSStyleSheet} styleSheet 
+ * @param {HTMLElement} component 
+ * @returns 
+ */
+export function localizeStyleSheet(styleSheet, component) {
+  const tagName = component.tagName;
+  let localTagName;
+  if (tagName.includes("-")) {
+    localTagName = tagName;
+  } else {
+    const isName = component.getAttribute("is");
+    localTagName = `${tagName}[is="${isName}"]`;
+  }
+  for(let rule of styleSheet.cssRules) {
+    if (rule instanceof CSSStyleRule) {
+      const newSelectorText = rule.selectorText.split(",").map(selector => {
+        if (selector.trim().startsWith(":host")) {
+          return selector.replace(":host", localTagName);
+        }
+        return `${localTagName} ${selector}`;
+      }).join(",");
+      rule.selectorText = newSelectorText;
+    }
+  }
+  return styleSheet;
+}

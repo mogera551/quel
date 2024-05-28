@@ -23,6 +23,9 @@ export function generateComponentClass(componentModule) {
       /** @type {CSSStyleSheet|undefined} */
       static styleSheet = module.styleSheet;
 
+      /** @type {CSSStyleSheet|undefined} */
+      static localStyleSheet;
+
       /** @type {ViewModel.constructor} */
       static ViewModel = module.ViewModel;
 
@@ -46,6 +49,9 @@ export function generateComponentClass(componentModule) {
 
       /** @type {boolean} */
       static useKeyed = module.config?.useKeyed ?? config.useKeyed;
+
+      /** @type {boolean} */
+      static useLocalSelector = module.config?.useLocalSelector ?? config.useLocalSelector;
 
       /** @type {boolean} */
       static get [Symbols.isComponent] () {

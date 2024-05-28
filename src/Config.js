@@ -14,4 +14,5 @@ export const config = {
   useKeyed: true, // use keyed
   useWebComponent: true, // use web component
   useLocalTagName: true, // use local tag name
+  useLocalSelector: true, // use local selector
 };

@@ -489,6 +489,7 @@ const config = {
   useKeyed: true, // use keyed
   useWebComponent: true, // use web component
   useLocalTagName: true, // use local tag name
+  useLocalSelector: true, // use local selector
 };
 
 class utils {
@@ -669,6 +670,35 @@ function create(cssText, uuid) {
   if (styleSheetFromMap) return styleSheetFromMap;
   const styleSheet = createStyleSheet$1(cssText);
   styleSheetByUuid.set(uuid, styleSheet);
+  return styleSheet;
+}
+
+/**
+ * 
+ * @param {CSSStyleSheet} styleSheet 
+ * @param {HTMLElement} component 
+ * @returns 
+ */
+function localizeStyleSheet(styleSheet, component) {
+  const tagName = component.tagName;
+  let localTagName;
+  if (tagName.includes("-")) {
+    localTagName = tagName;
+  } else {
+    const isName = component.getAttribute("is");
+    localTagName = `${tagName}[is="${isName}"]`;
+  }
+  for(let rule of styleSheet.cssRules) {
+    if (rule instanceof CSSStyleRule) {
+      const newSelectorText = rule.selectorText.split(",").map(selector => {
+        if (selector.trim().startsWith(":host")) {
+          return selector.replace(":host", localTagName);
+        }
+        return `${localTagName} ${selector}`;
+      }).join(",");
+      rule.selectorText = newSelectorText;
+    }
+  }
   return styleSheet;
 }
 
@@ -5117,10 +5147,14 @@ class MixedComponent {
       this.shadowRoot.adoptedStyleSheets = styleSheets;
     } else {
       if (typeof styleSheet !== "undefined") {
+        let localStyleSheet = this.constructor.localStyleSheet;
+        if (typeof localStyleSheet === "undefined") {
+          localStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this);
+        }
         const shadowRootOrDocument = this.shadowRootOrDocument;
         const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
-        if (!adoptedStyleSheets.includes(styleSheet)) {
-          shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, styleSheet];
+        if (!adoptedStyleSheets.includes(localStyleSheet)) {
+          shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, localStyleSheet];
         }
       }
     }
@@ -5503,6 +5537,9 @@ function generateComponentClass(componentModule) {
       /** @type {CSSStyleSheet|undefined} */
       static styleSheet = module.styleSheet;
 
+      /** @type {CSSStyleSheet|undefined} */
+      static localStyleSheet;
+
       /** @type {ViewModel.constructor} */
       static ViewModel = module.ViewModel;
 
@@ -5526,6 +5563,9 @@ function generateComponentClass(componentModule) {
 
       /** @type {boolean} */
       static useKeyed = module.config?.useKeyed ?? config.useKeyed;
+
+      /** @type {boolean} */
+      static useLocalSelector = module.config?.useLocalSelector ?? config.useLocalSelector;
 
       /** @type {boolean} */
       static get [Symbols.isComponent] () {

@@ -80,6 +80,8 @@
  * use local tag name, default is true. local custom tag is unique in the document.
  * @property {boolean|undefined} useKeyed 
  * use keyed, default is true. keyed is used for the component instance.
+ * @property {boolean|undefined} useLocalSelector
+ * use local selector, default is true. local selector is unique in the document.
  */
 
 /**

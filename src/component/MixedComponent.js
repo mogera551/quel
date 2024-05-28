@@ -15,6 +15,7 @@ import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { viewModelize } from "../viewModel/ViewModelize.js";
 import * as AdoptedCss from "./AdoptedCss.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
+import { localizeStyleSheet } from "./StyleSheet.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -277,10 +278,14 @@ export class MixedComponent {
       this.shadowRoot.adoptedStyleSheets = styleSheets;
     } else {
       if (typeof styleSheet !== "undefined") {
+        let localStyleSheet = this.constructor.localStyleSheet;
+        if (typeof localStyleSheet === "undefined") {
+          localStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this);
+        }
         const shadowRootOrDocument = this.shadowRootOrDocument;
         const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
-        if (!adoptedStyleSheets.includes(styleSheet)) {
-          shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, styleSheet];
+        if (!adoptedStyleSheets.includes(localStyleSheet)) {
+          shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, localStyleSheet];
         }
       }
     }
