@@ -158,6 +158,11 @@ export class MixedComponent {
     return this._useKeyed;
   }
 
+  /** @type {boolean} use local selector */
+  get useLocalSelector() {
+    return this._useLocalSelector;
+  }
+
   /** @type {boolean} use buffered bind */
   get useBufferedBind() {
     return this.hasAttribute("buffered-bind");
@@ -205,10 +210,13 @@ export class MixedComponent {
    * @returns {void}
    */
   initializeCallback() {
+    /** @type {class<Component>} */
+    const componentClass = this.constructor;
     /**
      * set members
      */
-    this._viewModels = createViewModels(this, this.constructor.ViewModel); // create view model
+
+    this._viewModels = createViewModels(this, componentClass.ViewModel); // create view model
     this._rootBinding = undefined;
     this._thread = undefined;
     this._updateSlot = undefined;
@@ -219,10 +227,11 @@ export class MixedComponent {
 
     this._parentComponent = undefined;
 
-    this._useShadowRoot = this.constructor.useShadowRoot;
-    this._useWebComponent = this.constructor.useWebComponent;
-    this._useLocalTagName = this.constructor.useLocalTagName;
-    this._useKeyed = this.constructor.useKeyed;
+    this._useShadowRoot = componentClass.useShadowRoot;
+    this._useWebComponent = componentClass.useWebComponent;
+    this._useLocalTagName = componentClass.useLocalTagName;
+    this._useKeyed = componentClass.useKeyed;
+    this._useLocalSelector = componentClass.useLocalSelector;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
@@ -278,14 +287,18 @@ export class MixedComponent {
       this.shadowRoot.adoptedStyleSheets = styleSheets;
     } else {
       if (typeof styleSheet !== "undefined") {
-        let localStyleSheet = this.constructor.localStyleSheet;
-        if (typeof localStyleSheet === "undefined") {
-          localStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this);
+        let adoptedStyleSheet = styleSheet;
+        if (this.useLocalSelector) {
+          if (typeof this.constructor.localStyleSheet !== "undefined") {
+            adoptedStyleSheet = this.constructor.localStyleSheet;
+          } else {
+            adoptedStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this);
+          }
         }
         const shadowRootOrDocument = this.shadowRootOrDocument;
         const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
-        if (!adoptedStyleSheets.includes(localStyleSheet)) {
-          shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, localStyleSheet];
+        if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
+          shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
         }
       }
     }
