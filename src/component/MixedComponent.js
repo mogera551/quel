@@ -173,6 +173,11 @@ export class MixedComponent {
     return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
   }
 
+  /** @type {ShadowRoot|HTMLElement} alias view root element */
+  get queryRoot() {
+    return this.viewRootElement;
+  }
+
   /** @type {Node} parent node（use, case of useWebComponent is false） */
   get pseudoParentNode() {
     return !this.useWebComponent ? this._pseudoParentNode : utils.raise("mixInComponent: useWebComponent must be false");
