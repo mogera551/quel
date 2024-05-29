@@ -1,3 +1,4 @@
+import { Symbols } from "../Symbols.js";
 import "../types.js";
 
 export class ProcessData {
@@ -26,6 +27,18 @@ export class ProcessData {
 export class ViewModelUpdator {
   /** @type {ProcessData[]} */
   queue = [];
+  /** @type {PropertyAccess[]} */
+  updatedProps = [];
+
+  /** @type {Component} */
+  #component;
+
+  /**
+   * @param {Component} component
+   */
+  constructor(component) {
+    this.#component = component;
+  }
 
   /**
    * 
@@ -37,6 +50,12 @@ export class ViewModelUpdator {
       for(const process of processes) {
         await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
       }
+    }
+    while(this.updatedProps.length > 0) {
+      const updatedProps = this.updatedProps;
+      this.updatedProps = [];
+      const params = updatedProps.map(prop => [prop.propName.name, prop.indexes]);
+      this.#component.writableViewModel[Symbols.updatedCallback](params);
     }
   }
 

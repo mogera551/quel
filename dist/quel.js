@@ -451,6 +451,7 @@ const Symbols = Object.assign({
   connectedCallback: Symbol.for(`${name}:viewModel.connectedCallback`),
   disconnectedCallback: Symbol.for(`${name}:viewModel.disconnectedCallback`),
   writeCallback: Symbol.for(`${name}:viewModel.writeCallback`),
+  updatedCallback: Symbol.for(`${name}:viewModel.updatedCallback`),
   getDependentProps: Symbol.for(`${name}:viewModel.getDependentProps`),
   clearCache: Symbol.for(`${name}:viewModel.clearCache`),
   directlyCall: Symbol.for(`${name}:viewModel.directCall`),
@@ -1269,6 +1270,18 @@ class ProcessData {
 class ViewModelUpdator {
   /** @type {ProcessData[]} */
   queue = [];
+  /** @type {PropertyAccess[]} */
+  updatedProps = [];
+
+  /** @type {Component} */
+  #component;
+
+  /**
+   * @param {Component} component
+   */
+  constructor(component) {
+    this.#component = component;
+  }
 
   /**
    * 
@@ -1280,6 +1293,12 @@ class ViewModelUpdator {
       for(const process of processes) {
         await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
       }
+    }
+    while(this.updatedProps.length > 0) {
+      const updatedProps = this.updatedProps;
+      this.updatedProps = [];
+      const params = updatedProps.map(prop => [prop.propName.name, prop.indexes]);
+      this.#component.writableViewModel[Symbols.updatedCallback](params);
     }
   }
 
@@ -1339,6 +1358,7 @@ class ViewModelHandlerBase extends Handler$2 {
    */
   addNotify(target, propertyAccess, receiver) {
     this.#component.updateSlot?.addNotify(propertyAccess);
+    this.#component.updateSlot?.addUpdatedProps(Object.assign({}, propertyAccess));
   }
 
   /**
@@ -1537,7 +1557,7 @@ class UpdateSlot {
    * @param {ChangePhaseCallback?} changePhaseCallback
    */
   constructor(component, callback = null, changePhaseCallback = null) {
-    this.#viewModelUpdator = new ViewModelUpdator();
+    this.#viewModelUpdator = new ViewModelUpdator(component);
     this.#nodeUpdator = new NodeUpdator(component);
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
@@ -1600,6 +1620,13 @@ class UpdateSlot {
     return new UpdateSlot(component, callback, changePhaseCallback);
   }
 
+  /**
+   * 
+   * @param {PropertyAccess} propAccess 
+   */
+  addUpdatedProps(propAccess) {
+    this.#viewModelUpdator.updatedProps.push(propAccess);
+  }
 }
 
 /** @type {Set<string>} shadow rootが可能なタグ名一覧 */
@@ -4153,6 +4180,7 @@ class DependentProps {
 const WRITE_CALLBACK = "$writeCallback";
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
+const UPDATED_CALLBACK = "$updatedCallback";
 
 /**
  * @type {Object<symbol,string>}
@@ -4161,6 +4189,7 @@ const callbackNameBySymbol = {
   [Symbols.connectedCallback]: CONNECTED_CALLBACK,
   [Symbols.disconnectedCallback]: DISCONNECTED_CALLBACK,
   [Symbols.writeCallback]: WRITE_CALLBACK,
+  [Symbols.updatedCallback]: UPDATED_CALLBACK,
 };
 
 /**
@@ -4170,6 +4199,7 @@ const setOfAllCallbacks = new Set([
   Symbols.connectedCallback,
   Symbols.disconnectedCallback,
   Symbols.writeCallback,
+  Symbols.updatedCallback,
 ]);
 
 class Callback {

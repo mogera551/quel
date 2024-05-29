@@ -59,7 +59,7 @@ export class UpdateSlot {
    * @param {ChangePhaseCallback?} changePhaseCallback
    */
   constructor(component, callback = null, changePhaseCallback = null) {
-    this.#viewModelUpdator = new ViewModelUpdator();
+    this.#viewModelUpdator = new ViewModelUpdator(component);
     this.#nodeUpdator = new NodeUpdator(component);
     this.#callback = callback;
     this.#changePhaseCallback = changePhaseCallback;
@@ -122,4 +122,11 @@ export class UpdateSlot {
     return new UpdateSlot(component, callback, changePhaseCallback);
   }
 
+  /**
+   * 
+   * @param {PropertyAccess} propAccess 
+   */
+  addUpdatedProps(propAccess) {
+    this.#viewModelUpdator.updatedProps.push(propAccess);
+  }
 }

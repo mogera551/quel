@@ -53,6 +53,7 @@ export class ViewModelHandlerBase extends Handler {
    */
   addNotify(target, propertyAccess, receiver) {
     this.#component.updateSlot?.addNotify(propertyAccess);
+    this.#component.updateSlot?.addUpdatedProps(Object.assign({}, propertyAccess));
   }
 
   /**

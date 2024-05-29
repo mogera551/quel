@@ -4,6 +4,7 @@ import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
 const WRITE_CALLBACK = "$writeCallback";
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
+const UPDATED_CALLBACK = "$updatedCallback";
 
 /**
  * @type {Object<symbol,string>}
@@ -12,6 +13,7 @@ const callbackNameBySymbol = {
   [Symbols.connectedCallback]: CONNECTED_CALLBACK,
   [Symbols.disconnectedCallback]: DISCONNECTED_CALLBACK,
   [Symbols.writeCallback]: WRITE_CALLBACK,
+  [Symbols.updatedCallback]: UPDATED_CALLBACK,
 };
 
 /**
@@ -21,6 +23,7 @@ const setOfAllCallbacks = new Set([
   Symbols.connectedCallback,
   Symbols.disconnectedCallback,
   Symbols.writeCallback,
+  Symbols.updatedCallback,
 ]);
 
 export class Callback {
