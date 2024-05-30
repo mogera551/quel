@@ -3075,11 +3075,11 @@ class Factory {
   // モジュール内で、const変数で書くとjestで循環参照でエラーになる
 
   /** @type {Object<boolean,Object<string,NodeProperty.constructor>> | undefined} */
-  static #classOfNodePropertyByNameByIsComment;
+  static #_classOfNodePropertyByNameByIsComment;
   /** @type {Object<boolean,Object<string,NodeProperty.constructor>>} */
-  static get classOfNodePropertyByNameByIsComment() {
-    if (typeof this.#classOfNodePropertyByNameByIsComment === "undefined") {
-      this.#classOfNodePropertyByNameByIsComment = {
+  static get #classOfNodePropertyByNameByIsComment() {
+    if (typeof this.#_classOfNodePropertyByNameByIsComment === "undefined") {
+      this.#_classOfNodePropertyByNameByIsComment = {
         true: {
           "if": Branch,
         },
@@ -3090,22 +3090,22 @@ class Factory {
         }
       };
     }
-    return this.#classOfNodePropertyByNameByIsComment;
+    return this.#_classOfNodePropertyByNameByIsComment;
   }
 
   /** @type {ObjectObject<string,NodeProperty.constructor> | undefined} */
-  static #classOfNodePropertyByFirstName;
+  static #_classOfNodePropertyByFirstName;
   /** @type {ObjectObject<string,NodeProperty.constructor>} */
-  static get classOfNodePropertyByFirstName() {
-    if (typeof this.#classOfNodePropertyByFirstName === "undefined") {
-      this.#classOfNodePropertyByFirstName = {
+  static get #classOfNodePropertyByFirstName() {
+    if (typeof this.#_classOfNodePropertyByFirstName === "undefined") {
+      this.#_classOfNodePropertyByFirstName = {
         "class": ElementClass,
         "attr": ElementAttribute,
         "style": ElementStyle,
         "props": ComponentProperty,
       };
     }
-    return this.#classOfNodePropertyByFirstName;
+    return this.#_classOfNodePropertyByFirstName;
   }
 
   /**
@@ -3125,7 +3125,7 @@ class Factory {
 
     do {
       const isComment = node instanceof Comment;
-      classOfNodeProperty = this.classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
+      classOfNodeProperty = this.#classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
       if (typeof classOfNodeProperty !== "undefined") break;
       if (isComment && nodePropertyName === "loop") {
         classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
@@ -3133,7 +3133,7 @@ class Factory {
       }
       if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
       const nameElements = nodePropertyName.split(".");
-      classOfNodeProperty = this.classOfNodePropertyByFirstName[nameElements[0]];
+      classOfNodeProperty = this.#classOfNodePropertyByFirstName[nameElements[0]];
       if (typeof classOfNodeProperty !== "undefined") break;
       if (node instanceof Element) {
         if (nodePropertyName.startsWith("on")) {
