@@ -313,7 +313,7 @@ export class MixedComponent {
         }
       }
     }
-    if (useOverscrollBehavior) {
+    if (this.useOverscrollBehavior) {
       this.style.overscrollBehavior = "contain";
     }
 
