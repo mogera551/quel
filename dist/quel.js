@@ -5228,7 +5228,9 @@ class MixedComponent {
       }
     }
     if (this.useOverscrollBehavior) {
-      this.style.overscrollBehavior = "contain";
+      if (this.tagName === "DIALOG" || this.hasAttribute("popover")) {
+        this.style.overscrollBehavior = "contain";
+      }
     }
 
     // create thread
