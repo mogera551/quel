@@ -540,7 +540,9 @@ const templateByUUID = new Map;
  * @returns {string}
  */
 function replaceTag(html, componentUuid, customComponentNames) {
+  /** @type {string[]} */
   const stack = [];
+  /** @type {string} */
   const replacedHtml =  html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
     expr = expr.trim();
     if (expr.startsWith("loop:") || expr.startsWith("if:")) {
@@ -551,6 +553,18 @@ function replaceTag(html, componentUuid, customComponentNames) {
       return `</template><template data-bind="${saveExpr}|not">`;
     } else if (expr.startsWith("end:")){
       stack.pop();
+      return `</template>`;
+    } else if (expr.startsWith("endif:")){
+      const expr = stack.pop();
+      if (!expr.startsWith("if:")) {
+        utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
+      }
+      return `</template>`;
+    } else if (expr.startsWith("endloop:")){
+      const expr = stack.pop();
+      if (!expr.startsWith("loop:")) {
+        utils.raise(`Template: endloop: is not matched with loop:, but {{ ${expr} }} `);
+      }
       return `</template>`;
     } else {
       return `<!--@@:${expr}-->`;
@@ -5213,7 +5227,7 @@ class MixedComponent {
         }
       }
     }
-    if (useOverscrollBehavior) {
+    if (this.useOverscrollBehavior) {
       this.style.overscrollBehavior = "contain";
     }
 
