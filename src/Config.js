@@ -15,4 +15,5 @@ export const config = {
   useWebComponent: true, // use web component
   useLocalTagName: true, // use local tag name
   useLocalSelector: true, // use local selector
+  useOverscrollBehavior: true, // use overscroll-behavior
 };

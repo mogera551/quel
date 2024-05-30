@@ -82,6 +82,8 @@
  * use keyed, default is true. keyed is used for the component instance.
  * @property {boolean|undefined} useLocalSelector
  * use local selector, default is true. local selector is unique in the document.
+ * @property {boolean|undefined} useOverscrollBehavior
+ * use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
  */
 
 /**

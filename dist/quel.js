@@ -491,6 +491,7 @@ const config = {
   useWebComponent: true, // use web component
   useLocalTagName: true, // use local tag name
   useLocalSelector: true, // use local selector
+  useOverscrollBehavior: true, // use overscroll-behavior
 };
 
 class utils {
@@ -5062,6 +5063,11 @@ class MixedComponent {
     return this._useLocalSelector;
   }
 
+  /** @type {boolean} use overscroll behavior */
+  get useOverscrollBehavior() {
+    return this._useOverscrollBehavior;
+  }
+
   /** @type {boolean} use buffered bind */
   get useBufferedBind() {
     return this.hasAttribute("buffered-bind");
@@ -5136,6 +5142,7 @@ class MixedComponent {
     this._useLocalTagName = componentClass.useLocalTagName;
     this._useKeyed = componentClass.useKeyed;
     this._useLocalSelector = componentClass.useLocalSelector;
+    this._useOverscrollBehavior = componentClass.useOverscrollBehavior;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
@@ -5205,6 +5212,9 @@ class MixedComponent {
           shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
         }
       }
+    }
+    if (useOverscrollBehavior) {
+      this.style.overscrollBehavior = "contain";
     }
 
     // create thread
@@ -5614,6 +5624,9 @@ function generateComponentClass(componentModule) {
 
       /** @type {boolean} */
       static useLocalSelector = module.config?.useLocalSelector ?? config.useLocalSelector;
+
+      /** @type {boolean} */
+      static useOverscrollBehavior = module.config?.useOverscrollBehavior ?? config.useOverscrollBehavior;
 
       /** @type {boolean} */
       static get [Symbols.isComponent] () {

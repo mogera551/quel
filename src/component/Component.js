@@ -54,6 +54,9 @@ export function generateComponentClass(componentModule) {
       static useLocalSelector = module.config?.useLocalSelector ?? config.useLocalSelector;
 
       /** @type {boolean} */
+      static useOverscrollBehavior = module.config?.useOverscrollBehavior ?? config.useOverscrollBehavior;
+
+      /** @type {boolean} */
       static get [Symbols.isComponent] () {
         return true;
       }

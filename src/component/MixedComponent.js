@@ -163,6 +163,11 @@ export class MixedComponent {
     return this._useLocalSelector;
   }
 
+  /** @type {boolean} use overscroll behavior */
+  get useOverscrollBehavior() {
+    return this._useOverscrollBehavior;
+  }
+
   /** @type {boolean} use buffered bind */
   get useBufferedBind() {
     return this.hasAttribute("buffered-bind");
@@ -237,6 +242,7 @@ export class MixedComponent {
     this._useLocalTagName = componentClass.useLocalTagName;
     this._useKeyed = componentClass.useKeyed;
     this._useLocalSelector = componentClass.useLocalSelector;
+    this._useOverscrollBehavior = componentClass.useOverscrollBehavior;
 
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
@@ -306,6 +312,9 @@ export class MixedComponent {
           shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
         }
       }
+    }
+    if (useOverscrollBehavior) {
+      this.style.overscrollBehavior = "contain";
     }
 
     // create thread
