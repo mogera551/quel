@@ -700,25 +700,17 @@ function create(cssText, uuid) {
 /**
  * 
  * @param {CSSStyleSheet} styleSheet 
- * @param {HTMLElement} component 
+ * @param {string} localSelector 
  * @returns 
  */
-function localizeStyleSheet(styleSheet, component) {
-  const tagName = component.tagName;
-  let localTagName;
-  if (tagName.includes("-")) {
-    localTagName = tagName;
-  } else {
-    const isName = component.getAttribute("is");
-    localTagName = `${tagName}[is="${isName}"]`;
-  }
+function localizeStyleSheet(styleSheet, localSelector) {
   for(let rule of styleSheet.cssRules) {
     if (rule instanceof CSSStyleRule) {
       const newSelectorText = rule.selectorText.split(",").map(selector => {
         if (selector.trim().startsWith(":host")) {
-          return selector.replace(":host", localTagName);
+          return selector.replace(":host", localSelector);
         }
-        return `${localTagName} ${selector}`;
+        return `${localSelector} ${selector}`;
       }).join(",");
       rule.selectorText = newSelectorText;
     }
@@ -2291,7 +2283,7 @@ class Repeat extends TemplateProperty {
   }
   /** @param {Array} value */
   set value(value) {
-    if (!Array.isArray(value)) utils.raise(`Repeat: ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
+    if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
@@ -2339,7 +2331,7 @@ class Branch extends TemplateProperty {
   }
   /** @param {boolean} value */
   set value(value) {
-    if (typeof value !== "boolean") utils.raise(`Branch: ViewModel['${this.binding.viewModelProperty.name}'] is not boolean`, );
+    if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not boolean`, );
     if (this.value !== value) {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
@@ -2600,7 +2592,7 @@ class ElementClassName extends ElementBase {
   }
   /** @param {Array} value */
   set value(value) {
-    if (!Array.isArray(value)) utils.raise("ElementClassName: value is not array");
+    if (!Array.isArray(value)) utils.raise(`ElementClassName: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`, );
     this.element.className = value.join(" ");
   }
   /**
@@ -2631,7 +2623,7 @@ class Checkbox extends ElementBase {
 
   /** @param {Array} value */
   set value(value) {
-    if (!Array.isArray(value)) utils.raise("Checkbox: value is not array");
+    if (!Array.isArray(value)) utils.raise(`Checkbox: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`, );
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
     this.inputElement.checked = value.some(v => v === multiValue.value);
@@ -2810,6 +2802,7 @@ class ElementClass extends ElementBase {
     return this.element.classList.contains(this.className);
   }
   set value(value) {
+    if (typeof value !== "boolean") utils.raise(`ElementClass: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not boolean`, );
     value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
   }
 
@@ -2994,7 +2987,7 @@ class RepeatKeyed extends Repeat {
     return this.#lastValue;
   }
   set value(values) {
-    if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
+    if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
     const lastIndexes = new Set;
     
@@ -5225,7 +5218,7 @@ class MixedComponent {
           if (typeof this.constructor.localStyleSheet !== "undefined") {
             adoptedStyleSheet = this.constructor.localStyleSheet;
           } else {
-            adoptedStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this);
+            adoptedStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this.selectorName);
           }
         }
         const shadowRootOrDocument = this.shadowRootOrDocument;
@@ -5660,10 +5653,52 @@ function generateComponentClass(componentModule) {
       /**  */
       static initializeCallbacks = [];
 
+      /** @type {string} */
+      static lowerTagName;
+      /** @type {string} */
+      get lowerTagName() {
+        return this.constructor.lowerTagName;
+      }
+
+      /** @type {string} */
+      static selectorName;
+      /** @type {string} */
+      get selectorName() {
+        return this.constructor.selectorName;
+      }
+
+      /** @type {boolean} */
+      static isAutonomousCustomElement;
+      /** @type {boolean} is autonomous custom element */
+      get isAutonomousCustomElement() {
+        return this.constructor.isAutonomousCustomElement;
+      }
+
+      /** @type {boolean} */
+      static isCostomizedBuiltInElement;
+      /** @type {boolean} is costomized built-in element */
+      get isCostomizedBuiltInElement() {
+        return this.constructor.isCostomizedBuiltInElement;
+      }
+
       /**
        */
       constructor() {
         super();
+        if (typeof this.constructor.lowerTagName === "undefined") {
+          const lowerTagName =  this.tagName.toLowerCase();
+          const isAutonomousCustomElement = lowerTagName.includes("-");
+          const isCostomizedBuiltInElement = this.hasAttribute("is");
+          if (isAutonomousCustomElement) {
+            this.constructor.selectorName = lowerTagName;
+          } else {
+            const customName = this.getAttribute("is");
+            this.constructor.selectorName = `${lowerTagName}[is="${customName}"]`;
+          }
+          this.constructor.lowerTagName = lowerTagName;
+          this.constructor.isAutonomousCustomElement = isAutonomousCustomElement;
+          this.constructor.isCostomizedBuiltInElement = isCostomizedBuiltInElement;
+        }
         this.initialize();
       }
 

@@ -303,7 +303,7 @@ export class MixedComponent {
           if (typeof this.constructor.localStyleSheet !== "undefined") {
             adoptedStyleSheet = this.constructor.localStyleSheet;
           } else {
-            adoptedStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this);
+            adoptedStyleSheet = this.constructor.localStyleSheet = localizeStyleSheet(styleSheet, this.selectorName);
           }
         }
         const shadowRootOrDocument = this.shadowRootOrDocument;

@@ -21,7 +21,7 @@ export class Repeat extends TemplateProperty {
   }
   /** @param {Array} value */
   set value(value) {
-    if (!Array.isArray(value)) utils.raise(`Repeat: ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
+    if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {

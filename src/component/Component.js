@@ -64,10 +64,52 @@ export function generateComponentClass(componentModule) {
       /**  */
       static initializeCallbacks = [];
 
+      /** @type {string} */
+      static lowerTagName;
+      /** @type {string} */
+      get lowerTagName() {
+        return this.constructor.lowerTagName;
+      }
+
+      /** @type {string} */
+      static selectorName;
+      /** @type {string} */
+      get selectorName() {
+        return this.constructor.selectorName;
+      }
+
+      /** @type {boolean} */
+      static isAutonomousCustomElement;
+      /** @type {boolean} is autonomous custom element */
+      get isAutonomousCustomElement() {
+        return this.constructor.isAutonomousCustomElement;
+      }
+
+      /** @type {boolean} */
+      static isCostomizedBuiltInElement;
+      /** @type {boolean} is costomized built-in element */
+      get isCostomizedBuiltInElement() {
+        return this.constructor.isCostomizedBuiltInElement;
+      }
+
       /**
        */
       constructor() {
         super();
+        if (typeof this.constructor.lowerTagName === "undefined") {
+          const lowerTagName =  this.tagName.toLowerCase();
+          const isAutonomousCustomElement = lowerTagName.includes("-");
+          const isCostomizedBuiltInElement = this.hasAttribute("is");
+          if (isAutonomousCustomElement) {
+            this.constructor.selectorName = lowerTagName;
+          } else {
+            const customName = this.getAttribute("is");
+            this.constructor.selectorName = `${lowerTagName}[is="${customName}"]`;
+          }
+          this.constructor.lowerTagName = lowerTagName;
+          this.constructor.isAutonomousCustomElement = isAutonomousCustomElement;
+          this.constructor.isCostomizedBuiltInElement = isCostomizedBuiltInElement;
+        }
         this.initialize();
       }
 

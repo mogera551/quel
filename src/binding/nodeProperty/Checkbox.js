@@ -16,7 +16,7 @@ export class Checkbox extends ElementBase {
 
   /** @param {Array} value */
   set value(value) {
-    if (!Array.isArray(value)) utils.raise("Checkbox: value is not array");
+    if (!Array.isArray(value)) utils.raise(`Checkbox: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`, );
     /** @type {MultiValue} */
     const multiValue = this.filteredValue;
     this.inputElement.checked = value.some(v => v === multiValue.value);

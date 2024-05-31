@@ -29,25 +29,17 @@ export function create(cssText, uuid) {
 /**
  * 
  * @param {CSSStyleSheet} styleSheet 
- * @param {HTMLElement} component 
+ * @param {string} localSelector 
  * @returns 
  */
-export function localizeStyleSheet(styleSheet, component) {
-  const tagName = component.tagName;
-  let localTagName;
-  if (tagName.includes("-")) {
-    localTagName = tagName;
-  } else {
-    const isName = component.getAttribute("is");
-    localTagName = `${tagName}[is="${isName}"]`;
-  }
+export function localizeStyleSheet(styleSheet, localSelector) {
   for(let rule of styleSheet.cssRules) {
     if (rule instanceof CSSStyleRule) {
       const newSelectorText = rule.selectorText.split(",").map(selector => {
         if (selector.trim().startsWith(":host")) {
-          return selector.replace(":host", localTagName);
+          return selector.replace(":host", localSelector);
         }
-        return `${localTagName} ${selector}`;
+        return `${localSelector} ${selector}`;
       }).join(",");
       rule.selectorText = newSelectorText;
     }

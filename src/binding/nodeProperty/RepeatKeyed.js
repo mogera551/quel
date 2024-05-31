@@ -18,7 +18,7 @@ export class RepeatKeyed extends Repeat {
     return this.#lastValue;
   }
   set value(values) {
-    if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
+    if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
     const lastIndexes = new Set;
     
