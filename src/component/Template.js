@@ -29,19 +29,24 @@ function replaceTag(html, componentUuid, customComponentNames) {
       return `<template data-bind="${expr}">`;
     } else if (expr.startsWith("else:")){
       const saveExpr = stack.at(-1);
+      if (typeof saveExpr === "undefined" || !saveExpr.startsWith("if:")) {
+        utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
+      }
       return `</template><template data-bind="${saveExpr}|not">`;
     } else if (expr.startsWith("end:")){
-      stack.pop();
+      if (typeof stack.pop() === "undefined") {
+        utils.raise(`Template: end: is not matched with loop: or if:, but {{ ${expr} }} `);
+      }
       return `</template>`;
     } else if (expr.startsWith("endif:")){
       const expr = stack.pop();
-      if (!expr.startsWith("if:")) {
+      if (typeof expr === "undefined" || !expr.startsWith("if:")) {
         utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
       }
       return `</template>`;
     } else if (expr.startsWith("endloop:")){
       const expr = stack.pop();
-      if (!expr.startsWith("loop:")) {
+      if (typeof expr === "undefined" || !expr.startsWith("loop:")) {
         utils.raise(`Template: endloop: is not matched with loop:, but {{ ${expr} }} `);
       }
       return `</template>`;
@@ -49,6 +54,9 @@ function replaceTag(html, componentUuid, customComponentNames) {
       return `<!--@@:${expr}-->`;
     }
   });
+  if (stack.length > 0) {
+    utils.raise(`Template: loop: or if: is not matched with endloop: or endif:, but {{ ${stack.at(-1)} }} `);
+  }
   const root = document.createElement("template"); // 仮のルート
   root.innerHTML = replacedHtml;
   // カスタムコンポーネントの名前を変更する
