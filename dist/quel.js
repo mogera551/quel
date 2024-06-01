@@ -2823,7 +2823,7 @@ class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     // event filter
-    event = this.filters.length > 0 ? FilterManager.applyFilter(event, this.filters) : event;
+    event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
