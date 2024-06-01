@@ -1,5 +1,5 @@
 import { Symbols } from "../../Symbols.js";
-import { Filter } from "../../filter/Filter.js";
+import { FilterManager } from "../../filter/Manager.js";
 import { ProcessData } from "../../thread/ViewModelUpdator.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
@@ -28,16 +28,24 @@ export class ElementEvent extends ElementBase {
     return this.#handler;
   }
 
+  /** @type {EventFilterFunc[]} */
+  #eventFilters = [];
+  get eventFilters() {
+    return this.#eventFilters;
+  }
+
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
+    const event = binding.component.filters.event;
+    this.#eventFilters = filters.map(info => event.getFilterFunc(info.name)(info.options));
   }
 
   /**
@@ -72,7 +80,7 @@ export class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     // event filter
-    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters) : event;
+    event = this.filters.length > 0 ? FilterManager.applyFilter(event, this.filters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);

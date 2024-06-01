@@ -1,6 +1,6 @@
 import "../../types.js";
-import { Filter } from "../../filter/Filter.js";
 import { utils } from "../../utils.js";
+import { FilterManager } from "../../filter/Manager.js";
 
 export class NodeProperty {
   /** @type {Node} */
@@ -29,7 +29,7 @@ export class NodeProperty {
     this.node[this.name] = value;
   }
 
-  /** @type {Filter[]} */
+  /** @type {FilterFunc[]} */
   #filters;
   get filters() {
     return this.#filters;
@@ -37,7 +37,7 @@ export class NodeProperty {
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters) : this.value;
+    return this.filters.length > 0 ? FilterManager.applyFilter(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToNode()の対象かどうか */
@@ -71,15 +71,16 @@ export class NodeProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Node} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
+    const input = binding.component.filters.in;
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = filters;
+    this.#filters = filters.toReversed().map(info => input.getFilterFunc(info.name)(info.options));
   }
 
   /**

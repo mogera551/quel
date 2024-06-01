@@ -5,17 +5,16 @@ import { createGlobals } from "./Globals.js";
 import { Thread } from "../thread/Thread.js";
 import { UpdateSlot } from "../thread/UpdateSlot.js";
 import { isAttachable } from "./AttachShadow.js";
-import { inputFilters, outputFilters, eventFilters } from "../filter/Builtin.js";
 import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
 import { createViewModels } from "../viewModel/Proxy.js";
 import { Phase } from "../thread/Phase.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
-import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { viewModelize } from "../viewModel/ViewModelize.js";
 import * as AdoptedCss from "./AdoptedCss.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { localizeStyleSheet } from "./StyleSheet.js";
+import { InputFilterManager, OutputFilterManager, EventFilterManager } from "../filter/Manager.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -193,7 +192,7 @@ export class MixedComponent {
     return this._pseudoNode;
   }
 
-  /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>,event:Object<string,EventFilterFunc>}} filters */
+  /** @type {{in:InputFilterManager,out:OutputFilterManager,event:EventFilterManager}} filters */
   get filters() {
     return this._filters;
   }
@@ -248,9 +247,9 @@ export class MixedComponent {
     this._pseudoNode = undefined;
     
     this._filters = {
-      in: class extends inputFilters {},
-      out: class extends outputFilters {},
-      event: class extends eventFilters {},
+      in: new InputFilterManager,
+      out: new OutputFilterManager,
+      event: new EventFilterManager,
     };
 
     this._bindingSummary = new BindingSummary;
@@ -271,20 +270,21 @@ export class MixedComponent {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
+    /** @type {CSSStyleSheet} styleSheet */
     const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
     for(const [name, filterFunc] of Object.entries(inputFilters)) {
       if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
-      this.filters.in[name] = filterFunc;
+      this.filters.in.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(outputFilters)) {
       if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
-      this.filters.out[name] = filterFunc;
+      this.filters.out.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(eventFilters)) {
       if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
-      this.filters.event[name] = filterFunc;
+      this.filters.event.registerFilter(name, filterFunc);
     }
     // create and attach shadowRoot
     // adopt css

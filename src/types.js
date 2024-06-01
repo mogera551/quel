@@ -63,9 +63,6 @@
  * @property {string} name
  * @property {string[]} options
  */
-/**
- * @typedef {import("./filter/Filter.js").Filter} Filter
- */
 
 /**
  * @typedef {(value:any)=>any} FilterFunc
@@ -158,7 +155,11 @@
  * @property {()=>void} connectedCallback
  * @property {()=>void} disconnectedCallback
  * @property {(setOfViewModelPropertyKeys:Set<String>)=>void} updateNode
- * @property {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>,event:Object<string,EventFilterFunc>}} filters
+ * @property {{
+ *   in:import("./filter/Manager.js").InputFilterManager,
+ *   out:import("./filter/Manager.js").OutputFilterManager,
+ *   event:import("./filter/Manager.js").EventFilterManager
+ * }} filters
  * @property {ViewModel.constructor} Component.ViewModel
  * @property {HTMLTemplateElement} Component.template
  * @property {HTMLElement.constructor} Component.extendClass

@@ -5,7 +5,6 @@ import * as Selector from "../binder/Selector.js";
 import * as Binder from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
-import { Filter } from "../filter/Filter.js";
 
 let seq = 0;
 
@@ -80,12 +79,10 @@ export class Binding {
     viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
-    const createFilter = Filter.createFilter(bindingManager.component);
-    const fiterObjs = filters.map(filter => createFilter(filter.name, filter.options));
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, fiterObjs);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, fiterObjs);
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters);
   }
 
   /**

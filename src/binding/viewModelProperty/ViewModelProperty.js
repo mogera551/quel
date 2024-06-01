@@ -1,8 +1,8 @@
 import "../../types.js";
-import { Filter } from "../../filter/Filter.js";
 import { MultiValue } from "../nodeProperty/MultiValue.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
+import { FilterManager } from "../../filter/Manager.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -78,7 +78,7 @@ export class ViewModelProperty {
     }
   }
 
-  /** @type {Filter[]} */
+  /** @type {FilterFunc[]} */
   #filters;
   get filters() {
     return this.#filters;
@@ -86,7 +86,7 @@ export class ViewModelProperty {
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters) : this.value;
+    return this.filters.length > 0 ? FilterManager.applyFilter(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToViewModel()の対象かどうか */
@@ -104,12 +104,13 @@ export class ViewModelProperty {
    * 
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, name, filters) {
+    const out = binding.component.filters.out;
     this.#binding = binding;
     this.#name = name;
-    this.#filters = filters;
+    this.#filters = filters.map(info => out.getFilterFunc(info.name)(info.options));
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
   }

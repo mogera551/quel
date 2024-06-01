@@ -1684,388 +1684,6 @@ function isAttachable(tagName) {
   return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
 }
 
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const num = (v, o, fn) => {
-  if (v == null) return v;
-  const n = Number(v);
-  return isNaN(n) ? v : fn(n, o);
-};
-
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const str = (v, o, fn) => {
-  return (v == null) ? v : fn(String(v), o);
-};
-
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const arr = (v, o, fn) => {
-  return !Array.isArray(v) ? v : fn(v, o);
-};
-/**
- * 
- * @param {any} v 
- * @param {string[]} o 
- * @param {(any,string[])=>any} fn 
- * @returns {any}
- */
-const date = (v, o, fn) => {
-  return !(v instanceof Date) ? v : fn(v, o);
-};
-
-class outputFilters {
-  static styleDisplay = options => value => value ? (options[0] ?? "") : "none";
-  static truthy       = options => value => value ? true : false;
-  static falsey       = options => value => !value ? true : false;
-  static not          = this.falsey;
-  static eq           = options => value => value == options[0]; // equality
-  static ne           = options => value => value != options[0]; // inequality
-  static lt           = options => value => Number(value) < Number(options[0]); // less than
-  static le           = options => value => Number(value) <= Number(options[0]); // less than or equal
-  static gt           = options => value => Number(value) > Number(options[0]); // greater than
-  static ge           = options => value => Number(value) >= Number(options[0]); // greater than or equal
-  static oi           = options => value => Number(options[0]) < Number(value) && Number(value) < Number(options[1]); // open interval
-  static ci           = options => value => Number(options[0]) <= Number(value) && Number(value) <= Number(options[1]); // closed interval
-  static embed        = options => value => (value != null) ? (options[0] ?? "").replaceAll("%s", value) : null;
-  static ifText       = options => value => value ? options[0] ?? null : options[1] ?? null;
-  static null         = options => value => (value == null) ? true : false;
-  static offset       = options => value => Number(value) + Number(options[0]);
-  static unit         = options => value => String(value) + String(options[0]);
-  static inc          = this.offset;
-  static mul          = options => value => Number(value) * Number(options[0]);
-  static div          = options => value => Number(value) / Number(options[0]);
-  static mod          = options => value => Number(value) % Number(options[0]);
-  static object       = options => value => value[options[0]];
-  static prefix       = options => value => String(options[0]) + String(value);
-  static suffix       = this.unit;
-  static date         = options => value => date(value, options, (d, o) => d.toLocaleDateString("sv-SE", o[0] ? o[0] : {}));
-
-  static #str_at      = options => value => str(value, options, (s, o) => s.at(...o));
-  static #str_charAt  = options => value => str(value, options, (s, o) => s.charAt(...o));
-  static #str_charCodeAt    = options => value => str(value, options, (s, o) => s.charCodeAt(...o));
-  static #str_codePointAt   = options => value => str(value, options, (s, o) => s.codePointAt(...o));
-  static #str_concat  = options => value => str(value, options, (s, o) => s.concat(...o));
-  static #str_endsWith      = options => value => str(value, options, (s, o) => s.endsWith(...o));
-  static #str_includes = options => value => str(value, options, (s, o) => s.includes(...o));
-  static #str_indexOf  = options => value => str(value, options, (s, o) => s.indexOf(...o));
-  static #str_lastIndexOf = options => value => str(value, options, (s, o) => s.lastIndexOf(...o));
-  static #str_localeCompare = options => value => str(value, options, (s, o) => s.localeCompare(...o));
-  static #str_match         = options => value => str(value, options, (s, o) => s.match(...o));
-  static #str_normalize     = options => value => str(value, options, (s, o) => s.normalize(...o));
-  static #str_padEnd        = options => value => str(value, options, (s, o) => s.padEnd(...o));
-  static #str_padStart      = options => value => str(value, options, (s, o) => s.padStart(...o));
-  static #str_repeat        = options => value => str(value, options, (s, o) => s.repeat(...o));
-  static #str_replace       = options => value => str(value, options, (s, o) => s.replace(...o));
-  static #str_replaceAll    = options => value => str(value, options, (s, o) => s.replaceAll(...o));
-  static #str_search        = options => value => str(value, options, (s, o) => s.search(...o));
-  static #str_slice   = options => value => str(value, options, (s, o) => s.slice(...o));
-  static #str_split         = options => value => str(value, options, (s, o) => s.split(...o));
-  static #str_startsWith    = options => value => str(value, options, (s, o) => s.startsWith(...o));
-  static #str_substring     = options => value => str(value, options, (s, o) => s.substring(...o));
-  static #str_toLocaleLowerCase = options => value => str(value, options, (s, o) => s.toLocaleLowerCase(...o));
-  static #str_toLocaleUpperCase = options => value => str(value, options, (s, o) => s.toLocaleUpperCase(...o));
-  static #str_toLowerCase   = options => value => str(value, options, (s, o) => s.toLowerCase(...o));
-  static #str_toUpperCase   = options => value => str(value, options, (s, o) => s.toUpperCase(...o));
-  static #str_trim          = options => value => str(value, options, (s, o) => s.trim(...o));
-  static #str_trimEnd       = options => value => str(value, options, (s, o) => s.trimEnd(...o));
-  static #str_trimStart     = options => value => str(value, options, (s, o) => s.trimStart(...o));
-
-  static #num_toExponential = options => value => num(value, options, (n, o) => n.toExponential(...o));
-  static #num_toFixed       = options => value => num(value, options, (n, o) => n.toFixed(...o));
-  static #num_toLocaleString = options => value => num(value, options, (n, o) => n.toLocaleString(...o));
-  static #num_toPrecision   = options => value => num(value, options, (n, o) => n.toPrecision(...o));
-  
-  static #arr_at       = options => value => arr(value, options, (a, o) => a.at(...o));
-  static #arr_concat   = options => value => arr(value, options, (a, o) => a.concat(...o));
-  static #arr_entries  = options => value => arr(value, options, (a, o) => a.entries(...o));
-  static #arr_flat     = options => value => arr(value, options, (a, o) => a.flat(...o));
-  static #arr_includes = options => value => arr(value, options, (a, o) => a.includes(...o));
-  static #arr_indexOf  = options => value => arr(value, options, (a, o) => a.indexOf(...o));
-  static #arr_join     = options => value => arr(value, options, (a, o) => a.join(...o));
-  static #arr_keys     = options => value => arr(value, options, (a, o) => a.keys(...o));
-  static #arr_lastIndexOf    = options => value => arr(value, options, (a, o) => a.lastIndexOf(...o));
-  static #arr_slice    = options => value => arr(value, options, (a, o) => a.slice(...o));
-  static #arr_toLocaleString = options => value => arr(value, options, (a, o) => a.toLocaleString(...o));
-  static #arr_toReversed     = options => value => arr(value, options, (a, o) => a.toReversed(...o));
-  static #arr_toSorted       = options => value => arr(value, options, (a, o) => a.toSorted(...o));
-  static #arr_toSpliced      = options => value => arr(value, options, (a, o) => a.toSpliced(...o));
-  static #arr_values   = options => value => arr(value, options, (a, o) => a.values(...o));
-  static #arr_with     = options => value => arr(value, options, (a, o) => a.with(...o));
-
-  static #date_getDate = options => value => date(value, options, (d, o) => d.getDate(...o));
-  static #date_getDay  = options => value => date(value, options, (d, o) => d.getDay(...o));
-  static #date_getFullYear      = options => value => date(value, options, (d, o) => d.getFullYear(...o));
-  static #date_getHours = options => value => date(value, options, (d, o) => d.getHours(...o));
-  static #date_getMilliseconds = options => value => date(value, options, (d, o) => d.getMilliseconds(...o));
-  static #date_getMinutes = options => value => date(value, options, (d, o) => d.getMinutes(...o));
-  static #date_getMonth = options => value => date(value, options, (d, o) => d.getMonth(...o));
-  static #date_getSeconds = options => value => date(value, options, (d, o) => d.getSeconds(...o));
-  static #date_getTime = options => value => date(value, options, (d, o) => d.getTime(...o));
-  static #date_getTimezoneOffset = options => value => date(value, options, (d, o) => d.getTimezoneOffset(...o));
-  static #date_getUTCDate = options => value => date(value, options, (d, o) => d.getUTCDate(...o));
-  static #date_getUTCDay = options => value => date(value, options, (d, o) => d.getUTCDay(...o));
-  static #date_getUTCFullYear = options => value => date(value, options, (d, o) => d.getUTCFullYear(...o));
-  static #date_getUTCHours = options => value => date(value, options, (d, o) => d.getUTCHours(...o));
-  static #date_getUTCMilliseconds = options => value => date(value, options, (d, o) => d.getUTCMilliseconds(...o));
-  static #date_getUTCMinutes = options => value => date(value, options, (d, o) => d.getUTCMinutes(...o));
-  static #date_getUTCMonth = options => value => date(value, options, (d, o) => d.getUTCMonth(...o));
-  static #date_getUTCSeconds = options => value => date(value, options, (d, o) => d.getUTCSeconds(...o));
-  static #date_toDateString = options => value => date(value, options, (d, o) => d.toDateString(...o));
-  static #date_toISOString = options => value => date(value, options, (d, o) => d.toISOString(...o));
-  static #date_toJSON = options => value => date(value, options, (d, o) => d.toJSON(...o));
-  static #date_toLocaleDateString = options => value => date(value, options, (d, o) => d.toLocaleDateString(...o));
-  static #date_toLocaleString = options => value => date(value, options, (d, o) => d.toLocaleString(...o));
-  static #date_toLocaleTimeString = options => value => date(value, options, (d, o) => d.toLocaleTimeString(...o));
-  static #date_toTimeString = options => value => date(value, options, (d, o) => d.toTimeString(...o));
-  static #date_toUTCString = options => value => date(value, options, (d, o) => d.toUTCString(...o));
-
-  static get at() {
-    return options => value => (Array.isArray(value) ? this.#arr_at : this.#str_at)(options)(value);
-  }
-  static get charAt() {
-    return this.#str_charAt;
-  }
-  static get charCodeAt() {
-    return this.#str_charCodeAt;
-  }
-  static get codePointAt() {
-    return this.#str_codePointAt;
-  }
-  static get concat() {
-    return options => value => (Array.isArray(value) ? this.#arr_concat : this.#str_concat)(options)(value);
-  }
-  static get endsWith() {
-    return this.#str_endsWith;
-  }
-  static get entries() {
-    return this.#arr_entries;
-  }
-  static get flat() {
-    return this.#arr_flat;
-  }
-  static get includes() {
-    return options => value => (Array.isArray(value) ? this.#arr_includes : this.#str_includes)(options)(value);
-  }
-  static get indexOf() {
-    return options => value => (Array.isArray(value) ? this.#arr_indexOf : this.#str_indexOf)(options)(value);
-  }
-  static get join() {
-    return this.#arr_join;
-  }
-  static get keys() {
-    return this.#arr_keys;
-  }
-  static get lastIndexOf() {
-    return options => value => (Array.isArray(value) ? this.#arr_lastIndexOf : this.#str_lastIndexOf)(options)(value);
-  }
-  static get localeCompare() {
-    return this.#str_localeCompare;
-  }
-  static get match() {
-    return this.#str_match;
-  }
-  //static get matchAll() {
-  //  return this.#str_matchAll;
-  //}
-  static get normalize() {
-    return this.#str_normalize;
-  }
-  static get padEnd() {
-    return this.#str_padEnd;
-  }
-  static get padStart() {
-    return this.#str_padStart;
-  }
-  static get repeat() {
-    return this.#str_repeat;
-  }
-  static get replace() {
-    return this.#str_replace;
-  }
-  static get replaceAll() {
-    return this.#str_replaceAll;
-  }
-  static get search() {
-    return this.#str_search;
-  }
-  static get slice() {
-    return options => value => (Array.isArray(value) ? this.#arr_slice : this.#str_slice)(options)(value);
-  }
-  static get split() {
-    return this.#str_split;
-  }
-  static get startsWith() {
-    return this.#str_startsWith;
-  }
-  static get substring() {
-    return this.#str_substring;
-  }
-  static get toExponential() {
-    return this.#num_toExponential;
-  }
-  static get toFixed() {
-    return this.#num_toFixed;
-  }
-  static get toLocaleString() {
-    return options => value => (
-      (value instanceof Date) ? this.#date_toLocaleString : 
-      Array.isArray(value) ? this.#arr_toLocaleString : 
-      this.#num_toLocaleString
-    )(options)(value);
-  }
-  static get toLocaleLowerCase() {
-    return this.#str_toLocaleLowerCase;
-  }
-  static get toLocaleUpperCase() {
-    return this.#str_toLocaleUpperCase;
-  }
-  static get toLowerCase() {
-    return this.#str_toLowerCase;
-  }
-  static get toPrecision() {
-    return this.#num_toPrecision;
-  }
-  static get toReversed() {
-    return this.#arr_toReversed;
-  }
-  static get toSorted() {
-    return this.#arr_toSorted;
-  }
-  static get toSpliced() {
-    return this.#arr_toSpliced;
-  }
-  static get toUpperCase() {
-    return this.#str_toUpperCase;
-  }
-  static get trim() {
-    return this.#str_trim;
-  }
-  static get trimEnd() {
-    return this.#str_trimEnd;
-  }
-  static get trimStart() {
-    return this.#str_trimStart;
-  }
-  static get values() {
-    return this.#arr_values;
-  }
-  static get with() {
-    return this.#arr_with;
-  }
-
-  static get getDate() {
-    return this.#date_getDate;
-  }
-  static get getDay() {
-    return this.#date_getDay;
-  }
-  static get getFullYear() {
-    return this.#date_getFullYear;
-  }
-  static get getHours() {
-    return this.#date_getHours;
-  }
-  static get getMilliseconds() {
-    return this.#date_getMilliseconds;
-  }
-  static get getMinutes() {
-    return this.#date_getMinutes;
-  }
-  static get getMonth() {
-    return this.#date_getMonth;
-  }
-  static get getSeconds() {
-    return this.#date_getSeconds;
-  }
-  static get getTime() {
-    return this.#date_getTime;
-  }
-  static get getTimezoneOffset() {
-    return this.#date_getTimezoneOffset;
-  }
-  static get getUTCDate() {
-    return this.#date_getUTCDate;
-  }
-  static get getUTCDay() {
-    return this.#date_getUTCDay;
-  }
-  static get getUTCFullYear() {
-    return this.#date_getUTCFullYear;
-  }
-  static get getUTCHours() {
-    return this.#date_getUTCHours;
-  }
-  static get getUTCMilliseconds() {
-    return this.#date_getUTCMilliseconds;
-  }
-  static get getUTCMinutes() {
-    return this.#date_getUTCMinutes;
-  }
-  static get getUTCMonth() {
-    return this.#date_getUTCMonth;
-  }
-  static get getUTCSeconds() {
-    return this.#date_getUTCSeconds;
-  }
-  static get toDateString() {
-    return this.#date_toDateString;
-  }
-  static get toISOString() {
-    return this.#date_toISOString;
-  }
-  static get toJSON() {
-    return this.#date_toJSON;
-  }
-  static get toLocaleDateString() {
-    return this.#date_toLocaleDateString;
-  }
-  static get toLocaleTimeString() {
-    return this.#date_toLocaleTimeString;
-  }
-  static get toTimeString() {
-    return this.#date_toTimeString;
-  }
-  static get toUTCString() {
-    return this.#date_toUTCString;
-  }
-
-}
-
-class inputFilters {
-  static date         = options => value => value === "" ? null : new Date(new Date(value).setHours(0));
-  static number       = options => value => value === "" ? null : Number(value);
-  static boolean      = options => value => (value === "false" || value === "") ? false : true;
-}
-
-class eventFilters {
-  static preventDefault = options => event => {
-    event.preventDefault();
-    return event;
-  }
-  static noStopPropagation = options => event => {
-    event.noStopPropagation = true;
-    return event;
-  }
-  static pd = this.preventDefault;
-  static nsp = this.noStopPropagation;
-}
-
 const moduleName$4 = "Selector";
 
 const SELECTOR = "[data-bind]";
@@ -2147,95 +1765,405 @@ function getTargetNodes(template, rootElement) {
 
 }
 
-// "property:vmProperty|toFix,2|toLocaleString;"
-// => toFix,2|toLocaleString
+/**
+ * @typedef {object} FilterGroup
+ * @property {class} ObjectClass
+ * @property {string} prefix
+ * @property {Set<string>} prototypeFuncs
+ * @property {Set<string>} staticFuncs
+ * @property {FilterTypeFunc} typeFunc
+ */
 
-const THRU_FUNC = (v) => v;
+/** @type {FilterGroup} */
+const objectFilterGroup = {
+  ObjectClass: Object,
+  prefix: "o",
+  prototypeFuncs: new Set([
+    "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable", "toLocaleString", 
+  ]),
+  staticFuncs: new Set([
+    "create", "defineProperties", "defineProperty", "entries", "fromEntries", 
+    "getOwnPropertyDescriptor", "getOwnPropertyDescriptors", "getOwnPropertyNames", "getOwnPropertySymbols", 
+    "getPrototypeOf", "is", "isExtensible", "isFrozen", 
+    "isSealed", "keys", "preventExtensions", "values", 
+  ]),
+};
 
-class Filter {
-  /** @type {string} */
-  name;
-  /** @type {string[]} */
-  options;
-  /** @type {FilterFunc} */
-  inputFilterFunc;
-  /** @type {FilterFunc} */
-  outputFilterFunc;
-  /** @type {EventFilterFunc} */
-  eventFilterFunc;
+/** @type {FilterGroup} */
+const arrayFilterGroup = {
+  ObjectClass: Array,
+  prefix: "a",
+  prototypeFuncs: new Set([
+    "at", "concat", "entries", "flat", 
+    "includes", "indexOf", "join", "keys", 
+    "lastIndexOf", "slice", "toLocaleString", "toReversed", 
+    "toSorted", "toSpliced", "values", "with"
+  ]),
+  staticFuncs: new Set([
+    "from", "isArray", "of"
+  ]),
+};
+
+/** @type {FilterGroup} */
+const numberFilterGroup = {
+  ObjectClass: Number,
+  prefix: "n",
+  prototypeFuncs: new Set([
+    "toExponential", "toFixed", "toLocaleString", "toPrecision"
+  ]),
+  staticFuncs: new Set([
+    "isFinite", "isInteger", "isNaN", "isSafeInteger", 
+    "parseFloat", "parseInt"
+  ]),
+};
+
+/** @type {FilterGroup} */
+const stringFilterGroup = {
+  ObjectClass: String,
+  prefix: "s",
+  prototypeFuncs: new Set([
+    "at", "charAt", "charCodeAt", "codePointAt",
+    "concat", "endsWith", "includes", "indexOf",
+    "lastIndexOf", "localeCompare", "match", "normalize",
+    "padEnd", "padStart", "repeat", "replace",
+    "replaceAll", "search", "slice", "split",
+    "startsWith", "substring", "toLocaleLowerCase", "toLocaleUpperCase",
+    "toLowerCase", "toUpperCase", "trim", "trimEnd",
+    "trimStart",
+  ]),
+  staticFuncs: new Set([
+    "fromCharCode", "fromCodePoint", "raw"
+  ]),
+};
+
+/** @type {FilterGroup} */
+const dateFilterGroup = {
+  ObjectClass: Date,
+  prefix: "date",
+  prototypeFuncs: new Set([
+    "getDate", "getDay", "getFullYear", "getHours",
+    "getMilliseconds", "getMinutes", "getMonth", "getSeconds",
+    "getTime", "getTimezoneOffset", "getUTCDate", "getUTCDay",
+    "getUTCFullYear", "getUTCHours", "getUTCMilliseconds", "getUTCMinutes",
+    "getUTCMonth", "getUTCSeconds", "toDateString", "toISOString",
+    "toJSON", "toLocaleDateString", "toLocaleString", "toLocaleTimeString",
+    "toTimeString", "toUTCString",
+  ]),
+  staticFuncs: new Set([
+    "now", "parse", "UTC"
+  ]),
+};
+
+/** @type {FilterGroup} */
+const setFilterGroup = {
+  ObjectClass: Set,
+  prefix: "set",
+  prototypeFuncs: new Set([
+    "entries", "forEach", "has", "keys", "values"
+  ]),
+  staticFuncs: new Set([
+  ]),
+};
+
+/** @type {FilterGroup} */
+const mapFilterGroup = {
+  ObjectClass: Map,
+  prefix: "map",
+  prototypeFuncs: new Set([
+    "entries", "forEach", "get", "has", "keys", "values"
+  ]),
+  staticFuncs: new Set([
+    "groupBy",
+  ]),
+};
+
+/** @type {FilterGroup} */
+const JSONFilterGroup = {
+  ObjectClass: JSON,
+  prefix: "json",
+  prototypeFuncs: new Set([]),
+  staticFuncs: new Set([
+    "parse", "stringify"
+  ]),
+};
+
+/** @type {FilterGroup} */
+const mathFilterGroup = {
+  ObjectClass: Math,
+  prefix: "math",
+  prototypeFuncs: new Set([]),
+  staticFuncs: new Set([
+    "abs", "acos", "acosh", "asin",
+    "asinh", "atan", "atan2", "atanh",
+    "cbrt", "ceil", "clz32", "cos",
+    "cosh", "exp", "expm1", "floor",
+    "fround", "hypot", "imul", "log",
+    "log10", "log1p", "log2", "max",
+    "min", "pow", "random", "round",
+    "sign", "sin", "sinh", "sqrt",
+    "tan", "tanh", "trunc"
+  ]),
+};
+
+/** @type {FilterGroup} */
+const regExpFilterGroup = {
+  ObjectClass: RegExp,
+  prototypeFuncs: new Set([
+    "exec", "test"
+  ]),
+  staticFuncs: new Set([
+  ]),
+};
+
+class DefaultFilters {
+  static truthy       = options => value => value ? true : false;
+  static falsey       = options => value => !value ? true : false;
+  static not          = this.falsey;
+  static eq           = options => value => value == options[0]; // equality
+  static ne           = options => value => value != options[0]; // inequality
+  static lt           = options => value => Number(value) < Number(options[0]); // less than
+  static le           = options => value => Number(value) <= Number(options[0]); // less than or equal
+  static gt           = options => value => Number(value) > Number(options[0]); // greater than
+  static ge           = options => value => Number(value) >= Number(options[0]); // greater than or equal
+  static oi           = options => value => Number(options[0]) < Number(value) && Number(value) < Number(options[1]); // open interval
+  static ci           = options => value => Number(options[0]) <= Number(value) && Number(value) <= Number(options[1]); // closed interval
+  static embed        = options => value => (value != null) ? (options[0] ?? "").replaceAll("%s", value) : null;
+  static iftext       = options => value => value ? options[0] ?? null : options[1] ?? null;
+  static null         = options => value => (value == null) ? true : false;
+  static offset       = options => value => Number(value) + Number(options[0]);
+  static unit         = options => value => String(value) + String(options[0]);
+  static inc          = this.offset;
+  static mul          = options => value => Number(value) * Number(options[0]);
+  static div          = options => value => Number(value) / Number(options[0]);
+  static mod          = options => value => Number(value) % Number(options[0]);
+  static prop         = options => value => value[options[0]];
+  static prefix       = options => value => String(options[0]) + String(value);
+  static suffix       = this.unit;
+  static date         = options => value => Date.prototype.toLocaleDateString.apply(value, ["sv-SE", options[0] ? options[0] : {}]);
+
+}
+
+/** @type {FilterGroup} */
+const defaultFilterGroup = {
+  ObjectClass: DefaultFilters,
+  prefix: "",
+  prototypeFuncs: new Set([
+  ]),
+  staticFuncs: new Set([
+    "truthy", "falsey", "not", "eq", "ne", "lt", "le", "gt", "ge", "oi", "ci", 
+    "embed", "iftext", "null", "offset", "unit", "inc", "mul", "div", "mod", 
+    "prop", "prefix", "suffix", "date"
+  ]),
+};
+
+/**
+ * 
+ * @param {class} ObjectClass 
+ * @param {string} FuncName 
+ * @returns {FilterFuncWithOption}
+ */
+function createPrototypeFilterFunc(ObjectClass, FuncName) {
+  const func = ObjectClass.prototype[FuncName];
+  return (options) => {
+    return (value) => {
+      return func.apply(value, options);
+    };
+  };
+}
+
+/**
+ * 
+ * @param {class} ObjectClass 
+ * @param {string} FuncName 
+ * @returns {FilterFuncWithOption}
+ */
+function createStaticFilterFunc(ObjectClass, FuncName) {
+  const func = ObjectClass[FuncName];
+  return (options) => {
+    return (value) => {
+      return func.apply(null, [value, ...options]);
+    };
+  };
+}
+
+const outputGroups = [
+  dateFilterGroup, setFilterGroup, mapFilterGroup, JSONFilterGroup, 
+  regExpFilterGroup, arrayFilterGroup, objectFilterGroup, 
+  numberFilterGroup, stringFilterGroup, mathFilterGroup,
+];
+
+class FilterManager {
+  /** @type {Set<string>} */
+  ambigousNames;
+  /** @type {Map<string, FilterFuncWithOption>} */
+  funcByName;
 
   /**
-   * 
+   * register user defined filter 
    * @param {string} name 
-   * @param {string[]} options 
-   * @param {FilterFuncWithOption} inputFilterFunc 
-   * @param {FilterFuncWithOption} outputFilterFunc 
-   * @param {EventFilterFuncWithOption} eventFilterFunc 
+   * @param {FilterFuncWithOption} filterFunc 
    */
-  constructor(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc) {
-    this.name = name;
-    this.options = options;
-    this.inputFilterFunc = inputFilterFunc ? inputFilterFunc(options) : THRU_FUNC;
-    this.outputFilterFunc = outputFilterFunc ? outputFilterFunc(options) : THRU_FUNC;
-    this.eventFilterFunc = eventFilterFunc ? eventFilterFunc(options) : THRU_FUNC;
+  registerFilter(name, filterFunc) {
+    if (this.funcByName.has(name)) {
+      utils.raise(`${this.constructor.name}: ${name} is already registered`);
+    }
+    this.funcByName.set(name, filterFunc);
+  }
+
+  /**
+   * get filter function by name
+   * @param {string} name 
+   * @returns {FilterFuncWithOption}
+   */
+  getFilterFunc(name) {
+    const func = this.funcByName.get(name);
+    return func ?? (options => value => value);
   }
 
   /**
    * 
    * @param {any} value 
-   * @param {Filter[]} filters 
+   * @param {FilterFunc[]} filters 
    * @returns {any}
    */
-  static applyForInput(value, filters) {
-    return filters.reduceRight((v, f) => f.inputFilterFunc(v), value);
+  static applyFilter(value, filters) {
+    return filters.reduce((value, filter) => filter(value), value);
   }
-  
-  /**
-   * 
-   * @param {any} value 
-   * @param {Filter[]} filters 
-   * @returns {any}
-   */
-  static applyForOutput(value, filters) {
-    return filters.reduce((v, f) => f.outputFilterFunc(v), value);
-  }
+}
 
-  /**
-   * 
-   * @param {Event} event 
-   * @param {Filter[]} filters 
-   * @returns {any}
-   */
-  static applyForEvent(event, filters) {
-    return filters.reduce((e, f) => f.eventFilterFunc(e), event);
+class OutputFilterManager extends FilterManager {
+  constructor() {
+    super();
+    this.ambigousNames = new Set(OutputFilterManager.#ambigousNames);
+    this.funcByName = new Map(OutputFilterManager.#funcByName);
   }
-
-  /**
-   * 
-   * @param {Component} component 
-   * @returns {(name:string,options:string[])=>Filter}
-   */
-  static createFilter = (component) => (name, options) => {
-    const inputFilterFunc = component.filters.in[name];
-    const outputFilterFunc = component.filters.out[name];
-    const eventFilterFunc = component.filters.event[name];
-    return new Filter(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc);
+  /** @type {Set<string>} */
+  static #ambigousNames = new Set;
+  /** @type {Map<string, FilterFuncWithOption>} */
+  static #funcByName = new Map;
+  static {
+    const ambigousNames = new Set;
+    const funcByName = new Map;
+    for(const group of outputGroups) {
+      for(const funcName of group.prototypeFuncs) {
+        const uniqueFuncName = `${group.prefix}.${funcName}`;
+        const func = createPrototypeFilterFunc(group.ObjectClass, funcName);
+        funcByName.set(uniqueFuncName, func);
+        if (funcByName.has(funcName)) {
+          ambigousNames.add(funcName);
+        } else {
+          funcByName.set(funcName, func);
+        }
+      }
+      for(const funcName of group.staticFuncs) {
+        const uniqueFuncName = `${group.prefix}.${funcName}`;
+        const func = createStaticFilterFunc(group.ObjectClass, funcName);
+        funcByName.set(uniqueFuncName, func);
+        if (funcByName.has(funcName)) {
+          ambigousNames.add(funcName);
+        } else {
+          funcByName.set(funcName, func);
+        }
+      }
+    }
+    for(const funcName of defaultFilterGroup.staticFuncs) {
+      const func = DefaultFilters[funcName];
+      funcByName.set(funcName, func);
+    }
+    for(const funcName of ambigousNames) {
+      funcByName.delete(funcName);
+    }
+    this.#ambigousNames = ambigousNames;
+    this.#funcByName = funcByName;
   }
   /**
    * 
    * @param {string} name 
-   * @param {(value:any,options:string[])=>{}} outputFilter 
-   * @param {(value:any,options:string[])=>{}} inputFilter 
-   * @param {(event:Event,options:string[])=>{}} eventFilter
+   * @param {FilterFuncWithOption} filterFunc 
    */
-  static register(name, outputFilter, inputFilter, eventFilter) {
-    if (name in outputFilters) utils.raise(`register filter error duplicate name (${name})`);
-    if (name in inputFilters) utils.raise(`register filter error duplicate name (${name})`);
-    if (name in eventFilters) utils.raise(`register filter error duplicate name (${name})`);
-    outputFilter && (outputFilters[name] = outputFilter);
-    inputFilter && (inputFilters[name] = inputFilter);
-    eventFilter && (eventFilters[name] = eventFilter);
+  static registerFilter(name, filterFunc) {
+    if (this.#funcByName.has(name)) {
+      utils.raise(`${this.name}: ${name} is already registered`);
+    }
+    this.#funcByName.set(name, filterFunc);
   }
+
+}
+
+class InputFilters {
+  static date         = options => value => value === "" ? null : new Date(new Date(value).setHours(0));
+  static number       = options => value => value === "" ? null : Number(value);
+  static boolean      = options => value => (value === "false" || value === "") ? false : true;
+}
+
+class InputFilterManager extends FilterManager {
+  constructor() {
+    super();
+    this.ambigousNames = new Set(InputFilterManager.#ambigousNames);
+    this.funcByName = new Map(InputFilterManager.#funcByName);
+  }
+  /** @type {Set<string>} */
+  static #ambigousNames = new Set;
+  /** @type {Map<string, FilterFuncWithOption>} */
+  static #funcByName = new Map;
+  static {
+    this.#funcByName.set("date", InputFilters.date);
+    this.#funcByName.set("number", InputFilters.number);
+    this.#funcByName.set("boolean", InputFilters.boolean);
+  }
+  /**
+   * 
+   * @param {string} name 
+   * @param {FilterFuncWithOption} filterFunc 
+   */
+  static registerFilter(name, filterFunc) {
+    if (this.#funcByName.has(name)) {
+      utils.raise(`${this.name}: ${name} is already registered`);
+    }
+    this.#funcByName.set(name, filterFunc);
+  }
+}
+
+class EventFilters {
+  static preventDefault = options => event => {
+    event.preventDefault();
+    return event;
+  }
+  static noStopPropagation = options => event => {
+    event.noStopPropagation = true;
+    return event;
+  }
+  static pd = this.preventDefault;
+  static nsp = this.noStopPropagation;
+}
+
+class EventFilterManager extends FilterManager {
+  constructor() {
+    super();
+    this.ambigousNames = new Set(EventFilterManager.#ambigousNames);
+    this.funcByName = new Map(EventFilterManager.#funcByName);
+  }
+  /** @type {Set<string>} */
+  static #ambigousNames = new Set;
+  /** @type {Map<string, EventFilterFuncWithOption>} */
+  static #funcByName = new Map;
+  static {
+    this.#funcByName.set("preventDefault", EventFilters.preventDefault);
+    this.#funcByName.set("noStopPropagation", EventFilters.noStopPropagation);
+    this.#funcByName.set("pd", EventFilters.preventDefault);
+    this.#funcByName.set("nsp", EventFilters.noStopPropagation);
+  }
+  /**
+   * 
+   * @param {string} name 
+   * @param {FilterFuncWithOption} filterFunc 
+   */
+  static registerFilter(name, filterFunc) {
+    if (this.#funcByName.has(name)) {
+      utils.raise(`${this.name}: ${name} is already registered`);
+    }
+    this.#funcByName.set(name, filterFunc);
+  } 
 }
 
 class NodeProperty {
@@ -2265,7 +2193,7 @@ class NodeProperty {
     this.node[this.name] = value;
   }
 
-  /** @type {Filter[]} */
+  /** @type {FilterFunc[]} */
   #filters;
   get filters() {
     return this.#filters;
@@ -2273,7 +2201,7 @@ class NodeProperty {
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters) : this.value;
+    return this.filters.length > 0 ? FilterManager.applyFilter(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToNode()の対象かどうか */
@@ -2307,15 +2235,16 @@ class NodeProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Node} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
+    const input = binding.component.filters.in;
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = filters;
+    this.#filters = filters.toReversed().map(info => input.getFilterFunc(info.name)(info.options));
   }
 
   /**
@@ -2587,7 +2516,7 @@ class ViewModelProperty {
     }
   }
 
-  /** @type {Filter[]} */
+  /** @type {FilterFunc[]} */
   #filters;
   get filters() {
     return this.#filters;
@@ -2595,7 +2524,7 @@ class ViewModelProperty {
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters) : this.value;
+    return this.filters.length > 0 ? FilterManager.applyFilter(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToViewModel()の対象かどうか */
@@ -2613,12 +2542,13 @@ class ViewModelProperty {
    * 
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, name, filters) {
+    const out = binding.component.filters.out;
     this.#binding = binding;
     this.#name = name;
-    this.#filters = filters;
+    this.#filters = filters.map(info => out.getFilterFunc(info.name)(info.options));
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
   }
@@ -2743,7 +2673,7 @@ class Checkbox extends ElementBase {
     /** @type {MultiValue} */
     const multiValue = this.value;
     return new MultiValue(
-      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters) : multiValue.value, 
+      this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value, 
       multiValue.enabled
     );
   }
@@ -2753,7 +2683,7 @@ class Checkbox extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
@@ -2791,7 +2721,7 @@ class Radio extends ElementBase {
     /** @type {MultiValue} */
     const multiValue = this.value;
     return new MultiValue(
-      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters) : multiValue.value, 
+      this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value, 
       multiValue.enabled
     );
   }
@@ -2801,7 +2731,7 @@ class Radio extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
@@ -2841,16 +2771,24 @@ class ElementEvent extends ElementBase {
     return this.#handler;
   }
 
+  /** @type {EventFilterFunc[]} */
+  #eventFilters = [];
+  get eventFilters() {
+    return this.#eventFilters;
+  }
+
   /**
    * 
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX$2)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
+    const event = binding.component.filters.event;
+    this.#eventFilters = filters.map(info => event.getFilterFunc(info.name)(info.options));
   }
 
   /**
@@ -2885,7 +2823,7 @@ class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     // event filter
-    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters) : event;
+    event = this.filters.length > 0 ? FilterManager.applyFilter(event, this.filters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
@@ -3878,12 +3816,10 @@ class Binding {
     viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
-    const createFilter = Filter.createFilter(bindingManager.component);
-    const fiterObjs = filters.map(filter => createFilter(filter.name, filter.options));
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, fiterObjs);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, fiterObjs);
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters);
   }
 
   /**
@@ -5207,7 +5143,7 @@ class MixedComponent {
     return this._pseudoNode;
   }
 
-  /** @type {{in:Object<string,FilterFunc>,out:Object<string,FilterFunc>,event:Object<string,EventFilterFunc>}} filters */
+  /** @type {{in:InputFilterManager,out:OutputFilterManager,event:EventFilterManager}} filters */
   get filters() {
     return this._filters;
   }
@@ -5262,9 +5198,9 @@ class MixedComponent {
     this._pseudoNode = undefined;
     
     this._filters = {
-      in: class extends inputFilters {},
-      out: class extends outputFilters {},
-      event: class extends eventFilters {},
+      in: new InputFilterManager,
+      out: new OutputFilterManager,
+      event: new EventFilterManager,
     };
 
     this._bindingSummary = new BindingSummary;
@@ -5285,20 +5221,21 @@ class MixedComponent {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
+    /** @type {CSSStyleSheet} styleSheet */
     const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
     for(const [name, filterFunc] of Object.entries(inputFilters)) {
       if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
-      this.filters.in[name] = filterFunc;
+      this.filters.in.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(outputFilters)) {
       if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
-      this.filters.out[name] = filterFunc;
+      this.filters.out.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(eventFilters)) {
       if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
-      this.filters.event[name] = filterFunc;
+      this.filters.event.registerFilter(name, filterFunc);
     }
     // create and attach shadowRoot
     // adopt css
@@ -6360,7 +6297,9 @@ class QuelModuleRegistrar extends Registrar {
     if (name.startsWith(PREFIX)) {
       const filterName = name.slice(PREFIX.length);
       const { output, input, event } = module;
-      Filter.register(filterName, output, input, event);
+      output && OutputFilterManager.registerFilter(filterName, output);
+      input && InputFilterManager.registerFilter(filterName, input);
+      event && EventFilterManager.registerFilter(filterName, event);
     } else {
       if (extendOf(module, HTMLElement)) {
         customElements.define(name, module);
@@ -6426,8 +6365,10 @@ async function bootFromImportMeta(importMeta, configPath) {
  */
 function registerFilters(filters) {
   Object.entries(filters).forEach(([name, filterData]) => {
-    const { input, output } = filterData;
-    Filter.register(name, output, input);
+    const { input, output, event } = filterData;
+    input && InputFilterManager.registerFilter(name, input);
+    output && OutputFilterManager.registerFilter(name, output);
+    event && EventFilterManager.registerFilter(name, event);
   });
 }
 

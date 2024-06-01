@@ -1,7 +1,7 @@
 import { ElementBase } from "./ElementBase.js";
 import { MultiValue } from "./MultiValue.js";
-import { Filter } from "../../filter/Filter.js";
 import { utils } from "../../utils.js";
+import { FilterManager } from "../../filter/Manager.js";
 
 export class Checkbox extends ElementBase {
   /** @type {HTMLInputElement} */
@@ -27,7 +27,7 @@ export class Checkbox extends ElementBase {
     /** @type {MultiValue} */
     const multiValue = this.value;
     return new MultiValue(
-      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters) : multiValue.value, 
+      this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value, 
       multiValue.enabled
     );
   }
@@ -37,7 +37,7 @@ export class Checkbox extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
