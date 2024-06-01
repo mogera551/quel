@@ -30,9 +30,9 @@ export class Filter {
   constructor(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc) {
     this.name = name;
     this.options = options;
-    this.inputFilterFunc = inputFilterFunc(options) ?? THRU_FUNC;
-    this.outputFilterFunc = outputFilterFunc(options) ?? THRU_FUNC;
-    this.eventFilterFunc = eventFilterFunc(options) ?? THRU_FUNC;
+    this.inputFilterFunc = inputFilterFunc ? inputFilterFunc(options) : THRU_FUNC;
+    this.outputFilterFunc = outputFilterFunc ? outputFilterFunc(options) : THRU_FUNC;
+    this.eventFilterFunc = eventFilterFunc ? eventFilterFunc(options) : THRU_FUNC;
   }
 
   /**

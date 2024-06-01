@@ -1754,8 +1754,7 @@ class outputFilters {
   static object       = options => value => value[options[0]];
   static prefix       = options => value => String(options[0]) + String(value);
   static suffix       = this.unit;
-  static date         = options => value => date(value, options, (d, o) => d.toLocaleDateString("ja-JP", o[0] ? o[0] : {}));
-  static isodate      = options => value => date(value, options, (d, o) => d.toLocaleDateString("sv-SE", o[0] ? o[0] : {}));
+  static date         = options => value => date(value, options, (d, o) => d.toLocaleDateString("sv-SE", o[0] ? o[0] : {}));
 
   static #str_at      = options => value => str(value, options, (s, o) => s.at(...o));
   static #str_charAt  = options => value => str(value, options, (s, o) => s.charAt(...o));
@@ -2049,10 +2048,9 @@ class outputFilters {
 }
 
 class inputFilters {
-  static date         = options => value => value === "" ? null : new Date(value);
-  static isodate      = options => value => value === "" ? null : new Date(new Date(value).setHours(0));
+  static date         = options => value => value === "" ? null : new Date(new Date(value).setHours(0));
   static number       = options => value => value === "" ? null : Number(value);
-  static boolean      = options => value => value === "" ? null : Boolean(value);
+  static boolean      = options => value => (value === "false" || value === "") ? false : true;
 }
 
 class eventFilters {
@@ -2177,9 +2175,9 @@ class Filter {
   constructor(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc) {
     this.name = name;
     this.options = options;
-    this.inputFilterFunc = inputFilterFunc(options) ?? THRU_FUNC;
-    this.outputFilterFunc = outputFilterFunc(options) ?? THRU_FUNC;
-    this.eventFilterFunc = eventFilterFunc(options) ?? THRU_FUNC;
+    this.inputFilterFunc = inputFilterFunc ? inputFilterFunc(options) : THRU_FUNC;
+    this.outputFilterFunc = outputFilterFunc ? outputFilterFunc(options) : THRU_FUNC;
+    this.eventFilterFunc = eventFilterFunc ? eventFilterFunc(options) : THRU_FUNC;
   }
 
   /**
