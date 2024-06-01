@@ -34,12 +34,10 @@ export class ElementEvent extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /**
@@ -74,7 +72,7 @@ export class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     // event filter
-    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters, this.eventFilterFuncs) : event;
+    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);

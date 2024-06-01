@@ -5,46 +5,77 @@ import {inputFilters, outputFilters, eventFilters} from "./Builtin.js";
 // "property:vmProperty|toFix,2|toLocaleString;"
 // => toFix,2|toLocaleString
 
+const THRU_FUNC = (v) => v;
+
 export class Filter {
   /** @type {string} */
   name;
-
   /** @type {string[]} */
   options;
+  /** @type {FilterFunc} */
+  inputFilterFunc;
+  /** @type {FilterFunc} */
+  outputFilterFunc;
+  /** @type {EventFilterFunc} */
+  eventFilterFunc;
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {string[]} options 
+   * @param {FilterFuncWithOption} inputFilterFunc 
+   * @param {FilterFuncWithOption} outputFilterFunc 
+   * @param {EventFilterFuncWithOption} eventFilterFunc 
+   */
+  constructor(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc) {
+    this.name = name;
+    this.options = options;
+    this.inputFilterFunc = inputFilterFunc(options) ?? THRU_FUNC;
+    this.outputFilterFunc = outputFilterFunc(options) ?? THRU_FUNC;
+    this.eventFilterFunc = eventFilterFunc(options) ?? THRU_FUNC;
+  }
 
   /**
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
    * @returns {any}
    */
-  static applyForInput(value, filters, inputFilterFuncs) {
-    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
+  static applyForInput(value, filters) {
+    return filters.reduceRight((v, f) => f.inputFilterFunc(v), value);
   }
   
   /**
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} outputFilterFuncs
    * @returns {any}
    */
-  static applyForOutput(value, filters, outputFilterFuncs) {
-    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
+  static applyForOutput(value, filters) {
+    return filters.reduce((v, f) => f.outputFilterFunc(v), value);
   }
 
   /**
    * 
    * @param {Event} event 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} eventFilterFuncs
    * @returns {any}
    */
-  static applyForEvent(event, filters, eventFilterFuncs) {
-    return filters.reduce((e, f) => (f.name in eventFilterFuncs) ? eventFilterFuncs[f.name](e, f.options) : e, event);
+  static applyForEvent(event, filters) {
+    return filters.reduce((e, f) => f.eventFilterFunc(e), event);
   }
 
+  /**
+   * 
+   * @param {Component} component 
+   * @returns {(name:string,options:string[])=>Filter}
+   */
+  static createFilter = (component) => (name, options) => {
+    const inputFilterFunc = component.filters.in[name];
+    const outputFilterFunc = component.filters.out[name];
+    const eventFilterFunc = component.filters.event[name];
+    return new Filter(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc);
+  }
   /**
    * 
    * @param {string} name 

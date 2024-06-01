@@ -19,11 +19,9 @@ export class ElementClassName extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (name !== NAME) utils.raise(`ElementClassName: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 }

@@ -84,15 +84,9 @@ export class ViewModelProperty {
     return this.#filters;
   }
 
-  /** @type {Object<string,FilterFunc>} */
-  #filterFuncs;
-  get filterFuncs() {
-    return this.#filterFuncs;
-  }
-
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters, this.filterFuncs) : this.value;
+    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToViewModel()の対象かどうか */
@@ -111,13 +105,11 @@ export class ViewModelProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, name, filters, filterFuncs) {
+  constructor(binding, name, filters) {
     this.#binding = binding;
     this.#name = name;
     this.#filters = filters;
-    this.#filterFuncs = filterFuncs;
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
   }

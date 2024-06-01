@@ -27,7 +27,7 @@ export class Checkbox extends ElementBase {
     /** @type {MultiValue} */
     const multiValue = this.value;
     return new MultiValue(
-      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
+      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters) : multiValue.value, 
       multiValue.enabled
     );
   }
@@ -38,13 +38,11 @@ export class Checkbox extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
     if (node.type !== "checkbox") utils.raise("Checkbox: not checkbox");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /** 

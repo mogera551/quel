@@ -59,15 +59,28 @@
  */
 
 /**
+ * @typedef {Object} FilterInfo
+ * @property {string} name
+ * @property {string[]} options
+ */
+/**
  * @typedef {import("./filter/Filter.js").Filter} Filter
  */
 
 /**
- * @typedef {(value:any,options:string[])=>any} FilterFunc
+ * @typedef {(value:any)=>any} FilterFunc
  */
 
 /**
- * @typedef {(event:Event,options:string[])=>any} EventFilterFunc
+ * @typedef {(options:string[])=>FilterFunc} FilterFuncWithOption
+ */
+
+/**
+ * @typedef {(event:Event)=>any} EventFilterFunc
+ */
+
+/**
+ * @typedef {(options:string[])=>EventFilterFunc} EventFilterFuncWithOption
  */
 
 /**

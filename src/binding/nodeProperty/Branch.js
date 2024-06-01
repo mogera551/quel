@@ -29,12 +29,10 @@ export class Branch extends TemplateProperty {
    * @param {Comment} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (name !== "if") utils.raise(`Branch: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /** 

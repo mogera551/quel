@@ -5,6 +5,7 @@ import * as Selector from "../binder/Selector.js";
 import * as Binder from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
+import { Filter } from "../filter/Filter.js";
 
 let seq = 0;
 
@@ -72,17 +73,19 @@ export class Binding {
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
    * @param {string} viewModelPropertyName
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
-   * @param {Filter[]} filters
+   * @param {FilterInfo[]} filters
    */
   constructor(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
     viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
+    const createFilter = Filter.createFilter(bindingManager.component);
+    const fiterObjs = filters.map(filter => createFilter(filter.name, filter.options));
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in, bindingManager.component.filters.event);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, fiterObjs);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, fiterObjs);
   }
 
   /**
@@ -182,7 +185,7 @@ export class Binding {
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
    * @param {string} viewModelPropertyName
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
-   * @param {Filter[]} filters
+   * @param {FilterInfo[]} filters
    */
   static create(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 

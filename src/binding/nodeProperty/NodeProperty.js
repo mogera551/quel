@@ -35,21 +35,9 @@ export class NodeProperty {
     return this.#filters;
   }
 
-  /** @type {Object<string,FilterFunc>} */
-  #filterFuncs;
-  get filterFuncs() {
-    return this.#filterFuncs;
-  }
-
-  /** @type {Object<string,EventFilterFunc>} */
-  #eventFilterFuncs;
-  get eventFilterFuncs() {
-    return this.#eventFilterFuncs;
-  }
-
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
+    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToNode()の対象かどうか */
@@ -84,18 +72,14 @@ export class NodeProperty {
    * @param {Node} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
     this.#filters = filters;
-    this.#filterFuncs = filterFuncs;
-    this.#eventFilterFuncs = eventFilterFuncs;
   }
 
   /**

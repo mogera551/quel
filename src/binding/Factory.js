@@ -64,7 +64,7 @@ export class Factory {
    * @param {string} nodePropertyName 
    * @param {ViewModel} viewModel 
    * @param {string} viewModelPropertyName 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    * @returns {Binding}
    */
   static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {

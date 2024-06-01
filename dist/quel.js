@@ -1720,85 +1720,85 @@ const arr = (v, o, fn) => {
 };
 
 class outputFilters {
-  static styleDisplay = (value, options) => value ? (options[0] ?? "") : "none";
-  static truthy       = (value, options) => value ? true : false;
-  static falsey       = (value, options) => !value ? true : false;
+  static styleDisplay = options => value => value ? (options[0] ?? "") : "none";
+  static truthy       = options => value => value ? true : false;
+  static falsey       = options => value => !value ? true : false;
   static not          = this.falsey;
-  static eq           = (value, options) => value == options[0]; // equality
-  static ne           = (value, options) => value != options[0]; // inequality
-  static lt           = (value, options) => Number(value) < Number(options[0]); // less than
-  static le           = (value, options) => Number(value) <= Number(options[0]); // less than or equal
-  static gt           = (value, options) => Number(value) > Number(options[0]); // greater than
-  static ge           = (value, options) => Number(value) >= Number(options[0]); // greater than or equal
-  static oi           = (value, options) => Number(options[0]) < Number(value) && Number(value) < Number(options[1]); // open interval
-  static ci           = (value, options) => Number(options[0]) <= Number(value) && Number(value) <= Number(options[1]); // closed interval
-  static embed        = (value, options) => (value != null) ? (options[0] ?? "").replaceAll("%s", value) : null;
-  static ifText       = (value, options) => value ? options[0] ?? null : options[1] ?? null;
-  static null         = (value, options) => (value == null) ? true : false;
-  static offset       = (value, options) => Number(value) + Number(options[0]);
-  static unit         = (value, options) => String(value) + String(options[0]);
+  static eq           = options => value => value == options[0]; // equality
+  static ne           = options => value => value != options[0]; // inequality
+  static lt           = options => value => Number(value) < Number(options[0]); // less than
+  static le           = options => value => Number(value) <= Number(options[0]); // less than or equal
+  static gt           = options => value => Number(value) > Number(options[0]); // greater than
+  static ge           = options => value => Number(value) >= Number(options[0]); // greater than or equal
+  static oi           = options => value => Number(options[0]) < Number(value) && Number(value) < Number(options[1]); // open interval
+  static ci           = options => value => Number(options[0]) <= Number(value) && Number(value) <= Number(options[1]); // closed interval
+  static embed        = options => value => (value != null) ? (options[0] ?? "").replaceAll("%s", value) : null;
+  static ifText       = options => value => value ? options[0] ?? null : options[1] ?? null;
+  static null         = options => value => (value == null) ? true : false;
+  static offset       = options => value => Number(value) + Number(options[0]);
+  static unit         = options => value => String(value) + String(options[0]);
   static inc          = this.offset;
-  static mul          = (value, options) => Number(value) * Number(options[0]);
-  static div          = (value, options) => Number(value) / Number(options[0]);
-  static mod          = (value, options) => Number(value) % Number(options[0]);
-  static object       = (value, options) => value[options[0]];
-  static prefix       = (value, options) => String(options[0]) + String(value);
+  static mul          = options => value => Number(value) * Number(options[0]);
+  static div          = options => value => Number(value) / Number(options[0]);
+  static mod          = options => value => Number(value) % Number(options[0]);
+  static object       = options => value => value[options[0]];
+  static prefix       = options => value => String(options[0]) + String(value);
   static suffix       = this.unit;
 
-  static #str_at      = (value, options) => str(value, options, (s, o) => s.at(...o));
-  static #str_charAt  = (value, options) => str(value, options, (s, o) => s.charAt(...o));
-  static #str_charCodeAt    = (value, options) => str(value, options, (s, o) => s.charCodeAt(...o));
-  static #str_codePointAt   = (value, options) => str(value, options, (s, o) => s.codePointAt(...o));
-  static #str_concat  = (value, options) => str(value, options, (s, o) => s.concat(...o));
-  static #str_endsWith      = (value, options) => str(value, options, (s, o) => s.endsWith(...o));
-  static #str_includes = (value, options) => str(value, options, (s, o) => s.includes(...o));
-  static #str_indexOf  = (value, options) => str(value, options, (s, o) => s.indexOf(...o));
-  static #str_lastIndexOf = (value, options) => str(value, options, (s, o) => s.lastIndexOf(...o));
-  static #str_localeCompare = (value, options) => str(value, options, (s, o) => s.localeCompare(...o));
-  static #str_match         = (value, options) => str(value, options, (s, o) => s.match(...o));
-  static #str_normalize     = (value, options) => str(value, options, (s, o) => s.normalize(...o));
-  static #str_padEnd        = (value, options) => str(value, options, (s, o) => s.padEnd(...o));
-  static #str_padStart      = (value, options) => str(value, options, (s, o) => s.padStart(...o));
-  static #str_repeat        = (value, options) => str(value, options, (s, o) => s.repeat(...o));
-  static #str_replace       = (value, options) => str(value, options, (s, o) => s.replace(...o));
-  static #str_replaceAll    = (value, options) => str(value, options, (s, o) => s.replaceAll(...o));
-  static #str_search        = (value, options) => str(value, options, (s, o) => s.search(...o));
-  static #str_slice   = (value, options) => str(value, options, (s, o) => s.slice(...o));
-  static #str_split         = (value, options) => str(value, options, (s, o) => s.split(...o));
-  static #str_startsWith    = (value, options) => str(value, options, (s, o) => s.startsWith(...o));
-  static #str_substring     = (value, options) => str(value, options, (s, o) => s.substring(...o));
-  static #str_toLocaleLowerCase = (value, options) => str(value, options, (s, o) => s.toLocaleLowerCase(...o));
-  static #str_toLocaleUpperCase = (value, options) => str(value, options, (s, o) => s.toLocaleUpperCase(...o));
-  static #str_toLowerCase   = (value, options) => str(value, options, (s, o) => s.toLowerCase(...o));
-  static #str_toUpperCase   = (value, options) => str(value, options, (s, o) => s.toUpperCase(...o));
-  static #str_trim          = (value, options) => str(value, options, (s, o) => s.trim(...o));
-  static #str_trimEnd       = (value, options) => str(value, options, (s, o) => s.trimEnd(...o));
-  static #str_trimStart     = (value, options) => str(value, options, (s, o) => s.trimStart(...o));
+  static #str_at      = options => value => str(value, options, (s, o) => s.at(...o));
+  static #str_charAt  = options => value => str(value, options, (s, o) => s.charAt(...o));
+  static #str_charCodeAt    = options => value => str(value, options, (s, o) => s.charCodeAt(...o));
+  static #str_codePointAt   = options => value => str(value, options, (s, o) => s.codePointAt(...o));
+  static #str_concat  = options => value => str(value, options, (s, o) => s.concat(...o));
+  static #str_endsWith      = options => value => str(value, options, (s, o) => s.endsWith(...o));
+  static #str_includes = options => value => str(value, options, (s, o) => s.includes(...o));
+  static #str_indexOf  = options => value => str(value, options, (s, o) => s.indexOf(...o));
+  static #str_lastIndexOf = options => value => str(value, options, (s, o) => s.lastIndexOf(...o));
+  static #str_localeCompare = options => value => str(value, options, (s, o) => s.localeCompare(...o));
+  static #str_match         = options => value => str(value, options, (s, o) => s.match(...o));
+  static #str_normalize     = options => value => str(value, options, (s, o) => s.normalize(...o));
+  static #str_padEnd        = options => value => str(value, options, (s, o) => s.padEnd(...o));
+  static #str_padStart      = options => value => str(value, options, (s, o) => s.padStart(...o));
+  static #str_repeat        = options => value => str(value, options, (s, o) => s.repeat(...o));
+  static #str_replace       = options => value => str(value, options, (s, o) => s.replace(...o));
+  static #str_replaceAll    = options => value => str(value, options, (s, o) => s.replaceAll(...o));
+  static #str_search        = options => value => str(value, options, (s, o) => s.search(...o));
+  static #str_slice   = options => value => str(value, options, (s, o) => s.slice(...o));
+  static #str_split         = options => value => str(value, options, (s, o) => s.split(...o));
+  static #str_startsWith    = options => value => str(value, options, (s, o) => s.startsWith(...o));
+  static #str_substring     = options => value => str(value, options, (s, o) => s.substring(...o));
+  static #str_toLocaleLowerCase = options => value => str(value, options, (s, o) => s.toLocaleLowerCase(...o));
+  static #str_toLocaleUpperCase = options => value => str(value, options, (s, o) => s.toLocaleUpperCase(...o));
+  static #str_toLowerCase   = options => value => str(value, options, (s, o) => s.toLowerCase(...o));
+  static #str_toUpperCase   = options => value => str(value, options, (s, o) => s.toUpperCase(...o));
+  static #str_trim          = options => value => str(value, options, (s, o) => s.trim(...o));
+  static #str_trimEnd       = options => value => str(value, options, (s, o) => s.trimEnd(...o));
+  static #str_trimStart     = options => value => str(value, options, (s, o) => s.trimStart(...o));
 
-  static #num_toExponential = (value, options) => num(value, options, (n, o) => n.toExponential(...o));
-  static #num_toFixed       = (value, options) => num(value, options, (n, o) => n.toFixed(...o));
-  static #num_toLocaleString = (value, options) => num(value, options, (n, o) => n.toLocaleString(...o));
-  static #num_toPrecision   = (value, options) => num(value, options, (n, o) => n.toPrecision(...o));
+  static #num_toExponential = options => value => num(value, options, (n, o) => n.toExponential(...o));
+  static #num_toFixed       = options => value => num(value, options, (n, o) => n.toFixed(...o));
+  static #num_toLocaleString = options => value => num(value, options, (n, o) => n.toLocaleString(...o));
+  static #num_toPrecision   = options => value => num(value, options, (n, o) => n.toPrecision(...o));
   
-  static #arr_at       = (value, options) => arr(value, options, (a, o) => a.at(...o));
-  static #arr_concat   = (value, options) => arr(value, options, (a, o) => a.concat(...o));
-  static #arr_entries  = (value, options) => arr(value, options, (a, o) => a.entries(...o));
-  static #arr_flat     = (value, options) => arr(value, options, (a, o) => a.flat(...o));
-  static #arr_includes = (value, options) => arr(value, options, (a, o) => a.includes(...o));
-  static #arr_indexOf  = (value, options) => arr(value, options, (a, o) => a.indexOf(...o));
-  static #arr_join     = (value, options) => arr(value, options, (a, o) => a.join(...o));
-  static #arr_keys     = (value, options) => arr(value, options, (a, o) => a.keys(...o));
-  static #arr_lastIndexOf    = (value, options) => arr(value, options, (a, o) => a.lastIndexOf(...o));
-  static #arr_slice    = (value, options) => arr(value, options, (a, o) => a.slice(...o));
-  static #arr_toLocaleString = (value, options) => arr(value, options, (a, o) => a.toLocaleString(...o));
-  static #arr_toReversed     = (value, options) => arr(value, options, (a, o) => a.toReversed(...o));
-  static #arr_toSorted       = (value, options) => arr(value, options, (a, o) => a.toSorted(...o));
-  static #arr_toSpliced      = (value, options) => arr(value, options, (a, o) => a.toSpliced(...o));
-  static #arr_values   = (value, options) => arr(value, options, (a, o) => a.values(...o));
-  static #arr_with     = (value, options) => arr(value, options, (a, o) => a.with(...o));
+  static #arr_at       = options => value => arr(value, options, (a, o) => a.at(...o));
+  static #arr_concat   = options => value => arr(value, options, (a, o) => a.concat(...o));
+  static #arr_entries  = options => value => arr(value, options, (a, o) => a.entries(...o));
+  static #arr_flat     = options => value => arr(value, options, (a, o) => a.flat(...o));
+  static #arr_includes = options => value => arr(value, options, (a, o) => a.includes(...o));
+  static #arr_indexOf  = options => value => arr(value, options, (a, o) => a.indexOf(...o));
+  static #arr_join     = options => value => arr(value, options, (a, o) => a.join(...o));
+  static #arr_keys     = options => value => arr(value, options, (a, o) => a.keys(...o));
+  static #arr_lastIndexOf    = options => value => arr(value, options, (a, o) => a.lastIndexOf(...o));
+  static #arr_slice    = options => value => arr(value, options, (a, o) => a.slice(...o));
+  static #arr_toLocaleString = options => value => arr(value, options, (a, o) => a.toLocaleString(...o));
+  static #arr_toReversed     = options => value => arr(value, options, (a, o) => a.toReversed(...o));
+  static #arr_toSorted       = options => value => arr(value, options, (a, o) => a.toSorted(...o));
+  static #arr_toSpliced      = options => value => arr(value, options, (a, o) => a.toSpliced(...o));
+  static #arr_values   = options => value => arr(value, options, (a, o) => a.values(...o));
+  static #arr_with     = options => value => arr(value, options, (a, o) => a.with(...o));
 
   static get at() {
-    return (value, options) => (Array.isArray(value) ? this.#arr_at : this.#str_at)(value, options);
+    return Array.isArray(value) ? this.#arr_at : this.#str_at;
   }
   static get charAt() {
     return this.#str_charAt;
@@ -1810,7 +1810,7 @@ class outputFilters {
     return this.#str_codePointAt;
   }
   static get concat() {
-    return (value, options) => (Array.isArray(value) ? this.#arr_concat : this.#str_concat)(value, options);
+    return Array.isArray(value) ? this.#arr_concat : this.#str_concat;
   }
   static get endsWith() {
     return this.#str_endsWith;
@@ -1822,10 +1822,10 @@ class outputFilters {
     return this.#arr_flat;
   }
   static get includes() {
-    return (value, options) => (Array.isArray(value) ? this.#arr_includes : this.#str_includes)(value, options);
+    return Array.isArray(value) ? this.#arr_includes : this.#str_includes;
   }
   static get indexOf() {
-    return (value, options) => (Array.isArray(value) ? this.#arr_indexOf : this.#str_indexOf)(value, options);
+    return Array.isArray(value) ? this.#arr_indexOf : this.#str_indexOf;
   }
   static get join() {
     return this.#arr_join;
@@ -1834,7 +1834,7 @@ class outputFilters {
     return this.#arr_keys;
   }
   static get lastIndexOf() {
-    return (value, options) => (Array.isArray(value) ? this.#arr_lastIndexOf : this.#str_lastIndexOf)(value, options);
+    return Array.isArray(value) ? this.#arr_lastIndexOf : this.#str_lastIndexOf;
   }
   static get localeCompare() {
     return this.#str_localeCompare;
@@ -1867,7 +1867,7 @@ class outputFilters {
     return this.#str_search;
   }
   static get slice() {
-    return (value, options) => (Array.isArray(value) ? this.#arr_slice : this.#str_slice)(value, options);
+    return Array.isArray(value) ? this.#arr_slice : this.#str_slice;
   }
   static get split() {
     return this.#str_split;
@@ -1885,7 +1885,7 @@ class outputFilters {
     return this.#num_toFixed;
   }
   static get toLocaleString() {
-    return (value, options) => (Array.isArray(value) ? this.#arr_toLocaleString : this.#num_toLocaleString)(value, options);
+    return Array.isArray(value) ? this.#arr_toLocaleString : this.#num_toLocaleString;
   }
   static get toLocaleLowerCase() {
     return this.#str_toLocaleLowerCase;
@@ -1933,16 +1933,16 @@ class outputFilters {
 }
 
 class inputFilters {
-  static number       = (value, options) => value === "" ? null : Number(value);
-  static boolean      = (value, options) => value === "" ? null : Boolean(value);
+  static number       = options => value => value === "" ? null : Number(value);
+  static boolean      = options => value => value === "" ? null : Boolean(value);
 }
 
 class eventFilters {
-  static preventDefault = (event, options) => {
+  static preventDefault = options => event => {
     event.preventDefault();
     return event;
   }
-  static noStopPropagation = (event, options) => {
+  static noStopPropagation = options => event => {
     event.noStopPropagation = true;
     return event;
   }
@@ -2034,46 +2034,77 @@ function getTargetNodes(template, rootElement) {
 // "property:vmProperty|toFix,2|toLocaleString;"
 // => toFix,2|toLocaleString
 
+const THRU_FUNC = (v) => v;
+
 class Filter {
   /** @type {string} */
   name;
-
   /** @type {string[]} */
   options;
+  /** @type {FilterFunc} */
+  inputFilterFunc;
+  /** @type {FilterFunc} */
+  outputFilterFunc;
+  /** @type {EventFilterFunc} */
+  eventFilterFunc;
+
+  /**
+   * 
+   * @param {string} name 
+   * @param {string[]} options 
+   * @param {FilterFuncWithOption} inputFilterFunc 
+   * @param {FilterFuncWithOption} outputFilterFunc 
+   * @param {EventFilterFuncWithOption} eventFilterFunc 
+   */
+  constructor(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc) {
+    this.name = name;
+    this.options = options;
+    this.inputFilterFunc = inputFilterFunc(options) ?? THRU_FUNC;
+    this.outputFilterFunc = outputFilterFunc(options) ?? THRU_FUNC;
+    this.eventFilterFunc = eventFilterFunc(options) ?? THRU_FUNC;
+  }
 
   /**
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} inputFilterFuncs
    * @returns {any}
    */
-  static applyForInput(value, filters, inputFilterFuncs) {
-    return filters.reduceRight((v, f) => (f.name in inputFilterFuncs) ? inputFilterFuncs[f.name](v, f.options) : v, value);
+  static applyForInput(value, filters) {
+    return filters.reduceRight((v, f) => f.inputFilterFunc(v), value);
   }
   
   /**
    * 
    * @param {any} value 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} outputFilterFuncs
    * @returns {any}
    */
-  static applyForOutput(value, filters, outputFilterFuncs) {
-    return filters.reduce((v, f) => (f.name in outputFilterFuncs) ? outputFilterFuncs[f.name](v, f.options) : v, value);
+  static applyForOutput(value, filters) {
+    return filters.reduce((v, f) => f.outputFilterFunc(v), value);
   }
 
   /**
    * 
    * @param {Event} event 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} eventFilterFuncs
    * @returns {any}
    */
-  static applyForEvent(event, filters, eventFilterFuncs) {
-    return filters.reduce((e, f) => (f.name in eventFilterFuncs) ? eventFilterFuncs[f.name](e, f.options) : e, event);
+  static applyForEvent(event, filters) {
+    return filters.reduce((e, f) => f.eventFilterFunc(e), event);
   }
 
+  /**
+   * 
+   * @param {Component} component 
+   * @returns {(name:string,options:string[])=>Filter}
+   */
+  static createFilter = (component) => (name, options) => {
+    const inputFilterFunc = component.filters.in[name];
+    const outputFilterFunc = component.filters.out[name];
+    const eventFilterFunc = component.filters.event[name];
+    return new Filter(name, options, inputFilterFunc, outputFilterFunc, eventFilterFunc);
+  }
   /**
    * 
    * @param {string} name 
@@ -2124,21 +2155,9 @@ class NodeProperty {
     return this.#filters;
   }
 
-  /** @type {Object<string,FilterFunc>} */
-  #filterFuncs;
-  get filterFuncs() {
-    return this.#filterFuncs;
-  }
-
-  /** @type {Object<string,EventFilterFunc>} */
-  #eventFilterFuncs;
-  get eventFilterFuncs() {
-    return this.#eventFilterFuncs;
-  }
-
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters, this.filterFuncs) : this.value;
+    return this.filters.length > 0 ? Filter.applyForInput(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToNode()の対象かどうか */
@@ -2173,18 +2192,14 @@ class NodeProperty {
    * @param {Node} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
     this.#filters = filters;
-    this.#filterFuncs = filterFuncs;
-    this.#eventFilterFuncs = eventFilterFuncs;
   }
 
   /**
@@ -2252,12 +2267,10 @@ class TemplateProperty extends NodeProperty {
    * @param {Comment} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 }
 
@@ -2305,12 +2318,10 @@ class Repeat extends TemplateProperty {
    * @param {Comment} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /** 
@@ -2348,12 +2359,10 @@ class Branch extends TemplateProperty {
    * @param {Comment} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (name !== "if") utils.raise(`Branch: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /** 
@@ -2468,15 +2477,9 @@ class ViewModelProperty {
     return this.#filters;
   }
 
-  /** @type {Object<string,FilterFunc>} */
-  #filterFuncs;
-  get filterFuncs() {
-    return this.#filterFuncs;
-  }
-
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters, this.filterFuncs) : this.value;
+    return this.filters.length > 0 ? Filter.applyForOutput(this.value, this.filters) : this.value;
   }
 
   /** @type {boolean} applyToViewModel()の対象かどうか */
@@ -2495,13 +2498,11 @@ class ViewModelProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, name, filters, filterFuncs) {
+  constructor(binding, name, filters) {
     this.#binding = binding;
     this.#name = name;
     this.#filters = filters;
-    this.#filterFuncs = filterFuncs;
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
   }
@@ -2551,11 +2552,10 @@ class ContextIndex extends ViewModelProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
    */
-  constructor(binding, name, filters, filterFuncs) {
+  constructor(binding, name, filters) {
     if (!regexp$1.test(name)) utils.raise(`ContextIndex: invalid name ${name}`);
-    super(binding, name, filters, filterFuncs);
+    super(binding, name, filters);
   }
 }
 
@@ -2571,12 +2571,10 @@ class ElementBase extends NodeProperty {
    * @param {Element} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof Element)) utils.raise("ElementBase: not element");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 }
 
@@ -2598,12 +2596,10 @@ class ElementClassName extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (name !== NAME) utils.raise(`ElementClassName: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 }
 
@@ -2631,7 +2627,7 @@ class Checkbox extends ElementBase {
     /** @type {MultiValue} */
     const multiValue = this.value;
     return new MultiValue(
-      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
+      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters) : multiValue.value, 
       multiValue.enabled
     );
   }
@@ -2642,13 +2638,11 @@ class Checkbox extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
     if (node.type !== "checkbox") utils.raise("Checkbox: not checkbox");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /** 
@@ -2681,7 +2675,7 @@ class Radio extends ElementBase {
     /** @type {MultiValue} */
     const multiValue = this.value;
     return new MultiValue(
-      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
+      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters) : multiValue.value, 
       multiValue.enabled
     );
   }
@@ -2692,13 +2686,11 @@ class Radio extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
     if (node.type !== "radio" && node.type !== "checkbox") utils.raise("Radio: not radio or checkbox");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /** 
@@ -2739,12 +2731,10 @@ class ElementEvent extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX$2)) utils.raise(`ElementEvent: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /**
@@ -2779,7 +2769,7 @@ class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
     // event filter
-    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters, this.eventFilterFuncs) : event;
+    event = this.filters.length > 0 ? Filter.applyForEvent(event, this.filters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
@@ -2809,12 +2799,10 @@ class ElementClass extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX$1)) utils.raise(`ElementClass: invalid property name ${name}`);
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 }
 
@@ -2858,12 +2846,10 @@ class ElementStyle extends ElementBase {
    * @param {HTMLElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 }
 
@@ -2927,12 +2913,10 @@ class ComponentProperty extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node.constructor[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /**
@@ -3128,7 +3112,7 @@ class Factory {
    * @param {string} nodePropertyName 
    * @param {ViewModel} viewModel 
    * @param {string} viewModelPropertyName 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    * @returns {Binding}
    */
   static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {
@@ -3175,7 +3159,7 @@ class BindTextInfo {
   nodeProperty;
   /** @type {string} bindするviewModelのプロパティ名 */
   viewModelProperty;
-  /** @type {Filter[]} 適用するフィルターの配列 */
+  /** @type {FilterInfo[]} 適用するフィルターの配列 */
   filters;
 }
 
@@ -3199,18 +3183,18 @@ const decode = s => decodeURIComponent(s);
  * フィルターのパース
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
  * @param {string} text 
- * @returns {Filter}
+ * @returns {FilterInfo}
  */
 const parseFilter = text => {
   const [name, ...options] = text.split(",").map(trim$1);
-  return Object.assign(new Filter, {name, options:options.map(decode)});
+  return {name, options:options.map(decode)};
 };
 
 /**
  * ViewModelプロパティのパース
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  * @param {string} text 
- * @returns {{viewModelProperty:string,filters:Filter[]}}
+ * @returns {{viewModelProperty:string,filters:FilterInfo[]}}
  */
 const parseViewModelProperty = text => {
   const [viewModelProperty, ...filterTexts] = text.split("|").map(trim$1);
@@ -3771,17 +3755,19 @@ class Binding {
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
    * @param {string} viewModelPropertyName
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
-   * @param {Filter[]} filters
+   * @param {FilterInfo[]} filters
    */
   constructor(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 
     viewModelPropertyName, classOfViewModelProperty,
     filters
   ) {
+    const createFilter = Filter.createFilter(bindingManager.component);
+    const fiterObjs = filters.map(filter => createFilter(filter.name, filter.options));
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters, bindingManager.component.filters.in, bindingManager.component.filters.event);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters, bindingManager.component.filters.out);
+    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, fiterObjs);
+    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, fiterObjs);
   }
 
   /**
@@ -3881,7 +3867,7 @@ class Binding {
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
    * @param {string} viewModelPropertyName
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
-   * @param {Filter[]} filters
+   * @param {FilterInfo[]} filters
    */
   static create(bindingManager,
     node, nodePropertyName, classOfNodeProperty, 

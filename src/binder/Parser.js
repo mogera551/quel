@@ -1,4 +1,3 @@
-import { Filter } from "../filter/Filter.js";
 import { utils } from "../utils.js";
 
 const SAMENAME = "@";
@@ -9,7 +8,7 @@ export class BindTextInfo {
   nodeProperty;
   /** @type {string} bindするviewModelのプロパティ名 */
   viewModelProperty;
-  /** @type {Filter[]} 適用するフィルターの配列 */
+  /** @type {FilterInfo[]} 適用するフィルターの配列 */
   filters;
 }
 
@@ -33,18 +32,18 @@ const decode = s => decodeURIComponent(s);
  * フィルターのパース
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
  * @param {string} text 
- * @returns {Filter}
+ * @returns {FilterInfo}
  */
 const parseFilter = text => {
   const [name, ...options] = text.split(",").map(trim);
-  return Object.assign(new Filter, {name, options:options.map(decode)});
+  return {name, options:options.map(decode)};
 };
 
 /**
  * ViewModelプロパティのパース
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  * @param {string} text 
- * @returns {{viewModelProperty:string,filters:Filter[]}}
+ * @returns {{viewModelProperty:string,filters:FilterInfo[]}}
  */
 const parseViewModelProperty = text => {
   const [viewModelProperty, ...filterTexts] = text.split("|").map(trim);

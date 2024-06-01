@@ -25,7 +25,7 @@ export class Radio extends ElementBase {
     /** @type {MultiValue} */
     const multiValue = this.value;
     return new MultiValue(
-      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters, this.filterFuncs) : multiValue.value, 
+      this.filters.length > 0 ? Filter.applyForInput(multiValue.value, this.filters) : multiValue.value, 
       multiValue.enabled
     );
   }
@@ -36,13 +36,11 @@ export class Radio extends ElementBase {
    * @param {HTMLInputElement} node 
    * @param {string} name 
    * @param {Filter[]} filters 
-   * @param {Object<string,FilterFunc>} filterFuncs
-   * @param {Object<string,EventFilterFunc>} eventFilterFuncs
    */
-  constructor(binding, node, name, filters, filterFuncs, eventFilterFuncs) {
+  constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
     if (node.type !== "radio" && node.type !== "checkbox") utils.raise("Radio: not radio or checkbox");
-    super(binding, node, name, filters, filterFuncs, eventFilterFuncs);
+    super(binding, node, name, filters);
   }
 
   /** 
