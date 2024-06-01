@@ -34,6 +34,16 @@ const str = (v, o, fn) => {
 const arr = (v, o, fn) => {
   return !Array.isArray(v) ? v : fn(v, o);
 }
+/**
+ * 
+ * @param {any} v 
+ * @param {string[]} o 
+ * @param {(any,string[])=>any} fn 
+ * @returns {any}
+ */
+const date = (v, o, fn) => {
+  return !(v instanceof Date) ? v : fn(v, o);
+}
 
 export class outputFilters {
   static styleDisplay = options => value => value ? (options[0] ?? "") : "none";
@@ -60,6 +70,8 @@ export class outputFilters {
   static object       = options => value => value[options[0]];
   static prefix       = options => value => String(options[0]) + String(value);
   static suffix       = this.unit;
+  static date         = options => value => date(value, options, (d, o) => d.toLocaleDateString("ja-JP", o[0] ? o[0] : {}));
+  static isodate      = options => value => date(value, options, (d, o) => d.toLocaleDateString("sv-SE", o[0] ? o[0] : {}));
 
   static #str_at      = options => value => str(value, options, (s, o) => s.at(...o));
   static #str_charAt  = options => value => str(value, options, (s, o) => s.charAt(...o));
@@ -113,8 +125,35 @@ export class outputFilters {
   static #arr_values   = options => value => arr(value, options, (a, o) => a.values(...o));
   static #arr_with     = options => value => arr(value, options, (a, o) => a.with(...o));
 
+  static #date_getDate = options => value => date(value, options, (d, o) => d.getDate(...o));
+  static #date_getDay  = options => value => date(value, options, (d, o) => d.getDay(...o));
+  static #date_getFullYear      = options => value => date(value, options, (d, o) => d.getFullYear(...o));
+  static #date_getHours = options => value => date(value, options, (d, o) => d.getHours(...o));
+  static #date_getMilliseconds = options => value => date(value, options, (d, o) => d.getMilliseconds(...o));
+  static #date_getMinutes = options => value => date(value, options, (d, o) => d.getMinutes(...o));
+  static #date_getMonth = options => value => date(value, options, (d, o) => d.getMonth(...o));
+  static #date_getSeconds = options => value => date(value, options, (d, o) => d.getSeconds(...o));
+  static #date_getTime = options => value => date(value, options, (d, o) => d.getTime(...o));
+  static #date_getTimezoneOffset = options => value => date(value, options, (d, o) => d.getTimezoneOffset(...o));
+  static #date_getUTCDate = options => value => date(value, options, (d, o) => d.getUTCDate(...o));
+  static #date_getUTCDay = options => value => date(value, options, (d, o) => d.getUTCDay(...o));
+  static #date_getUTCFullYear = options => value => date(value, options, (d, o) => d.getUTCFullYear(...o));
+  static #date_getUTCHours = options => value => date(value, options, (d, o) => d.getUTCHours(...o));
+  static #date_getUTCMilliseconds = options => value => date(value, options, (d, o) => d.getUTCMilliseconds(...o));
+  static #date_getUTCMinutes = options => value => date(value, options, (d, o) => d.getUTCMinutes(...o));
+  static #date_getUTCMonth = options => value => date(value, options, (d, o) => d.getUTCMonth(...o));
+  static #date_getUTCSeconds = options => value => date(value, options, (d, o) => d.getUTCSeconds(...o));
+  static #date_toDateString = options => value => date(value, options, (d, o) => d.toDateString(...o));
+  static #date_toISOString = options => value => date(value, options, (d, o) => d.toISOString(...o));
+  static #date_toJSON = options => value => date(value, options, (d, o) => d.toJSON(...o));
+  static #date_toLocaleDateString = options => value => date(value, options, (d, o) => d.toLocaleDateString(...o));
+  static #date_toLocaleString = options => value => date(value, options, (d, o) => d.toLocaleString(...o));
+  static #date_toLocaleTimeString = options => value => date(value, options, (d, o) => d.toLocaleTimeString(...o));
+  static #date_toTimeString = options => value => date(value, options, (d, o) => d.toTimeString(...o));
+  static #date_toUTCString = options => value => date(value, options, (d, o) => d.toUTCString(...o));
+
   static get at() {
-    return Array.isArray(value) ? this.#arr_at : this.#str_at;
+    return options => value => (Array.isArray(value) ? this.#arr_at : this.#str_at)(options)(value);
   }
   static get charAt() {
     return this.#str_charAt;
@@ -126,7 +165,7 @@ export class outputFilters {
     return this.#str_codePointAt;
   }
   static get concat() {
-    return Array.isArray(value) ? this.#arr_concat : this.#str_concat;
+    return options => value => (Array.isArray(value) ? this.#arr_concat : this.#str_concat)(options)(value);
   }
   static get endsWith() {
     return this.#str_endsWith;
@@ -138,10 +177,10 @@ export class outputFilters {
     return this.#arr_flat;
   }
   static get includes() {
-    return Array.isArray(value) ? this.#arr_includes : this.#str_includes;
+    return options => value => (Array.isArray(value) ? this.#arr_includes : this.#str_includes)(options)(value);
   }
   static get indexOf() {
-    return Array.isArray(value) ? this.#arr_indexOf : this.#str_indexOf;
+    return options => value => (Array.isArray(value) ? this.#arr_indexOf : this.#str_indexOf)(options)(value);
   }
   static get join() {
     return this.#arr_join;
@@ -150,7 +189,7 @@ export class outputFilters {
     return this.#arr_keys;
   }
   static get lastIndexOf() {
-    return Array.isArray(value) ? this.#arr_lastIndexOf : this.#str_lastIndexOf;
+    return options => value => (Array.isArray(value) ? this.#arr_lastIndexOf : this.#str_lastIndexOf)(options)(value);
   }
   static get localeCompare() {
     return this.#str_localeCompare;
@@ -183,7 +222,7 @@ export class outputFilters {
     return this.#str_search;
   }
   static get slice() {
-    return Array.isArray(value) ? this.#arr_slice : this.#str_slice;
+    return options => value => (Array.isArray(value) ? this.#arr_slice : this.#str_slice)(options)(value);
   }
   static get split() {
     return this.#str_split;
@@ -201,7 +240,11 @@ export class outputFilters {
     return this.#num_toFixed;
   }
   static get toLocaleString() {
-    return Array.isArray(value) ? this.#arr_toLocaleString : this.#num_toLocaleString;
+    return options => value => (
+      (value instanceof Date) ? this.#date_toLocaleString : 
+      Array.isArray(value) ? this.#arr_toLocaleString : 
+      this.#num_toLocaleString
+    )(options)(value);
   }
   static get toLocaleLowerCase() {
     return this.#str_toLocaleLowerCase;
@@ -227,9 +270,6 @@ export class outputFilters {
   static get toUpperCase() {
     return this.#str_toUpperCase;
   }
-  //static get toWellFormed() {
-  //  return this.#str_toWellFormed;
-  //}
   static get trim() {
     return this.#str_trim;
   }
@@ -246,9 +286,87 @@ export class outputFilters {
     return this.#arr_with;
   }
 
+  static get getDate() {
+    return this.#date_getDate;
+  }
+  static get getDay() {
+    return this.#date_getDay;
+  }
+  static get getFullYear() {
+    return this.#date_getFullYear;
+  }
+  static get getHours() {
+    return this.#date_getHours;
+  }
+  static get getMilliseconds() {
+    return this.#date_getMilliseconds;
+  }
+  static get getMinutes() {
+    return this.#date_getMinutes;
+  }
+  static get getMonth() {
+    return this.#date_getMonth;
+  }
+  static get getSeconds() {
+    return this.#date_getSeconds;
+  }
+  static get getTime() {
+    return this.#date_getTime;
+  }
+  static get getTimezoneOffset() {
+    return this.#date_getTimezoneOffset;
+  }
+  static get getUTCDate() {
+    return this.#date_getUTCDate;
+  }
+  static get getUTCDay() {
+    return this.#date_getUTCDay;
+  }
+  static get getUTCFullYear() {
+    return this.#date_getUTCFullYear;
+  }
+  static get getUTCHours() {
+    return this.#date_getUTCHours;
+  }
+  static get getUTCMilliseconds() {
+    return this.#date_getUTCMilliseconds;
+  }
+  static get getUTCMinutes() {
+    return this.#date_getUTCMinutes;
+  }
+  static get getUTCMonth() {
+    return this.#date_getUTCMonth;
+  }
+  static get getUTCSeconds() {
+    return this.#date_getUTCSeconds;
+  }
+  static get toDateString() {
+    return this.#date_toDateString;
+  }
+  static get toISOString() {
+    return this.#date_toISOString;
+  }
+  static get toJSON() {
+    return this.#date_toJSON;
+  }
+  static get toLocaleDateString() {
+    return this.#date_toLocaleDateString;
+  }
+  static get toLocaleTimeString() {
+    return this.#date_toLocaleTimeString;
+  }
+  static get toTimeString() {
+    return this.#date_toTimeString;
+  }
+  static get toUTCString() {
+    return this.#date_toUTCString;
+  }
+
 }
 
 export class inputFilters {
+  static date         = options => value => value === "" ? null : new Date(value);
+  static isodate      = options => value => value === "" ? null : new Date(new Date(value).setHours(0));
   static number       = options => value => value === "" ? null : Number(value);
   static boolean      = options => value => value === "" ? null : Boolean(value);
 }
