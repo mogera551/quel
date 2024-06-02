@@ -52,8 +52,7 @@ export class RepeatKeyed extends Repeat {
       const parentNode = this.node.parentNode;
       if (setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
-        const [ name, index ] = [ this.binding.viewModelProperty.name, newIndex ];
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
       } else {
         // 元のインデックスがある場合（既存）
@@ -101,8 +100,7 @@ export class RepeatKeyed extends Repeat {
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager === "undefined") {
-        const name = this.binding.viewModelProperty.name;
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, {name, index});
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
       }
       this.binding.replaceChild(index, bindingManager);
       bindingManager.registerBindingsToSummary();

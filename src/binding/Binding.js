@@ -60,8 +60,12 @@ export class Binding {
   }
 
   /** @type {boolean} for select tag value */
+  #isSelectValue;
   get isSelectValue() {
-    return this.nodeProperty.isSelectValue;
+    if (typeof this.#isSelectValue === "undefined") {
+      this.#isSelectValue = this.nodeProperty.isSelectValue;
+    }
+    return this.#isSelectValue;
   }
 
   /**
@@ -200,6 +204,8 @@ export class Binding {
   }
 }
 
+const appendChildFunc = fragment => node => fragment.appendChild(node);
+
 export class BindingManager {
   /** @type { Component } */
   #component;
@@ -256,18 +262,42 @@ export class BindingManager {
     this.#parentBinding = value;
   }
 
+  /** @type {(node:Node)=>void} */
+  #appendChildFunc;
+
+  /** @type {(binding:Binding)=>void} */
+  #applyToViewModelFunc = binding => binding.applyToViewModel();
+
+  /** @type {(binding:Binding)=>void} */
+  #applyToNodeFunc = binding => binding.applyToNode();
+
+  /**
+   * 
+   * @param {Binding[]} selectBindings 
+   * @param {Binding} binding 
+   * @returns {Binding[]}
+   */
+  #applyToNodeExcludeSelectFunc = (selectBindings, binding) => 
+    binding.isSelectValue ? (selectBindings.push(binding), selectBindings) : (this.#applyToNodeFunc(binding), selectBindings);
+
+  /** @type {BindingSummary} */
+  #bindingSummary;
+
+  /** @type {(binding:Binding)=>void} */
+  #registerBindingsToSummaryFunc = binding => this.#bindingSummary.add(binding);
+
   /**
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {{name:string,index:number}|undefined} loopInfo
    */
-  constructor(component, template, parentBinding, loopInfo) {
+  constructor(component, template, parentBinding) {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
     this.#loopContext = new LoopContext(this);
+    this.#bindingSummary = component.bindingSummary;
   }
 
   /**
@@ -279,40 +309,35 @@ export class BindingManager {
     this.#bindings = Binder.bind(this, nodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
+    this.#appendChildFunc = appendChildFunc(this.#fragment);
   }
 
   /**
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
+    this.#bindings.forEach(this.#registerBindingsToSummaryFunc);
   }
 
   /**
    * apply value to node
    */
   applyToNode() {
-    const selectBindings = new Set;
-    for(const binding of this.bindings) {
-      binding.isSelectValue ? selectBindings.add(binding) : binding.applyToNode();
-    }
-    for(const binding of selectBindings) {
-      binding.applyToNode();
-    }
+    this.#bindings.reduce(this.#applyToNodeExcludeSelectFunc, []).forEach(this.#applyToNodeFunc);
   }
 
   /**
    * apply value to ViewModel
    */
   applyToViewModel() {
-    this.bindings.forEach(binding => binding.applyToViewModel());
+    this.#bindings.forEach(this.#applyToViewModelFunc);
   }
 
   /**
    * remove nodes, append to fragment
    */
   removeNodes() {
-    this.#nodes.forEach(node => this.fragment.appendChild(node));
+    this.#nodes.forEach(this.#appendChildFunc);
   }
 
   /**
@@ -384,11 +409,10 @@ export class BindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {{name:string,index:number}|undefined} loopInfo
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding, loopInfo) {
-    const bindingManager = ReuseBindingManager.create(component, template, parentBinding, loopInfo);
+  static create(component, template, parentBinding) {
+    const bindingManager = ReuseBindingManager.create(component, template, parentBinding);
     return bindingManager;
   }
 

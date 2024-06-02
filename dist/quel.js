@@ -2401,8 +2401,7 @@ class Repeat extends TemplateProperty {
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
-        const [ name, index ] = [this.binding.viewModelProperty.name, newIndex]; 
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         this.binding.appendChild(bindingManager);
         bindingManager.registerBindingsToSummary();
         bindingManager.applyToNode();
@@ -3115,8 +3114,7 @@ class RepeatKeyed extends Repeat {
       const parentNode = this.node.parentNode;
       if (setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
-        const [ name, index ] = [ this.binding.viewModelProperty.name, newIndex ];
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, { name, index });
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
       } else {
         // 元のインデックスがある場合（既存）
@@ -3164,8 +3162,7 @@ class RepeatKeyed extends Repeat {
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager === "undefined") {
-        const name = this.binding.viewModelProperty.name;
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding, {name, index});
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
       }
       this.binding.replaceChild(index, bindingManager);
       bindingManager.registerBindingsToSummary();
@@ -3682,13 +3679,12 @@ class ReuseBindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {{name:string,index:number}|undefined} loopInfo
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding, loopInfo) {
+  static create(component, template, parentBinding) {
     let bindingManager = bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
-      bindingManager = new BindingManager(component, template, parentBinding, loopInfo);
+      bindingManager = new BindingManager(component, template, parentBinding);
       bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
@@ -3860,8 +3856,12 @@ class Binding {
   }
 
   /** @type {boolean} for select tag value */
+  #isSelectValue;
   get isSelectValue() {
-    return this.nodeProperty.isSelectValue;
+    if (typeof this.#isSelectValue === "undefined") {
+      this.#isSelectValue = this.nodeProperty.isSelectValue;
+    }
+    return this.#isSelectValue;
   }
 
   /**
@@ -4000,6 +4000,8 @@ class Binding {
   }
 }
 
+const appendChildFunc = fragment => node => fragment.appendChild(node);
+
 class BindingManager {
   /** @type { Component } */
   #component;
@@ -4056,18 +4058,42 @@ class BindingManager {
     this.#parentBinding = value;
   }
 
+  /** @type {(node:Node)=>void} */
+  #appendChildFunc;
+
+  /** @type {(binding:Binding)=>void} */
+  #applyToViewModelFunc = binding => binding.applyToViewModel();
+
+  /** @type {(binding:Binding)=>void} */
+  #applyToNodeFunc = binding => binding.applyToNode();
+
+  /**
+   * 
+   * @param {Binding[]} selectBindings 
+   * @param {Binding} binding 
+   * @returns {Binding[]}
+   */
+  #applyToNodeExcludeSelectFunc = (selectBindings, binding) => 
+    binding.isSelectValue ? (selectBindings.push(binding), selectBindings) : (this.#applyToNodeFunc(binding), selectBindings);
+
+  /** @type {BindingSummary} */
+  #bindingSummary;
+
+  /** @type {(binding:Binding)=>void} */
+  #registerBindingsToSummaryFunc = binding => this.#bindingSummary.add(binding);
+
   /**
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {{name:string,index:number}|undefined} loopInfo
    */
-  constructor(component, template, parentBinding, loopInfo) {
+  constructor(component, template, parentBinding) {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
     this.#loopContext = new LoopContext(this);
+    this.#bindingSummary = component.bindingSummary;
   }
 
   /**
@@ -4079,40 +4105,35 @@ class BindingManager {
     this.#bindings = bind(this, nodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
+    this.#appendChildFunc = appendChildFunc(this.#fragment);
   }
 
   /**
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    this.#bindings.forEach(binding => this.#component.bindingSummary.add(binding));
+    this.#bindings.forEach(this.#registerBindingsToSummaryFunc);
   }
 
   /**
    * apply value to node
    */
   applyToNode() {
-    const selectBindings = new Set;
-    for(const binding of this.bindings) {
-      binding.isSelectValue ? selectBindings.add(binding) : binding.applyToNode();
-    }
-    for(const binding of selectBindings) {
-      binding.applyToNode();
-    }
+    this.#bindings.reduce(this.#applyToNodeExcludeSelectFunc, []).forEach(this.#applyToNodeFunc);
   }
 
   /**
    * apply value to ViewModel
    */
   applyToViewModel() {
-    this.bindings.forEach(binding => binding.applyToViewModel());
+    this.#bindings.forEach(this.#applyToViewModelFunc);
   }
 
   /**
    * remove nodes, append to fragment
    */
   removeNodes() {
-    this.#nodes.forEach(node => this.fragment.appendChild(node));
+    this.#nodes.forEach(this.#appendChildFunc);
   }
 
   /**
@@ -4184,11 +4205,10 @@ class BindingManager {
    * @param {Component} component
    * @param {HTMLTemplateElement} template
    * @param {Binding|undefined} parentBinding
-   * @param {{name:string,index:number}|undefined} loopInfo
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding, loopInfo) {
-    const bindingManager = ReuseBindingManager.create(component, template, parentBinding, loopInfo);
+  static create(component, template, parentBinding) {
+    const bindingManager = ReuseBindingManager.create(component, template, parentBinding);
     return bindingManager;
   }
 
