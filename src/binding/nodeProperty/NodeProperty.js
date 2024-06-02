@@ -1,6 +1,6 @@
 import "../../types.js";
 import { utils } from "../../utils.js";
-import { FilterManager } from "../../filter/Manager.js";
+import { FilterManager, Filters } from "../../filter/Manager.js";
 
 export class NodeProperty {
   /** @type {Node} */
@@ -80,7 +80,7 @@ export class NodeProperty {
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = filters.toReversed().map(info => input.getFilterFunc(info.name)(info.options));
+    this.#filters = Filters.create(filters.toReversed(), input);
   }
 
   /**

@@ -30,4 +30,7 @@ export const Symbols = Object.assign({
   propInitialize: Symbol.for(`${myname}:props.initialize`),
 
   isComponent: Symbol.for(`${myname}:component.isComponent`),
+
+  nullFilter: Symbol.for(`${myname}:filter.nullFilter`),
+  notnullFilter: Symbol.for(`${myname}:filter.notnullFilter`),
 }, DotNotationSymbols);

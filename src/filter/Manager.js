@@ -1,13 +1,26 @@
+import { config } from "../Config.js";
+import { Symbols } from "../Symbols.js";
 import "../types.js"
 import { utils } from "../utils.js";
 
+/**
+ * ambigous name:
+ * "entries", "forEach", "has", "keys", "values", "parse",
+ * "toString", "toLocaleString", "valueOf", "at", "concat", 
+ * "includes", "indexOf", "lastIndexOf", "slice"
+ */
+
+
+/**
+ * @typedef {(value:any,callback:FilterFunc)=>any} DecorateFunc
+ */
 /**
  * @typedef {object} FilterGroup
  * @property {class} ObjectClass
  * @property {string} prefix
  * @property {Set<string>} prototypeFuncs
  * @property {Set<string>} staticFuncs
- * @property {FilterTypeFunc} typeFunc
+ * @property {DecorateFunc} decorateFunc
  */
 
 /** @type {FilterGroup} */
@@ -16,6 +29,7 @@ const objectFilterGroup = {
   prefix: "o",
   prototypeFuncs: new Set([
     "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable", "toLocaleString", 
+    "toString", "valueOf",
   ]),
   staticFuncs: new Set([
     "create", "defineProperties", "defineProperty", "entries", "fromEntries", 
@@ -23,6 +37,7 @@ const objectFilterGroup = {
     "getPrototypeOf", "is", "isExtensible", "isFrozen", 
     "isSealed", "keys", "preventExtensions", "values", 
   ]),
+  
 };
 
 /** @type {FilterGroup} */
@@ -33,7 +48,7 @@ const arrayFilterGroup = {
     "at", "concat", "entries", "flat", 
     "includes", "indexOf", "join", "keys", 
     "lastIndexOf", "slice", "toLocaleString", "toReversed", 
-    "toSorted", "toSpliced", "values", "with"
+    "toSorted", "toSpliced", "values", "with", "toString",
   ]),
   staticFuncs: new Set([
     "from", "isArray", "of"
@@ -45,7 +60,8 @@ const numberFilterGroup = {
   ObjectClass: Number,
   prefix: "n",
   prototypeFuncs: new Set([
-    "toExponential", "toFixed", "toLocaleString", "toPrecision"
+    "toExponential", "toFixed", "toLocaleString", "toPrecision",
+    "toString", "valueOf",
   ]),
   staticFuncs: new Set([
     "isFinite", "isInteger", "isNaN", "isSafeInteger", 
@@ -65,7 +81,7 @@ const stringFilterGroup = {
     "replaceAll", "search", "slice", "split",
     "startsWith", "substring", "toLocaleLowerCase", "toLocaleUpperCase",
     "toLowerCase", "toUpperCase", "trim", "trimEnd",
-    "trimStart",
+    "trimStart", "valueOf", "toString",
   ]),
   staticFuncs: new Set([
     "fromCharCode", "fromCodePoint", "raw"
@@ -83,7 +99,7 @@ const dateFilterGroup = {
     "getUTCFullYear", "getUTCHours", "getUTCMilliseconds", "getUTCMinutes",
     "getUTCMonth", "getUTCSeconds", "toDateString", "toISOString",
     "toJSON", "toLocaleDateString", "toLocaleString", "toLocaleTimeString",
-    "toTimeString", "toUTCString",
+    "toTimeString", "toUTCString", "valueOf", "toString",
   ]),
   staticFuncs: new Set([
     "now", "parse", "UTC"
@@ -145,7 +161,7 @@ const mathFilterGroup = {
 const regExpFilterGroup = {
   ObjectClass: RegExp,
   prototypeFuncs: new Set([
-    "exec", "test"
+    "exec", "test", "toString"
   ]),
   staticFuncs: new Set([
   ]),
@@ -163,9 +179,9 @@ class DefaultFilters {
   static ge           = options => value => Number(value) >= Number(options[0]); // greater than or equal
   static oi           = options => value => Number(options[0]) < Number(value) && Number(value) < Number(options[1]); // open interval
   static ci           = options => value => Number(options[0]) <= Number(value) && Number(value) <= Number(options[1]); // closed interval
-  static embed        = options => value => (value != null) ? (options[0] ?? "").replaceAll("%s", value) : null;
+  static embed        = options => value => (options[0] ?? "").replaceAll("%s", value);
   static iftext       = options => value => value ? options[0] ?? null : options[1] ?? null;
-  static null         = options => value => (value == null) ? true : false;
+  static isnull       = options => value => (value == null) ? true : false;
   static offset       = options => value => Number(value) + Number(options[0]);
   static unit         = options => value => String(value) + String(options[0]);
   static inc          = this.offset;
@@ -176,6 +192,8 @@ class DefaultFilters {
   static prefix       = options => value => String(options[0]) + String(value);
   static suffix       = this.unit;
   static date         = options => value => Date.prototype.toLocaleDateString.apply(value, ["sv-SE", options[0] ? options[0] : {}]);
+  static null         = options => value => Symbols.nullFilter;
+  static notnull      = options => value => Symbols.notnullFilter;
 
 }
 
@@ -187,8 +205,8 @@ const defaultFilterGroup = {
   ]),
   staticFuncs: new Set([
     "truthy", "falsey", "not", "eq", "ne", "lt", "le", "gt", "ge", "oi", "ci", 
-    "embed", "iftext", "null", "offset", "unit", "inc", "mul", "div", "mod", 
-    "prop", "prefix", "suffix", "date"
+    "embed", "iftext", "isnull", "offset", "unit", "inc", "mul", "div", "mod", 
+    "prop", "prefix", "suffix", "date", "null", "notnull",
   ]),
 };
 
@@ -228,6 +246,24 @@ const outputGroups = [
   numberFilterGroup, stringFilterGroup, mathFilterGroup,
 ];
 
+export class Filters {
+  /**
+   * 
+   * @param {FilterInfo[]} filters 
+   * @param {FilterManager} manager
+   * @returns {FilterFunc[]}
+   */
+  static create(filters, manager) {
+    let _filters = Array.from(filters);
+    if (manager instanceof OutputFilterManager) {
+      if (!filters.find(info => info.name === "isnull" | info.name === "null" || info.name === "notnull")) {
+        _filters = [{name: "null", options: []}].concat(_filters);
+      }
+    }
+    return _filters.map(info => manager.getFilterFunc(info.name)(info.options));
+  }
+}
+
 export class FilterManager {
   /** @type {Set<string>} */
   ambigousNames;
@@ -252,6 +288,7 @@ export class FilterManager {
    * @returns {FilterFuncWithOption}
    */
   getFilterFunc(name) {
+    this.ambigousNames.has(name) && utils.raise(`${this.constructor.name}: ${name} is ambigous`);
     const func = this.funcByName.get(name);
     return func ?? (options => value => value);
   }
@@ -263,7 +300,26 @@ export class FilterManager {
    * @returns {any}
    */
   static applyFilter(value, filters) {
-    return filters.reduce((value, filter) => filter(value), value);
+    return filters.reduce(({ value, state }, filter) => {
+      const retObj = {};
+      let retValue;
+      if (state !== Symbols.nullFilter || value != null) {
+        retValue = filter(value);
+      } else {
+        retValue = value;
+      }
+      if (retValue === Symbols.nullFilter) {
+        retObj.value = value;
+        retObj.state = Symbols.nullFilter;
+      } else if (retValue === Symbols.notnullFilter) {
+        retObj.value = value;
+        retObj.state = Symbols.notnullFilter;
+      } else {
+        retObj.value = retValue;
+        retObj.state = state;
+      }
+      return retObj;
+    }, {value, state:undefined}).value;
   }
 }
 

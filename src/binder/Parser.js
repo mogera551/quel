@@ -26,7 +26,11 @@ const trim = s => s.trim();
  */
 const has = s => s.length > 0;
 
-const decode = s => decodeURIComponent(s);
+const re = new RegExp(/^#(.*)#$/);
+const decode = s => {
+  const m = re.exec(s);
+  return m ? decodeURIComponent(m[1]) : s;
+};
 
 /**
  * フィルターのパース
@@ -47,7 +51,7 @@ const parseFilter = text => {
  */
 const parseViewModelProperty = text => {
   const [viewModelProperty, ...filterTexts] = text.split("|").map(trim);
-  return {viewModelProperty, filters:filterTexts.map(text => parseFilter(text))};
+  return {viewModelProperty, filters:filterTexts.map(parseFilter)};
 };
 
 /**

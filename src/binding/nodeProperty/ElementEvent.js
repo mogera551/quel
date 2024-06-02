@@ -1,5 +1,5 @@
 import { Symbols } from "../../Symbols.js";
-import { FilterManager } from "../../filter/Manager.js";
+import { FilterManager, Filters } from "../../filter/Manager.js";
 import { ProcessData } from "../../thread/ViewModelUpdator.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
@@ -45,7 +45,7 @@ export class ElementEvent extends ElementBase {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
     const event = binding.component.filters.event;
-    this.#eventFilters = filters.map(info => event.getFilterFunc(info.name)(info.options));
+    this.#eventFilters = Filters.create(filters, event)
   }
 
   /**

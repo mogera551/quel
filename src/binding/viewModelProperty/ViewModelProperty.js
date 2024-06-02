@@ -2,7 +2,7 @@ import "../../types.js";
 import { MultiValue } from "../nodeProperty/MultiValue.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
-import { FilterManager } from "../../filter/Manager.js";
+import { FilterManager, Filters } from "../../filter/Manager.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -110,7 +110,7 @@ export class ViewModelProperty {
     const out = binding.component.filters.out;
     this.#binding = binding;
     this.#name = name;
-    this.#filters = filters.map(info => out.getFilterFunc(info.name)(info.options));
+    this.#filters = Filters.create(filters, out);
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
   }
