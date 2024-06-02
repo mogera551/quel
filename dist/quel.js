@@ -4992,12 +4992,12 @@ function copyStyleRules(fromStyleSheet, toStyleSheet) {
 function createStyleSheet(name) {
   const styleSheet = new CSSStyleSheet();
   const matchTitle = sheet => sheet.title === name;
-  const fromStyleSheet = Array.from(document.styleSheets).find(matchTitle);
-  if (!fromStyleSheet) {
+  const fromStyleSheets = Array.from(document.styleSheets).filter(matchTitle);
+  if (fromStyleSheets.length === 0) {
     // ToDo: warning
     return;
   }
-  copyStyleRules(fromStyleSheet, styleSheet);
+  fromStyleSheets.forEach(fromStyleSheet => copyStyleRules(fromStyleSheet, styleSheet));
   styleSheetByName.set(name, styleSheet);
   return styleSheet;
 }
