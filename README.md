@@ -39,7 +39,7 @@ Simple and declarative view
     <span data-bind="class.selected:taskList.*.selected">{{ taskList.* }}</span>, 
     <button data-bind="delete">X</button>
   </li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 ```
 
@@ -191,13 +191,13 @@ export const html = `
 <!-- conditional branching -->
 {{ if:is5Times }}
   <div>It has been pressed more than 5 times.</div>
-{{ end: }}
+{{ endif: }}
 
 <!-- repetition -->
 <ul>
   {{ loop:animals }}
     <li>{{ animals.* }}</li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 `;
 ```
@@ -493,7 +493,6 @@ Features of filters (differences from accessor properties)
 
 |Name|Options|Type|Memo|
 |----|----|----|----|
-|styleDisplay|[string]|||
 |truthy|||prop ? true : false|
 |falsey|||!prop ? true : false|
 |not|||!prop ? true : false|
@@ -504,8 +503,8 @@ Features of filters (differences from accessor properties)
 |gt|[number]||prop > [number]|
 |ge|[number]||prop >= [number]|
 |embed|[format]||like printf, replace %s to prop|
-|ifText|[string1][string2]||prop is true then [string1] else [string2]|
-|null|||prop == null|
+|iftext|[string1][string2]||prop is true then [string1] else [string2]|
+|isnull|||prop == null|
 |offset|[number]||prop + [number]|
 |unit|[string]||prop + [string]|
 |inc|[number]||prop + [number]|
@@ -530,7 +529,7 @@ Features of filters (differences from accessor properties)
 |replace|...|string||
 |replaceAll|...|string||
 |search|...|string||
-|slice|...|string||
+|s.slice|...|string||
 |split|...|string||
 |startsWith|...|string||
 |substring|...|string||
@@ -554,7 +553,7 @@ Features of filters (differences from accessor properties)
 |join|...|Array||
 |keys|...|Array||
 |lastIndexOf|...|Array||
-|slice|...|Array||
+|a.slice|...|Array||
 |toLocaleString|...|Array||
 |toReversed|...|Array||
 |toSorted|...|Array||
@@ -585,8 +584,8 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step5).
 
 ### Step 6. Conditional Branch Block
 * You can control the display using the properties of `ViewModel` as conditions.
-* Enclose the block to be controlled (a set of elements) with `{{ if:(ViewModel property) }} ... {{ end: }}`. -> `{{ if:val }} ... {{ end: }}`
-* Use `{{ else }}` to display false conditions.
+* Enclose the block to be controlled (a set of elements) with `{{ if:(ViewModel property) }} ... {{ endif: }}`. -> `{{ if:val }} ... {{ endif: }}`
+* Use `{{ else: }}` to display false conditions.
 * There is no `else if`.
 * A single property is used as a condition. -> Conditions cannot handle multiple properties.
 
@@ -597,7 +596,7 @@ Content of the `html` variable in `main.js`
   <div>val is true</div>
 {{ else: }}
   <div>val is false</div>
-{{ end: }}
+{{ endif: }}
 ```
 
 `ViewModel` class in `main.js`
@@ -616,9 +615,9 @@ See [source](https://github.com/mogera551/quel/tree/main/tutorials/step6).
 
 ### Step 7. Loop Block
 * You can repeat the display block using the array properties of `ViewModel`.
-* Enclose the block to be repeated (a set of elements) with `{{ loop:(ViewModel property) }} ... {{ end: }}` in html.
-   * `{{ loop:animals }} ... {{ end: }}`
-   * `{{ loop:fruits }} ... {{ end: }}`
+* Enclose the block to be repeated (a set of elements) with `{{ loop:(ViewModel property) }} ... {{ endloop: }}` in html.
+   * `{{ loop:animals }} ... {{ endloop: }}`
+   * `{{ loop:fruits }} ... {{ endloop: }}`
 * Within the repeating block, describe the array elements using dot notation with wildcard `*`.
    * `animals.*`
    * `fruits.*.name`
@@ -629,12 +628,12 @@ Content of the `html` variable in `main.js`
 <ul>
 {{ loop:animals }}
   <li>{{ animals.* }}</li>
-{{ end: }}
+{{ endloop: }}
 </ul>
 <ul>
 {{ loop:fruits }}
   <li>{{ fruits.*.name }}({{ fruits.*.color }})</li>
-{{ end: }}
+{{ endloop: }}
 </ul>
 ```
 
@@ -668,9 +667,9 @@ Content of the `html` variable in `main.js`
 <ul>
   {{ loop:commits }}
   <li>
-    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
+    {{ commits.*.sha|s.slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
   </li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 ```
 
@@ -708,9 +707,9 @@ display
 <ul>
   {{ loop:commits }}
   <li>
-    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
+    {{ commits.*.sha|s.slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
   </li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 ```
 
@@ -889,7 +888,7 @@ Content of the `html` variable in `main.js`
   {{ members.*.no }} = {{ $1|offset,1 }}:{{ members.*.name }}, {{ members.*.age }}
   <button type="button" data-bind="onclick:popup">popup</button>
 </div>
-{{ end: }}
+{{ endloop: }}
 ```
 
 `ViewModel` class in `main.js`
@@ -934,7 +933,7 @@ Content of the `html` variable in `main.js`
 <button type="button" data-bind="onclick:dump">dump fruits</button>
 {{ loop:fruits }}
 <div><input type="text" data-bind="fruits.*">{{ fruits.* }}</div>
-{{ end: }}
+{{ endloop: }}
 ```
 
 `ViewModel` class in `main.js`
@@ -1059,7 +1058,7 @@ class ViewModel {
 
 #### htmlのリスト部分
 * モックのリスト部分を元にして作成
-* ToDoリストの繰り返すブロックを`{{ loop: }} ～ {{ end: }}`で括る
+* ToDoリストの繰り返すブロックを`{{ loop: }} ～ {{ endloop: }}`で括る
 * チェックボックスのチェック状態とToDoの完了フラグをバインドする。`data-bind="todoItems.*.completed"`
 * ToDoの内容の表示`{{ todoItems.*.content }}`
 * ToDoの完了フラグの状態によりクラス属性にcompletedを追加、削除する。`data-bind="class.completed:todoItems.*.completed"`
@@ -1072,7 +1071,7 @@ class ViewModel {
     <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
     <button type="button" data-bind="delete">削除</button>
   </li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 ```
 
@@ -1115,14 +1114,14 @@ const html = `
     <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
     <button type="button" data-bind="delete">削除</button>
   </li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 `;
 
 /**
  * @typedef {Object} TodoItem
  * @property {string} content
- * @property {completed} false;
+ * @property {boolean} completed;
  */
 
 class ViewModel {
@@ -1134,7 +1133,7 @@ class ViewModel {
    * add todo item
    */
   add() {
-    this.todoItems = this.todoItems.concat(new TodoItem(this.content));
+    this.todoItems = this.todoItems.concat({content:this.content, completed:false}));
     this.content = "";
   }
   /**
