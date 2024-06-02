@@ -25,7 +25,7 @@ export class ElementStyle extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");

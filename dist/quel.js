@@ -2036,7 +2036,7 @@ class FilterManager {
   funcByName;
 
   /**
-   * register user defined filter 
+   * register user defined filter, check duplicate name
    * @param {string} name 
    * @param {FilterFuncWithOption} filterFunc 
    */
@@ -2368,7 +2368,7 @@ class TemplateProperty extends NodeProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Comment} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
@@ -2419,7 +2419,7 @@ class Repeat extends TemplateProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Comment} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
@@ -2460,7 +2460,7 @@ class Branch extends TemplateProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Comment} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (name !== "if") utils.raise(`Branch: invalid property name ${name}`);
@@ -2654,7 +2654,7 @@ class ContextIndex extends ViewModelProperty {
    * 
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, name, filters) {
     if (!regexp$1.test(name)) utils.raise(`ContextIndex: invalid name ${name}`);
@@ -2673,7 +2673,7 @@ class ElementBase extends NodeProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Element} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilteInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Element)) utils.raise("ElementBase: not element");
@@ -2698,7 +2698,7 @@ class ElementClassName extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (name !== NAME) utils.raise(`ElementClassName: invalid property name ${name}`);
@@ -2909,7 +2909,7 @@ class ElementClass extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX$1)) utils.raise(`ElementClass: invalid property name ${name}`);
@@ -2956,7 +2956,7 @@ class ElementStyle extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");
@@ -3023,7 +3023,7 @@ class ComponentProperty extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node.constructor[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");
@@ -5282,20 +5282,25 @@ class MixedComponent {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    /** @type {CSSStyleSheet} styleSheet */
+    /**
+     * @type {{
+     *   template:HTMLTemplateElement,
+     *   styleSheet:CSSStyleSheet,
+     *   inputFilters:Object<string,FilterFuncWithOption>,
+     *   outputFilters:Object<string,FilterFuncWithOption>,
+     *   eventFilters:Object<string,FilterFuncWithOption>
+     * }} 
+     */
     const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
     for(const [name, filterFunc] of Object.entries(inputFilters)) {
-      if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
       this.filters.in.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(outputFilters)) {
-      if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
       this.filters.out.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(eventFilters)) {
-      if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
       this.filters.event.registerFilter(name, filterFunc);
     }
     // create and attach shadowRoot
@@ -5715,13 +5720,13 @@ function generateComponentClass(componentModule) {
       /** @type {ViewModel.constructor} */
       static ViewModel = module.ViewModel;
 
-      /**@type {Object<string,FilterFunc>} */
+      /**@type {Object<string,FilterFuncWithOption>} */
       static inputFilters = module.filters?.input ?? {};
 
-      /** @type {Object<string,FilterFunc>} */
+      /** @type {Object<string,FilterFuncWithOption>} */
       static outputFilters = module.filters?.output ?? {};
 
-      /** @type {Object<string,EventFilterFunc>} */
+      /** @type {Object<string,EventFilterFuncWithOption>} */
       static eventFilters = module.filters?.event ?? {};
 
       /** @type {boolean} */

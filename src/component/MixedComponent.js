@@ -270,20 +270,25 @@ export class MixedComponent {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
-    /** @type {CSSStyleSheet} styleSheet */
+    /**
+     * @type {{
+     *   template:HTMLTemplateElement,
+     *   styleSheet:CSSStyleSheet,
+     *   inputFilters:Object<string,FilterFuncWithOption>,
+     *   outputFilters:Object<string,FilterFuncWithOption>,
+     *   eventFilters:Object<string,FilterFuncWithOption>
+     * }} 
+     */
     const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
     for(const [name, filterFunc] of Object.entries(inputFilters)) {
-      if (name in this.filters.in) utils.raise(`mixInComponent: already exists filter ${name}`);
       this.filters.in.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(outputFilters)) {
-      if (name in this.filters.out) utils.raise(`mixInComponent: already exists filter ${name}`);
       this.filters.out.registerFilter(name, filterFunc);
     }
     for(const [name, filterFunc] of Object.entries(eventFilters)) {
-      if (name in this.filters.event) utils.raise(`mixInComponent: already exists filter ${name}`);
       this.filters.event.registerFilter(name, filterFunc);
     }
     // create and attach shadowRoot

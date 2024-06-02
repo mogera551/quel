@@ -29,13 +29,13 @@ export function generateComponentClass(componentModule) {
       /** @type {ViewModel.constructor} */
       static ViewModel = module.ViewModel;
 
-      /**@type {Object<string,FilterFunc>} */
+      /**@type {Object<string,FilterFuncWithOption>} */
       static inputFilters = module.filters?.input ?? {};
 
-      /** @type {Object<string,FilterFunc>} */
+      /** @type {Object<string,FilterFuncWithOption>} */
       static outputFilters = module.filters?.output ?? {};
 
-      /** @type {Object<string,EventFilterFunc>} */
+      /** @type {Object<string,EventFilterFuncWithOption>} */
       static eventFilters = module.filters?.event ?? {};
 
       /** @type {boolean} */

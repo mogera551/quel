@@ -52,7 +52,7 @@ export class ComponentProperty extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node.constructor[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");

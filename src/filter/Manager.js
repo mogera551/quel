@@ -271,7 +271,7 @@ export class FilterManager {
   funcByName;
 
   /**
-   * register user defined filter 
+   * register user defined filter, check duplicate name
    * @param {string} name 
    * @param {FilterFuncWithOption} filterFunc 
    */

@@ -23,7 +23,7 @@ export class ElementClass extends ElementBase {
    * @param {import("../Binding.js").Binding} binding
    * @param {HTMLInputElement} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementClass: invalid property name ${name}`);

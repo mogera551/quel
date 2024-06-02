@@ -104,9 +104,9 @@
 
 /**
  * @typedef {Object} ComponentModuleFilters
- * @property {Object<string,FilterFunc>|undefined} input
- * @property {Object<string,FilterFunc>|undefined} output
- * @property {Object<string,EventFilterFunc>|undefined} event
+ * @property {Object<string,FilterFuncWithOption>|undefined} input
+ * @property {Object<string,FilterFuncWithOption>|undefined} output
+ * @property {Object<string,EventFilterFuncWithOption>|undefined} event
  
  */
 

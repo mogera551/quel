@@ -45,7 +45,7 @@ export class Repeat extends TemplateProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Comment} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);

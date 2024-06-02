@@ -34,7 +34,7 @@ export class TemplateProperty extends NodeProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {Comment} node 
    * @param {string} name 
-   * @param {Filter[]} filters 
+   * @param {FilterInfo[]} filters 
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
