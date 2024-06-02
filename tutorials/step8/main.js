@@ -3,9 +3,9 @@ export const html = `
 <ul>
   {{ loop:commits }}
   <li>
-    {{ commits.*.sha|slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
+    {{ commits.*.sha|s.slice,0,7 }} - {{ commits.*.commit.message }} by {{ commits.*.commit.author.name }}
   </li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 `;
 

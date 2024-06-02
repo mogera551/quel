@@ -19,7 +19,7 @@ export const html = `
     <span data-bind="class.completed:todoItems.*.completed">{{ todoItems.*.content }}</span>
     <button type="button" data-bind="delete">削除</button>
   </li>
-  {{ end: }}
+  {{ endloop: }}
 </ul>
 `;
 

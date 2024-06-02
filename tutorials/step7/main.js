@@ -3,12 +3,12 @@ export const html = `
 <ul>
 {{ loop:animals }}
   <li>{{ animals.* }}</li>
-{{ end: }}
+{{ endloop: }}
 </ul>
 <ul>
 {{ loop:fruits }}
   <li>{{ fruits.*.name }}({{ fruits.*.color }})</li>
-{{ end: }}
+{{ endloop: }}
 </ul>
 `;
 

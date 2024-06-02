@@ -4,7 +4,7 @@ export const html = `
 <button type="button" data-bind="onclick:dump">dump fruits</button>
 {{ loop:fruits }}
 <div><input type="text" data-bind="fruits.*">{{ fruits.* }}</div>
-{{ end: }}
+{{ endloop: }}
 `;
 
 export class ViewModel {

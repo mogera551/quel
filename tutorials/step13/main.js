@@ -11,7 +11,7 @@ export const html = `
   {{ members.*.no }} = {{ $1|offset,1 }}:{{ members.*.name }}, {{ members.*.age }}
   <button type="button" data-bind="onclick:popup">popup</button>
 </div>
-{{ end: }}
+{{ endloop: }}
 `;
 
 export class ViewModel {

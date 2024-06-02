@@ -5,7 +5,7 @@ export const html = `
   <div>True</div>
 {{ else: }}
   <div>False</div>
-{{ end: }}
+{{ endif: }}
 `;
 
 export class ViewModel {

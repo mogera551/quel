@@ -4,7 +4,7 @@ export const html = `
 <div>{{ message|substring,4,15|toUpperCase }}</div>
 
 <div>{{ price }}</div>
-<div>{{ price|toLocaleString }}</div>
+<div>{{ price|s.toLocaleString }}</div>
 `;
 
 export class ViewModel {
