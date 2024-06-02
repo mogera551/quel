@@ -31,6 +31,6 @@ export const Symbols = Object.assign({
 
   isComponent: Symbol.for(`${myname}:component.isComponent`),
 
-  nullFilter: Symbol.for(`${myname}:filter.nullFilter`),
-  notnullFilter: Symbol.for(`${myname}:filter.notnullFilter`),
+  nullSafe: Symbol.for(`${myname}:filter.nullSafe`),
+  noNullSafe: Symbol.for(`${myname}:filter.noNullSafe`),
 }, DotNotationSymbols);

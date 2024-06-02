@@ -192,9 +192,8 @@ class DefaultFilters {
   static prefix       = options => value => String(options[0]) + String(value);
   static suffix       = this.unit;
   static date         = options => value => Date.prototype.toLocaleDateString.apply(value, ["sv-SE", options[0] ? options[0] : {}]);
-  static null         = options => value => Symbols.nullFilter;
-  static notnull      = options => value => Symbols.notnullFilter;
-
+  static nullsafe     = options => value => Symbols.nullSafe;
+  static nonullsafe   = options => value => Symbols.noNullSafe;
 }
 
 /** @type {FilterGroup} */
@@ -206,7 +205,7 @@ const defaultFilterGroup = {
   staticFuncs: new Set([
     "truthy", "falsey", "not", "eq", "ne", "lt", "le", "gt", "ge", "oi", "ci", 
     "embed", "iftext", "isnull", "offset", "unit", "inc", "mul", "div", "mod", 
-    "prop", "prefix", "suffix", "date", "null", "notnull",
+    "prop", "prefix", "suffix", "date", "nullsafe", "nonullsafe",
   ]),
 };
 
@@ -256,8 +255,8 @@ export class Filters {
   static create(filters, manager) {
     let _filters = Array.from(filters);
     if (manager instanceof OutputFilterManager) {
-      if (!filters.find(info => info.name === "isnull" | info.name === "null" || info.name === "notnull")) {
-        _filters = [{name: "null", options: []}].concat(_filters);
+      if (!filters.find(info => info.name === "isnull" | info.name === "nullsafe" || info.name === "nonullsafe")) {
+        _filters = [{name: "nullsafe", options: []}].concat(_filters);
       }
     }
     return _filters.map(info => manager.getFilterFunc(info.name)(info.options));
@@ -303,17 +302,17 @@ export class FilterManager {
     return filters.reduce(({ value, state }, filter) => {
       const retObj = {};
       let retValue;
-      if (state !== Symbols.nullFilter || value != null) {
+      if (state !== Symbols.nullSafe || value != null) {
         retValue = filter(value);
       } else {
         retValue = value;
       }
-      if (retValue === Symbols.nullFilter) {
+      if (retValue === Symbols.nullSafe) {
         retObj.value = value;
-        retObj.state = Symbols.nullFilter;
-      } else if (retValue === Symbols.notnullFilter) {
+        retObj.state = Symbols.nullSafe;
+      } else if (retValue === Symbols.noNullSafe) {
         retObj.value = value;
-        retObj.state = Symbols.notnullFilter;
+        retObj.state = Symbols.noNullSafe;
       } else {
         retObj.value = retValue;
         retObj.state = state;
