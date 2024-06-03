@@ -1794,7 +1794,8 @@ function getTargetNodes(template, rootElement) {
 /** @type {FilterGroup} */
 const objectFilterGroup = {
   ObjectClass: Object,
-  prefix: "o",
+  prefix: "object",
+  prefixShort: "o",
   prototypeFuncs: new Set([
     "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable", "toLocaleString", 
     "toString", "valueOf",
@@ -1811,7 +1812,8 @@ const objectFilterGroup = {
 /** @type {FilterGroup} */
 const arrayFilterGroup = {
   ObjectClass: Array,
-  prefix: "a",
+  prefix: "array",
+  prefixShort: "a",
   prototypeFuncs: new Set([
     "at", "concat", "entries", "flat", 
     "includes", "indexOf", "join", "keys", 
@@ -1826,7 +1828,8 @@ const arrayFilterGroup = {
 /** @type {FilterGroup} */
 const numberFilterGroup = {
   ObjectClass: Number,
-  prefix: "n",
+  prefix: "number",
+  prefixShort: "n",
   prototypeFuncs: new Set([
     "toExponential", "toFixed", "toLocaleString", "toPrecision",
     "toString", "valueOf",
@@ -1840,7 +1843,8 @@ const numberFilterGroup = {
 /** @type {FilterGroup} */
 const stringFilterGroup = {
   ObjectClass: String,
-  prefix: "s",
+  prefix: "string",
+  prefixShort: "s",
   prototypeFuncs: new Set([
     "at", "charAt", "charCodeAt", "codePointAt",
     "concat", "endsWith", "includes", "indexOf",
@@ -1860,6 +1864,7 @@ const stringFilterGroup = {
 const dateFilterGroup = {
   ObjectClass: Date,
   prefix: "date",
+  prefixShort: "",
   prototypeFuncs: new Set([
     "getDate", "getDay", "getFullYear", "getHours",
     "getMilliseconds", "getMinutes", "getMonth", "getSeconds",
@@ -1878,6 +1883,7 @@ const dateFilterGroup = {
 const setFilterGroup = {
   ObjectClass: Set,
   prefix: "set",
+  prefixShort: "",
   prototypeFuncs: new Set([
     "entries", "forEach", "has", "keys", "values"
   ]),
@@ -1889,6 +1895,7 @@ const setFilterGroup = {
 const mapFilterGroup = {
   ObjectClass: Map,
   prefix: "map",
+  prefixShort: "",
   prototypeFuncs: new Set([
     "entries", "forEach", "get", "has", "keys", "values"
   ]),
@@ -1901,6 +1908,7 @@ const mapFilterGroup = {
 const JSONFilterGroup = {
   ObjectClass: JSON,
   prefix: "json",
+  prefixShort: "",
   prototypeFuncs: new Set([]),
   staticFuncs: new Set([
     "parse", "stringify"
@@ -1911,6 +1919,7 @@ const JSONFilterGroup = {
 const mathFilterGroup = {
   ObjectClass: Math,
   prefix: "math",
+  prefixShort: "",
   prototypeFuncs: new Set([]),
   staticFuncs: new Set([
     "abs", "acos", "acosh", "asin",
@@ -1928,6 +1937,8 @@ const mathFilterGroup = {
 /** @type {FilterGroup} */
 const regExpFilterGroup = {
   ObjectClass: RegExp,
+  prefix: "regexp",
+  prefixShort: "",
   prototypeFuncs: new Set([
     "exec", "test", "toString"
   ]),
@@ -1968,6 +1979,7 @@ class DefaultFilters {
 const defaultFilterGroup = {
   ObjectClass: DefaultFilters,
   prefix: "",
+  prefixShort: "",
   prototypeFuncs: new Set([
   ]),
   staticFuncs: new Set([
@@ -2105,9 +2117,9 @@ class OutputFilterManager extends FilterManager {
     const funcByName = new Map;
     for(const group of outputGroups) {
       for(const funcName of group.prototypeFuncs) {
-        const uniqueFuncName = `${group.prefix}.${funcName}`;
         const func = createPrototypeFilterFunc(group.ObjectClass, funcName);
-        funcByName.set(uniqueFuncName, func);
+        group.prefix && funcByName.set(`${group.prefix}.${funcName}`, func);
+        group.prefixShort && funcByName.set(`${group.prefixShort}.${funcName}`, func);
         if (funcByName.has(funcName)) {
           ambigousNames.add(funcName);
         } else {
@@ -2115,9 +2127,9 @@ class OutputFilterManager extends FilterManager {
         }
       }
       for(const funcName of group.staticFuncs) {
-        const uniqueFuncName = `${group.prefix}.${funcName}`;
         const func = createStaticFilterFunc(group.ObjectClass, funcName);
-        funcByName.set(uniqueFuncName, func);
+        group.prefix && funcByName.set(`${group.prefix}.${funcName}`, func);
+        group.prefixShort && funcByName.set(`${group.prefixShort}.${funcName}`, func);
         if (funcByName.has(funcName)) {
           ambigousNames.add(funcName);
         } else {
