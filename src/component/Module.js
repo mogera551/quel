@@ -34,6 +34,9 @@ export class Module {
   /** @type {ComponentModuleConfig} */
   config = {};
 
+  /** @type {ComponentModuleConfig} */
+  moduleConfig = {};
+
   /** @type {ComponentModuleOptions} */
   options = {};
 

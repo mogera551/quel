@@ -122,19 +122,20 @@ export function generateComponentClass(componentModule) {
   /** @type {Module} */
   const module = Object.assign(new Module, componentModule);
   module.filters = Object.assign({}, componentModule.filters);
-  module.config = Object.assign({}, componentModule.config);
+  module.config = Object.assign({}, componentModule.moduleConfig ?? componentModule.config);
   module.options = Object.assign({}, componentModule.options);
 
   // generate new class, for customElements not define same class
   const componentClass = getBaseClass(module);
-  if (typeof module.options?.extends === "undefined") {
+  const extendsTag = module.config?.extends ?? module.options?.extends;
+  if (typeof extendsTag === "undefined") {
     // case of autonomous custom element
   } else {
     // case of customized built-in element
     // change class extends to extends constructor
     // See http://var.blog.jp/archives/75174484.html
     /** @type {HTMLElement.constructor} */
-    const extendClass = document.createElement(module.options.extends).constructor;
+    const extendClass = document.createElement(extendsTag).constructor;
     componentClass.prototype.__proto__ = extendClass.prototype;
     componentClass.__proto__ = extendClass;
   }
@@ -181,10 +182,11 @@ export function generateComponentClass(componentModule) {
 export function registerComponentModule(customElementName, componentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = generateComponentClass(componentModule);
-  if (typeof componentModule.options?.extends === "undefined") {
+  const extendsTag = componentModule.moduleConfig?.extends ?? componentModule.options?.extends;
+  if (typeof extendsTag === "undefined") {
     customElements.define(customElementKebabName, componentClass);
   } else {
-    customElements.define(customElementKebabName, componentClass, { extends:componentModule.options.extends });
+    customElements.define(customElementKebabName, componentClass, { extends:extendsTag });
   }
 }
 

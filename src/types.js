@@ -81,25 +81,29 @@
  */
 
 /**
+ * @typedef {Object} ComponentModuleOptions
+ * @property {string|undefined} extends
+ * for customized built-in element, like extends="button"
+ */
+
+/**
  * @typedef {Object} ComponentModuleConfig
- * @property {boolean|undefined} useShadowRoot 
+ * @property {string|undefined} extends
+ * for customized built-in element, like extends="button"
+ * @property {boolean|undefined} debug
+ * debug mode for the component, default is false
+ * @property {boolean|undefined} useShadowRoot
  * attach shadow root to the component, default is false
- * @property {boolean|undefined} useWebComponent 
- * use web component, default is true. if false then no custom element.
- * @property {boolean|undefined} useLocalTagName 
- * use local tag name, default is true. local custom tag is unique in the document.
- * @property {boolean|undefined} useKeyed 
+ * @property {boolean|undefined} useKeyed
  * use keyed, default is true. keyed is used for the component instance.
+ * @property {boolean|undefined} useWebComponent
+ * use web component, default is true. if false then no custom element.
+ * @property {boolean|undefined} useLocalTagName
+ * use local tag name, default is true. local custom tag is unique in the document.
  * @property {boolean|undefined} useLocalSelector
  * use local selector, default is true. local selector is unique in the document.
  * @property {boolean|undefined} useOverscrollBehavior
  * use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
- */
-
-/**
- * @typedef {Object} ComponentModuleOptions
- * @property {string|undefined} extends
- * for customized built-in element, like extends="button"
  */
 
 /**
@@ -119,6 +123,7 @@
  * @property {ComponentModuleConfig|undefined} config
  * @property {ComponentModuleOptions|undefined} options
  * @property {ComponentModuleFilters|undefined} filters
+ * @property {ComponentModuleConfig|undefined} moduleConfig
  */
 
 /**
