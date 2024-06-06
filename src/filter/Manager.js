@@ -179,9 +179,9 @@ const regExpFilterGroup = {
 };
 
 class DefaultFilters {
-  static truthy       = options => value => value ? true : false;
-  static falsey       = options => value => !value ? true : false;
-  static not          = this.falsey;
+  static "truthy*"    = options => value => value ? true : false;
+  static "falsey*"    = options => value => !value ? true : false;
+  static "not*"       = this["falsey*"];
   static eq           = options => value => value == options[0]; // equality
   static ne           = options => value => value != options[0]; // inequality
   static lt           = options => value => Number(value) < Number(options[0]); // less than
@@ -192,7 +192,7 @@ class DefaultFilters {
   static ci           = options => value => Number(options[0]) <= Number(value) && Number(value) <= Number(options[1]); // closed interval
   static embed        = options => value => (options[0] ?? "").replaceAll("%s", value);
   static iftext       = options => value => value ? options[0] ?? null : options[1] ?? null;
-  static isnull       = options => value => (value == null) ? true : false;
+  static "isnull*"    = options => value => (value == null) ? true : false;
   static offset       = options => value => Number(value) + Number(options[0]);
   static unit         = options => value => String(value) + String(options[0]);
   static inc          = this.offset;
@@ -203,6 +203,7 @@ class DefaultFilters {
   static prefix       = options => value => String(options[0]) + String(value);
   static suffix       = this.unit;
   static date         = options => value => Date.prototype.toLocaleDateString.apply(value, ["sv-SE", options[0] ? options[0] : {}]);
+  static "isnan*"     = options => value => isNaN(value);
   static nullsafe     = options => value => Symbols.nullSafe;
   static nonullsafe   = options => value => Symbols.noNullSafe;
 }
@@ -215,9 +216,9 @@ const defaultFilterGroup = {
   prototypeFuncs: new Set([
   ]),
   staticFuncs: new Set([
-    "truthy", "falsey", "not", "eq", "ne", "lt", "le", "gt", "ge", "oi", "ci", 
-    "embed", "iftext", "isnull", "offset", "unit", "inc", "mul", "div", "mod", 
-    "prop", "prefix", "suffix", "date", "nullsafe", "nonullsafe",
+    "truthy*", "falsey*", "not*", "eq", "ne", "lt", "le", "gt", "ge", "oi", "ci", 
+    "embed", "iftext", "isnull*", "offset", "unit", "inc", "mul", "div", "mod", 
+    "prop", "prefix", "suffix", "date", "isnan*",
   ]),
 };
 
@@ -257,6 +258,9 @@ const outputGroups = [
   numberFilterGroup, stringFilterGroup, mathFilterGroup,
 ];
 
+/** @type {(callback:FilterFuncWithOption)=>FilterFuncWithOption} */
+const nullthru = callback => options => value => value == null ? value : callback(options)(value);
+
 export class Filters {
   /**
    * 
@@ -265,13 +269,7 @@ export class Filters {
    * @returns {FilterFunc[]}
    */
   static create(filters, manager) {
-    let _filters = Array.from(filters);
-    if (manager instanceof OutputFilterManager) {
-      if (!filters.find(info => info.name === "isnull" | info.name === "nullsafe" || info.name === "nonullsafe")) {
-        _filters = [{name: "nullsafe", options: []}].concat(_filters);
-      }
-    }
-    return _filters.map(info => manager.getFilterFunc(info.name)(info.options));
+    return Array.from(filters).map(info => manager.getFilterFunc(info.name)(info.options));
   }
 }
 
@@ -283,14 +281,18 @@ export class FilterManager {
 
   /**
    * register user defined filter, check duplicate name
-   * @param {string} name 
+   * @param {string} funcName 
    * @param {FilterFuncWithOption} filterFunc 
    */
-  registerFilter(name, filterFunc) {
-    if (this.funcByName.has(name)) {
-      utils.raise(`${this.constructor.name}: ${name} is already registered`);
+  registerFilter(funcName, filterFunc) {
+    const isNotNullThru = funcName.endsWith("*");
+    const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
+
+    if (this.funcByName.has(realFuncName)) {
+      utils.raise(`${this.constructor.name}: ${realFuncName} is already registered`);
     }
-    this.funcByName.set(name, filterFunc);
+    const wrappedFunc = !isNotNullThru ? nullthru(filterFunc) : filterFunc;
+    this.funcByName.set(realFuncName, wrappedFunc);
   }
 
   /**
@@ -311,26 +313,7 @@ export class FilterManager {
    * @returns {any}
    */
   static applyFilter(value, filters) {
-    return filters.reduce(({ value, state }, filter) => {
-      const retObj = {};
-      let retValue;
-      if (state !== Symbols.nullSafe || value != null) {
-        retValue = filter(value);
-      } else {
-        retValue = value;
-      }
-      if (retValue === Symbols.nullSafe) {
-        retObj.value = value;
-        retObj.state = Symbols.nullSafe;
-      } else if (retValue === Symbols.noNullSafe) {
-        retObj.value = value;
-        retObj.state = Symbols.noNullSafe;
-      } else {
-        retObj.value = retValue;
-        retObj.state = state;
-      }
-      return retObj;
-    }, {value, state:undefined}).value;
+    return filters.reduce((value, filter) => filter(value), value);
   }
 }
 
@@ -349,29 +332,41 @@ export class OutputFilterManager extends FilterManager {
     const funcByName = new Map;
     for(const group of outputGroups) {
       for(const funcName of group.prototypeFuncs) {
-        const func = createPrototypeFilterFunc(group.ObjectClass, funcName);
-        group.prefix && funcByName.set(`${group.prefix}.${funcName}`, func);
-        group.prefixShort && funcByName.set(`${group.prefixShort}.${funcName}`, func);
-        if (funcByName.has(funcName)) {
-          ambigousNames.add(funcName);
+        const isNotNullThru = funcName.endsWith("*");
+        const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
+        const func = createPrototypeFilterFunc(group.ObjectClass, realFuncName);
+        const wrappedFunc = !isNotNullThru ? nullthru(func) : func;
+        group.prefix && funcByName.set(`${group.prefix}.${realFuncName}`, wrappedFunc);
+        group.prefixShort && funcByName.set(`${group.prefixShort}.${realFuncName}`, wrappedFunc);
+        if (funcByName.has(realFuncName)) {
+          ambigousNames.add(realFuncName);
         } else {
-          funcByName.set(funcName, func);
+          funcByName.set(realFuncName, wrappedFunc);
         }
       }
       for(const funcName of group.staticFuncs) {
-        const func = createStaticFilterFunc(group.ObjectClass, funcName);
-        group.prefix && funcByName.set(`${group.prefix}.${funcName}`, func);
-        group.prefixShort && funcByName.set(`${group.prefixShort}.${funcName}`, func);
-        if (funcByName.has(funcName)) {
-          ambigousNames.add(funcName);
+        const isNotNullThru = funcName.endsWith("*");
+        const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
+        const func = createStaticFilterFunc(group.ObjectClass, realFuncName);
+        const wrappedFunc = !isNotNullThru ? nullthru(func) : func;
+        group.prefix && funcByName.set(`${group.prefix}.${realFuncName}`, wrappedFunc);
+        group.prefixShort && funcByName.set(`${group.prefixShort}.${realFuncName}`, wrappedFunc);
+        if (funcByName.has(realFuncName)) {
+          ambigousNames.add(realFuncName);
         } else {
-          funcByName.set(funcName, func);
+          funcByName.set(realFuncName, wrappedFunc);
         }
       }
     }
     for(const funcName of defaultFilterGroup.staticFuncs) {
+      const isNotNullThru = funcName.endsWith("*");
+      const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
       const func = DefaultFilters[funcName];
-      funcByName.set(funcName, func);
+      if (typeof func === "undefined") {
+        utils.raise(`${this.name}: ${funcName} is not found in defaultFilterGroup`);
+      }
+      const wrappedFunc = !isNotNullThru ? nullthru(func) : func;
+      funcByName.set(realFuncName, wrappedFunc);
     }
     for(const funcName of ambigousNames) {
       funcByName.delete(funcName);
@@ -381,14 +376,17 @@ export class OutputFilterManager extends FilterManager {
   }
   /**
    * 
-   * @param {string} name 
+   * @param {string} funcName 
    * @param {FilterFuncWithOption} filterFunc 
    */
-  static registerFilter(name, filterFunc) {
-    if (this.#funcByName.has(name)) {
-      utils.raise(`${this.name}: ${name} is already registered`);
+  static registerFilter(funcName, filterFunc) {
+    const isNotNullThru = funcName.endsWith("*");
+    const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
+    if (this.#funcByName.has(realFuncName)) {
+      utils.raise(`${this.name}: ${realFuncName} is already registered`);
     }
-    this.#funcByName.set(name, filterFunc);
+    const wrappedFunc = !isNotNullThru ? nullthru(filterFunc) : filterFunc;
+    this.#funcByName.set(realFuncName, wrappedFunc);
   }
 
 }
