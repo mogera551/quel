@@ -41,8 +41,15 @@ export class LoopContext {
   }
 
   /** @type {number} */
+  #revision;
+  #index;
   get _index() {
-    return this.binding.children.indexOf(this.#bindingManager);    
+    const revision = this.bindingManager.component.contextRevision;
+    if (this.#revision !== revision) {
+      this.#index = this.binding.children.indexOf(this.#bindingManager);
+      this.#revision = revision;
+    }
+    return this.#index;
   }
 
   /** @type {number} */

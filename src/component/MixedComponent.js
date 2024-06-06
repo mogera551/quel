@@ -214,6 +214,12 @@ export class MixedComponent {
     return document;
   }
 
+  get contextRevision() {
+    return this._contextRevision;
+  }
+  set contextRevision(value) {
+    this._contextRevision = value;
+  }
   /** 
    * initialize
    * @returns {void}
@@ -257,6 +263,8 @@ export class MixedComponent {
     this._initialPromises = Promise.withResolvers(); // promises for initialize
 
     this._setOfObservedAttributes = new Set;
+
+    this._contextRevision = 0;
     //console.log("mixInComponent:initializeCallback");
   }
 

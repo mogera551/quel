@@ -387,6 +387,7 @@ export class BindingManager {
         binding.applyToChildNodes(setOfIndex);
       }
     }
+    bindingManager.component.contextRevision++;
 
     const selectBindings = new Set;
     for(const key of propertyAccessByViewModelPropertyKey.keys()) {

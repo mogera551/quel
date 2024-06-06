@@ -3748,8 +3748,15 @@ class LoopContext {
   }
 
   /** @type {number} */
+  #revision;
+  #index;
   get _index() {
-    return this.binding.children.indexOf(this.#bindingManager);    
+    const revision = this.bindingManager.component.contextRevision;
+    if (this.#revision !== revision) {
+      this.#index = this.binding.children.indexOf(this.#bindingManager);
+      this.#revision = revision;
+    }
+    return this.#index;
   }
 
   /** @type {number} */
@@ -4196,6 +4203,7 @@ class BindingManager {
         binding.applyToChildNodes(setOfIndex);
       }
     }
+    bindingManager.component.contextRevision++;
 
     const selectBindings = new Set;
     for(const key of propertyAccessByViewModelPropertyKey.keys()) {
@@ -5261,6 +5269,12 @@ class MixedComponent {
     return document;
   }
 
+  get contextRevision() {
+    return this._contextRevision;
+  }
+  set contextRevision(value) {
+    this._contextRevision = value;
+  }
   /** 
    * initialize
    * @returns {void}
@@ -5304,6 +5318,8 @@ class MixedComponent {
     this._initialPromises = Promise.withResolvers(); // promises for initialize
 
     this._setOfObservedAttributes = new Set;
+
+    this._contextRevision = 0;
     //console.log("mixInComponent:initializeCallback");
   }
 
