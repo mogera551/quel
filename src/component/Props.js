@@ -81,7 +81,7 @@ class Handler {
           return indexes[loopIndex];
         } else {
           const loopIndexes = contextLoopIndexes(handler, props);
-          return handler.component.parentComponent.viewModel[Symbols.directlyGet](props.name, loopIndexes);
+          return handler.component.parentComponent.readOnlyViewModel[Symbols.directlyGet](props.name, loopIndexes);
         }
       }
     };
@@ -103,7 +103,7 @@ class Handler {
         handler.component.setAttribute(`props:${name}`, value);
       } else {
         const loopIndexes = contextLoopIndexes(handler, props);
-        handler.component.parentComponent.viewModel[Symbols.directlySet](props.name, loopIndexes, value);
+        handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, loopIndexes, value);
       }
       return true;
     };
@@ -138,25 +138,25 @@ class Handler {
 
   #createBuffer() {
     let buffer;
-    buffer = this.#component.parentComponent.viewModel[Symbols.createBuffer](this.#component);
+    buffer = this.#component.parentComponent.readOnlyViewModel[Symbols.createBuffer](this.#component);
     if (typeof buffer !== "undefined") {
       return buffer;
     }
     buffer = {};
     this.#binds.forEach(({ prop, propAccess }) => {
       const loopIndexes = contextLoopIndexes(this, propAccess);
-      buffer[prop] = this.#component.parentComponent.viewModel[Symbols.directlyGet](propAccess.name, loopIndexes);     
+      buffer[prop] = this.#component.parentComponent.readOnlyViewModel[Symbols.directlyGet](propAccess.name, loopIndexes);     
     });
     return buffer;
   }
 
   #flushBuffer() {
     if (typeof this.#buffer !== "undefined") {
-      const result = this.#component.parentComponent.viewModel[Symbols.flushBuffer](this.#buffer, this.#component);
+      const result = this.#component.parentComponent.writableViewModel[Symbols.flushBuffer](this.#buffer, this.#component);
       if (result !== true) {
         this.#binds.forEach(({ prop, propAccess }) => {
           const loopIndexes = contextLoopIndexes(this, propAccess);
-          this.#component.parentComponent.viewModel[Symbols.directlySet](propAccess.name, loopIndexes, this.#buffer[prop]);     
+          this.#component.parentComponent.writableViewModel[Symbols.directlySet](propAccess.name, loopIndexes, this.#buffer[prop]);     
         });
       }
     }
