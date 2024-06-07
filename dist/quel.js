@@ -1521,7 +1521,6 @@ const Phase = {
   sleep: 0 ,
   updateViewModel: 1,
   gatherUpdatedProperties: 2,
-  applyToNode: 3,
   terminate: 100,
 };
 
@@ -5112,6 +5111,7 @@ class MixedComponent {
 
   /** @type {ViewModelProxy} view model proxy */
   get viewModel() {
+    if (this.cachableInBuilding) return this.readOnlyViewModel;
     if (typeof this.updateSlot === "undefined" || 
       (this.updateSlot.phase !== Phase.gatherUpdatedProperties)) {
       return this.writableViewModel;
@@ -5275,6 +5275,13 @@ class MixedComponent {
   set contextRevision(value) {
     this._contextRevision = value;
   }
+
+  get cachableInBuilding() {
+    return this._cachableInBuilding;
+  }
+  set cachableInBuilding(value) {
+    this._cachableInBuilding = value;
+  }
   /** 
    * initialize
    * @returns {void}
@@ -5320,6 +5327,8 @@ class MixedComponent {
     this._setOfObservedAttributes = new Set;
 
     this._contextRevision = 0;
+
+    this._cachableInBuilding = false;
     //console.log("mixInComponent:initializeCallback");
   }
 
@@ -5333,6 +5342,7 @@ class MixedComponent {
    */
   async build() {
 //    console.log(`components[${this.tagName}].build`);
+    this.cachableInBuilding = false;
     /**
      * @type {{
      *   template:HTMLTemplateElement,
@@ -5387,9 +5397,6 @@ class MixedComponent {
       }
     }
 
-    // create thread
-    this.thread = new Thread;
-
     // attribue
     if (this.useWebComponent) {
       for(let i = 0; i < this.attributes.length; i++) {
@@ -5402,8 +5409,13 @@ class MixedComponent {
       }
     }
 
+    // create thread
+    this.thread = new Thread;
+
     // initialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols.connectedCallback]();
+
+    this.cachableInBuilding = true;
 
     // buid binding tree and dom 
     this.rootBinding = BindingManager.create(this, template);
@@ -5429,6 +5441,8 @@ class MixedComponent {
     }
     // wait for update slot
     await this.updateSlot.alivePromises.promise;
+
+    this.cachableInBuilding = false;
   }
 
   /**
