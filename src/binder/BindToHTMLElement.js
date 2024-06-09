@@ -47,10 +47,12 @@ const isInputableElement = node => node instanceof HTMLElement &&
  * バインドを実行する（ノードがHTMLElementの場合）
  * デフォルトイベントハンドラの設定を行う
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-export function bind(bindingManager, node) {
+export function bind(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
   /** @type {HTMLElement}  */
@@ -64,7 +66,7 @@ export function bind(bindingManager, node) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
+  const bindings = BindToDom.parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   // イベントハンドラ設定
   /** @type {boolean} デフォルトイベントを設定したかどうか */

@@ -17,10 +17,12 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise(`${modu
  * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
  * Commentノードをテキストノードに置換する
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-export function bind(bindingManager, node) {
+export function bind(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   // コメントノードをテキストノードに差し替える
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
@@ -35,9 +37,12 @@ export function bind(bindingManager, node) {
   const textNode = document.createTextNode("");
   parentNode.replaceChild(textNode, comment);
 
+  /** @type {SelectedNode} */
+  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, template: selectedNode.template };
+
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, textNode, viewModel, bindText, DEFAULT_PROPERTY);
+  const bindings = BindToDom.parseBindText(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
 
   return bindings;
 }

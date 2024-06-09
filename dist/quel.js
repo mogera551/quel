@@ -181,6 +181,22 @@ class PropertyName {
  * @typedef {{propName:PropertyName,indexes:number[]}} PropertyAccess
  */
 
+/** @type {(handler:class,target:object,receiver:Proxy<object>)=>(prop:string,indexes:number[])=>any} */
+const directlyGetFunc = (handler, target, receiver) => (prop, indexes) => 
+  Reflect.apply(handler.directlyGet, handler, [target, { prop, indexes }, receiver]);
+/** @type {(handler:class,target:object,receiver:Proxy<object>)=>(prop:string,indexes:number[],value:any)=>boolean} */
+const directlySetFunc = (handler, target, receiver) => (prop, indexes, value) =>
+  Reflect.apply(handler.directlySet, handler, [target, { prop, indexes, value }, receiver]);
+/** @type {(handler:class,target:object,receiver:Proxy<object>)=>boolean} */
+const isSupportDotNotation = (handler, target, receiver) => true;
+
+/** @type {Object<key:symbol,(handler:class,target:object,receiver:Proxy<object>)=>any>} */
+const funcBySymbol = {
+  [Symbols$1.directlyGet]: directlyGetFunc,
+  [Symbols$1.directlySet]: directlySetFunc,
+  [Symbols$1.isSupportDotNotation]: isSupportDotNotation,
+};
+
 let Handler$2 = class Handler {
   /**
    * @type {number[][]}
@@ -214,20 +230,16 @@ let Handler$2 = class Handler {
    * @returns {any}
    */
   getByPropertyName(target, { propName }, receiver) {
-    let value = undefined;
-    if (Reflect.has(target, propName.name)) {
-      value = Reflect.get(target, propName.name, receiver);
-    } else {
-      if (propName.parentPath !== "") {
-        const parentPropName = PropertyName.create(propName.parentPath);
-        const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
-        if (typeof parent !== "undefined") {
-          const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
-          value = parent[lastName];
-        }
+    const value = Reflect.get(target, propName.name, receiver);
+    if (typeof value !== "undefined") return value;
+    if (propName.parentPath !== "") {
+      const parentPropName = PropertyName.create(propName.parentPath);
+      const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
+      if (typeof parent !== "undefined") {
+        const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+        return parent[lastName];
       }
     }
-    return value;
   }
 
   /**
@@ -362,45 +374,42 @@ let Handler$2 = class Handler {
     if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) {
       return Reflect.get(target, prop, receiver);
     }
+    const func = funcBySymbol[prop];
+    if (typeof func !== "undefined") {
+      return func(this, target, receiver);
+    }
     const getFunc = this.#getFunc(target, receiver);
     const lastIndexes = this.lastIndexes;
     let match;
-    if (prop === Symbols$1.directlyGet) {
-      // プロパティとindexesを直接指定してgetする
-      return (prop, indexes) => 
-        Reflect.apply(this.directlyGet, this, [target, { prop, indexes }, receiver]);
-    } else if (prop === Symbols$1.directlySet) {
-      // プロパティとindexesを直接指定してsetする
-      return (prop, indexes, value) => 
-        Reflect.apply(this.directlySet, this, [target, { prop, indexes, value }, receiver]);
-    } else if (prop === Symbols$1.isSupportDotNotation) {
-      return true;
-    } else if (isPropString) {
-      if (match = RE_CONTEXT_INDEX.exec(prop)) {
+    if (isPropString) {
+      if (prop[0] === "$"  && (match = RE_CONTEXT_INDEX.exec(prop))) {
         // $数字のプロパティ
         // indexesへのアクセス
         return lastIndexes?.[Number(match[1]) - 1] ?? undefined;
       //} else if (prop.at(0) === "@" && prop.at(1) === "@") {
-      } else if (prop.at(0) === "@") {
+      } else if (prop[0] === "@") {
         const name = prop.slice(1);
         const propName = PropertyName.create(name);
         if (((lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
         const baseIndexes = lastIndexes?.slice(0, propName.level - 1) ?? [];
         return this.#getExpandLastLevel(target, { propName, indexes:baseIndexes }, receiver);
       }
-      if (this.#matchByName.has(prop)) {
+      const propAccess = this.#matchByName.get(prop);
+      if (typeof propAccess !== "undefined") {
         return getFunc(this.#matchByName.get(prop));
-      }
-      const propAccess = PropertyName.parse(prop);
-      if (propAccess.propName.level === propAccess.indexes.length) {
-        this.#matchByName.set(prop, propAccess);
-        return getFunc(propAccess);
       } else {
-        return getFunc({
-          propName:propAccess.propName,
-          indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
-        });
+        const propAccess = PropertyName.parse(prop);
+        if (propAccess.propName.level === propAccess.indexes.length) {
+          this.#matchByName.set(prop, propAccess);
+          return getFunc(propAccess);
+        } else {
+          return getFunc({
+            propName:propAccess.propName,
+            indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
+          });
+        }
       }
+
     } else {
       return Reflect.get(target, prop, receiver);
     }
@@ -1714,18 +1723,14 @@ const getNodeRoute = node => {
   return routeIndexes;
 };
 
+/** @type {(node:Node,routeIndex:number)=>Node} */
+const reduceNodeByRouteIndex = (node, routeIndex) => node.childNodes[routeIndex];
+
 /**
  * ルートのインデックス配列からノード取得する
- * @param {Node} node 
- * @param {number[]} routeIndexes 
- * @returns {Node}
+ * @type {(node:Node)=>(routeIndexes:number[])=>Node}
  */
-const getNodeByRouteIndexes = (node, routeIndexes) => {
-  for(let i = 0; i < routeIndexes.length; i++) {
-    node = node.childNodes[routeIndexes[i]];
-  }
-  return node;
-};
+const routeIndexesToNodeFromRootNode = node => routeIndexes => routeIndexes.reduce(reduceNodeByRouteIndex, node);
 
 /**
  * ノードがコメントかどうか
@@ -1741,36 +1746,47 @@ const isCommentNode = node => node instanceof Comment && (node.textContent.start
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
+/** @type {Map<HTMLTemplateElement,number[][]>} */
 const listOfRouteIndexesByTemplate = new Map();
+
+/** @type {(node:Node,template:HTMLTemplateElement)=>(routeIndexes:number[])=>SelectedNode} */
+const routeIndexesToSelectedNodeFromRootNodeAndTemplate = 
+  (node, template) => routeIndexes => ({ template, routeIndexes, node:routeIndexesToNodeFromRootNode(node)(routeIndexes) });
 
 /**
  * Get target node list from template
  * @param {HTMLTemplateElement|undefined} template 
  * @param {HTMLElement|undefined} rootElement
- * @returns {Node[]}
+ * @returns {SelectedNode[]}
  */
 function getTargetNodes(template, rootElement) {
   (typeof template === "undefined") && utils.raise(`${moduleName$4}: template is undefined`);
   (typeof rootElement === "undefined") && utils.raise(`${moduleName$4}: rootElement is undefined`);
-
-  /** @type {Node[]} */
-  let nodes;
 
   /** @type {number[][]} */
   const listOfRouteIndexes = listOfRouteIndexesByTemplate.get(template);
   if (typeof listOfRouteIndexes !== "undefined") {
     // キャッシュがある場合
     // querySelectorAllを行わずにNodeの位置を特定できる
-    nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
+    const routeIndexesToSelectedNode = routeIndexesToSelectedNodeFromRootNodeAndTemplate(rootElement, template);
+    return listOfRouteIndexes.map(routeIndexesToSelectedNode);
   } else {
     // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
-    nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+    const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+    const { selectedNodes, listOfRouteIndexes } = nodes.reduce(({ selectedNodes, listOfRouteIndexes }, node) => {
+      const routeIndexes = getNodeRoute(node);
+      selectedNodes.push({ node, routeIndexes, template });
+      listOfRouteIndexes.push(routeIndexes);
+      return { selectedNodes, listOfRouteIndexes };
+    }, { 
+      /** @type {SelectedNode[]} */ selectedNodes:[], 
+      /** @type {number[][]} */ listOfRouteIndexes:[] 
+    });
 
     // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-    listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
+    listOfRouteIndexesByTemplate.set(template, listOfRouteIndexes);
+    return selectedNodes;
   }
-  return nodes;
-
 }
 
 /**
@@ -2354,13 +2370,21 @@ const PREFIX$3 = "@@|";
 
 class TemplateProperty extends NodeProperty {
   /** @type {HTMLTemplateElement} */
+  #template
   get template() {
-    return getByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
+    if (typeof this.#template === "undefined") {
+      this.#template = getByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
+    }
+    return this.#template;
   }
 
   /** @type {string} */
+  #uuid;
   get uuid() {
-    return TemplateProperty.getUUID(this.node);
+    if (typeof this.#uuid === "undefined") {
+      this.#uuid = TemplateProperty.getUUID(this.node);
+    }
+    return this.#uuid
   }
 
   /**
@@ -3189,6 +3213,15 @@ class RepeatKeyed extends Repeat {
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
+/** 
+ * @typedef {Object} ClassOf 
+ * @property {NodeProperty.constructor} classOfNodeProperty
+ * @property {ViewModelProperty.constructor} classOfViewModelProperty
+ */
+
+/** @type {Map<HTMLTemplateElement,Map<string,ClassOf>>} */
+const classOfByRouteIndexesByTemplate = new Map;
+
 class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
   // モジュール内で、const変数で書くとjestで循環参照でエラーになる
@@ -3230,40 +3263,59 @@ class Factory {
   /**
    * Bindingオブジェクトを生成する
    * @param {BindingManager} bindingManager
-   * @param {Node} node 
+   * @param {SelectedNode} selectedNode 
    * @param {string} nodePropertyName 
    * @param {ViewModel} viewModel 
    * @param {string} viewModelPropertyName 
    * @param {FilterInfo[]} filters 
    * @returns {Binding}
    */
-  static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {
+  static create(bindingManager, selectedNode, nodePropertyName, viewModel, viewModelPropertyName, filters) {
+    /** @type {ViewModelProperty.constructor|undefined} */
+    let classOfViewModelProperty;
     /** @type {NodeProperty.constructor|undefined} */
     let classOfNodeProperty;
-    const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
+    /** @type {Node} */
+    const node = selectedNode.node;
 
-    do {
-      const isComment = node instanceof Comment;
-      classOfNodeProperty = this.#classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
-      if (typeof classOfNodeProperty !== "undefined") break;
-      if (isComment && nodePropertyName === "loop") {
-        classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
-        break;
-      }
-      if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
-      const nameElements = nodePropertyName.split(".");
-      classOfNodeProperty = this.#classOfNodePropertyByFirstName[nameElements[0]];
-      if (typeof classOfNodeProperty !== "undefined") break;
-      if (node instanceof Element) {
-        if (nodePropertyName.startsWith("on")) {
-          classOfNodeProperty = ElementEvent;
-        } else {
-          classOfNodeProperty = ElementProperty;
+    /** @type {ClassOf|undefined} */
+    const classOf = classOfByRouteIndexesByTemplate.get(selectedNode.template)?.get(selectedNode.routeIndexes.join(","));
+    if (typeof classOf !== "undefined") {
+      classOfNodeProperty = classOf.classOfNodeProperty;
+      classOfViewModelProperty = classOf.classOfViewModelProperty;
+//      console.log("classOf", classOf);
+    } else {
+      classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
+
+      do {
+        const isComment = node instanceof Comment;
+        classOfNodeProperty = this.#classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
+        if (typeof classOfNodeProperty !== "undefined") break;
+        if (isComment && nodePropertyName === "loop") {
+          classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
+          break;
         }
-      } else {
-        classOfNodeProperty = NodeProperty;
-      }
-    } while(false);
+        if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
+        const nameElements = nodePropertyName.split(".");
+        classOfNodeProperty = this.#classOfNodePropertyByFirstName[nameElements[0]];
+        if (typeof classOfNodeProperty !== "undefined") break;
+        if (node instanceof Element) {
+          if (nodePropertyName.startsWith("on")) {
+            classOfNodeProperty = ElementEvent;
+          } else {
+            classOfNodeProperty = ElementProperty;
+          }
+        } else {
+          classOfNodeProperty = NodeProperty;
+        }
+      } while(false);
+      const key = selectedNode.routeIndexes.join(",");
+      classOfByRouteIndexesByTemplate
+        .get(selectedNode.template)
+        ?.set(key, { classOfNodeProperty, classOfViewModelProperty }) ??
+      classOfByRouteIndexesByTemplate
+        .set(selectedNode.template, new Map([[key, { classOfNodeProperty, classOfViewModelProperty }]]));
+    }
     
     return Binding.create(
       bindingManager,
@@ -3356,8 +3408,8 @@ const parseBindText$1 = (text, defaultName) => {
   });
 };
 
-/** @type {Object<string,BindTextInfo[]>} */
-const bindTextsByKey = {};
+/** @type {Map<string,BindTextInfo[]>} */
+const bindTextsByKey = new Map;
 
 /**
  * data-bind属性値のパースし、BindTextInfoの配列を返す
@@ -3371,29 +3423,29 @@ function parse(text, defaultName) {
   /** @type {string} */
   const key = text + "\t" + defaultName;
   /** @type {BindTextInfo[] | undefined} */
-  let binds = bindTextsByKey[key];
+  const binds = bindTextsByKey.get(key);
+  if (typeof binds !== "undefined") return binds;
 
-  if (typeof binds === "undefined") {
-    binds = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-    bindTextsByKey[key] = binds;
-  }
-  return binds;
+  /** @type {BindTextInfo[]} */
+  const newBinds = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
+  bindTextsByKey.set(key, newBinds);
+  return newBinds;
 }
 
 /**
  * Generate a list of binding objects from a string
  * @param {import("../binding/Binding.js").BindingManager} bindingManager 
- * @param {Node} node node
+ * @param {SelectedNode} selectedNode selected node information
  * @param {ViewModel} viewModel view model
  * @param {string|undefined} text the string specified in the "data-bind" attribute.
  * @param {string|undefined} defaultName default property name of node
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-function parseBindText(bindingManager, node, viewModel, text, defaultName) {
+function parseBindText(bindingManager, selectedNode, viewModel, text, defaultName) {
   (typeof text === "undefined") && utils.raise(`BindToDom: text is undefined`);
   if (text.trim() === "") return [];
   return parse(text, defaultName).map(info => 
-    Factory.create(bindingManager, node, info.nodeProperty, viewModel, info.viewModelProperty, info.filters));
+    Factory.create(bindingManager, selectedNode, info.nodeProperty, viewModel, info.viewModelProperty, info.filters));
 }
 
 const moduleName$3 = "BindToHTMLElement";
@@ -3439,10 +3491,12 @@ const isInputableElement = node => node instanceof HTMLElement &&
  * バインドを実行する（ノードがHTMLElementの場合）
  * デフォルトイベントハンドラの設定を行う
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-function bind$4(bindingManager, node) {
+function bind$4(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
   /** @type {HTMLElement}  */
@@ -3456,7 +3510,7 @@ function bind$4(bindingManager, node) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, node, viewModel, bindText, defaultName);
+  const bindings = parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   // イベントハンドラ設定
   /** @type {boolean} デフォルトイベントを設定したかどうか */
@@ -3506,7 +3560,7 @@ const DATASET_BIND_PROPERTY$1 = "data-bind";
 
 /**
  * 
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {SVGElement}
  */
 const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`${moduleName$2}: not SVGElement`);
@@ -3517,7 +3571,9 @@ const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`
  * @param {Node} node 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-function bind$3(bindingManager, node) {
+function bind$3(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
   /** @type {SVGElement} */
@@ -3532,7 +3588,7 @@ function bind$3(bindingManager, node) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, node, viewModel, bindText, defaultName);
+  const bindings = parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   return bindings;
 }
@@ -3552,10 +3608,12 @@ const toComment$1 = node => (node instanceof Comment) ? node : utils.raise(`${mo
  * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
  * Commentノードをテキストノードに置換する
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-function bind$2(bindingManager, node) {
+function bind$2(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   // コメントノードをテキストノードに差し替える
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
@@ -3570,9 +3628,12 @@ function bind$2(bindingManager, node) {
   const textNode = document.createTextNode("");
   parentNode.replaceChild(textNode, comment);
 
+  /** @type {SelectedNode} */
+  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, template: selectedNode.template };
+
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, textNode, viewModel, bindText, DEFAULT_PROPERTY);
+  const bindings = parseBindText(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
 
   return bindings;
 }
@@ -3590,10 +3651,12 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise(`${modu
 /**
  * バインドを実行する（ノードがComment（Templateの置換）の場合）
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-function bind$1(bindingManager, node) {
+function bind$1(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
   /** @type {Comment} */
@@ -3609,7 +3672,7 @@ function bind$1(bindingManager, node) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, node, viewModel, bindText, undefined);
+  const bindings = parseBindText(bindingManager, selectedNode, viewModel, bindText, undefined);
 
   return bindings;
 }
@@ -3617,15 +3680,15 @@ function bind$1(bindingManager, node) {
 /**
  * Generate a list of binding objects from a list of nodes
  * @param {import("../binding/Binding.js").BindingManager} bindingManager parent binding manager
- * @param {Node[]} nodes node list having data-bind attribute
+ * @param {SelectedNode[]} selectedNodes selected node list having data-bind attribute
  * @returns {import("../binding/Binding.js").Binding[]} generate a list of binding objects 
  */
-function bind(bindingManager, nodes) {
-  return nodes.flatMap(node => 
-    (node instanceof Comment && node.textContent[2] == ":") ? bind$2(bindingManager, node) : 
-    (node instanceof HTMLElement) ? bind$4(bindingManager, node) :
-    (node instanceof Comment && node.textContent[2] == "|") ? bind$1(bindingManager, node) : 
-    (node instanceof SVGElement) ? bind$3(bindingManager, node) :
+function bind(bindingManager, selectedNodes) {
+  return selectedNodes.flatMap(selectedNode => 
+    (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == ":") ? bind$2(bindingManager, selectedNode) : 
+    (selectedNode.node instanceof HTMLElement) ? bind$4(bindingManager, selectedNode) :
+    (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == "|") ? bind$1(bindingManager, selectedNode) : 
+    (selectedNode.node instanceof SVGElement) ? bind$3(bindingManager, selectedNode) :
     utils.raise(`Binder: unknown node type`)
   );
 }
@@ -4019,7 +4082,24 @@ class Binding {
   }
 }
 
-const appendChildFunc = fragment => node => fragment.appendChild(node);
+/** @type {(fragment:DocumentFragment)=>(node:Node)=>void} */
+const appendNodeTo = fragment => node => fragment.appendChild(node);
+
+/** @type {(binding:Binding)=>void} */
+const applyToViewModel = binding => binding.applyToViewModel();
+
+/** @type {(binding:Binding)=>void} */
+const applyToNode = binding => binding.applyToNode();
+
+/** @type {(selectBindings:Binding[],binding:Binding)=>Binding[]} */
+const applyToNodeExcludeSelectFunc = (selectBindings, binding) => 
+  (binding.isSelectValue ? selectBindings.push(binding) : applyToNode(binding), selectBindings);
+
+/** @type {(bindingSummary:BindingSummary)=>(binding:Binding)=>void} */
+const addBindingTo = bindingSummary => binding => bindingSummary.add(binding);
+
+/** @type {(node:Node)=>boolean} */
+const filterElement = node => node.nodeType === Node.ELEMENT_NODE;
 
 class BindingManager {
   /** @type { Component } */
@@ -4042,7 +4122,7 @@ class BindingManager {
 
   /** @type {Element[]} */
   get elements() {
-    return this.#nodes.filter(node => node.nodeType === Node.ELEMENT_NODE);
+    return this.#nodes.filter(filterElement);
   }
 
   /** @type {Node} */
@@ -4077,29 +4157,8 @@ class BindingManager {
     this.#parentBinding = value;
   }
 
-  /** @type {(node:Node)=>void} */
-  #appendChildFunc;
-
-  /** @type {(binding:Binding)=>void} */
-  #applyToViewModelFunc = binding => binding.applyToViewModel();
-
-  /** @type {(binding:Binding)=>void} */
-  #applyToNodeFunc = binding => binding.applyToNode();
-
-  /**
-   * 
-   * @param {Binding[]} selectBindings 
-   * @param {Binding} binding 
-   * @returns {Binding[]}
-   */
-  #applyToNodeExcludeSelectFunc = (selectBindings, binding) => 
-    binding.isSelectValue ? (selectBindings.push(binding), selectBindings) : (this.#applyToNodeFunc(binding), selectBindings);
-
   /** @type {BindingSummary} */
   #bindingSummary;
-
-  /** @type {(binding:Binding)=>void} */
-  #registerBindingsToSummaryFunc = binding => this.#bindingSummary.add(binding);
 
   /**
    * 
@@ -4120,39 +4179,40 @@ class BindingManager {
    */
   initialize() {
     const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const nodes = getTargetNodes(this.#template, content);
-    this.#bindings = bind(this, nodes);
+    const selectedNodes = getTargetNodes(this.#template, content);
+    this.#bindings = bind(this, selectedNodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
-    this.#appendChildFunc = appendChildFunc(this.#fragment);
   }
 
   /**
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    this.#bindings.forEach(this.#registerBindingsToSummaryFunc);
+    const addToBindingSummary = addBindingTo(this.#bindingSummary);
+    this.#bindings.forEach(addToBindingSummary);
   }
 
   /**
    * apply value to node
    */
   applyToNode() {
-    this.#bindings.reduce(this.#applyToNodeExcludeSelectFunc, []).forEach(this.#applyToNodeFunc);
+    this.#bindings.reduce(applyToNodeExcludeSelectFunc, []).forEach(applyToNode);
   }
 
   /**
    * apply value to ViewModel
    */
   applyToViewModel() {
-    this.#bindings.forEach(this.#applyToViewModelFunc);
+    this.#bindings.forEach(applyToViewModel);
   }
 
   /**
    * remove nodes, append to fragment
    */
   removeNodes() {
-    this.#nodes.forEach(this.#appendChildFunc);
+    const appnedNodeToFragment = appendNodeTo(this.#fragment);
+    this.#nodes.forEach(appnedNodeToFragment);
   }
 
   /**
@@ -4169,54 +4229,63 @@ class BindingManager {
    */
   static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
     const { bindingSummary } = bindingManager.component;
-    bindingSummary.initUpdate();
+    const expand = () => {
+      bindingSummary.initUpdate();
 
-    // expandable bindings are expanded first
-    // bind tree structure is determined
-    const expandableBindings = Array.from(bindingSummary.expandableBindings);
-    expandableBindings.sort((bindingA, bindingB) => {
-      const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
-      if (result !== 0) return result;
-      const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
-      return result2;
-    });
-    for(const binding of expandableBindings) {
-      if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
-      binding.applyToNode();
-    }
-    bindingSummary.flush();
-
-    const setOfIndexByParentKey = new Map;
-    for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
-      if (propertyAccess.propName.lastPathName !== "*") continue;
-      const lastIndex = propertyAccess.indexes?.at(-1);
-      if (typeof lastIndex === "undefined") continue;
-      const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
-      setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
-    }
-    for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-      const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
-      for(const binding of bindings) {
-        if (bindingSummary.updatedBindings.has(binding)) continue;
-        if (!binding.expandable) continue;
-        binding.applyToChildNodes(setOfIndex);
+      // expandable bindings are expanded first
+      // bind tree structure is determined
+      const expandableBindings = Array.from(bindingSummary.expandableBindings);
+      expandableBindings.sort((bindingA, bindingB) => {
+        const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
+        if (result !== 0) return result;
+        const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
+        return result2;
+      });
+      for(const binding of expandableBindings) {
+        if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
+        binding.applyToNode();
       }
-    }
-    bindingManager.component.contextRevision++;
+      bindingSummary.flush();
+    };
+    expand();
 
-    const selectBindings = new Set;
-    for(const key of propertyAccessByViewModelPropertyKey.keys()) {
-      for(const binding of bindingSummary.bindingsByKey.get(key) ?? new Set) {
-        if (binding.expandable) continue;
-        binding.isSelectValue ? selectBindings.add(binding) : binding.applyToNode();
+    const applyToChildNodes = () => {
+      const setOfIndexByParentKey = new Map;
+      for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
+        if (propertyAccess.propName.lastPathName !== "*") continue;
+        const lastIndex = propertyAccess.indexes?.at(-1);
+        if (typeof lastIndex === "undefined") continue;
+        const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
+        setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
       }
-    }
-    for(const binding of selectBindings) {
-      binding.applyToNode();
-    }
-    for(const binding of bindingSummary.componentBindings) {
-      binding.nodeProperty.postUpdate(propertyAccessByViewModelPropertyKey);
-    }
+      for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
+        const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
+        for(const binding of bindings) {
+          if (bindingSummary.updatedBindings.has(binding)) continue;
+          if (!binding.expandable) continue;
+          binding.applyToChildNodes(setOfIndex);
+        }
+      }
+      bindingManager.component.contextRevision++;
+    };
+    applyToChildNodes();
+
+    const applyToNode = () => {
+      const selectBindings = new Set;
+      for(const key of propertyAccessByViewModelPropertyKey.keys()) {
+        for(const binding of bindingSummary.bindingsByKey.get(key) ?? new Set) {
+          if (binding.expandable) continue;
+          binding.isSelectValue ? selectBindings.add(binding) : binding.applyToNode();
+        }
+      }
+      for(const binding of selectBindings) {
+        binding.applyToNode();
+      }
+      for(const binding of bindingSummary.componentBindings) {
+        binding.nodeProperty.postUpdate(propertyAccessByViewModelPropertyKey);
+      }
+    };
+    applyToNode();
 
   }
 

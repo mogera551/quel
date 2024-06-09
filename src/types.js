@@ -177,3 +177,10 @@
 /**
  * @typedef {ComponentBase & HTMLElement} Component
  */
+
+/**
+ * @typedef {Object} SelectedNode
+ * @property {Node} node
+ * @property {number[]} routeIndexes
+ * @property {HTMLTemplateElement} template
+ */

@@ -19,6 +19,15 @@ import { RepeatKeyed } from "./nodeProperty/RepeatKeyed.js";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
+/** 
+ * @typedef {Object} ClassOf 
+ * @property {NodeProperty.constructor} classOfNodeProperty
+ * @property {ViewModelProperty.constructor} classOfViewModelProperty
+ */
+
+/** @type {Map<HTMLTemplateElement,Map<string,ClassOf>>} */
+const classOfByRouteIndexesByTemplate = new Map;
+
 export class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
   // モジュール内で、const変数で書くとjestで循環参照でエラーになる
@@ -60,40 +69,59 @@ export class Factory {
   /**
    * Bindingオブジェクトを生成する
    * @param {BindingManager} bindingManager
-   * @param {Node} node 
+   * @param {SelectedNode} selectedNode 
    * @param {string} nodePropertyName 
    * @param {ViewModel} viewModel 
    * @param {string} viewModelPropertyName 
    * @param {FilterInfo[]} filters 
    * @returns {Binding}
    */
-  static create(bindingManager, node, nodePropertyName, viewModel, viewModelPropertyName, filters) {
+  static create(bindingManager, selectedNode, nodePropertyName, viewModel, viewModelPropertyName, filters) {
+    /** @type {ViewModelProperty.constructor|undefined} */
+    let classOfViewModelProperty;
     /** @type {NodeProperty.constructor|undefined} */
     let classOfNodeProperty;
-    const classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
+    /** @type {Node} */
+    const node = selectedNode.node;
 
-    do {
-      const isComment = node instanceof Comment;
-      classOfNodeProperty = this.#classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
-      if (typeof classOfNodeProperty !== "undefined") break;
-      if (isComment && nodePropertyName === "loop") {
-        classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
-        break;
-      }
-      if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
-      const nameElements = nodePropertyName.split(".");
-      classOfNodeProperty = this.#classOfNodePropertyByFirstName[nameElements[0]];
-      if (typeof classOfNodeProperty !== "undefined") break;
-      if (node instanceof Element) {
-        if (nodePropertyName.startsWith("on")) {
-          classOfNodeProperty = ElementEvent;
-        } else {
-          classOfNodeProperty = ElementProperty;
+    /** @type {ClassOf|undefined} */
+    const classOf = classOfByRouteIndexesByTemplate.get(selectedNode.template)?.get(selectedNode.routeIndexes.join(","));
+    if (typeof classOf !== "undefined") {
+      classOfNodeProperty = classOf.classOfNodeProperty;
+      classOfViewModelProperty = classOf.classOfViewModelProperty;
+//      console.log("classOf", classOf);
+    } else {
+      classOfViewModelProperty = regexp.test(viewModelPropertyName) ? ContextIndex : ViewModelProperty;
+
+      do {
+        const isComment = node instanceof Comment;
+        classOfNodeProperty = this.#classOfNodePropertyByNameByIsComment[isComment][nodePropertyName];
+        if (typeof classOfNodeProperty !== "undefined") break;
+        if (isComment && nodePropertyName === "loop") {
+          classOfNodeProperty = bindingManager.component.useKeyed ? RepeatKeyed : Repeat;
+          break;
         }
-      } else {
-        classOfNodeProperty = NodeProperty;
-      }
-    } while(false);
+        if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
+        const nameElements = nodePropertyName.split(".");
+        classOfNodeProperty = this.#classOfNodePropertyByFirstName[nameElements[0]];
+        if (typeof classOfNodeProperty !== "undefined") break;
+        if (node instanceof Element) {
+          if (nodePropertyName.startsWith("on")) {
+            classOfNodeProperty = ElementEvent;
+          } else {
+            classOfNodeProperty = ElementProperty;
+          }
+        } else {
+          classOfNodeProperty = NodeProperty;
+        }
+      } while(false);
+      const key = selectedNode.routeIndexes.join(",");
+      classOfByRouteIndexesByTemplate
+        .get(selectedNode.template)
+        ?.set(key, { classOfNodeProperty, classOfViewModelProperty }) ??
+      classOfByRouteIndexesByTemplate
+        .set(selectedNode.template, new Map([[key, { classOfNodeProperty, classOfViewModelProperty }]]));
+    }
     
     return Binding.create(
       bindingManager,

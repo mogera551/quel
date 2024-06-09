@@ -179,6 +179,22 @@ class PropertyName {
  * @typedef {{propName:PropertyName,indexes:number[]}} PropertyAccess
  */
 
+/** @type {(handler:class,target:object,receiver:Proxy<object>)=>(prop:string,indexes:number[])=>any} */
+const directlyGetFunc = (handler, target, receiver) => (prop, indexes) => 
+  Reflect.apply(handler.directlyGet, handler, [target, { prop, indexes }, receiver]);
+/** @type {(handler:class,target:object,receiver:Proxy<object>)=>(prop:string,indexes:number[],value:any)=>boolean} */
+const directlySetFunc = (handler, target, receiver) => (prop, indexes, value) =>
+  Reflect.apply(handler.directlySet, handler, [target, { prop, indexes, value }, receiver]);
+/** @type {(handler:class,target:object,receiver:Proxy<object>)=>boolean} */
+const isSupportDotNotation = (handler, target, receiver) => true;
+
+/** @type {Object<key:symbol,(handler:class,target:object,receiver:Proxy<object>)=>any>} */
+const funcBySymbol = {
+  [Symbols.directlyGet]: directlyGetFunc,
+  [Symbols.directlySet]: directlySetFunc,
+  [Symbols.isSupportDotNotation]: isSupportDotNotation,
+};
+
 class Handler {
   /**
    * @type {number[][]}
@@ -212,20 +228,16 @@ class Handler {
    * @returns {any}
    */
   getByPropertyName(target, { propName }, receiver) {
-    let value = undefined;
-    if (Reflect.has(target, propName.name)) {
-      value = Reflect.get(target, propName.name, receiver);
-    } else {
-      if (propName.parentPath !== "") {
-        const parentPropName = PropertyName.create(propName.parentPath);
-        const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
-        if (typeof parent !== "undefined") {
-          const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
-          value = parent[lastName];
-        }
+    const value = Reflect.get(target, propName.name, receiver);
+    if (typeof value !== "undefined") return value;
+    if (propName.parentPath !== "") {
+      const parentPropName = PropertyName.create(propName.parentPath);
+      const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
+      if (typeof parent !== "undefined") {
+        const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+        return parent[lastName];
       }
     }
-    return value;
   }
 
   /**
@@ -360,45 +372,42 @@ class Handler {
     if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) {
       return Reflect.get(target, prop, receiver);
     }
+    const func = funcBySymbol[prop];
+    if (typeof func !== "undefined") {
+      return func(this, target, receiver);
+    }
     const getFunc = this.#getFunc(target, receiver);
     const lastIndexes = this.lastIndexes;
     let match;
-    if (prop === Symbols.directlyGet) {
-      // プロパティとindexesを直接指定してgetする
-      return (prop, indexes) => 
-        Reflect.apply(this.directlyGet, this, [target, { prop, indexes }, receiver]);
-    } else if (prop === Symbols.directlySet) {
-      // プロパティとindexesを直接指定してsetする
-      return (prop, indexes, value) => 
-        Reflect.apply(this.directlySet, this, [target, { prop, indexes, value }, receiver]);
-    } else if (prop === Symbols.isSupportDotNotation) {
-      return true;
-    } else if (isPropString) {
-      if (match = RE_CONTEXT_INDEX.exec(prop)) {
+    if (isPropString) {
+      if (prop[0] === "$"  && (match = RE_CONTEXT_INDEX.exec(prop))) {
         // $数字のプロパティ
         // indexesへのアクセス
         return lastIndexes?.[Number(match[1]) - 1] ?? undefined;
       //} else if (prop.at(0) === "@" && prop.at(1) === "@") {
-      } else if (prop.at(0) === "@") {
+      } else if (prop[0] === "@") {
         const name = prop.slice(1);
         const propName = PropertyName.create(name);
         if (((lastIndexes?.length ?? 0) + 1) < propName.level) throw new Error(`array level not match`);
         const baseIndexes = lastIndexes?.slice(0, propName.level - 1) ?? [];
         return this.#getExpandLastLevel(target, { propName, indexes:baseIndexes }, receiver);
       }
-      if (this.#matchByName.has(prop)) {
+      const propAccess = this.#matchByName.get(prop);
+      if (typeof propAccess !== "undefined") {
         return getFunc(this.#matchByName.get(prop));
-      }
-      const propAccess = PropertyName.parse(prop);
-      if (propAccess.propName.level === propAccess.indexes.length) {
-        this.#matchByName.set(prop, propAccess);
-        return getFunc(propAccess);
       } else {
-        return getFunc({
-          propName:propAccess.propName,
-          indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
-        });
+        const propAccess = PropertyName.parse(prop);
+        if (propAccess.propName.level === propAccess.indexes.length) {
+          this.#matchByName.set(prop, propAccess);
+          return getFunc(propAccess);
+        } else {
+          return getFunc({
+            propName:propAccess.propName,
+            indexes:propAccess.indexes.concat(lastIndexes?.slice(propAccess.indexes.length) ?? [])
+          });
+        }
       }
+
     } else {
       return Reflect.get(target, prop, receiver);
     }

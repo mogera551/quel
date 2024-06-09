@@ -8,7 +8,7 @@ const DATASET_BIND_PROPERTY = "data-bind";
 
 /**
  * 
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {SVGElement}
  */
 const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`${moduleName}: not SVGElement`);
@@ -19,7 +19,9 @@ const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`
  * @param {Node} node 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-export function bind(bindingManager, node) {
+export function bind(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
   /** @type {SVGElement} */
@@ -34,7 +36,7 @@ export function bind(bindingManager, node) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, defaultName);
+  const bindings = BindToDom.parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   return bindings;
 }

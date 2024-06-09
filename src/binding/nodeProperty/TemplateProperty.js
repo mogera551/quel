@@ -6,13 +6,21 @@ const PREFIX = "@@|";
 
 export class TemplateProperty extends NodeProperty {
   /** @type {HTMLTemplateElement} */
+  #template
   get template() {
-    return Template.getByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
+    if (typeof this.#template === "undefined") {
+      this.#template = Template.getByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
+    }
+    return this.#template;
   }
 
   /** @type {string} */
+  #uuid;
   get uuid() {
-    return TemplateProperty.getUUID(this.node);
+    if (typeof this.#uuid === "undefined") {
+      this.#uuid = TemplateProperty.getUUID(this.node);
+    }
+    return this.#uuid
   }
 
   /**

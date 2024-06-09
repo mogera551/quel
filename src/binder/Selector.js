@@ -22,18 +22,14 @@ const getNodeRoute = node => {
   return routeIndexes;
 };
 
+/** @type {(node:Node,routeIndex:number)=>Node} */
+const reduceNodeByRouteIndex = (node, routeIndex) => node.childNodes[routeIndex];
+
 /**
  * ルートのインデックス配列からノード取得する
- * @param {Node} node 
- * @param {number[]} routeIndexes 
- * @returns {Node}
+ * @type {(node:Node)=>(routeIndexes:number[])=>Node}
  */
-const getNodeByRouteIndexes = (node, routeIndexes) => {
-  for(let i = 0; i < routeIndexes.length; i++) {
-    node = node.childNodes[routeIndexes[i]];
-  }
-  return node;
-}
+const routeIndexesToNodeFromRootNode = node => routeIndexes => routeIndexes.reduce(reduceNodeByRouteIndex, node);
 
 /**
  * ノードがコメントかどうか
@@ -49,34 +45,45 @@ const isCommentNode = node => node instanceof Comment && (node.textContent.start
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
+/** @type {Map<HTMLTemplateElement,number[][]>} */
 const listOfRouteIndexesByTemplate = new Map();
+
+/** @type {(node:Node,template:HTMLTemplateElement)=>(routeIndexes:number[])=>SelectedNode} */
+const routeIndexesToSelectedNodeFromRootNodeAndTemplate = 
+  (node, template) => routeIndexes => ({ template, routeIndexes, node:routeIndexesToNodeFromRootNode(node)(routeIndexes) });
 
 /**
  * Get target node list from template
  * @param {HTMLTemplateElement|undefined} template 
  * @param {HTMLElement|undefined} rootElement
- * @returns {Node[]}
+ * @returns {SelectedNode[]}
  */
 export function getTargetNodes(template, rootElement) {
   (typeof template === "undefined") && utils.raise(`${moduleName}: template is undefined`);
   (typeof rootElement === "undefined") && utils.raise(`${moduleName}: rootElement is undefined`);
-
-  /** @type {Node[]} */
-  let nodes;
 
   /** @type {number[][]} */
   const listOfRouteIndexes = listOfRouteIndexesByTemplate.get(template);
   if (typeof listOfRouteIndexes !== "undefined") {
     // キャッシュがある場合
     // querySelectorAllを行わずにNodeの位置を特定できる
-    nodes = listOfRouteIndexes.map(routeIndexes => getNodeByRouteIndexes(rootElement, routeIndexes));
+    const routeIndexesToSelectedNode = routeIndexesToSelectedNodeFromRootNodeAndTemplate(rootElement, template);
+    return listOfRouteIndexes.map(routeIndexesToSelectedNode);
   } else {
     // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
-    nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+    const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+    const { selectedNodes, listOfRouteIndexes } = nodes.reduce(({ selectedNodes, listOfRouteIndexes }, node) => {
+      const routeIndexes = getNodeRoute(node);
+      selectedNodes.push({ node, routeIndexes, template });
+      listOfRouteIndexes.push(routeIndexes);
+      return { selectedNodes, listOfRouteIndexes };
+    }, { 
+      /** @type {SelectedNode[]} */ selectedNodes:[], 
+      /** @type {number[][]} */ listOfRouteIndexes:[] 
+    });
 
     // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-    listOfRouteIndexesByTemplate.set(template, nodes.map(node => getNodeRoute(node)));
+    listOfRouteIndexesByTemplate.set(template, listOfRouteIndexes);
+    return selectedNodes;
   }
-  return nodes;
-
 }

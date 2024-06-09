@@ -16,10 +16,12 @@ const toComment = node => (node instanceof Comment) ? node : utils.raise(`${modu
 /**
  * バインドを実行する（ノードがComment（Templateの置換）の場合）
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-export function bind(bindingManager, node) {
+export function bind(bindingManager, selectedNode) {
+  /** @type {Node} */
+  const node = selectedNode.node;
   /** @type {ViewModel} */
   const viewModel = bindingManager.component.viewModel;
   /** @type {Comment} */
@@ -35,7 +37,7 @@ export function bind(bindingManager, node) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, node, viewModel, bindText, undefined);
+  const bindings = BindToDom.parseBindText(bindingManager, selectedNode, viewModel, bindText, undefined);
 
   return bindings;
 }
