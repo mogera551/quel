@@ -86,7 +86,7 @@ export class ViewModelProperty {
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length > 0 ? FilterManager.applyFilter(this.value, this.filters) : this.value;
+    return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
   }
 
   /** @type {boolean} applyToViewModel()の対象かどうか */

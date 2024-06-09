@@ -261,6 +261,9 @@ const outputGroups = [
 /** @type {(callback:FilterFuncWithOption)=>FilterFuncWithOption} */
 const nullthru = callback => options => value => value == null ? value : callback(options)(value);
 
+/** @type {(value:any,filter:FilterFunc)=>any} */
+const reduceApplyFilter = (value, filter) => filter(value)
+
 export class Filters {
   /**
    * 
@@ -302,8 +305,7 @@ export class FilterManager {
    */
   getFilterFunc(name) {
     this.ambigousNames.has(name) && utils.raise(`${this.constructor.name}: ${name} is ambigous`);
-    const func = this.funcByName.get(name);
-    return func ?? (options => value => value);
+    return this.funcByName.get(name) ?? (options => value => value);
   }
 
   /**
@@ -313,7 +315,7 @@ export class FilterManager {
    * @returns {any}
    */
   static applyFilter(value, filters) {
-    return filters.reduce((value, filter) => filter(value), value);
+    return filters.reduce(reduceApplyFilter, value);
   }
 }
 

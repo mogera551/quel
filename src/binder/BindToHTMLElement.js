@@ -18,20 +18,43 @@ const DEFAULT_PROPERTY = "textContent";
  */
 const toHTMLElement = node => (node instanceof HTMLElement) ? node : utils.raise(`${moduleName}: not HTMLElement`);
 
+const defaultPropertyByElementType = {
+  "radio": "checked",
+  "checkbox": "checked",
+  "button": "onclick",
+}
+
 /**
  * HTML要素のデフォルトプロパティを取得
  * @param {HTMLElement} element 
  * @returns {string}
  */
-const getDefaultProperty = element => {
-  return element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
+const getDefaultPropertyFn = element => 
+  element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLOptionElement ? "value" : 
   element instanceof HTMLButtonElement ? "onclick" : 
   element instanceof HTMLAnchorElement ? "onclick" : 
   element instanceof HTMLFormElement ? "onsubmit" : 
-  element instanceof HTMLInputElement ? ((element.type === "radio" || element.type === "checkbox") ? "checked" : (element.type === "button" ? "onclick" : "value")) : 
+  element instanceof HTMLInputElement ? (defaultPropertyByElementType[element.type] ?? "value") :
   DEFAULT_PROPERTY;
-  
-};
+
+/** @type {Map<string,string>} */
+const defaultPropertyByKey = new Map;
+
+/**
+ * HTML要素のデフォルトプロパティを取得
+ * @param {HTMLElement} element 
+ * @returns {string}
+ */
+
+const getDefaultProperty = element => {
+  const key = element.constructor.name + "\t" + (element.type ?? "");;
+  const defaultProperty = defaultPropertyByKey.get(key);
+  if (typeof defaultProperty !== "undefined") return defaultProperty;
+  const newDefaultProperty = getDefaultPropertyFn(element);
+  defaultPropertyByKey.set(key, newDefaultProperty);
+  return newDefaultProperty;
+}
+
 
 /**
  * ユーザー操作によりデフォルト値が変わるかどうか
@@ -41,6 +64,11 @@ const getDefaultProperty = element => {
  */
 const isInputableElement = node => node instanceof HTMLElement && 
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
+
+
+/** @type {(element:HTMLElement)=>(binding:import("../binding/Binding.js").Binding)=>void} */
+const setDefaultEventHandlerByElement = element => binding => 
+  element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
 
 
 /**
@@ -88,24 +116,22 @@ export function bind(bindingManager, selectedNode) {
     defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
   });
 
-  /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
-  const setDefaultEventHandler = (binding) => {
-    element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
-  }
-  if (radioBinding) {
-    if (!hasDefaultEvent) {
+  if (!hasDefaultEvent) {
+    /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
+    const setDefaultEventHandler = setDefaultEventHandlerByElement(element);
+
+    if (radioBinding) {
       setDefaultEventHandler(radioBinding);
-    }
-  } else if (checkboxBinding) {
-    if (!hasDefaultEvent) {
+    } else if (checkboxBinding) {
       setDefaultEventHandler(checkboxBinding);
+    } else if (defaultBinding && isInputableElement(node)) {
+      // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
+      // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
+      // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
+      // ・nodeが入力系（input, textarea, select） → 入力系に限定
+      setDefaultEventHandler(defaultBinding);
     }
-  } else if (defaultBinding && !hasDefaultEvent && isInputableElement(node)) {
-    // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
-    // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
-    // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
-    // ・nodeが入力系（input, textarea, select） → 入力系に限定
-    setDefaultEventHandler(defaultBinding);
+  
   }
   return bindings;
 }

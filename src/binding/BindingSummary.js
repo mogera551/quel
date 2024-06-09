@@ -3,6 +3,15 @@ import { Symbols } from "../Symbols.js";
 import "../types.js";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty.js";
 
+/** @type {(binding: Binding) => string} */
+const pickKey = (binding) => binding.viewModelProperty.key;
+
+/** @type {(binding: Binding) => boolean} */
+const filterExpandableBindings = (binding) => binding.nodeProperty.expandable;
+
+/** @type {(binding: Binding) => boolean} */
+const filerComponentBindings = (binding) => binding.nodeProperty.constructor === ComponentProperty;
+
 /**
  * BindingSummary
  */
@@ -97,7 +106,6 @@ export class BindingSummary {
       }
       const bindings = Array.from(this.#allBindings).filter(binding => !this.#deleteBindings.has(binding));
       this.rebuild(bindings);
-      this.#deleteBindings = new Set;
     } finally {
       if (config.debug) {
         performance.mark('BindingSummary.flush:end')
@@ -117,9 +125,9 @@ export class BindingSummary {
    */
   rebuild(bindings) {
     this.#allBindings = new Set(bindings);
-    this.#bindingsByKey = Map.groupBy(bindings, binding => binding.viewModelProperty.key);
-    this.#expandableBindings = new Set(bindings.filter(binding => binding.nodeProperty.expandable));
-    this.#componentBindings = new Set(bindings.filter(binding => binding.nodeProperty.constructor === ComponentProperty));
+    this.#bindingsByKey = Map.groupBy(bindings, pickKey);
+    this.#expandableBindings = new Set(bindings.filter(filterExpandableBindings));
+    this.#componentBindings = new Set(bindings.filter(filerComponentBindings));
     this.#deleteBindings = new Set;
   }
 }
