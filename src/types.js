@@ -182,6 +182,6 @@
  * @typedef {Object} SelectedNode
  * @property {Node} node
  * @property {number[]} routeIndexes
- * @property {HTMLTemplateElement} template
  * @property {string} uuid
+ * @property {string} key // uuid + routeIndexes.join(",")
  */

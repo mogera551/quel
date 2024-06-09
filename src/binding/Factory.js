@@ -84,10 +84,8 @@ export class Factory {
     /** @type {Node} */
     const node = selectedNode.node;
 
-    /** @type {string} */
-    const key = selectedNode.uuid + "\t" + selectedNode.routeIndexes.join(",");
     /** @type {ClassOf|undefined} */
-    const classOf = classOfByKey[key];
+    const classOf = classOfByKey[selectedNode.key];
     if (typeof classOf !== "undefined") {
       classOfNodeProperty = classOf.classOfNodeProperty;
       classOfViewModelProperty = classOf.classOfViewModelProperty;
@@ -117,7 +115,7 @@ export class Factory {
           classOfNodeProperty = NodeProperty;
         }
       } while(false);
-      classOfByKey[key] = { classOfNodeProperty, classOfViewModelProperty };
+      classOfByKey[selectedNode.key] = { classOfNodeProperty, classOfViewModelProperty };
     }
     
     return Binding.create(

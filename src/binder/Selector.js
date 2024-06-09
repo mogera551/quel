@@ -45,12 +45,23 @@ const isCommentNode = node => node instanceof Comment && (node.textContent.start
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
-/** @type {Object<string,number[][]>} */
-const listOfRouteIndexesByUUID = {};
+/**
+ * @typedef {Object} RouteInfo
+ * @property {number[]} routeIndexes
+ * @property {string} key // uuid + routeIndexes.join(",")
+ */
 
-/** @type {(node:Node,template:HTMLTemplateElement)=>(routeIndexes:number[])=>SelectedNode} */
-const routeIndexesToSelectedNodeFromRootNodeAndUUID = 
-  (node, uuid) => routeIndexes => ({ uuid, routeIndexes, node:routeIndexesToNodeFromRootNode(node)(routeIndexes) });
+/** @type {Object<string,RouteInfo[]>} */
+const listOfRouteInfoByUUID = {};
+
+/** @type {(node:Node,template:HTMLTemplateElement)=>(routeInfo:RouteInfo)=>SelectedNode} */
+const routeInfoToSelectedNodeFromRootNodeAndUUID = 
+  (node, uuid) => routeInfo => ({ 
+    uuid, 
+    routeIndexes: routeInfo.routeIndexes, 
+    node: routeIndexesToNodeFromRootNode(node)(routeInfo.routeIndexes),
+    key: routeInfo.key
+  });
 
 /**
  * Get target node list from template
@@ -65,28 +76,29 @@ export function getTargetNodes(template, rootElement) {
   const uuid = template.dataset["uuid"];
   (typeof uuid === "undefined" || uuid === "") && utils.raise(`${moduleName}: uuid is undefined`);
 
-  /** @type {number[][]} */
-  const listOfRouteIndexes = listOfRouteIndexesByUUID[uuid];
-  if (typeof listOfRouteIndexes !== "undefined") {
+  /** @type {RouteInfo[]} */
+  const listOfRouteInfo = listOfRouteInfoByUUID[uuid];
+  if (typeof listOfRouteInfo !== "undefined") {
     // キャッシュがある場合
     // querySelectorAllを行わずにNodeの位置を特定できる
-    const routeIndexesToSelectedNode = routeIndexesToSelectedNodeFromRootNodeAndUUID(rootElement, uuid);
-    return listOfRouteIndexes.map(routeIndexesToSelectedNode);
+    const routeInfoToSelectedNode = routeInfoToSelectedNodeFromRootNodeAndUUID(rootElement, uuid);
+    return listOfRouteInfo.map(routeInfoToSelectedNode);
   } else {
     // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-    const { selectedNodes, listOfRouteIndexes } = nodes.reduce(({ selectedNodes, listOfRouteIndexes }, node) => {
+    const { selectedNodes, listOfRouteInfo } = nodes.reduce(({ selectedNodes, listOfRouteInfo }, node) => {
       const routeIndexes = getNodeRoute(node);
-      selectedNodes.push({ node, routeIndexes, uuid });
-      listOfRouteIndexes.push(routeIndexes);
-      return { selectedNodes, listOfRouteIndexes };
+      const key = uuid + "\t" + routeIndexes.join(",");
+      selectedNodes.push({ node, routeIndexes, uuid, key });
+      listOfRouteInfo.push({ routeIndexes, key });
+      return { selectedNodes, listOfRouteInfo };
     }, { 
       /** @type {SelectedNode[]} */ selectedNodes:[], 
-      /** @type {number[][]} */ listOfRouteIndexes:[] 
+      /** @type {RouteInfo[]} */ listOfRouteInfo:[] 
     });
 
     // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-    listOfRouteIndexesByUUID[uuid] = listOfRouteIndexes;
+    listOfRouteInfoByUUID[uuid] = listOfRouteInfo;
     return selectedNodes;
   }
 }

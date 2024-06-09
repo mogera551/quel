@@ -16,7 +16,7 @@ const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`
 /**
  * バインドを実行する（ノードがSVGElementの場合）
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
- * @param {Node} node 
+ * @param {SelectedNode} selectedNode 
  * @returns {import("../binding/Binding.js").Binding[]}
  */
 export function bind(bindingManager, selectedNode) {
