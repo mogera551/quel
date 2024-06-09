@@ -7,23 +7,33 @@ export class Cache {
   /**
    * 
    * @param {PropertyName} propName 
-   * @param {number[]} indexes 
+   * @param {string} indexesString 
    * @returns {any}
    */
-  get(propName, indexes) {
-    return this.#valueByIndexesStringByPropertyName.get(propName)?.get(indexes.toString()) ?? undefined;
+  get(propName, indexesString) {
+    return this.#valueByIndexesStringByPropertyName.get(propName)?.get(indexesString) ?? undefined;
   }
 
   /**
    * 
    * @param {PropertyName} propName 
-   * @param {number[]} indexes 
+   * @param {string} indexesString 
+   * @returns {boolean}
+   */
+  has(propName, indexesString) {
+    return this.#valueByIndexesStringByPropertyName.get(propName)?.has(indexesString) ?? false;
+  }
+
+  /**
+   * 
+   * @param {PropertyName} propName 
+   * @param {string} indexesString 
    * @param {any} value
    * @returns {any}
    */
-  set(propName, indexes, value) {
-    this.#valueByIndexesStringByPropertyName.get(propName)?.set(indexes.toString(), value) ?? 
-      this.#valueByIndexesStringByPropertyName.set(propName, new Map([[indexes.toString(), value]]));
+  set(propName, indexesString, value) {
+    this.#valueByIndexesStringByPropertyName.get(propName)?.set(indexesString, value) ?? 
+      this.#valueByIndexesStringByPropertyName.set(propName, new Map([[indexesString, value]]));
     return value;
   }
 

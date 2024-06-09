@@ -4547,23 +4547,33 @@ class Cache {
   /**
    * 
    * @param {PropertyName} propName 
-   * @param {number[]} indexes 
+   * @param {string} indexesString 
    * @returns {any}
    */
-  get(propName, indexes) {
-    return this.#valueByIndexesStringByPropertyName.get(propName)?.get(indexes.toString()) ?? undefined;
+  get(propName, indexesString) {
+    return this.#valueByIndexesStringByPropertyName.get(propName)?.get(indexesString) ?? undefined;
   }
 
   /**
    * 
    * @param {PropertyName} propName 
-   * @param {number[]} indexes 
+   * @param {string} indexesString 
+   * @returns {boolean}
+   */
+  has(propName, indexesString) {
+    return this.#valueByIndexesStringByPropertyName.get(propName)?.has(indexesString) ?? false;
+  }
+
+  /**
+   * 
+   * @param {PropertyName} propName 
+   * @param {string} indexesString 
    * @param {any} value
    * @returns {any}
    */
-  set(propName, indexes, value) {
-    this.#valueByIndexesStringByPropertyName.get(propName)?.set(indexes.toString(), value) ?? 
-      this.#valueByIndexesStringByPropertyName.set(propName, new Map([[indexes.toString(), value]]));
+  set(propName, indexesString, value) {
+    this.#valueByIndexesStringByPropertyName.get(propName)?.set(indexesString, value) ?? 
+      this.#valueByIndexesStringByPropertyName.set(propName, new Map([[indexesString, value]]));
     return value;
   }
 
@@ -4602,12 +4612,16 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
     } else {
       if (!propName.isPrimitive || this.setOfAccessorProperties.has(propName.name)) {
           // プリミティブじゃないもしくはアクセサプロパティ場合、キャッシュから取得する
-        const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
-        let value = this.#cache.get(propName, indexes);
-        if (typeof value === "undefined") {
-          value = super.getByPropertyName(target, { propName }, receiver);
-          this.#cache.set(propName, indexes, value);
-        }
+        const indexesString = propName.level > 0 ? (
+          propName.level === this.lastIndexes.length ? 
+            this.lastIndexes.join(",") :
+            this.lastIndexes.slice(0, propName.level).join(",")
+        ) : "";
+        const cachedValue = this.#cache.get(propName, indexesString);
+        if (typeof cachedValue !== "undefined") return cachedValue;
+        if (this.#cache.has(propName, indexesString)) return undefined;
+        const value = super.getByPropertyName(target, { propName }, receiver);
+        this.#cache.set(propName, indexesString, value);
         return value;
       } else {
         return super.getByPropertyName(target, { propName }, receiver);

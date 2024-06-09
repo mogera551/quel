@@ -32,12 +32,16 @@ export class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
     } else {
       if (!propName.isPrimitive || this.setOfAccessorProperties.has(propName.name)) {
           // プリミティブじゃないもしくはアクセサプロパティ場合、キャッシュから取得する
-        const indexes = propName.level > 0 ? this.lastIndexes.slice(0, propName.level) : [];
-        let value = this.#cache.get(propName, indexes);
-        if (typeof value === "undefined") {
-          value = super.getByPropertyName(target, { propName }, receiver);
-          this.#cache.set(propName, indexes, value);
-        }
+        const indexesString = propName.level > 0 ? (
+          propName.level === this.lastIndexes.length ? 
+            this.lastIndexes.join(",") :
+            this.lastIndexes.slice(0, propName.level).join(",")
+        ) : "";
+        const cachedValue = this.#cache.get(propName, indexesString);
+        if (typeof cachedValue !== "undefined") return cachedValue;
+        if (this.#cache.has(propName, indexesString)) return undefined;
+        const value = super.getByPropertyName(target, { propName }, receiver);
+        this.#cache.set(propName, indexesString, value);
         return value;
       } else {
         return super.getByPropertyName(target, { propName }, receiver);
