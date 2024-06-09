@@ -12,8 +12,7 @@ const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
  * @returns {{readonly:Proxy,writable:Proxy}}
  */
 export function createViewModels(component, viewModelClass) {
-  const viewModelInfo = viewModelize(Reflect.construct(viewModelClass, []));
-  const { viewModel, accessorProps } = viewModelInfo;
+  const { viewModel, accessorProps } = viewModelize(Reflect.construct(viewModelClass, []));
   const setOfAccessorProperties = new Set(accessorProps);
   const dependentProps = new DependentProps();
   dependentProps.setDependentProps(viewModel[DEPENDENT_PROPS_PROPERTY] ?? {});

@@ -145,5 +145,7 @@ export function getByUUID(uuid) {
 export function create(html, componentUuid, customComponentNames) {
   const template = document.createElement("template");
   template.innerHTML = html ? replaceTag(html, componentUuid, customComponentNames) : "";
+  template.setAttribute(DATASET_UUID_PROPERTY, componentUuid);
+  templateByUUID.set(componentUuid, template);
   return template;
 }

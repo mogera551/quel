@@ -37,8 +37,8 @@ const getDefaultPropertyFn = element =>
   element instanceof HTMLInputElement ? (defaultPropertyByElementType[element.type] ?? "value") :
   DEFAULT_PROPERTY;
 
-/** @type {Map<string,string>} */
-const defaultPropertyByKey = new Map;
+/** @type {Object<string,string>} */
+const defaultPropertyByKey = {};
 
 /**
  * HTML要素のデフォルトプロパティを取得
@@ -47,12 +47,10 @@ const defaultPropertyByKey = new Map;
  */
 
 const getDefaultProperty = element => {
-  const key = element.constructor.name + "\t" + (element.type ?? "");;
-  const defaultProperty = defaultPropertyByKey.get(key);
+  const key = element.constructor.name + "\t" + (element.type ?? "");
+  const defaultProperty = defaultPropertyByKey[key];
   if (typeof defaultProperty !== "undefined") return defaultProperty;
-  const newDefaultProperty = getDefaultPropertyFn(element);
-  defaultPropertyByKey.set(key, newDefaultProperty);
-  return newDefaultProperty;
+  return defaultPropertyByKey[key] = getDefaultPropertyFn(element);
 }
 
 

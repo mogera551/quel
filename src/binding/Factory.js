@@ -25,8 +25,8 @@ const regexp = RegExp(/^\$[0-9]+$/);
  * @property {ViewModelProperty.constructor} classOfViewModelProperty
  */
 
-/** @type {Map<HTMLTemplateElement,Map<string,ClassOf>>} */
-const classOfByRouteIndexesByTemplate = new Map;
+/** @type {Object<string,ClassOf>} */
+const classOfByKey = {};
 
 export class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
@@ -84,8 +84,10 @@ export class Factory {
     /** @type {Node} */
     const node = selectedNode.node;
 
+    /** @type {string} */
+    const key = selectedNode.uuid + "\t" + selectedNode.routeIndexes.join(",");
     /** @type {ClassOf|undefined} */
-    const classOf = classOfByRouteIndexesByTemplate.get(selectedNode.template)?.get(selectedNode.routeIndexes.join(","));
+    const classOf = classOfByKey[key];
     if (typeof classOf !== "undefined") {
       classOfNodeProperty = classOf.classOfNodeProperty;
       classOfViewModelProperty = classOf.classOfViewModelProperty;
@@ -115,12 +117,7 @@ export class Factory {
           classOfNodeProperty = NodeProperty;
         }
       } while(false);
-      const key = selectedNode.routeIndexes.join(",");
-      classOfByRouteIndexesByTemplate
-        .get(selectedNode.template)
-        ?.set(key, { classOfNodeProperty, classOfViewModelProperty }) ??
-      classOfByRouteIndexesByTemplate
-        .set(selectedNode.template, new Map([[key, { classOfNodeProperty, classOfViewModelProperty }]]));
+      classOfByKey[key] = { classOfNodeProperty, classOfViewModelProperty };
     }
     
     return Binding.create(

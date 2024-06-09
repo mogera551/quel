@@ -83,8 +83,8 @@ const parseBindText = (text, defaultName) => {
   });
 };
 
-/** @type {Map<string,BindTextInfo[]>} */
-const bindTextsByKey = new Map;
+/** @type {Object<string,BindTextInfo[]>} */
+const bindTextsByKey = {};
 
 /**
  * data-bind属性値のパースし、BindTextInfoの配列を返す
@@ -98,11 +98,9 @@ export function parse(text, defaultName) {
   /** @type {string} */
   const key = text + "\t" + defaultName;
   /** @type {BindTextInfo[] | undefined} */
-  const binds = bindTextsByKey.get(key);
+  const binds = bindTextsByKey[key];
   if (typeof binds !== "undefined") return binds;
 
   /** @type {BindTextInfo[]} */
-  const newBinds = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-  bindTextsByKey.set(key, newBinds);
-  return newBinds;
+  return bindTextsByKey[key] = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
 }

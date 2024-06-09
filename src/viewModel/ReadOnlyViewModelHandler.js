@@ -34,7 +34,7 @@ export class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
           // プリミティブじゃないもしくはアクセサプロパティ場合、キャッシュから取得する
         const indexesString = propName.level > 0 ? (
           propName.level === this.lastIndexes.length ? 
-            this.lastIndexes.join(",") :
+            this.lastIndexesString :
             this.lastIndexes.slice(0, propName.level).join(",")
         ) : "";
         const cachedValue = this.#cache.get(propName, indexesString);

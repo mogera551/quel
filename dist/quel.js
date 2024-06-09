@@ -139,16 +139,14 @@ class PropertyName {
    * @returns {PropertyName}
    */
   static create(name) {
-    const propertyName = this.#propertyNameByName.get(name);
+    const propertyName = this.#propertyNameByName[name];
     if (typeof propertyName !== "undefined") return propertyName;
-    const newPropertyName = new PropertyName(name);
-    this.#propertyNameByName.set(name, newPropertyName);
-    return newPropertyName;
+    return this.#propertyNameByName[name] = new PropertyName(name);
   }
   /**
-   * @type {Map<string,PropertyName>}
+   * @type {Object<string,PropertyName>}
    */
-  static #propertyNameByName = new Map;
+  static #propertyNameByName = {};
   static get propertyNameByName() {
     return this.#propertyNameByName;
   }
@@ -211,6 +209,15 @@ let Handler$2 = class Handler {
     return this.#stackIndexes[this.#stackIndexes.length - 1];
   }
 
+  /** @type {string} */
+  #lastIndexesString;
+  get lastIndexesString() {
+    if (typeof this.#lastIndexesString === "undefined") {
+      this.#lastIndexesString = this.lastIndexes?.join(",");
+    }
+    return this.#lastIndexesString;
+  }
+
   get stackIndexes() {
     return this.#stackIndexes;
   }
@@ -232,14 +239,11 @@ let Handler$2 = class Handler {
   getByPropertyName(target, { propName }, receiver) {
     const value = Reflect.get(target, propName.name, receiver);
     if (typeof value !== "undefined") return value;
-    if (propName.parentPath !== "") {
-      const parentPropName = PropertyName.create(propName.parentPath);
-      const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
-      if (typeof parent !== "undefined") {
-        const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
-        return parent[lastName];
-      }
-    }
+    if (propName.parentPath === "") return undefined;
+    const parent = this.getByPropertyName(target, { propName:PropertyName.create(propName.parentPath) }, receiver);
+    if (typeof parent === "undefined") return undefined;
+    const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+    return parent[lastName];
   }
 
   /**
@@ -250,19 +254,15 @@ let Handler$2 = class Handler {
    * @returns {boolean}
    */
   setByPropertyName(target, { propName, value }, receiver) {
-    let result = false;
     if (Reflect.has(target, propName.name) || propName.isPrimitive) {
-      result = Reflect.set(target, propName.name, value, receiver);
+      return Reflect.set(target, propName.name, value, receiver);
     } else {
-      const parentPropName = PropertyName.create(propName.parentPath);
-      const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
-      if (typeof parent !== "undefined") {
-        const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
-        parent[lastName] = value;
-        result = true;
-      }
+      const parent = this.getByPropertyName(target, { propName:PropertyName.create(propName.parentPath) }, receiver);
+      if (typeof parent === "undefined") return false;
+      const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+      parent[lastName] = value;
+      return true;
     }
-    return result;
   }
 
   /**
@@ -272,6 +272,7 @@ let Handler$2 = class Handler {
    * @returns 
    */
   #pushIndexes(indexes, callback) {
+    this.#lastIndexesString = undefined;
     this.#stackIndexes.push(indexes);
     try {
       return Reflect.apply(callback, this, []);
@@ -681,6 +682,8 @@ function getByUUID(uuid) {
 function create$1(html, componentUuid, customComponentNames) {
   const template = document.createElement("template");
   template.innerHTML = html ? replaceTag(html, componentUuid, customComponentNames) : "";
+  template.setAttribute(DATASET_UUID_PROPERTY, componentUuid);
+  templateByUUID.set(componentUuid, template);
   return template;
 }
 
@@ -1746,12 +1749,12 @@ const isCommentNode = node => node instanceof Comment && (node.textContent.start
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
-/** @type {Map<HTMLTemplateElement,number[][]>} */
-const listOfRouteIndexesByTemplate = new Map();
+/** @type {Object<string,number[][]>} */
+const listOfRouteIndexesByUUID = {};
 
 /** @type {(node:Node,template:HTMLTemplateElement)=>(routeIndexes:number[])=>SelectedNode} */
-const routeIndexesToSelectedNodeFromRootNodeAndTemplate = 
-  (node, template) => routeIndexes => ({ template, routeIndexes, node:routeIndexesToNodeFromRootNode(node)(routeIndexes) });
+const routeIndexesToSelectedNodeFromRootNodeAndUUID = 
+  (node, uuid) => routeIndexes => ({ uuid, routeIndexes, node:routeIndexesToNodeFromRootNode(node)(routeIndexes) });
 
 /**
  * Get target node list from template
@@ -1762,20 +1765,23 @@ const routeIndexesToSelectedNodeFromRootNodeAndTemplate =
 function getTargetNodes(template, rootElement) {
   (typeof template === "undefined") && utils.raise(`${moduleName$4}: template is undefined`);
   (typeof rootElement === "undefined") && utils.raise(`${moduleName$4}: rootElement is undefined`);
+  /** @type {string} */
+  const uuid = template.dataset["uuid"];
+  (typeof uuid === "undefined" || uuid === "") && utils.raise(`${moduleName$4}: uuid is undefined`);
 
   /** @type {number[][]} */
-  const listOfRouteIndexes = listOfRouteIndexesByTemplate.get(template);
+  const listOfRouteIndexes = listOfRouteIndexesByUUID[uuid];
   if (typeof listOfRouteIndexes !== "undefined") {
     // キャッシュがある場合
     // querySelectorAllを行わずにNodeの位置を特定できる
-    const routeIndexesToSelectedNode = routeIndexesToSelectedNodeFromRootNodeAndTemplate(rootElement, template);
+    const routeIndexesToSelectedNode = routeIndexesToSelectedNodeFromRootNodeAndUUID(rootElement, uuid);
     return listOfRouteIndexes.map(routeIndexesToSelectedNode);
   } else {
     // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
     const { selectedNodes, listOfRouteIndexes } = nodes.reduce(({ selectedNodes, listOfRouteIndexes }, node) => {
       const routeIndexes = getNodeRoute(node);
-      selectedNodes.push({ node, routeIndexes, template });
+      selectedNodes.push({ node, routeIndexes, uuid });
       listOfRouteIndexes.push(routeIndexes);
       return { selectedNodes, listOfRouteIndexes };
     }, { 
@@ -1784,7 +1790,7 @@ function getTargetNodes(template, rootElement) {
     });
 
     // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-    listOfRouteIndexesByTemplate.set(template, listOfRouteIndexes);
+    listOfRouteIndexesByUUID[uuid] = listOfRouteIndexes;
     return selectedNodes;
   }
 }
@@ -3221,8 +3227,8 @@ const regexp = RegExp(/^\$[0-9]+$/);
  * @property {ViewModelProperty.constructor} classOfViewModelProperty
  */
 
-/** @type {Map<HTMLTemplateElement,Map<string,ClassOf>>} */
-const classOfByRouteIndexesByTemplate = new Map;
+/** @type {Object<string,ClassOf>} */
+const classOfByKey = {};
 
 class Factory {
   // 面倒くさい書き方をしているのは、循環参照でエラーになるため
@@ -3280,8 +3286,10 @@ class Factory {
     /** @type {Node} */
     const node = selectedNode.node;
 
+    /** @type {string} */
+    const key = selectedNode.uuid + "\t" + selectedNode.routeIndexes.join(",");
     /** @type {ClassOf|undefined} */
-    const classOf = classOfByRouteIndexesByTemplate.get(selectedNode.template)?.get(selectedNode.routeIndexes.join(","));
+    const classOf = classOfByKey[key];
     if (typeof classOf !== "undefined") {
       classOfNodeProperty = classOf.classOfNodeProperty;
       classOfViewModelProperty = classOf.classOfViewModelProperty;
@@ -3311,12 +3319,7 @@ class Factory {
           classOfNodeProperty = NodeProperty;
         }
       } while(false);
-      const key = selectedNode.routeIndexes.join(",");
-      classOfByRouteIndexesByTemplate
-        .get(selectedNode.template)
-        ?.set(key, { classOfNodeProperty, classOfViewModelProperty }) ??
-      classOfByRouteIndexesByTemplate
-        .set(selectedNode.template, new Map([[key, { classOfNodeProperty, classOfViewModelProperty }]]));
+      classOfByKey[key] = { classOfNodeProperty, classOfViewModelProperty };
     }
     
     return Binding.create(
@@ -3410,8 +3413,8 @@ const parseBindText$1 = (text, defaultName) => {
   });
 };
 
-/** @type {Map<string,BindTextInfo[]>} */
-const bindTextsByKey = new Map;
+/** @type {Object<string,BindTextInfo[]>} */
+const bindTextsByKey = {};
 
 /**
  * data-bind属性値のパースし、BindTextInfoの配列を返す
@@ -3425,13 +3428,11 @@ function parse(text, defaultName) {
   /** @type {string} */
   const key = text + "\t" + defaultName;
   /** @type {BindTextInfo[] | undefined} */
-  const binds = bindTextsByKey.get(key);
+  const binds = bindTextsByKey[key];
   if (typeof binds !== "undefined") return binds;
 
   /** @type {BindTextInfo[]} */
-  const newBinds = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
-  bindTextsByKey.set(key, newBinds);
-  return newBinds;
+  return bindTextsByKey[key] = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
 }
 
 /**
@@ -3483,8 +3484,8 @@ const getDefaultPropertyFn = element =>
   element instanceof HTMLInputElement ? (defaultPropertyByElementType[element.type] ?? "value") :
   DEFAULT_PROPERTY$1;
 
-/** @type {Map<string,string>} */
-const defaultPropertyByKey = new Map;
+/** @type {Object<string,string>} */
+const defaultPropertyByKey = {};
 
 /**
  * HTML要素のデフォルトプロパティを取得
@@ -3493,11 +3494,10 @@ const defaultPropertyByKey = new Map;
  */
 
 const getDefaultProperty = element => {
-  const key = element.constructor.name + "\t" + (element.type ?? "");  const defaultProperty = defaultPropertyByKey.get(key);
+  const key = element.constructor.name + "\t" + (element.type ?? "");
+  const defaultProperty = defaultPropertyByKey[key];
   if (typeof defaultProperty !== "undefined") return defaultProperty;
-  const newDefaultProperty = getDefaultPropertyFn(element);
-  defaultPropertyByKey.set(key, newDefaultProperty);
-  return newDefaultProperty;
+  return defaultPropertyByKey[key] = getDefaultPropertyFn(element);
 };
 
 
@@ -3656,7 +3656,7 @@ function bind$2(bindingManager, selectedNode) {
   parentNode.replaceChild(textNode, comment);
 
   /** @type {SelectedNode} */
-  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, template: selectedNode.template };
+  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, uuid: selectedNode.uuid };
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
@@ -4614,7 +4614,7 @@ class ReadOnlyViewModelHandler extends ViewModelHandlerBase {
           // プリミティブじゃないもしくはアクセサプロパティ場合、キャッシュから取得する
         const indexesString = propName.level > 0 ? (
           propName.level === this.lastIndexes.length ? 
-            this.lastIndexes.join(",") :
+            this.lastIndexesString :
             this.lastIndexes.slice(0, propName.level).join(",")
         ) : "";
         const cachedValue = this.#cache.get(propName, indexesString);
@@ -4921,8 +4921,7 @@ const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
  * @returns {{readonly:Proxy,writable:Proxy}}
  */
 function createViewModels(component, viewModelClass) {
-  const viewModelInfo = viewModelize(Reflect.construct(viewModelClass, []));
-  const { viewModel, accessorProps } = viewModelInfo;
+  const { viewModel, accessorProps } = viewModelize(Reflect.construct(viewModelClass, []));
   const setOfAccessorProperties = new Set(accessorProps);
   const dependentProps = new DependentProps();
   dependentProps.setDependentProps(viewModel[DEPENDENT_PROPS_PROPERTY] ?? {});
@@ -4962,7 +4961,7 @@ class BindingSummary {
   }
 
   /** @type {Map<string,Binding[]>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
-  #bindingsByKey = new Map;
+  #bindingsByKey = new Map; // Object<string,Binding[]>：16ms、Map<string,Binding[]>：9.2ms
   get bindingsByKey() {
     return this.#bindingsByKey;
   }

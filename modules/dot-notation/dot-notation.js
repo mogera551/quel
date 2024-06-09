@@ -137,16 +137,14 @@ class PropertyName {
    * @returns {PropertyName}
    */
   static create(name) {
-    const propertyName = this.#propertyNameByName.get(name);
+    const propertyName = this.#propertyNameByName[name];
     if (typeof propertyName !== "undefined") return propertyName;
-    const newPropertyName = new PropertyName(name);
-    this.#propertyNameByName.set(name, newPropertyName);
-    return newPropertyName;
+    return this.#propertyNameByName[name] = new PropertyName(name);
   }
   /**
-   * @type {Map<string,PropertyName>}
+   * @type {Object<string,PropertyName>}
    */
-  static #propertyNameByName = new Map;
+  static #propertyNameByName = {};
   static get propertyNameByName() {
     return this.#propertyNameByName;
   }
@@ -209,6 +207,15 @@ class Handler {
     return this.#stackIndexes[this.#stackIndexes.length - 1];
   }
 
+  /** @type {string} */
+  #lastIndexesString;
+  get lastIndexesString() {
+    if (typeof this.#lastIndexesString === "undefined") {
+      this.#lastIndexesString = this.lastIndexes?.join(",");
+    }
+    return this.#lastIndexesString;
+  }
+
   get stackIndexes() {
     return this.#stackIndexes;
   }
@@ -230,14 +237,11 @@ class Handler {
   getByPropertyName(target, { propName }, receiver) {
     const value = Reflect.get(target, propName.name, receiver);
     if (typeof value !== "undefined") return value;
-    if (propName.parentPath !== "") {
-      const parentPropName = PropertyName.create(propName.parentPath);
-      const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
-      if (typeof parent !== "undefined") {
-        const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
-        return parent[lastName];
-      }
-    }
+    if (propName.parentPath === "") return undefined;
+    const parent = this.getByPropertyName(target, { propName:PropertyName.create(propName.parentPath) }, receiver);
+    if (typeof parent === "undefined") return undefined;
+    const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+    return parent[lastName];
   }
 
   /**
@@ -248,19 +252,15 @@ class Handler {
    * @returns {boolean}
    */
   setByPropertyName(target, { propName, value }, receiver) {
-    let result = false;
     if (Reflect.has(target, propName.name) || propName.isPrimitive) {
-      result = Reflect.set(target, propName.name, value, receiver);
+      return Reflect.set(target, propName.name, value, receiver);
     } else {
-      const parentPropName = PropertyName.create(propName.parentPath);
-      const parent = this.getByPropertyName(target, { propName:parentPropName }, receiver);
-      if (typeof parent !== "undefined") {
-        const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
-        parent[lastName] = value;
-        result = true;
-      }
+      const parent = this.getByPropertyName(target, { propName:PropertyName.create(propName.parentPath) }, receiver);
+      if (typeof parent === "undefined") return false;
+      const lastName = (propName.lastPathName === WILDCARD) ? this.lastIndexes[propName.level - 1] : propName.lastPathName;
+      parent[lastName] = value;
+      return true;
     }
-    return result;
   }
 
   /**
@@ -270,6 +270,7 @@ class Handler {
    * @returns 
    */
   #pushIndexes(indexes, callback) {
+    this.#lastIndexesString = undefined;
     this.#stackIndexes.push(indexes);
     try {
       return Reflect.apply(callback, this, []);

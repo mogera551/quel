@@ -45,12 +45,12 @@ const isCommentNode = node => node instanceof Comment && (node.textContent.start
  */
 const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : null)).filter(node => node);
 
-/** @type {Map<HTMLTemplateElement,number[][]>} */
-const listOfRouteIndexesByTemplate = new Map();
+/** @type {Object<string,number[][]>} */
+const listOfRouteIndexesByUUID = {};
 
 /** @type {(node:Node,template:HTMLTemplateElement)=>(routeIndexes:number[])=>SelectedNode} */
-const routeIndexesToSelectedNodeFromRootNodeAndTemplate = 
-  (node, template) => routeIndexes => ({ template, routeIndexes, node:routeIndexesToNodeFromRootNode(node)(routeIndexes) });
+const routeIndexesToSelectedNodeFromRootNodeAndUUID = 
+  (node, uuid) => routeIndexes => ({ uuid, routeIndexes, node:routeIndexesToNodeFromRootNode(node)(routeIndexes) });
 
 /**
  * Get target node list from template
@@ -61,20 +61,23 @@ const routeIndexesToSelectedNodeFromRootNodeAndTemplate =
 export function getTargetNodes(template, rootElement) {
   (typeof template === "undefined") && utils.raise(`${moduleName}: template is undefined`);
   (typeof rootElement === "undefined") && utils.raise(`${moduleName}: rootElement is undefined`);
+  /** @type {string} */
+  const uuid = template.dataset["uuid"];
+  (typeof uuid === "undefined" || uuid === "") && utils.raise(`${moduleName}: uuid is undefined`);
 
   /** @type {number[][]} */
-  const listOfRouteIndexes = listOfRouteIndexesByTemplate.get(template);
+  const listOfRouteIndexes = listOfRouteIndexesByUUID[uuid];
   if (typeof listOfRouteIndexes !== "undefined") {
     // キャッシュがある場合
     // querySelectorAllを行わずにNodeの位置を特定できる
-    const routeIndexesToSelectedNode = routeIndexesToSelectedNodeFromRootNodeAndTemplate(rootElement, template);
+    const routeIndexesToSelectedNode = routeIndexesToSelectedNodeFromRootNodeAndUUID(rootElement, uuid);
     return listOfRouteIndexes.map(routeIndexesToSelectedNode);
   } else {
     // data-bind属性を持つエレメント、コメント（内容が@@で始まる）のノードを取得しリストを作成する
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
     const { selectedNodes, listOfRouteIndexes } = nodes.reduce(({ selectedNodes, listOfRouteIndexes }, node) => {
       const routeIndexes = getNodeRoute(node);
-      selectedNodes.push({ node, routeIndexes, template });
+      selectedNodes.push({ node, routeIndexes, uuid });
       listOfRouteIndexes.push(routeIndexes);
       return { selectedNodes, listOfRouteIndexes };
     }, { 
@@ -83,7 +86,7 @@ export function getTargetNodes(template, rootElement) {
     });
 
     // ノードのルート（DOMツリーのインデックス番号の配列）をキャッシュに覚えておく
-    listOfRouteIndexesByTemplate.set(template, listOfRouteIndexes);
+    listOfRouteIndexesByUUID[uuid] = listOfRouteIndexes;
     return selectedNodes;
   }
 }

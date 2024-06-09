@@ -32,7 +32,7 @@ export class BindingSummary {
   }
 
   /** @type {Map<string,Binding[]>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
-  #bindingsByKey = new Map;
+  #bindingsByKey = new Map; // Object<string,Binding[]>：16ms、Map<string,Binding[]>：9.2ms
   get bindingsByKey() {
     return this.#bindingsByKey;
   }

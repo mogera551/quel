@@ -183,4 +183,5 @@
  * @property {Node} node
  * @property {number[]} routeIndexes
  * @property {HTMLTemplateElement} template
+ * @property {string} uuid
  */
