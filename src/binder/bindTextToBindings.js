@@ -12,7 +12,7 @@ import { utils } from "../utils.js";
  * @param {string|undefined} defaultName default property name of node
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-export function parseBindText(bindingManager, selectedNode, viewModel, text, defaultName) {
+export function bindTextToBindings(bindingManager, selectedNode, viewModel, text, defaultName) {
   (typeof text === "undefined") && utils.raise(`BindToDom: text is undefined`);
   if (text.trim() === "") return [];
   return Parser.parse(text, defaultName).map(info => 

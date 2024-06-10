@@ -1,6 +1,6 @@
 import "../types.js";
 import { utils } from "../utils.js";
-import * as BindToDom from "./BindToDom.js";
+import { bindTextToBindings } from "./bindTextToBindings.js";
 
 const moduleName = "BindToSVGElement";
 
@@ -35,8 +35,8 @@ export function bind(bindingManager, selectedNode) {
   const defaultName = undefined;
 
   // パース
-  /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
+  /** @type {import("../binding/Binding.js")bindTextToBinds.Binding[]} */
+  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   return bindings;
 }

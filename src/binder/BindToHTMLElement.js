@@ -1,6 +1,6 @@
 import "../types.js";
 import { utils } from "../utils.js";
-import * as BindToDom from "./BindToDom.js";
+import { bindTextToBindings } from "./bindTextToBindings.js";
 import { Radio } from "../binding/nodeProperty/Radio.js";
 import { Checkbox } from "../binding/nodeProperty/Checkbox.js";
 
@@ -92,7 +92,7 @@ export function bind(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
+  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   // イベントハンドラ設定
   /** @type {boolean} デフォルトイベントを設定したかどうか */

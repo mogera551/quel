@@ -1,7 +1,7 @@
 import * as Template from "../component/Template.js";
 import "../types.js";
 import { utils } from "../utils.js";
-import * as BindToDom from "./BindToDom.js";
+import { bindTextToBindings } from "./bindTextToBindings.js";
 
 const moduleName = "BindToTemplate";
 
@@ -37,7 +37,7 @@ export function bind(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, selectedNode, viewModel, bindText, undefined);
+  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, undefined);
 
   return bindings;
 }

@@ -1,6 +1,6 @@
 import "../types.js";
 import { utils } from "../utils.js";
-import * as BindToDom from "./BindToDom.js";
+import { bindTextToBindings } from "./bindTextToBindings.js";
 
 const moduleName = "BindToText";
 
@@ -42,7 +42,7 @@ export function bind(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = BindToDom.parseBindText(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
+  const bindings = bindTextToBindings(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
 
   return bindings;
 }

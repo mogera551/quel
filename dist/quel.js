@@ -3414,7 +3414,7 @@ const parseExpression = (expr, defaultName) => {
  * @param {string|undefined} defaultName prop:を省略時、デフォルトのプロパティ値
  * @returns {BindTextInfo[]}
  */
-const parseBindText$1 = (text, defaultName) => {
+const parseBindText = (text, defaultName) => {
   return text.split(";").map(trim$1).filter(has).map(s => { 
     let { nodeProperty, viewModelProperty, filters } = parseExpression(s, DEFAULT);
     viewModelProperty = viewModelProperty === SAMENAME ? nodeProperty : viewModelProperty;
@@ -3440,7 +3440,7 @@ function parse(text, defaultName) {
   const key = text + "\t" + defaultName;
 
   return bindTextsByKey[key] ??
-    (bindTextsByKey[key] = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind)));
+    (bindTextsByKey[key] = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind)));
 }
 
 /**
@@ -3452,7 +3452,7 @@ function parse(text, defaultName) {
  * @param {string|undefined} defaultName default property name of node
  * @returns {import("../binding/Binding.js").Binding[]}
  */
-function parseBindText(bindingManager, selectedNode, viewModel, text, defaultName) {
+function bindTextToBindings(bindingManager, selectedNode, viewModel, text, defaultName) {
   (typeof text === "undefined") && utils.raise(`BindToDom: text is undefined`);
   if (text.trim() === "") return [];
   return parse(text, defaultName).map(info => 
@@ -3547,7 +3547,7 @@ function bind$4(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
+  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   // イベントハンドラ設定
   /** @type {boolean} デフォルトイベントを設定したかどうか */
@@ -3622,8 +3622,8 @@ function bind$3(bindingManager, selectedNode) {
   const defaultName = undefined;
 
   // パース
-  /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, selectedNode, viewModel, bindText, defaultName);
+  /** @type {import("../binding/Binding.js")bindTextToBinds.Binding[]} */
+  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
 
   return bindings;
 }
@@ -3668,7 +3668,7 @@ function bind$2(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
+  const bindings = bindTextToBindings(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
 
   return bindings;
 }
@@ -3707,7 +3707,7 @@ function bind$1(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = parseBindText(bindingManager, selectedNode, viewModel, bindText, undefined);
+  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, undefined);
 
   return bindings;
 }
@@ -3717,6 +3717,17 @@ function bind$1(bindingManager, selectedNode) {
 /** @type {Object<string,BindFn>} */
 const bindFnByKey = {};
 
+/** @type {(bindingManager:BindingManager)=>(selectedNode:SelectedNode)=>BindFn} */
+const bindToDomFn = bindingManager => selectedNode => {
+  return (bindFnByKey[selectedNode.key] ?? (bindFnByKey[selectedNode.key] =
+    (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == ":") ? bind$2 : 
+    (selectedNode.node instanceof HTMLElement) ? bind$4 :
+    (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == "|") ? bind$1 : 
+    (selectedNode.node instanceof SVGElement) ? bind$3 :
+    utils.raise(`Binder: unknown node type`)
+  ))(bindingManager, selectedNode);
+};
+
 /**
  * Generate a list of binding objects from a list of nodes
  * @param {import("../binding/Binding.js").BindingManager} bindingManager parent binding manager
@@ -3724,18 +3735,8 @@ const bindFnByKey = {};
  * @returns {import("../binding/Binding.js").Binding[]} generate a list of binding objects 
  */
 function bind(bindingManager, selectedNodes) {
-  return selectedNodes.flatMap(selectedNode => {
-    /** @type {BindFn} */
-    const bindFn = bindFnByKey[selectedNode.key];
-    if (typeof bindFn !== "undefined") return bindFn(bindingManager, selectedNode);
-    return (bindFnByKey[selectedNode.key] =
-      (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == ":") ? bind$2 : 
-      (selectedNode.node instanceof HTMLElement) ? bind$4 :
-      (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == "|") ? bind$1 : 
-      (selectedNode.node instanceof SVGElement) ? bind$3 :
-      utils.raise(`Binder: unknown node type`)
-    )(bindingManager, selectedNode);
-  });
+  const bindToDom = bindToDomFn(bindingManager);
+  return selectedNodes.flatMap(bindToDom);
 }
 
 /**

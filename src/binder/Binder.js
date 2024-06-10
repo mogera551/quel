@@ -10,6 +10,17 @@ import * as BindToTemplate from "./BindToTemplate.js";
 /** @type {Object<string,BindFn>} */
 const bindFnByKey = {}
 
+/** @type {(bindingManager:BindingManager)=>(selectedNode:SelectedNode)=>BindFn} */
+const bindToDomFn = bindingManager => selectedNode => {
+  return (bindFnByKey[selectedNode.key] ?? (bindFnByKey[selectedNode.key] =
+    (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == ":") ? BindToText.bind : 
+    (selectedNode.node instanceof HTMLElement) ? BindToHTMLElement.bind :
+    (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == "|") ? BindToTemplate.bind : 
+    (selectedNode.node instanceof SVGElement) ? BindToSVGElement.bind :
+    utils.raise(`Binder: unknown node type`)
+  ))(bindingManager, selectedNode);
+};
+
 /**
  * Generate a list of binding objects from a list of nodes
  * @param {import("../binding/Binding.js").BindingManager} bindingManager parent binding manager
@@ -17,16 +28,6 @@ const bindFnByKey = {}
  * @returns {import("../binding/Binding.js").Binding[]} generate a list of binding objects 
  */
 export function bind(bindingManager, selectedNodes) {
-  return selectedNodes.flatMap(selectedNode => {
-    /** @type {BindFn} */
-    const bindFn = bindFnByKey[selectedNode.key];
-    if (typeof bindFn !== "undefined") return bindFn(bindingManager, selectedNode);
-    return (bindFnByKey[selectedNode.key] =
-      (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == ":") ? BindToText.bind : 
-      (selectedNode.node instanceof HTMLElement) ? BindToHTMLElement.bind :
-      (selectedNode.node instanceof Comment && selectedNode.node.textContent[2] == "|") ? BindToTemplate.bind : 
-      (selectedNode.node instanceof SVGElement) ? BindToSVGElement.bind :
-      utils.raise(`Binder: unknown node type`)
-    )(bindingManager, selectedNode);
-  });
+  const bindToDom = bindToDomFn(bindingManager);
+  return selectedNodes.flatMap(bindToDom);
 }
