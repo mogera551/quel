@@ -3298,8 +3298,9 @@ class Factory {
     /** @type {Node} */
     const node = selectedNode.node;
 
+    const key = selectedNode.key + "\t" + nodePropertyName + "\t" + viewModelPropertyName;
     /** @type {ClassOf|undefined} */
-    const classOf = classOfByKey[selectedNode.key];
+    const classOf = classOfByKey[key];
     if (typeof classOf !== "undefined") {
       classOfNodeProperty = classOf.classOfNodeProperty;
       classOfViewModelProperty = classOf.classOfViewModelProperty;
@@ -3329,7 +3330,7 @@ class Factory {
           classOfNodeProperty = NodeProperty;
         }
       } while(false);
-      classOfByKey[selectedNode.key] = { classOfNodeProperty, classOfViewModelProperty };
+      classOfByKey[key] = { classOfNodeProperty, classOfViewModelProperty };
     }
     
     return Binding.create(
