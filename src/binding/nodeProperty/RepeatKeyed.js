@@ -19,17 +19,18 @@ export class RepeatKeyed extends Repeat {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
+    /** @type {Map<any,number>} */
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+    /** @type {Set<number>} */
     const lastIndexes = new Set;
     
-    /** @type {BindingManager[]} */
-    let beforeBindingManager;
     /** @type {Set<number>} */
     const setOfNewIndexes = new Set;
     /** @type {Map<number,number>} */
     const lastIndexByNewIndex = new Map;
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
-      const value = this.binding.viewModelProperty.getChildValue(newIndex);
+//      const value = this.binding.viewModelProperty.getChildValue(newIndex);
+      const value = values[newIndex];
       const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
@@ -45,14 +46,18 @@ export class RepeatKeyed extends Repeat {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].dispose();
     }
+
+    /** @type {BindingManager[]} */
+    let beforeBindingManager;
+    /** @type {Node} */
+    const parentNode = this.node.parentNode;
     const newBindingManagers = values.map((value, newIndex) => {
       /** @type {BindingManager} */
       let bindingManager;
       const beforeNode = beforeBindingManager?.lastNode ?? this.node;
-      const parentNode = this.node.parentNode;
       if (setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
       } else {
         // 元のインデックスがある場合（既存）
@@ -100,7 +105,7 @@ export class RepeatKeyed extends Repeat {
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager === "undefined") {
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
       }
       this.binding.replaceChild(index, bindingManager);
       bindingManager.registerBindingsToSummary();

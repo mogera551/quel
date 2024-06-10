@@ -28,13 +28,14 @@ export class ReuseBindingManager {
   /**
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {string} uuid
    * @param {Binding|undefined} parentBinding
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding) {
+  static create(component, template, uuid, parentBinding) {
     let bindingManager = bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
-      bindingManager = new BindingManager(component, template, parentBinding);
+      bindingManager = new BindingManager(component, template, uuid, parentBinding);
       bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;

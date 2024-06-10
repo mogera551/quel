@@ -1734,7 +1734,15 @@ const reduceNodeByRouteIndex = (node, routeIndex) => node.childNodes[routeIndex]
  * @type {(node:Node)=>(routeIndexes:number[])=>Node}
  */
 const routeIndexesToNodeFromRootNode = node => routeIndexes => routeIndexes.reduce(reduceNodeByRouteIndex, node);
-
+/*
+const routeIndexesToNodeFromRootNode = node => routeIndexes => {
+  let currentNode = node;
+  for(const routeIndex of routeIndexes) {
+    currentNode = currentNode.childNodes[routeIndex];
+  }
+  return currentNode;
+};
+*/
 /**
  * ノードがコメントかどうか
  * @param {Node} node 
@@ -1770,15 +1778,13 @@ const routeInfoToSelectedNodeFromRootNodeAndUUID =
 /**
  * Get target node list from template
  * @param {HTMLTemplateElement|undefined} template 
+ * @param {string} uuid
  * @param {HTMLElement|undefined} rootElement
  * @returns {SelectedNode[]}
  */
-function getTargetNodes(template, rootElement) {
+function getTargetNodes(template, uuid, rootElement) {
   (typeof template === "undefined") && utils.raise(`${moduleName$4}: template is undefined`);
   (typeof rootElement === "undefined") && utils.raise(`${moduleName$4}: rootElement is undefined`);
-  /** @type {string} */
-  const uuid = template.dataset["uuid"];
-  (typeof uuid === "undefined" || uuid === "") && utils.raise(`${moduleName$4}: uuid is undefined`);
 
   /** @type {RouteInfo[]} */
   const listOfRouteInfo = listOfRouteInfoByUUID[uuid];
@@ -2457,7 +2463,7 @@ class Repeat extends TemplateProperty {
     if (this.value < value.length) {
       this.binding.children.forEach(applyToNodeFunc);
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
         this.binding.appendChild(bindingManager);
         bindingManager.registerBindingsToSummary();
         bindingManager.applyToNode();
@@ -2501,7 +2507,7 @@ class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not boolean`, );
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
         this.binding.appendChild(bindingManager);
         bindingManager.registerBindingsToSummary();
       } else {
@@ -3137,17 +3143,18 @@ class RepeatKeyed extends Repeat {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
+    /** @type {Map<any,number>} */
     const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+    /** @type {Set<number>} */
     const lastIndexes = new Set;
     
-    /** @type {BindingManager[]} */
-    let beforeBindingManager;
     /** @type {Set<number>} */
     const setOfNewIndexes = new Set;
     /** @type {Map<number,number>} */
     const lastIndexByNewIndex = new Map;
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
-      const value = this.binding.viewModelProperty.getChildValue(newIndex);
+//      const value = this.binding.viewModelProperty.getChildValue(newIndex);
+      const value = values[newIndex];
       const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
@@ -3163,14 +3170,18 @@ class RepeatKeyed extends Repeat {
       if (lastIndexes.has(i)) continue;
       this.binding.children[i].dispose();
     }
+
+    /** @type {BindingManager[]} */
+    let beforeBindingManager;
+    /** @type {Node} */
+    const parentNode = this.node.parentNode;
     const newBindingManagers = values.map((value, newIndex) => {
       /** @type {BindingManager} */
       let bindingManager;
       const beforeNode = beforeBindingManager?.lastNode ?? this.node;
-      const parentNode = this.node.parentNode;
       if (setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
       } else {
         // 元のインデックスがある場合（既存）
@@ -3218,7 +3229,7 @@ class RepeatKeyed extends Repeat {
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager === "undefined") {
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
+        bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
       }
       this.binding.replaceChild(index, bindingManager);
       bindingManager.registerBindingsToSummary();
@@ -3503,9 +3514,7 @@ const defaultPropertyByKey = {};
 
 const getDefaultProperty = element => {
   const key = element.constructor.name + "\t" + (element.type ?? "");
-  const defaultProperty = defaultPropertyByKey[key];
-  if (typeof defaultProperty !== "undefined") return defaultProperty;
-  return defaultPropertyByKey[key] = getDefaultPropertyFn(element);
+  return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyFn(element));
 };
 
 
@@ -3523,6 +3532,8 @@ const isInputableElement = node => node instanceof HTMLElement &&
 const setDefaultEventHandlerByElement = element => binding => 
   element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
 
+/** @type {Object<string,string>} */
+const bindTextByKey$3 = {};
 
 /**
  * バインドを実行する（ノードがHTMLElementの場合）
@@ -3539,7 +3550,9 @@ function bind$4(bindingManager, selectedNode) {
   /** @type {HTMLElement}  */
   const element = toHTMLElement(node);
   /** @type {string} */
-  const bindText = element.getAttribute(DATASET_BIND_PROPERTY$2) ?? undefined;
+  const bindText = bindTextByKey$3[selectedNode.key] ?? (
+    bindTextByKey$3[selectedNode.key] = element.getAttribute(DATASET_BIND_PROPERTY$2) ?? undefined
+  );
   (typeof bindText === "undefined") && utils.raise(`${moduleName$3}: data-bind is not defined`);
   element.removeAttribute(DATASET_BIND_PROPERTY$2);
   /** @type {string} */
@@ -3600,6 +3613,9 @@ const DATASET_BIND_PROPERTY$1 = "data-bind";
  */
 const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`${moduleName$2}: not SVGElement`);
 
+/** @type {Object<string,string>} */
+const bindTextByKey$2 = {};
+
 /**
  * バインドを実行する（ノードがSVGElementの場合）
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
@@ -3614,7 +3630,9 @@ function bind$3(bindingManager, selectedNode) {
   /** @type {SVGElement} */
   const element = toSVGElement(node);
   /** @type {string} */
-  const bindText = element.getAttribute(DATASET_BIND_PROPERTY$1) ?? undefined;
+  const bindText = bindTextByKey$2[selectedNode.key] ?? (
+    bindTextByKey$2[selectedNode.key] = element.getAttribute(DATASET_BIND_PROPERTY$1) ?? undefined
+  );
   (typeof bindText === "undefined") && utils.raise(`${moduleName$2}: data-bind is not defined`);
 
   element.removeAttribute(DATASET_BIND_PROPERTY$1);
@@ -3623,9 +3641,7 @@ function bind$3(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js")bindTextToBinds.Binding[]} */
-  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
-
-  return bindings;
+  return bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
 }
 
 const moduleName$1 = "BindToText";
@@ -3638,6 +3654,9 @@ const DEFAULT_PROPERTY = "textContent";
  * @returns {Comment}
  */
 const toComment$1 = node => (node instanceof Comment) ? node : utils.raise(`${moduleName$1}: not Comment`);
+
+/** @type {Object<string,string>} */
+const bindTextByKey$1 = {};
 
 /**
  * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
@@ -3657,20 +3676,19 @@ function bind$2(bindingManager, selectedNode) {
   const parentNode = comment.parentNode ?? undefined;
   (typeof parentNode === "undefined") && utils.raise(`${moduleName$1}: no parent`);
   /** @type {string} */
-  const bindText = comment.textContent.slice(3); // @@:をスキップ
+  const bindText = bindTextByKey$1[selectedNode.key] ?? (bindTextByKey$1[selectedNode.key] = comment.textContent.slice(3)) ; // @@:をスキップ
   if (bindText.trim() === "") return [];
   /** @type {Text} */
   const textNode = document.createTextNode("");
-  parentNode.replaceChild(textNode, comment);
+  // not replaceChild, insertBefore, avoid gabage collection
+  parentNode.insertBefore(textNode, comment.nextSibling);
 
   /** @type {SelectedNode} */
   const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, uuid: selectedNode.uuid, key: selectedNode.key };
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = bindTextToBindings(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
-
-  return bindings;
+  return bindTextToBindings(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
 }
 
 const moduleName = "BindToTemplate";
@@ -3682,6 +3700,9 @@ const DATASET_BIND_PROPERTY = "data-bind";
  * @returns {Comment}
  */
 const toComment = node => (node instanceof Comment) ? node : utils.raise(`${moduleName}: not Comment`);
+
+/** @type {Object<string,string>} */
+const bindTextByKey = {};
 
 /**
  * バインドを実行する（ノードがComment（Templateの置換）の場合）
@@ -3702,7 +3723,9 @@ function bind$1(bindingManager, selectedNode) {
   const template = getByUUID(uuid);
   (typeof template === "undefined") && utils.raise(`${moduleName}: template not found`);
   /** @type {string} */
-  const bindText = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+  const bindText = bindTextByKey[selectedNode.key] ?? (
+    bindTextByKey[selectedNode.key] = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined
+  );
   (typeof bindText === "undefined") && utils.raise(`${moduleName}: data-bind is not defined`);
 
   // パース
@@ -3799,13 +3822,14 @@ class ReuseBindingManager {
   /**
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {string} uuid
    * @param {Binding|undefined} parentBinding
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding) {
+  static create(component, template, uuid, parentBinding) {
     let bindingManager = bindingManagersByTemplate.get(template)?.pop();
     if (typeof bindingManager !== "object") {
-      bindingManager = new BindingManager(component, template, parentBinding);
+      bindingManager = new BindingManager(component, template, uuid, parentBinding);
       bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
@@ -4207,18 +4231,23 @@ class BindingManager {
   /** @type {BindingSummary} */
   #bindingSummary;
 
+  /** @type {string} */
+  #uuid;
+
   /**
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {string} uuid
    * @param {Binding|undefined} parentBinding
    */
-  constructor(component, template, parentBinding) {
+  constructor(component, template, uuid, parentBinding) {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
     this.#loopContext = new LoopContext(this);
     this.#bindingSummary = component.bindingSummary;
+    this.#uuid = uuid;
   }
 
   /**
@@ -4226,7 +4255,7 @@ class BindingManager {
    */
   initialize() {
     const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const selectedNodes = getTargetNodes(this.#template, content);
+    const selectedNodes = getTargetNodes(this.#template, this.#uuid, content);
     this.#bindings = bind(this, selectedNodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
@@ -4341,12 +4370,12 @@ class BindingManager {
    * create BindingManager
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {string} uuid
    * @param {Binding|undefined} parentBinding
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding) {
-    const bindingManager = ReuseBindingManager.create(component, template, parentBinding);
-    return bindingManager;
+  static create(component, template, uuid, parentBinding) {
+    return ReuseBindingManager.create(component, template, uuid, parentBinding);
   }
 
 }
@@ -5514,7 +5543,7 @@ class MixedComponent {
     this.cachableInBuilding = true;
 
     // buid binding tree and dom 
-    this.rootBinding = BindingManager.create(this, template);
+    this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
     this.rootBinding.registerBindingsToSummary();
     this.rootBinding.applyToNode();
     this.bindingSummary.flush();

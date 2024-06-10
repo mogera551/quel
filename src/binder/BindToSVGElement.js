@@ -13,6 +13,9 @@ const DATASET_BIND_PROPERTY = "data-bind";
  */
 const toSVGElement = node => (node instanceof SVGElement) ? node : utils.raise(`${moduleName}: not SVGElement`);
 
+/** @type {Object<string,string>} */
+const bindTextByKey = {};
+
 /**
  * バインドを実行する（ノードがSVGElementの場合）
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
@@ -27,7 +30,9 @@ export function bind(bindingManager, selectedNode) {
   /** @type {SVGElement} */
   const element = toSVGElement(node);
   /** @type {string} */
-  const bindText = element.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+  const bindText = bindTextByKey[selectedNode.key] ?? (
+    bindTextByKey[selectedNode.key] = element.getAttribute(DATASET_BIND_PROPERTY) ?? undefined
+  );
   (typeof bindText === "undefined") && utils.raise(`${moduleName}: data-bind is not defined`);
 
   element.removeAttribute(DATASET_BIND_PROPERTY);
@@ -36,7 +41,5 @@ export function bind(bindingManager, selectedNode) {
 
   // パース
   /** @type {import("../binding/Binding.js")bindTextToBinds.Binding[]} */
-  const bindings = bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
-
-  return bindings;
+  return bindTextToBindings(bindingManager, selectedNode, viewModel, bindText, defaultName);
 }

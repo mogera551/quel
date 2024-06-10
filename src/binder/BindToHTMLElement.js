@@ -48,9 +48,7 @@ const defaultPropertyByKey = {};
 
 const getDefaultProperty = element => {
   const key = element.constructor.name + "\t" + (element.type ?? "");
-  const defaultProperty = defaultPropertyByKey[key];
-  if (typeof defaultProperty !== "undefined") return defaultProperty;
-  return defaultPropertyByKey[key] = getDefaultPropertyFn(element);
+  return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyFn(element));
 }
 
 
@@ -68,6 +66,8 @@ const isInputableElement = node => node instanceof HTMLElement &&
 const setDefaultEventHandlerByElement = element => binding => 
   element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
 
+/** @type {Object<string,string>} */
+const bindTextByKey = {};
 
 /**
  * バインドを実行する（ノードがHTMLElementの場合）
@@ -84,7 +84,9 @@ export function bind(bindingManager, selectedNode) {
   /** @type {HTMLElement}  */
   const element = toHTMLElement(node);
   /** @type {string} */
-  const bindText = element.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+  const bindText = bindTextByKey[selectedNode.key] ?? (
+    bindTextByKey[selectedNode.key] = element.getAttribute(DATASET_BIND_PROPERTY) ?? undefined
+  );
   (typeof bindText === "undefined") && utils.raise(`${moduleName}: data-bind is not defined`);
   element.removeAttribute(DATASET_BIND_PROPERTY);
   /** @type {string} */

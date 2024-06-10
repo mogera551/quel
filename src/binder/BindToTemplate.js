@@ -13,6 +13,9 @@ const DATASET_BIND_PROPERTY = "data-bind";
  */
 const toComment = node => (node instanceof Comment) ? node : utils.raise(`${moduleName}: not Comment`);
 
+/** @type {Object<string,string>} */
+const bindTextByKey = {};
+
 /**
  * バインドを実行する（ノードがComment（Templateの置換）の場合）
  * @param {import("../binding/Binding.js").BindingManager} bindingManager
@@ -32,7 +35,9 @@ export function bind(bindingManager, selectedNode) {
   const template = Template.getByUUID(uuid);
   (typeof template === "undefined") && utils.raise(`${moduleName}: template not found`);
   /** @type {string} */
-  const bindText = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined;
+  const bindText = bindTextByKey[selectedNode.key] ?? (
+    bindTextByKey[selectedNode.key] = template.getAttribute(DATASET_BIND_PROPERTY) ?? undefined
+  );
   (typeof bindText === "undefined") && utils.raise(`${moduleName}: data-bind is not defined`);
 
   // パース

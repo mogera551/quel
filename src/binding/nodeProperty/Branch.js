@@ -12,7 +12,7 @@ export class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not boolean`, );
     if (this.value !== value) {
       if (value) {
-        const bindingManager = BindingManager.create(this.binding.component, this.template, this.binding);
+        const bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
         this.binding.appendChild(bindingManager);
         bindingManager.registerBindingsToSummary();
       } else {

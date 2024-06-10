@@ -364,7 +364,7 @@ export class MixedComponent {
     this.cachableInBuilding = true;
 
     // buid binding tree and dom 
-    this.rootBinding = BindingManager.create(this, template);
+    this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
     this.rootBinding.registerBindingsToSummary();
     this.rootBinding.applyToNode();
     this.bindingSummary.flush();

@@ -283,18 +283,23 @@ export class BindingManager {
   /** @type {BindingSummary} */
   #bindingSummary;
 
+  /** @type {string} */
+  #uuid;
+
   /**
    * 
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {string} uuid
    * @param {Binding|undefined} parentBinding
    */
-  constructor(component, template, parentBinding) {
+  constructor(component, template, uuid, parentBinding) {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
     this.#loopContext = new LoopContext(this);
     this.#bindingSummary = component.bindingSummary;
+    this.#uuid = uuid;
   }
 
   /**
@@ -302,7 +307,7 @@ export class BindingManager {
    */
   initialize() {
     const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-    const selectedNodes = Selector.getTargetNodes(this.#template, content);
+    const selectedNodes = Selector.getTargetNodes(this.#template, this.#uuid, content);
     this.#bindings = Binder.bind(this, selectedNodes);
     this.#nodes = Array.from(content.childNodes);
     this.#fragment = content;
@@ -417,12 +422,12 @@ export class BindingManager {
    * create BindingManager
    * @param {Component} component
    * @param {HTMLTemplateElement} template
+   * @param {string} uuid
    * @param {Binding|undefined} parentBinding
    * @returns {BindingManager}
    */
-  static create(component, template, parentBinding) {
-    const bindingManager = ReuseBindingManager.create(component, template, parentBinding);
-    return bindingManager;
+  static create(component, template, uuid, parentBinding) {
+    return ReuseBindingManager.create(component, template, uuid, parentBinding);
   }
 
 }

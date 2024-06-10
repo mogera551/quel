@@ -182,6 +182,6 @@
  * @typedef {Object} SelectedNode
  * @property {Node} node
  * @property {number[]} routeIndexes
- * @property {string} uuid
- * @property {string} key // uuid + routeIndexes.join(",")
+ * @property {string} uuid // template uuid
+ * @property {string} key // uuid + routeIndexes.join(","), for identify node
  */

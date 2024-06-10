@@ -30,7 +30,15 @@ const reduceNodeByRouteIndex = (node, routeIndex) => node.childNodes[routeIndex]
  * @type {(node:Node)=>(routeIndexes:number[])=>Node}
  */
 const routeIndexesToNodeFromRootNode = node => routeIndexes => routeIndexes.reduce(reduceNodeByRouteIndex, node);
-
+/*
+const routeIndexesToNodeFromRootNode = node => routeIndexes => {
+  let currentNode = node;
+  for(const routeIndex of routeIndexes) {
+    currentNode = currentNode.childNodes[routeIndex];
+  }
+  return currentNode;
+};
+*/
 /**
  * ノードがコメントかどうか
  * @param {Node} node 
@@ -66,15 +74,13 @@ const routeInfoToSelectedNodeFromRootNodeAndUUID =
 /**
  * Get target node list from template
  * @param {HTMLTemplateElement|undefined} template 
+ * @param {string} uuid
  * @param {HTMLElement|undefined} rootElement
  * @returns {SelectedNode[]}
  */
-export function getTargetNodes(template, rootElement) {
+export function getTargetNodes(template, uuid, rootElement) {
   (typeof template === "undefined") && utils.raise(`${moduleName}: template is undefined`);
   (typeof rootElement === "undefined") && utils.raise(`${moduleName}: rootElement is undefined`);
-  /** @type {string} */
-  const uuid = template.dataset["uuid"];
-  (typeof uuid === "undefined" || uuid === "") && utils.raise(`${moduleName}: uuid is undefined`);
 
   /** @type {RouteInfo[]} */
   const listOfRouteInfo = listOfRouteInfoByUUID[uuid];

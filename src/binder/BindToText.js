@@ -13,6 +13,9 @@ const DEFAULT_PROPERTY = "textContent";
  */
 const toComment = node => (node instanceof Comment) ? node : utils.raise(`${moduleName}: not Comment`);
 
+/** @type {Object<string,string>} */
+const bindTextByKey = {};
+
 /**
  * バインドを実行する（ノードがComment（TextNodeの置換）の場合）
  * Commentノードをテキストノードに置換する
@@ -31,18 +34,17 @@ export function bind(bindingManager, selectedNode) {
   const parentNode = comment.parentNode ?? undefined;
   (typeof parentNode === "undefined") && utils.raise(`${moduleName}: no parent`);
   /** @type {string} */
-  const bindText = comment.textContent.slice(3); // @@:をスキップ
+  const bindText = bindTextByKey[selectedNode.key] ?? (bindTextByKey[selectedNode.key] = comment.textContent.slice(3)) ; // @@:をスキップ
   if (bindText.trim() === "") return [];
   /** @type {Text} */
   const textNode = document.createTextNode("");
-  parentNode.replaceChild(textNode, comment);
+  // not replaceChild, insertBefore, avoid gabage collection
+  parentNode.insertBefore(textNode, comment.nextSibling);
 
   /** @type {SelectedNode} */
   const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, uuid: selectedNode.uuid, key: selectedNode.key };
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
-  const bindings = bindTextToBindings(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
-
-  return bindings;
+  return bindTextToBindings(bindingManager, selectedTextNode, viewModel, bindText, DEFAULT_PROPERTY);
 }
