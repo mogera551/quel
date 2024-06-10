@@ -38,7 +38,7 @@ export function bind(bindingManager, selectedNode) {
   parentNode.replaceChild(textNode, comment);
 
   /** @type {SelectedNode} */
-  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, uuid: selectedNode.uuid };
+  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, uuid: selectedNode.uuid, key: selectedNode.key };
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */

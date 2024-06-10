@@ -97,10 +97,7 @@ export function parse(text, defaultName) {
   if (text.trim() === "") return [];
   /** @type {string} */
   const key = text + "\t" + defaultName;
-  /** @type {BindTextInfo[] | undefined} */
-  const binds = bindTextsByKey[key];
-  if (typeof binds !== "undefined") return binds;
 
-  /** @type {BindTextInfo[]} */
-  return bindTextsByKey[key] = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
+  return bindTextsByKey[key] ??
+    (bindTextsByKey[key] = parseBindText(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind)));
 }

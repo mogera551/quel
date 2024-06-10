@@ -3438,12 +3438,9 @@ function parse(text, defaultName) {
   if (text.trim() === "") return [];
   /** @type {string} */
   const key = text + "\t" + defaultName;
-  /** @type {BindTextInfo[] | undefined} */
-  const binds = bindTextsByKey[key];
-  if (typeof binds !== "undefined") return binds;
 
-  /** @type {BindTextInfo[]} */
-  return bindTextsByKey[key] = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind));
+  return bindTextsByKey[key] ??
+    (bindTextsByKey[key] = parseBindText$1(text, defaultName).map(bind => Object.assign(new BindTextInfo, bind)));
 }
 
 /**
@@ -3667,7 +3664,7 @@ function bind$2(bindingManager, selectedNode) {
   parentNode.replaceChild(textNode, comment);
 
   /** @type {SelectedNode} */
-  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, uuid: selectedNode.uuid };
+  const selectedTextNode = { node: textNode, routeIndexes: selectedNode.routeIndexes, uuid: selectedNode.uuid, key: selectedNode.key };
 
   // パース
   /** @type {import("../binding/Binding.js").Binding[]} */
