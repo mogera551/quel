@@ -10,8 +10,11 @@ export class Checkbox extends ElementBase {
   }
 
   /** @type {MultiValue} */
+  _value = new MultiValue(undefined, false);
   get value() {
-    return new MultiValue(this.inputElement.value, this.inputElement.checked);
+    this._value.value = this.inputElement.value;
+    this._value.enabled = this.inputElement.checked;
+    return this._value;
   }
 
   /** @param {Array} value */
@@ -23,13 +26,13 @@ export class Checkbox extends ElementBase {
   }
 
   /** @type {MultiValue} */
+  _filteredValue = new MultiValue(undefined, false);
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;
-    return new MultiValue(
-      this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value, 
-      multiValue.enabled
-    );
+    this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;
+    this._filteredValue.enabled = multiValue.enabled;
+    return this._filteredValue;
   }
 
   /**

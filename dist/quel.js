@@ -2622,12 +2622,11 @@ class NodeProperty {
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
-    const input = binding.component.filters.in;
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = Filters.create(filters.toReversed(), input);
+    this.#filters = Filters.create(filters.toReversed(), binding.component.filters.in);
   }
 
   /**
@@ -2810,16 +2809,10 @@ class Branch extends TemplateProperty {
 
 class MultiValue {
   /** @type {any} */
-  #value;
-  get value() {
-    return this.#value;
-  }
+  value;
 
   /** @type {boolean} */
-  #enabled;
-  get enabled() {
-    return this.#enabled;
-  }
+  enabled;
 
   /**
    * 
@@ -2827,8 +2820,8 @@ class MultiValue {
    * @param {boolean} enabled 
    */
   constructor(value, enabled) {
-    this.#value = value;
-    this.#enabled = enabled;
+    this.value = value;
+    this.enabled = enabled;
   }
 }
 
@@ -2935,10 +2928,9 @@ class ViewModelProperty {
    * @param {FilterInfo[]} filters 
    */
   constructor(binding, name, filters) {
-    const out = binding.component.filters.out;
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create(filters, out);
+    this.#filters = Filters.create(filters, binding.component.filters.out);
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
   }
@@ -3046,8 +3038,11 @@ class Checkbox extends ElementBase {
   }
 
   /** @type {MultiValue} */
+  _value = new MultiValue(undefined, false);
   get value() {
-    return new MultiValue(this.inputElement.value, this.inputElement.checked);
+    this._value.value = this.inputElement.value;
+    this._value.enabled = this.inputElement.checked;
+    return this._value;
   }
 
   /** @param {Array} value */
@@ -3059,13 +3054,13 @@ class Checkbox extends ElementBase {
   }
 
   /** @type {MultiValue} */
+  _filteredValue = new MultiValue(undefined, false);
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;
-    return new MultiValue(
-      this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value, 
-      multiValue.enabled
-    );
+    this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;
+    this._filteredValue.enabled = multiValue.enabled;
+    return this._filteredValue;
   }
 
   /**
@@ -3096,8 +3091,11 @@ class Radio extends ElementBase {
   }
 
   /** @type {MultiValue} */
+  _value = new MultiValue(undefined, false);
   get value() {
-    return new MultiValue(this.inputElement.value, this.inputElement.checked);
+    this._value.value = this.inputElement.value;
+    this._value.enabled = this.inputElement.checked;
+    return this._value;
   }
   /** @param {any} value */
   set value(value) {
@@ -3107,13 +3105,13 @@ class Radio extends ElementBase {
   }
 
   /** @type {MultiValue} */
+  _filteredValue = new MultiValue(undefined, false);
   get filteredValue() {
     /** @type {MultiValue} */
     const multiValue = this.value;
-    return new MultiValue(
-      this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value, 
-      multiValue.enabled
-    );
+    this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;
+    this._filteredValue.enabled = multiValue.enabled;
+    return this._filteredValue;
   }
   
   /**
@@ -3177,8 +3175,7 @@ class ElementEvent extends ElementBase {
   constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX$2)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
-    const event = binding.component.filters.event;
-    this.#eventFilters = Filters.create(filters, event);
+    this.#eventFilters = Filters.create(filters, binding.component.filters.event);
   }
 
   /**
@@ -3398,6 +3395,16 @@ class ComponentProperty extends ElementBase {
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
+/** @type {Map<any,number>} */
+const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+/** @type {Set<number>} */
+const lastIndexes = new Set;
+
+/** @type {Set<number>} */
+const setOfNewIndexes = new Set;
+/** @type {Map<number,number>} */
+const lastIndexByNewIndex = new Map;
+
 class RepeatKeyed extends Repeat {
   /** @type {boolean} */
   get loopable() {
@@ -3413,15 +3420,10 @@ class RepeatKeyed extends Repeat {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
-    /** @type {Map<any,number>} */
-    const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
-    /** @type {Set<number>} */
-    const lastIndexes = new Set;
-    
-    /** @type {Set<number>} */
-    const setOfNewIndexes = new Set;
-    /** @type {Map<number,number>} */
-    const lastIndexByNewIndex = new Map;
+    fromIndexByValue.clear();
+    lastIndexes.clear();
+    setOfNewIndexes.clear();
+    lastIndexByNewIndex.clear();
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
 //      const value = this.binding.viewModelProperty.getChildValue(newIndex);
       const value = values[newIndex];

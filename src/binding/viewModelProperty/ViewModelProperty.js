@@ -107,10 +107,9 @@ export class ViewModelProperty {
    * @param {FilterInfo[]} filters 
    */
   constructor(binding, name, filters) {
-    const out = binding.component.filters.out;
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create(filters, out);
+    this.#filters = Filters.create(filters, binding.component.filters.out);
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
   }

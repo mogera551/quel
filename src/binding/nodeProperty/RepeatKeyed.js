@@ -4,6 +4,16 @@ import { Repeat } from "./Repeat.js";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
+/** @type {Map<any,number>} */
+const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+/** @type {Set<number>} */
+const lastIndexes = new Set;
+
+/** @type {Set<number>} */
+const setOfNewIndexes = new Set;
+/** @type {Map<number,number>} */
+const lastIndexByNewIndex = new Map;
+
 export class RepeatKeyed extends Repeat {
   /** @type {boolean} */
   get loopable() {
@@ -19,15 +29,10 @@ export class RepeatKeyed extends Repeat {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
-    /** @type {Map<any,number>} */
-    const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
-    /** @type {Set<number>} */
-    const lastIndexes = new Set;
-    
-    /** @type {Set<number>} */
-    const setOfNewIndexes = new Set;
-    /** @type {Map<number,number>} */
-    const lastIndexByNewIndex = new Map;
+    fromIndexByValue.clear();
+    lastIndexes.clear();
+    setOfNewIndexes.clear();
+    lastIndexByNewIndex.clear();
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
 //      const value = this.binding.viewModelProperty.getChildValue(newIndex);
       const value = values[newIndex];

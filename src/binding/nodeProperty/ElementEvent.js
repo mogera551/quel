@@ -44,8 +44,7 @@ export class ElementEvent extends ElementBase {
   constructor(binding, node, name, filters) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
-    const event = binding.component.filters.event;
-    this.#eventFilters = Filters.create(filters, event)
+    this.#eventFilters = Filters.create(filters, binding.component.filters.event)
   }
 
   /**

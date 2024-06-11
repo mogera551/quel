@@ -75,12 +75,11 @@ export class NodeProperty {
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
-    const input = binding.component.filters.in;
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = Filters.create(filters.toReversed(), input);
+    this.#filters = Filters.create(filters.toReversed(), binding.component.filters.in);
   }
 
   /**
