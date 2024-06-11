@@ -16,11 +16,5 @@ export const getNodeRoute = node => {
   return routeIndexes;
 };
 
-
-export const getNodeFromNodeRoute = (rootNode, nodeRoute) => {
-  let currentNode = rootNode;
-  for(const routeIndex of nodeRoute) {
-    currentNode = currentNode.childNodes[routeIndex];
-  }
-  return currentNode;
-}
+const routeFn = (node, routeIndex) => node.childNodes[routeIndex];
+export const getNodeFromNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);

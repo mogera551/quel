@@ -1,8 +1,6 @@
 import "../types.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { utils } from "../utils.js";
-import * as Selector from "../binder/Selector.js";
-//import * as Binder from "../binder/Binder.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
 import { Binder } from "../newBinder/Binder.js";
@@ -307,13 +305,9 @@ export class BindingManager {
    * 
    */
   initialize() {
-    const binder = Binder.create(this.#template, this.#component.useKeyed);
-    const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-//    const selectedNodes = Selector.getTargetNodes(this.#template, this.#uuid, content);
-//    this.#bindings = Binder.bind(this, selectedNodes);
-    this.#bindings = binder.createBindings(content, this);
-    this.#nodes = Array.from(content.childNodes);
-    this.#fragment = content;
+    this.#fragment = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
+    this.#bindings = Binder.create(this.#template, this.#component.useKeyed).createBindings(this.#fragment, this);
+    this.#nodes = Array.from(this.#fragment.childNodes);
   }
 
   /**

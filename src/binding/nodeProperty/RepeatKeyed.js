@@ -63,11 +63,9 @@ export class RepeatKeyed extends Repeat {
         // 元のインデックスがある場合（既存）
         const lastIndex = lastIndexByNewIndex.get(newIndex);
         bindingManager = this.binding.children[lastIndex];
-        if (bindingManager.nodes) {
-          if (bindingManager.nodes[0].previousSibling !== beforeNode) {
-            bindingManager.removeNodes();
-            parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
-          }
+        if (bindingManager.nodes?.[0]?.previousSibling !== beforeNode) {
+          bindingManager.removeNodes();
+          parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
         }
       }
       beforeBindingManager = bindingManager;

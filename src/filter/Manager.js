@@ -272,7 +272,7 @@ export class Filters {
    * @returns {FilterFunc[]}
    */
   static create(filters, manager) {
-    return Array.from(filters).map(info => manager.getFilterFunc(info.name)(info.options));
+    return filters.map(info => manager.getFilterFunc(info.name)(info.options));
   }
 }
 

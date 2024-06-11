@@ -1717,20 +1717,19 @@ class Popover {
    * @returns 
    */
   static initialize(bindingManager) {
-    const buttons = Array.from(bindingManager.fragment.querySelectorAll("[popovertarget]"));
-    if (buttons.length === 0) return;
-    buttons.forEach(button => {
+    const buttonList = bindingManager.fragment.querySelectorAll("[popovertarget]");
+    if (buttonList.length === 0) return;
+    for(const button of buttonList) {
       const id = button.getAttribute("popovertarget");
       let setContextIndexes = setContextIndexesByIdByBindingManager.get(bindingManager)?.get(id);
       if (typeof setContextIndexes === "undefined") {
         setContextIndexes = () => bindingManager.component.popoverContextIndexesById.set(id, bindingManager.loopContext.indexes);
-        setContextIndexesByIdByBindingManager.get(bindingManager)?.set(id, setContextIndexes) ??
+        setContextIndexesByIdByBindingManager.get(bindingManager)?.set(id, setContextIndexes) ?? 
           setContextIndexesByIdByBindingManager.set(bindingManager, new Map([[id, setContextIndexes]]));
       }
       button.removeEventListener("click", setContextIndexes);
       button.addEventListener("click", setContextIndexes);
-    });
-
+    }
   }
   static dispose(bindingManager) {
     setContextIndexesByIdByBindingManager.delete(bindingManager);
@@ -2353,7 +2352,7 @@ class Filters {
    * @returns {FilterFunc[]}
    */
   static create(filters, manager) {
-    return Array.from(filters).map(info => manager.getFilterFunc(info.name)(info.options));
+    return filters.map(info => manager.getFilterFunc(info.name)(info.options));
   }
 }
 
@@ -3458,11 +3457,9 @@ class RepeatKeyed extends Repeat {
         // 元のインデックスがある場合（既存）
         const lastIndex = lastIndexByNewIndex.get(newIndex);
         bindingManager = this.binding.children[lastIndex];
-        if (bindingManager.nodes) {
-          if (bindingManager.nodes[0].previousSibling !== beforeNode) {
-            bindingManager.removeNodes();
-            parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
-          }
+        if (bindingManager.nodes?.[0]?.previousSibling !== beforeNode) {
+          bindingManager.removeNodes();
+          parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
         }
       }
       beforeBindingManager = bindingManager;
@@ -3619,14 +3616,8 @@ const getNodeRoute = node => {
   return routeIndexes;
 };
 
-
-const getNodeFromNodeRoute = (rootNode, nodeRoute) => {
-  let currentNode = rootNode;
-  for(const routeIndex of nodeRoute) {
-    currentNode = currentNode.childNodes[routeIndex];
-  }
-  return currentNode;
-};
+const routeFn = (node, routeIndex) => node.childNodes[routeIndex];
+const getNodeFromNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);
 
 /** @type {(bindTextInfo:BindTextInfo)=>(bindingManager:BindingManager,node:Node)=>Binding} */
 const createBinding = (bindTextInfo) => (bindingManager, node) => Binding.create(
@@ -4159,13 +4150,9 @@ class BindingManager {
    * 
    */
   initialize() {
-    const binder = Binder.create(this.#template, this.#component.useKeyed);
-    const content = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-//    const selectedNodes = Selector.getTargetNodes(this.#template, this.#uuid, content);
-//    this.#bindings = Binder.bind(this, selectedNodes);
-    this.#bindings = binder.createBindings(content, this);
-    this.#nodes = Array.from(content.childNodes);
-    this.#fragment = content;
+    this.#fragment = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
+    this.#bindings = Binder.create(this.#template, this.#component.useKeyed).createBindings(this.#fragment, this);
+    this.#nodes = Array.from(this.#fragment.childNodes);
   }
 
   /**
