@@ -4,6 +4,7 @@ import { utils } from "../utils.js";
 import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
 import { Binder } from "../newBinder/Binder.js";
+import { fragmentsByUUID } from "./ReuseFragment.js";
 
 let seq = 0;
 
@@ -257,6 +258,9 @@ export class BindingManager {
   get fragment() {
     return this.#fragment;
   }
+  set fragment(value) {
+    this.#fragment = value;
+  }
 
   /** @type {LoopContext} */
   #loopContext;
@@ -284,6 +288,9 @@ export class BindingManager {
 
   /** @type {string} */
   #uuid;
+  get uuid() {
+    return this.#uuid;
+  }
 
   /**
    * 
@@ -305,7 +312,8 @@ export class BindingManager {
    * 
    */
   initialize() {
-    this.#fragment = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
+    this.#fragment = fragmentsByUUID[this.#uuid]?.pop() ??
+      document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#bindings = Binder.create(this.#template, this.#component.useKeyed).createBindings(this.#fragment, this);
     this.#nodes = Array.from(this.#fragment.childNodes);
   }
@@ -337,8 +345,8 @@ export class BindingManager {
    * remove nodes, append to fragment
    */
   removeNodes() {
-    const appnedNodeToFragment = appendNodeTo(this.#fragment);
-    this.#nodes.forEach(appnedNodeToFragment);
+    const appendNodeToFragment = appendNodeTo(this.#fragment);
+    this.#nodes.forEach(appendNodeToFragment);
   }
 
   /**

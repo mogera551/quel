@@ -1736,6 +1736,9 @@ class Popover {
   }
 }
 
+/** @type {Object<string,DocumentFragment[]>} */
+const fragmentsByUUID = {};
+
 /** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
 const bindingManagersByTemplate = new Map;
 
@@ -1753,7 +1756,13 @@ class ReuseBindingManager {
       const removeBindManagers = binding.children.splice(0);
       removeBindManagers.forEach(bindingManager => bindingManager.dispose());
     });
-    if (!bindingManager.component.useKeyed) {
+    if (bindingManager.component.useKeyed) {
+      // reuse fragment
+      fragmentsByUUID[bindingManager.uuid]?.push(bindingManager.fragment) ??
+        (fragmentsByUUID[bindingManager.uuid] = [bindingManager.fragment]);
+      bindingManager.fragment = undefined;
+    } else {
+      // reuse bindingManager
       bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
         bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
@@ -4109,6 +4118,9 @@ class BindingManager {
   get fragment() {
     return this.#fragment;
   }
+  set fragment(value) {
+    this.#fragment = value;
+  }
 
   /** @type {LoopContext} */
   #loopContext;
@@ -4136,6 +4148,9 @@ class BindingManager {
 
   /** @type {string} */
   #uuid;
+  get uuid() {
+    return this.#uuid;
+  }
 
   /**
    * 
@@ -4157,7 +4172,8 @@ class BindingManager {
    * 
    */
   initialize() {
-    this.#fragment = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
+    this.#fragment = fragmentsByUUID[this.#uuid]?.pop() ??
+      document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#bindings = Binder.create(this.#template, this.#component.useKeyed).createBindings(this.#fragment, this);
     this.#nodes = Array.from(this.#fragment.childNodes);
   }
@@ -4189,8 +4205,8 @@ class BindingManager {
    * remove nodes, append to fragment
    */
   removeNodes() {
-    const appnedNodeToFragment = appendNodeTo(this.#fragment);
-    this.#nodes.forEach(appnedNodeToFragment);
+    const appendNodeToFragment = appendNodeTo(this.#fragment);
+    this.#nodes.forEach(appendNodeToFragment);
   }
 
   /**

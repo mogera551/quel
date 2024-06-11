@@ -1,5 +1,6 @@
 import { Popover } from "../popover/Popover.js";
 import { BindingManager } from "./Binding.js";
+import { fragmentsByUUID } from "./ReuseFragment.js";
 
 /** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
 const bindingManagersByTemplate = new Map;
@@ -18,7 +19,13 @@ export class ReuseBindingManager {
       const removeBindManagers = binding.children.splice(0);
       removeBindManagers.forEach(bindingManager => bindingManager.dispose());
     });
-    if (!bindingManager.component.useKeyed) {
+    if (bindingManager.component.useKeyed) {
+      // reuse fragment
+      fragmentsByUUID[bindingManager.uuid]?.push(bindingManager.fragment) ??
+        (fragmentsByUUID[bindingManager.uuid] = [bindingManager.fragment]);
+      bindingManager.fragment = undefined;
+    } else {
+      // reuse bindingManager
       bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
         bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
     }
