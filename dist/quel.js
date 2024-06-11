@@ -3532,7 +3532,7 @@ class RepeatKeyed extends Repeat {
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
-/** @type {Object<boolean,Object<string,NodeProperty.constructor>>} */
+/** @type {Object<boolean,Object<string,typeof NodeProperty>>} */
 const nodePropertyConstructorByNameByIsComment = {
   true: {
     "if": Branch,
@@ -3544,7 +3544,7 @@ const nodePropertyConstructorByNameByIsComment = {
   }
 };
 
-/** @type {Object<string,NodeProperty.constructor>} */
+/** @type {Object<string,typeof NodeProperty>} */
 const nodePropertyConstructorByFirstName = {
   "class": ElementClass,
   "attr": ElementAttribute,
@@ -3558,7 +3558,7 @@ const nodePropertyConstructorByFirstName = {
  * @param {string} nodePropertyName 
  * @param {string} viewModelPropertyName 
  * @param {boolean} useKeyed
- * @returns {{ nodePropertyConstructor: NodeProperty.constructor, viewModelPropertyConstructor: ViewModelProperty.constructor }}
+ * @returns {{ nodePropertyConstructor: typeof NodeProperty, viewModelPropertyConstructor: typeof ViewModelProperty }}
  */
 const getConstructors = (node, nodePropertyName, viewModelPropertyName, useKeyed) => {
   /** @type {ViewModelProperty.constructor} */
@@ -3937,20 +3937,36 @@ class Binding {
    * @param {BindingManager} bindingManager 
    * @param {Node} node
    * @param {string} nodePropertyName
-   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
+   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
    * @param {string} viewModelPropertyName
-   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
+   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor 
    * @param {FilterInfo[]} filters
    */
   constructor(bindingManager,
-    node, nodePropertyName, classOfNodeProperty, 
-    viewModelPropertyName, classOfViewModelProperty,
+    node, nodePropertyName, nodePropertyConstructor, 
+    viewModelPropertyName, viewModelPropertyConstructor,
     filters
   ) {
+    this.assign(bindingManager, node, nodePropertyName, nodePropertyConstructor, viewModelPropertyName, viewModelPropertyConstructor, filters);
+  }
+
+  /**
+   * for reuse
+   * @param {BindingManager} bindingManager 
+   * @param {Node} node
+   * @param {string} nodePropertyName
+   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
+   * @param {string} viewModelPropertyName
+   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor 
+   * @param {FilterInfo[]} filters
+   */
+  assign(bindingManager, 
+    node, nodePropertyName, nodePropertyConstructor, 
+    viewModelPropertyName, viewModelPropertyConstructor, filters) {
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new classOfNodeProperty(this, node, nodePropertyName, filters);
-    this.#viewModelProperty = new classOfViewModelProperty(this, viewModelPropertyName, filters);
+    this.#nodeProperty = new nodePropertyConstructor(this, node, nodePropertyName, filters);
+    this.#viewModelProperty = new viewModelPropertyConstructor(this, viewModelPropertyName, filters);
   }
 
   /**
@@ -4048,20 +4064,20 @@ class Binding {
    * @param {BindingManager} bindingManager 
    * @param {Node} node
    * @param {string} nodePropertyName
-   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} classOfNodeProperty 
+   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor 
    * @param {string} viewModelPropertyName
-   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} classOfViewModelProperty 
+   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor
    * @param {FilterInfo[]} filters
    */
   static create(bindingManager,
-    node, nodePropertyName, classOfNodeProperty, 
-    viewModelPropertyName, classOfViewModelProperty,
+    node, nodePropertyName, nodePropertyConstructor, 
+    viewModelPropertyName, viewModelPropertyConstructor,
     filters
   ) {
     const binding = new Binding(
       bindingManager,
-      node, nodePropertyName, classOfNodeProperty, 
-      viewModelPropertyName, classOfViewModelProperty,
+      node, nodePropertyName, nodePropertyConstructor, 
+      viewModelPropertyName, viewModelPropertyConstructor,
       filters
     );
     binding.initialize();

@@ -1,4 +1,3 @@
-import "../types.js";
 import { utils } from "../utils.js";
 import { Repeat } from "../binding/nodeProperty/Repeat.js";
 import { Branch } from "../binding/nodeProperty/Branch.js";
@@ -18,7 +17,7 @@ import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed.js";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
-/** @type {Object<boolean,Object<string,NodeProperty.constructor>>} */
+/** @type {Object<boolean,Object<string,typeof NodeProperty>>} */
 const nodePropertyConstructorByNameByIsComment = {
   true: {
     "if": Branch,
@@ -30,7 +29,7 @@ const nodePropertyConstructorByNameByIsComment = {
   }
 };
 
-/** @type {Object<string,NodeProperty.constructor>} */
+/** @type {Object<string,typeof NodeProperty>} */
 const nodePropertyConstructorByFirstName = {
   "class": ElementClass,
   "attr": ElementAttribute,
@@ -44,7 +43,7 @@ const nodePropertyConstructorByFirstName = {
  * @param {string} nodePropertyName 
  * @param {string} viewModelPropertyName 
  * @param {boolean} useKeyed
- * @returns {{ nodePropertyConstructor: NodeProperty.constructor, viewModelPropertyConstructor: ViewModelProperty.constructor }}
+ * @returns {{ nodePropertyConstructor: typeof NodeProperty, viewModelPropertyConstructor: typeof ViewModelProperty }}
  */
 export const getConstructors = (node, nodePropertyName, viewModelPropertyName, useKeyed) => {
   /** @type {ViewModelProperty.constructor} */

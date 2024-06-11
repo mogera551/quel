@@ -1,10 +1,11 @@
+
 /**
  * @typedef {Object} BindTextInfo
  * @property {string} nodeProperty bindするnodeのプロパティ名
  * @property {string} viewModelProperty bindするviewModelのプロパティ名
  * @property {FilterInfo[]} filters 適用するフィルターの配列
- * @property {NodeProperty.constructor} nodePropertyConstructor
- * @property {ViewModelProperty.constructor} viewModelPropertyConstructor
+ * @property {typeof import("../binding/nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
+ * @property {typeof import("../binding/viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor
  * @property {(bindingManager:BindingManager,node:Node)=>Binding} bindingCreator
  */
 
