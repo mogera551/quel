@@ -4,13 +4,18 @@ import { Repeat } from "./Repeat.js";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
+/**
+ * Exclude from GC
+ */
 /** @type {Map<any,number>} */
 const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+
 /** @type {Set<number>} */
 const lastIndexes = new Set;
 
 /** @type {Set<number>} */
 const setOfNewIndexes = new Set;
+
 /** @type {Map<number,number>} */
 const lastIndexByNewIndex = new Map;
 
