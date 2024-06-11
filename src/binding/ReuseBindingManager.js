@@ -5,6 +5,9 @@ import { fragmentsByUUID } from "./ReuseFragment.js";
 /** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
 const bindingManagersByTemplate = new Map;
 
+/** @type {Object<string,import("./Binding.js").BindingManager[]>} */
+const bindingManagersByUUID = {};
+
 export class ReuseBindingManager {
   /**
    * 
@@ -24,10 +27,12 @@ export class ReuseBindingManager {
       fragmentsByUUID[bindingManager.uuid]?.push(bindingManager.fragment) ??
         (fragmentsByUUID[bindingManager.uuid] = [bindingManager.fragment]);
       bindingManager.fragment = undefined;
+      bindingManagersByUUID[bindingManager.uuid]?.push(bindingManager) ??
+        (bindingManagersByUUID[bindingManager.uuid] = [bindingManager]);
     } else {
       // reuse bindingManager
-      bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
-        bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
+      bindingManagersByUUID[bindingManager.uuid]?.push(bindingManager) ??
+        (bindingManagersByUUID[bindingManager.uuid] = [bindingManager]);
     }
     Popover.dispose(bindingManager);
   }
@@ -40,12 +45,14 @@ export class ReuseBindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, uuid, parentBinding) {
-    let bindingManager = bindingManagersByTemplate.get(template)?.pop();
+    let bindingManager = bindingManagersByUUID[uuid]?.pop();
     if (typeof bindingManager !== "object") {
       bindingManager = new BindingManager(component, template, uuid, parentBinding);
       bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
+      bindingManager.assign(component, template, uuid, parentBinding);
+      bindingManager.initialize();
     }
     Popover.initialize(bindingManager);
     return bindingManager;

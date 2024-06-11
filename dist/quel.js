@@ -1739,8 +1739,8 @@ class Popover {
 /** @type {Object<string,DocumentFragment[]>} */
 const fragmentsByUUID = {};
 
-/** @type {Map<HTMLTemplateElement,Array<import("./Binding.js").BindingManager>>} */
-const bindingManagersByTemplate = new Map;
+/** @type {Object<string,import("./Binding.js").BindingManager[]>} */
+const bindingManagersByUUID = {};
 
 class ReuseBindingManager {
   /**
@@ -1761,10 +1761,12 @@ class ReuseBindingManager {
       fragmentsByUUID[bindingManager.uuid]?.push(bindingManager.fragment) ??
         (fragmentsByUUID[bindingManager.uuid] = [bindingManager.fragment]);
       bindingManager.fragment = undefined;
+      bindingManagersByUUID[bindingManager.uuid]?.push(bindingManager) ??
+        (bindingManagersByUUID[bindingManager.uuid] = [bindingManager]);
     } else {
       // reuse bindingManager
-      bindingManagersByTemplate.get(bindingManager.template)?.push(bindingManager) ??
-        bindingManagersByTemplate.set(bindingManager.template, [bindingManager]);
+      bindingManagersByUUID[bindingManager.uuid]?.push(bindingManager) ??
+        (bindingManagersByUUID[bindingManager.uuid] = [bindingManager]);
     }
     Popover.dispose(bindingManager);
   }
@@ -1777,12 +1779,14 @@ class ReuseBindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, uuid, parentBinding) {
-    let bindingManager = bindingManagersByTemplate.get(template)?.pop();
+    let bindingManager = bindingManagersByUUID[uuid]?.pop();
     if (typeof bindingManager !== "object") {
       bindingManager = new BindingManager(component, template, uuid, parentBinding);
       bindingManager.initialize();
     } else {
       bindingManager.parentBinding = parentBinding;
+      bindingManager.assign(component, template, uuid, parentBinding);
+      bindingManager.initialize();
     }
     Popover.initialize(bindingManager);
     return bindingManager;
@@ -4160,6 +4164,17 @@ class BindingManager {
    * @param {Binding|undefined} parentBinding
    */
   constructor(component, template, uuid, parentBinding) {
+    this.assign(component, template, uuid, parentBinding);
+  }
+
+  /**
+   * for reuse
+   * @param {Component} component 
+   * @param {HTMLTemplateElement} template 
+   * @param {string} uuid 
+   * @param {Binding|undefined} parentBinding 
+   */
+  assign(component, template, uuid, parentBinding) {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;

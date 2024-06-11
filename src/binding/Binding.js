@@ -300,6 +300,17 @@ export class BindingManager {
    * @param {Binding|undefined} parentBinding
    */
   constructor(component, template, uuid, parentBinding) {
+    this.assign(component, template, uuid, parentBinding);
+  }
+
+  /**
+   * for reuse
+   * @param {Component} component 
+   * @param {HTMLTemplateElement} template 
+   * @param {string} uuid 
+   * @param {Binding|undefined} parentBinding 
+   */
+  assign(component, template, uuid, parentBinding) {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
