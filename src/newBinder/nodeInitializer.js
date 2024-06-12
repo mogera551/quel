@@ -18,7 +18,7 @@ const setDefaultEventHandlerByElement = element => binding =>
  * @param {string} defaultName
  * @returns {void}
  */
-export function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
+function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
   /** @type {HTMLElement}  */
   const element = node;
 

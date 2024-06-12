@@ -5,7 +5,7 @@ export const NodeType = {
   Template: 4,
 }
 
-export const nodeKey = node => node.constructor.name + "\t" + node.textContent?.[2] ?? "";
+const nodeKey = node => node.constructor.name + "\t" + node.textContent?.[2] ?? "";
 
 const nodeTypeByNodeKey = {};
 
