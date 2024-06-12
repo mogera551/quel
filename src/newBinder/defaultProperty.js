@@ -45,7 +45,7 @@ const getDefaultPropertyFn = {
  * @returns {string}
  */
 export const getDefaultProperty = (node, nodeType) => {
-  const key = node.constructor.name + "\t" + (node.type ?? "");
+  const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
   return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyFn[nodeType](node));
 }
   

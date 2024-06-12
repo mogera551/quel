@@ -1,6 +1,7 @@
 
 
 import "../types.js";
+import "./types.js";
 import { utils } from "../utils.js";
 import { getDefaultProperty } from "./defaultProperty.js";
 import { getBindText } from "./bindText.js";
@@ -74,7 +75,7 @@ export class Binder {
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
       nodeInfo.nodeInitializer = nodeInitializer(nodeInfo);
 
-      this.nodeInfos.push(nodeInfo);
+      this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
     }
   }
 
@@ -85,12 +86,20 @@ export class Binder {
    * @returns {Binding[]}
    */
   createBindings(content, bindingManager) {
-    return this.nodeInfos.flatMap(nodeInfo => {
+    const allBindings =[];
+    for(let i = 0; i < this.nodeInfos.length; i++) {
+      const nodeInfo = this.nodeInfos[i];
       const node = getNodeFromNodeRoute(content, nodeInfo.nodeRoute);
-      const bindings = nodeInfo.bindTextInfos.map(bindTextInfo => bindTextInfo.bindingCreator(bindingManager, node));
+      const bindings = [];
+      for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
+        const bindTextInfo = nodeInfo.bindTextInfos[j];
+        const binding = bindTextInfo.bindingCreator(bindingManager, node);
+        bindings[bindings.length] = binding; // push
+      }
       nodeInfo.nodeInitializer(node, bindings);
-      return bindings;
-    });
+      allBindings.push(...bindings);
+    }
+    return allBindings;
   }
 
   static #binderByUUID = {};

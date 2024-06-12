@@ -272,7 +272,12 @@ export class Filters {
    * @returns {FilterFunc[]}
    */
   static create(filters, manager) {
-    return filters.map(info => manager.getFilterFunc(info.name)(info.options));
+    const filterFuncs = [];
+    for(let i = 0; i < filters.length; i++) {
+      const filter = filters[i];
+      filterFuncs.push(manager.getFilterFunc(filter.name)(filter.options));
+    }
+    return filterFuncs;
   }
 }
 

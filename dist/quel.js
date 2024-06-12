@@ -1980,7 +1980,7 @@ const getDefaultPropertyFn = {
  * @returns {string}
  */
 const getDefaultProperty = (node, nodeType) => {
-  const key = node.constructor.name + "\t" + (node.type ?? "");
+  const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
   return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyFn[nodeType](node));
 };
 
@@ -2375,7 +2375,12 @@ class Filters {
    * @returns {FilterFunc[]}
    */
   static create(filters, manager) {
-    return filters.map(info => manager.getFilterFunc(info.name)(info.options));
+    const filterFuncs = [];
+    for(let i = 0; i < filters.length; i++) {
+      const filter = filters[i];
+      filterFuncs.push(manager.getFilterFunc(filter.name)(filter.options));
+    }
+    return filterFuncs;
   }
 }
 
@@ -3957,7 +3962,7 @@ class Binder {
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
       nodeInfo.nodeInitializer = nodeInitializer(nodeInfo);
 
-      this.nodeInfos.push(nodeInfo);
+      this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
     }
   }
 
@@ -3968,12 +3973,20 @@ class Binder {
    * @returns {Binding[]}
    */
   createBindings(content, bindingManager) {
-    return this.nodeInfos.flatMap(nodeInfo => {
+    const allBindings =[];
+    for(let i = 0; i < this.nodeInfos.length; i++) {
+      const nodeInfo = this.nodeInfos[i];
       const node = getNodeFromNodeRoute(content, nodeInfo.nodeRoute);
-      const bindings = nodeInfo.bindTextInfos.map(bindTextInfo => bindTextInfo.bindingCreator(bindingManager, node));
+      const bindings = [];
+      for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
+        const bindTextInfo = nodeInfo.bindTextInfos[j];
+        const binding = bindTextInfo.bindingCreator(bindingManager, node);
+        bindings[bindings.length] = binding; // push
+      }
       nodeInfo.nodeInitializer(node, bindings);
-      return bindings;
-    });
+      allBindings.push(...bindings);
+    }
+    return allBindings;
   }
 
   static #binderByUUID = {};
