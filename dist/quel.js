@@ -3673,13 +3673,13 @@ const replaceTextNodeText = (node) => {
   return textNode;
 };
 
-const itsSelf$1 = node => node;
+const itsSelf = node => node;
 
 const replaceTextNodeFn = {
   [NodeType.Text]: replaceTextNodeText,
-  [NodeType.HTMLElement]: itsSelf$1,
-  [NodeType.SVGElement]: itsSelf$1,
-  [NodeType.Template]: itsSelf$1,
+  [NodeType.HTMLElement]: itsSelf,
+  [NodeType.SVGElement]: itsSelf,
+  [NodeType.Template]: itsSelf,
 };
 
 /**
@@ -3708,8 +3708,18 @@ const getNodeRoute = node => {
   return routeIndexes;
 };
 
-const routeFn = (node, routeIndex) => node.childNodes[routeIndex];
-const getNodeFromNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);
+//const routeFn = (node, routeIndex) => node.childNodes[routeIndex];
+//export const getNodeFromNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);
+/**
+ * 
+ * @param {Node} node 
+ * @param {NodeRoute} nodeRoute 
+ * @returns {Node}
+ */
+const getNodeFromNodeRoute = (node, nodeRoute) => {
+  for(let i = 0 ; i < nodeRoute.length; node = node.childNodes[nodeRoute[i++]]) ;
+  return node;
+};
 
 /** @type {(bindTextInfo:BindTextInfo)=>(bindingManager:BindingManager,node:Node)=>Binding} */
 const createBinding = (bindTextInfo) => (bindingManager, node) => Binding.create(
@@ -3860,8 +3870,6 @@ const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getC
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
 
-const itsSelf = x => x;
-
 class Binder {
   /** @type {HTMLTemplateElement} */
   template;
@@ -3889,29 +3897,34 @@ class Binder {
   parse(useKeyed) {
     const rootElement = this.template.content;
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-    this.nodeInfos = nodes.map(node => {
+    this.nodeInfos = [];
+    for(let i = 0; i < nodes.length; i++) {
+      let node = nodes[i];
       /** @type {BindNodeInfo} */
       const nodeInfo = { };
       nodeInfo.nodeType = getNodeType(node);
       if (typeof nodeInfo.nodeType === "undefined") utils.raise(`Binder: unknown node type`);
       const bindText = getBindText(node, nodeInfo.nodeType);
-      if (bindText.trim() === "") return;
+      if (bindText.trim() === "") continue;
       node = replaceTextNode(node, nodeInfo.nodeType); // CommentNodeをTextに置換
 
       removeAttribute(node, nodeInfo.nodeType);
       nodeInfo.isInputable = isInputable(node, nodeInfo.nodeType);
       nodeInfo.defaultProperty = getDefaultProperty(node, nodeInfo.nodeType);
       /** @type {BindTextInfo[]} */
-      nodeInfo.bindTextInfos = parse(bindText, nodeInfo.defaultProperty).map(bindTextInfo => {
+      nodeInfo.bindTextInfos = parse(bindText, nodeInfo.defaultProperty);
+      for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
+        const bindTextInfo = nodeInfo.bindTextInfos[j];
         const { nodeProperty, viewModelProperty } = bindTextInfo;
         bindTextInfo.bindingCreator = createBinding(bindTextInfo);
-        return Object.assign(bindTextInfo, getConstructors(node, nodeProperty, viewModelProperty, useKeyed));
-      });
+        Object.assign(bindTextInfo, getConstructors(node, nodeProperty, viewModelProperty, useKeyed));
+      }
       nodeInfo.nodeRoute = getNodeRoute(node);
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
       nodeInfo.nodeInitializer = nodeInitializer(nodeInfo);
-      return nodeInfo;
-    }).filter(itsSelf);
+
+      this.nodeInfos.push(nodeInfo);
+    }
   }
 
   /**

@@ -16,5 +16,15 @@ export const getNodeRoute = node => {
   return routeIndexes;
 };
 
-const routeFn = (node, routeIndex) => node.childNodes[routeIndex];
-export const getNodeFromNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);
+//const routeFn = (node, routeIndex) => node.childNodes[routeIndex];
+//export const getNodeFromNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);
+/**
+ * 
+ * @param {Node} node 
+ * @param {NodeRoute} nodeRoute 
+ * @returns {Node}
+ */
+export const getNodeFromNodeRoute = (node, nodeRoute) => {
+  for(let i = 0 ; i < nodeRoute.length; node = node.childNodes[nodeRoute[i++]]) ;
+  return node;
+};

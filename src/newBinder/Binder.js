@@ -47,29 +47,34 @@ export class Binder {
   parse(useKeyed) {
     const rootElement = this.template.content;
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-    this.nodeInfos = nodes.map(node => {
+    this.nodeInfos = [];
+    for(let i = 0; i < nodes.length; i++) {
+      let node = nodes[i];
       /** @type {BindNodeInfo} */
       const nodeInfo = { };
       nodeInfo.nodeType = getNodeType(node);
       if (typeof nodeInfo.nodeType === "undefined") utils.raise(`Binder: unknown node type`);
       const bindText = getBindText(node, nodeInfo.nodeType);
-      if (bindText.trim() === "") return;
+      if (bindText.trim() === "") continue;
       node = replaceTextNode(node, nodeInfo.nodeType); // CommentNodeをTextに置換
 
       removeAttribute(node, nodeInfo.nodeType);
       nodeInfo.isInputable = isInputable(node, nodeInfo.nodeType);
       nodeInfo.defaultProperty = getDefaultProperty(node, nodeInfo.nodeType);
       /** @type {BindTextInfo[]} */
-      nodeInfo.bindTextInfos = bindTextParse(bindText, nodeInfo.defaultProperty).map(bindTextInfo => {
+      nodeInfo.bindTextInfos = bindTextParse(bindText, nodeInfo.defaultProperty);
+      for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
+        const bindTextInfo = nodeInfo.bindTextInfos[j];
         const { nodeProperty, viewModelProperty } = bindTextInfo;
         bindTextInfo.bindingCreator = createBinding(bindTextInfo);
-        return Object.assign(bindTextInfo, getConstructors(node, nodeProperty, viewModelProperty, useKeyed));
-      });
+        Object.assign(bindTextInfo, getConstructors(node, nodeProperty, viewModelProperty, useKeyed));
+      }
       nodeInfo.nodeRoute = getNodeRoute(node);
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
       nodeInfo.nodeInitializer = nodeInitializer(nodeInfo);
-      return nodeInfo;
-    }).filter(itsSelf);
+
+      this.nodeInfos.push(nodeInfo);
+    }
   }
 
   /**
