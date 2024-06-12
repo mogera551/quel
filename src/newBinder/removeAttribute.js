@@ -2,6 +2,11 @@ import { NodeType } from "./nodeType.js";
 
 const DATASET_BIND_PROPERTY = 'data-bind';
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Node}
+ */
 const removeAttributeFromElement = (node) => {
   /** @type {Element} */
   const element = node;
@@ -9,8 +14,14 @@ const removeAttributeFromElement = (node) => {
   return element;
 }
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Node}
+ */
 const thru = (node) => node;
 
+/** @type {Object<NodeType,(node:Node)=>Node>} */
 const removeAttributeFn = {
   [NodeType.HTMLElement]: removeAttributeFromElement,
   [NodeType.SVGElement]: removeAttributeFromElement,

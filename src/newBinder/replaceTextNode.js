@@ -11,8 +11,14 @@ const replaceTextNodeText = (node) => {
   return textNode;
 }
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Node}
+ */
 const itsSelf = node => node;
 
+/** @type {Object<NodeType,(node:Node)=>Node>} */
 const replaceTextNodeFn = {
   [NodeType.Text]: replaceTextNodeText,
   [NodeType.HTMLElement]: itsSelf,
@@ -24,6 +30,6 @@ const replaceTextNodeFn = {
  * 
  * @param {Node} node 
  * @param {NodeType} nodeType 
- * @returns 
+ * @returns {Node}
  */
 export const replaceTextNode = (node, nodeType) => replaceTextNodeFn[nodeType](node);

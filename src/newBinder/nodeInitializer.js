@@ -35,12 +35,13 @@ function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
   /** @type {import("../binding/nodeProperty/Checkbox.js").Checkbox|null} */
   let checkboxBinding = null;
 
-  bindings.forEach(binding => {
+  for(let i = 0; i < bindings.length; i++) {
+    const binding = bindings[i];
     hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
     radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
     checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
     defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
-  });
+  }
 
   if (!hasDefaultEvent) {
     /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */

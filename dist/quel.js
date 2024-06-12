@@ -1915,16 +1915,24 @@ const NodeType = {
   Template: 4,
 };
 
+/** @type {(node:Node)=>string} */
 const nodeKey = node => node.constructor.name + "\t" + node.textContent?.[2] ?? "";
 
+/** @type {Object<string,NodeType>} */
 const nodeTypeByNodeKey = {};
 
+/** @type {Object<NodeType,(node:Node)=>NodeType>} */
 const getNodeTypeByNode = node =>
   node instanceof Comment && node.textContent?.[2] === ":" ? NodeType.Text : 
   node instanceof HTMLElement ? NodeType.HTMLElement :
   node instanceof Comment && node.textContent?.[2] === "|" ? NodeType.Template : 
   node instanceof SVGElement ? NodeType.SVGElement : NodeType.Unknown;
 
+/**
+ * 
+ * @param {Node} node
+ * @returns {NodeType}
+ */
 const getNodeType = (node) => nodeTypeByNodeKey[nodeKey(node)] ?? (nodeTypeByNodeKey[nodeKey(node)] = getNodeTypeByNode(node));
 
 const DEFAULT_PROPERTY = "textContent";
@@ -1952,7 +1960,9 @@ const getDefaultPropertyHTMLElement = (node, element = node) =>
 /** @type {Object<string,string>} */
 const defaultPropertyByKey = {};
 
+/** @type {(node:Node)=>string} */
 const undefinedProperty = node => undefined;
+/** @type {(node:Node)=>string} */
 const textContentProperty = node => DEFAULT_PROPERTY;
 
 /** @type {Object<NodeType,(node:Node)=>string>} */
@@ -3676,8 +3686,14 @@ const replaceTextNodeText = (node) => {
   return textNode;
 };
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Node}
+ */
 const itsSelf = node => node;
 
+/** @type {Object<NodeType,(node:Node)=>Node>} */
 const replaceTextNodeFn = {
   [NodeType.Text]: replaceTextNodeText,
   [NodeType.HTMLElement]: itsSelf,
@@ -3689,7 +3705,7 @@ const replaceTextNodeFn = {
  * 
  * @param {Node} node 
  * @param {NodeType} nodeType 
- * @returns 
+ * @returns {Node}
  */
 const replaceTextNode = (node, nodeType) => replaceTextNodeFn[nodeType](node);
 
@@ -3734,6 +3750,11 @@ const createBinding = (bindTextInfo) => (bindingManager, node) => Binding.create
 
 const DATASET_BIND_PROPERTY = 'data-bind';
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Node}
+ */
 const removeAttributeFromElement = (node) => {
   /** @type {Element} */
   const element = node;
@@ -3741,8 +3762,14 @@ const removeAttributeFromElement = (node) => {
   return element;
 };
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Node}
+ */
 const thru$1 = (node) => node;
 
+/** @type {Object<NodeType,(node:Node)=>Node>} */
 const removeAttributeFn = {
   [NodeType.HTMLElement]: removeAttributeFromElement,
   [NodeType.SVGElement]: removeAttributeFromElement,
@@ -3767,8 +3794,10 @@ const removeAttribute = (node, nodeType) => removeAttributeFn[nodeType](node);
 const isInputableHTMLElement = node => node instanceof HTMLElement && 
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
 
+/** @type {(node:Node)=>boolean} */
 const falsey = node => false;
 
+/** @type {Object<NodeType,(node:Node)=>boolean>} */
 const isInputableFn = {
   [NodeType.HTMLElement]: isInputableHTMLElement,
   [NodeType.SVGElement]: falsey,
@@ -3816,12 +3845,13 @@ function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
   /** @type {import("../binding/nodeProperty/Checkbox.js").Checkbox|null} */
   let checkboxBinding = null;
 
-  bindings.forEach(binding => {
+  for(let i = 0; i < bindings.length; i++) {
+    const binding = bindings[i];
     hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
     radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
     checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
     defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
-  });
+  }
 
   if (!hasDefaultEvent) {
     /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
@@ -3872,6 +3902,7 @@ const getCommentNodes = node => Array.from(node.childNodes).flatMap(node => getC
 
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
+const UUID_DATASET = "uuid";
 
 class Binder {
   /** @type {HTMLTemplateElement} */
@@ -3953,7 +3984,7 @@ class Binder {
    * @returns {Binder}
    */
   static create(template, useKeyed) {
-    const uuid = template.dataset[BIND_DATASET] ?? "";
+    const uuid = template.dataset[UUID_DATASET] ?? "";
     return this.#binderByUUID[uuid] ?? (this.#binderByUUID[uuid] = new Binder(template, uuid, useKeyed));
   }
 }

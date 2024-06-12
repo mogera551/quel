@@ -9,8 +9,10 @@ import { NodeType } from "./nodeType.js";
 const isInputableHTMLElement = node => node instanceof HTMLElement && 
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
 
+/** @type {(node:Node)=>boolean} */
 const falsey = node => false;
 
+/** @type {Object<NodeType,(node:Node)=>boolean>} */
 const isInputableFn = {
   [NodeType.HTMLElement]: isInputableHTMLElement,
   [NodeType.SVGElement]: falsey,

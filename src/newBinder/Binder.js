@@ -17,6 +17,7 @@ import { getNodeType } from "./nodeType.js";
 
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
+const UUID_DATASET = "uuid";
 
 const itsSelf = x => x;
 
@@ -100,7 +101,7 @@ export class Binder {
    * @returns {Binder}
    */
   static create(template, useKeyed) {
-    const uuid = template.dataset[BIND_DATASET] ?? "";
+    const uuid = template.dataset[UUID_DATASET] ?? "";
     return this.#binderByUUID[uuid] ?? (this.#binderByUUID[uuid] = new Binder(template, uuid, useKeyed));
   }
 }

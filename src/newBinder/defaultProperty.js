@@ -25,7 +25,9 @@ const getDefaultPropertyHTMLElement = (node, element = node) =>
 /** @type {Object<string,string>} */
 const defaultPropertyByKey = {};
 
+/** @type {(node:Node)=>string} */
 const undefinedProperty = node => undefined;
+/** @type {(node:Node)=>string} */
 const textContentProperty = node => DEFAULT_PROPERTY;
 
 /** @type {Object<NodeType,(node:Node)=>string>} */
