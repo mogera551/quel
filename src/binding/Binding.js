@@ -5,6 +5,9 @@ import { ReuseBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
 import { Binder } from "../newBinder/Binder.js";
 import { fragmentsByUUID } from "./ReuseFragment.js";
+import { saveBindings } from "./ReuseBinding.js";
+import { createNodeProperty } from "./ReuseNodeProperty.js";
+import { createViewModelProperty } from "./ReuseViewModelProperty.js";
 
 let seq = 0;
 
@@ -101,8 +104,8 @@ export class Binding {
     viewModelPropertyName, viewModelPropertyConstructor, filters) {
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new nodePropertyConstructor(this, node, nodePropertyName, filters);
-    this.#viewModelProperty = new viewModelPropertyConstructor(this, viewModelPropertyName, filters);
+    this.#nodeProperty = createNodeProperty(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
+    this.#viewModelProperty = createViewModelProperty(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
   }
 
   /**
@@ -195,6 +198,14 @@ export class Binding {
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
+  dispose() {
+    saveBindings.push(this);
+    this.#nodeProperty.dispose();
+    this.#viewModelProperty.dispose();
+    this.#nodeProperty = undefined;
+    this.#viewModelProperty = undefined;
+  }
+
   /**
    * create Binding
    * @param {BindingManager} bindingManager 
@@ -210,6 +221,12 @@ export class Binding {
     viewModelPropertyName, viewModelPropertyConstructor,
     filters
   ) {
+    const saveBinding = saveBindings.pop();
+    if (typeof saveBinding !== "undefined") {
+      saveBinding.assign(bindingManager, node, nodePropertyName, nodePropertyConstructor, viewModelPropertyName, viewModelPropertyConstructor, filters);
+      saveBinding.initialize();
+      return saveBinding;
+    }
     const binding = new Binding(
       bindingManager,
       node, nodePropertyName, nodePropertyConstructor, 
@@ -339,9 +356,10 @@ export class BindingManager {
    * 
    */
   initialize() {
+    const binder = Binder.create(this.#template, this.#component.useKeyed);
     this.#fragment = fragmentsByUUID[this.#uuid]?.pop() ??
       document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-    this.#bindings = Binder.create(this.#template, this.#component.useKeyed).createBindings(this.#fragment, this);
+    this.#bindings = binder.createBindings(this.#fragment, this);
     this.#nodes = Array.from(this.#fragment.childNodes);
   }
 

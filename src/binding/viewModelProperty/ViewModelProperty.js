@@ -3,6 +3,7 @@ import { MultiValue } from "../nodeProperty/MultiValue.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
 import { FilterManager, Filters } from "../../filter/Manager.js";
+import { viewModelPropertiesByClassName } from "../ReuseViewModelProperty.js";
 
 export class ViewModelProperty {
   /** @type { ViewModel } */
@@ -107,6 +108,16 @@ export class ViewModelProperty {
    * @param {FilterInfo[]} filters 
    */
   constructor(binding, name, filters) {
+    this.assign(binding, name, filters);
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {string} name 
+   * @param {FilterInfo[]} filters 
+   */
+  assign(binding, name, filters) {
     this.#binding = binding;
     this.#name = name;
     this.#filters = Filters.create(filters, binding.component.filters.out);
@@ -128,5 +139,12 @@ export class ViewModelProperty {
 
   setChildValue(index, value) {
     return this.viewModel[Symbols.directlySet](`${this.name}.*` , this.indexes.concat(index), value);
+  }
+
+  dispose() {
+    viewModelPropertiesByClassName[this.constructor.name]?.push(this) ??
+      (viewModelPropertiesByClassName[this.constructor.name] = [this]);
+    this.#binding = undefined;
+    this.#filters = undefined;
   }
 }

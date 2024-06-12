@@ -2562,6 +2562,24 @@ class EventFilterManager extends FilterManager {
   } 
 }
 
+/** @type {Object<string,import("./nodeProperty/NodeProperty.js").NodeProperty[]>} */
+const nodePropertiesByClassName = {};
+
+/**
+ * 
+ * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor 
+ * @param {[ import("./Binding.js").Binding, Node, string, FilterInfo[] ]} args 
+ * @returns {import("./nodeProperty/NodeProperty.js").NodeProperty}
+ */
+const createNodeProperty = (nodePropertyConstructor, args) => {
+  const nodeProperty = nodePropertiesByClassName[nodePropertyConstructor.name]?.pop();
+  if (typeof nodeProperty !== "undefined") {
+    nodeProperty.assign(...args);
+    return nodeProperty;
+  }
+  return Reflect.construct(nodePropertyConstructor, args);
+};
+
 class NodeProperty {
   /** @type {Node} */
   #node;
@@ -2635,6 +2653,17 @@ class NodeProperty {
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
+    this.assign(binding, node, name, filters);
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Node} node 
+   * @param {string} name 
+   * @param {FilterInfo[]} filters 
+   */
+  assign(binding, node, name, filters) {
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
@@ -2671,6 +2700,14 @@ class NodeProperty {
   }
 
   clearValue() {
+  }
+
+  dispose() {
+    nodePropertiesByClassName[this.constructor.name]?.push(this) ?? 
+      (nodePropertiesByClassName[this.constructor.name] = [this]);
+    this.#binding = undefined;
+    this.#node = undefined;
+    this.#filters = undefined;
   }
 }
 
@@ -2838,6 +2875,24 @@ class MultiValue {
   }
 }
 
+/** @type {Object<string,import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty[]>} */
+const viewModelPropertiesByClassName = {};
+
+/**
+ * 
+ * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor 
+ * @param {[import("./Binding.js").Binding, string, FilterInfo[] ]} args 
+ * @returns {port("./viewModelProperty/ViewModelProperty.js").ViewModelProperty}
+ */
+const createViewModelProperty = (viewModelPropertyConstructor, args) => {
+  const viewModelProperty = viewModelPropertiesByClassName[viewModelPropertyConstructor.name]?.pop();
+  if (typeof viewModelProperty !== "undefined") {
+    viewModelProperty.assign(...args);
+    return viewModelProperty;
+  }
+  return Reflect.construct(viewModelPropertyConstructor, args);
+};
+
 class ViewModelProperty {
   /** @type { ViewModel } */
   get viewModel() {
@@ -2941,6 +2996,16 @@ class ViewModelProperty {
    * @param {FilterInfo[]} filters 
    */
   constructor(binding, name, filters) {
+    this.assign(binding, name, filters);
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {string} name 
+   * @param {FilterInfo[]} filters 
+   */
+  assign(binding, name, filters) {
     this.#binding = binding;
     this.#name = name;
     this.#filters = Filters.create(filters, binding.component.filters.out);
@@ -2962,6 +3027,13 @@ class ViewModelProperty {
 
   setChildValue(index, value) {
     return this.viewModel[Symbols.directlySet](`${this.name}.*` , this.indexes.concat(index), value);
+  }
+
+  dispose() {
+    viewModelPropertiesByClassName[this.constructor.name]?.push(this) ??
+      (viewModelPropertiesByClassName[this.constructor.name] = [this]);
+    this.#binding = undefined;
+    this.#filters = undefined;
   }
 }
 
@@ -3870,6 +3942,8 @@ class Binder {
   }
 }
 
+const saveBindings = [];
+
 let seq = 0;
 
 class Binding {
@@ -3965,8 +4039,8 @@ class Binding {
     viewModelPropertyName, viewModelPropertyConstructor, filters) {
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = new nodePropertyConstructor(this, node, nodePropertyName, filters);
-    this.#viewModelProperty = new viewModelPropertyConstructor(this, viewModelPropertyName, filters);
+    this.#nodeProperty = createNodeProperty(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
+    this.#viewModelProperty = createViewModelProperty(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
   }
 
   /**
@@ -4059,6 +4133,14 @@ class Binding {
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
+  dispose() {
+    saveBindings.push(this);
+    this.#nodeProperty.dispose();
+    this.#viewModelProperty.dispose();
+    this.#nodeProperty = undefined;
+    this.#viewModelProperty = undefined;
+  }
+
   /**
    * create Binding
    * @param {BindingManager} bindingManager 
@@ -4074,6 +4156,12 @@ class Binding {
     viewModelPropertyName, viewModelPropertyConstructor,
     filters
   ) {
+    const saveBinding = saveBindings.pop();
+    if (typeof saveBinding !== "undefined") {
+      saveBinding.assign(bindingManager, node, nodePropertyName, nodePropertyConstructor, viewModelPropertyName, viewModelPropertyConstructor, filters);
+      saveBinding.initialize();
+      return saveBinding;
+    }
     const binding = new Binding(
       bindingManager,
       node, nodePropertyName, nodePropertyConstructor, 
@@ -4203,9 +4291,10 @@ class BindingManager {
    * 
    */
   initialize() {
+    const binder = Binder.create(this.#template, this.#component.useKeyed);
     this.#fragment = fragmentsByUUID[this.#uuid]?.pop() ??
       document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
-    this.#bindings = Binder.create(this.#template, this.#component.useKeyed).createBindings(this.#fragment, this);
+    this.#bindings = binder.createBindings(this.#fragment, this);
     this.#nodes = Array.from(this.#fragment.childNodes);
   }
 

@@ -1,6 +1,7 @@
 import "../../types.js";
 import { utils } from "../../utils.js";
 import { FilterManager, Filters } from "../../filter/Manager.js";
+import { nodePropertiesByClassName } from "../ReuseNodeProperty.js";
 
 export class NodeProperty {
   /** @type {Node} */
@@ -75,6 +76,17 @@ export class NodeProperty {
    */
   constructor(binding, node, name, filters) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
+    this.assign(binding, node, name, filters);
+  }
+
+  /**
+   * 
+   * @param {import("../Binding.js").Binding} binding
+   * @param {Node} node 
+   * @param {string} name 
+   * @param {FilterInfo[]} filters 
+   */
+  assign(binding, node, name, filters) {
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
@@ -111,5 +123,13 @@ export class NodeProperty {
   }
 
   clearValue() {
+  }
+
+  dispose() {
+    nodePropertiesByClassName[this.constructor.name]?.push(this) ?? 
+      (nodePropertiesByClassName[this.constructor.name] = [this]);
+    this.#binding = undefined;
+    this.#node = undefined;
+    this.#filters = undefined;
   }
 }
