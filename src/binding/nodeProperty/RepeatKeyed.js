@@ -61,7 +61,9 @@ export class RepeatKeyed extends Repeat {
     let beforeBindingManager;
     /** @type {Node} */
     const parentNode = this.node.parentNode;
-    const newBindingManagers = values.map((value, newIndex) => {
+    const newBindingManagers = [];
+    for(let i = 0; i < values.length; i++) {
+      const newIndex = i;
       /** @type {BindingManager} */
       let bindingManager;
       const beforeNode = beforeBindingManager?.lastNode ?? this.node;
@@ -79,14 +81,15 @@ export class RepeatKeyed extends Repeat {
         }
       }
       beforeBindingManager = bindingManager;
-      return bindingManager;
-    });
+      newBindingManagers.push(bindingManager);
+    }
 
     this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
-    newBindingManagers.forEach(bindingManager => {
+    for(let i = 0; i < newBindingManagers.length; i++) {
+      const bindingManager = newBindingManagers[i];
       bindingManager.registerBindingsToSummary();
       bindingManager.applyToNode()
-    });
+    }
     this.#lastValue = values.slice();
   }
 
