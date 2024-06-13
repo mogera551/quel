@@ -6,6 +6,7 @@ import { utils } from "../utils.js";
 import { config } from "../Config.js";
 import { MixedDialog } from "./MixedDialog.js";
 import { MixedPopover } from "../popover/MixedPopover.js";
+import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager.js";
 
 /**
  * generate unique component class
@@ -92,6 +93,15 @@ export function generateComponentClass(componentModule) {
         return this.constructor.isCostomizedBuiltInElement;
       }
 
+      /** @type {InputFilterManager} */
+      static inputFilterManager = new InputFilterManager;
+
+      /** @type {OutputFilterManager} */
+      static outputFilterManager = new OutputFilterManager;
+
+      /** @type {EventFilterManager} */
+      static eventFilterManager = new EventFilterManager;
+
       /**
        */
       constructor() {
@@ -99,13 +109,10 @@ export function generateComponentClass(componentModule) {
         if (typeof this.constructor.lowerTagName === "undefined") {
           const lowerTagName =  this.tagName.toLowerCase();
           const isAutonomousCustomElement = lowerTagName.includes("-");
-          const isCostomizedBuiltInElement = this.hasAttribute("is");
-          if (isAutonomousCustomElement) {
-            this.constructor.selectorName = lowerTagName;
-          } else {
-            const customName = this.getAttribute("is");
-            this.constructor.selectorName = `${lowerTagName}[is="${customName}"]`;
-          }
+          const customName = this.getAttribute("is");
+          const isCostomizedBuiltInElement = customName ? true : false;
+          this.constructor.selectorName = 
+            isAutonomousCustomElement ? lowerTagName : `${lowerTagName}[is="${customName}"]`;
           this.constructor.lowerTagName = lowerTagName;
           this.constructor.isAutonomousCustomElement = isAutonomousCustomElement;
           this.constructor.isCostomizedBuiltInElement = isCostomizedBuiltInElement;
@@ -115,6 +122,18 @@ export function generateComponentClass(componentModule) {
 
       initialize() {
         this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, []));
+      }
+      static {
+        // setting filters
+        for(const [name, filterFunc] of Object.entries(this.inputFilters)) {
+          this.inputFilterManager.registerFilter(name, filterFunc);
+        }
+        for(const [name, filterFunc] of Object.entries(this.outputFilters)) {
+          this.outputFilterManager.registerFilter(name, filterFunc);
+        }
+        for(const [name, filterFunc] of Object.entries(this.eventFilters)) {
+          this.eventFilterManager.registerFilter(name, filterFunc);
+        }
       }
     };
   };

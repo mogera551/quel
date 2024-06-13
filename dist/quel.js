@@ -2367,6 +2367,8 @@ const nullthru = callback => options => value => value == null ? value : callbac
 /** @type {(value:any,filter:FilterFunc)=>any} */
 const reduceApplyFilter = (value, filter) => filter(value);
 
+const thru$2 = options => value => value;
+
 class Filters {
   /**
    * 
@@ -2413,7 +2415,7 @@ class FilterManager {
    */
   getFilterFunc(name) {
     this.ambigousNames.has(name) && utils.raise(`${this.constructor.name}: ${name} is ambigous`);
-    return this.funcByName.get(name) ?? (options => value => value);
+    return this.funcByName.get(name) ?? thru$2;
   }
 
   /**
@@ -3945,7 +3947,7 @@ class Binder {
       if (typeof nodeInfo.nodeType === "undefined") utils.raise(`Binder: unknown node type`);
       const bindText = getBindText(node, nodeInfo.nodeType);
       if (bindText.trim() === "") continue;
-      node = replaceTextNode(node, nodeInfo.nodeType); // CommentNodeをTextに置換
+      node = replaceTextNode(node, nodeInfo.nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
 
       removeAttribute(node, nodeInfo.nodeType);
       nodeInfo.isInputable = isInputable(node, nodeInfo.nodeType);
@@ -3955,12 +3957,12 @@ class Binder {
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
         const bindTextInfo = nodeInfo.bindTextInfos[j];
         const { nodeProperty, viewModelProperty } = bindTextInfo;
-        bindTextInfo.bindingCreator = createBinding(bindTextInfo);
+        bindTextInfo.createBindingFn = createBinding(bindTextInfo);
         Object.assign(bindTextInfo, getConstructors(node, nodeProperty, viewModelProperty, useKeyed));
       }
       nodeInfo.nodeRoute = getNodeRoute(node);
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
-      nodeInfo.nodeInitializer = nodeInitializer(nodeInfo);
+      nodeInfo.nodeInitializeFn = nodeInitializer(nodeInfo);
 
       this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
     }
@@ -3979,11 +3981,10 @@ class Binder {
       const node = getNodeFromNodeRoute(content, nodeInfo.nodeRoute);
       const bindings = [];
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
-        const bindTextInfo = nodeInfo.bindTextInfos[j];
-        const binding = bindTextInfo.bindingCreator(bindingManager, node);
-        bindings[bindings.length] = binding; // push
+        bindings[bindings.length] = 
+          nodeInfo.bindTextInfos[j].createBindingFn(bindingManager, node); // push
       }
-      nodeInfo.nodeInitializer(node, bindings);
+      nodeInfo.nodeInitializeFn(node, bindings);
       allBindings.push(...bindings);
     }
     return allBindings;
@@ -5536,11 +5537,7 @@ class MixedComponent {
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
     
-    this._filters = {
-      in: new InputFilterManager,
-      out: new OutputFilterManager,
-      event: new EventFilterManager,
-    };
+    this._filters = undefined;
 
     this._bindingSummary = new BindingSummary;
 
@@ -5569,23 +5566,19 @@ class MixedComponent {
      * @type {{
      *   template:HTMLTemplateElement,
      *   styleSheet:CSSStyleSheet,
-     *   inputFilters:Object<string,FilterFuncWithOption>,
-     *   outputFilters:Object<string,FilterFuncWithOption>,
-     *   eventFilters:Object<string,FilterFuncWithOption>
+     *   inputFilterManager:InputFilterManager,
+     *   outputFilterManager:OutputFilterManager,
+     *   eventFilterManager:EventFilterManager
      * }} 
      */
-    const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
+    const { template, styleSheet, inputFilterManager, outputFilterManager, eventFilterManager } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
-    for(const [name, filterFunc] of Object.entries(inputFilters)) {
-      this.filters.in.registerFilter(name, filterFunc);
-    }
-    for(const [name, filterFunc] of Object.entries(outputFilters)) {
-      this.filters.out.registerFilter(name, filterFunc);
-    }
-    for(const [name, filterFunc] of Object.entries(eventFilters)) {
-      this.filters.event.registerFilter(name, filterFunc);
-    }
+    this._filters = {
+      in: inputFilterManager,
+      out: outputFilterManager,
+      event: eventFilterManager,
+    };
     // create and attach shadowRoot
     // adopt css
     if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
@@ -6070,6 +6063,15 @@ function generateComponentClass(componentModule) {
         return this.constructor.isCostomizedBuiltInElement;
       }
 
+      /** @type {InputFilterManager} */
+      static inputFilterManager = new InputFilterManager;
+
+      /** @type {OutputFilterManager} */
+      static outputFilterManager = new OutputFilterManager;
+
+      /** @type {EventFilterManager} */
+      static eventFilterManager = new EventFilterManager;
+
       /**
        */
       constructor() {
@@ -6077,13 +6079,10 @@ function generateComponentClass(componentModule) {
         if (typeof this.constructor.lowerTagName === "undefined") {
           const lowerTagName =  this.tagName.toLowerCase();
           const isAutonomousCustomElement = lowerTagName.includes("-");
-          const isCostomizedBuiltInElement = this.hasAttribute("is");
-          if (isAutonomousCustomElement) {
-            this.constructor.selectorName = lowerTagName;
-          } else {
-            const customName = this.getAttribute("is");
-            this.constructor.selectorName = `${lowerTagName}[is="${customName}"]`;
-          }
+          const customName = this.getAttribute("is");
+          const isCostomizedBuiltInElement = customName ? true : false;
+          this.constructor.selectorName = 
+            isAutonomousCustomElement ? lowerTagName : `${lowerTagName}[is="${customName}"]`;
           this.constructor.lowerTagName = lowerTagName;
           this.constructor.isAutonomousCustomElement = isAutonomousCustomElement;
           this.constructor.isCostomizedBuiltInElement = isCostomizedBuiltInElement;
@@ -6093,6 +6092,18 @@ function generateComponentClass(componentModule) {
 
       initialize() {
         this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, []));
+      }
+      static {
+        // setting filters
+        for(const [name, filterFunc] of Object.entries(this.inputFilters)) {
+          this.inputFilterManager.registerFilter(name, filterFunc);
+        }
+        for(const [name, filterFunc] of Object.entries(this.outputFilters)) {
+          this.outputFilterManager.registerFilter(name, filterFunc);
+        }
+        for(const [name, filterFunc] of Object.entries(this.eventFilters)) {
+          this.eventFilterManager.registerFilter(name, filterFunc);
+        }
       }
     };
   };

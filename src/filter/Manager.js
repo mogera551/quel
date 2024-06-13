@@ -264,6 +264,8 @@ const nullthru = callback => options => value => value == null ? value : callbac
 /** @type {(value:any,filter:FilterFunc)=>any} */
 const reduceApplyFilter = (value, filter) => filter(value)
 
+const thru = options => value => value;
+
 export class Filters {
   /**
    * 
@@ -310,7 +312,7 @@ export class FilterManager {
    */
   getFilterFunc(name) {
     this.ambigousNames.has(name) && utils.raise(`${this.constructor.name}: ${name} is ambigous`);
-    return this.funcByName.get(name) ?? (options => value => value);
+    return this.funcByName.get(name) ?? thru;
   }
 
   /**

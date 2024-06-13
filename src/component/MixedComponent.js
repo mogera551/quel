@@ -260,11 +260,7 @@ export class MixedComponent {
     this._pseudoParentNode = undefined;
     this._pseudoNode = undefined;
     
-    this._filters = {
-      in: new InputFilterManager,
-      out: new OutputFilterManager,
-      event: new EventFilterManager,
-    };
+    this._filters = undefined;
 
     this._bindingSummary = new BindingSummary;
 
@@ -293,23 +289,19 @@ export class MixedComponent {
      * @type {{
      *   template:HTMLTemplateElement,
      *   styleSheet:CSSStyleSheet,
-     *   inputFilters:Object<string,FilterFuncWithOption>,
-     *   outputFilters:Object<string,FilterFuncWithOption>,
-     *   eventFilters:Object<string,FilterFuncWithOption>
+     *   inputFilterManager:InputFilterManager,
+     *   outputFilterManager:OutputFilterManager,
+     *   eventFilterManager:EventFilterManager
      * }} 
      */
-    const { template, styleSheet, inputFilters, outputFilters, eventFilters } = this.constructor; // from static members of ComponentBase class 
+    const { template, styleSheet, inputFilterManager, outputFilterManager, eventFilterManager } = this.constructor; // from static members of ComponentBase class 
     
     // setting filters
-    for(const [name, filterFunc] of Object.entries(inputFilters)) {
-      this.filters.in.registerFilter(name, filterFunc);
-    }
-    for(const [name, filterFunc] of Object.entries(outputFilters)) {
-      this.filters.out.registerFilter(name, filterFunc);
-    }
-    for(const [name, filterFunc] of Object.entries(eventFilters)) {
-      this.filters.event.registerFilter(name, filterFunc);
-    }
+    this._filters = {
+      in: inputFilterManager,
+      out: outputFilterManager,
+      event: eventFilterManager,
+    };
     // create and attach shadowRoot
     // adopt css
     if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {

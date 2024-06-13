@@ -6,7 +6,7 @@
  * @property {FilterInfo[]} filters 適用するフィルターの配列
  * @property {typeof import("../binding/nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
  * @property {typeof import("../binding/viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor
- * @property {(bindingManager:BindingManager,node:Node)=>Binding} bindingCreator
+ * @property {(bindingManager:BindingManager,node:Node)=>Binding} createBindingFn
  */
 
 /** @typedef {number[]} NodeRoute */
@@ -20,5 +20,5 @@
  * @property {BindTextInfo[]} bindTextInfos
  * @property {boolean} isInputable
  * @property {string} defaultProperty
- * @property {(node:Node,bindings:Binding[])=>{}} nodeInitializer
+ * @property {(node:Node,bindings:Binding[])=>{}} nodeInitializeFn
  */

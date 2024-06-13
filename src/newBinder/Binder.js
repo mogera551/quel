@@ -58,7 +58,7 @@ export class Binder {
       if (typeof nodeInfo.nodeType === "undefined") utils.raise(`Binder: unknown node type`);
       const bindText = getBindText(node, nodeInfo.nodeType);
       if (bindText.trim() === "") continue;
-      node = replaceTextNode(node, nodeInfo.nodeType); // CommentNodeをTextに置換
+      node = replaceTextNode(node, nodeInfo.nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
 
       removeAttribute(node, nodeInfo.nodeType);
       nodeInfo.isInputable = isInputable(node, nodeInfo.nodeType);
@@ -68,12 +68,12 @@ export class Binder {
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
         const bindTextInfo = nodeInfo.bindTextInfos[j];
         const { nodeProperty, viewModelProperty } = bindTextInfo;
-        bindTextInfo.bindingCreator = createBinding(bindTextInfo);
+        bindTextInfo.createBindingFn = createBinding(bindTextInfo);
         Object.assign(bindTextInfo, getConstructors(node, nodeProperty, viewModelProperty, useKeyed));
       }
       nodeInfo.nodeRoute = getNodeRoute(node);
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
-      nodeInfo.nodeInitializer = nodeInitializer(nodeInfo);
+      nodeInfo.nodeInitializeFn = nodeInitializer(nodeInfo);
 
       this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
     }
@@ -92,11 +92,10 @@ export class Binder {
       const node = getNodeFromNodeRoute(content, nodeInfo.nodeRoute);
       const bindings = [];
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
-        const bindTextInfo = nodeInfo.bindTextInfos[j];
-        const binding = bindTextInfo.bindingCreator(bindingManager, node);
-        bindings[bindings.length] = binding; // push
+        bindings[bindings.length] = 
+          nodeInfo.bindTextInfos[j].createBindingFn(bindingManager, node); // push
       }
-      nodeInfo.nodeInitializer(node, bindings);
+      nodeInfo.nodeInitializeFn(node, bindings);
       allBindings.push(...bindings);
     }
     return allBindings;
