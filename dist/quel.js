@@ -2736,6 +2736,12 @@ class TemplateProperty extends NodeProperty {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     super(binding, node, name, filters);
   }
+
+  dispose() {
+    super.dispose();
+    this.#template = undefined;
+    this.#uuid = undefined;
+  }
 }
 
 /**
@@ -3282,6 +3288,11 @@ class ElementEvent extends ElementBase {
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
   }
+
+  dispose() {
+    this.element.removeEventListener(this.eventType, this.handler);
+    super.dispose();
+  }
 }
 
 const PREFIX$1 = "class.";
@@ -3788,6 +3799,9 @@ const isInputable = (node, nodeType) => isInputableFn[nodeType](node);
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
 
+/** @type {Set<(event:Event)=>void>} */
+const defaultEventHandlers = new Set;
+
 /** @type {(element:HTMLElement)=>(binding:import("../binding/Binding.js").Binding)=>void} */
 const setDefaultEventHandlerByElement = element => binding => 
   element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
@@ -3811,10 +3825,10 @@ function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
   /** @type {import("../binding/Binding.js").Binding|null} */
   let defaultBinding = null;
 
-  /** @type {import("../binding/nodeProperty/Radio.js").Radio|null} */
+  /** @type {import("../binding/Binding.js").Binding|null} */
   let radioBinding = null;
 
-  /** @type {import("../binding/nodeProperty/Checkbox.js").Checkbox|null} */
+  /** @type {import("../binding/Binding.js").Binding|null} */
   let checkboxBinding = null;
 
   for(let i = 0; i < bindings.length; i++) {
@@ -3831,16 +3845,20 @@ function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
 
     if (radioBinding) {
       setDefaultEventHandler(radioBinding);
+      defaultEventHandlers.add(radioBinding.defaultEventHandler);
     } else if (checkboxBinding) {
       setDefaultEventHandler(checkboxBinding);
+      defaultEventHandlers.add(checkboxBinding.defaultEventHandler);
     } else if (defaultBinding && isInputable) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
       // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
       // ・nodeが入力系（input, textarea, select） → 入力系に限定
       setDefaultEventHandler(defaultBinding);
+      defaultEventHandlers.add(defaultBinding.defaultEventHandler);
     }
   }
+  return undefined;
 }
 
 const thru = () => {};
@@ -4167,6 +4185,11 @@ class Binding {
   }
 
   dispose() {
+    if (defaultEventHandlers.has(this.defaultEventHandler)) {
+      this.#nodeProperty.node.removeEventListener("input", this.defaultEventHandler);
+      defaultEventHandlers.delete(this.defaultEventHandler);
+    }
+
     for(let i = 0; i < this.children.length; i++) {
       this.children[i].dispose();
     }
@@ -4402,6 +4425,7 @@ class BindingManager {
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
+    /** @type {{bindingSummary:import("./BindingSummary.js").BindingSummary}} */
     const { bindingSummary } = bindingManager.component;
     const expand = () => {
       bindingSummary.initUpdate();
@@ -4416,6 +4440,7 @@ class BindingManager {
         return result2;
       });
       for(const binding of expandableBindings) {
+        if (bindingSummary.deleteBindings.has(binding)) continue;
         if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
         binding.applyToNode();
       }
@@ -4447,11 +4472,11 @@ class BindingManager {
     const applyToNode = () => {
       const selectBindings = [];
       const keys = propertyAccessByViewModelPropertyKey.keys();
-      for(let i = 0; i < keys.length; i++) {
-        const bindings = bindingSummary.bindingsByKey.get(keys[i]);
+      for(const key of keys) {
+        const bindings = bindingSummary.bindingsByKey.get(key);
         if (typeof bindings === "undefined") continue;
-        for(let j = 0; j < bindings.length; j++) {
-          const binding = bindings[j];
+        for(let i = 0; i < bindings.length; i++) {
+          const binding = bindings[i];
           if (binding.expandable) continue;
           binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
         }
@@ -5129,6 +5154,9 @@ class BindingSummary {
 
   /** @type {Set<Binding>} 仮削除用のbinding、flush()でこのbindingの削除処理をする */
   #deleteBindings = new Set;
+  get deleteBindings() {
+    return this.#deleteBindings;
+  }
 
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;

@@ -8,6 +8,7 @@ import { fragmentsByUUID } from "./ReuseFragment.js";
 import { reuseBindings } from "./ReuseBinding.js";
 import { createNodeProperty } from "./ReuseNodeProperty.js";
 import { createViewModelProperty } from "./ReuseViewModelProperty.js";
+import { defaultEventHandlers } from "../newBinder/nodeInitializer.js";
 
 let seq = 0;
 
@@ -201,6 +202,11 @@ export class Binding {
   }
 
   dispose() {
+    if (defaultEventHandlers.has(this.defaultEventHandler)) {
+      this.#nodeProperty.node.removeEventListener("input", this.defaultEventHandler);
+      defaultEventHandlers.delete(this.defaultEventHandler);
+    }
+
     for(let i = 0; i < this.children.length; i++) {
       this.children[i].dispose();
     }
@@ -436,6 +442,7 @@ export class BindingManager {
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
+    /** @type {{bindingSummary:import("./BindingSummary.js").BindingSummary}} */
     const { bindingSummary } = bindingManager.component;
     const expand = () => {
       bindingSummary.initUpdate();
@@ -450,6 +457,7 @@ export class BindingManager {
         return result2;
       });
       for(const binding of expandableBindings) {
+        if (bindingSummary.deleteBindings.has(binding)) continue;
         if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
         binding.applyToNode();
       }
@@ -481,11 +489,11 @@ export class BindingManager {
     const applyToNode = () => {
       const selectBindings = [];
       const keys = propertyAccessByViewModelPropertyKey.keys();
-      for(let i = 0; i < keys.length; i++) {
-        const bindings = bindingSummary.bindingsByKey.get(keys[i]);
+      for(const key of keys) {
+        const bindings = bindingSummary.bindingsByKey.get(key);
         if (typeof bindings === "undefined") continue;
-        for(let j = 0; j < bindings.length; j++) {
-          const binding = bindings[j];
+        for(let i = 0; i < bindings.length; i++) {
+          const binding = bindings[i];
           if (binding.expandable) continue;
           binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
         }

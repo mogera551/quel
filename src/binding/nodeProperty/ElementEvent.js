@@ -84,4 +84,9 @@ export class ElementEvent extends ElementBase {
     const processData = this.createProcessData(event);
     this.binding.component.updateSlot.addProcess(processData);
   }
+
+  dispose() {
+    this.element.removeEventListener(this.eventType, this.handler);
+    super.dispose();
+  }
 }

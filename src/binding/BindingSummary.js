@@ -51,6 +51,9 @@ export class BindingSummary {
 
   /** @type {Set<Binding>} 仮削除用のbinding、flush()でこのbindingの削除処理をする */
   #deleteBindings = new Set;
+  get deleteBindings() {
+    return this.#deleteBindings;
+  }
 
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;

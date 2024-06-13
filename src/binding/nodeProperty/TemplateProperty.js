@@ -48,4 +48,10 @@ export class TemplateProperty extends NodeProperty {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     super(binding, node, name, filters);
   }
+
+  dispose() {
+    super.dispose();
+    this.#template = undefined;
+    this.#uuid = undefined;
+  }
 }
