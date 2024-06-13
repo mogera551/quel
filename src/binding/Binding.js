@@ -244,22 +244,6 @@ export class Binding {
   }
 }
 
-/** @type {(fragment:DocumentFragment)=>(node:Node)=>void} */
-const appendNodeTo = fragment => node => fragment.appendChild(node);
-
-/** @type {(binding:Binding)=>void} */
-const applyToViewModel = binding => binding.applyToViewModel();
-
-/** @type {(binding:Binding)=>void} */
-const applyToNode = binding => binding.applyToNode();
-
-/** @type {(selectBindings:Binding[],binding:Binding)=>Binding[]} */
-const applyToNodeExcludeSelectFunc = (selectBindings, binding) => 
-  (binding.isSelectValue ? selectBindings.push(binding) : applyToNode(binding), selectBindings);
-
-/** @type {(bindingSummary:BindingSummary)=>(binding:Binding)=>void} */
-const addBindingTo = bindingSummary => binding => bindingSummary.add(binding);
-
 /** @type {(node:Node)=>boolean} */
 const filterElement = node => node.nodeType === Node.ELEMENT_NODE;
 
@@ -331,11 +315,6 @@ export class BindingManager {
     return this.#uuid;
   }
 
-  /** @type {(node:Node)=>void} */
-  #appendNodeToFragment;
-
-  /** @type {(binding:Binding)=>void} */ 
-  #addToBindingSummary
   /**
    * 
    * @param {Component} component
@@ -362,7 +341,6 @@ export class BindingManager {
     this.#loopContext = new LoopContext(this);
     this.#bindingSummary = component.bindingSummary;
     this.#uuid = uuid;
-    this.#addToBindingSummary = addBindingTo(this.#bindingSummary)
 
     return this;
   }
@@ -376,7 +354,6 @@ export class BindingManager {
       document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#bindings = binder.createBindings(this.#fragment, this);
     this.#nodes = Array.from(this.#fragment.childNodes);
-    this.#appendNodeToFragment = appendNodeTo(this.#fragment);
   }
 
   /**
@@ -384,7 +361,7 @@ export class BindingManager {
    */
   registerBindingsToSummary() {
     for(let i = 0; i < this.#bindings.length; i++) {
-      this.#addToBindingSummary(this.#bindings[i]);
+      this.#bindingSummary.add(this.#bindings[i]);
     }
   }
 
@@ -412,7 +389,7 @@ export class BindingManager {
    */
   applyToViewModel() {
     for(let i = 0; i < this.#bindings.length; i++) {
-      applyToViewModel(this.#bindings[i]);
+      this.#bindings[i].applyToViewModel();
     }
   }
 
@@ -421,7 +398,7 @@ export class BindingManager {
    */
   removeNodes() {
     for(let i = 0; i < this.#nodes.length; i++) {
-      this.#appendNodeToFragment(this.#nodes[i]);
+      this.#fragment.appendChild(this.#nodes[i]);
     }
   }
 
