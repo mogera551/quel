@@ -118,6 +118,7 @@ export class ViewModelProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
    * @param {FilterInfo[]} filters 
+   * @returns {ViewModelProperty}
    */
   assign(binding, name, filters) {
     this.#binding = binding;
@@ -125,6 +126,7 @@ export class ViewModelProperty {
     this.#filters = Filters.create(filters, binding.component.filters.out);
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
+    return this;
   }
 
   /**

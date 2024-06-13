@@ -85,6 +85,7 @@ export class NodeProperty {
    * @param {Node} node 
    * @param {string} name 
    * @param {FilterInfo[]} filters 
+   * @returns {NodeProperty}
    */
   assign(binding, node, name, filters) {
     this.#binding = binding;
@@ -92,6 +93,7 @@ export class NodeProperty {
     this.#name = name;
     this.#nameElements = name.split(".");
     this.#filters = Filters.create(filters.toReversed(), binding.component.filters.in);
+    return this;
   }
 
   /**
@@ -129,7 +131,7 @@ export class NodeProperty {
     this.#node = undefined;
     this.#filters = undefined;
 
-    nodePropertiesByClassName[this.constructor.name]?.push(this) ?? 
-      (nodePropertiesByClassName[this.constructor.name] = [this]);
+    nodePropertiesByClassName[name]?.push(this) ?? 
+      (nodePropertiesByClassName[name] = [this]);
   }
 }

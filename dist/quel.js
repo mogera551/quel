@@ -1747,8 +1747,8 @@ const bindingManagersByUUID = {};
  * @returns {BindingManager}
  */
 const createBindingManager = (component, template, uuid, parentBinding) => {
-  const bindingManager = bindingManagersByUUID[uuid]?.pop()?.assign(component, template, uuid, parentBinding) ??
-    new BindingManager(component, template, uuid, parentBinding);
+  //const bindingManager = bindingManagersByUUID[uuid]?.pop()?.assign(component, template, uuid, parentBinding) ??
+  const bindingManager = new BindingManager(component, template, uuid, parentBinding);
   bindingManager.initialize();
   Popover.initialize(bindingManager);
   return bindingManager;
@@ -2549,12 +2549,8 @@ const nodePropertiesByClassName = {};
  * @returns {import("./nodeProperty/NodeProperty.js").NodeProperty}
  */
 const createNodeProperty = (nodePropertyConstructor, args) => {
-  const nodeProperty = nodePropertiesByClassName[nodePropertyConstructor.name]?.pop();
-  if (typeof nodeProperty !== "undefined") {
-    nodeProperty.assign(...args);
-    return nodeProperty;
-  }
-  return Reflect.construct(nodePropertyConstructor, args);
+  //return nodePropertiesByClassName[nodePropertyConstructor.name]?.pop()?.assign(...args) ??
+    return Reflect.construct(nodePropertyConstructor, args);
 };
 
 class NodeProperty {
@@ -2639,6 +2635,7 @@ class NodeProperty {
    * @param {Node} node 
    * @param {string} name 
    * @param {FilterInfo[]} filters 
+   * @returns {NodeProperty}
    */
   assign(binding, node, name, filters) {
     this.#binding = binding;
@@ -2646,6 +2643,7 @@ class NodeProperty {
     this.#name = name;
     this.#nameElements = name.split(".");
     this.#filters = Filters.create(filters.toReversed(), binding.component.filters.in);
+    return this;
   }
 
   /**
@@ -2677,14 +2675,14 @@ class NodeProperty {
   }
 
   dispose() {
-    this.constructor.name;
+    const name = this.constructor.name;
 
     this.#binding = undefined;
     this.#node = undefined;
     this.#filters = undefined;
 
-    nodePropertiesByClassName[this.constructor.name]?.push(this) ?? 
-      (nodePropertiesByClassName[this.constructor.name] = [this]);
+    nodePropertiesByClassName[name]?.push(this) ?? 
+      (nodePropertiesByClassName[name] = [this]);
   }
 }
 
@@ -2862,12 +2860,8 @@ const viewModelPropertiesByClassName = {};
  * @returns {port("./viewModelProperty/ViewModelProperty.js").ViewModelProperty}
  */
 const createViewModelProperty = (viewModelPropertyConstructor, args) => {
-  const viewModelProperty = viewModelPropertiesByClassName[viewModelPropertyConstructor.name]?.pop();
-  if (typeof viewModelProperty !== "undefined") {
-    viewModelProperty.assign(...args);
-    return viewModelProperty;
-  }
-  return Reflect.construct(viewModelPropertyConstructor, args);
+  //return viewModelPropertiesByClassName[viewModelPropertyConstructor.name]?.pop()?.assign(...args) ??
+    return Reflect.construct(viewModelPropertyConstructor, args);
 };
 
 class ViewModelProperty {
@@ -2983,6 +2977,7 @@ class ViewModelProperty {
    * @param {import("../Binding.js").Binding} binding
    * @param {string} name 
    * @param {FilterInfo[]} filters 
+   * @returns {ViewModelProperty}
    */
   assign(binding, name, filters) {
     this.#binding = binding;
@@ -2990,6 +2985,7 @@ class ViewModelProperty {
     this.#filters = Filters.create(filters, binding.component.filters.out);
     this.#propertyName = PropertyName.create(this.name);
     this.#level = this.#propertyName.level;
+    return this;
   }
 
   /**

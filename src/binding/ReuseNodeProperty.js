@@ -9,10 +9,6 @@ export const nodePropertiesByClassName = {};
  * @returns {import("./nodeProperty/NodeProperty.js").NodeProperty}
  */
 export const createNodeProperty = (nodePropertyConstructor, args) => {
-  const nodeProperty = nodePropertiesByClassName[nodePropertyConstructor.name]?.pop();
-  if (typeof nodeProperty !== "undefined") {
-    nodeProperty.assign(...args);
-    return nodeProperty;
-  }
-  return Reflect.construct(nodePropertyConstructor, args);
+  //return nodePropertiesByClassName[nodePropertyConstructor.name]?.pop()?.assign(...args) ??
+    return Reflect.construct(nodePropertyConstructor, args);
 }

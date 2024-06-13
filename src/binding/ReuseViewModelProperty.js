@@ -9,10 +9,6 @@ export const viewModelPropertiesByClassName = {};
  * @returns {port("./viewModelProperty/ViewModelProperty.js").ViewModelProperty}
  */
 export const createViewModelProperty = (viewModelPropertyConstructor, args) => {
-  const viewModelProperty = viewModelPropertiesByClassName[viewModelPropertyConstructor.name]?.pop();
-  if (typeof viewModelProperty !== "undefined") {
-    viewModelProperty.assign(...args);
-    return viewModelProperty;
-  }
-  return Reflect.construct(viewModelPropertyConstructor, args);
+  //return viewModelPropertiesByClassName[viewModelPropertyConstructor.name]?.pop()?.assign(...args) ??
+    return Reflect.construct(viewModelPropertyConstructor, args);
 }
