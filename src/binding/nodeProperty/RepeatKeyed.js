@@ -124,7 +124,7 @@ export class RepeatKeyed extends Repeat {
     }
   }
 
-  clearValue() {
+  initialize() {
     this.#lastValue = [];
   }
 }

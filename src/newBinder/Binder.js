@@ -69,7 +69,9 @@ export class Binder {
         const bindTextInfo = nodeInfo.bindTextInfos[j];
         const { nodeProperty, viewModelProperty } = bindTextInfo;
         bindTextInfo.createBindingFn = createBinding(bindTextInfo);
-        Object.assign(bindTextInfo, getConstructors(node, nodeProperty, viewModelProperty, useKeyed));
+        const { nodePropertyConstructor, viewModelPropertyConstructor } = getConstructors(node, nodeProperty, viewModelProperty, useKeyed);
+        bindTextInfo.nodePropertyConstructor = nodePropertyConstructor;
+        bindTextInfo.viewModelPropertyConstructor = viewModelPropertyConstructor;
       }
       nodeInfo.nodeRoute = getNodeRoute(node);
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");

@@ -122,14 +122,14 @@ export class NodeProperty {
   applyToChildNodes(setOfIndex) {
   }
 
-  clearValue() {
-  }
-
   dispose() {
-    nodePropertiesByClassName[this.constructor.name]?.push(this) ?? 
-      (nodePropertiesByClassName[this.constructor.name] = [this]);
+    const name = this.constructor.name;
+
     this.#binding = undefined;
     this.#node = undefined;
     this.#filters = undefined;
+
+    nodePropertiesByClassName[this.constructor.name]?.push(this) ?? 
+      (nodePropertiesByClassName[this.constructor.name] = [this]);
   }
 }

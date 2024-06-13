@@ -30,7 +30,9 @@ export class ViewModelProperty {
 
   /** @type {number[]} */
   get indexes() {
-    return this.binding.loopContext?.indexes.slice(0 , this.level) ?? [];
+    const indexes = this.binding.loopContext?.indexes ?? [];
+    return indexes.length === this.level ? indexes : indexes.slice(0 , this.level);
+//    return this.binding.loopContext?.indexes.slice(0 , this.level) ?? [];
   }
 
   /** @type {string} */
@@ -142,9 +144,12 @@ export class ViewModelProperty {
   }
 
   dispose() {
-    viewModelPropertiesByClassName[this.constructor.name]?.push(this) ??
-      (viewModelPropertiesByClassName[this.constructor.name] = [this]);
+    const name = this.constructor.name;
+
     this.#binding = undefined;
     this.#filters = undefined;
+
+    viewModelPropertiesByClassName[name]?.push(this) ??
+      (viewModelPropertiesByClassName[name] = [this]);
   }
 }

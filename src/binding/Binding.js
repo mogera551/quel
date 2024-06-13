@@ -1,11 +1,11 @@
 import "../types.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { utils } from "../utils.js";
-import { ReuseBindingManager } from "./ReuseBindingManager.js";
+import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
 import { Binder } from "../newBinder/Binder.js";
 import { fragmentsByUUID } from "./ReuseFragment.js";
-import { saveBindings } from "./ReuseBinding.js";
+import { reuseBindings } from "./ReuseBinding.js";
 import { createNodeProperty } from "./ReuseNodeProperty.js";
 import { createViewModelProperty } from "./ReuseViewModelProperty.js";
 
@@ -98,6 +98,7 @@ export class Binding {
    * @param {string} viewModelPropertyName
    * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor 
    * @param {FilterInfo[]} filters
+   * @returns {Binding}
    */
   assign(bindingManager, 
     node, nodePropertyName, nodePropertyConstructor, 
@@ -106,6 +107,7 @@ export class Binding {
     this.#bindingManager = bindingManager;
     this.#nodeProperty = createNodeProperty(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
     this.#viewModelProperty = createViewModelProperty(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
+    return this;
   }
 
   /**
@@ -199,11 +201,19 @@ export class Binding {
   }
 
   dispose() {
-    saveBindings.push(this);
+    for(let i = 0; i < this.children.length; i++) {
+      this.children[i].dispose();
+    }
+    this.children.length = 0;
+    this.component.bindingSummary.delete(this);
     this.#nodeProperty.dispose();
     this.#viewModelProperty.dispose();
+
+    this.#bindingManager = undefined;
     this.#nodeProperty = undefined;
     this.#viewModelProperty = undefined;
+
+    reuseBindings.push(this); // reuse
   }
 
   /**
@@ -221,18 +231,14 @@ export class Binding {
     viewModelPropertyName, viewModelPropertyConstructor,
     filters
   ) {
-    const saveBinding = saveBindings.pop();
-    if (typeof saveBinding !== "undefined") {
-      saveBinding.assign(bindingManager, node, nodePropertyName, nodePropertyConstructor, viewModelPropertyName, viewModelPropertyConstructor, filters);
-      saveBinding.initialize();
-      return saveBinding;
-    }
-    const binding = new Binding(
-      bindingManager,
+    const binding = reuseBindings.pop()?.assign(bindingManager,
       node, nodePropertyName, nodePropertyConstructor, 
       viewModelPropertyName, viewModelPropertyConstructor,
-      filters
-    );
+      filters) ?? 
+      Reflect.construct(Binding, [bindingManager,
+        node, nodePropertyName, nodePropertyConstructor, 
+        viewModelPropertyName, viewModelPropertyConstructor,
+        filters]);
     binding.initialize();
     return binding;
   }
@@ -325,6 +331,11 @@ export class BindingManager {
     return this.#uuid;
   }
 
+  /** @type {(node:Node)=>void} */
+  #appendNodeToFragment;
+
+  /** @type {(binding:Binding)=>void} */ 
+  #addToBindingSummary
   /**
    * 
    * @param {Component} component
@@ -342,6 +353,7 @@ export class BindingManager {
    * @param {HTMLTemplateElement} template 
    * @param {string} uuid 
    * @param {Binding|undefined} parentBinding 
+   * @returns {BindingManager}
    */
   assign(component, template, uuid, parentBinding) {
     this.#parentBinding = parentBinding;
@@ -350,6 +362,9 @@ export class BindingManager {
     this.#loopContext = new LoopContext(this);
     this.#bindingSummary = component.bindingSummary;
     this.#uuid = uuid;
+    this.#addToBindingSummary = addBindingTo(this.#bindingSummary)
+
+    return this;
   }
 
   /**
@@ -361,14 +376,16 @@ export class BindingManager {
       document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#bindings = binder.createBindings(this.#fragment, this);
     this.#nodes = Array.from(this.#fragment.childNodes);
+    this.#appendNodeToFragment = appendNodeTo(this.#fragment);
   }
 
   /**
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    const addToBindingSummary = addBindingTo(this.#bindingSummary);
-    this.#bindings.forEach(addToBindingSummary);
+    for(let i = 0; i < this.#bindings.length; i++) {
+      this.#addToBindingSummary(this.#bindings[i]);
+    }
   }
 
   /**
@@ -376,29 +393,64 @@ export class BindingManager {
    */
   applyToNode() {
     // apply value to node exluding select tag, and apply select tag value
-    this.#bindings.reduce(applyToNodeExcludeSelectFunc, []).forEach(applyToNode);
+    const selectBindings = [];
+    for(let i = 0; i < this.#bindings.length; i++) {
+      const binding = this.#bindings[i];
+      if (binding.isSelectValue) {
+        selectBindings.push(binding);
+      } else {
+        binding.applyToNode();
+      }
+    }
+    for(let i = 0; i < selectBindings.length; i++) {
+      selectBindings[i].applyToNode();
+    }
   }
 
   /**
    * apply value to ViewModel
    */
   applyToViewModel() {
-    this.#bindings.forEach(applyToViewModel);
+    for(let i = 0; i < this.#bindings.length; i++) {
+      applyToViewModel(this.#bindings[i]);
+    }
   }
 
   /**
    * remove nodes, append to fragment
    */
   removeNodes() {
-    const appendNodeToFragment = appendNodeTo(this.#fragment);
-    this.#nodes.forEach(appendNodeToFragment);
+    for(let i = 0; i < this.#nodes.length; i++) {
+      this.#appendNodeToFragment(this.#nodes[i]);
+    }
   }
 
   /**
    * 
    */
   dispose() {
-    ReuseBindingManager.dispose(this);
+    this.removeNodes(); // append nodes to fragment
+    for(let i = 0; i < this.bindings.length; i++) {
+      this.bindings[i].dispose();
+    }
+    this.bindings.length = 0;
+
+    const uuid = this.#uuid;
+    const fragment = this.#fragment;
+
+    this.#parentBinding = undefined;
+    this.#component = undefined;
+    this.#template = undefined;
+    this.#loopContext = undefined;
+    this.#bindingSummary = undefined;
+    this.#uuid = undefined;
+    this.#fragment = undefined;
+
+    // reuse fragment
+    fragmentsByUUID[uuid]?.push(fragment) ??
+      (fragmentsByUUID[uuid] = [fragment]);
+    bindingManagersByUUID[uuid]?.push(this) ??
+      (bindingManagersByUUID[uuid] = [this]);
   }
 
   /**
@@ -450,15 +502,19 @@ export class BindingManager {
     applyToChildNodes();
 
     const applyToNode = () => {
-      const selectBindings = new Set;
-      for(const key of propertyAccessByViewModelPropertyKey.keys()) {
-        for(const binding of bindingSummary.bindingsByKey.get(key) ?? new Set) {
+      const selectBindings = [];
+      const keys = propertyAccessByViewModelPropertyKey.keys();
+      for(let i = 0; i < keys.length; i++) {
+        const bindings = bindingSummary.bindingsByKey.get(keys[i]);
+        if (typeof bindings === "undefined") continue;
+        for(let j = 0; j < bindings.length; j++) {
+          const binding = bindings[j];
           if (binding.expandable) continue;
-          binding.isSelectValue ? selectBindings.add(binding) : binding.applyToNode();
+          binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
         }
       }
-      for(const binding of selectBindings) {
-        binding.applyToNode();
+      for(let i = 0; i < selectBindings.length; i++) {
+        selectBindings[i].applyToNode();
       }
       for(const binding of bindingSummary.componentBindings) {
         binding.nodeProperty.postUpdate(propertyAccessByViewModelPropertyKey);
@@ -477,7 +533,7 @@ export class BindingManager {
    * @returns {BindingManager}
    */
   static create(component, template, uuid, parentBinding) {
-    return ReuseBindingManager.create(component, template, uuid, parentBinding);
+    return createBindingManager(component, template, uuid, parentBinding);
   }
 
 }
