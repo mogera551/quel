@@ -101,6 +101,7 @@ export class ViewModelHandlerBase extends Handler {
     } else if (propName.level < indexes.length) {
       return [ indexes.slice(0, propName.level) ];
     } else {
+      const getValuesFn = viewModel[Symbols.directlyGet];
       /**
        * 
        * @param {string} parentName 
@@ -112,31 +113,34 @@ export class ViewModelHandlerBase extends Handler {
         const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
         const element = propName.pathNames[elementIndex];
         const isTerminate = (propName.pathNames.length - 1) === elementIndex;
-        const currentName = parentNameDot + element;
-        let retIndexes;
         if (isTerminate) {
           if (element === "*") {
-            retIndexes = (viewModel[Symbols.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
-              return [ loopIndexes.concat(index) ];
-            });
+            const indexes = [];
+            const len = getValuesFn(parentName, loopIndexes).length;
+            for(let i = 0; i < len; i++) {
+              indexes.push(loopIndexes.concat(i));
+            }
+            return indexes;
           } else {
-            retIndexes = [ loopIndexes ];
+            return [ loopIndexes ];
           }
         } else {
+          const currentName = parentNameDot + element;
           if (element === "*") {
             if (loopIndexes.length < indexes.length) {
-              retIndexes = traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+              return traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
             } else {
-              retIndexes = (viewModel[Symbols.directlyGet](parentName, loopIndexes)).flatMap((value, index) => {
-                return traverse(currentName, elementIndex + 1, loopIndexes.concat(index));
-              });
+              const indexes = [];
+              const len = getValuesFn(parentName, loopIndexes).length;
+              for(let i = 0; i < len; i++) {
+                indexes.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
+              }
+              return indexes;
             }
           } else {
-            retIndexes = traverse(currentName, elementIndex + 1, loopIndexes);
+            return traverse(currentName, elementIndex + 1, loopIndexes);
           }
-
         }
-        return retIndexes;
       };
       const listOfIndexes = traverse("", 0, []);
       return listOfIndexes;
