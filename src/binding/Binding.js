@@ -8,7 +8,7 @@ import { fragmentsByUUID } from "./ReuseFragment.js";
 import { reuseBindings } from "./ReuseBinding.js";
 import { createNodeProperty } from "./ReuseNodeProperty.js";
 import { createViewModelProperty } from "./ReuseViewModelProperty.js";
-import { defaultEventHandlers } from "../newBinder/nodeInitializer.js";
+import { defaultEventHandlers } from "../newBinder/InitializeNode.js";
 
 let seq = 0;
 

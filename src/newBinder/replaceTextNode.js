@@ -20,14 +20,14 @@ const itsSelf = node => node;
 
 /** @type {Object<NodeType,(node:Node)=>Node>} */
 const replaceTextNodeFn = {
-  [NodeType.Text]: replaceTextNodeText,
+  [NodeType.Text]:        replaceTextNodeText,
   [NodeType.HTMLElement]: itsSelf,
-  [NodeType.SVGElement]: itsSelf,
-  [NodeType.Template]: itsSelf,
+  [NodeType.SVGElement]:  itsSelf,
+  [NodeType.Template]:    itsSelf,
 }
 
 /**
- * 
+ * replace comment node to text node
  * @param {Node} node 
  * @param {NodeType} nodeType 
  * @returns {Node}

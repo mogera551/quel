@@ -5,14 +5,14 @@ const DEFAULT = "$";
 
 
 /**
- * トリム関数
+ * trim
  * @param {string} s 
  * @returns {string}
  */
 const trim = s => s.trim();
 
 /**
- * 長さチェック関数
+ * check length
  * @param {string} s 
  * @returns {string}
  */
@@ -25,7 +25,7 @@ const decode = s => {
 };
 
 /**
- * フィルターのパース
+ * parse filter part
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
  * @param {string} text 
  * @returns {FilterInfo}
@@ -36,7 +36,7 @@ const parseFilter = text => {
 };
 
 /**
- * ViewModelプロパティのパース
+ * parse expression
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  * @param {string} text 
  * @returns {{viewModelProperty:string,filters:FilterInfo[]}}
@@ -47,7 +47,7 @@ const parseViewModelProperty = text => {
 };
 
 /**
- * 式のパース
+ * parse expressions
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  * @param {string} expr 
  * @param {string} defaultName 
@@ -60,7 +60,7 @@ const parseExpression = (expr, defaultName) => {
 };
 
 /**
- * data-bind属性値のパース
+ * parse bind text and return BindTextInfo[]
  * @param {string} text data-bind属性値
  * @param {string|undefined} defaultName prop:を省略時、デフォルトのプロパティ値
  * @returns {BindTextInfo[]}
@@ -79,7 +79,7 @@ const parseBindText = (text, defaultName) => {
 const bindTextsByKey = {};
 
 /**
- * data-bind属性値のパースし、BindTextInfoの配列を返す
+ * parse bind text and return BindTextInfo[], if hit cache return cache value
  * @param {string} text data-bind属性値
  * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
  * @returns {BindTextInfo[]}

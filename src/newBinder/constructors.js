@@ -38,7 +38,7 @@ const nodePropertyConstructorByFirstName = {
 };
 
 /**
- * 
+ * get constructors for NodeProperty and ViewModelProperty
  * @param {Node} node 
  * @param {string} nodePropertyName 
  * @param {string} viewModelPropertyName 

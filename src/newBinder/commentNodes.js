@@ -1,12 +1,12 @@
 /**
- * ノードがコメントかどうか
+ * is the node a comment node for template or text ?
  * @param {Node} node 
  * @returns {boolean}
  */
 const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
 
 /**
- * コメントノードを取得
+ * get comment nodes for template or text
  * @param {Node} node 
  * @returns {Comment[]}
  */

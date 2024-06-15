@@ -19,7 +19,7 @@ const getNodeTypeByNode = node =>
   node instanceof SVGElement ? NodeType.SVGElement : NodeType.Unknown;
 
 /**
- * 
+ * get node type
  * @param {Node} node
  * @returns {NodeType}
  */

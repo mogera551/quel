@@ -10,14 +10,14 @@ const isInputableHTMLElement = node => node instanceof HTMLElement &&
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
 
 /** @type {(node:Node)=>boolean} */
-const falsey = node => false;
+const alwaysFalse = node => false;
 
 /** @type {Object<NodeType,(node:Node)=>boolean>} */
 const isInputableFn = {
   [NodeType.HTMLElement]: isInputableHTMLElement,
-  [NodeType.SVGElement]: falsey,
-  [NodeType.Text]: falsey,
-  [NodeType.Template]: falsey,
+  [NodeType.SVGElement]:  alwaysFalse,
+  [NodeType.Text]:        alwaysFalse,
+  [NodeType.Template]:    alwaysFalse,
 }
 
 /**

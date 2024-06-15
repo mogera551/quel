@@ -22,7 +22,7 @@ const getDefaultPropertyHTMLElement = (node, element = node) =>
   element instanceof HTMLInputElement ? (defaultPropertyByElementType[element.type] ?? "value") :
   DEFAULT_PROPERTY;
 
-/** @type {Object<string,string>} */
+/** @type {Object<string,string>} cache */
 const defaultPropertyByKey = {};
 
 /** @type {(node:Node)=>string} */
@@ -31,21 +31,21 @@ const undefinedProperty = node => undefined;
 const textContentProperty = node => DEFAULT_PROPERTY;
 
 /** @type {Object<NodeType,(node:Node)=>string>} */
-const getDefaultPropertyFn = {
+const getDefaultPropertyByNodeType = {
   [NodeType.HTMLElement]: getDefaultPropertyHTMLElement,
-  [NodeType.SVGElement]: undefinedProperty,
-  [NodeType.Text]: textContentProperty,
-  [NodeType.Template]: undefinedProperty,
+  [NodeType.SVGElement]:  undefinedProperty,
+  [NodeType.Text]:        textContentProperty,
+  [NodeType.Template]:    undefinedProperty,
 }
 
 /**
- * HTML要素のデフォルトプロパティを取得
+ * get html element's default property
  * @param {Node} node 
  * @param {NodeType} nodeTYpe
  * @returns {string}
  */
 export const getDefaultProperty = (node, nodeType) => {
   const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
-  return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyFn[nodeType](node));
+  return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyByNodeType[nodeType](node));
 }
   

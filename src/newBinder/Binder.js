@@ -5,14 +5,14 @@ import "./types.js";
 import { utils } from "../utils.js";
 import { getDefaultProperty } from "./defaultProperty.js";
 import { getBindText } from "./bindText.js";
-import { parse as bindTextParse } from "./bindTextParser.js"
+import { parse as parseBindText } from "./parseBindText.js"
 import { getConstructors } from "./constructors.js";
 import { replaceTextNode } from "./replaceTextNode.js";
-import { getNodeFromNodeRoute, getNodeRoute } from "./nodeRoute.js";
-import { createBinding } from "./factory.js";
+import { findNodeByNodeRoute, computeNodeRoute } from "./nodeRoute.js";
+import { createBinding } from "./createBinding.js";
 import { removeAttribute } from "./removeAttribute.js";
 import { isInputable } from "./isInputable.js";
-import { nodeInitializer } from "./nodeInitializer.js";
+import { InitializeNode } from "./InitializeNode.js";
 import { getCommentNodes } from "./commentNodes.js";
 import { getNodeType } from "./nodeType.js";
 
@@ -64,18 +64,18 @@ export class Binder {
       nodeInfo.isInputable = isInputable(node, nodeInfo.nodeType);
       nodeInfo.defaultProperty = getDefaultProperty(node, nodeInfo.nodeType);
       /** @type {BindTextInfo[]} */
-      nodeInfo.bindTextInfos = bindTextParse(bindText, nodeInfo.defaultProperty);
+      nodeInfo.bindTextInfos = parseBindText(bindText, nodeInfo.defaultProperty);
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
         const bindTextInfo = nodeInfo.bindTextInfos[j];
         const { nodeProperty, viewModelProperty } = bindTextInfo;
-        bindTextInfo.createBindingFn = createBinding(bindTextInfo);
+        bindTextInfo.createBinding = createBinding(bindTextInfo);
         const { nodePropertyConstructor, viewModelPropertyConstructor } = getConstructors(node, nodeProperty, viewModelProperty, useKeyed);
         bindTextInfo.nodePropertyConstructor = nodePropertyConstructor;
         bindTextInfo.viewModelPropertyConstructor = viewModelPropertyConstructor;
       }
-      nodeInfo.nodeRoute = getNodeRoute(node);
+      nodeInfo.nodeRoute = computeNodeRoute(node);
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
-      nodeInfo.nodeInitializeFn = nodeInitializer(nodeInfo);
+      nodeInfo.initializeNode = InitializeNode(nodeInfo);
 
       this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
     }
@@ -88,19 +88,19 @@ export class Binder {
    * @returns {Binding[]}
    */
   createBindings(content, bindingManager) {
-    const allBindings =[];
+    const bindings =[];
     for(let i = 0; i < this.nodeInfos.length; i++) {
       const nodeInfo = this.nodeInfos[i];
-      const node = getNodeFromNodeRoute(content, nodeInfo.nodeRoute);
-      const bindings = [];
+      const node = findNodeByNodeRoute(content, nodeInfo.nodeRoute);
+      const nodeBindings = [];
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
-        bindings[bindings.length] = 
-          nodeInfo.bindTextInfos[j].createBindingFn(bindingManager, node); // push
+        nodeBindings[nodeBindings.length] = 
+          nodeInfo.bindTextInfos[j].createBinding(bindingManager, node); // push
       }
-      nodeInfo.nodeInitializeFn(node, bindings);
-      allBindings.push(...bindings);
+      nodeInfo.initializeNode(node, nodeBindings);
+      bindings.push(...nodeBindings);
     }
-    return allBindings;
+    return bindings;
   }
 
   static #binderByUUID = {};

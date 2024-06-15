@@ -22,17 +22,17 @@ const removeAttributeFromElement = (node) => {
 const thru = (node) => node;
 
 /** @type {Object<NodeType,(node:Node)=>Node>} */
-const removeAttributeFn = {
+const removeAttributeByNodeType = {
   [NodeType.HTMLElement]: removeAttributeFromElement,
-  [NodeType.SVGElement]: removeAttributeFromElement,
-  [NodeType.Text]: thru,
-  [NodeType.Template]: thru,
+  [NodeType.SVGElement]:  removeAttributeFromElement,
+  [NodeType.Text]:        thru,
+  [NodeType.Template]:    thru,
 }
 
 /**
- * 
+ * remove data-bind attribute from node
  * @param {Node} node 
  * @param {NodeType} nodeType 
  * @returns {Node}
  */
-export const removeAttribute = (node, nodeType) => removeAttributeFn[nodeType](node);
+export const removeAttribute = (node, nodeType) => removeAttributeByNodeType[nodeType](node);

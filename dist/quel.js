@@ -1890,7 +1890,7 @@ const getNodeTypeByNode = node =>
   node instanceof SVGElement ? NodeType.SVGElement : NodeType.Unknown;
 
 /**
- * 
+ * get node type
  * @param {Node} node
  * @returns {NodeType}
  */
@@ -1918,7 +1918,7 @@ const getDefaultPropertyHTMLElement = (node, element = node) =>
   element instanceof HTMLInputElement ? (defaultPropertyByElementType[element.type] ?? "value") :
   DEFAULT_PROPERTY;
 
-/** @type {Object<string,string>} */
+/** @type {Object<string,string>} cache */
 const defaultPropertyByKey = {};
 
 /** @type {(node:Node)=>string} */
@@ -1927,43 +1927,43 @@ const undefinedProperty = node => undefined;
 const textContentProperty = node => DEFAULT_PROPERTY;
 
 /** @type {Object<NodeType,(node:Node)=>string>} */
-const getDefaultPropertyFn = {
+const getDefaultPropertyByNodeType = {
   [NodeType.HTMLElement]: getDefaultPropertyHTMLElement,
-  [NodeType.SVGElement]: undefinedProperty,
-  [NodeType.Text]: textContentProperty,
-  [NodeType.Template]: undefinedProperty,
+  [NodeType.SVGElement]:  undefinedProperty,
+  [NodeType.Text]:        textContentProperty,
+  [NodeType.Template]:    undefinedProperty,
 };
 
 /**
- * HTML要素のデフォルトプロパティを取得
+ * get html element's default property
  * @param {Node} node 
  * @param {NodeType} nodeTYpe
  * @returns {string}
  */
 const getDefaultProperty = (node, nodeType) => {
   const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
-  return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyFn[nodeType](node));
+  return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyByNodeType[nodeType](node));
 };
 
 const BIND_DATASET$1 = "bind";
 
 /** @typedef {(node:Node)=>string} BindTextFn */
 
-/** @type {BindTextFn} */
+/** @type {BindTextFn} get text to bind from data-bind attribute */
 const getBindTextFromHTMLElement = node => node.dataset[BIND_DATASET$1] ?? "";
-/** @type {BindTextFn} */
+/** @type {BindTextFn} get text to bind from data-bind attribute */
 const getBindTextFromSVGElement = node => node.dataset[BIND_DATASET$1] ?? "";
-/** @type {BindTextFn} */
+/** @type {BindTextFn} get text to bind from textContent property */
 const getBindTextFromText = node => node.textContent.slice(3) ?? "";
-/** @type {BindTextFn} */
+/** @type {BindTextFn} get text to bind from template's data-bind attribute, looking up by textContent property */
 const getBindTextFromTemplate = node => getByUUID(node.textContent.slice(3) ?? "")?.dataset[BIND_DATASET$1] ?? "";
 
 /** @type {Object<NodeType,BindTextFn>} */
-const getBindTextFnByNodeType = {
+const getBindTextByNodeType = {
   [NodeType.HTMLElement]: getBindTextFromHTMLElement,
-  [NodeType.SVGElement]: getBindTextFromSVGElement,
-  [NodeType.Text]: getBindTextFromText,
-  [NodeType.Template]: getBindTextFromTemplate,
+  [NodeType.SVGElement]:  getBindTextFromSVGElement,
+  [NodeType.Text]:        getBindTextFromText,
+  [NodeType.Template]:    getBindTextFromTemplate,
 };
 
 /**
@@ -1972,21 +1972,21 @@ const getBindTextFnByNodeType = {
  * @param {NodeType} nodeType 
  * @returns {string}
  */
-const getBindText = (node, nodeType) => getBindTextFnByNodeType[nodeType](node);
+const getBindText = (node, nodeType) => getBindTextByNodeType[nodeType](node);
 
 const SAMENAME = "@";
 const DEFAULT = "$";
 
 
 /**
- * トリム関数
+ * trim
  * @param {string} s 
  * @returns {string}
  */
 const trim$1 = s => s.trim();
 
 /**
- * 長さチェック関数
+ * check length
  * @param {string} s 
  * @returns {string}
  */
@@ -1999,7 +1999,7 @@ const decode = s => {
 };
 
 /**
- * フィルターのパース
+ * parse filter part
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
  * @param {string} text 
  * @returns {FilterInfo}
@@ -2010,7 +2010,7 @@ const parseFilter = text => {
 };
 
 /**
- * ViewModelプロパティのパース
+ * parse expression
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  * @param {string} text 
  * @returns {{viewModelProperty:string,filters:FilterInfo[]}}
@@ -2021,7 +2021,7 @@ const parseViewModelProperty = text => {
 };
 
 /**
- * 式のパース
+ * parse expressions
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  * @param {string} expr 
  * @param {string} defaultName 
@@ -2034,7 +2034,7 @@ const parseExpression = (expr, defaultName) => {
 };
 
 /**
- * data-bind属性値のパース
+ * parse bind text and return BindTextInfo[]
  * @param {string} text data-bind属性値
  * @param {string|undefined} defaultName prop:を省略時、デフォルトのプロパティ値
  * @returns {BindTextInfo[]}
@@ -2053,7 +2053,7 @@ const parseBindText = (text, defaultName) => {
 const bindTextsByKey = {};
 
 /**
- * data-bind属性値のパースし、BindTextInfoの配列を返す
+ * parse bind text and return BindTextInfo[], if hit cache return cache value
  * @param {string} text data-bind属性値
  * @param {string｜undefined} defaultName prop:を省略時に使用する、プロパティの名前
  * @returns {BindTextInfo[]}
@@ -3618,7 +3618,7 @@ const nodePropertyConstructorByFirstName = {
 };
 
 /**
- * 
+ * get constructors for NodeProperty and ViewModelProperty
  * @param {Node} node 
  * @param {string} nodePropertyName 
  * @param {string} viewModelPropertyName 
@@ -3675,14 +3675,14 @@ const itsSelf = node => node;
 
 /** @type {Object<NodeType,(node:Node)=>Node>} */
 const replaceTextNodeFn = {
-  [NodeType.Text]: replaceTextNodeText,
+  [NodeType.Text]:        replaceTextNodeText,
   [NodeType.HTMLElement]: itsSelf,
-  [NodeType.SVGElement]: itsSelf,
-  [NodeType.Template]: itsSelf,
+  [NodeType.SVGElement]:  itsSelf,
+  [NodeType.Template]:    itsSelf,
 };
 
 /**
- * 
+ * replace comment node to text node
  * @param {Node} node 
  * @param {NodeType} nodeType 
  * @returns {Node}
@@ -3690,14 +3690,14 @@ const replaceTextNodeFn = {
 const replaceTextNode = (node, nodeType) => replaceTextNodeFn[nodeType](node);
 
 /**
- * ルートノードから、ノードまでのchileNodesのインデックスリストを取得する
+ * get indexes of childNodes from root node to the node 
  * ex.
  * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
  * => [1,3,7,2]
  * @param {Node} node 
  * @returns {number[]}
  */
-const getNodeRoute = node => {
+const computeNodeRoute = node => {
   /** @type {number[]} */
   let routeIndexes = [];
   while(node.parentNode !== null) {
@@ -3708,19 +3708,22 @@ const getNodeRoute = node => {
 };
 
 //const routeFn = (node, routeIndex) => node.childNodes[routeIndex];
-//export const getNodeFromNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);
+//export const findNodeByNodeRoute = (rootNode, nodeRoute) => nodeRoute.reduce(routeFn, rootNode);
 /**
- * 
+ * find node by node route
  * @param {Node} node 
  * @param {NodeRoute} nodeRoute 
  * @returns {Node}
  */
-const getNodeFromNodeRoute = (node, nodeRoute) => {
+const findNodeByNodeRoute = (node, nodeRoute) => {
   for(let i = 0 ; i < nodeRoute.length; node = node.childNodes[nodeRoute[i++]]) ;
   return node;
 };
 
-/** @type {(bindTextInfo:BindTextInfo)=>(bindingManager:BindingManager,node:Node)=>Binding} */
+/** 
+ * @type {(bindTextInfo:BindTextInfo)=>(bindingManager:BindingManager,node:Node)=>Binding} 
+ * create binding from bindTextInfo, bindingManager and node
+ */
 const createBinding = (bindTextInfo) => (bindingManager, node) => Binding.create(
   bindingManager,
   node, bindTextInfo.nodeProperty, bindTextInfo.nodePropertyConstructor, 
@@ -3750,20 +3753,20 @@ const removeAttributeFromElement = (node) => {
 const thru$1 = (node) => node;
 
 /** @type {Object<NodeType,(node:Node)=>Node>} */
-const removeAttributeFn = {
+const removeAttributeByNodeType = {
   [NodeType.HTMLElement]: removeAttributeFromElement,
-  [NodeType.SVGElement]: removeAttributeFromElement,
-  [NodeType.Text]: thru$1,
-  [NodeType.Template]: thru$1,
+  [NodeType.SVGElement]:  removeAttributeFromElement,
+  [NodeType.Text]:        thru$1,
+  [NodeType.Template]:    thru$1,
 };
 
 /**
- * 
+ * remove data-bind attribute from node
  * @param {Node} node 
  * @param {NodeType} nodeType 
  * @returns {Node}
  */
-const removeAttribute = (node, nodeType) => removeAttributeFn[nodeType](node);
+const removeAttribute = (node, nodeType) => removeAttributeByNodeType[nodeType](node);
 
 /**
  * ユーザー操作によりデフォルト値が変わるかどうか
@@ -3775,14 +3778,14 @@ const isInputableHTMLElement = node => node instanceof HTMLElement &&
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
 
 /** @type {(node:Node)=>boolean} */
-const falsey = node => false;
+const alwaysFalse = node => false;
 
 /** @type {Object<NodeType,(node:Node)=>boolean>} */
 const isInputableFn = {
   [NodeType.HTMLElement]: isInputableHTMLElement,
-  [NodeType.SVGElement]: falsey,
-  [NodeType.Text]: falsey,
-  [NodeType.Template]: falsey,
+  [NodeType.SVGElement]:  alwaysFalse,
+  [NodeType.Text]:        alwaysFalse,
+  [NodeType.Template]:    alwaysFalse,
 };
 
 /**
@@ -3811,7 +3814,7 @@ const setDefaultEventHandlerByElement = element => binding =>
  * @param {string} defaultName
  * @returns {void}
  */
-function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
+function InitializeHTMLElement(node, isInputable, bindings, defaultName) {
   /** @type {HTMLElement}  */
   const element = node;
 
@@ -3858,30 +3861,32 @@ function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
   return undefined;
 }
 
+/** @type {()=>void} */
 const thru = () => {};
 
-const nodeInitializerFn = {
-  [NodeType.HTMLElement]: HTMLElementInitialize,
-  [NodeType.SVGElement]: thru,
-  [NodeType.Text]: thru,
-  [NodeType.Template]: thru,
+/** @type {{[key:NodeType]:(node:Node, isInputable:boolean, bindings:Binding[], defaultName:string)=>void}} */
+const InitializeNodeByNodeType = {
+  [NodeType.HTMLElement]: InitializeHTMLElement,
+  [NodeType.SVGElement]:  thru,
+  [NodeType.Text]:        thru,
+  [NodeType.Template]:    thru,
 };
 
 /**
- * 
+ * Initialize node created from template.importNode
  * @type {(nodeInfo:BindNodeInfo)=>(node:Node, bindings:Binding[])=>void}
  */
-const nodeInitializer = (nodeInfo) => (node, bindings) => nodeInitializerFn[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
+const InitializeNode = (nodeInfo) => (node, bindings) => InitializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
 
 /**
- * ノードがコメントかどうか
+ * is the node a comment node for template or text ?
  * @param {Node} node 
  * @returns {boolean}
  */
 const isCommentNode = node => node instanceof Comment && (node.textContent.startsWith("@@:") || node.textContent.startsWith("@@|"));
 
 /**
- * コメントノードを取得
+ * get comment nodes for template or text
  * @param {Node} node 
  * @returns {Comment[]}
  */
@@ -3937,14 +3942,14 @@ class Binder {
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
         const bindTextInfo = nodeInfo.bindTextInfos[j];
         const { nodeProperty, viewModelProperty } = bindTextInfo;
-        bindTextInfo.createBindingFn = createBinding(bindTextInfo);
+        bindTextInfo.createBinding = createBinding(bindTextInfo);
         const { nodePropertyConstructor, viewModelPropertyConstructor } = getConstructors(node, nodeProperty, viewModelProperty, useKeyed);
         bindTextInfo.nodePropertyConstructor = nodePropertyConstructor;
         bindTextInfo.viewModelPropertyConstructor = viewModelPropertyConstructor;
       }
-      nodeInfo.nodeRoute = getNodeRoute(node);
+      nodeInfo.nodeRoute = computeNodeRoute(node);
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
-      nodeInfo.nodeInitializeFn = nodeInitializer(nodeInfo);
+      nodeInfo.initializeNode = InitializeNode(nodeInfo);
 
       this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
     }
@@ -3957,19 +3962,19 @@ class Binder {
    * @returns {Binding[]}
    */
   createBindings(content, bindingManager) {
-    const allBindings =[];
+    const bindings =[];
     for(let i = 0; i < this.nodeInfos.length; i++) {
       const nodeInfo = this.nodeInfos[i];
-      const node = getNodeFromNodeRoute(content, nodeInfo.nodeRoute);
-      const bindings = [];
+      const node = findNodeByNodeRoute(content, nodeInfo.nodeRoute);
+      const nodeBindings = [];
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
-        bindings[bindings.length] = 
-          nodeInfo.bindTextInfos[j].createBindingFn(bindingManager, node); // push
+        nodeBindings[nodeBindings.length] = 
+          nodeInfo.bindTextInfos[j].createBinding(bindingManager, node); // push
       }
-      nodeInfo.nodeInitializeFn(node, bindings);
-      allBindings.push(...bindings);
+      nodeInfo.initializeNode(node, nodeBindings);
+      bindings.push(...nodeBindings);
     }
-    return allBindings;
+    return bindings;
   }
 
   static #binderByUUID = {};

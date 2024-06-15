@@ -21,7 +21,7 @@ const setDefaultEventHandlerByElement = element => binding =>
  * @param {string} defaultName
  * @returns {void}
  */
-function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
+function InitializeHTMLElement(node, isInputable, bindings, defaultName) {
   /** @type {HTMLElement}  */
   const element = node;
 
@@ -68,17 +68,19 @@ function HTMLElementInitialize(node, isInputable, bindings, defaultName) {
   return undefined;
 }
 
+/** @type {()=>void} */
 const thru = () => {};
 
-const nodeInitializerFn = {
-  [NodeType.HTMLElement]: HTMLElementInitialize,
-  [NodeType.SVGElement]: thru,
-  [NodeType.Text]: thru,
-  [NodeType.Template]: thru,
+/** @type {{[key:NodeType]:(node:Node, isInputable:boolean, bindings:Binding[], defaultName:string)=>void}} */
+const InitializeNodeByNodeType = {
+  [NodeType.HTMLElement]: InitializeHTMLElement,
+  [NodeType.SVGElement]:  thru,
+  [NodeType.Text]:        thru,
+  [NodeType.Template]:    thru,
 };
 
 /**
- * 
+ * Initialize node created from template.importNode
  * @type {(nodeInfo:BindNodeInfo)=>(node:Node, bindings:Binding[])=>void}
  */
-export const nodeInitializer = (nodeInfo) => (node, bindings) => nodeInitializerFn[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
+export const InitializeNode = (nodeInfo) => (node, bindings) => InitializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
