@@ -67,6 +67,8 @@ export function generateComponentClass(componentModule) {
 
       static accessiblePropertiesFn = [];
 
+      static allProperties = [ "initialize", "accessibleProperties", "allProperties" ];
+
       /** @type {string} */
       static lowerTagName;
       /** @type {string} */
@@ -127,8 +129,11 @@ export function generateComponentClass(componentModule) {
       }
 
       get accessibleProperties() {
-        const accessibleProperties = ["dispatchEvent"];
+        const accessibleProperties = [];
         return this.constructor.accessiblePropertiesFn.flatMap(fn => fn.apply(this, []) ?? []).concat(accessibleProperties);
+      }
+      get allProperties() {
+        return this.constructor.allProperties;
       }
       static {
         // setting filters
@@ -180,6 +185,7 @@ export function generateComponentClass(componentModule) {
       } else {
         Object.defineProperty(componentClass, key, desc);
       }
+      componentClass.allProperties.push(key);
     }
     // instance accessors and methods
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass.prototype))) {
@@ -192,6 +198,7 @@ export function generateComponentClass(componentModule) {
       } else {
         Object.defineProperty(componentClass.prototype, key, desc);
       }
+      componentClass.allProperties.push(key);
     }
 
   }

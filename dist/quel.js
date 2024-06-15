@@ -4719,6 +4719,8 @@ class Api {
 
 }
 
+const bindValue = (target) => (value) => (typeof value === "function") ? value.bind(target) : value;
+
 class Handler {
   /**
    * Proxy.get
@@ -4729,13 +4731,14 @@ class Handler {
    */
   get(target, prop, receiver) {
     const accessibleProperties = new Set(target.accessibleProperties);
-    if (accessibleProperties.has(prop)) {
-      const type = typeof target[prop];
-      if (type === "function") {
-        return target[prop].bind(target);
-      } else {
-        return target[prop];
+    const allProperties = new Set(target.allProperties);
+    if (allProperties.has(prop)) {
+      if (accessibleProperties.has(prop)) {
+        return bindValue(target)(target[prop]);
       }
+    } else {
+      // mixedInしたプロパティでない場合、そのままアクセスOK
+      return bindValue(target)(target[prop]);
     }
   }
 }
@@ -6099,6 +6102,8 @@ function generateComponentClass(componentModule) {
 
       static accessiblePropertiesFn = [];
 
+      static allProperties = [ "initialize", "accessibleProperties", "allProperties" ];
+
       /** @type {string} */
       static lowerTagName;
       /** @type {string} */
@@ -6159,8 +6164,11 @@ function generateComponentClass(componentModule) {
       }
 
       get accessibleProperties() {
-        const accessibleProperties = ["dispatchEvent"];
+        const accessibleProperties = [];
         return this.constructor.accessiblePropertiesFn.flatMap(fn => fn.apply(this, []) ?? []).concat(accessibleProperties);
+      }
+      get allProperties() {
+        return this.constructor.allProperties;
       }
       static {
         // setting filters
@@ -6210,6 +6218,7 @@ function generateComponentClass(componentModule) {
       } else {
         Object.defineProperty(componentClass, key, desc);
       }
+      componentClass.allProperties.push(key);
     }
     // instance accessors and methods
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass.prototype))) {
@@ -6222,6 +6231,7 @@ function generateComponentClass(componentModule) {
       } else {
         Object.defineProperty(componentClass.prototype, key, desc);
       }
+      componentClass.allProperties.push(key);
     }
 
   };

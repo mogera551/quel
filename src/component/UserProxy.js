@@ -1,5 +1,7 @@
 import "../types.js";
 
+const bindValue = (target) => (value) => (typeof value === "function") ? value.bind(target) : value;
+
 class Handler {
   /**
    * Proxy.get
@@ -10,13 +12,14 @@ class Handler {
    */
   get(target, prop, receiver) {
     const accessibleProperties = new Set(target.accessibleProperties);
-    if (accessibleProperties.has(prop)) {
-      const type = typeof target[prop];
-      if (type === "function") {
-        return target[prop].bind(target);
-      } else {
-        return target[prop];
+    const allProperties = new Set(target.allProperties);
+    if (allProperties.has(prop)) {
+      if (accessibleProperties.has(prop)) {
+        return bindValue(target)(target[prop]);
       }
+    } else {
+      // mixedInしたプロパティでない場合、そのままアクセスOK
+      return bindValue(target)(target[prop]);
     }
   }
 }
