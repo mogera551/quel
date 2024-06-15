@@ -1,3 +1,4 @@
+import { createUserComponent } from "../component/UserProxy.js";
 import "../types.js";
 
 const GLOBALS_PROPERTY = "$globals";
@@ -19,7 +20,7 @@ export const setOfProperties = new Set([
 const getFuncByName = {
   [GLOBALS_PROPERTY]: ({component}) => component.globals,
   [DEPENDENT_PROPS_PROPERTY]: ({viewModel}) => viewModel[DEPENDENT_PROPS_PROPERTY],
-  [COMPONENT_PROPERTY]: ({component}) => component,
+  [COMPONENT_PROPERTY]: ({component}) => createUserComponent(component),
 }
 
 export class SpecialProp {

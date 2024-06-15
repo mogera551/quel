@@ -421,4 +421,8 @@ export class MixedComponent {
     const process = new ProcessData(func, thisArg, args ?? []);
     this.updateSlot.addProcess(process);
   }
+
+  get accessibleProperties() {
+    return [ "addProcess", "viewRootElement ", "queryRoot" ];
+  }
 }

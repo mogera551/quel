@@ -174,6 +174,7 @@
  * @property {Object<string,FilterFunc>} Component.inputFilters
  * @property {Object<string,FilterFunc>} Component.outputFilters
  * @property {Object<string,EventFilterFunc>} Component.eventFilters
+ * @property {string[]} accessibleProperties
  */
 
 /**

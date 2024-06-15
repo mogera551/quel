@@ -65,6 +65,8 @@ export function generateComponentClass(componentModule) {
       /**  */
       static initializeCallbacks = [];
 
+      static accessiblePropertiesFn = [];
+
       /** @type {string} */
       static lowerTagName;
       /** @type {string} */
@@ -123,6 +125,11 @@ export function generateComponentClass(componentModule) {
       initialize() {
         this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, []));
       }
+
+      get accessibleProperties() {
+        const accessibleProperties = ["dispatchEvent"];
+        return this.constructor.accessiblePropertiesFn.flatMap(fn => fn.apply(this, []) ?? []).concat(accessibleProperties);
+      }
       static {
         // setting filters
         for(const [name, filterFunc] of Object.entries(this.inputFilters)) {
@@ -168,7 +175,11 @@ export function generateComponentClass(componentModule) {
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass))) {
       // exclude name, length, prototype
       if (!desc.enumerable && typeof desc.get === "undefined") continue;
-      Object.defineProperty(componentClass, key, desc);
+      if (key === "accessibleProperties") {
+        componentClass.accessiblePropertiesFn.push(desc.get ?? (() => desc.value));
+      } else {
+        Object.defineProperty(componentClass, key, desc);
+      }
     }
     // instance accessors and methods
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass.prototype))) {
@@ -176,6 +187,8 @@ export function generateComponentClass(componentModule) {
       if (key === "constructor") continue;
       if (key === "initializeCallback") {
         componentClass.initializeCallbacks.push(desc.value);
+      } else if (key === "accessibleProperties") {
+        componentClass.accessiblePropertiesFn.push(desc.get ?? (() => desc.value));
       } else {
         Object.defineProperty(componentClass.prototype, key, desc);
       }

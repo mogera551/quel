@@ -195,7 +195,7 @@ const funcBySymbol = {
   [Symbols$1.isSupportDotNotation]: isSupportDotNotation,
 };
 
-let Handler$2 = class Handler {
+let Handler$3 = class Handler {
   /**
    * @type {number[][]}
    */
@@ -831,7 +831,7 @@ const contextLoopIndexes = (handler, props) => {
   return indexes ?? props.indexes;
 };
 
-let Handler$1 = class Handler {
+let Handler$2 = class Handler {
   #component;
   #buffer;
   #binds = [];
@@ -1030,10 +1030,10 @@ let Handler$1 = class Handler {
  * @returns {Proxy<Handler>}
  */
 function createProps(component) {
-  return new Proxy({}, new Handler$1(component));
+  return new Proxy({}, new Handler$2(component));
 }
 
-class GlobalDataHandler extends Handler$2 {
+class GlobalDataHandler extends Handler$3 {
   /** @type {Map<string,Set<Component>>} */
   #setOfComponentByProp = new Map;
 
@@ -1101,7 +1101,7 @@ class GlobalData {
 /**
  * @type {ProxyHandler<typeof GlobalDataAccessor>}
  */
-class Handler {
+let Handler$1 = class Handler {
   /** @type {Component} */
   #component;
 
@@ -1182,7 +1182,7 @@ class Handler {
     const { propName, indexes } = PropertyName.parse(prop);
     return this.directSet(propName.name, indexes, value);
   }
-}
+};
 
 /**
  * 
@@ -1190,7 +1190,7 @@ class Handler {
  * @returns {Proxy<Handler>}
  */
 function createGlobals(component) {
-  return new Proxy({}, new Handler(component));
+  return new Proxy({}, new Handler$1(component));
 }
 
 class ThreadStop extends Error {
@@ -1341,7 +1341,7 @@ class ViewModelUpdator {
   }
 }
 
-class ViewModelHandlerBase extends Handler$2 {
+class ViewModelHandlerBase extends Handler$3 {
   /** @type {Component} */
   #component;
   get component() {
@@ -4719,6 +4719,29 @@ class Api {
 
 }
 
+class Handler {
+  /**
+   * Proxy.get
+   * @param {Component} target
+   * @param {string} prop
+   * @param {Proxy<Handler>} receiver
+   * @returns {any|undefined}
+   */
+  get(target, prop, receiver) {
+    const accessibleProperties = new Set(target.accessibleProperties);
+    if (accessibleProperties.has(prop)) {
+      const type = typeof target[prop];
+      if (type === "function") {
+        return target[prop].bind(target);
+      } else {
+        return target[prop];
+      }
+    }
+  }
+}
+
+const createUserComponent = (component) => new Proxy(component, new Handler);
+
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY$1 = "$dependentProps";
 const COMPONENT_PROPERTY = "$component";
@@ -4738,7 +4761,7 @@ const setOfProperties = new Set([
 const getFuncByName = {
   [GLOBALS_PROPERTY]: ({component}) => component.globals,
   [DEPENDENT_PROPS_PROPERTY$1]: ({viewModel}) => viewModel[DEPENDENT_PROPS_PROPERTY$1],
-  [COMPONENT_PROPERTY]: ({component}) => component,
+  [COMPONENT_PROPERTY]: ({component}) => createUserComponent(component),
 };
 
 class SpecialProp {
@@ -5778,6 +5801,10 @@ class MixedComponent {
     const process = new ProcessData(func, thisArg, args ?? []);
     this.updateSlot.addProcess(process);
   }
+
+  get accessibleProperties() {
+    return [ "addProcess", "viewRootElement ", "queryRoot" ];
+  }
 }
 
 class MixedDialog {
@@ -5897,6 +5924,11 @@ class MixedDialog {
     return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
   }
 
+  get accessibleProperties() {
+    if (this.tagName === "DIALOG") {
+      return ["showModal", "show", "close", "asyncShowModal", "asyncShow"];
+    }
+  }
 }
 
 class MixedPopover {
@@ -6001,6 +6033,11 @@ class MixedPopover {
     return this._popoverContextIndexesById;
   }
 
+  get accessibleProperties() {
+    if (this.hasAttribute("popover")) {
+      return ["showPopover", "asyncShowPopover", "hidePopover", "cancelPopover"];
+    }
+  }
 }
 
 /**
@@ -6060,6 +6097,8 @@ function generateComponentClass(componentModule) {
       /**  */
       static initializeCallbacks = [];
 
+      static accessiblePropertiesFn = [];
+
       /** @type {string} */
       static lowerTagName;
       /** @type {string} */
@@ -6118,6 +6157,11 @@ function generateComponentClass(componentModule) {
       initialize() {
         this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, []));
       }
+
+      get accessibleProperties() {
+        const accessibleProperties = ["dispatchEvent"];
+        return this.constructor.accessiblePropertiesFn.flatMap(fn => fn.apply(this, []) ?? []).concat(accessibleProperties);
+      }
       static {
         // setting filters
         for(const [name, filterFunc] of Object.entries(this.inputFilters)) {
@@ -6161,7 +6205,11 @@ function generateComponentClass(componentModule) {
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass))) {
       // exclude name, length, prototype
       if (!desc.enumerable && typeof desc.get === "undefined") continue;
-      Object.defineProperty(componentClass, key, desc);
+      if (key === "accessibleProperties") {
+        componentClass.accessiblePropertiesFn.push(desc.get ?? (() => desc.value));
+      } else {
+        Object.defineProperty(componentClass, key, desc);
+      }
     }
     // instance accessors and methods
     for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass.prototype))) {
@@ -6169,6 +6217,8 @@ function generateComponentClass(componentModule) {
       if (key === "constructor") continue;
       if (key === "initializeCallback") {
         componentClass.initializeCallbacks.push(desc.value);
+      } else if (key === "accessibleProperties") {
+        componentClass.accessiblePropertiesFn.push(desc.get ?? (() => desc.value));
       } else {
         Object.defineProperty(componentClass.prototype, key, desc);
       }

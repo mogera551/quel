@@ -104,4 +104,9 @@ export class MixedPopover {
     return this._popoverContextIndexesById;
   }
 
+  get accessibleProperties() {
+    if (this.hasAttribute("popover")) {
+      return ["showPopover", "asyncShowPopover", "hidePopover", "cancelPopover"];
+    }
+  }
 }

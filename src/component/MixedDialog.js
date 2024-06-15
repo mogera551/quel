@@ -118,4 +118,9 @@ export class MixedDialog {
     return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
   }
 
+  get accessibleProperties() {
+    if (this.tagName === "DIALOG") {
+      return ["showModal", "show", "close", "asyncShowModal", "asyncShow"];
+    }
+  }
 }
