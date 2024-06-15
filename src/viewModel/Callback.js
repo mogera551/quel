@@ -1,4 +1,5 @@
 import { Symbols } from "../Symbols.js";
+import { dispatchCustomEvent } from "./Event.js";
 import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
 
 const WRITE_CALLBACK = "$writeCallback";
@@ -26,6 +27,14 @@ const setOfAllCallbacks = new Set([
   Symbols.updatedCallback,
 ]);
 
+/** @type {{callback:Symbol,event:Symbol} */
+const callbackToEvent = {
+  [Symbols.connectedCallback]: Symbols.connectedEvent,
+  [Symbols.disconnectedCallback]: Symbols.disconnectedEvent,
+  [Symbols.writeCallback]: Symbols.writeEvent,
+  [Symbols.updatedCallback]: Symbols.updatedEvent,
+}
+
 export class Callback {
   /**
    * 
@@ -36,12 +45,13 @@ export class Callback {
    */
   static get(viewModel, viewModelProxy, handler, prop) {
     const callbackName = callbackNameBySymbol[prop];
-    const applyCallback = (...args) => async () => Reflect.apply(viewModel[callbackName], viewModelProxy, args);
-    if (prop === Symbols.connectedCallback) {
-      return (callbackName in viewModel) ? (...args) => applyCallback(...args)() : () => {};
-    } else {
-      return (callbackName in viewModel) ? (...args) => handler.addProcess(applyCallback(...args), viewModelProxy, []) : () => {};
-    }
+    const applyCallback = (...args) => async () => {
+      (callbackName in viewModel) && Reflect.apply(viewModel[callbackName], viewModelProxy, args);
+      dispatchCustomEvent(handler.component, callbackToEvent[prop], args);
+    };
+    return (prop === Symbols.connectedCallback) ?
+      (...args) => applyCallback(...args)() : 
+      (...args) => handler.addProcess(applyCallback(...args), viewModelProxy, []);
   }
 
   /**

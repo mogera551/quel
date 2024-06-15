@@ -9,6 +9,12 @@ export const Symbols = Object.assign({
   disconnectedCallback: Symbol.for(`${myname}:viewModel.disconnectedCallback`),
   writeCallback: Symbol.for(`${myname}:viewModel.writeCallback`),
   updatedCallback: Symbol.for(`${myname}:viewModel.updatedCallback`),
+
+  connectedEvent: Symbol.for(`${myname}:viewModel.connectedEvent`),
+  disconnectedEvent: Symbol.for(`${myname}:viewModel.disconnectedEvent`),
+  writeEvent: Symbol.for(`${myname}:viewModel.writeEvent`),
+  updatedEvent: Symbol.for(`${myname}:viewModel.updatedEvent`),
+
   getDependentProps: Symbol.for(`${myname}:viewModel.getDependentProps`),
   clearCache: Symbol.for(`${myname}:viewModel.clearCache`),
   directlyCall: Symbol.for(`${myname}:viewModel.directCall`),

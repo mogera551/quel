@@ -266,8 +266,6 @@ export class MixedComponent {
 
     this._initialPromises = Promise.withResolvers(); // promises for initialize
 
-    this._setOfObservedAttributes = new Set;
-
     this._contextRevision = 0;
 
     this._cachableInBuilding = false;
@@ -332,18 +330,6 @@ export class MixedComponent {
     if (this.useOverscrollBehavior) {
       if (this.tagName === "DIALOG" || this.hasAttribute("popover")) {
         this.style.overscrollBehavior = "contain";
-      }
-    }
-
-    // attribue
-    if (this.useWebComponent) {
-      for(let i = 0; i < this.attributes.length; i++) {
-        const attr = this.attributes[i];
-        const [prefix, name] = attr.name.split(":");
-        if (prefix === "props") {
-          this.props[Symbols.bindProperty](name);
-          this._setOfObservedAttributes.add(attr.name);
-        }
       }
     }
 
@@ -429,47 +415,6 @@ export class MixedComponent {
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
     this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
-  }
-
-  /** 
-   * @type {string[]} 
-   * @static
-   */
-  static get observedAttributes() {
-    const viewModelInfo = viewModelize(Reflect.construct(this.ViewModel, []));
-    this._propByObservedAttribute = new Map(
-      viewModelInfo.primitiveProps
-      .filter(prop => !prop.startsWith("_"))
-      .map(prop => [`props:${utils.toKebabCase(prop)}`, prop])
-    );
-    return Array.from(this._propByObservedAttribute.keys());
-  }
-  /**
-   * @type {Map<string,string>}
-   * @static
-   */
-  static get propByObservedAttribute() {
-    return this._propByObservedAttribute;
-  }
-  /**
-   * callback for attribute changed
-   * @param {string} name 
-   * @param {string} oldValue 
-   * @param {string} newValue 
-   */
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (!this._setOfObservedAttributes.has(name)) return;
-    const propName = this.constructor.propByObservedAttribute.get(name);
-    if (typeof propName === "undefined") return;
-    if (typeof this.updateSlot === "undefined") return;
-    const changePropsEvent = new CustomEvent("changeprops");
-    changePropsEvent.propName = name;
-    changePropsEvent.propValue = newValue;
-    this.dispatchEvent(changePropsEvent);
-    if (this.updateSlot.phase !== Phase.updateViewModel) {
-      this.viewModel[Symbols.notifyForDependentProps](name, []);
-    }
-
   }
 
   addProcess(func, thisArg, args) {

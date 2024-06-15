@@ -68,8 +68,6 @@ class Handler {
     const getFunc = (handler, name, props) => function () {
       if (typeof handler.buffer !== "undefined") {
         return handler.buffer[name];
-      } else if (handler.binds.length === 0) {
-        return handler.component.getAttribute(`props:${name}`);
       } else {
         const match = RE_CONTEXT_INDEX.exec(props.name);
         if (match) {
@@ -95,12 +93,6 @@ class Handler {
     const setFunc = (handler, name, props) => function (value) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
-        const changePropsEvent = new CustomEvent("changeprops");
-        changePropsEvent.propName = name;
-        changePropsEvent.propValue = value;
-        handler.component.dispatchEvent(changePropsEvent);
-      } else if (handler.binds.length === 0) {
-        handler.component.setAttribute(`props:${name}`, value);
       } else {
         const loopIndexes = contextLoopIndexes(handler, props);
         handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, loopIndexes, value);
@@ -207,10 +199,6 @@ class Handler {
   ownKeys(target, receiver) {
     if (typeof this.buffer !== "undefined") {
       return Reflect.ownKeys(this.buffer);
-    } else if (this.binds.length === 0) {
-      return Array.from(this.component.attributes)
-        .filter(attribute => attribute.name.startsWith("props:"))
-        .map(attribute => attribute.name.slice(6));
     } else {
       return this.#binds.map(({ prop }) => prop);
     }

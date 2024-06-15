@@ -465,6 +465,12 @@ const Symbols = Object.assign({
   disconnectedCallback: Symbol.for(`${name}:viewModel.disconnectedCallback`),
   writeCallback: Symbol.for(`${name}:viewModel.writeCallback`),
   updatedCallback: Symbol.for(`${name}:viewModel.updatedCallback`),
+
+  connectedEvent: Symbol.for(`${name}:viewModel.connectedEvent`),
+  disconnectedEvent: Symbol.for(`${name}:viewModel.disconnectedEvent`),
+  writeEvent: Symbol.for(`${name}:viewModel.writeEvent`),
+  updatedEvent: Symbol.for(`${name}:viewModel.updatedEvent`),
+
   getDependentProps: Symbol.for(`${name}:viewModel.getDependentProps`),
   clearCache: Symbol.for(`${name}:viewModel.clearCache`),
   directlyCall: Symbol.for(`${name}:viewModel.directCall`),
@@ -863,8 +869,6 @@ let Handler$1 = class Handler {
     const getFunc = (handler, name, props) => function () {
       if (typeof handler.buffer !== "undefined") {
         return handler.buffer[name];
-      } else if (handler.binds.length === 0) {
-        return handler.component.getAttribute(`props:${name}`);
       } else {
         const match = RE_CONTEXT_INDEX.exec(props.name);
         if (match) {
@@ -890,12 +894,6 @@ let Handler$1 = class Handler {
     const setFunc = (handler, name, props) => function (value) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
-        const changePropsEvent = new CustomEvent("changeprops");
-        changePropsEvent.propName = name;
-        changePropsEvent.propValue = value;
-        handler.component.dispatchEvent(changePropsEvent);
-      } else if (handler.binds.length === 0) {
-        handler.component.setAttribute(`props:${name}`, value);
       } else {
         const loopIndexes = contextLoopIndexes(handler, props);
         handler.component.parentComponent.writableViewModel[Symbols.directlySet](props.name, loopIndexes, value);
@@ -1002,10 +1000,6 @@ let Handler$1 = class Handler {
   ownKeys(target, receiver) {
     if (typeof this.buffer !== "undefined") {
       return Reflect.ownKeys(this.buffer);
-    } else if (this.binds.length === 0) {
-      return Array.from(this.component.attributes)
-        .filter(attribute => attribute.name.startsWith("props:"))
-        .map(attribute => attribute.name.slice(6));
     } else {
       return this.#binds.map(({ prop }) => prop);
     }
@@ -4561,6 +4555,49 @@ class DependentProps {
 
 }
 
+const CONNECTED_EVENT = "connected";
+const DISCONNECTED_EVENT = "disconnected";
+const WRITE_EVENT = "write";
+const UPDATED_EVENT = "updated";
+
+/** @type {(...args)=>void} */
+const createConnectedDetail = (...args) => {};
+/** @type {(...args)=>void} */
+const createDisconnectedDetail = (...args) => {};
+/** @type {(...args)=>void} */
+const createWriteDetail = (...args) => ({prop:args[0], indexes:args[1]});
+/** @type {(...args)=>void} */
+const createUpdatedDetail = (...args) => ({props:args});
+
+/** @type {Object<Symbol,(...args)=>void>} */
+const createDetailFn = {
+  [Symbols.connectedEvent]: createConnectedDetail,
+  [Symbols.disconnectedEvent]: createDisconnectedDetail,
+  [Symbols.writeEvent]: createWriteDetail,
+  [Symbols.updatedEvent]: createUpdatedDetail,
+};
+
+/** @type {Object<Symbol,string>} */
+const customEventNames = {
+  [Symbols.connectedEvent]: CONNECTED_EVENT,
+  [Symbols.disconnectedEvent]: DISCONNECTED_EVENT,
+  [Symbols.writeEvent]: WRITE_EVENT,
+  [Symbols.updatedEvent]: UPDATED_EVENT,
+};
+
+/**
+ * 
+ * @param {Component} component 
+ * @param {Symbol} symbol 
+ * @param {any[]} args 
+ */
+const dispatchCustomEvent = (component, symbol, args) => {
+  const event = new CustomEvent(customEventNames[symbol], {
+    detail: createDetailFn[symbol](...args),
+  });
+  component.dispatchEvent(event);
+};
+
 const WRITE_CALLBACK = "$writeCallback";
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
@@ -4586,6 +4623,14 @@ const setOfAllCallbacks = new Set([
   Symbols.updatedCallback,
 ]);
 
+/** @type {{callback:Symbol,event:Symbol} */
+const callbackToEvent = {
+  [Symbols.connectedCallback]: Symbols.connectedEvent,
+  [Symbols.disconnectedCallback]: Symbols.disconnectedEvent,
+  [Symbols.writeCallback]: Symbols.writeEvent,
+  [Symbols.updatedCallback]: Symbols.updatedEvent,
+};
+
 class Callback {
   /**
    * 
@@ -4596,12 +4641,13 @@ class Callback {
    */
   static get(viewModel, viewModelProxy, handler, prop) {
     const callbackName = callbackNameBySymbol[prop];
-    const applyCallback = (...args) => async () => Reflect.apply(viewModel[callbackName], viewModelProxy, args);
-    if (prop === Symbols.connectedCallback) {
-      return (callbackName in viewModel) ? (...args) => applyCallback(...args)() : () => {};
-    } else {
-      return (callbackName in viewModel) ? (...args) => handler.addProcess(applyCallback(...args), viewModelProxy, []) : () => {};
-    }
+    const applyCallback = (...args) => async () => {
+      (callbackName in viewModel) && Reflect.apply(viewModel[callbackName], viewModelProxy, args);
+      dispatchCustomEvent(handler.component, callbackToEvent[prop], args);
+    };
+    return (prop === Symbols.connectedCallback) ?
+      (...args) => applyCallback(...args)() : 
+      (...args) => handler.addProcess(applyCallback(...args), viewModelProxy, []);
   }
 
   /**
@@ -5574,8 +5620,6 @@ class MixedComponent {
 
     this._initialPromises = Promise.withResolvers(); // promises for initialize
 
-    this._setOfObservedAttributes = new Set;
-
     this._contextRevision = 0;
 
     this._cachableInBuilding = false;
@@ -5640,18 +5684,6 @@ class MixedComponent {
     if (this.useOverscrollBehavior) {
       if (this.tagName === "DIALOG" || this.hasAttribute("popover")) {
         this.style.overscrollBehavior = "contain";
-      }
-    }
-
-    // attribue
-    if (this.useWebComponent) {
-      for(let i = 0; i < this.attributes.length; i++) {
-        const attr = this.attributes[i];
-        const [prefix, name] = attr.name.split(":");
-        if (prefix === "props") {
-          this.props[Symbols.bindProperty](name);
-          this._setOfObservedAttributes.add(attr.name);
-        }
       }
     }
 
@@ -5737,47 +5769,6 @@ class MixedComponent {
    */
   updateNode(propertyAccessByViewModelPropertyKey) {
     this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
-  }
-
-  /** 
-   * @type {string[]} 
-   * @static
-   */
-  static get observedAttributes() {
-    const viewModelInfo = viewModelize(Reflect.construct(this.ViewModel, []));
-    this._propByObservedAttribute = new Map(
-      viewModelInfo.primitiveProps
-      .filter(prop => !prop.startsWith("_"))
-      .map(prop => [`props:${utils.toKebabCase(prop)}`, prop])
-    );
-    return Array.from(this._propByObservedAttribute.keys());
-  }
-  /**
-   * @type {Map<string,string>}
-   * @static
-   */
-  static get propByObservedAttribute() {
-    return this._propByObservedAttribute;
-  }
-  /**
-   * callback for attribute changed
-   * @param {string} name 
-   * @param {string} oldValue 
-   * @param {string} newValue 
-   */
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (!this._setOfObservedAttributes.has(name)) return;
-    const propName = this.constructor.propByObservedAttribute.get(name);
-    if (typeof propName === "undefined") return;
-    if (typeof this.updateSlot === "undefined") return;
-    const changePropsEvent = new CustomEvent("changeprops");
-    changePropsEvent.propName = name;
-    changePropsEvent.propValue = newValue;
-    this.dispatchEvent(changePropsEvent);
-    if (this.updateSlot.phase !== Phase.updateViewModel) {
-      this.viewModel[Symbols.notifyForDependentProps](name, []);
-    }
-
   }
 
   addProcess(func, thisArg, args) {
