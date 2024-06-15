@@ -233,7 +233,7 @@ export class MixedComponent {
    * @returns {void}
    */
   initializeCallback() {
-    /** @type {class<Component>} */
+    /** @type {Component.constructor} */
     const componentClass = this.constructor;
     /**
      * set members

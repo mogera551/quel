@@ -767,7 +767,10 @@ class Module {
   }
 
   /** @type {ViewModel.constructor} */
-  ViewModel = class {};
+  ViewModel = undefined;
+
+  /** @type {ViewModel.constructor} */
+  State = undefined;
 
   /** @type {ComponentModuleConfig} */
   config = {};
@@ -5587,7 +5590,7 @@ class MixedComponent {
    * @returns {void}
    */
   initializeCallback() {
-    /** @type {class<Component>} */
+    /** @type {Component.constructor} */
     const componentClass = this.constructor;
     /**
      * set members
@@ -6020,7 +6023,7 @@ function generateComponentClass(componentModule) {
       static localStyleSheet;
 
       /** @type {ViewModel.constructor} */
-      static ViewModel = module.ViewModel;
+      static ViewModel = module.ViewModel ?? module.State ?? class {};
 
       /**@type {Object<string,FilterFuncWithOption>} */
       static inputFilters = module.filters?.input ?? {};

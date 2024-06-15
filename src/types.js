@@ -20,6 +20,7 @@
  * @property {()=>void|undefined} $connectedCallback
  * @property {()=>void|undefined} $disconnectedCallback
  * @property {(prop:string,indexes:number[])=>void|undefined} $writeCallback
+ * @property {([string,number[]][])=>void|undefined} $updatedCallback
  */
 
 /**
@@ -118,7 +119,8 @@
  * @typedef {Object} ComponentModule
  * @property {string|undefined} html
  * @property {string|undefined} css
- * @property {ViewModel.constructor|undefined} ViewModel
+ * @property {typeof ViewModel|undefined} ViewModel
+ * @property {typeof ViewModel|undefined} State
  * @property {Object<string,ComponentModule>|undefined} componentModules
  * @property {ComponentModuleConfig|undefined} config
  * @property {ComponentModuleOptions|undefined} options

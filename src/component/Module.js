@@ -29,7 +29,10 @@ export class Module {
   }
 
   /** @type {ViewModel.constructor} */
-  ViewModel = class {};
+  ViewModel = undefined;
+
+  /** @type {ViewModel.constructor} */
+  State = undefined;
 
   /** @type {ComponentModuleConfig} */
   config = {};

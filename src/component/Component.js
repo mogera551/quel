@@ -28,7 +28,7 @@ export function generateComponentClass(componentModule) {
       static localStyleSheet;
 
       /** @type {ViewModel.constructor} */
-      static ViewModel = module.ViewModel;
+      static ViewModel = module.ViewModel ?? module.State ?? class {};
 
       /**@type {Object<string,FilterFuncWithOption>} */
       static inputFilters = module.filters?.input ?? {};
