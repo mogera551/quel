@@ -7,12 +7,10 @@ import { Symbols as DotNotationSymbols } from "../modules/dot-notation/dot-notat
 export const Symbols = Object.assign({
   connectedCallback: Symbol.for(`${myname}:viewModel.connectedCallback`),
   disconnectedCallback: Symbol.for(`${myname}:viewModel.disconnectedCallback`),
-  writeCallback: Symbol.for(`${myname}:viewModel.writeCallback`),
   updatedCallback: Symbol.for(`${myname}:viewModel.updatedCallback`),
 
   connectedEvent: Symbol.for(`${myname}:viewModel.connectedEvent`),
   disconnectedEvent: Symbol.for(`${myname}:viewModel.disconnectedEvent`),
-  writeEvent: Symbol.for(`${myname}:viewModel.writeEvent`),
   updatedEvent: Symbol.for(`${myname}:viewModel.updatedEvent`),
 
   getDependentProps: Symbol.for(`${myname}:viewModel.getDependentProps`),

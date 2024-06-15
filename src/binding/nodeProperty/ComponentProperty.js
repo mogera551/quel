@@ -77,7 +77,7 @@ export class ComponentProperty extends ElementBase {
     for(const [key, propertyAccess] of propertyAccessByViewModelPropertyKey.entries()) {
       if (propertyAccess.propName.name === viewModelProperty || propertyAccess.propName.setOfParentPaths.has(viewModelProperty)) {
         const remain = propertyAccess.propName.name.slice(viewModelProperty.length);
-        this.thisComponent.viewModel?.[Symbols.writeCallback](`${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${propName}${remain}`, propertyAccess.indexes]]);
         this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, propertyAccess.indexes);
       }
     }

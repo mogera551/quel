@@ -25,8 +25,8 @@ export class ViewModel {
   async $connectedCallback() {
     this.commits = await this.getCommits(this.display_count);
   }
-  async $writeCallback(name, indexes) {
-    if (name === "display_count") {
+  async $updatedCallback(props) {
+    if (props.find(prop => prop[0] === "display_count")) {
       this.commits = await this.getCommits(this.display_count);
     }
   }

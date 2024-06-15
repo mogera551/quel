@@ -43,7 +43,6 @@ export class WritableViewModelHandler extends ViewModelHandlerBase {
     }
     const result = super.setByPropertyName(target, { propName, value }, receiver);
     const indexes = this.lastIndexes;
-    receiver[Symbols.writeCallback](propName.name, indexes);
     this.addNotify(target, { propName, indexes }, receiver);
 
     return result;

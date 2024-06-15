@@ -19,7 +19,6 @@
  * @property {Component|undefined} $component
  * @property {()=>void|undefined} $connectedCallback
  * @property {()=>void|undefined} $disconnectedCallback
- * @property {(prop:string,indexes:number[])=>void|undefined} $writeCallback
  * @property {([string,number[]][])=>void|undefined} $updatedCallback
  */
 
