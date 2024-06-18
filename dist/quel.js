@@ -3413,7 +3413,7 @@ class ComponentProperty extends ElementBase {
 
   /** @type {boolean} */
   get applicable() {
-    return false;
+    return true;
   }
 
   /** @type {Component} */
@@ -3433,6 +3433,13 @@ class ComponentProperty extends ElementBase {
     super(binding, node, name, filters);
   }
 
+  get value() {
+    return super.value;
+  }
+  set value(value) {
+    this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${this.propName}`, []]]);
+    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](this.propName, []);
+  }
   /**
    * 初期化処理
    * DOM要素にイベントハンドラの設定を行う
@@ -3463,7 +3470,7 @@ class ComponentProperty extends ElementBase {
   isSameValue(value) {
     return false;
   }
-  
+
 }
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
@@ -4091,6 +4098,7 @@ class Binding {
     this.#bindingManager = bindingManager;
     this.#nodeProperty = createNodeProperty(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
     this.#viewModelProperty = createViewModelProperty(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
+//    console.log("create bind", this.#nodeProperty.node, this.#nodeProperty.name, this.#viewModelProperty.propertyName.name);
     return this;
   }
 
@@ -4167,6 +4175,7 @@ class Binding {
     this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
+//    console.log(Array.from(bindingManager.fragment.childNodes));
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
@@ -5781,6 +5790,9 @@ class MixedComponent {
    * @returns {void}
    */
   disconnectedCallback() {
+    this.rootBinding?.dispose();
+    this.rootBinding = undefined;
+//    console.log(this.viewRootElement.childNodes);
     this.alivePromises?.resolve && this.alivePromises.resolve(this.props);
   }
 

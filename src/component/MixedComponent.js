@@ -405,6 +405,9 @@ export class MixedComponent {
    * @returns {void}
    */
   disconnectedCallback() {
+    this.rootBinding?.dispose();
+    this.rootBinding = undefined;
+//    console.log(this.viewRootElement.childNodes);
     this.alivePromises?.resolve && this.alivePromises.resolve(this.props);
   }
 

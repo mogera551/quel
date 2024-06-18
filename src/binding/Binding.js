@@ -108,6 +108,7 @@ export class Binding {
     this.#bindingManager = bindingManager;
     this.#nodeProperty = createNodeProperty(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
     this.#viewModelProperty = createViewModelProperty(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
+//    console.log("create bind", this.#nodeProperty.node, this.#nodeProperty.name, this.#viewModelProperty.propertyName.name);
     return this;
   }
 
@@ -184,6 +185,7 @@ export class Binding {
     this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
+//    console.log(Array.from(bindingManager.fragment.childNodes));
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 

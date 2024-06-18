@@ -39,7 +39,7 @@ export class ComponentProperty extends ElementBase {
 
   /** @type {boolean} */
   get applicable() {
-    return false;
+    return true;
   }
 
   /** @type {Component} */
@@ -59,6 +59,13 @@ export class ComponentProperty extends ElementBase {
     super(binding, node, name, filters);
   }
 
+  get value() {
+    return super.value;
+  }
+  set value(value) {
+    this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${this.propName}`, []]]);
+    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](this.propName, []);
+  }
   /**
    * 初期化処理
    * DOM要素にイベントハンドラの設定を行う
@@ -89,5 +96,5 @@ export class ComponentProperty extends ElementBase {
   isSameValue(value) {
     return false;
   }
-  
+
 }
