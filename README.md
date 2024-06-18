@@ -13,20 +13,12 @@ The development goal is to simplify the increasingly complex frontend developmen
 * No need for transpiling
 * Component-based
 * Portability
+* Complete separation of CSS, HTML and State
 * Compliant with web standards
 * **Property description by dot notation**
 
 Simple and declarative view
 ```html
-<style>
-  .selected {
-    color: white;
-    background-color: red;
-  }
-  li {
-    cursor: pointer;
-  }
-</style>
 <div>
   <form data-bind="add|preventDefault">
     <input data-bind="task">
