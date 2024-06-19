@@ -52,6 +52,8 @@ class Handler {
     return this.#binds;
   }
 
+  #saveBindProperties = {};
+
   /**
    * bind parent component's property
    * @param {string} prop 
@@ -99,6 +101,9 @@ class Handler {
       }
       return true;
     };
+    // save
+    this.#saveBindProperties[prop] = Object.getOwnPropertyDescriptor(this.#component.baseViewModel, prop);
+
     // define component's property
     Object.defineProperty(this.#component.baseViewModel, prop, {
       get: getFunc(this, prop, propAccess),
@@ -153,6 +158,14 @@ class Handler {
       }
     }
   }
+
+  #clear() {
+    this.#buffer = undefined;
+    this.#binds = [];
+    for(const [key, desc] of Object.entries(this.#saveBindProperties)) {
+      Object.defineProperty(this.#component.baseViewModel, key, desc);
+    }
+  }
   /**
    * Proxy.get
    * @param {any} target 
@@ -173,6 +186,8 @@ class Handler {
       return () => this.#createBuffer();
     } else if (prop === Symbols.flushBuffer) {
       return () => this.#flushBuffer();
+    } else if (prop === Symbols.clear) {
+      return () => this.#clear();
     }
     return this.#component.viewModel[prop];
   }

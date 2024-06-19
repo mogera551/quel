@@ -486,6 +486,7 @@ const Symbols = Object.assign({
   clearBuffer: Symbol.for(`${name}:props.clearBuffer`),
   createBuffer: Symbol.for(`${name}:props.createBuffer`),
   flushBuffer: Symbol.for(`${name}:props.flushBuffer`),
+  clear: Symbol.for(`${name}:props.clear`),
   toObject: Symbol.for(`${name}:props.toObject`),
   propInitialize: Symbol.for(`${name}:props.initialize`),
 
@@ -854,6 +855,8 @@ let Handler$2 = class Handler {
     return this.#binds;
   }
 
+  #saveBindProperties = {};
+
   /**
    * bind parent component's property
    * @param {string} prop 
@@ -901,6 +904,9 @@ let Handler$2 = class Handler {
       }
       return true;
     };
+    // save
+    this.#saveBindProperties[prop] = Object.getOwnPropertyDescriptor(this.#component.baseViewModel, prop);
+
     // define component's property
     Object.defineProperty(this.#component.baseViewModel, prop, {
       get: getFunc(this, prop, propAccess),
@@ -955,6 +961,14 @@ let Handler$2 = class Handler {
       }
     }
   }
+
+  #clear() {
+    this.#buffer = undefined;
+    this.#binds = [];
+    for(const [key, desc] of Object.entries(this.#saveBindProperties)) {
+      Object.defineProperty(this.#component.baseViewModel, key, desc);
+    }
+  }
   /**
    * Proxy.get
    * @param {any} target 
@@ -975,6 +989,8 @@ let Handler$2 = class Handler {
       return () => this.#createBuffer();
     } else if (prop === Symbols.flushBuffer) {
       return () => this.#flushBuffer();
+    } else if (prop === Symbols.clear) {
+      return () => this.#clear();
     }
     return this.#component.viewModel[prop];
   }
@@ -5792,6 +5808,7 @@ class MixedComponent {
   disconnectedCallback() {
     this.rootBinding?.dispose();
     this.rootBinding = undefined;
+    this.props[Symbols.clear]();
 //    console.log(this.viewRootElement.childNodes);
     this.alivePromises?.resolve && this.alivePromises.resolve(this.props);
   }

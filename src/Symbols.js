@@ -30,6 +30,7 @@ export const Symbols = Object.assign({
   clearBuffer: Symbol.for(`${myname}:props.clearBuffer`),
   createBuffer: Symbol.for(`${myname}:props.createBuffer`),
   flushBuffer: Symbol.for(`${myname}:props.flushBuffer`),
+  clear: Symbol.for(`${myname}:props.clear`),
   toObject: Symbol.for(`${myname}:props.toObject`),
   propInitialize: Symbol.for(`${myname}:props.initialize`),
 
