@@ -905,7 +905,12 @@ let Handler$2 = class Handler {
       return true;
     };
     // save
-    this.#saveBindProperties[prop] = Object.getOwnPropertyDescriptor(this.#component.baseViewModel, prop);
+    this.#saveBindProperties[prop] = Object.getOwnPropertyDescriptor(this.#component.baseViewModel, prop) ?? {
+      value: undefined,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    };
 
     // define component's property
     Object.defineProperty(this.#component.baseViewModel, prop, {
@@ -968,6 +973,7 @@ let Handler$2 = class Handler {
     for(const [key, desc] of Object.entries(this.#saveBindProperties)) {
       Object.defineProperty(this.#component.baseViewModel, key, desc);
     }
+    this.#saveBindProperties = {};
   }
   /**
    * Proxy.get
