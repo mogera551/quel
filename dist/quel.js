@@ -4456,6 +4456,7 @@ class BindingManager {
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
   static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
+    bindingManager.component.contextRevision++;
     /** @type {{bindingSummary:import("./BindingSummary.js").BindingSummary}} */
     const { bindingSummary } = bindingManager.component;
     const expand = () => {
@@ -4496,7 +4497,6 @@ class BindingManager {
           binding.applyToChildNodes(setOfIndex);
         }
       }
-      bindingManager.component.contextRevision++;
     };
     applyToChildNodes();
 
@@ -4520,7 +4520,6 @@ class BindingManager {
       }
     };
     applyToNode();
-
   }
 
   /**
