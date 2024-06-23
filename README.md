@@ -12,7 +12,6 @@ The development goal is to simplify the increasingly complex frontend developmen
 * No need for other libraries
 * No need for transpiling
 * Component-based
-* Portability
 * Complete separation of CSS, HTML and State
 * Compliant with web standards
 * **Property description by dot notation**
@@ -37,7 +36,7 @@ Simple and declarative view
 
 Simple class to store and manipulate state
 ```js
-class ViewModel {
+class State {
   /** @type {string} */
   task = "";
   /** @type {string[]} */
@@ -120,11 +119,11 @@ const html = `
 <div>{{ message }}</div>
 `;
 
-class ViewModel {
+class State {
   message = "Welcome to Quel";
 }
 
-registerComponentModules({ myappMain:{ html, ViewModel } });
+registerComponentModules({ myappMain:{ html, State } });
 </script>
 </html>
 ```
@@ -202,10 +201,10 @@ Declare with the class name `ViewModel` and `export` it.
 You can also use accessor properties using getters.
 note:When using accessor properties, it is necessary to define dependencies.
 
-Example for ViewModel class of component module
+Example for State class of component module
 `main.js`
 ```js
-export class ViewModel {
+export class State {
   // state
   count = 0;
   message = "welcome to quel";
