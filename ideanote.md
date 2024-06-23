@@ -149,3 +149,67 @@ https://developer.mozilla.org/ja/docs/Web/API/HTMLFormElement
 # 属性変更を修正
 observedAttributes
 attributeChangedCallback
+
+# リファクタリング 2024/06/24
+## スレッドの部分の見直し
+### 問題点
+* スレッドでやるべきことと、バインドのアップデートでやることの区別があいまい
+* スレッドのフェーズを考え直す
+   * Stateの値更新、もしくはイベントハンドラ実行＝プロセス実行
+   * その際、Stateの更新したプロパティを収集しておく
+   * 全てのプロセスの実行が終わったら
+   * Stateのプロパティ更新コールバックをコール
+   * Stateの更新したプロパティから、依存関係にあるStateのプロパティを取得(Stateプロパティの展開)
+   * 展開されたStateプロパティをもとに、
+      * バインディングの再構築
+      * セレクト以外のノードへ値の反映
+      * セレクトのノードへ値の反映
+      * 子コンポーネントへの反映（要検討）
+
+```js
+
+
+const UpdateCycleState = {
+  Sleeping: 0,
+  UpdatingState: 1, // Update State 
+  UpdatedState: 2, // Updated State , calling $updatedCallback
+  ExpandStateProps: 3, // Expand State properties
+  RebuildBindings: 4,
+  ApplyToNode: 5,
+  ApplyToSelectNode: 6,
+  ApplyToSubComponent: 7,
+}
+
+class ComponentUpdator {
+  component;
+  state;
+  processQueue = [];
+  updatedStateProperties = [];
+  expandedStateProperties = [];
+  executing = false;
+
+  addProcess(proc) {
+    this.processQueue.push(proc);
+    this.exec();
+  }
+
+  async exec() {
+    if (this.executing) return;
+    this.executing = true;
+    try {
+      while(this.processQueue.length > 0) {
+        let proc;
+        while(proc = this.processQueue.pop()) {
+          await proc.exec();
+        }
+        await this.component.viewModel[Symbols.updatedCallback)();
+      }
+
+    } finally {
+      this.executing = false;
+    }
+  }
+
+
+}
+```
