@@ -406,10 +406,9 @@ export class MixedComponent {
    */
   disconnectedCallback() {
     this.rootBinding?.dispose();
-    this.rootBinding = undefined;
     this.props[Symbols.clear]();
-//    console.log(this.viewRootElement.childNodes);
     this.alivePromises?.resolve && this.alivePromises.resolve(this.props);
+    this.initialize();
   }
 
   /**

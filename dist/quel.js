@@ -3459,7 +3459,11 @@ class ComponentProperty extends ElementBase {
     return super.value;
   }
   set value(value) {
-    this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${this.propName}`, []]]);
+//    console.log(`componentProperty: props.${this.propName} = ${value}`);
+//    if (typeof this.thisComponent.viewModel === "undefined") {
+//      console.log("this.thisComponent.viewModel is undefined.");
+//    }
+    this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${this.propName}`, []]]); 
     this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](this.propName, []);
   }
   /**
@@ -3480,6 +3484,7 @@ class ComponentProperty extends ElementBase {
     for(const [key, propertyAccess] of propertyAccessByViewModelPropertyKey.entries()) {
       if (propertyAccess.propName.name === viewModelProperty || propertyAccess.propName.setOfParentPaths.has(viewModelProperty)) {
         const remain = propertyAccess.propName.name.slice(viewModelProperty.length);
+//        console.log(`componentProperty:postUpdate(${propName}${remain})`);
         this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${propName}${remain}`, propertyAccess.indexes]]);
         this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, propertyAccess.indexes);
       }
@@ -5812,10 +5817,9 @@ class MixedComponent {
    */
   disconnectedCallback() {
     this.rootBinding?.dispose();
-    this.rootBinding = undefined;
     this.props[Symbols.clear]();
-//    console.log(this.viewRootElement.childNodes);
     this.alivePromises?.resolve && this.alivePromises.resolve(this.props);
+    this.initialize();
   }
 
   /**
