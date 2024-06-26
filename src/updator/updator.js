@@ -8,6 +8,10 @@ export class Process {
   argumentList = [];
 }
 
+/** @typedef {(prop:PropertyAccess)=>string} PropAccessKey */
+/** @type {PropAccessKey} */
+const getPropAccessKey = (prop) => prop.propName.name + "\t" + prop.indexes.toString();
+
 class Updator {
   /** @type {Component} */
   component;
@@ -54,6 +58,8 @@ class Updator {
         updatedStateProperties.push(...this.updatedStateProperties);
         this.updatedStateProperties = [];
       }
+      // set to read only view model
+      
       // expand state properties
       const expandedStateProperties = updatedStateProperties.slice(0);
       for(let i = 0; i < updatedStateProperties.length; i++) {
@@ -63,12 +69,14 @@ class Updator {
         ));
       }
       const expandedStatePropertyByKey = 
-        new Map(expandedStateProperties.map(prop => [prop.propName.name + "\t" + prop.indexes.toString(), prop]));
+        new Map(expandedStateProperties.map(prop => [getPropAccessKey(prop), prop]));
+      const updatedStatePropertyKeys = new Set(updatedStateProperties.map(getPropAccessKey));
 
       // bindingの再構築
-      // expandedStatePropertiesに、branch、repeatが含まれている場合、それらのbindingを再構築する
+      // updatedStatePropertyKeysに、branch、repeatが含まれている場合、それらのbindingを再構築する
       // 再構築する際、branch、repeatの子ノードは更新する
       // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
+      //
       const bindingSummary = this.component.bindingSummary;
       /** @type {Binding[]} */
       const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(
@@ -77,7 +85,7 @@ class Updator {
       );
       for(let i = 0; i < expandableBindings.length; i++) {
         const binding = expandableBindings[i];
-        if (expandedStatePropertyByKey.has(binding.viewModelProperty.key)) {
+        if (updatedStatePropertyKeys.has(binding.viewModelProperty.key)) {
           binding.expand();
         }
       }
