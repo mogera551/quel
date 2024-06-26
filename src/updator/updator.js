@@ -59,7 +59,7 @@ class Updator {
         this.updatedStateProperties = [];
       }
       // set to read only view model
-      
+
       // expand state properties
       const expandedStateProperties = updatedStateProperties.slice(0);
       for(let i = 0; i < updatedStateProperties.length; i++) {
@@ -73,6 +73,7 @@ class Updator {
       const updatedStatePropertyKeys = new Set(updatedStateProperties.map(getPropAccessKey));
 
       // bindingの再構築
+      // 再構築するのは、更新したプロパティのみでいいかも
       // updatedStatePropertyKeysに、branch、repeatが含まれている場合、それらのbindingを再構築する
       // 再構築する際、branch、repeatの子ノードは更新する
       // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
