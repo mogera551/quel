@@ -85,7 +85,7 @@ export class BindingSummary {
       this.#deleteBindings.delete(binding);
       return;
     }
-    this.#addBindings.add(binding);
+    this.#allBindings.add(binding);
   }
 
   /**
@@ -94,8 +94,8 @@ export class BindingSummary {
    */
   delete(binding) {
     this.#updated = true;
-    if (this.#addBindings.has(binding)) {
-      this.#addBindings.delete(binding);
+    if (this.#allBindings.has(binding)) {
+      this.#allBindings.delete(binding);
       return;
     }
     this.#deleteBindings.add(binding);

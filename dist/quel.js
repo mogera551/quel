@@ -1213,478 +1213,6 @@ function createGlobals(component) {
   return new Proxy({}, new Handler$1(component));
 }
 
-class ThreadStop extends Error {
-
-}
-
-class Thread {
-  /** @type {Promises} */
-  #promises;
-
-  /** @type {boolean} */
-  #alive = true;
-  /** @type {boolean} */
-  get alive() {
-    return this.#alive;
-  }
-
-  /**
-   * 
-   */
-  constructor() {
-    this.main();
-  }
-
-  /**
-   * 
-   * @returns {Promise<UpdateSlot>}
-   */
-  async #sleep() {
-    this.#promises = Promise.withResolvers();
-    return this.#promises.promise;
-  }
-
-  /**
-   * @returns {void}
-   */
-  stop() {
-    this.#promises.reject(new ThreadStop("stop"));
-  }
-
-  /**
-   * @param {UpdateSlot} slot 
-   * @returns {void}
-   */
-  wakeup(slot) {
-    this.#promises.resolve(slot);
-  }
-
-  /**
-   * @returns {void}
-   */
-  async main() {
-    do {
-      try {
-        const slot = await this.#sleep(); // wakeup(slot)が呼ばれるまで待機
-        await slot.waitPromises.promise; // queueにデータが入るまで待機
-        config.debug && performance.mark('slot-exec:start');
-        try {
-          await slot.exec();
-          if (config.debug) {
-            performance.mark('slot-exec:end');
-            performance.measure('slot-exec', 'slot-exec:start', 'slot-exec:end');
-            console.log(performance.getEntriesByType("measure"));    
-            performance.clearMeasures();
-            performance.clearMarks();
-          }
-        } finally {
-          slot.callback();
-        }
-      } catch(e) {
-        if (e instanceof ThreadStop) {
-          break;
-        } else {
-          console.error(e);
-          if (!confirm("致命的なエラーが発生しました。続行しますか？")) {
-            break;
-          }
-        }
-      }
-    } while(true);
-
-    this.#alive = false;
-  }
-
-}
-
-class ProcessData {
-  /** @type {()=>void} */
-  target;
-
-  /** @type {Object} */
-  thisArgument;
-
-  /** @type {any[]} */
-  argumentsList;
-
-  /**
-   * 
-   * @param {()=>void} target 
-   * @param {Object} thisArgument 
-   * @param {any[]} argumentsList 
-   */
-  constructor(target, thisArgument, argumentsList) {
-    this.target = target;
-    this.thisArgument = thisArgument;
-    this.argumentsList = argumentsList;
-  }
-}
-
-class ViewModelUpdator {
-  /** @type {ProcessData[]} */
-  queue = [];
-  /** @type {PropertyAccess[]} */
-  updatedProps = [];
-
-  /** @type {Component} */
-  #component;
-
-  /**
-   * @param {Component} component
-   */
-  constructor(component) {
-    this.#component = component;
-  }
-
-  /**
-   * 
-   */
-  async exec() {
-    while(this.queue.length > 0) {
-      const processes = this.queue;
-      this.queue = [];
-      for(const process of processes) {
-        await Reflect.apply(process.target, process.thisArgument, process.argumentsList);
-      }
-    }
-    while(this.updatedProps.length > 0) {
-      const updatedProps = this.updatedProps;
-      this.updatedProps = [];
-      const params = updatedProps.map(prop => [prop.propName.name, prop.indexes]);
-      this.#component.writableViewModel[Symbols.updatedCallback](params);
-    }
-  }
-
-  /** @type {boolean} */
-  get isEmpty() {
-    return this.queue.length === 0;
-  }
-}
-
-class ViewModelHandlerBase extends Handler$3 {
-  /** @type {Component} */
-  #component;
-  get component() {
-    return this.#component;
-  }
-
-  /** @type {import("./DependentProps.js").DependentProps} */
-  #dependentProps;
-  get dependentProps() {
-    return this.#dependentProps;
-  }
-
-  /** @type {Set<string>} */
-  #setOfAccessorProperties;
-  get setOfAccessorProperties() {
-    return this.#setOfAccessorProperties;
-  }
-
-  /**
-   * 
-   * @param {Component} component 
-   * @param {Set<string>} setOfAccessorProperties
-   * @param {import("./DependentProps.js").DependentProps} dependentProps
-   */
-  constructor(component, setOfAccessorProperties, dependentProps) {
-    super();
-    this.#component = component;
-    this.#setOfAccessorProperties = setOfAccessorProperties;
-    this.#dependentProps = dependentProps;
-  }
-
-  /**
-   * 更新処理をキューイングする
-   * @param {ViewModel} target 
-   * @param {Proxy} thisArg 
-   * @param {any[]} argumentArray 
-   */
-  addProcess(target, thisArg, argumentArray) {
-    this.#component.updateSlot?.addProcess(new ProcessData(target, thisArg, argumentArray));
-  }
-
-  /**
-   * 更新情報をキューイングする
-   * @param {ViewModel} target 
-   * @param {PropertyAccess} propertyAccess 
-   * @param {Proxy} receiver 
-   */
-  addNotify(target, propertyAccess, receiver) {
-    this.#component.updateSlot?.addNotify(propertyAccess);
-    this.#component.updateSlot?.addUpdatedProps(Object.assign({}, propertyAccess));
-  }
-
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @param {PropertyAccess} propertyAccess
-   * @param {Set<PropertyAccess>} setOfSavePropertyAccessKeys 
-   * @returns {PropertyAccess[]}
-   */
-  static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
-    const { propName, indexes } = propertyAccess;
-    const propertyAccessKey = propName.name + "\t" + indexes.toString();
-    if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
-    setOfSavePropertyAccessKeys.add(propertyAccessKey);
-    const dependentProps = viewModel[Symbols.getDependentProps]();
-    const setOfProps = dependentProps.setOfPropsByRefProp.get(propName.name);
-    const propertyAccesses = [];
-    if (typeof setOfProps === "undefined") return [];
-    for(const prop of setOfProps) {
-      const curPropName = PropertyName.create(prop);
-      if (indexes.length < curPropName.level) {
-        //if (curPropName.setOfParentPaths.has(propName.name)) continue;
-        const listOfIndexes = ViewModelHandlerBase.expandIndexes(viewModel, { propName:curPropName, indexes });
-        propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));
-      } else {
-        const notifyIndexes = indexes.slice(0, curPropName.level);
-        propertyAccesses.push({ propName:curPropName, indexes:notifyIndexes });
-      }
-      propertyAccesses.push(...this.makeNotifyForDependentProps(viewModel, { propName:curPropName, indexes }, setOfSavePropertyAccessKeys));
-    }
-    return propertyAccesses;
-  }
-
-  /**
-   * 
-   * @param {ViewModel} viewModel 
-   * @param {PropertyAccess} propertyAccess
-   * @param {number[]} indexes 
-   * @returns {number[][]}
-   */
-  static expandIndexes(viewModel, propertyAccess) {
-    const { propName, indexes } = propertyAccess;
-    if (propName.level === indexes.length) {
-      return [ indexes ];
-    } else if (propName.level < indexes.length) {
-      return [ indexes.slice(0, propName.level) ];
-    } else {
-      const getValuesFn = viewModel[Symbols.directlyGet];
-      /**
-       * 
-       * @param {string} parentName 
-       * @param {number} elementIndex 
-       * @param {number[]} loopIndexes 
-       * @returns {number[][]}
-       */
-      const traverse = (parentName, elementIndex, loopIndexes) => {
-        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
-        const element = propName.pathNames[elementIndex];
-        const isTerminate = (propName.pathNames.length - 1) === elementIndex;
-        if (isTerminate) {
-          if (element === "*") {
-            const indexes = [];
-            const len = getValuesFn(parentName, loopIndexes).length;
-            for(let i = 0; i < len; i++) {
-              indexes.push(loopIndexes.concat(i));
-            }
-            return indexes;
-          } else {
-            return [ loopIndexes ];
-          }
-        } else {
-          const currentName = parentNameDot + element;
-          if (element === "*") {
-            if (loopIndexes.length < indexes.length) {
-              return traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
-            } else {
-              const indexes = [];
-              const len = getValuesFn(parentName, loopIndexes).length;
-              for(let i = 0; i < len; i++) {
-                indexes.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
-              }
-              return indexes;
-            }
-          } else {
-            return traverse(currentName, elementIndex + 1, loopIndexes);
-          }
-        }
-      };
-      const listOfIndexes = traverse("", 0, []);
-      return listOfIndexes;
-    }
-  }
-}
-
-function key() {
-  return this.propName.name + "\t" + this.indexes.toString();
-}
-
-class NodeUpdator {
-  /** @type {PropertyAccess[]} */
-  queue = [];
-
-  /** @type {Component} */
-  #component;
-
-  /**
-   * @param {Component} component
-   */
-  constructor(component) {
-    this.#component = component;
-  }
-
-  /**
-   * @returns {void}
-   */
-  async exec() {
-    while(this.queue.length > 0) {
-      const notifies = this.queue;
-      this.queue = [];
-      const dependentPropertyAccesses = [];
-      for(const propertyAccess of notifies) {
-        dependentPropertyAccesses.push(...ViewModelHandlerBase.makeNotifyForDependentProps(this.#component.viewModel, propertyAccess));
-      }
-      const propertyAccessByViewModelPropertyKey = 
-        new Map(notifies.concat(dependentPropertyAccesses).map(propertyAccess => [key.apply(propertyAccess), propertyAccess]));
-      this.#component.updateNode(propertyAccessByViewModelPropertyKey);
-    }
-  }
-
-  /** @type {boolean} */
-  get isEmpty() {
-    return this.queue.length === 0;
-  }
-}
-
-/**
- * @enum {number} 実行フェーズ
- */
-const Phase = {
-  sleep: 0 ,
-  updateViewModel: 1,
-  gatherUpdatedProperties: 2,
-  terminate: 100,
-};
-
-/**
- * @typedef {(phase:import("./Phase.js").Phase, prevPhase:import("./Phase.js").Phase)=>{}} ChangePhaseCallback
- */
-class UpdateSlot {
-  /** @type {ViewModelUpdator} */
-  #viewModelUpdator;
-  /** @type {ViewModelUpdator} */
-  get viewModelUpdator() {
-    return this.#viewModelUpdator;
-  }
-
-  /** @type {NodeUpdator} */
-  #nodeUpdator;
-  /** @type {NodeUpdator} */
-  get nodeUpdator() {
-    return this.#nodeUpdator;
-  }
-
-  /** @type {()=>void} */
-  #callback;
-
-  /** @type {Resolvers} */
-  #waitPromises;
-  get waitPromises() {
-    return this.#waitPromises;
-  }
-
-  /** @type {Resolvers} */
-  #alivePromises;
-  get alivePromises() {
-    return this.#alivePromises;
-  }
-
-  /** @type {ChangePhaseCallback} */
-  #changePhaseCallback;
-
-  /** @type {Phase} */
-  #phase = Phase.sleep;
-  get phase() {
-    return this.#phase;
-  }
-  set phase(value) {
-    const oldValue = this.#phase;
-    this.#phase = value;
-    if (typeof this.#changePhaseCallback !== "undefined") {
-      this.#changePhaseCallback(value, oldValue);
-    }
-  }
-  
-  /**
-   * 
-   * @param {Component} component
-   * @param {()=>{}?} callback
-   * @param {ChangePhaseCallback?} changePhaseCallback
-   */
-  constructor(component, callback = null, changePhaseCallback = null) {
-    this.#viewModelUpdator = new ViewModelUpdator(component);
-    this.#nodeUpdator = new NodeUpdator(component);
-    this.#callback = callback;
-    this.#changePhaseCallback = changePhaseCallback;
-    this.#waitPromises = Promise.withResolvers();
-    this.#alivePromises = Promise.withResolvers();
-  }
-
-  /** @type {boolean} */
-  get isEmpty() {
-    return this.#viewModelUpdator.isEmpty && this.#nodeUpdator.isEmpty;
-  }
-
-  async exec() {
-    do {
-      this.phase = Phase.updateViewModel;
-      await this.#viewModelUpdator.exec();
-
-      this.phase = Phase.gatherUpdatedProperties;
-      await this.#nodeUpdator.exec();
-
-    } while(!this.#viewModelUpdator.isEmpty || !this.#nodeUpdator.isEmpty);
-
-    this.phase = Phase.terminate;
-    this.#alivePromises.resolve();
-  }
-
-  /**
-   * 
-   * @param {ProcessData} processData 
-   */
-  addProcess(processData) {
-    this.#viewModelUpdator.queue.push(processData);
-    this.#waitPromises.resolve(true); // waitingを解除する
-  }
-  
-  /**
-   * 
-   * @param {PropertyAccess} notifyData 
-   */
-  addNotify(notifyData) {
-    this.#nodeUpdator.queue.push(notifyData);
-    this.#waitPromises.resolve(true); // waitingを解除する
-  }
-
-  /** 
-   * @returns {void}
-   */
-  callback() {
-    this.#callback && this.#callback();
-  }
-
-  /**
-   * 
-   * @param {Component} component
-   * @param {()=>{}} callback 
-   * @param {ChangePhaseCallback} changePhaseCallback 
-   * @returns {UpdateSlot}
-   */
-  static create(component, callback, changePhaseCallback) {
-    return new UpdateSlot(component, callback, changePhaseCallback);
-  }
-
-  /**
-   * 
-   * @param {PropertyAccess} propAccess 
-   */
-  addUpdatedProps(propAccess) {
-    this.#viewModelUpdator.updatedProps.push(propAccess);
-  }
-}
-
 /** @type {Set<string>} shadow rootが可能なタグ名一覧 */
 const setOfAttachableTags = new Set([
   // See https://developer.mozilla.org/ja/docs/Web/API/Element/attachShadow
@@ -1723,6 +1251,29 @@ const isCustomTag = tagName => tagName.indexOf("-") !== -1;
  */
 function isAttachable(tagName) {
   return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
+}
+
+class ProcessData {
+  /** @type {()=>void} */
+  target;
+
+  /** @type {Object} */
+  thisArgument;
+
+  /** @type {any[]} */
+  argumentsList;
+
+  /**
+   * 
+   * @param {()=>void} target 
+   * @param {Object} thisArgument 
+   * @param {any[]} argumentsList 
+   */
+  constructor(target, thisArgument, argumentsList) {
+    this.target = target;
+    this.thisArgument = thisArgument;
+    this.argumentsList = argumentsList;
+  }
 }
 
 /**
@@ -3302,8 +2853,7 @@ class ElementEvent extends ElementBase {
     // event filter
     event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
-    const processData = this.createProcessData(event);
-    this.binding.component.updateSlot.addProcess(processData);
+    this.binding.component.updator.addProcess(this.directlyCall, this, [event]);
   }
 
   dispose() {
@@ -4133,7 +3683,7 @@ class Binding {
    * apply value to node
    */
   applyToNode() {
-    if (this.component.bindingSummary.updatedBindings.has(this)) return;
+    if (this.component.updator.updatedBindings.has(this)) return;
     const { component, nodeProperty, viewModelProperty } = this;
     try {
       if (!nodeProperty.applicable) return;
@@ -4142,7 +3692,7 @@ class Binding {
 //      console.log(`node.${this.#nodeProperty.name} = viewModel.${this.#viewModelProperty.propertyName.name}`);
       nodeProperty.value = filteredViewModelValue;
     } finally {
-      component.bindingSummary.updatedBindings.add(this);
+      component.updator.updatedBindings.add(this);
     }
   }
 
@@ -4151,7 +3701,12 @@ class Binding {
    * @param {Set<number>} setOfIndex 
    */
   applyToChildNodes(setOfIndex) {
-    this.nodeProperty.applyToChildNodes(setOfIndex);
+    if (this.component.updator.updatedBindings.has(this)) return;
+    try {
+      this.nodeProperty.applyToChildNodes(setOfIndex);
+    } finally {
+      this.component.updator.updatedBindings.add(this);
+    }
 
   }
 
@@ -4172,8 +3727,7 @@ class Binding {
   execDefaultEventHandler(event) {
     if (!this.component.bindingSummary.allBindings.has(this)) return;
     event.stopPropagation();
-    const process = new ProcessData(this.applyToViewModel, this, []);
-    this.component.updateSlot.addProcess(process);
+    this.component.updator.addProcess(this.applyToViewModel, this, []);
   }
 
   /** @type {(event:Event)=>void} */
@@ -4633,6 +4187,150 @@ const dispatchCustomEvent = (component, symbol, args) => {
   });
   component.dispatchEvent(event);
 };
+
+class ViewModelHandlerBase extends Handler$3 {
+  /** @type {Component} */
+  #component;
+  get component() {
+    return this.#component;
+  }
+
+  /** @type {import("./DependentProps.js").DependentProps} */
+  #dependentProps;
+  get dependentProps() {
+    return this.#dependentProps;
+  }
+
+  /** @type {Set<string>} */
+  #setOfAccessorProperties;
+  get setOfAccessorProperties() {
+    return this.#setOfAccessorProperties;
+  }
+
+  /**
+   * 
+   * @param {Component} component 
+   * @param {Set<string>} setOfAccessorProperties
+   * @param {import("./DependentProps.js").DependentProps} dependentProps
+   */
+  constructor(component, setOfAccessorProperties, dependentProps) {
+    super();
+    this.#component = component;
+    this.#setOfAccessorProperties = setOfAccessorProperties;
+    this.#dependentProps = dependentProps;
+  }
+
+  /**
+   * 更新処理をキューイングする
+   * @param {ViewModel} target 
+   * @param {Proxy} thisArg 
+   * @param {any[]} argumentArray 
+   */
+  addProcess(target, thisArg, argumentArray) {
+    this.#component.updator?.addProcess(target, thisArg, argumentArray);
+  }
+
+  /**
+   * 更新情報をキューイングする
+   * @param {ViewModel} target 
+   * @param {PropertyAccess} propertyAccess 
+   * @param {Proxy} receiver 
+   */
+  addNotify(target, propertyAccess, receiver) {
+    this.#component.updator?.addUpdatedStateProperty(Object.assign({}, propertyAccess));
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {PropertyAccess} propertyAccess
+   * @param {Set<PropertyAccess>} setOfSavePropertyAccessKeys 
+   * @returns {PropertyAccess[]}
+   */
+  static makeNotifyForDependentProps(viewModel, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
+    const { propName, indexes } = propertyAccess;
+    const propertyAccessKey = propName.name + "\t" + indexes.toString();
+    if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
+    setOfSavePropertyAccessKeys.add(propertyAccessKey);
+    const dependentProps = viewModel[Symbols.getDependentProps]();
+    const setOfProps = dependentProps.setOfPropsByRefProp.get(propName.name);
+    const propertyAccesses = [];
+    if (typeof setOfProps === "undefined") return [];
+    for(const prop of setOfProps) {
+      const curPropName = PropertyName.create(prop);
+      if (indexes.length < curPropName.level) {
+        //if (curPropName.setOfParentPaths.has(propName.name)) continue;
+        const listOfIndexes = ViewModelHandlerBase.expandIndexes(viewModel, { propName:curPropName, indexes });
+        propertyAccesses.push(...listOfIndexes.map(indexes => ({ propName:curPropName, indexes })));
+      } else {
+        const notifyIndexes = indexes.slice(0, curPropName.level);
+        propertyAccesses.push({ propName:curPropName, indexes:notifyIndexes });
+      }
+      propertyAccesses.push(...this.makeNotifyForDependentProps(viewModel, { propName:curPropName, indexes }, setOfSavePropertyAccessKeys));
+    }
+    return propertyAccesses;
+  }
+
+  /**
+   * 
+   * @param {ViewModel} viewModel 
+   * @param {PropertyAccess} propertyAccess
+   * @param {number[]} indexes 
+   * @returns {number[][]}
+   */
+  static expandIndexes(viewModel, propertyAccess) {
+    const { propName, indexes } = propertyAccess;
+    if (propName.level === indexes.length) {
+      return [ indexes ];
+    } else if (propName.level < indexes.length) {
+      return [ indexes.slice(0, propName.level) ];
+    } else {
+      const getValuesFn = viewModel[Symbols.directlyGet];
+      /**
+       * 
+       * @param {string} parentName 
+       * @param {number} elementIndex 
+       * @param {number[]} loopIndexes 
+       * @returns {number[][]}
+       */
+      const traverse = (parentName, elementIndex, loopIndexes) => {
+        const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
+        const element = propName.pathNames[elementIndex];
+        const isTerminate = (propName.pathNames.length - 1) === elementIndex;
+        if (isTerminate) {
+          if (element === "*") {
+            const indexes = [];
+            const len = getValuesFn(parentName, loopIndexes).length;
+            for(let i = 0; i < len; i++) {
+              indexes.push(loopIndexes.concat(i));
+            }
+            return indexes;
+          } else {
+            return [ loopIndexes ];
+          }
+        } else {
+          const currentName = parentNameDot + element;
+          if (element === "*") {
+            if (loopIndexes.length < indexes.length) {
+              return traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+            } else {
+              const indexes = [];
+              const len = getValuesFn(parentName, loopIndexes).length;
+              for(let i = 0; i < len; i++) {
+                indexes.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
+              }
+              return indexes;
+            }
+          } else {
+            return traverse(currentName, elementIndex + 1, loopIndexes);
+          }
+        }
+      };
+      const listOfIndexes = traverse("", 0, []);
+      return listOfIndexes;
+    }
+  }
+}
 
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
@@ -5261,16 +4959,16 @@ class BindingSummary {
     return this.#deleteBindings;
   }
 
+  /** @type {Set<Binding>} 仮追加用binding、flush()でこのbindingの追加処理をする */
+  #addBindings = new Set;
+  get addBindings() {
+    return this.#addBindings;
+  }
+
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
   get allBindings() {
     return this.#allBindings;
-  }
-
-  /** @type {Set<Binding>} 更新したbinding */
-  #updatedBindings = new Set;
-  get updatedBindings() {
-    return this.#updatedBindings;
   }
 
   /**
@@ -5279,7 +4977,6 @@ class BindingSummary {
   initUpdate() {
     this.#updated = false;
     this.#updateRevision++;
-    this.#updatedBindings = new Set;
   }
   
   /**
@@ -5301,6 +4998,10 @@ class BindingSummary {
    */
   delete(binding) {
     this.#updated = true;
+    if (this.#allBindings.has(binding)) {
+      this.#allBindings.delete(binding);
+      return;
+    }
     this.#deleteBindings.add(binding);
   }
 
@@ -5427,6 +5128,148 @@ function getNamesFromComponent(component) {
   return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
 }
 
+/** @typedef {(prop:PropertyAccess)=>string} PropAccessKey */
+/** @type {PropAccessKey} */
+const getPropAccessKey = (prop) => prop.propName.name + "\t" + prop.indexes.toString();
+
+const executeProcess = (process) => async () => Reflect.apply(process.target, process.thisArgument, process.argumentList);
+
+class Updator {
+  /** @type {Component} */
+  component;
+  state;
+  processQueue = [];
+  /** @type {PropertyAccess[]} */
+  updatedStateProperties = [];
+  /** @type {PropertyAccess[]} */ 
+  expandedStateProperties = [];
+  /** @type {Set<Binding>} */
+  updatedBindings = new Set();
+
+  executing = false;
+
+  constructor(component) {
+    this.component = component;
+  }
+
+  addProcess(target, thisArgument, argumentList) {
+    this.processQueue.push({ target, thisArgument, argumentList });
+    if (this.executing) return;
+    this.exec();
+  }
+
+  /**
+   * 
+   * @param {PropertyAccess} prop 
+   */
+  addUpdatedStateProperty(prop) {
+    this.updatedStateProperties.push(prop);
+  }
+
+  async process({ component, processQueue, updatedStateProperties } = this) {
+//    const { component, processQueue, updatedStateProperties } = this;
+    const totalUpdatedStateProperties = [];
+    // event callback, and update state
+    while (processQueue.length > 0) {
+      const processes = processQueue.slice(0);
+      processQueue.length = 0;
+      for(let i = 0; i < processes.length; i++) {
+        await component.writableViewModelCallback(executeProcess(processes[i]));
+      }
+      if (updatedStateProperties.length > 0) {
+        // call updatedCallback, and add processQeueue
+        component.writableViewModel[Symbols.updatedCallback](updatedStateProperties);
+        totalUpdatedStateProperties.push(...updatedStateProperties);
+        updatedStateProperties.length = 0;
+      }
+    }
+    return totalUpdatedStateProperties;
+  }
+
+  async exec() {
+    this.executing = true;
+    try {
+      while(this.processQueue.length > 0) {
+        this.updatedBindings.clear();
+        this.component.contextRevision++;
+
+        const updatedStateProperties = await this.process();
+
+        // cache clear
+        this.component.readOnlyViewModel[Symbols.clearCache]();
+
+        // expand state properties
+        const expandedStateProperties = updatedStateProperties.slice(0);
+        for(let i = 0; i < updatedStateProperties.length; i++) {
+          const prop = updatedStateProperties[i];
+          expandedStateProperties.push(...ViewModelHandlerBase.makeNotifyForDependentProps(
+            this.component.readOnlyViewModel, prop
+          ));
+        }
+        const expandedStatePropertyByKey = 
+          new Map(expandedStateProperties.map(prop => [getPropAccessKey(prop), prop]));
+
+        // bindingの再構築
+        // 再構築するのは、更新したプロパティのみでいいかも→ダメだった。
+        // expandedStatePropertyByKeyに、branch、repeatが含まれている場合、それらのbindingを再構築する
+        // 再構築する際、branch、repeatの子ノードは更新する
+        // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
+        const bindingSummary = this.component.bindingSummary;
+        /** @type {Binding[]} */
+        const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(
+          /** @type {(a:Binding,b:Binding)=>number} */
+          (a, b) => a.viewModelProperty.propertyName.level - b.viewModelProperty.propertyName.level
+        );
+        bindingSummary.initUpdate();
+        for(let i = 0; i < expandableBindings.length; i++) {
+          const binding = expandableBindings[i];
+          if (expandedStatePropertyByKey.has(binding.viewModelProperty.key)) {
+            binding.applyToNode();
+          }
+        }
+        bindingSummary.flush();
+
+        const setOfIndexByParentKey = new Map;
+        for(const propertyAccess of expandedStatePropertyByKey.values()) {
+          if (propertyAccess.propName.lastPathName !== "*") continue;
+          const lastIndex = propertyAccess.indexes?.at(-1);
+          if (typeof lastIndex === "undefined") continue;
+          const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
+          setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
+        }
+        for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
+          for(const binding of bindingSummary.bindingsByKey.get(parentKey) ?? new Set) {
+            if (!binding.expandable) continue;
+            binding.applyToChildNodes(setOfIndex);
+          }
+        }
+
+        const selectBindings = [];
+        for(const key of expandedStatePropertyByKey.keys()) {
+          const bindings = bindingSummary.bindingsByKey.get(key);
+          if (typeof bindings === "undefined") continue;
+          for(let i = 0; i < bindings.length; i++) {
+            const binding = bindings[i];
+            if (binding.expandable) continue;
+            binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
+          }
+        }
+        for(let i = 0; i < selectBindings.length; i++) {
+          selectBindings[i].applyToNode();
+        }
+        for(const binding of bindingSummary.componentBindings) {
+          binding.nodeProperty.postUpdate(expandedStatePropertyByKey);
+        }
+          
+      }
+  
+    } finally {
+      this.executing = false;
+    }
+
+  } 
+}
+
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
 
@@ -5466,15 +5309,15 @@ class MixedComponent {
     return this._viewModels["readonly"];
   }
 
+  /** @type {boolean} */
+  get isWritable() {
+    return this._isWritable;
+  }
+
   /** @type {ViewModelProxy} view model proxy */
   get viewModel() {
     if (this.cachableInBuilding) return this.readOnlyViewModel;
-    if (typeof this.updateSlot === "undefined" || 
-      (this.updateSlot.phase !== Phase.gatherUpdatedProperties)) {
-      return this.writableViewModel;
-    } else {
-      return this.readOnlyViewModel;
-    }
+    return this.isWritable ? this.writableViewModel : this.readOnlyViewModel;
   }
 
   /** @type {BindingManager} */
@@ -5483,36 +5326,6 @@ class MixedComponent {
   }
   set rootBinding(value) {
     this._rootBinding = value;
-  }
-
-  /** @type {Thread} thread */
-  get thread() {
-    return this._thread;
-  }
-  set thread(value) {
-    this._thread = value;
-  }
-
-  /** @type {UpdateSlot} update slot */
-  get updateSlot() {
-    if (typeof this._thread === "undefined") {
-      return undefined;
-    }
-    if (typeof this._updateSlot === "undefined") {
-      this._updateSlot = UpdateSlot.create(this, () => {
-        this._updateSlot = undefined;
-      }, phase => {
-        if (phase === Phase.gatherUpdatedProperties) {
-          this.viewModel[Symbols.clearCache]();
-        }
-      });
-      this.thread.wakeup(this._updateSlot);
-    }
-    return this._updateSlot;
-  }
-  // for unit test mock
-  set updateSlot(value) {
-    this._updateSlot = value;
   }
 
   /** @type {Object<string,any>} parent component property */
@@ -5639,6 +5452,10 @@ class MixedComponent {
   set cachableInBuilding(value) {
     this._cachableInBuilding = value;
   }
+
+  get updator() {
+    return this._updator;
+  }
   /** 
    * initialize
    * @returns {void}
@@ -5649,11 +5466,9 @@ class MixedComponent {
     /**
      * set members
      */
-
+    this._isWritable = false;
     this._viewModels = createViewModels(this, componentClass.ViewModel); // create view model
     this._rootBinding = undefined;
-    this._thread = undefined;
-    this._updateSlot = undefined;
     this._props = createProps(this); // create property for parent component connection
     this._globals = createGlobals(); // create property for global connection
     this._initialPromises = undefined;
@@ -5680,6 +5495,8 @@ class MixedComponent {
     this._contextRevision = 0;
 
     this._cachableInBuilding = false;
+
+    this._updator = new Updator(this);      
     //console.log("mixInComponent:initializeCallback");
   }
 
@@ -5687,7 +5504,6 @@ class MixedComponent {
    * build component (called from connectedCallback)
    * setting filters
    * create and attach shadowRoot
-   * create thread
    * initialize view model
    * @returns {Promise<any>}
    */
@@ -5744,9 +5560,6 @@ class MixedComponent {
       }
     }
 
-    // create thread
-    this.thread = new Thread;
-
     // initialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols.connectedCallback]();
 
@@ -5769,13 +5582,6 @@ class MixedComponent {
       // then append fragment block to viewRootElement
       this.viewRootElement.appendChild(this.rootBinding.fragment);
     }
-
-    // update slot wakeup
-    if (this.updateSlot.isEmpty) {
-      this.updateSlot.waitPromises.resolve(true);
-    }
-    // wait for update slot
-    await this.updateSlot.alivePromises.promise;
 
     this.cachableInBuilding = false;
   }
@@ -5832,8 +5638,16 @@ class MixedComponent {
   }
 
   addProcess(func, thisArg, args) {
-    const process = new ProcessData(func, thisArg, args ?? []);
-    this.updateSlot.addProcess(process);
+    this.updator.addProcess(func, thisArg, args ?? []);
+  }
+
+  async writableViewModelCallback(callback) {
+    this._isWritable = true;
+    try {
+      await callback();
+    } finally {
+      this._isWritable = false;
+    }
   }
 
   get accessibleProperties() {

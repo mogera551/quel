@@ -134,7 +134,12 @@ export class Binding {
    * @param {Set<number>} setOfIndex 
    */
   applyToChildNodes(setOfIndex) {
-    this.nodeProperty.applyToChildNodes(setOfIndex);
+    if (this.component.updator.updatedBindings.has(this)) return;
+    try {
+      this.nodeProperty.applyToChildNodes(setOfIndex);
+    } finally {
+      this.component.updator.updatedBindings.add(this);
+    }
 
   }
 
@@ -155,8 +160,7 @@ export class Binding {
   execDefaultEventHandler(event) {
     if (!this.component.bindingSummary.allBindings.has(this)) return;
     event.stopPropagation();
-    const process = new ProcessData(this.applyToViewModel, this, []);
-    this.component.updateSlot.addProcess(process);
+    this.component.updator.addProcess(this.applyToViewModel, this, []);
   }
 
   /** @type {(event:Event)=>void} */

@@ -81,8 +81,7 @@ export class ElementEvent extends ElementBase {
     // event filter
     event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
-    const processData = this.createProcessData(event);
-    this.binding.component.updateSlot.addProcess(processData);
+    this.binding.component.updator.addProcess(this.directlyCall, this, [event]);
   }
 
   dispose() {

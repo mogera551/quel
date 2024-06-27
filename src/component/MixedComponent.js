@@ -2,17 +2,13 @@ import "../types.js";
 import { Symbols } from "../Symbols.js";
 import { createProps } from "./Props.js";
 import { createGlobals } from "./Globals.js";
-import { Thread } from "../thread/Thread.js";
-import { UpdateSlot } from "../thread/UpdateSlot.js";
 import { isAttachable } from "./AttachShadow.js";
 import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
 import { createViewModels } from "../viewModel/Proxy.js";
-import { Phase } from "../thread/Phase.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
 import { viewModelize } from "../viewModel/ViewModelize.js";
 import * as AdoptedCss from "./AdoptedCss.js";
-import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { localizeStyleSheet } from "./StyleSheet.js";
 import { InputFilterManager, OutputFilterManager, EventFilterManager } from "../filter/Manager.js";
 import { Updator } from "../updator/updator.js";
@@ -73,36 +69,6 @@ export class MixedComponent {
   }
   set rootBinding(value) {
     this._rootBinding = value;
-  }
-
-  /** @type {Thread} thread */
-  get thread() {
-    return this._thread;
-  }
-  set thread(value) {
-    this._thread = value;
-  }
-
-  /** @type {UpdateSlot} update slot */
-  get updateSlot() {
-    if (typeof this._thread === "undefined") {
-      return undefined;
-    }
-    if (typeof this._updateSlot === "undefined") {
-      this._updateSlot = UpdateSlot.create(this, () => {
-        this._updateSlot = undefined;
-      }, phase => {
-        if (phase === Phase.gatherUpdatedProperties) {
-          this.viewModel[Symbols.clearCache]();
-        }
-      });
-      this.thread.wakeup(this._updateSlot);
-    }
-    return this._updateSlot;
-  }
-  // for unit test mock
-  set updateSlot(value) {
-    this._updateSlot = value;
   }
 
   /** @type {Object<string,any>} parent component property */
@@ -246,8 +212,6 @@ export class MixedComponent {
     this._isWritable = false;
     this._viewModels = createViewModels(this, componentClass.ViewModel); // create view model
     this._rootBinding = undefined;
-    this._thread = undefined;
-    this._updateSlot = undefined;
     this._props = createProps(this); // create property for parent component connection
     this._globals = createGlobals(); // create property for global connection
     this._initialPromises = undefined;
@@ -283,7 +247,6 @@ export class MixedComponent {
    * build component (called from connectedCallback)
    * setting filters
    * create and attach shadowRoot
-   * create thread
    * initialize view model
    * @returns {Promise<any>}
    */
@@ -340,9 +303,6 @@ export class MixedComponent {
       }
     }
 
-    // create thread
-    this.thread = new Thread;
-
     // initialize ViewModel（call viewModel's $connectedCallback）
     await this.viewModel[Symbols.connectedCallback]();
 
@@ -365,13 +325,6 @@ export class MixedComponent {
       // then append fragment block to viewRootElement
       this.viewRootElement.appendChild(this.rootBinding.fragment);
     }
-
-    // update slot wakeup
-    if (this.updateSlot.isEmpty) {
-      this.updateSlot.waitPromises.resolve(true);
-    }
-    // wait for update slot
-    await this.updateSlot.alivePromises.promise;
 
     this.cachableInBuilding = false;
   }
@@ -428,8 +381,7 @@ export class MixedComponent {
   }
 
   addProcess(func, thisArg, args) {
-    const process = new ProcessData(func, thisArg, args ?? []);
-    this.updateSlot.addProcess(process);
+    this.updator.addProcess(func, thisArg, args ?? []);
   }
 
   async writableViewModelCallback(callback) {
