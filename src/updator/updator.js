@@ -63,6 +63,8 @@ export class Updator {
         updatedStateProperties.length = 0;
       }
     }
+    // cache clear
+    component.readOnlyViewModel[Symbols.clearCache]();
     return totalUpdatedStateProperties;
   }
 
@@ -74,9 +76,6 @@ export class Updator {
         this.component.contextRevision++;
 
         const updatedStateProperties = await this.process();
-
-        // cache clear
-        this.component.readOnlyViewModel[Symbols.clearCache]();
 
         // expand state properties
         const expandedStateProperties = updatedStateProperties.slice(0);
@@ -103,6 +102,7 @@ export class Updator {
         bindingSummary.initUpdate();
         for(let i = 0; i < expandableBindings.length; i++) {
           const binding = expandableBindings[i];
+          if (!bindingSummary.exists(binding)) continue;
           if (expandedStatePropertyByKey.has(binding.viewModelProperty.key)) {
             binding.applyToNode();
           }

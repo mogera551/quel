@@ -2849,7 +2849,7 @@ class ElementEvent extends ElementBase {
    */
   eventHandler(event) {
     // 再構築などでバインドが削除されている場合は処理しない
-    if (!this.binding.component.bindingSummary.allBindings.has(this.binding)) return;
+    if (!this.binding.component.bindingSummary.exists(this.binding)) return;
     // event filter
     event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
@@ -3725,7 +3725,7 @@ class Binding {
    * @param {Event} event 
    */
   execDefaultEventHandler(event) {
-    if (!this.component.bindingSummary.allBindings.has(this)) return;
+    if (!this.component.bindingSummary.exists(this)) return;
     event.stopPropagation();
     this.component.updator.addProcess(this.applyToViewModel, this, []);
   }
@@ -5005,6 +5005,9 @@ class BindingSummary {
     this.#deleteBindings.add(binding);
   }
 
+  exists(binding) {
+    return this.#allBindings.has(binding);
+  }
   /**
    * 
    */
@@ -5183,6 +5186,8 @@ class Updator {
         updatedStateProperties.length = 0;
       }
     }
+    // cache clear
+    component.readOnlyViewModel[Symbols.clearCache]();
     return totalUpdatedStateProperties;
   }
 
@@ -5194,9 +5199,6 @@ class Updator {
         this.component.contextRevision++;
 
         const updatedStateProperties = await this.process();
-
-        // cache clear
-        this.component.readOnlyViewModel[Symbols.clearCache]();
 
         // expand state properties
         const expandedStateProperties = updatedStateProperties.slice(0);
@@ -5223,6 +5225,7 @@ class Updator {
         bindingSummary.initUpdate();
         for(let i = 0; i < expandableBindings.length; i++) {
           const binding = expandableBindings[i];
+          if (!bindingSummary.exists(binding)) continue;
           if (expandedStatePropertyByKey.has(binding.viewModelProperty.key)) {
             binding.applyToNode();
           }

@@ -101,6 +101,9 @@ export class BindingSummary {
     this.#deleteBindings.add(binding);
   }
 
+  exists(binding) {
+    return this.#allBindings.has(binding);
+  }
   /**
    * 
    */

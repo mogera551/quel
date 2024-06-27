@@ -158,7 +158,7 @@ export class Binding {
    * @param {Event} event 
    */
   execDefaultEventHandler(event) {
-    if (!this.component.bindingSummary.allBindings.has(this)) return;
+    if (!this.component.bindingSummary.exists(this)) return;
     event.stopPropagation();
     this.component.updator.addProcess(this.applyToViewModel, this, []);
   }
