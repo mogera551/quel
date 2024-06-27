@@ -1,7 +1,6 @@
 import "../types.js";
 import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../Symbols.js";
-import { ProcessData } from "../thread/ViewModelUpdator.js";
 
 export class ViewModelHandlerBase extends Handler {
   /** @type {Component} */
@@ -42,7 +41,7 @@ export class ViewModelHandlerBase extends Handler {
    * @param {any[]} argumentArray 
    */
   addProcess(target, thisArg, argumentArray) {
-    this.#component.updateSlot?.addProcess(new ProcessData(target, thisArg, argumentArray));
+    this.#component.updator?.addProcess(target, thisArg, argumentArray);
   }
 
   /**
@@ -52,8 +51,7 @@ export class ViewModelHandlerBase extends Handler {
    * @param {Proxy} receiver 
    */
   addNotify(target, propertyAccess, receiver) {
-    this.#component.updateSlot?.addNotify(propertyAccess);
-    this.#component.updateSlot?.addUpdatedProps(Object.assign({}, propertyAccess));
+    this.#component.updator?.addUpdatedStateProperty(Object.assign({}, propertyAccess));
   }
 
   /**

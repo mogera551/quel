@@ -15,6 +15,7 @@ import * as AdoptedCss from "./AdoptedCss.js";
 import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { localizeStyleSheet } from "./StyleSheet.js";
 import { InputFilterManager, OutputFilterManager, EventFilterManager } from "../filter/Manager.js";
+import { Updator } from "../updator/updator.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
@@ -55,15 +56,15 @@ export class MixedComponent {
     return this._viewModels["readonly"];
   }
 
+  /** @type {boolean} */
+  get isWritable() {
+    return this._isWritable;
+  }
+
   /** @type {ViewModelProxy} view model proxy */
   get viewModel() {
     if (this.cachableInBuilding) return this.readOnlyViewModel;
-    if (typeof this.updateSlot === "undefined" || 
-      (this.updateSlot.phase !== Phase.gatherUpdatedProperties)) {
-      return this.writableViewModel;
-    } else {
-      return this.readOnlyViewModel;
-    }
+    return this.isWritable ? this.writableViewModel : this.readOnlyViewModel;
   }
 
   /** @type {BindingManager} */
@@ -228,6 +229,10 @@ export class MixedComponent {
   set cachableInBuilding(value) {
     this._cachableInBuilding = value;
   }
+
+  get updator() {
+    return this._updator;
+  }
   /** 
    * initialize
    * @returns {void}
@@ -238,7 +243,7 @@ export class MixedComponent {
     /**
      * set members
      */
-
+    this._isWritable = false;
     this._viewModels = createViewModels(this, componentClass.ViewModel); // create view model
     this._rootBinding = undefined;
     this._thread = undefined;
@@ -269,6 +274,8 @@ export class MixedComponent {
     this._contextRevision = 0;
 
     this._cachableInBuilding = false;
+
+    this._updator = new Updator(this);      
     //console.log("mixInComponent:initializeCallback");
   }
 
@@ -423,6 +430,15 @@ export class MixedComponent {
   addProcess(func, thisArg, args) {
     const process = new ProcessData(func, thisArg, args ?? []);
     this.updateSlot.addProcess(process);
+  }
+
+  async writableViewModelCallback(callback) {
+    this._isWritable = true;
+    try {
+      await callback();
+    } finally {
+      this._isWritable = false;
+    }
   }
 
   get accessibleProperties() {

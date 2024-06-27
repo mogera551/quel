@@ -116,7 +116,7 @@ export class Binding {
    * apply value to node
    */
   applyToNode() {
-    if (this.component.bindingSummary.updatedBindings.has(this)) return;
+    if (this.component.updator.updatedBindings.has(this)) return;
     const { component, nodeProperty, viewModelProperty } = this;
     try {
       if (!nodeProperty.applicable) return;
@@ -125,7 +125,7 @@ export class Binding {
 //      console.log(`node.${this.#nodeProperty.name} = viewModel.${this.#viewModelProperty.propertyName.name}`);
       nodeProperty.value = filteredViewModelValue;
     } finally {
-      component.bindingSummary.updatedBindings.add(this);
+      component.updator.updatedBindings.add(this);
     }
   }
 

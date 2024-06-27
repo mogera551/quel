@@ -175,6 +175,8 @@
  * @property {Object<string,EventFilterFunc>} Component.eventFilters
  * @property {string[]} accessibleProperties
  * @property {string[]} allProperties
+ * @property {(callback:()=>void)=>Promise<>} writableViewModelCallback
+ * @property {import("./updator/updator.js").Updator} updator
  */
 
 /**

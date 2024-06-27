@@ -55,16 +55,16 @@ export class BindingSummary {
     return this.#deleteBindings;
   }
 
+  /** @type {Set<Binding>} 仮追加用binding、flush()でこのbindingの追加処理をする */
+  #addBindings = new Set;
+  get addBindings() {
+    return this.#addBindings;
+  }
+
   /** @type {Set<Binding>} 全binding */
   #allBindings = new Set;
   get allBindings() {
     return this.#allBindings;
-  }
-
-  /** @type {Set<Binding>} 更新したbinding */
-  #updatedBindings = new Set;
-  get updatedBindings() {
-    return this.#updatedBindings;
   }
 
   /**
@@ -73,7 +73,6 @@ export class BindingSummary {
   initUpdate() {
     this.#updated = false;
     this.#updateRevision++;
-    this.#updatedBindings = new Set;
   }
   
   /**
@@ -86,7 +85,7 @@ export class BindingSummary {
       this.#deleteBindings.delete(binding);
       return;
     }
-    this.#allBindings.add(binding);
+    this.#addBindings.add(binding);
   }
 
   /**
@@ -95,6 +94,10 @@ export class BindingSummary {
    */
   delete(binding) {
     this.#updated = true;
+    if (this.#addBindings.has(binding)) {
+      this.#addBindings.delete(binding);
+      return;
+    }
     this.#deleteBindings.add(binding);
   }
 
