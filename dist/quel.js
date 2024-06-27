@@ -1253,29 +1253,6 @@ function isAttachable(tagName) {
   return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
 }
 
-class ProcessData {
-  /** @type {()=>void} */
-  target;
-
-  /** @type {Object} */
-  thisArgument;
-
-  /** @type {any[]} */
-  argumentsList;
-
-  /**
-   * 
-   * @param {()=>void} target 
-   * @param {Object} thisArgument 
-   * @param {any[]} argumentsList 
-   */
-  constructor(target, thisArgument, argumentsList) {
-    this.target = target;
-    this.thisArgument = thisArgument;
-    this.argumentsList = argumentsList;
-  }
-}
-
 /**
  * @type {Map<BindingManager,Map<string,number[]>>}
  */
@@ -2834,13 +2811,6 @@ class ElementEvent extends ElementBase {
   async directlyCall(event) {
     const { viewModelProperty = undefined, loopContext = undefined } = this.binding ?? {};
     return viewModelProperty?.viewModel[Symbols.directlyCall](viewModelProperty.name, loopContext, event);
-  }
-  /**
-   * 
-   * @param {Event} event
-   */
-  createProcessData(event) {
-    return new ProcessData(this.directlyCall, this, [event]);
   }
 
   /**

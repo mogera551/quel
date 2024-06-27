@@ -1,6 +1,5 @@
 import { Symbols } from "../../Symbols.js";
 import { FilterManager, Filters } from "../../filter/Manager.js";
-import { ProcessData } from "../../thread/ViewModelUpdator.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
@@ -62,13 +61,6 @@ export class ElementEvent extends ElementBase {
   async directlyCall(event) {
     const { viewModelProperty = undefined, loopContext = undefined } = this.binding ?? {};
     return viewModelProperty?.viewModel[Symbols.directlyCall](viewModelProperty.name, loopContext, event);
-  }
-  /**
-   * 
-   * @param {Event} event
-   */
-  createProcessData(event) {
-    return new ProcessData(this.directlyCall, this, [event]);
   }
 
   /**

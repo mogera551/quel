@@ -47,18 +47,6 @@
  */
 
 /**
- * @typedef {import("./thread/Thread.js").Thread} Thread
- */
-
-/**
- * @typedef {import("./thread/UpdateSlot.js").UpdateSlot} UpdateSlot
- */
-
-/**
- * @typedef {import("./thread/ViewModelUpdator.js").ProcessData} ProcessData 
- */
-
-/**
  * @typedef {Object} FilterInfo
  * @property {string} name
  * @property {string[]} options

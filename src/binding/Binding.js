@@ -1,5 +1,4 @@
 import "../types.js";
-import { ProcessData } from "../thread/ViewModelUpdator.js";
 import { utils } from "../utils.js";
 import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
