@@ -12,6 +12,26 @@ const filterExpandableBindings = (binding) => binding.nodeProperty.expandable;
 /** @type {(binding: Binding) => boolean} */
 const filerComponentBindings = (binding) => binding.nodeProperty.constructor === ComponentProperty;
 
+class BindingSummaryBase {
+  #allBindings = new Set;
+  get allBindings() {
+    return this.#allBindings;
+  }
+  #bindingsByKey = new Map;
+  get bindingsByKey() {
+    return this.#bindingsByKey;
+  }
+  #expandableBindings = new Set;
+  get expandableBindings() {
+    return this.#expandableBindings;
+  }
+  #componentBindings = new Set;
+  get componentBindings() {
+    return this.#componentBindings;
+  }
+
+}
+
 /**
  * BindingSummary
  */
@@ -113,7 +133,8 @@ export class BindingSummary {
       if (!this.#updated) {
         return;
       }
-      const bindings = Array.from(this.#allBindings).filter(binding => !this.#deleteBindings.has(binding));
+      const bindings = Array.from(this.#allBindings.symmetricDifference(this.#deleteBindings));
+//      const bindings = Array.from(this.#allBindings).filter(binding => !this.#deleteBindings.has(binding));
       this.rebuild(bindings);
     } finally {
       if (config.debug) {
@@ -125,6 +146,19 @@ export class BindingSummary {
         performance.clearMarks('BindingSummary.flush:end');
       }
 
+    }
+  }
+
+  /**
+   * 
+   * @param {(summary:BindingSummary)=>any} callback 
+   */
+  update(callback) {
+    this.initUpdate();
+    try {
+      callback(this);
+    } finally {
+      this.flush();
     }
   }
 
