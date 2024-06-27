@@ -5191,6 +5191,21 @@ class Updator {
     return totalUpdatedStateProperties;
   }
 
+  /**
+   * 
+   * @param {PropertyAccess[]} updatedStateProperties 
+   */
+  expandStateProperties(updatedStateProperties, {component} = this) {
+    // expand state properties
+    const expandedStateProperties = updatedStateProperties.slice(0);
+    for(let i = 0; i < updatedStateProperties.length; i++) {
+      expandedStateProperties.push(...ViewModelHandlerBase.makeNotifyForDependentProps(
+        component.readOnlyViewModel, updatedStateProperties[i]
+      ));
+    }
+    return expandedStateProperties;
+  }
+
   async exec() {
     this.executing = true;
     try {
@@ -5199,15 +5214,8 @@ class Updator {
         this.component.contextRevision++;
 
         const updatedStateProperties = await this.process();
+        const expandedStateProperties = this.expandStateProperties(updatedStateProperties);
 
-        // expand state properties
-        const expandedStateProperties = updatedStateProperties.slice(0);
-        for(let i = 0; i < updatedStateProperties.length; i++) {
-          const prop = updatedStateProperties[i];
-          expandedStateProperties.push(...ViewModelHandlerBase.makeNotifyForDependentProps(
-            this.component.readOnlyViewModel, prop
-          ));
-        }
         const expandedStatePropertyByKey = 
           new Map(expandedStateProperties.map(prop => [getPropAccessKey(prop), prop]));
 
