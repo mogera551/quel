@@ -7,11 +7,10 @@ import { utils } from "../utils.js";
 import { BindingManager } from "../binding/Binding.js";
 import { createViewModels } from "../viewModel/Proxy.js";
 import { BindingSummary } from "../binding/BindingSummary.js";
-import { viewModelize } from "../viewModel/ViewModelize.js";
 import * as AdoptedCss from "./AdoptedCss.js";
 import { localizeStyleSheet } from "./StyleSheet.js";
 import { InputFilterManager, OutputFilterManager, EventFilterManager } from "../filter/Manager.js";
-import { Updator } from "../updator/updator.js";
+import { Updator } from "./Updator2.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;
