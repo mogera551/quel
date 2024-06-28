@@ -10,7 +10,7 @@ import { BindingSummary } from "../binding/BindingSummary.js";
 import * as AdoptedCss from "./AdoptedCss.js";
 import { localizeStyleSheet } from "./StyleSheet.js";
 import { InputFilterManager, OutputFilterManager, EventFilterManager } from "../filter/Manager.js";
-import { Updator } from "./Updator2.js";
+import { Updator } from "./Updator.js";
 
 /** @type {WeakMap<Node,Component>} */
 const pseudoComponentByNode = new WeakMap;

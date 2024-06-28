@@ -164,7 +164,7 @@
  * @property {string[]} accessibleProperties
  * @property {string[]} allProperties
  * @property {(callback:()=>void)=>Promise<>} writableViewModelCallback
- * @property {import("./component/Updator2.js").Updator} updator
+ * @property {import("./component/Updator.js").Updator} updator
  */
 
 /**
