@@ -2314,8 +2314,7 @@ class Repeat extends TemplateProperty {
       for(let newIndex = this.value; newIndex < value.length; newIndex++) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
         this.binding.appendChild(bindingManager);
-        bindingManager.registerBindingsToSummary();
-        bindingManager.applyToNode();
+        bindingManager.postCreate();
       }
     } else if (this.value > value.length) {
       const removeBindingManagers = this.binding.children.splice(value.length);
@@ -2358,13 +2357,14 @@ class Branch extends TemplateProperty {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
         this.binding.appendChild(bindingManager);
-        bindingManager.registerBindingsToSummary();
+        bindingManager.postCreate();
       } else {
         const removeBindingManagers = this.binding.children.splice(0, this.binding.children.length);
         removeBindingManagers.forEach(bindingManager => bindingManager.dispose());
       }
+    } else {
+      this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
     }
-    this.binding.children.forEach(bindingManager => bindingManager.applyToNode());
   }
 
   /**
@@ -3025,19 +3025,20 @@ const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 /**
  * Exclude from GC
  */
-/** @type {Map<any,number>} */
-const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
-
-/** @type {Set<number>} */
-const lastIndexes = new Set;
-
-/** @type {Set<number>} */
-const setOfNewIndexes = new Set;
-
-/** @type {Map<number,number>} */
-const lastIndexByNewIndex = new Map;
 
 class RepeatKeyed extends Repeat {
+  /** @type {Map<any,number>} */
+  #fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+
+  /** @type {Set<number>} */
+  #lastIndexes = new Set;
+
+  /** @type {Set<number>} */
+  #setOfNewIndexes = new Set;
+
+  /** @type {Map<number,BindingManager>} */
+  #lastChildByNewIndex = new Map;
+
   /** @type {boolean} */
   get loopable() {
     return true;
@@ -3052,61 +3053,62 @@ class RepeatKeyed extends Repeat {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
-    fromIndexByValue.clear();
-    lastIndexes.clear();
-    setOfNewIndexes.clear();
-    lastIndexByNewIndex.clear();
+    this.#fromIndexByValue.clear();
+    this.#lastIndexes.clear();
+    this.#setOfNewIndexes.clear();
+    this.#lastChildByNewIndex.clear();
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
 //      const value = this.binding.viewModelProperty.getChildValue(newIndex);
       const value = values[newIndex];
-      const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
+      const lastIndex = this.#lastValue.indexOf(value, this.#fromIndexByValue.get(value) ?? 0);
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
-        setOfNewIndexes.add(newIndex);
+        this.#setOfNewIndexes.add(newIndex);
       } else {
         // 元のインデックスがある場合（既存）
-        fromIndexByValue.set(value, lastIndex + 1); // 
-        lastIndexes.add(lastIndex);
-        lastIndexByNewIndex.set(newIndex, lastIndex);
+        this.#fromIndexByValue.set(value, lastIndex + 1); // 
+        this.#lastIndexes.add(lastIndex);
+        this.#lastChildByNewIndex.set(newIndex, this.binding.children[lastIndex]);
       }
     }
     for(let i = 0; i < this.binding.children.length; i++) {
-      if (lastIndexes.has(i)) continue;
+      if (this.#lastIndexes.has(i)) continue;
       this.binding.children[i].dispose();
     }
 
     /** @type {BindingManager[]} */
+    this.binding.children.slice(0);
+    /** @type {BindingManager[]} */
     let beforeBindingManager;
     /** @type {Node} */
     const parentNode = this.node.parentNode;
-    const newBindingManagers = [];
+    //const newBindingManagers = [];
     for(let i = 0; i < values.length; i++) {
       const newIndex = i;
       /** @type {BindingManager} */
       let bindingManager;
       const beforeNode = beforeBindingManager?.lastNode ?? this.node;
-      if (setOfNewIndexes.has(newIndex)) {
+      if (this.#setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
         bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
+        (newIndex < this.binding.children.length) ? (this.binding.children[newIndex] = bindingManager) : this.binding.children.push(bindingManager);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+        bindingManager.postCreate();
       } else {
         // 元のインデックスがある場合（既存）
-        const lastIndex = lastIndexByNewIndex.get(newIndex);
-        bindingManager = this.binding.children[lastIndex];
+        bindingManager = this.#lastChildByNewIndex.get(newIndex);
         if (bindingManager.nodes?.[0]?.previousSibling !== beforeNode) {
           bindingManager.removeNodes();
           parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
         }
+        (newIndex < this.binding.children.length) ? (this.binding.children[newIndex] = bindingManager) : this.binding.children.push(bindingManager);
+        bindingManager.applyToNode();
       }
       beforeBindingManager = bindingManager;
-      newBindingManagers.push(bindingManager);
+      //newBindingManagers.push(bindingManager);
     }
-
-    this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
-    for(let i = 0; i < newBindingManagers.length; i++) {
-      const bindingManager = newBindingManagers[i];
-      bindingManager.registerBindingsToSummary();
-      bindingManager.applyToNode();
+    if (values.length < this.binding.children.length) {
+      this.binding.children.length = values.length;
     }
     this.#lastValue = values.slice();
   }
@@ -3135,10 +3137,12 @@ class RepeatKeyed extends Repeat {
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager === "undefined") {
         bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
+        this.binding.replaceChild(index, bindingManager);
+        bindingManager.postCreate();
+      } else {
+        this.binding.replaceChild(index, bindingManager);
+        bindingManager.applyToNode();
       }
-      this.binding.replaceChild(index, bindingManager);
-      bindingManager.registerBindingsToSummary();
-      bindingManager.applyToNode();
     }
   }
 
@@ -3914,6 +3918,11 @@ class BindingManager {
     }
   }
 
+  postCreate() {
+    this.registerBindingsToSummary();
+    this.applyToNode();
+  }
+
   /**
    * apply value to node
    */
@@ -3977,78 +3986,6 @@ class BindingManager {
       (fragmentsByUUID[uuid] = [fragment]);
     bindingManagersByUUID[uuid]?.push(this) ??
       (bindingManagersByUUID[uuid] = [this]);
-  }
-
-  /**
-   * updated viewModel properties are updated to node properties
-   * @param {BindingManager} bindingManager
-   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
-   */
-  static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
-    bindingManager.component.contextRevision++;
-    /** @type {{bindingSummary:import("./BindingSummary.js").BindingSummary}} */
-    const { bindingSummary } = bindingManager.component;
-    const expand = () => {
-      bindingSummary.initUpdate();
-
-      // expandable bindings are expanded first
-      // bind tree structure is determined
-      const expandableBindings = Array.from(bindingSummary.expandableBindings);
-      expandableBindings.sort((bindingA, bindingB) => {
-        const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
-        if (result !== 0) return result;
-        const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
-        return result2;
-      });
-      for(const binding of expandableBindings) {
-        if (bindingSummary.deleteBindings.has(binding)) continue;
-        if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
-        binding.applyToNode();
-      }
-      bindingSummary.flush();
-    };
-    expand();
-
-    const applyToChildNodes = () => {
-      const setOfIndexByParentKey = new Map;
-      for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
-        if (propertyAccess.propName.lastPathName !== "*") continue;
-        const lastIndex = propertyAccess.indexes?.at(-1);
-        if (typeof lastIndex === "undefined") continue;
-        const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
-        setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
-      }
-      for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-        const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
-        for(const binding of bindings) {
-          if (bindingSummary.updatedBindings.has(binding)) continue;
-          if (!binding.expandable) continue;
-          binding.applyToChildNodes(setOfIndex);
-        }
-      }
-    };
-    applyToChildNodes();
-
-    const applyToNode = () => {
-      const selectBindings = [];
-      const keys = propertyAccessByViewModelPropertyKey.keys();
-      for(const key of keys) {
-        const bindings = bindingSummary.bindingsByKey.get(key);
-        if (typeof bindings === "undefined") continue;
-        for(let i = 0; i < bindings.length; i++) {
-          const binding = bindings[i];
-          if (binding.expandable) continue;
-          binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
-        }
-      }
-      for(let i = 0; i < selectBindings.length; i++) {
-        selectBindings[i].applyToNode();
-      }
-      for(const binding of bindingSummary.componentBindings) {
-        binding.nodeProperty.postUpdate(propertyAccessByViewModelPropertyKey);
-      }
-    };
-    applyToNode();
   }
 
   /**
@@ -5602,8 +5539,7 @@ class MixedComponent {
 
     // buid binding tree and dom 
     this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
-    this.rootBinding.registerBindingsToSummary();
-    this.rootBinding.applyToNode();
+    this.rootBinding.postCreate();
     this.bindingSummary.flush();
 
     if (!this.useWebComponent) {

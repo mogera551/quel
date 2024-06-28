@@ -310,8 +310,7 @@ export class MixedComponent {
 
     // buid binding tree and dom 
     this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
-    this.rootBinding.registerBindingsToSummary();
-    this.rootBinding.applyToNode();
+    this.rootBinding.postCreate();
     this.bindingSummary.flush();
 
     if (!this.useWebComponent) {

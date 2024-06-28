@@ -7,19 +7,20 @@ const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 /**
  * Exclude from GC
  */
-/** @type {Map<any,number>} */
-const fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
-
-/** @type {Set<number>} */
-const lastIndexes = new Set;
-
-/** @type {Set<number>} */
-const setOfNewIndexes = new Set;
-
-/** @type {Map<number,number>} */
-const lastIndexByNewIndex = new Map;
 
 export class RepeatKeyed extends Repeat {
+  /** @type {Map<any,number>} */
+  #fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
+
+  /** @type {Set<number>} */
+  #lastIndexes = new Set;
+
+  /** @type {Set<number>} */
+  #setOfNewIndexes = new Set;
+
+  /** @type {Map<number,BindingManager>} */
+  #lastChildByNewIndex = new Map;
+
   /** @type {boolean} */
   get loopable() {
     return true;
@@ -34,61 +35,62 @@ export class RepeatKeyed extends Repeat {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not array`);
-    fromIndexByValue.clear();
-    lastIndexes.clear();
-    setOfNewIndexes.clear();
-    lastIndexByNewIndex.clear();
+    this.#fromIndexByValue.clear();
+    this.#lastIndexes.clear();
+    this.#setOfNewIndexes.clear();
+    this.#lastChildByNewIndex.clear();
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
 //      const value = this.binding.viewModelProperty.getChildValue(newIndex);
       const value = values[newIndex];
-      const lastIndex = this.#lastValue.indexOf(value, fromIndexByValue.get(value) ?? 0);
+      const lastIndex = this.#lastValue.indexOf(value, this.#fromIndexByValue.get(value) ?? 0);
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
-        setOfNewIndexes.add(newIndex);
+        this.#setOfNewIndexes.add(newIndex);
       } else {
         // 元のインデックスがある場合（既存）
-        fromIndexByValue.set(value, lastIndex + 1); // 
-        lastIndexes.add(lastIndex);
-        lastIndexByNewIndex.set(newIndex, lastIndex);
+        this.#fromIndexByValue.set(value, lastIndex + 1); // 
+        this.#lastIndexes.add(lastIndex);
+        this.#lastChildByNewIndex.set(newIndex, this.binding.children[lastIndex]);
       }
     }
     for(let i = 0; i < this.binding.children.length; i++) {
-      if (lastIndexes.has(i)) continue;
+      if (this.#lastIndexes.has(i)) continue;
       this.binding.children[i].dispose();
     }
 
     /** @type {BindingManager[]} */
+    const oldChildren = this.binding.children.slice(0);
+    /** @type {BindingManager[]} */
     let beforeBindingManager;
     /** @type {Node} */
     const parentNode = this.node.parentNode;
-    const newBindingManagers = [];
+    //const newBindingManagers = [];
     for(let i = 0; i < values.length; i++) {
       const newIndex = i;
       /** @type {BindingManager} */
       let bindingManager;
       const beforeNode = beforeBindingManager?.lastNode ?? this.node;
-      if (setOfNewIndexes.has(newIndex)) {
+      if (this.#setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
         bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
+        (newIndex < this.binding.children.length) ? (this.binding.children[newIndex] = bindingManager) : this.binding.children.push(bindingManager);
         parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+        bindingManager.postCreate();
       } else {
         // 元のインデックスがある場合（既存）
-        const lastIndex = lastIndexByNewIndex.get(newIndex);
-        bindingManager = this.binding.children[lastIndex];
+        bindingManager = this.#lastChildByNewIndex.get(newIndex);
         if (bindingManager.nodes?.[0]?.previousSibling !== beforeNode) {
           bindingManager.removeNodes();
           parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
         }
+        (newIndex < this.binding.children.length) ? (this.binding.children[newIndex] = bindingManager) : this.binding.children.push(bindingManager);
+        bindingManager.applyToNode();
       }
       beforeBindingManager = bindingManager;
-      newBindingManagers.push(bindingManager);
+      //newBindingManagers.push(bindingManager);
     }
-
-    this.binding.children.splice(0, this.binding.children.length, ...newBindingManagers);
-    for(let i = 0; i < newBindingManagers.length; i++) {
-      const bindingManager = newBindingManagers[i];
-      bindingManager.registerBindingsToSummary();
-      bindingManager.applyToNode()
+    if (values.length < this.binding.children.length) {
+      this.binding.children.length = values.length;
     }
     this.#lastValue = values.slice();
   }
@@ -117,10 +119,12 @@ export class RepeatKeyed extends Repeat {
       let bindingManager = bindingManagerByValue.get(newValue);
       if (typeof bindingManager === "undefined") {
         bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
+        this.binding.replaceChild(index, bindingManager);
+        bindingManager.postCreate();
+      } else {
+        this.binding.replaceChild(index, bindingManager);
+        bindingManager.applyToNode();
       }
-      this.binding.replaceChild(index, bindingManager);
-      bindingManager.registerBindingsToSummary();
-      bindingManager.applyToNode();
     }
   }
 

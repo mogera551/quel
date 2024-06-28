@@ -376,6 +376,11 @@ export class BindingManager {
     }
   }
 
+  postCreate() {
+    this.registerBindingsToSummary();
+    this.applyToNode();
+  }
+
   /**
    * apply value to node
    */
@@ -439,78 +444,6 @@ export class BindingManager {
       (fragmentsByUUID[uuid] = [fragment]);
     bindingManagersByUUID[uuid]?.push(this) ??
       (bindingManagersByUUID[uuid] = [this]);
-  }
-
-  /**
-   * updated viewModel properties are updated to node properties
-   * @param {BindingManager} bindingManager
-   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
-   */
-  static updateNode(bindingManager, propertyAccessByViewModelPropertyKey) {
-    bindingManager.component.contextRevision++;
-    /** @type {{bindingSummary:import("./BindingSummary.js").BindingSummary}} */
-    const { bindingSummary } = bindingManager.component;
-    const expand = () => {
-      bindingSummary.initUpdate();
-
-      // expandable bindings are expanded first
-      // bind tree structure is determined
-      const expandableBindings = Array.from(bindingSummary.expandableBindings);
-      expandableBindings.sort((bindingA, bindingB) => {
-        const result = bindingA.viewModelProperty.propertyName.level - bindingB.viewModelProperty.propertyName.level;
-        if (result !== 0) return result;
-        const result2 = bindingA.viewModelProperty.propertyName.pathNames.length - bindingB.viewModelProperty.propertyName.pathNames.length;
-        return result2;
-      });
-      for(const binding of expandableBindings) {
-        if (bindingSummary.deleteBindings.has(binding)) continue;
-        if (!propertyAccessByViewModelPropertyKey.has(binding.viewModelProperty.key)) continue;
-        binding.applyToNode();
-      }
-      bindingSummary.flush();
-    };
-    expand();
-
-    const applyToChildNodes = () => {
-      const setOfIndexByParentKey = new Map;
-      for(const propertyAccess of propertyAccessByViewModelPropertyKey.values()) {
-        if (propertyAccess.propName.lastPathName !== "*") continue;
-        const lastIndex = propertyAccess.indexes?.at(-1);
-        if (typeof lastIndex === "undefined") continue;
-        const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, propertyAccess.indexes.length - 1);
-        setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
-      }
-      for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-        const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? new Set;
-        for(const binding of bindings) {
-          if (bindingSummary.updatedBindings.has(binding)) continue;
-          if (!binding.expandable) continue;
-          binding.applyToChildNodes(setOfIndex);
-        }
-      }
-    };
-    applyToChildNodes();
-
-    const applyToNode = () => {
-      const selectBindings = [];
-      const keys = propertyAccessByViewModelPropertyKey.keys();
-      for(const key of keys) {
-        const bindings = bindingSummary.bindingsByKey.get(key);
-        if (typeof bindings === "undefined") continue;
-        for(let i = 0; i < bindings.length; i++) {
-          const binding = bindings[i];
-          if (binding.expandable) continue;
-          binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
-        }
-      }
-      for(let i = 0; i < selectBindings.length; i++) {
-        selectBindings[i].applyToNode();
-      }
-      for(const binding of bindingSummary.componentBindings) {
-        binding.nodeProperty.postUpdate(propertyAccessByViewModelPropertyKey);
-      }
-    };
-    applyToNode();
   }
 
   /**
