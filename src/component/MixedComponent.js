@@ -370,18 +370,19 @@ export class MixedComponent {
   }
 
   /**
-   * update binding nodes
-   * called from update slot's node updator
-   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
+   * 
+   * @param {()=>void} func 
+   * @param {object} thisArg 
+   * @param {any[]} args 
    */
-  updateNode(propertyAccessByViewModelPropertyKey) {
-    this.rootBinding && BindingManager.updateNode(this.rootBinding, propertyAccessByViewModelPropertyKey);
-  }
-
   addProcess(func, thisArg, args) {
     this.updator.addProcess(func, thisArg, args ?? []);
   }
 
+  /**
+   * use writable view model
+   * @param {()=>void)} callback 
+   */
   async writableViewModelCallback(callback) {
     this._isWritable = true;
     try {

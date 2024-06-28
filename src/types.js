@@ -148,7 +148,6 @@
  * @property {()=>void} build
  * @property {()=>void} connectedCallback
  * @property {()=>void} disconnectedCallback
- * @property {(setOfViewModelPropertyKeys:Set<String>)=>void} updateNode
  * @property {{
  *   in:import("./filter/Manager.js").InputFilterManager,
  *   out:import("./filter/Manager.js").OutputFilterManager,
@@ -161,10 +160,11 @@
  * @property {Object<string,FilterFunc>} Component.inputFilters
  * @property {Object<string,FilterFunc>} Component.outputFilters
  * @property {Object<string,EventFilterFunc>} Component.eventFilters
- * @property {string[]} accessibleProperties
  * @property {string[]} allProperties
+ * @property {(target:()=>any,thisArg:object,args:any[])=>void} addProcess
  * @property {(callback:()=>void)=>Promise<>} writableViewModelCallback
  * @property {import("./component/Updator.js").Updator} updator
+ * @property {string[]} accessibleProperties
  */
 
 /**
