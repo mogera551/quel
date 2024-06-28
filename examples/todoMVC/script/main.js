@@ -1,0 +1,213 @@
+import * as myappEdit from "./edit.js";
+
+export const componentModules = { myappEdit };
+
+export const html = `
+<section class="todoapp">
+  <header class="header">
+    <h1>todos</h1>
+    <form data-bind="add|preventDefault">
+      <input class="new-todo" data-bind="content" placeholder="What needs to be done?" autofocus="">
+    </form>
+  </header>
+  {{ if:allList.length|gt,0 }}
+    <section class="main">
+      <input class="toggle-all" id="toggle-all" type="checkbox" data-bind="toggleAll;">
+      <label for="toggle-all">Mark all as complete</label>
+      <ul class="todo-list">
+        {{ loop:list }}
+          <li data-bind="class.completed:list.*.completed; class.editing:list.*.editing; ondblclick:startEditing">
+            {{ if:list.*.editing|falsey }}
+              <div class="view">
+                <input class="toggle" type="checkbox" data-bind="list.*.completed">
+                <label data-bind="class.completed:list.*.completed">{{ list.*.content }}</label>
+                <button class="destroy" data-bind="deleteItem"></button>
+              </div>
+            {{ else: }}
+              <form data-bind="completeEditing|preventDefault">
+                <input is="myapp-edit" class="edit" data-bind="editingContent; onfocusout:completeEditing; onkeyup:keyUpOnEditing">
+              </form>
+            {{ endif: }}
+          </li>
+        {{endloop:}}
+      </ul>
+    </section>
+    <footer class="footer">
+      <span class="todo-count"><strong>{{ activeCount }}</strong> item left</span>
+      <ul class="filters">
+        {{ loop:filters }}
+          <li>
+            <a data-bind="selectFilter; class.selected:filters.*.selected">{{ filters.*.text }}</a>
+          </li>
+        {{endloop:}}
+      </ul>
+      {{ if:completedCount|gt,0 }}
+        <button class="clear-completed" data-bind="clearCompleted">Clear completed</button>
+      {{ endif: }}
+    </footer>  
+  {{ endif: }}
+</section>
+`;
+
+/**
+ * @typedef {Object} TodoItem
+ * @property {string} content
+ * @property {boolean} completed
+ */
+
+const ESCAPE_KEY = 27;
+
+/** @enum {string} */
+const FilterType = {
+  all: "all",
+  active: "active",
+  completed: "completed",
+}
+
+/** @type {Object<FilterType,(item:TodoItem)=>boolean>} filter function by filter type */
+const filterFuncByFilterType = {
+  [FilterType.all]: item => true,
+  [FilterType.active]: item => !item.completed,
+  [FilterType.completed]: item => item.completed,
+};
+
+export class ViewModel {
+  /** @type {TodoItem[]} all todo list */
+  allList = [];
+
+  /** @type {FilterType} selected filter */
+  selectedFilter = FilterType.all;
+
+  /** @type {{text:string,value:FilterType}[]} filter list */
+  filters = [ 
+    { text:"All", value:FilterType.all }, 
+    { text:"Active", value:FilterType.active }, 
+    { text:"Completed", value:FilterType.completed } 
+  ];
+  /** @type {boolean} filter's selected flag */
+  get "filters.*.selected"() {
+    return this["filters.*.value"] === this.selectedFilter;
+  }
+
+  /** @type {TodoItem[]} list for display, filtered by selected filter */
+  get list() {
+    return this.allList.filter(filterFuncByFilterType[this.selectedFilter]);
+  }
+  /** @type {boolean} editing flag of todo item */
+  get "list.*.editing"() {
+    return this["list.*"] === this.editingItem;
+  }
+  /** @type {number} active todo count */
+  get activeCount() {
+    return this.allList.filter(filterFuncByFilterType[FilterType.active]).length;
+  }
+  /** @type {number} complete todo count */
+  get completedCount() {
+    return this.allList.filter(filterFuncByFilterType[FilterType.completed]).length;
+  }
+
+  /** @type {boolean} all todo items's complete flag in the list */
+  get toggleAll() {
+    return this["@allList.*.completed"].every(Boolean)
+  }
+  set toggleAll(value) {
+    this["@allList.*.completed"] = value;
+  }
+
+  /** @type {string} content for new todo */
+  content = "";
+  /**
+   * add new todo item to the list
+   */
+  add() {
+    if (this.content.length === 0) return;
+    this.allList = this.allList.concat({ content:this.content, completed:false });
+    this.content = "";
+  }
+
+  /** @type {TodoItem|undefined} editing todo */
+  editingItem;
+  /** @type {string} work content for editing todo, and copy to editing todo content when has edited */
+  editingContent;
+  /**
+   * start edit selected todo's content
+   */
+  startEditing() {
+    this.editingItem = this["list.*"];
+    this.editingContent = this.editingItem.content;
+  }
+  /**
+   * clear editing the content
+   */
+  clearEditing() {
+    this.editingItem = undefined;
+    this.editingContent = "";
+  }
+  /**
+   * complete editing the content
+   */
+  completeEditing() {
+    if (typeof this.editingItem !== "undefined" && this.editingContent.length > 0) {
+      this.editingItem.content = this.editingContent;
+    }
+    this.clearEditing();
+  }
+  /**
+   * capture key up event for editing the content 
+   * @param {Event} e 
+   */
+  keyUpOnEditing(e) {
+    if (e.keyCode === ESCAPE_KEY) {
+      this.clearEditing();
+    }
+  }
+
+  /**
+   * change filter
+   */
+  selectFilter() {
+    this.selectedFilter = this["filters.*.value"];
+  }
+
+  /**
+   * detele completed todo items from the list
+   */
+  clearCompleted() {
+    this.allList = this.allList.filter(item => !item.completed);
+  }
+
+  /**
+   * delete selected todo item from the list
+   */
+  deleteItem(e, $1) {
+    this.allList = this.allList.filter((_, index) => index !== $1);
+  }
+
+  /**
+   * write property callback, used for clear editing
+   * @param {string} prop 
+   * @param {number[]} indexes 
+   */
+  $writeCallback(prop, indexes) {
+    // clear editing when selected filter changed
+    if (prop === "selectedFilter") {
+      this.clearEditing();
+    }
+  }
+
+  /**
+   * dependencies for computed properties
+   * @type {Object<string,string[]>}
+   */
+  $dependentProps = {
+    "filters.*.selected": [ "filters.*.value", "selectedFilter" ],
+    "list": [ "selectedFilter", "allList", "list.*.completed" ],
+    "list.*.editing": [ "list.*", "editingItem" ],
+    "activeCount": [ "allList", "list.*.completed" ],
+    "completedCount": [ "allList", "list.*.completed" ],
+    "toggleAll": [ "list.*.completed" ],
+    "list.*.completed": [ "toggleAll" ],
+  }
+}
+
+export const config = { useShadowRoot: true};

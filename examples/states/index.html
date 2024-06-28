@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<meta charset="utf-8">
+
+<title>list of states and regions by poulation</title>
+
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "quel": "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"
+  }
+}
+</script>
+
+<style>
+body {
+  margin-left: 10px;
+}
+
+.over {
+  color: red;
+}
+
+.under {
+  color: blue;
+}
+
+tr.summary td {
+  background-color: white;
+  font-weight: bold;
+}
+</style>
+
+<myapp-main></myapp-main>
+
+<script type="module">
+import { registerComponentModules } from "quel";
+import * as myappMain from "./main.js";
+
+registerComponentModules({myappMain});
+</script>
+
+</html>
