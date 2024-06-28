@@ -40,8 +40,8 @@ export class RepeatKeyed extends Repeat {
     this.#setOfNewIndexes.clear();
     this.#lastChildByNewIndex.clear();
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
-//      const value = this.binding.viewModelProperty.getChildValue(newIndex);
-      const value = values[newIndex];
+      // values[newIndex]では、get "values.*"()を正しく取得できない
+      const value = this.binding.viewModelProperty.getChildValue(newIndex);
       const lastIndex = this.#lastValue.indexOf(value, this.#fromIndexByValue.get(value) ?? 0);
       if (lastIndex === -1 || lastIndex === false) {
         // 元のインデックスにない場合（新規）
@@ -64,7 +64,6 @@ export class RepeatKeyed extends Repeat {
     let beforeBindingManager;
     /** @type {Node} */
     const parentNode = this.node.parentNode;
-    //const newBindingManagers = [];
     for(let i = 0; i < values.length; i++) {
       const newIndex = i;
       /** @type {BindingManager} */
@@ -87,7 +86,6 @@ export class RepeatKeyed extends Repeat {
         bindingManager.applyToNode();
       }
       beforeBindingManager = bindingManager;
-      //newBindingManagers.push(bindingManager);
     }
     if (values.length < this.binding.children.length) {
       this.binding.children.length = values.length;
@@ -126,6 +124,7 @@ export class RepeatKeyed extends Repeat {
         bindingManager.applyToNode();
       }
     }
+    this.#lastValue = this.binding.viewModelProperty.value.slice();
   }
 
   initialize() {
