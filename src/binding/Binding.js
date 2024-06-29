@@ -114,32 +114,23 @@ export class Binding {
   /**
    * apply value to node
    */
-  applyToNode() {
-    if (this.component.updator.updatedBindings.has(this)) return;
-    const { component, nodeProperty, viewModelProperty } = this;
-    try {
+  applyToNode({ component, nodeProperty, viewModelProperty } = this) {
+    component.updator.applyUpdateNodeByBinding(this, updator => {
       if (!nodeProperty.applicable) return;
       const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
       if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-//      console.log(`node.${this.#nodeProperty.name} = viewModel.${this.#viewModelProperty.propertyName.name}`);
       nodeProperty.value = filteredViewModelValue;
-    } finally {
-      component.updator.updatedBindings.add(this);
-    }
+    });
   }
 
   /**
    * apply value to child nodes
    * @param {Set<number>} setOfIndex 
    */
-  applyToChildNodes(setOfIndex) {
-    if (this.component.updator.updatedBindings.has(this)) return;
-    try {
+  applyToChildNodes(setOfIndex, { component } = this) {
+    component.updator.applyUpdateNodeByBinding(this, updator => {
       this.nodeProperty.applyToChildNodes(setOfIndex);
-    } finally {
-      this.component.updator.updatedBindings.add(this);
-    }
-
+    });
   }
 
   /**

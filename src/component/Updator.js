@@ -105,10 +105,10 @@ export class Updator {
     const bindingSummary = component.bindingSummary;
     /** @type {Binding[]} */
     const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
-    bindingSummary.update((summary) => {
+    bindingSummary.update((bindingSummary) => {
       for(let i = 0; i < expandableBindings.length; i++) {
         const binding = expandableBindings[i];
-        if (!summary.exists(binding)) continue;
+        if (!bindingSummary.exists(binding)) continue;
         if (expandedStatePropertyByKey.has(binding.viewModelProperty.key)) {
           binding.applyToNode();
         }
@@ -121,7 +121,7 @@ export class Updator {
    * @param {PropertyAccess[]} expandedStateProperties 
    * @param {{ component:Component, updatedBindings:Set<binding> }} param1 
    */
-  updateChildNodes(expandedStateProperties, { component, updatedBindings } = this) {
+  updateChildNodes(expandedStateProperties, { component } = this) {
     const bindingSummary = component.bindingSummary;
     /** @type {Map<string,Set<number>>} */
     const setOfIndexByParentKey = new Map;
@@ -134,7 +134,6 @@ export class Updator {
     }
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
       for(const binding of bindingSummary.bindingsByKey.get(parentKey) ?? new Set) {
-        //if (updatedBindings.has(binding)) continue;
         binding.applyToChildNodes(setOfIndex);
       }
     }
@@ -145,7 +144,7 @@ export class Updator {
    * @param {Map<string,PropertyAccess>} expandedStatePropertyByKey 
    * @param {{ component:Component, updatedBindings:Set<binding> }} param1 
    */
-  updateNode(expandedStatePropertyByKey, { component, updatedBindings } = this) {
+  updateNode(expandedStatePropertyByKey, { component } = this) {
     const bindingSummary = component.bindingSummary;
     const selectBindings = [];
     for(const key of expandedStatePropertyByKey.keys()) {
@@ -153,7 +152,6 @@ export class Updator {
       if (typeof bindings === "undefined") continue;
       for(let i = 0; i < bindings.length; i++) {
         const binding = bindings[i];
-        //if (updatedBindings.has(binding)) continue;
         binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
       }
     }
@@ -196,5 +194,20 @@ export class Updator {
       this.executing = false;
     }
 
-  } 
+  }
+
+  /**
+   * 
+   * @param {Binding} binding 
+   * @param {(updator:Updator)=>any} callback 
+   * @returns {void}
+   */
+  applyUpdateNodeByBinding(binding, callback) {
+    if (this.updatedBindings.has(binding)) return;
+    try {
+      callback(this);
+    } finally {
+      this.updatedBindings.add(binding);
+    }
+  }
 }

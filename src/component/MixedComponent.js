@@ -307,10 +307,11 @@ export class MixedComponent {
 
     this.cachableInBuilding = true;
 
-    // buid binding tree and dom 
-    this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
-    this.rootBinding.postCreate();
-    this.bindingSummary.flush();
+    // build binding tree and dom 
+    this.bindingSummary.update((summary) => {
+      this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
+      this.rootBinding.postCreate();
+    });
 
     if (!this.useWebComponent) {
       // case of no useWebComponent, 

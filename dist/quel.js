@@ -3655,32 +3655,23 @@ class Binding {
   /**
    * apply value to node
    */
-  applyToNode() {
-    if (this.component.updator.updatedBindings.has(this)) return;
-    const { component, nodeProperty, viewModelProperty } = this;
-    try {
+  applyToNode({ component, nodeProperty, viewModelProperty } = this) {
+    component.updator.applyUpdateNodeByBinding(this, updator => {
       if (!nodeProperty.applicable) return;
       const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
       if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-//      console.log(`node.${this.#nodeProperty.name} = viewModel.${this.#viewModelProperty.propertyName.name}`);
       nodeProperty.value = filteredViewModelValue;
-    } finally {
-      component.updator.updatedBindings.add(this);
-    }
+    });
   }
 
   /**
    * apply value to child nodes
    * @param {Set<number>} setOfIndex 
    */
-  applyToChildNodes(setOfIndex) {
-    if (this.component.updator.updatedBindings.has(this)) return;
-    try {
+  applyToChildNodes(setOfIndex, { component } = this) {
+    component.updator.applyUpdateNodeByBinding(this, updator => {
       this.nodeProperty.applyToChildNodes(setOfIndex);
-    } finally {
-      this.component.updator.updatedBindings.add(this);
-    }
-
+    });
   }
 
   /**
@@ -4835,6 +4826,8 @@ class BindingSummary {
     this.#updated = value;
   }
 
+  #updating = false;
+
   /** @type {number} */
   #updateRevision = 0;
   get updateRevision() {
@@ -4844,31 +4837,22 @@ class BindingSummary {
   /** @type {Map<string,Binding[]>} viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す */
   #bindingsByKey = new Map; // Object<string,Binding[]>：16ms、Map<string,Binding[]>：9.2ms
   get bindingsByKey() {
+    if (this.#updating) utils.raise("BindingSummary.bindingsByKey can only be called after BindingSummary.update()");
     return this.#bindingsByKey;
   }
 
   /** @type {Set<Binding>} if/loopを持つbinding */
   #expandableBindings = new Set;
   get expandableBindings() {
+    if (this.#updating) utils.raise("BindingSummary.expandableBindings can only be called after BindingSummary.update()");
     return this.#expandableBindings;
   }
 
   /** @type {Set<Binding} componentを持つbinding */
   #componentBindings = new Set;
   get componentBindings() {
+    if (this.#updating) utils.raise("BindingSummary.componentBindings can only be called after BindingSummary.update()");
     return this.#componentBindings;
-  }
-
-  /** @type {Set<Binding>} 仮削除用のbinding、flush()でこのbindingの削除処理をする */
-  #deleteBindings = new Set;
-  get deleteBindings() {
-    return this.#deleteBindings;
-  }
-
-  /** @type {Set<Binding>} 仮追加用binding、flush()でこのbindingの追加処理をする */
-  #addBindings = new Set;
-  get addBindings() {
-    return this.#addBindings;
   }
 
   /** @type {Set<Binding>} 全binding */
@@ -4879,22 +4863,11 @@ class BindingSummary {
 
   /**
    * 
-   */
-  initUpdate() {
-    this.#updated = false;
-    this.#updateRevision++;
-  }
-  
-  /**
-   * 
    * @param {Binding} binding 
    */
   add(binding) {
+    if (!this.#updating) utils.raise("BindingSummary.add() can only be called in BindingSummary.update()");
     this.#updated = true;
-    if (this.#deleteBindings.has(binding)) {
-      this.#deleteBindings.delete(binding);
-      return;
-    }
     this.#allBindings.add(binding);
   }
 
@@ -4903,12 +4876,9 @@ class BindingSummary {
    * @param {Binding} binding 
    */
   delete(binding) {
+    if (!this.#updating) utils.raise("BindingSummary.delete() can only be called in BindingSummary.update()");
     this.#updated = true;
-    if (this.#allBindings.has(binding)) {
-      this.#allBindings.delete(binding);
-      return;
-    }
-    this.#deleteBindings.add(binding);
+    this.#allBindings.delete(binding);
   }
 
   exists(binding) {
@@ -4920,12 +4890,7 @@ class BindingSummary {
   flush() {
     config.debug && performance.mark('BindingSummary.flush:start');
     try {
-      if (!this.#updated) {
-        return;
-      }
-      const bindings = Array.from(this.#allBindings.symmetricDifference(this.#deleteBindings));
-//      const bindings = Array.from(this.#allBindings).filter(binding => !this.#deleteBindings.has(binding));
-      this.rebuild(bindings);
+      this.rebuild(this.#allBindings);
     } finally {
       if (config.debug) {
         performance.mark('BindingSummary.flush:end');
@@ -4944,24 +4909,27 @@ class BindingSummary {
    * @param {(summary:BindingSummary)=>any} callback 
    */
   update(callback) {
-    this.initUpdate();
+    this.#updating = true;
+    this.#updated = false;
+    this.#updateRevision++;
     try {
       callback(this);
     } finally {
-      this.flush();
+      if (this.#updated) this.flush();
+      this.#updating = false;
     }
   }
 
   /**
    * 
-   * @param {Binding[]} bindings 
+   * @param {Set<Binding>} bindings 
    */
   rebuild(bindings) {
-    this.#allBindings = new Set(bindings);
-    this.#bindingsByKey = Map.groupBy(bindings, pickKey);
-    this.#expandableBindings = new Set(bindings.filter(filterExpandableBindings));
-    this.#componentBindings = new Set(bindings.filter(filerComponentBindings));
-    this.#deleteBindings = new Set;
+    this.#allBindings = bindings;
+    const arrayBindings = Array.from(bindings);
+    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey);
+    this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
+    this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
   }
 }
 
@@ -5147,10 +5115,10 @@ class Updator {
     const bindingSummary = component.bindingSummary;
     /** @type {Binding[]} */
     const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
-    bindingSummary.update((summary) => {
+    bindingSummary.update((bindingSummary) => {
       for(let i = 0; i < expandableBindings.length; i++) {
         const binding = expandableBindings[i];
-        if (!summary.exists(binding)) continue;
+        if (!bindingSummary.exists(binding)) continue;
         if (expandedStatePropertyByKey.has(binding.viewModelProperty.key)) {
           binding.applyToNode();
         }
@@ -5163,7 +5131,7 @@ class Updator {
    * @param {PropertyAccess[]} expandedStateProperties 
    * @param {{ component:Component, updatedBindings:Set<binding> }} param1 
    */
-  updateChildNodes(expandedStateProperties, { component, updatedBindings } = this) {
+  updateChildNodes(expandedStateProperties, { component } = this) {
     const bindingSummary = component.bindingSummary;
     /** @type {Map<string,Set<number>>} */
     const setOfIndexByParentKey = new Map;
@@ -5176,7 +5144,6 @@ class Updator {
     }
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
       for(const binding of bindingSummary.bindingsByKey.get(parentKey) ?? new Set) {
-        //if (updatedBindings.has(binding)) continue;
         binding.applyToChildNodes(setOfIndex);
       }
     }
@@ -5187,7 +5154,7 @@ class Updator {
    * @param {Map<string,PropertyAccess>} expandedStatePropertyByKey 
    * @param {{ component:Component, updatedBindings:Set<binding> }} param1 
    */
-  updateNode(expandedStatePropertyByKey, { component, updatedBindings } = this) {
+  updateNode(expandedStatePropertyByKey, { component } = this) {
     const bindingSummary = component.bindingSummary;
     const selectBindings = [];
     for(const key of expandedStatePropertyByKey.keys()) {
@@ -5195,7 +5162,6 @@ class Updator {
       if (typeof bindings === "undefined") continue;
       for(let i = 0; i < bindings.length; i++) {
         const binding = bindings[i];
-        //if (updatedBindings.has(binding)) continue;
         binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
       }
     }
@@ -5238,7 +5204,22 @@ class Updator {
       this.executing = false;
     }
 
-  } 
+  }
+
+  /**
+   * 
+   * @param {Binding} binding 
+   * @param {(updator:Updator)=>any} callback 
+   * @returns {void}
+   */
+  applyUpdateNodeByBinding(binding, callback) {
+    if (this.updatedBindings.has(binding)) return;
+    try {
+      callback(this);
+    } finally {
+      this.updatedBindings.add(binding);
+    }
+  }
 }
 
 /** @type {WeakMap<Node,Component>} */
@@ -5536,10 +5517,11 @@ class MixedComponent {
 
     this.cachableInBuilding = true;
 
-    // buid binding tree and dom 
-    this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
-    this.rootBinding.postCreate();
-    this.bindingSummary.flush();
+    // build binding tree and dom 
+    this.bindingSummary.update((summary) => {
+      this.rootBinding = BindingManager.create(this, template, template.dataset["uuid"]);
+      this.rootBinding.postCreate();
+    });
 
     if (!this.useWebComponent) {
       // case of no useWebComponent, 
