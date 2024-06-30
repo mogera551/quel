@@ -69,12 +69,12 @@ export class State {
     return this.statesByRegionName.get(this["regions.*"]);
   }
 
-  /** @type {number} the States' population percentage of the regional population */
+  /** @type {number} the States' population share of the regional population */
   get "regions.*.states.*.shareOfRegionPopulation"() {
     return this["regions.*.states.*.population"] / this["regions.*.population"];
   }
 
-  /** @type {number} the States' population percentage of total population */
+  /** @type {number} the States' population share of total population */
   get "regions.*.states.*.shareOfPopulation"() {
     return this["regions.*.states.*.population"] / this.totalPopulation;
   }
@@ -84,7 +84,7 @@ export class State {
     return this["@regions.*.states.*.population"].reduce(summaryPopulation, 0)
   }
 
-  /** @type {number} the regional population percentage of total population */
+  /** @type {number} the regional population share of total population */
   get "regions.*.shareOfPopulation"() {
     return this["regions.*.population"] / this.totalPopulation;
   }
