@@ -12,9 +12,11 @@ export const bindingManagersByUUID = {};
  * @returns {BindingManager}
  */
 export const createBindingManager = (component, template, uuid, parentBinding) => {
-  const bindingManager = bindingManagersByUUID[uuid]?.pop()?.assign(component, template, uuid, parentBinding) ??
-    new BindingManager(component, template, uuid, parentBinding);
-  bindingManager.initialize();
+  let bindingManager = bindingManagersByUUID[uuid]?.pop()?.assign(component, template, uuid, parentBinding);
+  if (typeof bindingManager === "undefined") {
+    bindingManager = new BindingManager(component, template, uuid, parentBinding);
+    bindingManager.initialize();
+  }
   Popover.initialize(bindingManager);
   return bindingManager;
 }

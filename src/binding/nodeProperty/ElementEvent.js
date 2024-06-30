@@ -75,9 +75,4 @@ export class ElementEvent extends ElementBase {
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
     this.binding.component.updator.addProcess(this.directlyCall, this, [event]);
   }
-
-  dispose() {
-    this.element.removeEventListener(this.eventType, this.handler);
-    super.dispose();
-  }
 }

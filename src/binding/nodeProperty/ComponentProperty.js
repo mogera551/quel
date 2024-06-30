@@ -72,7 +72,7 @@ export class ComponentProperty extends ElementBase {
   }
   /**
    * 初期化処理
-   * DOM要素にイベントハンドラの設定を行う
+   * コンポーネントプロパティのバインドを行う
    */
   initialize() {
     this.thisComponent.props[Symbols.bindProperty](this.propName, new BindingPropertyAccess(this.binding.viewModelProperty));

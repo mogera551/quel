@@ -1,7 +1,6 @@
 import "../../types.js";
 import { utils } from "../../utils.js";
 import { FilterManager, Filters } from "../../filter/Manager.js";
-import { nodePropertiesByClassName } from "../ReuseNodeProperty.js";
 
 export class NodeProperty {
   /** @type {Node} */
@@ -122,16 +121,5 @@ export class NodeProperty {
    * @param {Set<number>} setOfIndex
    */
   applyToChildNodes(setOfIndex) {
-  }
-
-  dispose() {
-    const name = this.constructor.name;
-
-    this.#binding = undefined;
-    this.#node = undefined;
-    this.#filters = undefined;
-
-    nodePropertiesByClassName[name]?.push(this) ?? 
-      (nodePropertiesByClassName[name] = [this]);
   }
 }

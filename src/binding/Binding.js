@@ -3,11 +3,6 @@ import { utils } from "../utils.js";
 import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
 import { Binder } from "../newBinder/Binder.js";
-import { fragmentsByUUID } from "./ReuseFragment.js";
-import { reuseBindings } from "./ReuseBinding.js";
-import { createNodeProperty } from "./ReuseNodeProperty.js";
-import { createViewModelProperty } from "./ReuseViewModelProperty.js";
-import { defaultEventHandlers } from "../newBinder/InitializeNode.js";
 
 let seq = 0;
 
@@ -105,9 +100,8 @@ export class Binding {
     viewModelPropertyName, viewModelPropertyConstructor, filters) {
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = createNodeProperty(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
-    this.#viewModelProperty = createViewModelProperty(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
-//    console.log("create bind", this.#nodeProperty.node, this.#nodeProperty.name, this.#viewModelProperty.propertyName.name);
+    this.#nodeProperty = Reflect.construct(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
+    this.#viewModelProperty = Reflect.construct(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
     return this;
   }
 
@@ -179,7 +173,6 @@ export class Binding {
     this.children.push(bindingManager);
     const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
-//    console.log(Array.from(bindingManager.fragment.childNodes));
     parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
@@ -198,24 +191,11 @@ export class Binding {
   }
 
   dispose() {
-    if (defaultEventHandlers.has(this.defaultEventHandler)) {
-      this.#nodeProperty.node.removeEventListener("input", this.defaultEventHandler);
-      defaultEventHandlers.delete(this.defaultEventHandler);
-    }
-
     for(let i = 0; i < this.children.length; i++) {
       this.children[i].dispose();
     }
     this.children.length = 0;
     this.component.bindingSummary.delete(this);
-    this.#nodeProperty.dispose();
-    this.#viewModelProperty.dispose();
-
-    this.#bindingManager = undefined;
-    this.#nodeProperty = undefined;
-    this.#viewModelProperty = undefined;
-
-    reuseBindings.push(this); // reuse
   }
 
   /**
@@ -233,11 +213,7 @@ export class Binding {
     viewModelPropertyName, viewModelPropertyConstructor,
     filters
   ) {
-    const binding = reuseBindings.pop()?.assign(bindingManager,
-      node, nodePropertyName, nodePropertyConstructor, 
-      viewModelPropertyName, viewModelPropertyConstructor,
-      filters) ?? 
-      Reflect.construct(Binding, [bindingManager,
+    const binding = Reflect.construct(Binding, [bindingManager,
         node, nodePropertyName, nodePropertyConstructor, 
         viewModelPropertyName, viewModelPropertyConstructor,
         filters]);
@@ -352,8 +328,7 @@ export class BindingManager {
    */
   initialize() {
     const binder = Binder.create(this.#template, this.#component.useKeyed);
-    this.#fragment = fragmentsByUUID[this.#uuid]?.pop() ??
-      document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
+    this.#fragment = document.importNode(this.#template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#bindings = binder.createBindings(this.#fragment, this);
     this.#nodes = Array.from(this.#fragment.childNodes);
   }
@@ -417,22 +392,19 @@ export class BindingManager {
     for(let i = 0; i < this.bindings.length; i++) {
       this.bindings[i].dispose();
     }
-    this.bindings.length = 0;
+//    this.bindings.length = 0;
 
     const uuid = this.#uuid;
-    const fragment = this.#fragment;
+//    const fragment = this.#fragment;
 
     this.#parentBinding = undefined;
     this.#component = undefined;
-    this.#template = undefined;
-    this.#loopContext = undefined;
+//    this.#template = undefined;
+//    this.#loopContext = undefined;
     this.#bindingSummary = undefined;
-    this.#uuid = undefined;
-    this.#fragment = undefined;
+//    this.#uuid = undefined;
+//    this.#fragment = undefined;
 
-    // reuse fragment
-    fragmentsByUUID[uuid]?.push(fragment) ??
-      (fragmentsByUUID[uuid] = [fragment]);
     bindingManagersByUUID[uuid]?.push(this) ??
       (bindingManagersByUUID[uuid] = [this]);
   }
