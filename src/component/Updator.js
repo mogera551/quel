@@ -202,7 +202,7 @@ export class Updator {
    * @param {(updator:Updator)=>any} callback 
    * @returns {void}
    */
-  applyUpdateNodeByBinding(binding, callback) {
+  applyNodeUpdatesByBinding(binding, callback) {
     if (this.updatedBindings.has(binding)) return;
     try {
       callback(this);

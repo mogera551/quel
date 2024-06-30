@@ -115,7 +115,7 @@ export class Binding {
    * apply value to node
    */
   applyToNode({ component, nodeProperty, viewModelProperty } = this) {
-    component.updator.applyUpdateNodeByBinding(this, updator => {
+    component.updator.applyNodeUpdatesByBinding(this, updator => {
       if (!nodeProperty.applicable) return;
       const filteredViewModelValue = viewModelProperty.filteredValue ?? "";
       if (nodeProperty.isSameValue(filteredViewModelValue)) return;
@@ -128,7 +128,7 @@ export class Binding {
    * @param {Set<number>} setOfIndex 
    */
   applyToChildNodes(setOfIndex, { component } = this) {
-    component.updator.applyUpdateNodeByBinding(this, updator => {
+    component.updator.applyNodeUpdatesByBinding(this, updator => {
       this.nodeProperty.applyToChildNodes(setOfIndex);
     });
   }
