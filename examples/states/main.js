@@ -45,7 +45,7 @@ export const html = `
       <tfoot>
         <tr class="summary">
           <td class="text-center" colspan="2">Total</td>
-          <td class="text-right">{{ population|number.toLocaleString }}</td>
+          <td class="text-right">{{ totalPopulation|number.toLocaleString }}</td>
           <td></td>
           <td></td>
         </tr>
@@ -58,10 +58,10 @@ export const html = `
 const summaryPopulation = (sum, population) => sum + population;
 
 export class State {
-  /** @type {Map<string,StateInfo[]>} */
+  /** @type {Map<string,StateInfo[]>} list of States by region name */
   statesByRegionName = Map.groupBy(allStates, state => state.region);
 
-  /** @type {string[]} unique list of region */
+  /** @type {string[]} list of unique region */
   regions = Array.from(new Set(allStates.map(state => state.region))).toSorted();
 
   /** @type {StateInfo[]} list of States in the regions */
@@ -69,14 +69,14 @@ export class State {
     return this.statesByRegionName.get(this["regions.*"]);
   }
 
-  /** @type {number} the States' population percentage of regional population */
+  /** @type {number} the States' population percentage of the regional population */
   get "regions.*.states.*.shareOfRegionPopulation"() {
     return this["regions.*.states.*.population"] / this["regions.*.population"];
   }
 
   /** @type {number} the States' population percentage of total population */
   get "regions.*.states.*.shareOfPopulation"() {
-    return this["regions.*.states.*.population"] / this.population;
+    return this["regions.*.states.*.population"] / this.totalPopulation;
   }
 
   /** @type {number} the regional population */
@@ -86,11 +86,11 @@ export class State {
 
   /** @type {number} the regional population percentage of total population */
   get "regions.*.shareOfPopulation"() {
-    return this["regions.*.population"] / this.population;
+    return this["regions.*.population"] / this.totalPopulation;
   }
 
   /** @type {number} total population, population of all States */
-  get population() {
+  get totalPopulation() {
     return this["@regions.*.population"].reduce(summaryPopulation, 0)
   }
 
@@ -101,7 +101,7 @@ export class State {
     "regions.*.states.*.shareOfRegionPopulation": ["regions.*.states.*.population", "regions.*.population"],
     "regions.*.population": ["regions.*.states.*.population"],
     "regions.*.shareOfPopulation": ["regions.*.population", "population"],
-    "population": ["regions.*.population"],
+    "totalPopulation": ["regions.*.population"],
   }
 }
 
