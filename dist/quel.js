@@ -1266,9 +1266,13 @@ class Popover {
    * @returns 
    */
   static initialize(bindingManager) {
-    const buttonList = bindingManager.fragment.querySelectorAll("[popovertarget]");
-    if (buttonList.length === 0) return;
-    for(const button of buttonList) {
+    let buttons = this.buttonsByFragment.get(bindingManager.fragment);
+    if (typeof buttons === "undefined") {
+      buttons = Array.from(bindingManager.fragment.querySelectorAll("[popovertarget]"));
+      this.buttonsByFragment.set(bindingManager.fragment, buttons);
+    }
+    if (buttons.length === 0) return;
+    for(const button of buttons) {
       const id = button.getAttribute("popovertarget");
       let setContextIndexes = setContextIndexesByIdByBindingManager.get(bindingManager)?.get(id);
       if (typeof setContextIndexes === "undefined") {
@@ -1280,9 +1284,17 @@ class Popover {
       button.addEventListener("click", setContextIndexes);
     }
   }
+
+  /**
+   * 
+   * @param {BindingManager} bindingManager 
+   */
   static dispose(bindingManager) {
     setContextIndexesByIdByBindingManager.delete(bindingManager);
   }
+
+  /** @type {Map<DocumentFragment,HTMLButtonElement[]>} */
+  static buttonsByFragment = new Map;
 }
 
 /** @type {Object<string,import("./Binding.js").BindingManager[]>} */
