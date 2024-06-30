@@ -57,12 +57,16 @@ export const html = `
 
 const summaryPopulation = (sum, population) => sum + population;
 
+const regionOrder = ["Northeast", "Midwest", "South", "West"];
+
+const compareRegionName = (a, b) => regionOrder.indexOf(a) - regionOrder.indexOf(b);
+
 export class State {
   /** @type {Map<string,StateInfo[]>} list of States by region name */
   statesByRegionName = Map.groupBy(allStates, state => state.region);
 
   /** @type {string[]} list of unique region */
-  regions = Array.from(new Set(allStates.map(state => state.region))).toSorted();
+  regions = Array.from(new Set(allStates.map(state => state.region))).toSorted(compareRegionName);
 
   /** @type {StateInfo[]} list of States in the regions */
   get "regions.*.states"() {
@@ -81,6 +85,8 @@ export class State {
 
   /** @type {number} the regional population */
   get "regions.*.population"() {
+    // "@regions.*.states.*.population" means array of the population of all States in the region
+    // example: [733406, 7431344, 38965193 ...] for "West"
     return this["@regions.*.states.*.population"].reduce(summaryPopulation, 0)
   }
 
@@ -91,6 +97,8 @@ export class State {
 
   /** @type {number} total population, population of all States */
   get totalPopulation() {
+    // "@regions.*.population" means array of the regional population
+    // example: [56983517, 68909283, 129446318, 78896805] for ["Northeast", "Midwest", "South", "West"]
     return this["@regions.*.population"].reduce(summaryPopulation, 0)
   }
 
