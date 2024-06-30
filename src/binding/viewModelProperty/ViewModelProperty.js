@@ -143,4 +143,7 @@ export class ViewModelProperty {
   setChildValue(index, value) {
     return this.viewModel[Symbols.directlySet](`${this.name}.*` , this.indexes.concat(index), value);
   }
+
+  dispose() {
+  }
 }

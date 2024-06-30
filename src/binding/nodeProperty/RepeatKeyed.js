@@ -130,4 +130,9 @@ export class RepeatKeyed extends Repeat {
   initialize() {
     this.#lastValue = [];
   }
+
+  dispose() {
+    super.dispose();
+    this.#lastValue = [];
+  }
 }

@@ -195,6 +195,8 @@ export class Binding {
       this.children[i].dispose();
     }
     this.children.length = 0;
+    this.nodeProperty.dispose();
+    this.viewModelProperty.dispose();
     this.component.bindingSummary.delete(this);
   }
 
@@ -392,18 +394,10 @@ export class BindingManager {
     for(let i = 0; i < this.bindings.length; i++) {
       this.bindings[i].dispose();
     }
-//    this.bindings.length = 0;
-
     const uuid = this.#uuid;
-//    const fragment = this.#fragment;
-
     this.#parentBinding = undefined;
     this.#component = undefined;
-//    this.#template = undefined;
-//    this.#loopContext = undefined;
     this.#bindingSummary = undefined;
-//    this.#uuid = undefined;
-//    this.#fragment = undefined;
 
     bindingManagersByUUID[uuid]?.push(this) ??
       (bindingManagersByUUID[uuid] = [this]);

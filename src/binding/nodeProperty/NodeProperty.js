@@ -122,4 +122,7 @@ export class NodeProperty {
    */
   applyToChildNodes(setOfIndex) {
   }
+
+  dispose() {
+  }
 }
