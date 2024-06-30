@@ -59,44 +59,44 @@ const summaryPopulation = (sum, population) => sum + population;
 
 export class State {
   /** @type {Map<string,StateInfo[]>} */
-  statesByRegion = Map.groupBy(allStates, state => state.region);
+  statesByRegionName = Map.groupBy(allStates, state => state.region);
 
-  /** @type {string[]}  */
+  /** @type {string[]} unique list of region */
   regions = Array.from(new Set(allStates.map(state => state.region))).toSorted();
 
-  /** @type {StateInfo[]} States in regions*/
+  /** @type {StateInfo[]} list of States in the regions */
   get "regions.*.states"() {
-    return this.statesByRegion.get(this["regions.*"]);
+    return this.statesByRegionName.get(this["regions.*"]);
   }
 
-  /** @type {number} share of region */
+  /** @type {number} the States' population percentage of regional population */
   get "regions.*.states.*.shareOfRegionPopulation"() {
     return this["regions.*.states.*.population"] / this["regions.*.population"];
   }
 
-  /** @type {number} share of total */
+  /** @type {number} the States' population percentage of total population */
   get "regions.*.states.*.shareOfPopulation"() {
     return this["regions.*.states.*.population"] / this.population;
   }
 
-  /** @type {number} population of region */
+  /** @type {number} the regional population */
   get "regions.*.population"() {
     return this["@regions.*.states.*.population"].reduce(summaryPopulation, 0)
   }
 
-  /** @type {number} share of total */
+  /** @type {number} the regional population percentage of total population */
   get "regions.*.shareOfPopulation"() {
     return this["regions.*.population"] / this.population;
   }
 
-  /** @type {number} total population */
+  /** @type {number} total population, population of all States */
   get population() {
     return this["@regions.*.population"].reduce(summaryPopulation, 0)
   }
 
   /** @type {{prop:string,refProps:string[]}[]} */
   $dependentProps = {
-    "regions.*.states": ["statesByRegion", "regions"],
+    "regions.*.states": ["statesByRegionName", "regions"],
     "regions.*.states.*.shareOfPopulation": ["regions.*.states.*.population", "population"],
     "regions.*.states.*.shareOfRegionPopulation": ["regions.*.states.*.population", "regions.*.population"],
     "regions.*.population": ["regions.*.states.*.population"],
