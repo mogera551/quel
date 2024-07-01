@@ -97,7 +97,7 @@ export class State {
 
   /** @type {number} total population, population of all States */
   get totalPopulation() {
-    // "@regions.*.population" means array of the regional population
+    // "@regions.*.population" means array of the population of all regions
     // example: [56983517, 68909283, 129446318, 78896805] for ["Northeast", "Midwest", "South", "West"]
     return this["@regions.*.population"].reduce(summaryPopulation, 0)
   }
