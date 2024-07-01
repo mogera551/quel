@@ -57,16 +57,14 @@ export const html = `
 
 const summaryPopulation = (sum, population) => sum + population;
 
-const regionOrder = ["Northeast", "Midwest", "South", "West"];
-
-const compareRegionName = (a, b) => regionOrder.indexOf(a) - regionOrder.indexOf(b);
+const regions = ["Northeast", "Midwest", "South", "West"];
 
 export class State {
   /** @type {Map<string,StateInfo[]>} list of States by region name */
   statesByRegionName = Map.groupBy(allStates, state => state.region);
 
-  /** @type {string[]} list of unique region */
-  regions = Array.from(new Set(allStates.map(state => state.region))).toSorted(compareRegionName);
+  /** @type {string[]} list of region */
+  regions = regions;
 
   /** @type {StateInfo[]} list of States in the regions */
   get "regions.*.states"() {
@@ -102,7 +100,7 @@ export class State {
     return this["@regions.*.population"].reduce(summaryPopulation, 0)
   }
 
-  /** @type {{prop:string,refProps:string[]}[]} */
+  /** @type {{prop:string,refProps:string[]}[]} describe dependency for property */
   $dependentProps = {
     "regions.*.states": ["statesByRegionName", "regions"],
     "regions.*.states.*.shareOfPopulation": ["regions.*.states.*.population", "population"],
@@ -113,6 +111,10 @@ export class State {
   }
 }
 
+/**
+ * User defined filters
+ * @type {Object<string,Object<string,(options:any[])=>(value:any)=>any>>} 
+ */
 export const filters = {
   output: {
     "percent": options => value => (Number(value) * 100).toFixed(options[0]),
