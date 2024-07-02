@@ -210,4 +210,4 @@ export class ViewModel {
   }
 }
 
-export const config = { useShadowRoot: true};
+export const moduleConfig = { useShadowRoot: true};
