@@ -59,6 +59,8 @@ export class ElementEvent extends ElementBase {
    * @param {Event} event
    */
   async directlyCall(event) {
+    // 再構築などでバインドが削除されている場合は処理しない
+    if (!(this.binding.component?.bindingSummary.exists(this.binding) ?? false)) return;
     const { viewModelProperty = undefined, loopContext = undefined } = this.binding ?? {};
     return viewModelProperty?.viewModel[Symbols.directlyCall](viewModelProperty.name, loopContext, event);
   }
@@ -69,7 +71,7 @@ export class ElementEvent extends ElementBase {
    */
   eventHandler(event) {
     // 再構築などでバインドが削除されている場合は処理しない
-    if (!this.binding.component.bindingSummary.exists(this.binding)) return;
+    if (!(this.binding.component?.bindingSummary.exists(this.binding) ?? false)) return;
     // event filter
     event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
     !(event?.noStopPropagation ?? false) && event.stopPropagation();
