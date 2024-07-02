@@ -84,6 +84,7 @@ export class ViewModel {
     { text:"Active", value:FilterType.active }, 
     { text:"Completed", value:FilterType.completed } 
   ];
+
   /** @type {boolean} filter's selected flag */
   get "filters.*.selected"() {
     return this["filters.*.value"] === this.selectedFilter;
@@ -93,14 +94,17 @@ export class ViewModel {
   get list() {
     return this.allList.filter(filterFuncByFilterType[this.selectedFilter]);
   }
+
   /** @type {boolean} editing flag of todo item */
   get "list.*.editing"() {
     return this["list.*"] === this.editingItem;
   }
+
   /** @type {number} active todo count */
   get activeCount() {
     return this.allList.filter(filterFuncByFilterType[FilterType.active]).length;
   }
+
   /** @type {number} complete todo count */
   get completedCount() {
     return this.allList.filter(filterFuncByFilterType[FilterType.completed]).length;
@@ -116,6 +120,7 @@ export class ViewModel {
 
   /** @type {string} content for new todo */
   content = "";
+
   /**
    * add new todo item to the list
    */
@@ -127,8 +132,10 @@ export class ViewModel {
 
   /** @type {TodoItem|undefined} editing todo */
   editingItem;
+
   /** @type {string} work content for editing todo, and copy to editing todo content when has edited */
   editingContent;
+
   /**
    * start edit selected todo's content
    */
@@ -136,6 +143,7 @@ export class ViewModel {
     this.editingItem = this["list.*"];
     this.editingContent = this.editingItem.content;
   }
+
   /**
    * clear editing the content
    */
@@ -143,6 +151,7 @@ export class ViewModel {
     this.editingItem = undefined;
     this.editingContent = "";
   }
+
   /**
    * complete editing the content
    */
@@ -152,6 +161,7 @@ export class ViewModel {
     }
     this.clearEditing();
   }
+
   /**
    * capture key up event for editing the content 
    * @param {Event} e 
