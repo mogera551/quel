@@ -137,7 +137,7 @@ export class ViewModel {
   editingContent;
 
   /**
-   * start edit selected todo's content
+   * start edit the content of selected item
    */
   startEditing() {
     this.editingItem = this["list.*"];
@@ -180,17 +180,18 @@ export class ViewModel {
   }
 
   /**
-   * detele completed todo items from the list
+   * detele completed items from the list
    */
   clearCompleted() {
     this.allList = this.allList.filter(item => !item.completed);
   }
 
   /**
-   * delete selected todo item from the list
+   * delete item from the list
    */
-  deleteItem(e, $1) {
-    this.allList = this.allList.filter((_, index) => index !== $1);
+  deleteItem() {
+    const deleteItem = this["list.*"];
+    this.allList = this.allList.filter(item => item !== deleteItem);
   }
 
   /**
