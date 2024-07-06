@@ -4985,7 +4985,7 @@ class Updator {
    * @param {()=>any} target 
    * @param {object} thisArgument 
    * @param {any[]} argumentList 
-   * @param {{ processQueue:Process[], executing:boolean, exec:()=>any }} param3 
+   * @param {{ processQueue:Process[], executing:boolean }} param3 
    * @returns 
    */
   addProcess(target, thisArgument, argumentList, { processQueue, executing } = this) {
