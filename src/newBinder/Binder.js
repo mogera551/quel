@@ -29,7 +29,7 @@ export class Binder {
   uuid;
 
   /** @type {BindNodeInfo[]} */
-  nodeInfos = {};
+  nodeInfos = [];
 
   /**
    * @param {HTMLTemplateElement} template
@@ -46,10 +46,10 @@ export class Binder {
    * 
    * @param {boolean} useKeyed 
    */
-  parse(useKeyed) {
-    const rootElement = this.template.content;
+  parse(useKeyed, { template, nodeInfos } = this) {
+    const rootElement = template.content;
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-    this.nodeInfos = [];
+    nodeInfos.length = 0;
     for(let i = 0; i < nodes.length; i++) {
       let node = nodes[i];
       /** @type {BindNodeInfo} */
@@ -77,7 +77,7 @@ export class Binder {
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
       nodeInfo.initializeNode = InitializeNode(nodeInfo);
 
-      this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
+      nodeInfos[nodeInfos.length] = nodeInfo; // push
     }
   }
 
@@ -87,10 +87,10 @@ export class Binder {
    * @param {BindingManager} bindingManager
    * @returns {Binding[]}
    */
-  createBindings(content, bindingManager) {
+  createBindings(content, bindingManager, { nodeInfos } = this) {
     const bindings =[];
-    for(let i = 0; i < this.nodeInfos.length; i++) {
-      const nodeInfo = this.nodeInfos[i];
+    for(let i = 0; i < nodeInfos.length; i++) {
+      const nodeInfo = nodeInfos[i];
       const node = findNodeByNodeRoute(content, nodeInfo.nodeRoute);
       const nodeBindings = [];
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
@@ -103,16 +103,17 @@ export class Binder {
     return bindings;
   }
 
-  static #binderByUUID = {};
+  /** @type {Object<string,Binder>} */
+  static binderByUUID = {};
   /**
    * 
    * @param {HTMLTemplateElement} template 
    * @param {boolean} useKeyed
    * @returns {Binder}
    */
-  static create(template, useKeyed) {
+  static create(template, useKeyed, { binderByUUID } = this) {
     const uuid = template.dataset[UUID_DATASET] ?? "";
-    return this.#binderByUUID[uuid] ?? (this.#binderByUUID[uuid] = new Binder(template, uuid, useKeyed));
+    return binderByUUID[uuid] ?? (binderByUUID[uuid] = new Binder(template, uuid, useKeyed));
   }
 }
 

@@ -21,6 +21,7 @@ export class Updator {
   /** @type {Component} */
   component;
   state;
+  /** @type {Process[]} */
   processQueue = [];
   /** @type {PropertyAccess[]} */
   updatedStateProperties = [];
@@ -35,18 +36,36 @@ export class Updator {
     this.component = component;
   }
 
-  addProcess(target, thisArgument, argumentList) {
-    this.processQueue.push({ target, thisArgument, argumentList });
-    if (this.executing) return;
+  /**
+   * 
+   * @param {()=>any} target 
+   * @param {object} thisArgument 
+   * @param {any[]} argumentList 
+   * @param {{ processQueue:Process[], executing:boolean, exec:()=>any }} param3 
+   * @returns 
+   */
+  addProcess(target, thisArgument, argumentList, { processQueue, executing } = this) {
+    processQueue.push({ target, thisArgument, argumentList });
+    if (executing) return;
     this.exec();
   }
 
   /**
    * 
-   * @param {PropertyAccess} prop 
+   * @param {{ processQueue:Process[] }} param0
+   * @returns {Process[]}
    */
-  addUpdatedStateProperty(prop) {
-    this.updatedStateProperties.push(prop);
+  getProcessQueue({ processQueue } = this) {
+    return processQueue;
+  }
+
+  /**
+   * 
+   * @param {PropertyAccess} prop
+   * @param {{ updatedStateProperties:PropertyAccess[] }} param1 
+   */
+  addUpdatedStateProperty(prop, { updatedStateProperties } = this) {
+    updatedStateProperties.push(prop);
   }
 
   /**
@@ -80,7 +99,7 @@ export class Updator {
    * @param {PropertyAccess[]} updatedStateProperties 
    * @param {{ component:Component }} param1 
    */
-  expandStateProperties(updatedStateProperties, {component} = this) {
+  expandStateProperties(updatedStateProperties, { component } = this) {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
@@ -163,13 +182,37 @@ export class Updator {
       binding.nodeProperty.postUpdate(expandedStatePropertyByKey);
     }
   }
-  async exec() {
+  /**
+   * 
+   * @param {()=>any} callback 
+   */
+  async execCallback(callback) {
     this.executing = true;
     config.debug && performance.mark('Updator.exec:start');
     try {
-      while(this.processQueue.length > 0) {
-        this.updatedBindings.clear();
-        this.component.contextRevision++;
+      await callback();
+    } finally {
+      if (config.debug) {
+        performance.mark('Updator.exec:end')
+        performance.measure('Updator.exec', 'Updator.exec:start', 'Updator.exec:end');
+        console.log(performance.getEntriesByType("measure"));    
+        performance.clearMeasures('Updator.exec');
+        performance.clearMarks('Updator.exec:start');
+        performance.clearMarks('Updator.exec:end');
+      }
+      this.executing = false;
+    }
+  }
+
+  /**
+   * 
+   * @param {{ updatedBindings:Set<Binding>, component:Component }} param0 
+   */
+  async exec({ updatedBindings, component } = this) {
+    await this.execCallback(async () => {
+      while(this.getProcessQueue().length > 0) {
+        updatedBindings.clear();
+        component.contextRevision++;
 
         const updatedStateProperties = await this.process();
         const expandedStateProperties = this.expandStateProperties(updatedStateProperties);
@@ -181,33 +224,22 @@ export class Updator {
         this.updateChildNodes(expandedStateProperties);
         this.updateNode(expandedStatePropertyByKey);
       }
-    } finally {
-      if (config.debug) {
-        performance.mark('Updator.exec:end')
-        performance.measure('Updator.exec', 'Updator.exec:start', 'Updator.exec:end');
-        console.log(performance.getEntriesByType("measure"));    
-        performance.clearMeasures('Updator.exec');
-        performance.clearMarks('Updator.exec:start');
-        performance.clearMarks('Updator.exec:end');
-      }
-
-      this.executing = false;
-    }
-
+    });
   }
 
   /**
    * 
    * @param {Binding} binding 
    * @param {(updator:Updator)=>any} callback 
+   * @param {{ updatedBindings:Set<Binding> }} param2
    * @returns {void}
    */
-  applyNodeUpdatesByBinding(binding, callback) {
-    if (this.updatedBindings.has(binding)) return;
+  applyNodeUpdatesByBinding(binding, callback, { updatedBindings } = this) {
+    if (updatedBindings.has(binding)) return;
     try {
       callback(this);
     } finally {
-      this.updatedBindings.add(binding);
+      updatedBindings.add(binding);
     }
   }
 }

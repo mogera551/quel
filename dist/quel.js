@@ -3425,7 +3425,7 @@ class Binder {
   uuid;
 
   /** @type {BindNodeInfo[]} */
-  nodeInfos = {};
+  nodeInfos = [];
 
   /**
    * @param {HTMLTemplateElement} template
@@ -3442,10 +3442,10 @@ class Binder {
    * 
    * @param {boolean} useKeyed 
    */
-  parse(useKeyed) {
-    const rootElement = this.template.content;
+  parse(useKeyed, { template, nodeInfos } = this) {
+    const rootElement = template.content;
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-    this.nodeInfos = [];
+    nodeInfos.length = 0;
     for(let i = 0; i < nodes.length; i++) {
       let node = nodes[i];
       /** @type {BindNodeInfo} */
@@ -3473,7 +3473,7 @@ class Binder {
       nodeInfo.nodeRouteKey = nodeInfo.nodeRoute.join(",");
       nodeInfo.initializeNode = InitializeNode(nodeInfo);
 
-      this.nodeInfos[this.nodeInfos.length] = nodeInfo; // push
+      nodeInfos[nodeInfos.length] = nodeInfo; // push
     }
   }
 
@@ -3483,10 +3483,10 @@ class Binder {
    * @param {BindingManager} bindingManager
    * @returns {Binding[]}
    */
-  createBindings(content, bindingManager) {
+  createBindings(content, bindingManager, { nodeInfos } = this) {
     const bindings =[];
-    for(let i = 0; i < this.nodeInfos.length; i++) {
-      const nodeInfo = this.nodeInfos[i];
+    for(let i = 0; i < nodeInfos.length; i++) {
+      const nodeInfo = nodeInfos[i];
       const node = findNodeByNodeRoute(content, nodeInfo.nodeRoute);
       const nodeBindings = [];
       for(let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
@@ -3499,16 +3499,17 @@ class Binder {
     return bindings;
   }
 
-  static #binderByUUID = {};
+  /** @type {Object<string,Binder>} */
+  static binderByUUID = {};
   /**
    * 
    * @param {HTMLTemplateElement} template 
    * @param {boolean} useKeyed
    * @returns {Binder}
    */
-  static create(template, useKeyed) {
+  static create(template, useKeyed, { binderByUUID } = this) {
     const uuid = template.dataset[UUID_DATASET] ?? "";
-    return this.#binderByUUID[uuid] ?? (this.#binderByUUID[uuid] = new Binder(template, uuid, useKeyed));
+    return binderByUUID[uuid] ?? (binderByUUID[uuid] = new Binder(template, uuid, useKeyed));
   }
 }
 
@@ -4964,6 +4965,7 @@ class Updator {
   /** @type {Component} */
   component;
   state;
+  /** @type {Process[]} */
   processQueue = [];
   /** @type {PropertyAccess[]} */
   updatedStateProperties = [];
@@ -4978,18 +4980,36 @@ class Updator {
     this.component = component;
   }
 
-  addProcess(target, thisArgument, argumentList) {
-    this.processQueue.push({ target, thisArgument, argumentList });
-    if (this.executing) return;
+  /**
+   * 
+   * @param {()=>any} target 
+   * @param {object} thisArgument 
+   * @param {any[]} argumentList 
+   * @param {{ processQueue:Process[], executing:boolean, exec:()=>any }} param3 
+   * @returns 
+   */
+  addProcess(target, thisArgument, argumentList, { processQueue, executing } = this) {
+    processQueue.push({ target, thisArgument, argumentList });
+    if (executing) return;
     this.exec();
   }
 
   /**
    * 
-   * @param {PropertyAccess} prop 
+   * @param {{ processQueue:Process[] }} param0
+   * @returns {Process[]}
    */
-  addUpdatedStateProperty(prop) {
-    this.updatedStateProperties.push(prop);
+  getProcessQueue({ processQueue } = this) {
+    return processQueue;
+  }
+
+  /**
+   * 
+   * @param {PropertyAccess} prop
+   * @param {{ updatedStateProperties:PropertyAccess[] }} param1 
+   */
+  addUpdatedStateProperty(prop, { updatedStateProperties } = this) {
+    updatedStateProperties.push(prop);
   }
 
   /**
@@ -5023,7 +5043,7 @@ class Updator {
    * @param {PropertyAccess[]} updatedStateProperties 
    * @param {{ component:Component }} param1 
    */
-  expandStateProperties(updatedStateProperties, {component} = this) {
+  expandStateProperties(updatedStateProperties, { component } = this) {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
@@ -5106,13 +5126,37 @@ class Updator {
       binding.nodeProperty.postUpdate(expandedStatePropertyByKey);
     }
   }
-  async exec() {
+  /**
+   * 
+   * @param {()=>any} callback 
+   */
+  async execCallback(callback) {
     this.executing = true;
     config.debug && performance.mark('Updator.exec:start');
     try {
-      while(this.processQueue.length > 0) {
-        this.updatedBindings.clear();
-        this.component.contextRevision++;
+      await callback();
+    } finally {
+      if (config.debug) {
+        performance.mark('Updator.exec:end');
+        performance.measure('Updator.exec', 'Updator.exec:start', 'Updator.exec:end');
+        console.log(performance.getEntriesByType("measure"));    
+        performance.clearMeasures('Updator.exec');
+        performance.clearMarks('Updator.exec:start');
+        performance.clearMarks('Updator.exec:end');
+      }
+      this.executing = false;
+    }
+  }
+
+  /**
+   * 
+   * @param {{ updatedBindings:Set<Binding>, component:Component }} param0 
+   */
+  async exec({ updatedBindings, component } = this) {
+    await this.execCallback(async () => {
+      while(this.getProcessQueue().length > 0) {
+        updatedBindings.clear();
+        component.contextRevision++;
 
         const updatedStateProperties = await this.process();
         const expandedStateProperties = this.expandStateProperties(updatedStateProperties);
@@ -5124,33 +5168,22 @@ class Updator {
         this.updateChildNodes(expandedStateProperties);
         this.updateNode(expandedStatePropertyByKey);
       }
-    } finally {
-      if (config.debug) {
-        performance.mark('Updator.exec:end');
-        performance.measure('Updator.exec', 'Updator.exec:start', 'Updator.exec:end');
-        console.log(performance.getEntriesByType("measure"));    
-        performance.clearMeasures('Updator.exec');
-        performance.clearMarks('Updator.exec:start');
-        performance.clearMarks('Updator.exec:end');
-      }
-
-      this.executing = false;
-    }
-
+    });
   }
 
   /**
    * 
    * @param {Binding} binding 
    * @param {(updator:Updator)=>any} callback 
+   * @param {{ updatedBindings:Set<Binding> }} param2
    * @returns {void}
    */
-  applyNodeUpdatesByBinding(binding, callback) {
-    if (this.updatedBindings.has(binding)) return;
+  applyNodeUpdatesByBinding(binding, callback, { updatedBindings } = this) {
+    if (updatedBindings.has(binding)) return;
     try {
       callback(this);
     } finally {
-      this.updatedBindings.add(binding);
+      updatedBindings.add(binding);
     }
   }
 }
