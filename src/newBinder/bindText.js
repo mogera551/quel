@@ -10,9 +10,9 @@ const getBindTextFromHTMLElement = node => node.dataset[BIND_DATASET] ?? "";
 /** @type {BindTextFn} get text to bind from data-bind attribute */
 const getBindTextFromSVGElement = node => node.dataset[BIND_DATASET] ?? "";
 /** @type {BindTextFn} get text to bind from textContent property */
-const getBindTextFromText = node => node.textContent.slice(3) ?? "";
+const getBindTextFromText = node => node.textContent.slice(3);
 /** @type {BindTextFn} get text to bind from template's data-bind attribute, looking up by textContent property */
-const getBindTextFromTemplate = node => getByUUID(node.textContent.slice(3) ?? "")?.dataset[BIND_DATASET] ?? "";
+const getBindTextFromTemplate = node => getByUUID(node.textContent.slice(3))?.dataset[BIND_DATASET] ?? "";
 
 /** @type {Object<NodeType,BindTextFn>} */
 const getBindTextByNodeType = {

@@ -3,6 +3,7 @@ export default {
   testEnvironment: 'jsdom',
   transform: {},
   collectCoverage: true,
+//  setupFilesAfterEnv: ['<rootDir>/mock/setup-mock.js'],
   coveragePathIgnorePatterns: [
     "/node_modules/", 
     "/demo/",
