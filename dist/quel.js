@@ -1439,24 +1439,25 @@ const NodeType = {
 };
 
 /** @type {(node:Node)=>string} */
-const nodeKey = node => node.constructor.name + "\t" + node.textContent?.[2] ?? "";
+const createNodeKey = node => node.constructor.name + "\t" + ((node instanceof Comment) ? (node.textContent[2] ?? "") : "");
 
 /** @type {Object<string,NodeType>} */
 const nodeTypeByNodeKey = {};
 
-/** @type {Object<NodeType,(node:Node)=>NodeType>} */
+/** @type {(node:Node)=>NodeType} */
 const getNodeTypeByNode = node =>
-  node instanceof Comment && node.textContent?.[2] === ":" ? NodeType.Text : 
+  node instanceof Comment && node.textContent[2] === ":" ? NodeType.Text : 
   node instanceof HTMLElement ? NodeType.HTMLElement :
-  node instanceof Comment && node.textContent?.[2] === "|" ? NodeType.Template : 
-  node instanceof SVGElement ? NodeType.SVGElement : NodeType.Unknown;
+  node instanceof Comment && node.textContent[2] === "|" ? NodeType.Template : 
+  node instanceof SVGElement ? NodeType.SVGElement : utils.raise(`Unknown NodeType: ${node.nodeType}`);
 
 /**
  * get node type
  * @param {Node} node
  * @returns {NodeType}
  */
-const getNodeType = (node) => nodeTypeByNodeKey[nodeKey(node)] ?? (nodeTypeByNodeKey[nodeKey(node)] = getNodeTypeByNode(node));
+const getNodeType = (node, nodeKey = createNodeKey(node)) => 
+  nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));
 
 const DEFAULT_PROPERTY = "textContent";
 
