@@ -10,7 +10,6 @@ jest.unstable_mockModule('../../src/component/Template.js', () => {
 });
 const { getBindText } = await import("../../src/newBinder/bindText.js");
 const { NodeType } = await import("../../src/newBinder/nodeType.js");
-const { getByUUID } = await import("../../src/component/Template.js");
 
 describe("getBindText", () => {
 
