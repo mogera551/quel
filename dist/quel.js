@@ -3321,9 +3321,6 @@ const isInputable = (node, nodeType) => isInputableFn[nodeType](node);
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
 
-/** @type {Set<(event:Event)=>void>} */
-const defaultEventHandlers = new Set;
-
 /** @type {(element:HTMLElement)=>(binding:import("../binding/Binding.js").Binding)=>void} */
 const setDefaultEventHandlerByElement = element => binding => 
   element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
@@ -3367,17 +3364,14 @@ function InitializeHTMLElement(node, isInputable, bindings, defaultName) {
 
     if (radioBinding) {
       setDefaultEventHandler(radioBinding);
-      defaultEventHandlers.add(radioBinding.defaultEventHandler);
     } else if (checkboxBinding) {
       setDefaultEventHandler(checkboxBinding);
-      defaultEventHandlers.add(checkboxBinding.defaultEventHandler);
     } else if (defaultBinding && isInputable) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
       // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
       // ・nodeが入力系（input, textarea, select） → 入力系に限定
       setDefaultEventHandler(defaultBinding);
-      defaultEventHandlers.add(defaultBinding.defaultEventHandler);
     }
   }
   return undefined;
