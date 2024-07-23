@@ -5,6 +5,7 @@ export { getCustomTagFromImportMeta, importHtmlFromImportMeta, importCssFromImpo
 export { bootFromImportMeta } from "./Boot.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "./filter/Manager.js";
 import { GlobalData } from "./global/Data.js";
+export { loadSingleFileComponent, registerSingleFileComponents } from "./component/SingleFile.js";
 
 /**
  * 

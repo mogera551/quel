@@ -6571,6 +6571,60 @@ async function bootFromImportMeta(importMeta, configPath) {
 
 /**
  * 
+ * @param {string} path
+ * @returns {Promise<ComponentModule>} 
+ */
+async function loadSingleFileComponent(path) {
+  const template = document.createElement("template");
+  const response = await fetch(path);
+  template.innerHTML = await response.text();
+
+  let scriptModule;
+  const script = template.content.querySelector("script");
+  if (script) {
+    scriptModule = await import("data:text/javascript;charset=utf-8," + script.text);
+    script.remove();
+  } else {
+    scriptModule = { ViewModel:class {} };
+  }
+
+  let cssModule;
+  const style = template.content.querySelector("style");
+  if (style) {
+    cssModule = { css: style.textContent };
+    style.remove();
+  } else {
+    cssModule = {};
+  }
+
+  const htmlModule = { html: template.innerHTML };
+
+  return Object.assign({}, scriptModule, htmlModule, cssModule);
+}
+
+/**
+ * 
+ * @param {string} customElementName
+ * @param {string} pathToSingleFileComponent 
+ */
+async function registerSingleFileComponent(customElementName, pathToSingleFileComponent) {
+  const componentModule = await loadSingleFileComponent(pathToSingleFileComponent);
+  registerComponentModule(customElementName, componentModule);
+}
+
+
+/**
+ * 
+ * @param {Object<string,string>} pathToSingleFileComponentByCustomElementName
+ */
+async function registerSingleFileComponents(pathToSingleFileComponentByCustomElementName) {
+  for(const [customElementName, pathToSingleFileComponent] of Object.entries(pathToSingleFileComponentByCustomElementName ?? {})) {
+    registerSingleFileComponent(customElementName, pathToSingleFileComponent);
+  }
+}
+
+/**
+ * 
  * @param {Object<string,UserFilterData>} filters 
  */
 function registerFilters(filters) {
@@ -6590,4 +6644,4 @@ function registerGlobal(data) {
   Object.assign(GlobalData.data, data);
 }
 
-export { bootFromImportMeta, config, generateComponentClass, getCustomTagFromImportMeta, importCssFromImportMeta, importHtmlFromImportMeta, loader, registerComponentModules, registerFilters, registerGlobal };
+export { bootFromImportMeta, config, generateComponentClass, getCustomTagFromImportMeta, importCssFromImportMeta, importHtmlFromImportMeta, loadSingleFileComponent, loader, registerComponentModules, registerFilters, registerGlobal, registerSingleFileComponents };
