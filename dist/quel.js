@@ -6576,7 +6576,7 @@ async function bootFromImportMeta(importMeta, configPath) {
  */
 async function loadSingleFileComponent(path) {
   const template = document.createElement("template");
-  const response = await fetch(path);
+  const response = await fetch(import.meta.resolve(path));
   template.innerHTML = await response.text();
 
   let scriptModule;
