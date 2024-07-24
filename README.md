@@ -14,6 +14,7 @@ The development goal is to simplify the increasingly complex frontend developmen
 * Component-based
 * Complete separation of CSS, HTML and State
 * Compliant with web standards
+* Support single file component like a .svelte and .vue
 * **Property description by dot notation**
 
 Simple and declarative view
@@ -37,40 +38,23 @@ Simple and declarative view
 Simple class to store and manipulate state
 ```js
 class State {
-  /** @type {string} */
   task = "";
-  /** @type {string[]} */
   taskList = [];
-  /** @type {number} */
   selectedIndex;
-  /** @type {boolean} */
   get "taskList.*.selected"() {
     return this.selectedIndex === this.$1;
   }
 
-  /**
-   * add task to list
-   */
   add() {
     this.taskList = this.taskList.concat(this.task);
     this.task = "";
   }
 
-  /**
-   * delete task from list
-   * @param {Event} e
-   * @param {number} $1 loop context index
-   */
   delete(e, $1) {
     this.taskList = this.taskList.toSpliced($1, 1);
     this.selectedIndex = undefined;
   }
 
-  /**
-   * select task
-   * @param {Event} e
-   * @param {number} $1 loop context index
-   */
   select(e, $1) {
     this.selectedIndex = $1;
   }
@@ -156,95 +140,97 @@ Example for custom elements
 </html>
 ```
 
-### Create corresponding component modules
-A component module consists of an HTML template, and a class that stores and manipulates state.
-It is easier to manage if one component module is described in one file.
-Here, it is referred to as `main.js`.
+### Create corresponding single file component
+A single file component consists of a class that stores and manipulates state, an HTML template, an css.
+Here, it is referred to as `main.sfc.html`.
 
-#### Define the HTML template.
-Define the HTML that will serve as the content of the component.
-You describe the embedding of properties defined in the `ViewModel` class, the association of attribute values of html elements, the association of events, conditional branching, and repetition.
-Declare with the variable name `html` and `export` it.
+example
+```html
+<script type="module">
+export class State {
+  message = "welcome to quel";
+}
+</script>
 
-Example for HTML template of component module
-`main.js`
-```js
-export const html = `
-<!-- embed -->
-<div>{{ count }}</div>
+<div class="message">{{ message }}</div>
 
-<!-- association of attribute -->
-<input data-bind="value:message">
-
-<!-- association of events -->
-<button data-bind="onclick:countUp">count up</button>
-
-<!-- conditional branching -->
-{{ if:is5Times }}
-  <div>It has been pressed more than 5 times.</div>
-{{ endif: }}
-
-<!-- repetition -->
-<ul>
-  {{ loop:animals }}
-    <li>{{ animals.* }}</li>
-  {{ endloop: }}
-</ul>
-`;
+<style>
+div.message {
+  color: red;
+}
+</style>
 ```
 
 #### Define the class to store and manipulate state
-Define the ViewModel class that stores and manipulates the state of the component.
+Define the State class that stores and manipulates the state of the component.
+Use `script` tag with `type="module"` attribute.
 By declaring members that store state as fields within the class, you can handle the state as properties of the class.
 Create methods within the class to manipulate the state.
-Declare with the class name `ViewModel` and `export` it.
+Declare with the class name `State` and `export` it.
 You can also use accessor properties using getters.
 note:When using accessor properties, it is necessary to define dependencies.
 
-Example for State class of component module
-`main.js`
-```js
+Example for State class of single file component
+`main.sfc.html`
+```html
+<script type="module">
 export class State {
-  // state
-  count = 0;
   message = "welcome to quel";
-  animals = [ "cat", "dog", "fox", "pig" ];
-
-  // accessor properties using getters
-  get is5Times() {
-    return this.count >= 5;
-  }
-
-  // manipulate the state
+  count = 0;
+  animals = [{ name:"dog" }, { name:"cat" }, { name:"mouse" }];
   countUp() {
-    this.count++;
-  }
-
-  // define dependencies
-  // when using accessor properties
-  $dependentProps = {
-    "is5Times": [ "count" ],
+    count++;
   }
 }
+</script>
+```
+
+#### Define the HTML template.
+Define the HTML that will serve as the content of the component.
+You describe the embedding of properties defined in the `State` class, the association of attribute values of html elements, the association of events, conditional branching, and repetition.
+
+Example for HTML template of signle file component
+`main.sfc.html`
+```html
+
+<div class="message">{{ message }}</div>
+
+<button data-bind="countUp">count up, count={{ count }}</button>
+
+{{ if:count|gt,0 }}
+  count > 0
+{{ else: }}
+  count = 0
+{{ endif: }}
+
+{{ loop:animals }}
+  <div>{{ animals.*.name }}</div>
+{{ endloop: }}
+```
+
+#### Define the CSS.
+Define the CSS that will serve as the content of the component.
+Use `style` tag.
+
+Example for HTML template of signle file component
+`main.sfc.html`
+```html
+<style>
+div.message {
+  color: red;
+}
+</style>
 ```
 
 ### Associate custom elements with component modules
-You `import` the created component module.
-You associate the component module with the custom element name using the registerComponentModules function.
+You associate the single file component with the custom element name using the registerSingleFileComponents function.
 
 `index.html`
 ```js
-import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
-import * as myappMain from "./main.js"; // import the created component module
+import { registerSingleFileComponents } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 
-// Associate the component module with the custom element name
-registerComponentModules({ "myapp-main":myappMain });
+registerSingleFileComponents({ "myapp-main":"./main.sfc.html" });
 
-// The custom element name can also be in camel case
-registerComponentModules({ "myappMain":myappMain });
-
-// You can describe it more simply using the shorthand notation for object literals
-registerComponentModules({ myappMain });
 ```
 
 ## Tutorial
@@ -253,14 +239,13 @@ The file structure used in the tutorial is as follows.
 ```
 --+-- index.html
   |
-  +-- main.js
+  +-- main.sfc.html
 ```
 
 In `index.html`
 * Describe the custom element (<myapp-main/>)
-* Import `registerComponentModules` function
-* Import `main` component module
-* associate the component module with the custom element name using the `registerComponentModules` function
+* Import `registerSingleFileComponents` function
+* associate the single file component with the custom element name using the `registerSingleFileComponents` function
 
 Unless otherwise stated, the tutorial will use the contents of the following index.html.
 
@@ -273,52 +258,51 @@ Unless otherwise stated, the tutorial will use the contents of the following ind
 <myapp-main></myapp-main>
 
 <script type="module">
-import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
-import * as myappMain from "./main.js";
+import { registerSingleFileComponents } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 
-registerComponentModules({ myappMain });
+registerComponentModules({ "myapp-main": "./main.sfc.html" });
 </script>
 </html>
 ```
 
-In `main.js`,
+In `main.sfc.html`,
 * You define the HTML template in the `html` variable, `export` it
-* In the `ViewModel` class, you define a class that stores and manipulates state, `export` it.
+* In the `State` class, you define a class that stores and manipulates state, `export` it.
 
-In the tutorial, we will mainly discuss `main.js`.
+In the tutorial, we will mainly discuss `main.sfc.html`.
 
-`main.js`
-```js
-export const html = `
-(HTML Tempate)
-`;
-
-export class ViewModel {
+`main.sfc.html`
+```html
+<script type="module">
+export class State {
   // (State)
 
   // (Manupilate)
 
 }
+</script>
+
+(HTML Tempate)
+
 ```
 
 ### Step 1. Embedding properties
 * In `html`, enclose the property `message` to be embedded in `{{ }}`.
-* In `ViewModel`, declare the property `message` that stores the state as a field, and give it an initial value of `welcome to quel`.
-* The `ViewModel` class is extended by a Proxy after it is instantiated, so you cannot use private fields in the ViewModel class.
+* In `State`, declare the property `message` that stores the state as a field, and give it an initial value of `welcome to quel`.
+* The `State` class is extended by a Proxy after it is instantiated, so you cannot use private fields in the State class.
 * Property names starting with `$` are assigned to special properties, so you cannot use them.
 
-The content of the `html` variable in `main.js`
+Example `main.sfc.html`
 ```html
-<div>{{ message }}</div>
-```
-
-The `ViewModel` class in `main.js`
-```js
-export class ViewModel {
+<script type="module">
+export class State {
   message = "welcome to quel";
   // #message NG, cannot use private fields
   // $message NG, cannot use name starting with $ 
 }
+</script>
+
+<div>{{ message }}</div>
 ```
 
 See [result](https://codepen.io/mogera551/pen/KKrbPjJ).
