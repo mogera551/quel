@@ -1,5 +1,10 @@
+<script type="module">
+export class State {
+  message = "welcome to quel";
+  val = "1";
+}
+</script>
 
-export const html = `
 <div>
   <div>{{ message }}</div>
   <div data-bind="textContent:message"></div>
@@ -15,7 +20,3 @@ export const html = `
 </div>
 `;
 
-export class ViewModel {
-  message = "welcome to quel";
-  val = "1";
-}

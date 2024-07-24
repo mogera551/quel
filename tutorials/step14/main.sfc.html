@@ -1,13 +1,5 @@
-
-export const html = `
-<button type="button" data-bind="onclick:add">add grape</button>
-<button type="button" data-bind="onclick:dump">dump fruits</button>
-{{ loop:fruits }}
-<div><input type="text" data-bind="fruits.*">{{ fruits.* }}</div>
-{{ endloop: }}
-`;
-
-export class ViewModel {
+<script type="module">
+export class State {
   fruits = ["apple", "orange", "strawberry"];
   add() {
     // 
@@ -19,3 +11,10 @@ export class ViewModel {
     alert(JSON.stringify(this.fruits));
   }
 }
+</script>
+
+<button type="button" data-bind="onclick:add">add grape</button>
+<button type="button" data-bind="onclick:dump">dump fruits</button>
+{{ loop:fruits }}
+  <div><input type="text" data-bind="fruits.*">{{ fruits.* }}</div>
+{{ endloop: }}

@@ -1,0 +1,19 @@
+<script type="module">
+export class State {
+  count = 1;
+  get doubled() {
+    return this.count * 2;
+  }
+  countUp() {
+    this.count++;
+  }
+
+  $dependentProps = {
+    "doubled": [ "count" ],
+  };
+}
+</script>
+
+<div>{{ counter }}</div>
+<div>{{ doubled }}</div>
+<button type="button" data-bind="onclick:countUp">count up</button>

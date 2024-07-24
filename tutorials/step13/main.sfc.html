@@ -1,0 +1,39 @@
+<script type="module">
+export class State {
+  members = [
+    { name:"佐藤　一郎", age:20 },
+    { name:"鈴木　二郎", age:15 },
+    { name:"高橋　三郎", age:22 },
+    { name:"田中　四郎", age:18 },
+    { name:"伊藤　五郎", age:17 },
+  ];
+  get "members.*.no"() {
+    return this.$1 + 1;
+  }
+  get "members.*.isAdult"() {
+    return this["members.*.age"] >= 18;
+  }
+
+  popup(e, $1) {
+    alert(`選択したのは、${$1 + 1}行目です`);
+  }
+
+  $dependentProps = {
+    "members.*.isAdult": [ "members.*.age" ]
+  }
+}
+</script>
+
+{{ loop:members }}
+  <div data-bind="class.adult:members.*.isAdult">
+    {{ members.*.no }} = {{ $1|offset,1 }}:{{ members.*.name }}, {{ members.*.age }}
+    <button type="button" data-bind="popup">popup</button>
+  </div>
+{{ endloop: }}
+
+<style>
+.adult {
+  color:red;
+}
+</style>
+  

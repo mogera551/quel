@@ -5,9 +5,8 @@
 <myapp-main></myapp-main>
 
 <script type="module">
-import { registerComponentModules } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
-import * as myappMain from "./main.js";
+import { registerSingleFileComponents } from "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js"; // CDN
 
-registerComponentModules({ myappMain });
+registerSingleFileComponents({ myappMain: "./main.sfc.html" });
 </script>
 </html>

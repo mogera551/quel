@@ -1,0 +1,14 @@
+<script type="module">
+export class State {
+  num = 5;
+  get numberColor() {
+    return this.num > 10 ? "red" : "black";
+  }
+
+  $dependentProps = {
+    "numberColor": ["num"]
+  }
+}
+</script>
+
+<input type="number" data-bind="num|number; style.color:numberColor">

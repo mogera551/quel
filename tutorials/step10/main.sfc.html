@@ -1,5 +1,19 @@
+<script type="module">
+export class State {
+  num = 1;
+  message = "";
+  get double() {
+    return this.num + this.num;
+  }
+  clearMessage() {
+    this.message = "";
+  }
+  $dependentProps = {
+    "double": ["num"]
+  }
+}
+</script>
 
-export const html = `
 <div data-bind="message"></div>
 <div>
   <input type="text" data-bind="message">
@@ -25,18 +39,3 @@ export const html = `
   </select>
   {{ double }}
 </div>
-`;
-
-export class ViewModel {
-  num = 1;
-  message = "";
-  get double() {
-    return this.num + this.num;
-  }
-  clearMessage() {
-    this.message = "";
-  }
-  $dependentProps = {
-    "double": ["num"]
-  }
-}
