@@ -1,5 +1,18 @@
 import "../types.js";
 import { registerComponentModule } from "./Component.js";
+
+function toComment(html) {
+  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+    return `<!--{{${expr}}}-->`;
+  });
+}
+
+function fromComment(html) {
+  return html.replaceAll(/<!--\{\{([^\}]+)\}\}-->/g, (match, expr) => {
+    return `{{${expr}}}`;
+  });
+}
+
 /**
  * 
  * @param {string} path
@@ -8,7 +21,7 @@ import { registerComponentModule } from "./Component.js";
 export async function loadSingleFileComponent(path) {
   const template = document.createElement("template");
   const response = await fetch(import.meta.resolve(path));
-  template.innerHTML = await response.text();
+  template.innerHTML = toComment(await response.text());
 
   let scriptModule;
   const script = template.content.querySelector("script");
@@ -28,7 +41,7 @@ export async function loadSingleFileComponent(path) {
     cssModule = {};
   }
 
-  const htmlModule = { html: template.innerHTML };
+  const htmlModule = { html: fromComment(template.innerHTML) };
 
   return Object.assign({}, scriptModule, htmlModule, cssModule);
 }

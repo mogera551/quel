@@ -6569,6 +6569,18 @@ async function bootFromImportMeta(importMeta, configPath) {
   await loader.config(configData).load();
 }
 
+function toComment(html) {
+  return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+    return `<!--{{${expr}}}-->`;
+  });
+}
+
+function fromComment(html) {
+  return html.replaceAll(/<!--\{\{([^\}]+)\}\}-->/g, (match, expr) => {
+    return `{{${expr}}}`;
+  });
+}
+
 /**
  * 
  * @param {string} path
@@ -6577,7 +6589,7 @@ async function bootFromImportMeta(importMeta, configPath) {
 async function loadSingleFileComponent(path) {
   const template = document.createElement("template");
   const response = await fetch(import.meta.resolve(path));
-  template.innerHTML = await response.text();
+  template.innerHTML = toComment(await response.text());
 
   let scriptModule;
   const script = template.content.querySelector("script");
@@ -6597,7 +6609,7 @@ async function loadSingleFileComponent(path) {
     cssModule = {};
   }
 
-  const htmlModule = { html: template.innerHTML };
+  const htmlModule = { html: fromComment(template.innerHTML) };
 
   return Object.assign({}, scriptModule, htmlModule, cssModule);
 }
