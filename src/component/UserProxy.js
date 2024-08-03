@@ -1,4 +1,5 @@
 import "../types.js";
+import { getPropertyNameInfo } from "../dot-notation/PropertyName.js";
 
 const bindValue = (target) => (value) => (typeof value === "function") ? value.bind(target) : value;
 
@@ -25,3 +26,4 @@ class Handler {
 }
 
 export const createUserComponent = (component) => new Proxy(component, new Handler);
+export const aaa = getPropertyNameInfo("aaa.bbb.ccc");

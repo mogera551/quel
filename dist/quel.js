@@ -2332,12 +2332,23 @@ class Repeat extends TemplateProperty {
   }
 }
 
+/**
+ * @module binding/nodeProperty/Branch
+ * @typedef {import("../Binding.js").Binding} Binding
+ * @typedef {import("../Binding.js").BindingManager} BindingManager
+ */
+
 class Branch extends TemplateProperty {
-  /** @type {boolean} */
+  /** 
+   * @return {boolean} having child bindingManager or not
+   */
   get value() {
     return this.binding.children.length > 0;
   }
-  /** @param {boolean} value */
+  /** 
+   * Set value to bind/unbind child bindingManager
+   * @param {boolean} value 
+   */
   set value(value) {
     if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.component.selectorName}.ViewModel['${this.binding.viewModelProperty.name}'] is not boolean`, );
     if (this.value !== value) {
@@ -2356,7 +2367,7 @@ class Branch extends TemplateProperty {
 
   /**
    * 
-   * @param {import("../Binding.js").Binding} binding
+   * @param {Binding} binding
    * @param {Comment} node 
    * @param {string} name 
    * @param {FilterInfo[]} filters 
@@ -4272,6 +4283,40 @@ class Api {
 
 }
 
+function _getPropertyNameInfo(name) {
+    const indexes = [];
+    const patternPropElements = [];
+    let isIncomplete = false;
+    for (const propElement of name.split(".")) {
+        const index = Number(propElement);
+        if (isNaN(index)) {
+            patternPropElements.push(propElement);
+            if (propElement === "*") {
+                indexes.push(undefined);
+                isIncomplete = true;
+            }
+        }
+        else {
+            indexes.push(index);
+            patternPropElements.push("*");
+        }
+    }
+    return {
+        name,
+        isPrimitive: (patternPropElements.length === 1),
+        isDotted: (patternPropElements.length > 1),
+        hasWildcard: (indexes.length > 0),
+        patternName: patternPropElements.join("."),
+        isIncomplete,
+        indexes,
+    };
+}
+const _cache = {};
+function getPropertyNameInfo(name) {
+    var _a;
+    return (_a = _cache[name]) !== null && _a !== void 0 ? _a : (_cache[name] = _getPropertyNameInfo(name));
+}
+
 const bindValue = (target) => (value) => (typeof value === "function") ? value.bind(target) : value;
 
 class Handler {
@@ -4297,6 +4342,7 @@ class Handler {
 }
 
 const createUserComponent = (component) => new Proxy(component, new Handler);
+getPropertyNameInfo("aaa.bbb.ccc");
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY$1 = "$dependentProps";
