@@ -14,8 +14,16 @@ export class StateBaseHandler extends Handler  {
     return this.#dependencies;
   }
 
-  constructor(accessorProperties: Set<string>, dependencies: DependentProps) {
+  // todo: HTMLElementをComponentに変更
+  #component:HTMLElement; 
+  get component(): HTMLElement {
+    return this.#component;
+  }
+
+  // todo: HTMLElementをComponentに変更
+  constructor(component:HTMLElement, accessorProperties: Set<string>, dependencies: DependentProps) {
     super();
+    this.#component = component;
     this.#accessorProperties = accessorProperties;
     this.#dependencies = dependencies;
   }
@@ -40,4 +48,17 @@ export class StateBaseHandler extends Handler  {
     return Reflect.has(target, prop) || prop === AccessorPropertiesSymbol || prop === DependenciesSymbol;
   }
 
+  addProcess(process:()=>void, target:State, indexes:number[]):void {
+    // todo: ここに処理を追加
+  }
+
+  addNotify(target:State, {propertyName, indexes}:{propertyName:string, indexes:number[]}, receiver:State) {
+    // todo: ここに処理を追加
+  }
+
+  clearCache() {
+  }
+
+  directlyCallback(loopContext:any, callback:()=>Promise<void>) {
+  }
 }

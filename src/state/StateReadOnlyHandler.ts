@@ -3,14 +3,19 @@ import { utils } from "../utils";
 import { StateCache } from "./Cache";
 import { AccessorPropertiesSymbol } from "./Const";
 import { StateBaseHandler } from "./StateBaseHandler";
+import { Callback } from "./Callback";
+import { Api } from "./Api";
 
 const SpecialProp:Map<string,string> = new Map();
-const Callback:Map<PropertyKey,string> = new Map;
 
 export class StateReadOnlyHandler extends StateBaseHandler {
   #cache = new StateCache;
   get cache() {
     return this.#cache;
+  }
+
+  clearCache() {
+    this.#cache.clear();
   }
 
   getByPatternNameAndIndexes(target:State, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any):any {
@@ -26,14 +31,14 @@ export class StateReadOnlyHandler extends StateBaseHandler {
           // プリミティブじゃないもしくはアクセサプロパティ場合、キャッシュから取得する
         const indexesString = patternNameInfo.level > 0 ? (
           patternNameInfo.level === this.lastIndexes.length ? 
-            this.lastIndexesString :
-            this.lastIndexes.slice(0, patternNameInfo.level).join(",")
+            indexes.toString() :
+            indexes.slice(0, patternNameInfo.level).join(",")
         ) : "";
         const cachedValue = this.#cache.get(patternName, indexesString);
         if (typeof cachedValue !== "undefined") return cachedValue;
-        if (this.#cache.has(patternName, indexesString)) return undefined;
+        if (this.cache.has(patternName, indexesString)) return undefined;
         const value = super.getByPatternNameAndIndexes(target, {patternName, indexes}, receiver);
-        this.#cache.set(patternName, indexesString, value);
+        this.cache.set(patternName, indexesString, value);
         return value;
       } else {
         return super.getByPatternNameAndIndexes(target, {patternName, indexes}, receiver);
@@ -48,13 +53,15 @@ export class StateReadOnlyHandler extends StateBaseHandler {
   }
 
   get(target:State, prop:PropertyKey, receiver:any):any {
-    if (Callback.has(prop)) {
-      return Callback.get(target, receiver, this, prop);
-    } else if (Api.has(prop)) {
-      return Api.get(target, receiver, this, prop);
-    } else {
-      return super.get(target, prop, receiver);
+    const isSymbol = typeof prop === "symbol";
+    if (isSymbol) {
+      if (Callback.has(prop as symbol)) {
+        return Callback.get(target, receiver, this, prop as symbol);
+      } else if (Api.has(prop as symbol)) {
+        return Api.get(target, receiver, this, prop as symbol);
+      }
     }
+    return super.get(target, prop, receiver);
   }
 
   set(target:State, prop:PropertyKey, value:any, receiver:any):boolean {

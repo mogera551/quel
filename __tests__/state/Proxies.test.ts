@@ -5,7 +5,8 @@ import { DependenciesSymbol } from "../../src/state/Const";
 describe("getProxies", () => {
   test("getProxies should return the correct proxies", () => {
     const state = {a:1, b:2};
-    const proxies = getProxies(state);
+    const component = document.createElement("div");
+    const proxies = getProxies(component, state);
     const base = Object.assign({}, proxies.base);
     expect(base).toStrictEqual(state);
     const write = Object.assign({}, proxies.write);
@@ -15,7 +16,8 @@ describe("getProxies", () => {
   });
   test("getProxies should return the correct proxies", () => {
     const state = {a:1, b:2, $dependentProps: {a: ["b"]}};
-    const proxies = getProxies(state);
+    const component = document.createElement("div");
+    const proxies = getProxies(component, state);
     const base = Object.assign({}, proxies.base);
     expect(base).toStrictEqual(state);
     const write = Object.assign({}, proxies.write);
