@@ -1,6 +1,3 @@
-//import "../types.js";
-//import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-
 import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { getPropertyNameInfo } from "../dot-notation/PropertyName";
 

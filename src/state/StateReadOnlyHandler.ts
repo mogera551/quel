@@ -5,8 +5,7 @@ import { AccessorPropertiesSymbol } from "./Const";
 import { StateBaseHandler } from "./StateBaseHandler";
 import { Callback } from "./Callback";
 import { Api } from "./Api";
-
-const SpecialProp:Map<string,string> = new Map();
+import { SpecialProp } from "./SpecialProp";
 
 export class StateReadOnlyHandler extends StateBaseHandler {
   #cache = new StateCache;
@@ -25,16 +24,16 @@ export class StateReadOnlyHandler extends StateBaseHandler {
         this.dependencies.addDefaultProp(patternName);
     }
     if (SpecialProp.has(patternNameInfo.name)) {
-      return undefined; // SpecialProp.get(this.component, target, patternNameInfo.name);
+      return SpecialProp.get(this.component, target, patternName);
     } else {
       if (!patternNameInfo.isPrimitive || this.accessorProperties.has(patternName)) {
           // プリミティブじゃないもしくはアクセサプロパティ場合、キャッシュから取得する
         const indexesString = patternNameInfo.level > 0 ? (
-          patternNameInfo.level === this.lastIndexes.length ? 
+          patternNameInfo.level === indexes.length ? 
             indexes.toString() :
             indexes.slice(0, patternNameInfo.level).join(",")
         ) : "";
-        const cachedValue = this.#cache.get(patternName, indexesString);
+        const cachedValue = this.cache.get(patternName, indexesString);
         if (typeof cachedValue !== "undefined") return cachedValue;
         if (this.cache.has(patternName, indexesString)) return undefined;
         const value = super.getByPatternNameAndIndexes(target, {patternName, indexes}, receiver);
