@@ -5,7 +5,7 @@ import { ViewModelProperty } from "../binding/viewModelProperty/ViewModelPropert
 import { ContextIndex } from "../binding/viewModelProperty/ContextIndex.js";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty_.js";
 import { ElementClassName } from "../binding/nodeProperty/ElementClassName.js"
-import { Checkbox } from "../binding/nodeProperty/Checkbox.js";
+import { Checkbox } from "../binding/nodeProperty/Checkbox_.js";
 import { Radio } from "../binding/nodeProperty/Radio.js";
 import { ElementEvent } from "../binding/nodeProperty/ElementEvent.js";
 import { ElementClass } from "../binding/nodeProperty/ElementClass.js";

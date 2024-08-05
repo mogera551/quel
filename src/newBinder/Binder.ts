@@ -3,7 +3,7 @@
 import "../types.js";
 import "./types.js";
 import { utils } from "../utils.js";
-import { getDefaultProperty } from "./defaultProperty.js";
+import { getDefaultProperty } from "./defaultProperty_.js";
 import { getBindText } from "./bindText_.js";
 import { parse as parseBindText } from "./parseBindText.js"
 import { getConstructors } from "./constructors_.js";
@@ -12,7 +12,7 @@ import { findNodeByNodeRoute, computeNodeRoute } from "./nodeRoute.js";
 import { createBinding } from "./createBinding.js";
 import { removeAttribute } from "./removeAttribute.js";
 import { isInputable } from "./isInputable.js";
-import { InitializeNode } from "./InitializeNode.js";
+import { InitializeNode } from "./InitializeNode_.js";
 import { getCommentNodes } from "./commentNodes_.js";
 import { getNodeType } from "./nodeType_.js";
 
