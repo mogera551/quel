@@ -2,7 +2,7 @@ import { Binding } from "../binding/Binding";
 import { Checkbox } from "../binding/nodeProperty/Checkbox";
 import { Radio } from "../binding/nodeProperty/Radio";
 import { utils } from "../utils";
-import { NodeType, BindNodeInfoIf } from "./types";
+import { NodeType, IBindNodeInfo } from "./types";
 
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
@@ -64,4 +64,4 @@ const initializeNodeByNodeType:InitializeNodeByNodeType = {
   [NodeType.Unknown]:     raiseError,
 };
 
-export const initializeNode = (nodeInfo:BindNodeInfoIf) => (node:Node, bindings:Binding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
+export const initializeNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:Binding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);

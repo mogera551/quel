@@ -1,9 +1,9 @@
-import { Binding, BindingManager } from "../binding/Binding";
+import { IBinding, IBindingManager } from "../binding/types";
 import { findNodeByNodeRoute } from "./nodeRoute";
-import { BindNodeInfoIf } from "./types";
+import { IBindNodeInfo } from "./types";
 
-export function createBindings(content:DocumentFragment, bindingManager:BindingManager, nodeInfos:BindNodeInfoIf[]):Binding[] {
-  const bindings:Binding[] =[];
+export function createBindings(content:DocumentFragment, bindingManager:IBindingManager, nodeInfos:IBindNodeInfo[]):IBinding[] {
+  const bindings:IBinding[] =[];
   for(let i = 0; i < nodeInfos.length; i++) {
     const nodeInfo = nodeInfos[i];
     const node = findNodeByNodeRoute(content, nodeInfo.nodeRoute);
@@ -12,7 +12,7 @@ export function createBindings(content:DocumentFragment, bindingManager:BindingM
       nodeBindings[nodeBindings.length] = 
         nodeInfo.bindTextInfos[j].createBinding(bindingManager, node); // push
     }
-    nodeInfo.initializeNode?.(node, nodeBindings);
+    nodeInfo.initializeNode(node, nodeBindings);
     bindings.push(...nodeBindings);
   }
   return bindings;

@@ -1,4 +1,4 @@
-import { FilterInfo } from "../filter/Manager.js";
+import { IFilterInfo } from "../filter/types";
 import { utils } from "../utils.js";
 import { BindTextInfo, ParseBindTextInfo } from "./types.js";
 
@@ -19,7 +19,7 @@ const decode = (s:string):string => {
  * parse filter part
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
  */
-const parseFilter = (text:string):FilterInfo => {
+const parseFilter = (text:string):IFilterInfo => {
   const [name, ...options] = text.split(",").map(trim);
   return {name, options:options.map(decode)};
 };

@@ -1,23 +1,23 @@
-import { BindNodeInfoIf, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from './types';
-import { Binding } from '../binding/Binding';
+import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from './types';
+import { IBinding } from '../binding/types';
 import { replaceTextNode } from './replaceTextNode';
 import { removeAttribute } from './removeAttribute';
 import { getIsInputable } from './isInputable';
 import { parse } from './parseBindText';
 import { getDefaultProperty } from './defaultProperty';
-import { getConstructors } from './constructors';
+import { getPropertyCreators } from './propertyCreators';
 import { createBinding } from './createBinding';
 import { computeNodeRoute } from './nodeRoute';
 import { initializeNode } from './initializeNode';
 
-export class BindNodeInfo implements BindNodeInfoIf {
+export class BindNodeInfo implements IBindNodeInfo {
   nodeType: NodeType;
   nodeRoute: NodeRoute;
   nodeRouteKey: NodeRouteKey;
   bindTextInfos: BindTextInfo[];
   isInputable: boolean;
   defaultProperty: string;
-  initializeNode: (node:Node,bindings:Binding[])=>void;
+  initializeNode: (node:Node,bindings:IBinding[])=>void;
   constructor(
     nodeType: NodeType, 
     nodeRoute: NodeRoute, 
@@ -25,7 +25,8 @@ export class BindNodeInfo implements BindNodeInfoIf {
     bindTextInfos: BindTextInfo[], 
     isInputable: boolean, 
     defaultProperty: string, 
-    initializeNode: (bindInfo:BindNodeInfoIf)=>(node:Node,bindings:Binding[])=>void) {
+    initializeNode: (bindInfo:IBindNodeInfo)=>(node:Node,bindings:IBinding[])=>void
+  ) {
     this.nodeType = nodeType;
     this.nodeRoute = nodeRoute;
     this.nodeRouteKey = nodeRouteKey;
@@ -35,7 +36,7 @@ export class BindNodeInfo implements BindNodeInfoIf {
     this.initializeNode = initializeNode(this);
   }
 
-  static create(node:Node, nodeType:NodeType, bindText:string, useKeyed:boolean):BindNodeInfoIf {
+  static create(node:Node, nodeType:NodeType, bindText:string, useKeyed:boolean):IBindNodeInfo {
     node = replaceTextNode(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
     removeAttribute(node, nodeType);
     const isInputable:boolean = getIsInputable(node, nodeType);
@@ -45,8 +46,8 @@ export class BindNodeInfo implements BindNodeInfoIf {
     for(let j = 0; j < parseBindTextInfos.length; j++) {
       const parseBindTextInfo = parseBindTextInfos[j];
       const { nodeProperty, stateProperty } = parseBindTextInfo;
-      const constructors = getConstructors(node, nodeProperty, stateProperty, useKeyed);
-      bindTextInfos.push({ ...parseBindTextInfo, ...constructors, createBinding: createBinding(parseBindTextInfo, constructors) });
+      const propertyCreators = getPropertyCreators(node, nodeProperty, stateProperty, useKeyed);
+      bindTextInfos.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBinding(parseBindTextInfo, propertyCreators) });
     }
     const nodeRoute = computeNodeRoute(node);
     const nodeRouteKey = nodeRoute.join(",");

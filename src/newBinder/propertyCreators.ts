@@ -1,9 +1,12 @@
-import { utils } from "../utils.js";
+import { utils } from "../utils";
+import { PropertyCreators, NodePropertyCreator, StatePropertyCreator } from "./types";
+import { IBinding, IBindingManager, INodeProperty, IStateProperty } from "../binding/types";
+import { IFilterInfo } from "../filter/types";
+import { StateProperty } from "../binding/stateProperty/StateProperty";
+import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
+import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { Repeat } from "../binding/nodeProperty/Repeat.js";
 import { Branch } from "../binding/nodeProperty/Branch.js";
-import { StateProperty } from "../binding/stateProperty/StateProperty";
-import { ContextIndex } from "../binding/stateProperty/ContextIndex";
-import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { ElementClassName } from "../binding/nodeProperty/ElementClassName.js"
 import { Checkbox } from "../binding/nodeProperty/Checkbox_.js";
 import { Radio } from "../binding/nodeProperty/Radio_.js";
@@ -35,6 +38,17 @@ const nodePropertyConstructorByNameByIsComment:NodePropertyConstructorByNameByIs
 
 type NodePropertyConstructorByFirstName = {[key:string]:typeof NodeProperty};
 
+const createNodeProperty = (NodeProertyClass:typeof NodeProperty)=>
+  (binding:IBinding, node:Node, name:string, filters:IFilterInfo[]):INodeProperty=>
+{
+  return Reflect.construct(NodeProertyClass, [binding, node, name, filters]);
+};
+const createStateProperty = (StatePropertyClass:typeof StateProperty)=>
+  (binding:IBinding, name:string, filters:IFilterInfo[]):IStateProperty => 
+{
+  return Reflect.construct(StatePropertyClass, [binding, name, filters]);
+}
+
 const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
   "class": ElementClass,
   "attr": ElementAttribute,
@@ -45,30 +59,32 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
 /**
  * get constructors for NodeProperty and ViewModelProperty
  */
-export const getConstructors = (node:Node, nodePropertyName:string, statePropertyName:string, useKeyed:boolean):({ nodePropertyConstructor: typeof NodeProperty, statePropertyConstructor: typeof StateProperty }) => {
-  const statePropertyConstructor = regexp.test(statePropertyName) ? ContextIndex : StateProperty;
-  let nodePropertyConstructor:typeof NodeProperty;
+export const getPropertyCreators = (node:Node, nodePropertyName:string, statePropertyName:string, useKeyed:boolean):PropertyCreators {
+  const statePropertyClass = regexp.test(statePropertyName) ? ContextIndex : StateProperty;
+  let nodePropertyClass:typeof NodeProperty;
   do {
     const isComment = node instanceof Comment;
-    nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 0 : 1][nodePropertyName];
-    if (typeof nodePropertyConstructor !== "undefined") break;
+    nodePropertyClass = nodePropertyConstructorByNameByIsComment[isComment ? 0 : 1][nodePropertyName];
+    if (typeof nodePropertyClass !== "undefined") break;
     if (isComment && nodePropertyName === "loop") {
-      nodePropertyConstructor = useKeyed ? RepeatKeyed : Repeat;
+      nodePropertyClass = useKeyed ? RepeatKeyed : Repeat;
       break;
     }
     if (isComment) utils.raise(`Factory: unknown node property ${nodePropertyName}`);
     const nameElements = nodePropertyName.split(".");
-    nodePropertyConstructor = nodePropertyConstructorByFirstName[nameElements[0]];
-    if (typeof nodePropertyConstructor !== "undefined") break;
+    nodePropertyClass = nodePropertyConstructorByFirstName[nameElements[0]];
+    if (typeof nodePropertyClass !== "undefined") break;
     if (node instanceof Element) {
       if (nodePropertyName.startsWith("on")) {
-        nodePropertyConstructor = ElementEvent;
+        nodePropertyClass = ElementEvent;
       } else {
-        nodePropertyConstructor = ElementProperty;
+        nodePropertyClass = ElementProperty;
       }
     } else {
-      nodePropertyConstructor = NodeProperty;
+      nodePropertyClass = NodeProperty;
     }
   } while(false);
-  return { nodePropertyConstructor, statePropertyConstructor };
+  return { 
+    nodePropertyCreator:createNodeProperty(nodePropertyClass),
+    statePropertyCreator:createStateProperty(statePropertyClass), };
 }

@@ -1,6 +1,6 @@
 
 
-import { BindNodeInfoIf } from "./types";
+import { IBindNodeInfo } from "./types";
 import { Binding, BindingManager } from "../binding/Binding";
 import { parseTemplate } from "./parseTemplate";
 import { createBindings } from "./createBindings";
@@ -16,7 +16,7 @@ const _cache:BinderByUUID = {};
 export class Binder {
   template: HTMLTemplateElement;
   uuid:string;
-  nodeInfos:BindNodeInfoIf[];
+  nodeInfos:IBindNodeInfo[];
 
   constructor(template:HTMLTemplateElement, uuid:string, useKeyed:boolean) {
     this.template = template;

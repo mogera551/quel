@@ -1,4 +1,5 @@
 import { utils } from "../utils";
+import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption } from "./types";
 
 /**
  * ambigous name:
@@ -6,16 +7,6 @@ import { utils } from "../utils";
  * "toString", "toLocaleString", "valueOf", "at", "concat", 
  * "includes", "indexOf", "lastIndexOf", "slice"
  */
-
-export class FilterInfo {
-  name:string = "";
-  options:string[] = [];
-}
-
-export type FilterFunc = (options:any[])=>(value:any)=>any;
-type FilterFuncWithOption = (options:any[])=>FilterFunc;
-type EventFilterFunc = (event:Event)=>Event;
-type EventFilterFuncWithOption = (options:string[])=>EventFilterFunc;
 
 type ClassName = (Object | typeof Array | Number | String | Date | typeof Set | typeof Map | JSON | Math | RegExp | DefaultFilters);
 type FilterGroup = {
@@ -246,7 +237,7 @@ const thru:FilterFuncWithOption = (options:any[]) => (value:any):any => value;
 
 export class Filters {
 
-  static create(filters:FilterInfo[], manager:FilterManager) {
+  static create(filters:IFilterInfo[], manager:FilterManager) {
     const filterFuncs = [];
     for(let i = 0; i < filters.length; i++) {
       const filter = filters[i];

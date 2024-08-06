@@ -1,7 +1,7 @@
 import { WILDCARD, DELIMITER } from "./Const";
-import { PatternNameInfo } from "./PatternNameInfo";
+import { IPatternNameInfo } from "./types";
 
-function _getPatternNameInfo(name:string):PatternNameInfo {
+function _getPatternNameInfo(name:string):IPatternNameInfo {
   const pathNames = name.split(DELIMITER);
   const parentPathNames = pathNames.slice(0, -1);
   const parentPaths = parentPathNames.reduce((paths:string[][], pathName:string):string[][] => { 
@@ -37,11 +37,11 @@ function _getPatternNameInfo(name:string):PatternNameInfo {
 }
 
 type PatternNameInfoCache = {
-  [name:string]:PatternNameInfo;
+  [name:string]:IPatternNameInfo;
 }
 
 const _cache:PatternNameInfoCache = {};
 
-export function getPatternNameInfo(name:string):PatternNameInfo {
+export function getPatternNameInfo(name:string):IPatternNameInfo {
   return _cache[name] ?? (_cache[name] = _getPatternNameInfo(name));
 }

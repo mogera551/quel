@@ -1,16 +1,16 @@
 
 import { utils } from '../utils';
-import { BindNodeInfo } from './BindNodeInfo2';
+import { BindNodeInfo } from './BindNodeInfo';
 import { getBindText } from './bindText';
 import { getCommentNodes } from './commentNodes';
 import { getNodeType } from './nodeType';
-import { BindNodeInfoIf, NodeType } from './types';
+import { IBindNodeInfo, NodeType } from './types';
 
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
 
-export function parseTemplate(template:HTMLTemplateElement, useKeyed:boolean):BindNodeInfoIf[] {
-  const nodeInfos:BindNodeInfoIf[] = [];
+export function parseTemplate(template:HTMLTemplateElement, useKeyed:boolean):IBindNodeInfo[] {
+  const nodeInfos:IBindNodeInfo[] = [];
   const rootElement = template.content;
   const nodes = (Array.from(rootElement.querySelectorAll(SELECTOR)) as Node[]).concat(getCommentNodes(rootElement));
   nodeInfos.length = 0;

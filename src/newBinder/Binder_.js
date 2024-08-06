@@ -6,7 +6,7 @@ import { utils } from "../utils.js";
 import { getDefaultProperty } from "./defaultProperty.js";
 import { getBindText } from "./bindText.js";
 import { parse as parseBindText } from "./parseBindText.js"
-import { getConstructors } from "./constructors.js";
+import { getConstructors } from "./propertyCreators.js";
 import { replaceTextNode } from "./replaceTextNode.js";
 import { findNodeByNodeRoute, computeNodeRoute } from "./nodeRoute.js";
 import { createBinding } from "./createBinding.js";

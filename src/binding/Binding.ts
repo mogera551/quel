@@ -1,61 +1,65 @@
 import { utils } from "../utils.js";
 //import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager.js";
-//import { LoopContext } from "../loopContext/LoopContext.js";
+import { LoopContext } from "../loopContext/LoopContext";
 import { Binder } from "../newBinder/Binder";
+import { INodeProperty, IStateProperty, IBinding, IBindingManager } from "./types";
+import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types.js";
+import { IFilterInfo } from "../filter/types.js";
+import { ILoopContext } from "../loopContext/types.js";
 
 let seq = 0;
 
-export class Binding {
+export class Binding implements IBinding {
   #id:number = -1;
   get id() {
     return this.#id;
   }
 
-  /** @type {BindingManager} parent binding manager */
-  #bindingManager:BindingManager;
+  #bindingManager:IBindingManager; // parent binding manager
   get bindingManager() {
     return this.#bindingManager;
   }
 
-  #nodeProperty:NodeProperty;
+  #nodeProperty:INodeProperty;
   get nodeProperty() {
     return this.#nodeProperty;
   }
 
-  #stateProperty:StateProperty;
+  #stateProperty:IStateProperty;
   get stateProperty() {
     return this.#stateProperty;
   }
 
-  /** @type {Component} component */
-  get component() {
+  // todo: componentの型を指定する
+  get component():any {
     return this.#bindingManager.component;
   }
 
-  /** @type {LoopContext} new loop context */
-  get loopContext() {
+  // todo: loopContextの型を指定する
+  // new loop context
+  get loopContext():any {
     return this.#bindingManager.loopContext;
   }
 
   /** child bindingManager for branch/repeat */
-  #children:BindingManager[] = [];
+  #children:IBindingManager[] = [];
   get children() {
     return this.#children;
   }
 
-  /** @type {boolean} branch/repeat is true */
-  get expandable() {
+  // branch/repeat is true
+  get expandable():boolean {
     return this.nodeProperty.expandable;
   }
 
-  /** @type {boolean} repeat is true */
-  get loopable() {
+  // repeat is true
+  get loopable():boolean {
     return this.nodeProperty.loopable;
   }
 
   /** for select tag value */
   #isSelectValue:(boolean|undefined);
-  get isSelectValue() {
+  get isSelectValue():boolean {
     if (typeof this.#isSelectValue === "undefined") {
       this.#isSelectValue = this.nodeProperty.isSelectValue;
     }
@@ -63,48 +67,41 @@ export class Binding {
   }
 
   constructor(
-    bindingManager:BindingManager,
+    bindingManager:IBindingManager,
     node:Node, 
     nodePropertyName:string, 
-    nodePropertyConstructor:typeof NodeProperty, 
+    nodePropertyCreator:NodePropertyCreator, 
     state:State,
     statePropertyName:string, 
-    statePropertyConstructor: typeof StateProperty,
-    filters:FilterInfo[]
+    statePropertyCreator:StatePropertyCreator,
+    filters:IFilterInfo[]
   ) {
     // assignを呼ぶとbindingManagerなどがundefinedになるので、constructorで初期化
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = Reflect.construct(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
-    this.#viewModelProperty = Reflect.construct(statePropertyConstructor, [this, state, statePropertyName, filters]);
+    this.#nodeProperty = nodePropertyCreator(this, node, nodePropertyName, filters);
+    this.#stateProperty = statePropertyCreator(this, statePropertyName, filters);
   }
 
   /**
    * for reuse
-   * @param {BindingManager} bindingManager 
-   * @param {Node} node
-   * @param {string} nodePropertyName
-   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
-   * @param {string} viewModelPropertyName
-   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor 
-   * @param {FilterInfo[]} filters
-   * @returns {Binding}
    */
-  assign(bindingManager, 
-    node, nodePropertyName, nodePropertyConstructor, 
-    viewModelPropertyName, viewModelPropertyConstructor, filters) {
+  assign(bindingManager:IBindingManager, 
+    node:Node, nodePropertyName:string, nodePropertyCreator:NodePropertyCreator, 
+    statePropertyName:string, statePropertyConstructor:StatePropertyCreator, filters:IFilterInfo[]):IBinding {
     this.#id = ++seq;
     this.#bindingManager = bindingManager;
-    this.#nodeProperty = Reflect.construct(nodePropertyConstructor, [this, node, nodePropertyName, filters]);
-    this.#viewModelProperty = Reflect.construct(viewModelPropertyConstructor, [this, viewModelPropertyName, filters]);
+    this.#nodeProperty = nodePropertyCreator(this, node, nodePropertyName, filters);
+    this.#stateProperty = statePropertyConstructor(this, statePropertyName, filters);
     return this;
   }
 
   /**
    * apply value to node
    */
-  applyToNode({ component, nodeProperty, stateProperty } = this) {
-    component.updator.applyNodeUpdatesByBinding(this, updator => {
+  applyToNode() {
+    const { component, nodeProperty, stateProperty } = this
+    component.updator.applyNodeUpdatesByBinding(this, () => {
       if (!nodeProperty.applicable) return;
       const filteredViewModelValue = stateProperty.filteredValue ?? "";
       if (nodeProperty.isSameValue(filteredViewModelValue)) return;
@@ -115,17 +112,17 @@ export class Binding {
   /**
    * apply value to child nodes
    */
-  applyToChildNodes(setOfIndex:Set<number>, { component } = this) {
-    component.updator.applyNodeUpdatesByBinding(this, updator => {
+  applyToChildNodes(setOfIndex:Set<number>) {
+    const { component } = this;
+    component.updator.applyNodeUpdatesByBinding(this, () => {
       this.nodeProperty.applyToChildNodes(setOfIndex);
     });
   }
 
   /**
-   * ViewModelへ値を反映する
-   * apply value to ViewModel
+   * apply value to State
    */
-  applyToViewModel() {
+  applyToState() {
     const { stateProperty, nodeProperty } = this;
     if (!stateProperty.applicable) return;
     stateProperty.value = nodeProperty.filteredValue;
@@ -136,11 +133,11 @@ export class Binding {
   execDefaultEventHandler(event:Event) {
     if (!(this.component?.bindingSummary.exists(this) ?? false)) return;
     event.stopPropagation();
-    this.component.updator.addProcess(this.applyToViewModel, this, []);
+    this.component.updator.addProcess(this.applyToState, this, []);
   }
 
   #defaultEventHandler:(((event:Event)=>void)|undefined) = undefined;
-  get defaultEventHandler() {
+  get defaultEventHandler():((event:Event)=>void) {
     if (typeof this.#defaultEventHandler === "undefined") {
       this.#defaultEventHandler = (binding => event => binding.execDefaultEventHandler(event))(this);
     }
@@ -157,24 +154,24 @@ export class Binding {
 
   /**
    */
-  appendChild(bindingManager:BindingManager) {
+  appendChild(bindingManager:IBindingManager) {
     if (!this.expandable) utils.raise("Binding.appendChild: not expandable");
-    const lastChild = this.children[this.children.length - 1];
+    const lastChild:IBindingManager = this.children[this.children.length - 1];
     this.children.push(bindingManager);
-    const parentNode:Node = this.nodeProperty.node.parentNode;
+    const parentNode = this.nodeProperty.node.parentNode;
     const beforeNode:Node = lastChild?.lastNode ?? this.nodeProperty.node;
-    parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+    parentNode?.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
   /**
    */
-  replaceChild(index:number, bindingManager:BindingManager) {
+  replaceChild(index:number, bindingManager:IBindingManager) {
     if (!this.expandable) utils.raise("Binding.replaceChild: not expandable");
     const lastChild = this.children[index - 1];
     this.children[index] = bindingManager;
-    const parentNode:Node = this.nodeProperty.node.parentNode;
-    const beforeNode:Node = lastChild?.lastNode ?? this.nodeProperty.node;
-    parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+    const parentNode = this.nodeProperty.node.parentNode;
+    const beforeNode = lastChild?.lastNode ?? this.nodeProperty.node;
+    parentNode?.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
   }
 
   dispose() {
@@ -189,119 +186,98 @@ export class Binding {
 
   /**
    * create Binding
-   * @param {BindingManager} bindingManager 
-   * @param {Node} node
-   * @param {string} nodePropertyName
-   * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor 
-   * @param {string} viewModelPropertyName
-   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor
-   * @param {FilterInfo[]} filters
    */
-  static create(bindingManager,
-    node, nodePropertyName, nodePropertyConstructor, 
-    viewModelPropertyName, viewModelPropertyConstructor,
-    filters
-  ) {
+  static create(bindingManager:IBindingManager,
+    node:Node, nodePropertyName:string, nodePropertyCreator:NodePropertyCreator, 
+    statePropertyName:string, statePropertyCreator:StatePropertyCreator, filters:IFilterInfo[]) 
+  {
     const binding = Reflect.construct(Binding, [bindingManager,
-        node, nodePropertyName, nodePropertyConstructor, 
-        viewModelPropertyName, viewModelPropertyConstructor,
+        node, nodePropertyName, nodePropertyCreator, 
+        statePropertyName, statePropertyCreator,
         filters]);
     binding.initialize();
     return binding;
   }
 }
 
-/** @type {(node:Node)=>boolean} */
-const filterElement = node => node.nodeType === Node.ELEMENT_NODE;
+const filterElement = (node:Node):boolean => node.nodeType === Node.ELEMENT_NODE;
 
-export class BindingManager {
-  /** @type { Component } */
-  #component;
-  get component() {
+export class BindingManager implements IBindingManager {
+  // todo: componentの型を指定する
+  #component:any;
+  get component():any {
     return this.#component;
   }
 
-  /** @type {Binding[]} */
-  #bindings = [];
-  get bindings() {
+  #bindings:IBinding[] = [];
+  get bindings():IBinding[] {
     return this.#bindings;
   }
 
-  /** @type {Node[]} */
-  #nodes = [];
-  get nodes() {
-    return this.#nodes;
+  #nodes:Node[] = [];
+  get nodes():Node[] {
+    return this.#nodes ?? [];
   }
 
-  /** @type {Element[]} */
-  get elements() {
-    return this.#nodes.filter(filterElement);
+  get elements():Element[] {
+    return this.nodes.filter(filterElement) as Element[];
   }
 
-  /** @type {Node} */
-  get lastNode() {
-    return this.#nodes[this.#nodes.length - 1];
+  get lastNode():Node {
+    return this.nodes[this.nodes.length - 1];
   }
 
-  /** @type {DocumentFragment} */
-  #fragment;
-  get fragment() {
+  #fragment:DocumentFragment = document.createDocumentFragment();
+  get fragment():DocumentFragment {
     return this.#fragment;
   }
-  set fragment(value) {
+  set fragment(value:DocumentFragment) {
     this.#fragment = value;
   }
 
-  /** @type {LoopContext} */
-  #loopContext;
-  get loopContext() {
+  #loopContext:ILoopContext;
+  get loopContext():ILoopContext {
     return this.#loopContext;
   }
 
-  /** @type {HTMLTemplateElement} */
-  #template;
-  get template() {
+  #template:HTMLTemplateElement;
+  get template():HTMLTemplateElement {
     return this.#template;
   }
 
-  /** @type {Binding} */
-  #parentBinding;
-  get parentBinding() {
+  #parentBinding:(IBinding|undefined);
+  get parentBinding():(IBinding|undefined) {
     return this.#parentBinding;
   }
-  set parentBinding(value) {
+  set parentBinding(value:(IBinding|undefined)) {
     this.#parentBinding = value;
   }
 
-  /** @type {BindingSummary} */
-  #bindingSummary;
+  // todo: BindingSummaryの型を指定する
+  #bindingSummary:any;
 
-  /** @type {string} */
-  #uuid;
-  get uuid() {
+  #uuid:string;
+  get uuid():string {
     return this.#uuid;
   }
 
-  /**
-   * 
-   * @param {Component} component
-   * @param {HTMLTemplateElement} template
-   * @param {string} uuid
-   * @param {Binding|undefined} parentBinding
-   */
-  constructor(component, template, uuid, parentBinding) {
+  constructor(component:any, template:HTMLTemplateElement, uuid:string, parentBinding:(IBinding|undefined)) {
+    this.#parentBinding = parentBinding;
+    this.#component = component;
+    this.#template = template;
+    this.#loopContext = new LoopContext(this);
+    this.#bindingSummary = component.bindingSummary;
+    this.#uuid = uuid;
+
+    return this;
+
     this.assign(component, template, uuid, parentBinding);
   }
 
   /**
    * for reuse
-   * @param {Component} component 
-   * @param {HTMLTemplateElement} template 
-   * @param {string} uuid 
-   * @param {Binding|undefined} parentBinding 
-   * @returns {BindingManager}
    */
-  assign(component, template, uuid, parentBinding) {
+  assign(component:any, template:HTMLTemplateElement, uuid:string, parentBinding:(IBinding|undefined)) {
     this.#parentBinding = parentBinding;
     this.#component = component;
     this.#template = template;
@@ -358,9 +334,9 @@ export class BindingManager {
   /**
    * apply value to ViewModel
    */
-  applyToViewModel() {
+  applyToState() {
     for(let i = 0; i < this.#bindings.length; i++) {
-      this.#bindings[i].applyToViewModel();
+      this.#bindings[i].applyToState();
     }
   }
 
@@ -369,7 +345,7 @@ export class BindingManager {
    */
   removeNodes() {
     for(let i = 0; i < this.#nodes.length; i++) {
-      this.#fragment.appendChild(this.#nodes[i]);
+      this.#fragment?.appendChild(this.#nodes[i]);
     }
   }
 
@@ -386,20 +362,25 @@ export class BindingManager {
     this.#component = undefined;
     this.#bindingSummary = undefined;
 
-    bindingManagersByUUID[uuid]?.push(this) ??
-      (bindingManagersByUUID[uuid] = [this]);
+    BindingManager._cache[uuid]?.push(this) ??
+      (BindingManager._cache[uuid] = [this]);
   }
+
+  static _cache:BindingManagerByUUID = {};
 
   /**
    * create BindingManager
-   * @param {Component} component
-   * @param {HTMLTemplateElement} template
-   * @param {string} uuid
-   * @param {Binding|undefined} parentBinding
-   * @returns {BindingManager}
    */
-  static create(component, template, uuid, parentBinding) {
-    return createBindingManager(component, template, uuid, parentBinding);
+  static create(component:any, template:HTMLTemplateElement, uuid:string, parentBinding:(IBinding|undefined)) {
+    let bindingManager = this._cache[uuid]?.pop()?.assign(component, template, uuid, parentBinding);
+    if (typeof bindingManager === "undefined") {
+      bindingManager = new BindingManager(component, template, uuid, parentBinding);
+      bindingManager.initialize();
+    }
+    // Popover.initialize(bindingManager);
+    return bindingManager;
   }
 
 }
+
+type BindingManagerByUUID = {[key:string]:IBindingManager[]};

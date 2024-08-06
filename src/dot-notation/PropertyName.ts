@@ -1,7 +1,7 @@
 
-import { PropertyNameInfo } from "./PropertyNameInfo.js";
+import { IPropertyNameInfo } from "./types";
 
-function _getPropertyNameInfo(name:string):PropertyNameInfo {
+function _getPropertyNameInfo(name:string):IPropertyNameInfo {
   const indexes = [];
   const patternPropElements = [];
   let isIncomplete = false;
@@ -33,11 +33,11 @@ function _getPropertyNameInfo(name:string):PropertyNameInfo {
 }
 
 type PropertyNameInfoCache = {
-  [name:string]:PropertyNameInfo;
+  [name:string]:IPropertyNameInfo;
 }
 
 const _cache:PropertyNameInfoCache = {};
 
-export function getPropertyNameInfo(name:string):PropertyNameInfo {
+export function getPropertyNameInfo(name:string):IPropertyNameInfo {
   return _cache[name] ?? (_cache[name] = _getPropertyNameInfo(name));
 }

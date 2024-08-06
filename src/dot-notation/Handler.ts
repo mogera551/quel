@@ -1,7 +1,6 @@
 
-import { PropertyNameInfo } from "./PropertyNameInfo";
+import { IPropertyNameInfo, IPatternNameInfo } from "./types";
 import { getPropertyNameInfo } from "./PropertyName";
-import { PatternNameInfo } from "./PatternNameInfo";
 import { getPatternNameInfo } from "./PatternName";
 import { RE_CONTEXT_INDEX, WILDCARD } from "./Const";
 import { utils } from "../utils";
@@ -61,7 +60,7 @@ export class Handler implements ProxyHandler<State> {
     }
   }
 
-  getValuesAndLevelIndex (target:State, {propertyNameInfo, lastIndexes}:{propertyNameInfo:PropertyNameInfo, lastIndexes:number[]}, receiver:any):({ values:any[], levelIndex:number, indexes:number[] }) {
+  getValuesAndLevelIndex (target:State, {propertyNameInfo, lastIndexes}:{propertyNameInfo:IPropertyNameInfo, lastIndexes:number[]}, receiver:any):({ values:any[], levelIndex:number, indexes:number[] }) {
     if (propertyNameInfo.lastIncompleteIndex === -1) utils.raise(`propertyName(${propertyNameInfo.name}) has no wildcard`);
     let levelIndex = -1;
     const indexes = propertyNameInfo.indexes.map((index, i) => { 
