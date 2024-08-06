@@ -1,14 +1,16 @@
-import { ElementBase } from "./ElementBase_.js";
+import { ElementBase } from "./ElementBase";
 import { MultiValue } from "./MultiValue";
 import { utils } from "../../utils.js";
-import { FilterManager } from "../../filter/Manager_.js";
+import { FilterManager } from "../../filter/Manager";
+import { Binding } from "../Binding";
+import { FilterInfo } from "../../filter/Manager";
 
 export class Checkbox extends ElementBase {
   get inputElement():HTMLInputElement {
     return this.node as HTMLInputElement;
   }
 
-  _value:MultiValue = new MultiValue;
+  _value:MultiValue = new MultiValue(undefined, false);
   get value():MultiValue {
     this._value.value = this.inputElement.value;
     this._value.enabled = this.inputElement.checked;
@@ -21,7 +23,7 @@ export class Checkbox extends ElementBase {
     this.inputElement.checked = value.some(v => v === multiValue.value);
   }
 
-  _filteredValue:MultiValue = new MultiValue;
+  _filteredValue:MultiValue = new MultiValue(undefined, false);
   get filteredValue() {
     const multiValue:MultiValue = this.value;
     this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;

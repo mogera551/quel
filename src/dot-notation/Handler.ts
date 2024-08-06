@@ -28,7 +28,7 @@ export class Handler implements ProxyHandler<State> {
     this.#lastIndexesString = undefined;
     this.#stackIndexes.push(indexes);
     try {
-      callback();
+      return callback();
     } finally {
       this.#stackIndexes.pop(); 
     }

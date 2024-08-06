@@ -1,12 +1,5 @@
 import { utils } from "../utils";
-
-export enum NodeType {
-  HTMLElement = 1,
-  SVGElement = 2,
-  Text = 3,
-  Template = 4,
-  Unknown = -1,
-}
+import { NodeType } from "./types";
 
 const createNodeKey = (node:Node):string => node.constructor.name + "\t" + ((node instanceof Comment) ? (node.textContent?.[2] ?? "") : "");
 

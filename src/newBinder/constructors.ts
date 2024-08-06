@@ -1,12 +1,12 @@
 import { utils } from "../utils.js";
 import { Repeat } from "../binding/nodeProperty/Repeat.js";
 import { Branch } from "../binding/nodeProperty/Branch.js";
-import { ViewModelProperty } from "../binding/viewModelProperty/ViewModelProperty.js";
-import { ContextIndex } from "../binding/viewModelProperty/ContextIndex.js";
-import { NodeProperty } from "../binding/nodeProperty/NodeProperty_.js";
+import { StateProperty } from "../binding/stateProperty/StateProperty";
+import { ContextIndex } from "../binding/stateProperty/ContextIndex";
+import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { ElementClassName } from "../binding/nodeProperty/ElementClassName.js"
 import { Checkbox } from "../binding/nodeProperty/Checkbox_.js";
-import { Radio } from "../binding/nodeProperty/Radio.js";
+import { Radio } from "../binding/nodeProperty/Radio_.js";
 import { ElementEvent } from "../binding/nodeProperty/ElementEvent.js";
 import { ElementClass } from "../binding/nodeProperty/ElementClass.js";
 import { ElementAttribute } from "../binding/nodeProperty/ElementAttribute.js";
@@ -42,13 +42,11 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
   "props": ComponentProperty,
 };
 
-class StateProperty {};
-
 /**
  * get constructors for NodeProperty and ViewModelProperty
  */
 export const getConstructors = (node:Node, nodePropertyName:string, statePropertyName:string, useKeyed:boolean):({ nodePropertyConstructor: typeof NodeProperty, statePropertyConstructor: typeof StateProperty }) => {
-  const statePropertyConstructor = regexp.test(statePropertyName) ? ContextIndex : ViewModelProperty;
+  const statePropertyConstructor = regexp.test(statePropertyName) ? ContextIndex : StateProperty;
   let nodePropertyConstructor:typeof NodeProperty;
   do {
     const isComment = node instanceof Comment;

@@ -1,0 +1,31 @@
+import { utils } from "../utils";
+import { NodeType } from "./types";
+
+const DATASET_BIND_PROPERTY = 'data-bind';
+
+const removeAttributeFromElement = (node:Node):Node => {
+  const element = node as Element;
+  element.removeAttribute(DATASET_BIND_PROPERTY);
+  return element;
+}
+
+const thru = (node:Node):Node => node;
+
+const raiseError = (node:Node) => (utils.raise(`Unknown NodeType: ${node.constructor.name}`), node);
+
+type RemoveAttributeByNodeType = {
+  [key in NodeType]: (node:Node)=>Node;
+}
+
+const removeAttributeByNodeType:RemoveAttributeByNodeType = {
+  [NodeType.HTMLElement]: removeAttributeFromElement,
+  [NodeType.SVGElement]:  removeAttributeFromElement,
+  [NodeType.Text]:        thru,
+  [NodeType.Template]:    thru,
+  [NodeType.Unknown]:     raiseError,
+}
+
+/**
+ * remove data-bind attribute from node
+ */
+export const removeAttribute = (node:Node, nodeType:NodeType):Node => removeAttributeByNodeType[nodeType](node);

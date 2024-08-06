@@ -1,38 +1,26 @@
-import { Checkbox } from "../binding/nodeProperty/Checkbox_.js";
-import { Radio } from "../binding/nodeProperty/Radio.js";
-import { NodeType } from "./nodeType.js";
+import { Binding } from "../binding/Binding";
+import { Checkbox } from "../binding/nodeProperty/Checkbox";
+import { Radio } from "../binding/nodeProperty/Radio";
+import { utils } from "../utils";
+import { NodeType, BindNodeInfoIf } from "./types";
 
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
 
-/** @type {(element:HTMLElement)=>(binding:import("../binding/Binding.js").Binding)=>void} */
-const setDefaultEventHandlerByElement = element => binding => 
+const setDefaultEventHandlerByElement = (element:HTMLElement) => (binding:Binding) => 
   element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
 
-/**
- * 
- * @param {Node} node
- * @param {boolean} isInputable
- * @param {Binding[]} bindings 
- * @param {string} defaultName
- * @returns {void}
- */
-function InitializeHTMLElement(node, isInputable, bindings, defaultName) {
-  /** @type {HTMLElement}  */
-  const element = node;
+function initializeHTMLElement(node:Node, isInputable:boolean, bindings:Binding[], defaultName:string) {
+  const element = node as HTMLElement;
 
   // set event handler
-  /** @type {boolean} has default event */
   let hasDefaultEvent = false;
 
-  /** @type {import("../binding/Binding.js").Binding|null} */
-  let defaultBinding = null;
+  let defaultBinding:(Binding|null) = null;
 
-  /** @type {import("../binding/Binding.js").Binding|null} */
-  let radioBinding = null;
+  let radioBinding:(Binding|null) = null;
 
-  /** @type {import("../binding/Binding.js").Binding|null} */
-  let checkboxBinding = null;
+  let checkboxBinding:(Binding|null) = null;
 
   for(let i = 0; i < bindings.length; i++) {
     const binding = bindings[i];
@@ -43,7 +31,6 @@ function InitializeHTMLElement(node, isInputable, bindings, defaultName) {
   }
 
   if (!hasDefaultEvent) {
-    /** @type {(binding:import("../binding/Binding.js").Binding)=>void} */
     const setDefaultEventHandler = setDefaultEventHandlerByElement(element);
 
     if (radioBinding) {
@@ -61,19 +48,20 @@ function InitializeHTMLElement(node, isInputable, bindings, defaultName) {
   return undefined;
 }
 
-/** @type {()=>void} */
 const thru = () => {};
 
-/** @type {{[key:NodeType]:(node:Node, isInputable:boolean, bindings:Binding[], defaultName:string)=>void}} */
-const InitializeNodeByNodeType = {
-  [NodeType.HTMLElement]: InitializeHTMLElement,
+const raiseError = (node:Node) => (utils.raise(`Unknown NodeType: ${node.constructor.name}`), undefined);
+
+type InitializeNodeByNodeType = {
+  [key in NodeType]: (node:Node, isInputable:boolean, bindings:Binding[], defaultName:string)=>void;
+}
+
+const initializeNodeByNodeType:InitializeNodeByNodeType = {
+  [NodeType.HTMLElement]: initializeHTMLElement,
   [NodeType.SVGElement]:  thru,
   [NodeType.Text]:        thru,
   [NodeType.Template]:    thru,
+  [NodeType.Unknown]:     raiseError,
 };
 
-/**
- * Initialize node created from template.importNode
- * @type {(nodeInfo:BindNodeInfo)=>(node:Node, bindings:Binding[])=>void}
- */
-export const InitializeNode = (nodeInfo) => (node, bindings) => InitializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
+export const initializeNode = (nodeInfo:BindNodeInfoIf) => (node:Node, bindings:Binding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);

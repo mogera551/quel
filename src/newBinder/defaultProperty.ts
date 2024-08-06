@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { NodeType } from "./nodeType";
+import { NodeType } from "./types";
 
 const DEFAULT_PROPERTY = "textContent";
 

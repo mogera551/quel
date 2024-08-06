@@ -1,4 +1,6 @@
+import { FilterInfo } from "../../filter/Manager";
 import { utils } from "../../utils";
+import { Binding } from "../Binding";
 import { NodeProperty } from "./NodeProperty";
 
 export class ElementBase extends NodeProperty {
