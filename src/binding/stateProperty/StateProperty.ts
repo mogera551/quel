@@ -1,12 +1,13 @@
 import { MultiValue } from "../nodeProperty/MultiValue";
-//import { Symbols } from "../../Symbols.js";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { getPatternNameInfo } from "../../dot-notation/PatternName";
 import { getPropertyNameInfo } from "../../dot-notation/PropertyName";
 import { Binding } from "../Binding";
-import { IBinding, IStateProperty } from "../types.js";
-import { IFilterInfo, FilterFunc } from "../../filter/types.js";
-import { IPatternNameInfo, IPropertyNameInfo } from "../../dot-notation/types.js";
+import { IBinding, IStateProperty } from "../types";
+import { IFilterInfo, FilterFunc } from "../../filter/types";
+import { IPatternNameInfo, IPropertyNameInfo } from "../../dot-notation/types";
+import { State } from "../../state/types";
+import { GetDirectSymbol, SetDirectSymbol } from "../../dot-notation/Const";
 
 export class StateProperty implements IStateProperty {
   get state():State {
@@ -61,11 +62,11 @@ export class StateProperty implements IStateProperty {
   }
 
   get value():any {
-    return this.state[Symbols.directlyGet](this.name, this.indexes);
+    return this.state[GetDirectSymbol](this.name, this.indexes);
   }
   set value(value:any) {
     const setValue = (value:any) => {
-      this.state[Symbols.directlySet](this.name, this.indexes, value);
+      this.state[SetDirectSymbol](this.name, this.indexes, value);
     };
     if (value instanceof MultiValue) {
       const thisValue = this.value;
@@ -103,7 +104,7 @@ export class StateProperty implements IStateProperty {
   constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create(filters, binding.component.filters.out);
+    this.#filters = Filters.create(filters, binding.component.filters.out) as FilterFunc[];
     this.#propertyName = getPropertyNameInfo(name);
     this.#patternName = getPatternNameInfo(name);
     this.#level = this.#patternName.level;
@@ -112,7 +113,7 @@ export class StateProperty implements IStateProperty {
   assign(binding:Binding, name:string, filters:IFilterInfo[]):IStateProperty {
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create(filters, binding.component.filters.out);
+    this.#filters = Filters.create(filters, binding.component.filters.out) as FilterFunc[];
     this.#propertyName = getPropertyNameInfo(name);
     this.#patternName = getPatternNameInfo(name);
     this.#level = this.#patternName.level;
@@ -127,11 +128,11 @@ export class StateProperty implements IStateProperty {
   }
 
   getChildValue(index:number) {
-    return this.state[Symbols.directlyGet](`${this.name}.*` , this.indexes.concat(index));
+    return this.state[GetDirectSymbol](`${this.name}.*` , this.indexes.concat(index));
   }
 
   setChildValue(index:number, value:any) {
-    return this.state[Symbols.directlySet](`${this.name}.*` , this.indexes.concat(index), value);
+    return this.state[SetDirectSymbol](`${this.name}.*` , this.indexes.concat(index), value);
   }
 
   dispose() {

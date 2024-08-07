@@ -2,8 +2,9 @@
 import { IPropertyNameInfo, IPatternNameInfo } from "./types";
 import { getPropertyNameInfo } from "./PropertyName";
 import { getPatternNameInfo } from "./PatternName";
-import { RE_CONTEXT_INDEX, WILDCARD } from "./Const";
+import { GetDirectSymbol, RE_CONTEXT_INDEX, SetDirectSymbol, WILDCARD } from "./Const";
 import { utils } from "../utils";
+import { State } from "../state/types";
 
 export class Handler implements ProxyHandler<State> {
   #stackIndexes:number[][] = [];
@@ -103,10 +104,26 @@ export class Handler implements ProxyHandler<State> {
     return result;
   }
 
+  getDirect = (target:State, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any) => ():any => {
+    return this.pushIndexes(indexes, () => this.getByPatternNameAndIndexes(target, {patternName, indexes}, receiver));
+  }
+
+  setDirect(target:State, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any) {
+    return this.pushIndexes(indexes, () => this.setByPatternNameAndIndexes(target, { patternName, indexes, value }, receiver));
+  }
+
   get(target:State, prop:PropertyKey, receiver:any):any {
     const isPropString = typeof prop === "string";
     do {
       if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) break;
+      if (prop === GetDirectSymbol) {
+        const fn = Reflect.get(this, "getDirect", receiver);
+        return (patternName:string, indexes:number[])=> Reflect.apply(fn, target, [target, {patternName, indexes}, receiver]);
+      }
+      if (prop === SetDirectSymbol) {
+        const fn = Reflect.get(this, "setDirect", receiver);
+        return (patternName:string, indexes:number[], value:any)=> Reflect.apply(fn, target, [target, {patternName, indexes, value}, receiver]);
+      }
       if (!isPropString) break;
       const lastIndexes = this.lastIndexes;
       if (prop[0] === "$") {

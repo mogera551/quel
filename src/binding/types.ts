@@ -2,6 +2,7 @@ import { IPatternNameInfo, IPropertyNameInfo } from "../dot-notation/types";
 import { FilterFunc, IFilterInfo } from "../filter/types";
 import { ILoopContext } from "../loopContext/types";
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
+import { State } from "../state/types";
 
 export interface INodeProperty {
   node: Node;
@@ -54,7 +55,7 @@ export interface IBinding {
   nodeProperty: INodeProperty;
   stateProperty: IStateProperty;
   component: any;
-  loopContext: any;
+  loopContext: ILoopContext;
   children: IBindingManager[];
   expandable: boolean;
   loopable: boolean;

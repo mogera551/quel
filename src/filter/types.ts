@@ -12,6 +12,6 @@ export type EventFilterFuncWithOption = (options:string[])=>EventFilterFunc;
 export interface IFilterManager {
   ambigousNames:Set<string>;
   funcByName:(Map<string, FilterFuncWithOption>|Map<string, EventFilterFuncWithOption>);
-  registerFilter(funcName:string, filterFunc:FilterFuncWithOption):void;
-  getFilterFunc(name:string):FilterFuncWithOption;
+  registerFilter(funcName:string, filterFunc:FilterFuncWithOption|EventFilterFuncWithOption):void;
+  getFilterFunc(name:string):FilterFuncWithOption|EventFilterFuncWithOption;
 }

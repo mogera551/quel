@@ -66,7 +66,7 @@ export class NodeProperty {
     this.#nameElements = name.split(".");
     const workFilters = filters.slice(0)
     workFilters.reverse();
-    this.#filters = Filters.create(workFilters, binding.component.filters.in);
+    this.#filters = Filters.create(workFilters, binding.component.filters.in) as FilterFunc[];
   }
 
   assign(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
@@ -76,7 +76,7 @@ export class NodeProperty {
     this.#nameElements = name.split(".");
     const workFilters = filters.slice(0)
     workFilters.reverse();
-    this.#filters = Filters.create(workFilters, binding.component.filters.in);
+    this.#filters = Filters.create(workFilters, binding.component.filters.in) as FilterFunc[];
     return this;
   }
 

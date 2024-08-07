@@ -1,8 +1,3 @@
-/**
- * @module binding/nodeProperty/Branch
- * @typedef {import("../Binding.js").Binding} Binding
- * @typedef {import("../Binding.js").BindingManager} BindingManager
- */
 import { TemplateProperty } from "./TemplateProperty";
 import { utils } from "../../utils";
 import { BindingManager } from "../Binding";

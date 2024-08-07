@@ -7,14 +7,14 @@ import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { Repeat } from "../binding/nodeProperty/Repeat.js";
 import { Branch } from "../binding/nodeProperty/Branch_.js";
-import { ElementClassName } from "../binding/nodeProperty/ElementClassName.js"
+import { ElementClassName } from "../binding/nodeProperty/ElementClassName_.js"
 import { Checkbox } from "../binding/nodeProperty/Checkbox_.js";
 import { Radio } from "../binding/nodeProperty/Radio_.js";
-import { ElementEvent } from "../binding/nodeProperty/ElementEvent.js";
-import { ElementClass } from "../binding/nodeProperty/ElementClass.js";
-import { ElementAttribute } from "../binding/nodeProperty/ElementAttribute.js";
-import { ElementStyle } from "../binding/nodeProperty/ElementStyle.js";
-import { ElementProperty } from "../binding/nodeProperty/ElementProperty.js";
+import { ElementEvent } from "../binding/nodeProperty/ElementEvent_.js";
+import { ElementClass } from "../binding/nodeProperty/ElementClass_.js";
+import { ElementAttribute } from "../binding/nodeProperty/ElementAttribute_.js";
+import { ElementStyle } from "../binding/nodeProperty/ElementStyle_.js";
+import { ElementProperty } from "../binding/nodeProperty/ElementProperty_.js";
 import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty.js";
 import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed.js";
 

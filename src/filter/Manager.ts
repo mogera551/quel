@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption } from "./types";
+import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption, IFilterManager } from "./types";
 
 /**
  * ambigous name:
@@ -228,16 +228,16 @@ const outputGroups = [
   numberFilterGroup, stringFilterGroup, mathFilterGroup,
 ];
 
-const nullthru = (callback:FilterFuncWithOption):FilterFuncWithOption => 
+const nullthru = (callback:FilterFuncWithOption|EventFilterFuncWithOption):FilterFuncWithOption|FilterFuncWithOption => 
   (options:any[]) => (value:any) => value == null ? value : callback(options)(value);
 
-const reduceApplyFilter = (value:any, filter:FilterFunc) => filter(value);
+const reduceApplyFilter = (value:any, filter:FilterFunc|EventFilterFunc) => filter(value);
 
 const thru:FilterFuncWithOption = (options:any[]) => (value:any):any => value;
 
 export class Filters {
 
-  static create(filters:IFilterInfo[], manager:FilterManager) {
+  static create(filters:IFilterInfo[], manager:IFilterManager):(FilterFunc|EventFilterFunc)[] {
     const filterFuncs = [];
     for(let i = 0; i < filters.length; i++) {
       const filter = filters[i];
@@ -249,12 +249,12 @@ export class Filters {
 
 export class FilterManager {
   ambigousNames:Set<string> = new Set;
-  funcByName:(Map<string, FilterFuncWithOption>|Map<string, EventFilterFuncWithOption>) = new Map;
+  funcByName:(Map<string, FilterFuncWithOption|EventFilterFuncWithOption>) = new Map;
 
   /**
    * register user defined filter, check duplicate name
    */
-  registerFilter(funcName:string, filterFunc:FilterFuncWithOption):void {
+  registerFilter(funcName:string, filterFunc:FilterFuncWithOption|EventFilterFuncWithOption):void {
     const isNotNullThru = funcName.endsWith("*");
     const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
 
@@ -262,7 +262,7 @@ export class FilterManager {
       utils.raise(`${this.constructor.name}: ${realFuncName} is already registered`);
     }
     const wrappedFunc = !isNotNullThru ? nullthru(filterFunc) : filterFunc;
-    (this.funcByName as Map<string, FilterFuncWithOption>).set(realFuncName, wrappedFunc);
+    (this.funcByName as Map<string, FilterFuncWithOption|EventFilterFuncWithOption>).set(realFuncName, wrappedFunc);
   }
 
   /**
@@ -273,7 +273,7 @@ export class FilterManager {
     return (this.funcByName.get(name) ?? thru) as FilterFuncWithOption;
   }
 
-  static applyFilter(value:any, filters:FilterFunc[]) {
+  static applyFilter(value:any, filters:(FilterFunc|EventFilterFunc)[]):any {
     return filters.reduce(reduceApplyFilter, value);
   }
 }
