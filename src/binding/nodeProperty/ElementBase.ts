@@ -1,6 +1,6 @@
-import { FilterInfo } from "../../filter/Manager";
+import { IFilterInfo } from "../../filter/types";
 import { utils } from "../../utils";
-import { Binding } from "../Binding";
+import { IBinding } from "../types";
 import { NodeProperty } from "./NodeProperty";
 
 export class ElementBase extends NodeProperty {
@@ -8,7 +8,7 @@ export class ElementBase extends NodeProperty {
     return this.node as Element;
   }
 
-  constructor(binding:Binding, node:Node, name:string, filters:FilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof Element)) utils.raise("ElementBase: not element");
     super(binding, node, name, filters);
   }

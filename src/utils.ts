@@ -1,5 +1,5 @@
 export class utils {
-  static raise(message:string) {
+  static raise(message:string):never {
     throw new Error(message);
   }
 

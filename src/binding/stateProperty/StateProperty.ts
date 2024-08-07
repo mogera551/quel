@@ -1,37 +1,35 @@
-import "../../types.js";
 import { MultiValue } from "../nodeProperty/MultiValue";
-import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
-import { Symbols } from "../../Symbols.js";
-import { FilterInfo, FilterManager, Filters, FilterFunc } from "../../filter/Manager";
+//import { Symbols } from "../../Symbols.js";
+import { FilterManager, Filters } from "../../filter/Manager";
 import { getPatternNameInfo } from "../../dot-notation/PatternName";
-import { PropertyNameInfo } from "../../dot-notation/PropertyNameInfo";
-import { PatternNameInfo } from "../../dot-notation/PatternNameInfo";
 import { getPropertyNameInfo } from "../../dot-notation/PropertyName";
 import { Binding } from "../Binding";
+import { IBinding, IStateProperty } from "../types.js";
+import { IFilterInfo, FilterFunc } from "../../filter/types.js";
+import { IPatternNameInfo, IPropertyNameInfo } from "../../dot-notation/types.js";
 
-export class StateProperty {
-  /** @type { State } */
+export class StateProperty implements IStateProperty {
   get state():State {
     return this.#binding.component.state;
   }
 
   #name:string;
-  get name() {
+  get name():string {
     return this.#name;
   }
 
-  #propertyName:PropertyNameInfo;
-  get propertyName() {
+  #propertyName:IPropertyNameInfo;
+  get propertyName():IPropertyNameInfo {
     return this.#propertyName;
   }
 
-  #patternName:PatternNameInfo;
-  get patternName() {
+  #patternName:IPatternNameInfo;
+  get patternName():IPatternNameInfo {
     return this.#patternName;
   }
 
-  #level;
-  get level() {
+  #level:number;
+  get level():number {
     return this.#level;
   }
 
@@ -49,7 +47,7 @@ export class StateProperty {
   }
 
   #oldKey:string = "";
-  get oldKey() {
+  get oldKey():string {
     return this.#oldKey;
   }
 
@@ -62,11 +60,10 @@ export class StateProperty {
     return this.key;
   }
 
-  /** @type {any} */
-  get value() {
+  get value():any {
     return this.state[Symbols.directlyGet](this.name, this.indexes);
   }
-  set value(value) {
+  set value(value:any) {
     const setValue = (value:any) => {
       this.state[Symbols.directlySet](this.name, this.indexes, value);
     };
@@ -89,23 +86,21 @@ export class StateProperty {
     return this.#filters;
   }
 
-  /** @type {any} */
-  get filteredValue() {
+  get filteredValue():any {
     return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
   }
 
-  /** @type {boolean} applyToViewModel()の対象かどうか */
-  get applicable() {
+  // applyToViewModel()の対象かどうか
+  get applicable():boolean {
     return true;
   }
 
-  /** @type {import("../Binding.js").Binding} */
-  #binding;
+  #binding:IBinding;
   get binding() {
     return this.#binding;
   }
 
-  constructor(binding:Binding, name:string, filters:FilterInfo[]) {
+  constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#name = name;
     this.#filters = Filters.create(filters, binding.component.filters.out);
@@ -114,7 +109,7 @@ export class StateProperty {
     this.#level = this.#patternName.level;
   }
 
-  assign(binding:Binding, name:string, filters:FilterInfo[]):StateProperty {
+  assign(binding:Binding, name:string, filters:IFilterInfo[]):IStateProperty {
     this.#binding = binding;
     this.#name = name;
     this.#filters = Filters.create(filters, binding.component.filters.out);
@@ -127,7 +122,6 @@ export class StateProperty {
   /**
    * 初期化処理
    * 特に何もしない
-   * @param {import("../Binding.js").Binding} binding
    */
   initialize() {
   }

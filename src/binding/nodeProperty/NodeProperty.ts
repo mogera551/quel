@@ -1,6 +1,7 @@
-//import "../../types.js";
 import { utils } from "../../utils";
-//import { FilterManager, Filters } from "../../filter/Manager.js";
+import { FilterManager, Filters } from "../../filter/Manager";
+import { FilterFunc, IFilterInfo } from "../../filter/types";
+import { IBinding } from "../types";
 
 export class NodeProperty {
   #node:Node;
@@ -25,8 +26,7 @@ export class NodeProperty {
     Reflect.set(this.node, this.name, value);
   }
 
-  /** @type {FilterFunc[]} */
-  #filters;
+  #filters:FilterFunc[];
   get filters() {
     return this.#filters;
   }
@@ -36,70 +36,50 @@ export class NodeProperty {
     return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
   }
 
-  /** @type {boolean} applyToNode()の対象かどうか */
-  get applicable() {
+  // applyToNode()の対象かどうか
+  get applicable():boolean {
     return true;
   }
 
-  /** @type {import("../Binding.js").Binding} */
-  #binding;
+  #binding:IBinding;
   get binding() {
     return this.#binding;
   }
 
-  /** @type {boolean} */
-  get expandable() {
+  get expandable():boolean {
     return false;
   }
 
-  /** @type {boolean} */
-  get isSelectValue() {
+  get isSelectValue():boolean {
     return false;
   }
 
-  /** @type {boolean} */
-  get loopable() {
+  get loopable():boolean {
     return false;
   }
 
-  /**
-   * 
-   * @param {import("../Binding.js").Binding} binding
-   * @param {Node} node 
-   * @param {string} name 
-   * @param {FilterInfo[]} filters 
-   */
-  constructor(binding, node, name, filters) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-//    this.#filters = Filters.create(filters.toReversed(), binding.component.filters.in);
+    const workFilters = filters.slice(0)
+    workFilters.reverse();
+    this.#filters = Filters.create(workFilters, binding.component.filters.in);
   }
 
-  /**
-   * 
-   * @param {import("../Binding.js").Binding} binding
-   * @param {Node} node 
-   * @param {string} name 
-   * @param {FilterInfo[]} filters 
-   * @returns {NodeProperty}
-   */
-  assign(binding, node, name, filters) {
+  assign(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = Filters.create(filters.toReversed(), binding.component.filters.in);
+    const workFilters = filters.slice(0)
+    workFilters.reverse();
+    this.#filters = Filters.create(workFilters, binding.component.filters.in);
     return this;
   }
 
-  /**
-   * 初期化処理
-   * 特に何もしない
-   * @param {import("../Binding.js").Binding} binding
-   */
   initialize() {
   }
 
@@ -107,20 +87,14 @@ export class NodeProperty {
    * 更新後処理
    * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  postUpdate(propertyAccessByViewModelPropertyKey) {
+  postUpdate(propertyAccessByViewModelPropertyKey:Map<string,{}>) {
   }
 
-  /** 
-   * @param {any} value
-   */
-  isSameValue(value) {
+  isSameValue(value:any):boolean {
     return this.value === value;
   }
 
-  /**
-   * @param {Set<number>} setOfIndex
-   */
-  applyToChildNodes(setOfIndex) {
+  applyToChildNodes(setOfIndex:Set<number>) {
   }
 
   dispose() {

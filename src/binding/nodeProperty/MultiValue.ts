@@ -1,4 +1,6 @@
-export class MultiValue {
+import { IMultiValue } from "./types";
+
+export class MultiValue implements IMultiValue {
   value:any;
   enabled:boolean = false;
   constructor(value:any, enabled:boolean) {

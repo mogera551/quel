@@ -6,7 +6,7 @@ import { StateProperty } from "../binding/stateProperty/StateProperty";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { Repeat } from "../binding/nodeProperty/Repeat.js";
-import { Branch } from "../binding/nodeProperty/Branch.js";
+import { Branch } from "../binding/nodeProperty/Branch_.js";
 import { ElementClassName } from "../binding/nodeProperty/ElementClassName.js"
 import { Checkbox } from "../binding/nodeProperty/Checkbox_.js";
 import { Radio } from "../binding/nodeProperty/Radio_.js";

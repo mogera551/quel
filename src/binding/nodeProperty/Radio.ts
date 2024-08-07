@@ -1,35 +1,36 @@
 import { MultiValue } from "./MultiValue";
+import { IMultiValue } from "./types";
 import { utils } from "../../utils";
 import { ElementBase } from "./ElementBase";
-import { FilterInfo, FilterManager } from "../../filter/Manager";
-import { Binding } from "../Binding";
+import { IFilterInfo } from "../../filter/types";
+import { IBinding } from "../types";
+import { FilterManager } from "../../filter/Manager";
 
 export class Radio extends ElementBase {
   get inputElement():HTMLInputElement {
     return this.element as HTMLInputElement;
   }
 
-  /** @type {MultiValue} */
-  _value = new MultiValue(undefined, false);
-  get value():MultiValue {
+  _value:IMultiValue = new MultiValue(undefined, false);
+  get value():IMultiValue {
     this._value.value = this.inputElement.value;
     this._value.enabled = this.inputElement.checked;
     return this._value;
   }
   set value(value:any) {
-    const multiValue:MultiValue = this.filteredValue;
+    const multiValue:IMultiValue = this.filteredValue;
     this.inputElement.checked = (value === multiValue.value) ? true : false;
   }
 
-  _filteredValue = new MultiValue(undefined, false);
-  get filteredValue():MultiValue {
-    const multiValue:MultiValue = this.value;
+  _filteredValue:IMultiValue = new MultiValue(undefined, false);
+  get filteredValue():IMultiValue {
+    const multiValue:IMultiValue = this.value;
     this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;
     this._filteredValue.enabled = multiValue.enabled;
     return this._filteredValue;
   }
   
-  constructor(binding:Binding, node:Node, name:string, filters:FilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
     const element = node as HTMLInputElement;
     if (element.type !== "radio" && element.type !== "checkbox") utils.raise("Radio: not radio or checkbox");
