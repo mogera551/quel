@@ -1,11 +1,10 @@
-import { config } from "../Config.js";
-import { utils } from "../utils.js";
-import * as Template from "./Template.js";
-import * as StyleSheet from "./StyleSheet.js";
-import { IState } from "../state/types.js";
-import { ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions } from "./types.js";
+import { config } from "../Config";
+import { utils } from "../utils";
+import * as Template from "./Template";
+import * as StyleSheet from "./StyleSheet";
+import { ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions, IModule } from "./types";
 
-export class Module {
+export class Module implements IModule{
   #uuid:string = utils.createUUID();
   get uuid():string {
     return this.#uuid;
@@ -24,7 +23,7 @@ export class Module {
     return this.css ? StyleSheet.create(this.css, this.uuid) : undefined;
   }
 
-  State:typeof Object|undefined;
+  State:typeof Object = class {} as typeof Object;
 
   config:ComponentModuleConfig = {};
 

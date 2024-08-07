@@ -20,8 +20,6 @@ import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
-/** @type {Object<boolean,Object<string,typeof NodeProperty>>} */
-
 type NodePropertyConstructorByName = {[key:string]:typeof NodeProperty};
 type NodePropertyConstructorByNameByIsComment = {[key:number]:NodePropertyConstructorByName};
 

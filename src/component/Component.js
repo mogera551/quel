@@ -1,22 +1,22 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
-import { Module } from "./Module_.js";
+import { IsComponentSymbol } from "./Const.js";
+import { Module } from "./Module.js";
 import { MixedComponent } from "./MixedComponent.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
 import { MixedDialog } from "./MixedDialog.js";
 import { MixedPopover } from "../popover/MixedPopover.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager.js";
-import { ComponentModule } from "./types.js";
+
+const componentModuleByConstructor = new Map;
 
 /**
  * generate unique component class
  * @param {ComponentModule} componentModule 
  * @returns {Component.constructor}
  */
-export function generateComponentClass(componentModule:ComponentModule) {
+export function generateComponentClass(componentModule) {
   /** @type {(module:Module)=>HTMLElement.constructor} */
-  const getBaseClass:typeof HTMLElement = function (module:ComponentModule):typeof HTMLElement {
+  const getBaseClass = function (module) {
     return class extends HTMLElement {
 
       /** @type {HTMLTemplateElement} */
@@ -59,7 +59,7 @@ export function generateComponentClass(componentModule:ComponentModule) {
       static useOverscrollBehavior = module.config?.useOverscrollBehavior ?? config.useOverscrollBehavior;
 
       /** @type {boolean} */
-      static get [Symbols.isComponent] () {
+      static get [IsComponentSymbol] () {
         return true;
       }
 

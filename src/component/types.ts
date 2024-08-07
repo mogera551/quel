@@ -1,5 +1,4 @@
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
-import { IState } from "../state/types";
 
 export interface IComponent {
   element:Element;
@@ -11,7 +10,7 @@ export type ComponentModuleConfig = {
   debug?:boolean; // debug mode for the component, default is false
   useShadowRoot?:boolean; // attach shadow root to the component, default is false
   useKeyed?:boolean; // use keyed, default is true. keyed is used for the component instance.
-  useWebComponent?:boolean; // use web component, default is true. if false then no custom element.
+  useWebComponent?:boolean; // use web component, default is true. if false then no use custom element.
   useLocalTagName?:boolean; // use local tag name, default is true. local custom tag is unique in the document.
   useLocalSelector?:boolean; // use local selector, default is true. local selector is unique in the document.
   useOverscrollBehavior?:boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
@@ -38,17 +37,17 @@ export type ComponentModule = {
   moduleConfig?:ComponentModuleConfig;
 }
 
-export interface Module {
-  uuid:string;
-  html:string;
-  css:string|undefined;
-  template:HTMLTemplateElement;
-  styleSheet:CSSStyleSheet|undefined;
-  State:typeof Object;
-  config:ComponentModuleConfig;
-  moduleConfig:ComponentModuleConfig;
-  options:ComponentModuleOptions;
-  filters:ComponentModuleFilters;
-  componentModules:{[key:string]:Module}|undefined;
-  componentModulesForRegister:{[key:string]:Module}|undefined;
+export interface IModule {
+  uuid: string;
+  html: string;
+  css?: string;
+  template: HTMLTemplateElement;
+  styleSheet?: CSSStyleSheet;
+  State: typeof Object;
+  config: ComponentModuleConfig;
+  moduleConfig: ComponentModuleConfig;
+  options: ComponentModuleOptions;
+  filters: ComponentModuleFilters;
+  componentModules?: {[key:string]:IModule};
+  componentModulesForRegister?: {[key:string]:IModule};
 }

@@ -1,12 +1,22 @@
 import "../types.js";
 import { registerComponentModule } from "./Component.js";
 
+/**
+ * 
+ * @param {string} html 
+ * @returns {string}
+ */
 function toComment(html) {
   return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
     return `<!--{{${expr}}}-->`;
   });
 }
 
+/**
+ * 
+ * @param {string} html 
+ * @returns {string}
+ */
 function fromComment(html) {
   return html.replaceAll(/<!--\{\{([^\}]+)\}\}-->/g, (match, expr) => {
     return `{{${expr}}}`;

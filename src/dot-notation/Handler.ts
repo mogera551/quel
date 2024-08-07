@@ -4,9 +4,9 @@ import { getPropertyNameInfo } from "./PropertyName";
 import { getPatternNameInfo } from "./PatternName";
 import { GetDirectSymbol, RE_CONTEXT_INDEX, SetDirectSymbol, WILDCARD } from "./Const";
 import { utils } from "../utils";
-import { State } from "../state/types";
+import { IState } from "../state/types";
 
-export class Handler implements ProxyHandler<State> {
+export class Handler implements ProxyHandler<IState> {
   #stackIndexes:number[][] = [];
   get lastIndexes():number[] {
     return this.#stackIndexes[this.#stackIndexes.length - 1] ?? [];
@@ -34,7 +34,7 @@ export class Handler implements ProxyHandler<State> {
     }
   }
 
-  getByPatternNameAndIndexes(target:State, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any):any {
+  getByPatternNameAndIndexes(target:IState, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any):any {
     const value = Reflect.get(target, patternName, receiver);
     if (typeof value !== "undefined") return value;
     const patterNameInfo = getPatternNameInfo(patternName);
@@ -47,7 +47,7 @@ export class Handler implements ProxyHandler<State> {
     return parent[lastName];
   }
   
-  setByPatternNameAndIndexes(target:State, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any):boolean {
+  setByPatternNameAndIndexes(target:IState, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any):boolean {
     const patterNameInfo = getPatternNameInfo(patternName);
     if (Reflect.has(target, patternName) || patterNameInfo.isPrimitive) {
       return Reflect.set(target, patternName, value, receiver);
@@ -61,7 +61,7 @@ export class Handler implements ProxyHandler<State> {
     }
   }
 
-  getValuesAndLevelIndex (target:State, {propertyNameInfo, lastIndexes}:{propertyNameInfo:IPropertyNameInfo, lastIndexes:number[]}, receiver:any):({ values:any[], levelIndex:number, indexes:number[] }) {
+  getValuesAndLevelIndex (target:IState, {propertyNameInfo, lastIndexes}:{propertyNameInfo:IPropertyNameInfo, lastIndexes:number[]}, receiver:any):({ values:any[], levelIndex:number, indexes:number[] }) {
     if (propertyNameInfo.lastIncompleteIndex === -1) utils.raise(`propertyName(${propertyNameInfo.name}) has no wildcard`);
     let levelIndex = -1;
     const indexes = propertyNameInfo.indexes.map((index, i) => { 
@@ -79,7 +79,7 @@ export class Handler implements ProxyHandler<State> {
     return { values, levelIndex, indexes };
   }
   
-  getExpandLastIndex = (target:State, receiver:any) => (propertyName:string, lastIndexes:number[]):any[] => {
+  getExpandLastIndex = (target:IState, receiver:any) => (propertyName:string, lastIndexes:number[]):any[] => {
     const propertyNameInfo = getPropertyNameInfo(propertyName);
     if (!propertyNameInfo.hasWildcard) utils.raise(`propertyName(${propertyName}) has no wildcard`);
     const { values, levelIndex, indexes } = this.getValuesAndLevelIndex(target, {propertyNameInfo, lastIndexes}, receiver);
@@ -91,7 +91,7 @@ export class Handler implements ProxyHandler<State> {
     return results;
   }
   
-  setExpandLastIndex = (target:State, receiver:any) => (propertyName:string, lastIndexes:number[], value:(any|any[])):boolean => {
+  setExpandLastIndex = (target:IState, receiver:any) => (propertyName:string, lastIndexes:number[], value:(any|any[])):boolean => {
     const propertyNameInfo = getPropertyNameInfo(propertyName);
     if (!propertyNameInfo.hasWildcard) utils.raise(`propertyName(${propertyName}) has no wildcard`);
     const { values, levelIndex, indexes } = this.getValuesAndLevelIndex(target, {propertyNameInfo, lastIndexes}, receiver);
@@ -104,15 +104,15 @@ export class Handler implements ProxyHandler<State> {
     return result;
   }
 
-  getDirect = (target:State, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any) => ():any => {
+  getDirect = (target:IState, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any) => ():any => {
     return this.pushIndexes(indexes, () => this.getByPatternNameAndIndexes(target, {patternName, indexes}, receiver));
   }
 
-  setDirect(target:State, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any) {
+  setDirect(target:IState, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any) {
     return this.pushIndexes(indexes, () => this.setByPatternNameAndIndexes(target, { patternName, indexes, value }, receiver));
   }
 
-  get(target:State, prop:PropertyKey, receiver:any):any {
+  get(target:IState, prop:PropertyKey, receiver:any):any {
     const isPropString = typeof prop === "string";
     do {
       if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) break;
@@ -142,7 +142,7 @@ export class Handler implements ProxyHandler<State> {
     return Reflect.get(target, prop, receiver);
   }
 
-  set(target:State, prop:PropertyKey, value:any, receiver:any):boolean {
+  set(target:IState, prop:PropertyKey, value:any, receiver:any):boolean {
     const isPropString = typeof prop === "string";
     do {
       if (isPropString && prop.startsWith("@@__")) break;
