@@ -1,4 +1,4 @@
-import { IBinding, IBindingManager } from "../binding/types";
+import { IBindingManager } from "../binding/types";
 import { Binding } from "../binding/Binding";
 import { ParseBindTextInfo, PropertyCreators } from "./types";
 

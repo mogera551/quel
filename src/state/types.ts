@@ -1,4 +1,3 @@
-
-type State = {
+export type State = {
   [name:(string|symbol)]:any;
 }

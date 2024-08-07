@@ -1,9 +1,9 @@
 
 
 import { IBindNodeInfo } from "./types";
-import { Binding, BindingManager } from "../binding/Binding";
 import { parseTemplate } from "./parseTemplate";
 import { createBindings } from "./createBindings";
+import { IBinding, IBindingManager } from "../binding/types";
 
 const UUID_DATASET = "uuid";
 
@@ -24,7 +24,7 @@ export class Binder {
     this.nodeInfos = parseTemplate(this.template, useKeyed);
   }
 
-  createBindings(content:DocumentFragment, bindingManager:BindingManager):Binding[] {
+  createBindings(content:DocumentFragment, bindingManager:IBindingManager):IBinding[] {
     return createBindings(content, bindingManager, this.nodeInfos);
   }
 

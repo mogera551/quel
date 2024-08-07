@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import { NodeType } from "./types";
 
 const DATASET_BIND_PROPERTY = 'data-bind';
@@ -11,8 +10,6 @@ const removeAttributeFromElement = (node:Node):Node => {
 
 const thru = (node:Node):Node => node;
 
-const raiseError = (node:Node) => (utils.raise(`Unknown NodeType: ${node.constructor.name}`), node);
-
 type RemoveAttributeByNodeType = {
   [key in NodeType]: (node:Node)=>Node;
 }
@@ -22,7 +19,6 @@ const removeAttributeByNodeType:RemoveAttributeByNodeType = {
   [NodeType.SVGElement]:  removeAttributeFromElement,
   [NodeType.Text]:        thru,
   [NodeType.Template]:    thru,
-  [NodeType.Unknown]:     raiseError,
 }
 
 /**

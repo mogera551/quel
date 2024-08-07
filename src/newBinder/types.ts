@@ -6,7 +6,6 @@ export enum NodeType {
   SVGElement = 2,
   Text = 3,
   Template = 4,
-  Unknown = -1,
 }
 
 export type ParseBindTextInfo = {

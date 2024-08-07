@@ -1,6 +1,6 @@
 import { IFilterInfo } from "../filter/types";
 import { utils } from "../utils.js";
-import { BindTextInfo, ParseBindTextInfo } from "./types.js";
+import { ParseBindTextInfo } from "./types.js";
 
 const SAMENAME = "@";
 const DEFAULT = "$";
@@ -24,7 +24,7 @@ const parseFilter = (text:string):IFilterInfo => {
   return {name, options:options.map(decode)};
 };
 
-type ReturnParseStateProperty = {stateProperty:string,filters:FilterInfo[]};
+type ReturnParseStateProperty = {stateProperty:string,filters:IFilterInfo[]};
 /**
  * parse expression
  * "value|eq,100|falsey" ---> ["value", Filter[]]

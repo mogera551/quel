@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import { NodeType } from "./types";
 
 const replaceTextNodeText = (node:Node):Node => {
@@ -9,8 +8,6 @@ const replaceTextNodeText = (node:Node):Node => {
 
 const itsSelf = (node:Node):Node => node;
 
-const raiseError = (node:Node) => (utils.raise(`Unknown NodeType: ${node.constructor.name}`), node);
-
 type ReplaceTextNodeFn = {
   [key in NodeType]: (node:Node)=>Node;
 }
@@ -20,7 +17,6 @@ const replaceTextNodeFn:ReplaceTextNodeFn = {
   [NodeType.HTMLElement]: itsSelf,
   [NodeType.SVGElement]:  itsSelf,
   [NodeType.Template]:    itsSelf,
-  [NodeType.Unknown]:     raiseError,
 }
 
 /**

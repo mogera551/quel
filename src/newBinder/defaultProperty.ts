@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import { NodeType } from "./types";
 
 const DEFAULT_PROPERTY = "textContent";
@@ -32,7 +31,6 @@ const defaultPropertyByKey:DefaultPropertyByKey = {};
 
 const undefinedProperty = (node:Node):(string|undefined) => undefined;
 const textContentProperty = (node:Node):(string|undefined) => DEFAULT_PROPERTY;
-const raiseError = (node:Node):(string|undefined) => (utils.raise(`Unknown NodeType: ${node.constructor.name}`), undefined);
 
 type GetDefaultPropertyByNodeType = {
   [key in NodeType]: (node:Node)=>(string|undefined);
@@ -43,7 +41,6 @@ const getDefaultPropertyByNodeType:GetDefaultPropertyByNodeType = {
   [NodeType.SVGElement]:  undefinedProperty,
   [NodeType.Text]:        textContentProperty,
   [NodeType.Template]:    undefinedProperty,
-  [NodeType.Unknown]:     raiseError,
 }
 
 /**

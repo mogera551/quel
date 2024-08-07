@@ -1,10 +1,9 @@
 
-import { utils } from '../utils';
 import { BindNodeInfo } from './BindNodeInfo';
 import { getBindText } from './bindText';
 import { getCommentNodes } from './commentNodes';
 import { getNodeType } from './nodeType';
-import { IBindNodeInfo, NodeType } from './types';
+import { IBindNodeInfo } from './types';
 
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
@@ -17,7 +16,6 @@ export function parseTemplate(template:HTMLTemplateElement, useKeyed:boolean):IB
   for(let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
     const nodeType = getNodeType(node);
-    if (nodeType === NodeType.Unknown) utils.raise(`Binder: unknown node type`);
     const bindText = getBindText(node, nodeType);
     if (bindText.trim() === "") continue;
     nodeInfos[nodeInfos.length] = BindNodeInfo.create(nodes[i], nodeType, bindText, useKeyed);

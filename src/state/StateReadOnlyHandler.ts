@@ -6,6 +6,7 @@ import { StateBaseHandler } from "./StateBaseHandler";
 import { Callback } from "./Callback";
 import { Api } from "./Api";
 import { SpecialProp } from "./SpecialProp";
+import { State } from "./types";
 
 export class StateReadOnlyHandler extends StateBaseHandler {
   #cache = new StateCache;
@@ -48,7 +49,6 @@ export class StateReadOnlyHandler extends StateBaseHandler {
 
   setByPatternNameAndIndexes(target:State, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any):boolean {
     utils.raise("StateReadOnlyHandler: State is read only");
-    return false;
   }
 
   get(target:State, prop:PropertyKey, receiver:any):any {
@@ -65,7 +65,6 @@ export class StateReadOnlyHandler extends StateBaseHandler {
 
   set(target:State, prop:PropertyKey, value:any, receiver:any):boolean {
     utils.raise("StateReadOnlyHandler: State is read only");
-    return false;
   }
 
 }

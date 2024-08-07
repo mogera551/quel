@@ -19,15 +19,15 @@ describe("getNodeType", () => {
     const node = document.createComment("@@|");
     expect(getNodeType(node)).toBe(NodeType.Template);
   });
-  it("should return NodeType.Unknown", () => {
+  it("should throw Unknown NodeType", () => {
     const node = document.createComment("@@:");
     expect(getNodeType(node)).toBe(NodeType.Text);
   });
-  it("should return NodeType.Unknown", () => {
+  it("should throw Unknown NodeType", () => {
     const node = document.createComment("@@");
     expect(() => getNodeType(node)).toThrow();
   });
-  it("should return NodeType.Unknown", () => {
+  it("should throw Unknown NodeType", () => {
     const node = document.createTextNode("text");
     expect(() => getNodeType(node)).toThrow();
   });

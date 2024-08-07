@@ -1,7 +1,6 @@
 import { Binding } from "../binding/Binding";
 import { Checkbox } from "../binding/nodeProperty/Checkbox";
 import { Radio } from "../binding/nodeProperty/Radio";
-import { utils } from "../utils";
 import { NodeType, IBindNodeInfo } from "./types";
 
 const DEFAULT_EVENT = "oninput";
@@ -50,8 +49,6 @@ function initializeHTMLElement(node:Node, isInputable:boolean, bindings:Binding[
 
 const thru = () => {};
 
-const raiseError = (node:Node) => (utils.raise(`Unknown NodeType: ${node.constructor.name}`), undefined);
-
 type InitializeNodeByNodeType = {
   [key in NodeType]: (node:Node, isInputable:boolean, bindings:Binding[], defaultName:string)=>void;
 }
@@ -61,7 +58,6 @@ const initializeNodeByNodeType:InitializeNodeByNodeType = {
   [NodeType.SVGElement]:  thru,
   [NodeType.Text]:        thru,
   [NodeType.Template]:    thru,
-  [NodeType.Unknown]:     raiseError,
 };
 
 export const initializeNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:Binding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
