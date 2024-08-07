@@ -5,18 +5,18 @@ import { IFilterInfo } from "../filter/types";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { ContextIndex } from "../binding/stateProperty/ContextIndex";
-import { Repeat } from "../binding/nodeProperty/Repeat.js";
-import { Branch } from "../binding/nodeProperty/Branch_.js";
-import { ElementClassName } from "../binding/nodeProperty/ElementClassName_.js"
-import { Checkbox } from "../binding/nodeProperty/Checkbox_.js";
-import { Radio } from "../binding/nodeProperty/Radio_.js";
-import { ElementEvent } from "../binding/nodeProperty/ElementEvent_.js";
-import { ElementClass } from "../binding/nodeProperty/ElementClass_.js";
-import { ElementAttribute } from "../binding/nodeProperty/ElementAttribute_.js";
-import { ElementStyle } from "../binding/nodeProperty/ElementStyle_.js";
-import { ElementProperty } from "../binding/nodeProperty/ElementProperty_.js";
-import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty.js";
-import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed.js";
+import { Repeat } from "../binding/nodeProperty/Repeat";
+import { Branch } from "../binding/nodeProperty/Branch";
+import { ElementClassName } from "../binding/nodeProperty/ElementClassName"
+import { Checkbox } from "../binding/nodeProperty/Checkbox";
+import { Radio } from "../binding/nodeProperty/Radio";
+import { ElementEvent } from "../binding/nodeProperty/ElementEvent";
+import { ElementClass } from "../binding/nodeProperty/ElementClass";
+import { ElementAttribute } from "../binding/nodeProperty/ElementAttribute";
+import { ElementStyle } from "../binding/nodeProperty/ElementStyle";
+import { ElementProperty } from "../binding/nodeProperty/ElementProperty";
+import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty_.js";
+import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 

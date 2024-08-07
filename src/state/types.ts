@@ -1,3 +1,3 @@
-export type State = {
+export interface IState {
   [name:(string|symbol)]:any;
 }
