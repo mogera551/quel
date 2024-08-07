@@ -51,3 +51,10 @@ export interface IModule {
   componentModules?: {[key:string]:IModule};
   componentModulesForRegister?: {[key:string]:IModule};
 }
+
+export type CustomElementInfo = {
+  lowerTagName:string; // lower case tag name
+  selectorName:string; // local selector name
+  isAutonomousCustomElement:boolean; // is autonomous custom element
+  isCostomizedBuiltInElement:boolean; // is customized built-in element
+}

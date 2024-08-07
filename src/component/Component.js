@@ -1,4 +1,4 @@
-import { IsComponentSymbol } from "./Const.js";
+import { IsComponentSymbol, ModuleSymbol, CustomElementInfoSymbol, SetCustomElementInfoSymbol } from "./Const.js";
 import { Module } from "./Module.js";
 import { MixedComponent } from "./MixedComponent.js";
 import { utils } from "../utils.js";
@@ -7,17 +7,40 @@ import { MixedDialog } from "./MixedDialog.js";
 import { MixedPopover } from "../popover/MixedPopover.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager.js";
 
-const componentModuleByConstructor = new Map;
+const moduleByConstructor = new Map;
+const customElementInfoByTagName = new Map;
 
 /**
  * generate unique component class
  * @param {ComponentModule} componentModule 
  * @returns {Component.constructor}
  */
-export function generateComponentClass(componentModule) {
+export const generateComponentClass = (componentModule) => {
   /** @type {(module:Module)=>HTMLElement.constructor} */
   const getBaseClass = function (module) {
-    return class extends HTMLElement {
+    const baseClass = class extends HTMLElement {
+      get [ModuleSymbol]() {
+        return moduleByConstructor.get(this.constructor);
+      }
+      get [IsComponentSymbol]() {
+        return true;
+      }
+      get [CustomElementInfoSymbol]() {
+        return customElementInfoByTagName.get(this.tagName);
+      }
+      [SetCustomElementInfoSymbol]() {
+        const customeElementInfo = customElementInfoByTagName.get(this.tagName);
+        if (typeof customeElementInfo === "undefined") {
+          const lowerTagName =  this.tagName.toLowerCase();
+          const isAutonomousCustomElement = lowerTagName.includes("-");
+          const customName = this.getAttribute("is");
+          const isCostomizedBuiltInElement = customName ? true : false;
+          const selectorName = isAutonomousCustomElement ? lowerTagName : `${lowerTagName}[is="${customName}"]`;
+          customElementInfoByTagName.set(this.tagName, 
+            { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement });
+        }
+
+      }
 
       /** @type {HTMLTemplateElement} */
       static template = module.template;
@@ -111,18 +134,12 @@ export function generateComponentClass(componentModule) {
        */
       constructor() {
         super();
-        if (typeof this.constructor.lowerTagName === "undefined") {
-          const lowerTagName =  this.tagName.toLowerCase();
-          const isAutonomousCustomElement = lowerTagName.includes("-");
-          const customName = this.getAttribute("is");
-          const isCostomizedBuiltInElement = customName ? true : false;
-          this.constructor.selectorName = 
-            isAutonomousCustomElement ? lowerTagName : `${lowerTagName}[is="${customName}"]`;
-          this.constructor.lowerTagName = lowerTagName;
-          this.constructor.isAutonomousCustomElement = isAutonomousCustomElement;
-          this.constructor.isCostomizedBuiltInElement = isCostomizedBuiltInElement;
-        }
+        this[SetCustomElementInfoSymbol]();
         this.initialize();
+      }
+
+      get module() {
+        return moduleByConstructor.get(this.constructor);
       }
 
       initialize() {
@@ -149,6 +166,8 @@ export function generateComponentClass(componentModule) {
         }
       }
     };
+    moduleByConstructor.set(baseClass, module);
+    return baseClass;
   };
 
   /** @type {Module} */
@@ -159,6 +178,7 @@ export function generateComponentClass(componentModule) {
 
   // generate new class, for customElements not define same class
   const componentClass = getBaseClass(module);
+
   const extendsTag = module.config?.extends ?? module.options?.extends;
   if (typeof extendsTag === "undefined") {
     // case of autonomous custom element
