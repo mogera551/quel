@@ -8,7 +8,7 @@ import { State, Proxies } from "./types";
 
 
 // todo: HTMLElementをComponentに変更
-export function getProxies(component:HTMLElement, state:State):Proxies {
+export function getProxies(component:HTMLElement, state:typeof Object):Proxies {
   const accessorProperties = new Set(getAccessorProperties(state));
   const dependencies:DependentProps = new DependentProps(Reflect.get(state, DEPENDENCIES) ?? {});
   return {

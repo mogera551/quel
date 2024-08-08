@@ -1,6 +1,6 @@
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
-import { StateClass } from "../state/types";
+import { State, StateClass } from "../state/types";
 
 export type ComponentModuleConfig = {
   extends?:string; // for customized built-in element, like extends="button"
@@ -91,6 +91,7 @@ export interface IComponentBase {
 }
 
 export interface ICustomComponent {
+  state:State;
   get parentComponent():IComponentBase & HTMLElement;
   connectedCallback():void;
   disconnectedCallback():void;

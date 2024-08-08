@@ -1,4 +1,10 @@
 import { Constructor, IComponentBase, ICustomComponent } from "./types";
+import { createStates, getProxies } from "../state/Proxies";
+import { isAttachable } from "./AttachShadow";
+import { AdoptedCss } from "./AdoptedCss";
+import { localizeStyleSheet } from "./StyleSheet";
+import { ConnectedCallbackSymbol } from "../state/Const";
+import { Proxies, State } from "../state/types";
 
 const pseudoComponentByNode:Map<Node,IComponentBase & HTMLElement> = new Map;
 
@@ -16,13 +22,15 @@ const getParentComponent = (_node:Node):Node|undefined => {
   } while(true);
 };
 
+const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
-function CustomComponent<TBase extends Constructor>(Base: TBase) {
+function CustomComponent<TBase extends Constructor>(Base: TBase & IComponentBase &HTMLElement) {
   return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();
+      this.
       this._isWritable = false;
-      this._viewModels = createStates(this, componentClass.ViewModel); // create view model
+      this.#states = getProxies(this.component, this.component.State as State); // create view model
       this._rootBinding = undefined;
 //      this._props = createProps(this); // create property for parent component connection
 //      this._globals = createGlobals(); // create property for global connection
@@ -50,6 +58,7 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
     #globals;
     #initialPromises;
     #alivePromises;
+    #states:Proxies;
     #initialize() {
   
 
@@ -68,6 +77,44 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
       return this.#parentComponent;
     }    
     async connectedCallback() {
+      const component = this.component;
+      if (isAttachable(component.tagName.toLowerCase()) && component.useShadowRoot && component.useWebComponent) {
+        const shadowRoot = component.attachShadow({mode: 'open'});
+        const names = AdoptedCss.getNamesFromComponent(this);
+        const styleSheets = AdoptedCss.getStyleSheetList(names);
+        if (typeof component.styleSheet !== "undefined" ) {
+          styleSheets.push(component.styleSheet);
+        }
+        shadowRoot.adoptedStyleSheets = styleSheets;
+      } else {
+        if (typeof component.styleSheet !== "undefined") {
+          let adoptedStyleSheet = component.styleSheet;
+          if (component.useLocalSelector) {
+            const localStyleSheet = localStyleSheetByTagName.get(component.tagName);
+            if (typeof localStyleSheet !== "undefined") {
+              adoptedStyleSheet = localStyleSheet;
+            } else {
+              adoptedStyleSheet = localizeStyleSheet(component.styleSheet, component.selectorName);
+              localStyleSheetByTagName.set(component.tagName, adoptedStyleSheet);
+            }
+          }
+          const shadowRootOrDocument = this.shadowRootOrDocument;
+          const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
+          if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
+            shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
+          }
+        }
+      }
+      if (component.useOverscrollBehavior) {
+        if (component.tagName === "DIALOG" || component.hasAttribute("popover")) {
+          component.style.overscrollBehavior = "contain";
+        }
+      }
+
+      await this.state[ConnectedCallbackSymbol]();
+
+  
+
     }
     async disconnectedCallback() {
 
