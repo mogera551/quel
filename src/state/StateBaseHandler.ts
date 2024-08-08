@@ -2,6 +2,7 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "./Const";
 import { Handler } from "../dot-notation/Handler";
 import { DependentProps } from "./DependentProps";
+import { IState } from "./types";
 
 export class StateBaseHandler extends Handler  {
   #accessorProperties:Set<string>;
@@ -28,7 +29,7 @@ export class StateBaseHandler extends Handler  {
     this.#dependencies = dependencies;
   }
 
-  get(target: State, prop: PropertyKey, receiver: any): any {
+  get(target: Object, prop: PropertyKey, receiver: IState): any {
     if (prop === AccessorPropertiesSymbol) {
       return this.#accessorProperties;
     } else if (prop === DependenciesSymbol) {
@@ -37,22 +38,22 @@ export class StateBaseHandler extends Handler  {
     return Reflect.get(target, prop, receiver);
   }
 
-  ownKeys(target: State): (string|symbol)[] {
+  ownKeys(target: Object): (string|symbol)[] {
     return Reflect.ownKeys(target).concat([
       AccessorPropertiesSymbol, 
       DependenciesSymbol
     ]);
   }
 
-  has(target: State, prop: PropertyKey): boolean {
+  has(target: Object, prop: PropertyKey): boolean {
     return Reflect.has(target, prop) || prop === AccessorPropertiesSymbol || prop === DependenciesSymbol;
   }
 
-  addProcess(process:()=>void, target:State, indexes:number[]):void {
+  addProcess(process:()=>void, target:Object, indexes:number[]):void {
     // todo: ここに処理を追加
   }
 
-  addNotify(target:State, {propertyName, indexes}:{propertyName:string, indexes:number[]}, receiver:State) {
+  addNotify(target:Object, {propertyName, indexes}:{propertyName:string, indexes:number[]}, receiver:IState) {
     // todo: ここに処理を追加
   }
 

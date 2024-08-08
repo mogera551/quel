@@ -1,12 +1,11 @@
-//import "../types.js";
-//import { Symbols } from "../Symbols.js";
-//import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-
+import { IComponent } from "../component/types";
+import { ILoopContext } from "../loopContext/types";
 import { 
   DirectryCallApiSymbol, NotifyForDependentPropsApiSymbol, GetDependentPropsApiSymbol, 
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
 } from "./Const";
 import { StateBaseHandler } from "./StateBaseHandler";
+import { IDependentProps, IState, SupportApiSymbols } from "./types";
 
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
@@ -22,30 +21,36 @@ const apiFunctions = new Set([
 
 const callFuncBySymbol = {
   // todo: 色々直す
-  [DirectryCallApiSymbol]:({state, stateProxy, handler}:{state:State, stateProxy:State, handler:StateBaseHandler}) => 
-    async (prop:string, loopContext:any, event:any) => 
+  [DirectryCallApiSymbol]:({state, stateProxy, handler}:{state:Object, stateProxy:IState, handler:StateBaseHandler}) => 
+    async (prop:string, loopContext:ILoopContext, event:Event) => 
       handler.directlyCallback(loopContext, async () => 
-        Reflect.apply(state[prop], stateProxy, [event, ...(loopContext?.allIndexes ?? [])])
+        Reflect.apply(Reflect.get(state, prop), stateProxy, [event, ...(loopContext?.allIndexes ?? [])]) as void
       ),
   [NotifyForDependentPropsApiSymbol]:
-    ({state, stateProxy, handler}:{state:State, stateProxy:State, handler:StateBaseHandler}) => 
+    ({state, stateProxy, handler}:{state:Object, stateProxy:IState, handler:StateBaseHandler}) => 
       (prop:string, indexes:number[]) => 
         handler.addNotify(state, { propertyName:prop, indexes }, stateProxy),
-  [GetDependentPropsApiSymbol]:({handler}:{handler:StateBaseHandler}) => () => handler.dependencies,
+  [GetDependentPropsApiSymbol]:({handler}:{handler:StateBaseHandler}) => ():IDependentProps => handler.dependencies,
   [ClearCacheApiSymbol]:({handler}:{handler:StateBaseHandler}) => () => handler.clearCache(),
   // todo: componentをHTMLElementからComponentに変更
-  [CreateBufferApiSymbol]:({stateProxy}:{stateProxy:State}) => (component:HTMLElement) => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
+  [CreateBufferApiSymbol]:({stateProxy}:{stateProxy:IState}) => (component:IComponent) => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
   // todo: componentをHTMLElementからComponentに変更
-  [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:State}) => (buffer:any, component:HTMLElement) => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
+  [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IState}) => (buffer:any, component:IComponent) => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
 export class Api {
-  static get(state:State, stateProxy:State, handler:StateBaseHandler, prop:symbol) {
+  static get(state:Object, stateProxy:IState, handler:StateBaseHandler, prop:SupportApiSymbols) {
     return callFuncBySymbol[prop]?.({state, stateProxy, handler});
   }
 
-  static has(prop:symbol):boolean {
+  static has(prop:PropertyKey):boolean {
+    if (typeof prop === "string" || typeof prop === "number") return false;
     return apiFunctions.has(prop);
+  }
+
+  static getSupportSymbol(prop:PropertyKey):SupportApiSymbols|undefined {
+    if (typeof prop === "string" || typeof prop === "number") return undefined;
+    return apiFunctions.has(prop) ? prop as SupportApiSymbols : undefined;
   }
 
 }

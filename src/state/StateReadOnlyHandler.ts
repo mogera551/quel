@@ -6,7 +6,7 @@ import { StateBaseHandler } from "./StateBaseHandler";
 import { Callback } from "./Callback";
 import { Api } from "./Api";
 import { SpecialProp } from "./SpecialProp";
-import { State } from "./types";
+import { IState } from "./types";
 
 export class StateReadOnlyHandler extends StateBaseHandler {
   #cache = new StateCache;
@@ -18,7 +18,7 @@ export class StateReadOnlyHandler extends StateBaseHandler {
     this.#cache.clear();
   }
 
-  getByPatternNameAndIndexes(target:State, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any):any {
+  getByPatternNameAndIndexes(target:Object, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:IState):any {
     const patternNameInfo = getPatternNameInfo(patternName);
     if (!patternNameInfo.isPrimitive) {
       !this.dependencies.hasDefaultProp(patternName) && 
@@ -47,23 +47,25 @@ export class StateReadOnlyHandler extends StateBaseHandler {
 
   }
 
-  setByPatternNameAndIndexes(target:State, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any):boolean {
+  setByPatternNameAndIndexes(target:Object, {patternName, indexes, value}:{patternName:string, indexes:number[], value:IState}, receiver:any):boolean {
     utils.raise("StateReadOnlyHandler: State is read only");
   }
 
-  get(target:State, prop:PropertyKey, receiver:any):any {
-    const isSymbol = typeof prop === "symbol";
-    if (isSymbol) {
-      if (Callback.has(prop as symbol)) {
-        return Callback.get(target, receiver, this, prop as symbol);
-      } else if (Api.has(prop as symbol)) {
-        return Api.get(target, receiver, this, prop as symbol);
+  get(target:Object, prop:PropertyKey, receiver:IState):any {
+    if (typeof prop === "symbol") {
+      const supportCallbackSymbol = Callback.getSupportSymbol(prop);
+      if (typeof supportCallbackSymbol !== "undefined") {
+        return Callback.get(target, receiver, this, supportCallbackSymbol);
+      }
+      const supportApiSymbol = Api.getSupportSymbol(prop);
+      if (typeof supportApiSymbol !== "undefined") {
+        return Api.get(target, receiver, this, supportApiSymbol);
       }
     }
     return super.get(target, prop, receiver);
   }
 
-  set(target:State, prop:PropertyKey, value:any, receiver:any):boolean {
+  set(target:Object, prop:PropertyKey, value:any, receiver:any):boolean {
     utils.raise("StateReadOnlyHandler: State is read only");
   }
 

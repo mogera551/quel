@@ -1,20 +1,20 @@
 import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { getPropertyNameInfo } from "../dot-notation/PropertyName";
+import { IDependentProps, Dependencies } from "./types";
 
 /**
  * $dependentPropsを表現
  */
 
-type DependentPropsStore = Map<string,Set<string>>;
-export class DependentProps {
+export class DependentProps implements IDependentProps {
   #defaultProps:Set<string> = new Set;
-  #propsByRefProp:DependentPropsStore = new Map;
+  #propsByRefProp:Map<string,Set<string>> = new Map;
 
   constructor(props:Dependencies) {
     this.setDependentProps(props);
   }
 
-  get propsByRefProp():DependentPropsStore {
+  get propsByRefProp():Map<string,Set<string>> {
     return this.#propsByRefProp;
   }
 
