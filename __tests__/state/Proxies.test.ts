@@ -1,6 +1,6 @@
 
-import { getProxies } from "../../src/State2/Proxies";
-import { DependenciesSymbol } from "../../src/State2/Const";
+import { getProxies } from "../../src/state/Proxies";
+import { DependenciesSymbol } from "../../src/state/Const";
 
 describe("getProxies", () => {
   test("getProxies should return the correct proxies", () => {

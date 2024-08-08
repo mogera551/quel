@@ -6,7 +6,7 @@ import { Binding } from "../Binding";
 import { IBinding, IStateProperty } from "../types";
 import { IFilterInfo, FilterFunc } from "../../filter/types";
 import { IPatternNameInfo, IPropertyNameInfo } from "../../dot-notation/types";
-import { State } from "../../State2/types";
+import { State } from "../../state/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../../dot-notation/Const";
 
 export class StateProperty implements IStateProperty {

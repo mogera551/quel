@@ -1,5 +1,5 @@
 
-import { getAccessorProperties } from "../../src/State2/AccessorProperties";
+import { getAccessorProperties } from "../../src/state/AccessorProperties";
 
 describe("getAccessorProperties", () => {
   test("getAccessorProperties should return the correct accessor properties", () => {

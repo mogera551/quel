@@ -1,9 +1,9 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { StateHandlerBase } from "../State2/StateBaseHandler.js";
+import { StateHandlerBase } from "../state/StateBaseHandler.js";
 import { config } from "../Config.js";
 import { IComponent } from "./types.js";
-import { State } from "../State2/types.js";
+import { State } from "../state/types.js";
 
 class Process {
   target:any;

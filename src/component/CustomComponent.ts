@@ -1,10 +1,10 @@
 import { Constructor, IComponentBase, ICustomComponent } from "./types";
-import { createStates, getProxies } from "../State2/Proxies";
+import { createStates, getProxies } from "../state/Proxies";
 import { isAttachable } from "./AttachShadow";
 import { AdoptedCss } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
-import { ConnectedCallbackSymbol } from "../State2/Const";
-import { Proxies, State } from "../State2/types";
+import { ConnectedCallbackSymbol } from "../state/Const";
+import { Proxies, State } from "../state/types";
 
 const pseudoComponentByNode:Map<Node,IComponentBase & HTMLElement> = new Map;
 

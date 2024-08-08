@@ -6,7 +6,7 @@ import { INodeProperty, IStateProperty, IBinding, IBindingManager } from "./type
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types.js";
 import { IFilterInfo } from "../filter/types.js";
 import { ILoopContext } from "../loopContext/types.js";
-import { IState } from "../State2/types.js";
+import { IState } from "../state/types.js";
 
 let seq = 0;
 
