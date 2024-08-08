@@ -1,9 +1,6 @@
+import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
-
-export interface IComponent {
-  element:Element;
-
-}
+import { StateClass } from "../state/types";
 
 export type ComponentModuleConfig = {
   extends?:string; // for customized built-in element, like extends="button"
@@ -58,3 +55,47 @@ export type CustomElementInfo = {
   isAutonomousCustomElement:boolean; // is autonomous custom element
   isCostomizedBuiltInElement:boolean; // is customized built-in element
 }
+
+export type FilterManagers = {
+  inputFilterManager:InputFilterManager, 
+  outputFilterManager:OutputFilterManager, 
+  eventFilterManager:EventFilterManager
+};
+
+export interface IComponentBase {
+  get module():IModule;
+  get isQuelComponent():boolean;
+  get customElementInfo():CustomElementInfo;
+  get template():HTMLTemplateElement;
+  get styleSheet():CSSStyleSheet|undefined;
+  get State():StateClass;
+  get inputFilters():{[key:string]:FilterFuncWithOption};
+  get outputFilters():{[key:string]:FilterFuncWithOption};
+  get eventFilters():{[key:string]:EventFilterFuncWithOption};
+  get useShadowRoot():boolean;
+  get useWebComponent():boolean;
+  get useLocalTagName():boolean;
+  get useKeyed():boolean;
+  get useLocalSelector():boolean;
+  get useOverscrollBehavior():boolean;
+  get lowerTagName():string;
+  get selectorName():string;
+  // is autonomous custom element 
+  get isAutonomousCustomElement():boolean;
+  // is costomized built-in element
+  get isCostomizedBuiltInElement():boolean;
+  get filterManagers():FilterManagers;
+  get inputFilterManager():InputFilterManager;
+  get outputFilterManager():OutputFilterManager;
+  get eventFilterManager():EventFilterManager;
+}
+
+export interface ICustomComponent {
+  get parentComponent():IComponentBase & HTMLElement;
+  connectedCallback():void;
+  disconnectedCallback():void;
+} 
+
+export type Constructor<T = {}> = new (...args: any[]) => T;
+
+export type IComponent = IComponentBase & ICustomComponent & HTMLElement;

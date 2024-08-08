@@ -1,4 +1,4 @@
-import { IsComponentSymbol, ModuleSymbol, CustomElementInfoSymbol, SetCustomElementInfoSymbol } from "./Const.js";
+import { IsComponentSymbol, ModuleSymbol, CustomElementInfoSymbol, SetCustomElementInfoSymbol, FilterManagersSymbol, SetFilterManagersSymbol } from "./Const.js";
 import { Module } from "./Module.js";
 import { MixedComponent } from "./MixedComponent.js";
 import { utils } from "../utils.js";
@@ -7,8 +7,10 @@ import { MixedDialog } from "./MixedDialog.js";
 import { MixedPopover } from "../popover/MixedPopover.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager.js";
 
+/** @type {Map<Function,Module>} */
 const moduleByConstructor = new Map;
 const customElementInfoByTagName = new Map;
+const filterManagersByTagName = new Map;
 
 /**
  * generate unique component class
@@ -19,14 +21,25 @@ export const generateComponentClass = (componentModule) => {
   /** @type {(module:Module)=>HTMLElement.constructor} */
   const getBaseClass = function (module) {
     const baseClass = class extends HTMLElement {
+      /** @type {Module} */
+      #module;
       get [ModuleSymbol]() {
-        return moduleByConstructor.get(this.constructor);
+        if (typeof this.#module === "undefined") {
+          this.#module = moduleByConstructor.get(this.constructor) ?? utils.raise(`module is not found for ${this.constructor.name}`);
+        }
+        return this.#module;
       }
+      /** @type {boolean} */
       get [IsComponentSymbol]() {
         return true;
       }
+      /** @type {CustomElementInfo} */
+      #ustomElementInfo;
       get [CustomElementInfoSymbol]() {
-        return customElementInfoByTagName.get(this.tagName);
+        if (typeof this.#customElementInfo === "undefined") {
+          this.#customElementInfo = customElementInfoByTagName.get(this.tagName) ?? utils.raise(`customElementInfo is not found for ${this.tagName}`);
+        }
+        return this.#customElementInfo;
       }
       [SetCustomElementInfoSymbol]() {
         const customeElementInfo = customElementInfoByTagName.get(this.tagName);
@@ -39,52 +52,133 @@ export const generateComponentClass = (componentModule) => {
           customElementInfoByTagName.set(this.tagName, 
             { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement });
         }
-
       }
 
       /** @type {HTMLTemplateElement} */
-      static template = module.template;
+      get template() {
+        return this[ModuleSymbol].template;
+      }
 
       /** @type {CSSStyleSheet|undefined} */
-      static styleSheet = module.styleSheet;
+      get styleSheet() {
+        return this[ModuleSymbol].styleSheet;
+      }
+
+      /** @type {typeof Object} */
+      get State() {
+        return this[ModuleSymbol].State;
+      }
+
+      /**@type {Object<string,FilterFuncWithOption>} */
+      get inputFilters() {
+        return this[ModuleSymbol].inputFilters ?? {};
+      }
+
+      /** @type {Object<string,FilterFuncWithOption>} */
+      get outputFilters() {
+        return this[ModuleSymbol].outputFilters ?? {};
+      }
+
+      /** @type {Object<string,EventFilterFuncWithOption>} */
+      get eventFilters() {
+        return this[ModuleSymbol].eventFilters ?? {};
+      }
+
+      /** @type {boolean} */
+      get useShadowRoot() {
+        return this[ModuleSymbol].useShadowRoot ?? config.useShadowRoot;
+      }
+
+      /** @type {boolean} */
+      get useWebComponent() {
+        return this[ModuleSymbol].useWebComponent ?? config.useWebComponent;
+      }
+
+      /** @type {boolean} */
+      get useLocalTagName() {
+        return this[ModuleSymbol].useLocalTagName ?? config.useLocalTagName;
+      }
+
+      /** @type {boolean} */
+      get useKeyed() {
+        return this[ModuleSymbol].useKeyed ?? config.useKeyed;
+      }
+
+      /** @type {boolean} */
+      get useLocalSelector() {
+        return this[ModuleSymbol].useLocalSelector ?? config.useLocalSelector;
+      }
+
+      /** @type {boolean} */
+      get useOverscrollBehavior() {
+        return this[ModuleSymbol].useOverscrollBehavior ?? config.useOverscrollBehavior;
+      }
+
+      /** @type {string} */
+      get lowerTagName() {
+        return this.customeElementInfo.lowerTagName;
+      }
+
+      /** @type {string} */
+      get selectorName() {
+        return this.customeElementInfo.selectorName;
+      }
+
+      /** @type {boolean} is autonomous custom element */
+      get isAutonomousCustomElement() {
+        return this.customeElementInfo.isAutonomousCustomElement;
+      }
+
+      /** @type {boolean} is costomized built-in element */
+      get isCostomizedBuiltInElement() {
+        return this.customeElementInfo.isCostomizedBuiltInElement;
+      }
+
+      #filterManagers;
+      get [FilterManagersSymbol]() {
+        if (typeof this.#filterManagers === "undefined") {
+          this.#filterManagers = filterManagersByTagName.get(this.tagName) ?? utils.raise(`filterManagers is not found for ${this.tagName}`);
+        }
+        return this.#filterManagers;
+      }
+      [SetFilterManagersSymbol]() {
+        const filterManagers = filterManagersByTagName.get(this.tagName);
+        if (typeof filterManagers === "undefined") {
+          const filterManagers = {
+            inputFilterManager: new InputFilterManager,
+            outputFilterManager: new OutputFilterManager,
+            eventFilterManager: new EventFilterManager,
+          };
+          for(const [name, filterFunc] of Object.entries(this.inputFilters)) {
+            filterManagers.inputFilterManager.registerFilter(name, filterFunc);
+          }
+          for(const [name, filterFunc] of Object.entries(this.outputFilters)) {
+            filterManagers.outputFilterManager.registerFilter(name, filterFunc);
+          }
+          for(const [name, filterFunc] of Object.entries(this.eventFilters)) {
+            filterManagers.eventFilterManager.registerFilter(name, filterFunc);
+          }
+          filterManagersByTagName.set(this.tagName, filterManagers);
+        }
+      }
+
+      /** @type {InputFilterManager} */
+      get inputFilterManager() {
+        return this[FilterManagersSymbol].inputFilterManager;
+      }
+
+      /** @type {OutputFilterManager} */
+      get outputFilterManager() {
+        return this[FilterManagersSymbol].outputFilterManager;
+      }
+
+      /** @type {EventFilterManager} */
+      get eventFilterManager() {
+        return this[FilterManagersSymbol].eventFilterManager;
+      }
 
       /** @type {CSSStyleSheet|undefined} */
       static localStyleSheet;
-
-      /** @type {ViewModel.constructor} */
-      static ViewModel = module.ViewModel ?? module.State ?? class {};
-
-      /**@type {Object<string,FilterFuncWithOption>} */
-      static inputFilters = module.filters?.input ?? {};
-
-      /** @type {Object<string,FilterFuncWithOption>} */
-      static outputFilters = module.filters?.output ?? {};
-
-      /** @type {Object<string,EventFilterFuncWithOption>} */
-      static eventFilters = module.filters?.event ?? {};
-
-      /** @type {boolean} */
-      static useShadowRoot = module.config?.useShadowRoot ?? config.useShadowRoot;
-
-      /** @type {boolean} */
-      static useWebComponent = module.config?.useWebComponent ?? config.useWebComponent;
-
-      /** @type {boolean} */
-      static useLocalTagName = module.config?.useLocalTagName ?? config.useLocalTagName;
-
-      /** @type {boolean} */
-      static useKeyed = module.config?.useKeyed ?? config.useKeyed;
-
-      /** @type {boolean} */
-      static useLocalSelector = module.config?.useLocalSelector ?? config.useLocalSelector;
-
-      /** @type {boolean} */
-      static useOverscrollBehavior = module.config?.useOverscrollBehavior ?? config.useOverscrollBehavior;
-
-      /** @type {boolean} */
-      static get [IsComponentSymbol] () {
-        return true;
-      }
 
       /**  */
       static initializeCallbacks = [];
@@ -93,48 +187,12 @@ export const generateComponentClass = (componentModule) => {
 
       static allProperties = [ "initialize", "accessibleProperties", "allProperties" ];
 
-      /** @type {string} */
-      static lowerTagName;
-      /** @type {string} */
-      get lowerTagName() {
-        return this.constructor.lowerTagName;
-      }
-
-      /** @type {string} */
-      static selectorName;
-      /** @type {string} */
-      get selectorName() {
-        return this.constructor.selectorName;
-      }
-
-      /** @type {boolean} */
-      static isAutonomousCustomElement;
-      /** @type {boolean} is autonomous custom element */
-      get isAutonomousCustomElement() {
-        return this.constructor.isAutonomousCustomElement;
-      }
-
-      /** @type {boolean} */
-      static isCostomizedBuiltInElement;
-      /** @type {boolean} is costomized built-in element */
-      get isCostomizedBuiltInElement() {
-        return this.constructor.isCostomizedBuiltInElement;
-      }
-
-      /** @type {InputFilterManager} */
-      static inputFilterManager = new InputFilterManager;
-
-      /** @type {OutputFilterManager} */
-      static outputFilterManager = new OutputFilterManager;
-
-      /** @type {EventFilterManager} */
-      static eventFilterManager = new EventFilterManager;
-
       /**
        */
       constructor() {
         super();
         this[SetCustomElementInfoSymbol]();
+        this[SetFilterManagersSymbol]();
         this.initialize();
       }
 

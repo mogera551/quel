@@ -69,7 +69,7 @@ export function getStyleSheetList(names:string[]):CSSStyleSheet[] {
 /**
  * get name list from component style variable '--adopted-css'
  */
-export function getNamesFromComponent(component:IComponent):string[] {
+export function getNamesFromComponent(component:IComponent & Element):string[] {
   // get adopted css names from component style variable '--adopted-css'
   return getComputedStyle(component.element)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
 }
