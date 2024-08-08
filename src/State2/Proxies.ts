@@ -8,12 +8,12 @@ import { State, Proxies } from "./types";
 
 
 // todo: HTMLElementをComponentに変更
-export function getProxies(component:HTMLElement, state:typeof Object):Proxies {
+export function getProxies(component:HTMLElement, state:Object):Proxies {
   const accessorProperties = new Set(getAccessorProperties(state));
   const dependencies:DependentProps = new DependentProps(Reflect.get(state, DEPENDENCIES) ?? {});
   return {
-    base: new Proxy<State>(state, new StateBaseHandler(component, accessorProperties, dependencies)),
-    write: new Proxy<State>(state, new StateWriteHandler(component, accessorProperties, dependencies)),
-    readonly: new Proxy<State>(state, new StateReadOnlyHandler(component, accessorProperties, dependencies))
+    base: new Proxy<Object>(state, new StateBaseHandler(component, accessorProperties, dependencies)) as State,
+    write: new Proxy<Object>(state, new StateWriteHandler(component, accessorProperties, dependencies)) as State,
+    readonly: new Proxy<Object>(state, new StateReadOnlyHandler(component, accessorProperties, dependencies)) as State,
   }
 }

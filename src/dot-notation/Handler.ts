@@ -4,7 +4,7 @@ import { getPropertyNameInfo } from "./PropertyName";
 import { getPatternNameInfo } from "./PatternName";
 import { GetDirectSymbol, RE_CONTEXT_INDEX, SetDirectSymbol, WILDCARD } from "./Const";
 import { utils } from "../utils";
-import { State } from "../state/types";
+import { State } from "../State2/types";
 
 export class Handler implements ProxyHandler<State> {
   #stackIndexes:number[][] = [];

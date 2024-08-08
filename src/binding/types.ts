@@ -2,7 +2,7 @@ import { IPatternNameInfo, IPropertyNameInfo } from "../dot-notation/types";
 import { FilterFunc, IFilterInfo } from "../filter/types";
 import { ILoopContext } from "../loopContext/types";
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
-import { IState } from "../state/types";
+import { IState } from "../State2/types";
 
 export interface INodeProperty {
   node: Node;

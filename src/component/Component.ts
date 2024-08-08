@@ -8,7 +8,7 @@ import { MixedPopover } from "../popover/MixedPopover.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase } from "./types";
 import { replaceBaseClass } from "./ReplaceBaseClass.js";
-import { StateClass } from "../state/types";
+import { StateClass } from "../State2/types";
 
 const moduleByConstructor:Map<Function,IModule> = new Map;
 const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;

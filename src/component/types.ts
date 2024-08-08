@@ -1,6 +1,6 @@
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
-import { State, StateClass } from "../state/types";
+import { State, StateClass } from "../State2/types";
 
 export type ComponentModuleConfig = {
   extends?:string; // for customized built-in element, like extends="button"
