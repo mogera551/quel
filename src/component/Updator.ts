@@ -1,72 +1,51 @@
 import "../types.js";
 import { Symbols } from "../Symbols.js";
-import { StateHandlerBase } from "../state/StateBaseHandler.js";
+import { StateBaseHandler } from "../state/StateBaseHandler";
 import { config } from "../Config.js";
 import { IComponent } from "./types.js";
-import { State } from "../state/types.js";
+import { IState } from "../state/types.js";
+import { IBinding, IPropertyAccess } from "../binding/types.js";
+import { StateProperty } from "../binding/stateProperty/StateProperty.js";
+import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../state/Const.js";
+import { util } from "../../node_modules/webpack/types.js";
 
-class Process {
-  target:any;
-  thisArgument:any;
-  argumentList = [];
+interface IProcess {
+  target:Function;
+  thisArgument:object;
+  argumentList:any[];
 }
 
-/** @typedef {(prop:PropertyAccess)=>string} PropAccessKey */
-/** @type {PropAccessKey} */
-const getPropAccessKey = (prop) => prop.propName.name + "\t" + prop.indexes.toString();
-/** @type {(process:Process)=>()=>Promise<void>} */
-const executeProcess = (process) => async () => Reflect.apply(process.target, process.thisArgument, process.argumentList);
-/** @type {(a:ViewModelProperty,b:ViewModelProperty)=>number} */
-const compareExpandableBindings = (a, b) => a.viewModelProperty.propertyName.level - b.viewModelProperty.propertyName.level;
+const getPropAccessKey = (prop:IPropertyAccess):string => prop.patternName + "\t" + prop.indexes.toString();
+const executeProcess = (process:IProcess) => async ():Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
+const compareExpandableBindings = (a:StateProperty, b:StateProperty):number => a.patternName.level - b.patternName.level;
 
 export class Updator {
   component:IComponent;
-  state:State;
-  /** @type {Process[]} */
-  processQueue = [];
-  /** @type {PropertyAccess[]} */
-  updatedStateProperties = [];
-  /** @type {PropertyAccess[]} */ 
-  expandedStateProperties = [];
-  /** @type {Set<Binding>} */
-  updatedBindings = new Set();
+  state:IState;
+  processQueue:IProcess[] = [];
+  updatedStateProperties:IPropertyAccess[] = [];
+  expandedStateProperties:IPropertyAccess[] = [];
+  updatedBindings:Set<IBinding> = new Set();
 
   executing = false;
 
   constructor(component:IComponent) {
     this.component = component;
+    this.state = component.state;
   }
 
-  /**
-   * 
-   * @param {()=>any} target 
-   * @param {object} thisArgument 
-   * @param {any[]} argumentList 
-   * @param {{ processQueue:Process[], executing:boolean }} param3 
-   * @returns 
-   */
-  addProcess(target, thisArgument, argumentList, { processQueue, executing } = this) {
-    processQueue.push({ target, thisArgument, argumentList });
-    if (executing) return;
+  addProcess(target:Function, thisArgument:object, argumentList:any[]) {
+    this.processQueue.push({ target, thisArgument, argumentList });
+    if (this.executing) return;
     this.exec();
   }
 
-  /**
-   * 
-   * @param {{ processQueue:Process[] }} param0
-   * @returns {Process[]}
-   */
-  getProcessQueue({ processQueue } = this) {
-    return processQueue;
+  getProcessQueue():IProcess[] {
+    return this.processQueue;
   }
 
-  /**
-   * 
-   * @param {PropertyAccess} prop
-   * @param {{ updatedStateProperties:PropertyAccess[] }} param1 
-   */
-  addUpdatedStateProperty(prop, { updatedStateProperties } = this) {
-    updatedStateProperties.push(prop);
+  addUpdatedStateProperty(prop:IPropertyAccess):void {
+    this.updatedStateProperties.push(prop);
   }
 
   /**
@@ -74,38 +53,34 @@ export class Updator {
    * @param {{ component:Component, processQueue:Process[], updatedStateProperties:PropertyAccess[] }} param0 
    * @returns {Promise<PropertyAccess[]>}
    */
-  async process({ component, processQueue, updatedStateProperties } = this) {
-    const totalUpdatedStateProperties = [];
+  async process():Promise<IPropertyAccess[]> {
+
+    const totalUpdatedStateProperties:IPropertyAccess[] = [];
     // event callback, and update state
-    while (processQueue.length > 0) {
-      const processes = processQueue.slice(0);
-      processQueue.length = 0;
+    while (this.processQueue.length > 0) {
+      const processes = this.processQueue.slice(0);
+      this.processQueue.length = 0;
       for(let i = 0; i < processes.length; i++) {
-        await component.writableViewModelCallback(executeProcess(processes[i]))
+        await this.component.stateWritable(executeProcess(processes[i]));
       }
-      if (updatedStateProperties.length > 0) {
+      if (this.updatedStateProperties.length > 0) {
         // call updatedCallback, and add processQeueue
-        component.writableViewModel[Symbols.updatedCallback](updatedStateProperties);
-        totalUpdatedStateProperties.push(...updatedStateProperties);
-        updatedStateProperties.length = 0;
+        this.component.writeState[UpdatedCallbackSymbol](this.updatedStateProperties);
+        totalUpdatedStateProperties.push(...this.updatedStateProperties);
+        this.updatedStateProperties.length = 0;
       }
     }
     // cache clear
-    component.readOnlyViewModel[Symbols.clearCache]();
+    this.component.readonlyState[ClearCacheApiSymbol]();
     return totalUpdatedStateProperties;
   }
 
-  /**
-   * 
-   * @param {PropertyAccess[]} updatedStateProperties 
-   * @param {{ component:Component }} param1 
-   */
-  expandStateProperties(updatedStateProperties, { component } = this) {
+  expandStateProperties(updatedStateProperties:IPropertyAccess[]):IPropertyAccess[] {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
-      expandedStateProperties.push(...ViewModelHandlerBase.makeNotifyForDependentProps(
-        component.readOnlyViewModel, updatedStateProperties[i]
+      expandedStateProperties.push(...StateBaseHandler.makeNotifyForDependentProps(
+        this.component.readonlyState, updatedStateProperties[i]
       ));
     }
     return expandedStateProperties;
@@ -116,12 +91,13 @@ export class Updator {
    * @param {Map<string,PropertyAccess>} expandedStatePropertyByKey 
    * @param {{ component:Component }} param1 
    */
-  rebuildBinding(expandedStatePropertyByKey, { component } = this) {
+  rebuildBinding(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
     // bindingの再構築
     // 再構築するのは、更新したプロパティのみでいいかも→ダメだった。
     // expandedStatePropertyByKeyに、branch、repeatが含まれている場合、それらのbindingを再構築する
     // 再構築する際、branch、repeatの子ノードは更新する
     // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
+    const component = this.component;
     const bindingSummary = component.bindingSummary;
     /** @type {Binding[]} */
     const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
@@ -136,24 +112,20 @@ export class Updator {
     });
   }
 
-  /**
-   * 
-   * @param {PropertyAccess[]} expandedStateProperties 
-   * @param {{ component:Component, updatedBindings:Set<binding> }} param1 
-   */
-  updateChildNodes(expandedStateProperties, { component } = this) {
+  updateChildNodes(expandedStateProperties:IPropertyAccess[]) {
+    const component = this.component;
     const bindingSummary = component.bindingSummary;
-    /** @type {Map<string,Set<number>>} */
-    const setOfIndexByParentKey = new Map;
+    const setOfIndexByParentKey:Map<string,Set<number>> = new Map;
     for(const propertyAccess of expandedStateProperties) {
-      if (propertyAccess.propName.lastPathName !== "*") continue;
+      if (propertyAccess.patternNameInfo.lastPathName !== "*") continue;
       const lastIndex = propertyAccess.indexes?.at(-1);
       if (typeof lastIndex === "undefined") continue;
-      const parentKey = propertyAccess.propName.parentPath + "\t" + propertyAccess.indexes.slice(0, -1);
+      const parentKey = propertyAccess.patternNameInfo.parentPath + "\t" + propertyAccess.indexes.slice(0, -1);
       setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
     }
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-      for(const binding of bindingSummary.bindingsByKey.get(parentKey) ?? new Set) {
+      const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? util.raise(`binding not found: ${parentKey}`);
+      for(const binding of bindings) {
         binding.applyToChildNodes(setOfIndex);
       }
     }
@@ -164,7 +136,8 @@ export class Updator {
    * @param {Map<string,PropertyAccess>} expandedStatePropertyByKey 
    * @param {{ component:Component, updatedBindings:Set<binding> }} param1 
    */
-  updateNode(expandedStatePropertyByKey, { component } = this) {
+  updateNode(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
+    const component = this.component;
     const bindingSummary = component.bindingSummary;
     const selectBindings = [];
     for(const key of expandedStatePropertyByKey.keys()) {

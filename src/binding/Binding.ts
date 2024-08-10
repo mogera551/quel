@@ -7,6 +7,7 @@ import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types.js
 import { IFilterInfo } from "../filter/types.js";
 import { ILoopContext } from "../loopContext/types.js";
 import { IState } from "../state/types.js";
+import { IComponent } from "../component/types.js";
 
 let seq = 0;
 
@@ -372,7 +373,7 @@ export class BindingManager implements IBindingManager {
   /**
    * create BindingManager
    */
-  static create(component:any, template:HTMLTemplateElement, uuid:string, parentBinding:(IBinding|undefined)) {
+  static create(component:IComponent, template:HTMLTemplateElement, uuid:string, parentBinding?:IBinding):IBindingManager {
     let bindingManager = this._cache[uuid]?.pop()?.assign(component, template, uuid, parentBinding);
     if (typeof bindingManager === "undefined") {
       bindingManager = new BindingManager(component, template, uuid, parentBinding);

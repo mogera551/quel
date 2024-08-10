@@ -1,3 +1,4 @@
+import { IComponent } from "../component/types";
 import { IPatternNameInfo, IPropertyNameInfo } from "../dot-notation/types";
 import { FilterFunc, IFilterInfo } from "../filter/types";
 import { ILoopContext } from "../loopContext/types";
@@ -18,7 +19,7 @@ export interface INodeProperty {
   loopable: boolean;
   assign(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]):INodeProperty;
   initialize():void;
-  postUpdate(propertyAccessByViewModelPropertyKey:Map<string,{name:string,indexes:number[]}>):void;
+  postUpdate(propertyAccessByViewModelPropertyKey:Map<string,IPropertyAccess>):void;
   isSameValue(value:any):boolean;
   applyToChildNodes(indexes:Set<number>):void;
   dispose():void;
@@ -54,7 +55,7 @@ export interface IBinding {
   bindingManager: IBindingManager;
   nodeProperty: INodeProperty;
   stateProperty: IStateProperty;
-  component: any;
+  component: IComponent;
   loopContext: ILoopContext;
   children: IBindingManager[];
   expandable: boolean;
@@ -94,5 +95,25 @@ export interface IBindingManager {
   applyToState():void;
   removeNodes():void;
   dispose():void;
+}
 
+export interface IBindingSummary {
+  get updated(): boolean;
+  set updated(value: boolean);
+  get updateRevision(): number;
+  get bindingsByKey(): Map<string,IBinding[]>;
+  get expandableBindings(): Set<IBinding>;
+  get componentBindings(): Set<IBinding>;
+  get allBindings(): Set<IBinding>;
+  add(binding:IBinding):void;
+  delete(binding:IBinding):void;
+  exists(binding:IBinding):boolean;
+  flush():void;
+  update(callback:(summary:IBindingSummary)=>any):void;
+}
+
+export type IPropertyAccess = {
+  patternName: string;
+  indexes: number[];
+  get patternNameInfo():IPatternNameInfo;
 }

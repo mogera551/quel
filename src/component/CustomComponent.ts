@@ -1,10 +1,15 @@
-import { Constructor, IComponentBase, ICustomComponent } from "./types";
-import { createStates, getProxies } from "../state/Proxies";
+import { Constructor, IComponent, IComponentBase, ICustomComponent } from "./types";
+import { getProxies } from "../state/Proxies";
 import { isAttachable } from "./AttachShadow";
-import { AdoptedCss } from "./AdoptedCss";
+import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
 import { ConnectedCallbackSymbol } from "../state/Const";
-import { Proxies, State } from "../state/types";
+import { IState, Proxies } from "../state/types";
+import { PromiseWithResolvers } from "../types";
+import { BindingManager } from "../binding/Binding";
+import { promiseWithResolvers } from "../PromiseWithResolvers.js";
+import { utils } from "../utils";
+import { IBindingManager } from "../binding/types";
 
 const pseudoComponentByNode:Map<Node,IComponentBase & HTMLElement> = new Map;
 
@@ -24,64 +29,174 @@ const getParentComponent = (_node:Node):Node|undefined => {
 
 const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
-function CustomComponent<TBase extends Constructor>(Base: TBase & IComponentBase &HTMLElement) {
+function CustomComponent<TBase extends Constructor>(Base: TBase) {
   return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();
-      this.
-      this._isWritable = false;
-      this.#states = getProxies(this.component, this.component.State as State); // create view model
-      this._rootBinding = undefined;
+      const component = this.component;
+//      this._isWritable = false;
+      this.#states = getProxies(component, component.State as State); // create view model
 //      this._props = createProps(this); // create property for parent component connection
 //      this._globals = createGlobals(); // create property for global connection
 //      this._initialPromises = undefined;
 //      this._alivePromises = undefined;
   
   
-      this._pseudoParentNode = undefined;
-      this._pseudoNode = undefined;
+//      this._pseudoParentNode = undefined;
+//      this._pseudoNode = undefined;
       
-      this._filters = undefined;
+ //     this._filters = undefined;
   
-      this._bindingSummary = new BindingSummary;
+//      this._bindingSummary = new BindingSummary;
   
-      this._initialPromises = Promise.withResolvers(); // promises for initialize
+      this.#initialPromises = promiseWithResolvers() as PromiseWithResolvers<void>; // promises for initialize
   
-      this._contextRevision = 0;
   
-      this._cachableInBuilding = false;
+//      this._cachableInBuilding = false;
   
       this._updator = new Updator(this);      
     }
 
     #props;
     #globals;
-    #initialPromises;
-    #alivePromises;
     #states:Proxies;
-    #initialize() {
-  
+    get states():Proxies {
+      return this.#states;
+    }
 
+    get component():IComponent & HTMLElement {
+      return this as unknown as IComponent & HTMLElement;
     }
-    #build() {
-
-    }
-    get component():IComponentBase & HTMLElement {
-      return this as unknown as IComponentBase & HTMLElement;
-    }
-    #parentComponent?:IComponentBase & HTMLElement;
-    get parentComponent():IComponentBase & HTMLElement {
+    #parentComponent?:IComponent & HTMLElement;
+    get parentComponent():IComponent & HTMLElement {
       if (typeof this.#parentComponent === "undefined") {
-        this.#parentComponent = getParentComponent(this.component as Node) as IComponentBase & HTMLElement;
+        this.#parentComponent = getParentComponent(this.component as Node) as IComponent & HTMLElement;
       }
       return this.#parentComponent;
-    }    
-    async connectedCallback() {
+    }
+
+    #initialPromises:PromiseWithResolvers<void>;
+    get initialPromises():PromiseWithResolvers<void> {
+      return this.#initialPromises;
+    }
+
+    #alivePromises:PromiseWithResolvers<void>|undefined;
+    get alivePromises():PromiseWithResolvers<void> {
+      return this.#alivePromises ?? utils.raise("alivePromises is undefined");
+    }
+    set alivePromises(promises:PromiseWithResolvers<void>) {
+      this.#alivePromises = promises;
+    }
+
+    get baseState():IState {
+      return this.#states.base;
+    }
+    get writabeState():IState {
+      return this.#states.write;
+    }
+    get readonlyState():IState {
+      return this.#states.readonly;
+    }
+    get currentState():IState {
+      return this.isWritable ? this.writabeState : this.readonlyState;
+    }
+
+    #rootBindingManager?:IBindingManager;
+    get rootBindingManager():IBindingManager {
+      return this.#rootBindingManager ?? utils.raise("rootBindingManager is undefined");
+    }
+    set rootBindingManager(bindingManager:IBindingManager) {
+      this.#rootBindingManager = bindingManager;
+    }
+
+    get viewRootElement():ShadowRoot|HTMLElement {
+      const component = this.component;
+      return component.useWebComponent ? (component.shadowRoot ?? component) : component.pseudoParentNode as HTMLElement;
+    }
+
+    // alias view root element */
+    get queryRoot():ShadowRoot|HTMLElement {
+      return this.viewRootElement;
+    }
+
+    // parent node（use, case of useWebComponent is false）
+    #pseudoParentNode:Node|undefined;
+    get pseudoParentNode():Node {
+      const component = this.component;
+      return !component.useWebComponent ? 
+        (this.#pseudoParentNode ?? utils.raise("pseudoParentNode is undefined")) : 
+        utils.raise("mixInComponent: useWebComponent must be false");
+    }
+    set pseudoParentNode(node:Node) {
+      this.#pseudoParentNode = node;
+    }
+
+    // pseudo node（use, case of useWebComponent is false） */
+    #pseudoNode:Node|undefined;
+    get pseudoNode():Node {
+      return this.#pseudoNode ?? utils.raise("pseudoNode is undefined");
+    }
+    set pseudoNode(node:Node) {
+      this.#pseudoNode = node;
+    }
+
+    #isWritable:boolean = false;
+    get isWritable():boolean {
+      return this.#isWritable;
+    }
+    async stateWritable(callback:()=>Promise<void>):Promise<void> {
+      this.#isWritable = true;
+      try {
+        await callback();
+      } finally {
+        this.#isWritable = false;
+      }
+    }
+
+    #cachableInBuilding:boolean = false;
+    get cachableInBuilding():boolean {
+      return this.#cachableInBuilding;
+    }
+    cacheInBuilding(callback:(component:IComponent)=>void):void {
+      this.#cachableInBuilding = true;
+      try {
+        callback(this.component);
+      } finally {
+        this.#cachableInBuilding = false;
+      }
+    }
+
+    // find parent shadow root, or document, for adoptedCSS 
+    get shadowRootOrDocument():ShadowRoot|Document {
+      const component = this.component;
+      let node = component.parentNode;
+      while(node) {
+        if (node instanceof ShadowRoot) {
+          return node;
+        }
+        node = node.parentNode;
+      }
+      return document;
+    }
+
+    #contextRevision:number = 0;
+    get contextRevision() {
+      return this.#contextRevision;
+    }
+    set contextRevision(value) {
+      this.#contextRevision = value;
+    }
+    useContextRevision(callback:(revision:number)=>void):void {
+      this.#contextRevision++;
+      callback(this.#contextRevision);
+    }
+  
+    async build() {
       const component = this.component;
       if (isAttachable(component.tagName.toLowerCase()) && component.useShadowRoot && component.useWebComponent) {
         const shadowRoot = component.attachShadow({mode: 'open'});
-        const names = AdoptedCss.getNamesFromComponent(this);
-        const styleSheets = AdoptedCss.getStyleSheetList(names);
+        const names = getNamesFromComponent(component);
+        const styleSheets = getStyleSheetList(names);
         if (typeof component.styleSheet !== "undefined" ) {
           styleSheets.push(component.styleSheet);
         }
@@ -98,7 +213,7 @@ function CustomComponent<TBase extends Constructor>(Base: TBase & IComponentBase
               localStyleSheetByTagName.set(component.tagName, adoptedStyleSheet);
             }
           }
-          const shadowRootOrDocument = this.shadowRootOrDocument;
+          const shadowRootOrDocument = component.shadowRootOrDocument;
           const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
           if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
             shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
@@ -111,10 +226,58 @@ function CustomComponent<TBase extends Constructor>(Base: TBase & IComponentBase
         }
       }
 
-      await this.state[ConnectedCallbackSymbol]();
+      await component.baseState[ConnectedCallbackSymbol]();
 
+      component.cacheInBuilding((component:IComponent) => {
+        // build binding tree and dom 
+        component.bindingSummary.update((summary) => {
+          const uuid = component.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+          component.rootBindingManager = BindingManager.create(component, component.template, uuid);
+          component.rootBindingManager.postCreate();
+        });
+        if (component.useWebComponent) {
+          // case of useWebComponent,
+          // then append fragment block to viewRootElement
+          component.viewRootElement.appendChild(component.rootBindingManager.fragment);
+        } else {
+          // case of no useWebComponent, 
+          // then insert fragment block before pseudo node nextSibling
+          component.viewRootElement.insertBefore(component.rootBindingManager.fragment, component.pseudoNode.nextSibling);
+          // child nodes add pseudoComponentByNode
+          component.rootBindingManager.nodes.forEach(node => pseudoComponentByNode.set(node, component));
+        }
   
+      });
 
+
+    }
+
+    async connectedCallback() {
+      const component = this.component;
+      try {
+        // wait for parent component initialize
+        if (this.parentComponent) {
+          await this.parentComponent.initialPromises.promise;
+        } else {
+        }
+  
+        if (!component.useWebComponent) {
+          // case of no useWebComponent
+          const comment = document.createComment(`@@/${component.tagName}`);
+          component.pseudoParentNode = component.parentNode ?? utils.raise("parentNode is undefined");
+          component.pseudoNode = comment;
+          component.pseudoParentNode.replaceChild(comment, component);
+        }
+  
+        // promises for alive
+        component.alivePromises = promiseWithResolvers();
+  
+        await this.build();
+        
+      } finally {
+        this.initialPromises?.resolve && this.initialPromises.resolve();
+      }
+  
     }
     async disconnectedCallback() {
 

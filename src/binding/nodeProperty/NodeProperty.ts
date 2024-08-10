@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { FilterFunc, IFilterInfo } from "../../filter/types";
-import { IBinding } from "../types";
+import { FilterFunc, FilterType, IFilterInfo } from "../../filter/types";
+import { IBinding, IPropertyAccess } from "../types";
 
 export class NodeProperty {
   #node:Node;
@@ -33,7 +33,7 @@ export class NodeProperty {
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
+    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<FilterType.Input>(this.value, this.filters);
   }
 
   // applyToNode()の対象かどうか
@@ -66,7 +66,7 @@ export class NodeProperty {
     this.#nameElements = name.split(".");
     const workFilters = filters.slice(0)
     workFilters.reverse();
-    this.#filters = Filters.create(workFilters, binding.component.filters.in) as FilterFunc[];
+    this.#filters = Filters.create<FilterType.Input>(workFilters, binding.component.inputFilterManager);
   }
 
   assign(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
@@ -76,18 +76,14 @@ export class NodeProperty {
     this.#nameElements = name.split(".");
     const workFilters = filters.slice(0)
     workFilters.reverse();
-    this.#filters = Filters.create(workFilters, binding.component.filters.in) as FilterFunc[];
+    this.#filters = Filters.create<FilterType.Input>(workFilters, binding.component.inputFilterManager);
     return this;
   }
 
   initialize() {
   }
 
-  /**
-   * 更新後処理
-   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
-   */
-  postUpdate(propertyAccessByViewModelPropertyKey:Map<string,{}>) {
+  postUpdate(propertyAccessByViewModelPropertyKey:Map<string,IPropertyAccess>) {
   }
 
   isSameValue(value:any):boolean {

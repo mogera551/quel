@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption, IFilterManager } from "./types";
+import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption, IFilterManager, FilterFuncType, FilterType, FilterFuncWithOptionType } from "./types";
 
 /**
  * ambigous name:
@@ -228,57 +228,59 @@ const outputGroups = [
   numberFilterGroup, stringFilterGroup, mathFilterGroup,
 ];
 
-const nullthru = (callback:FilterFuncWithOption|EventFilterFuncWithOption):FilterFuncWithOption|FilterFuncWithOption => 
+const nullthru = <T = FilterType>(callback:FilterFuncWithOptionType<T>) => 
   (options:any[]) => (value:any) => value == null ? value : callback(options)(value);
 
-const reduceApplyFilter = (value:any, filter:FilterFunc|EventFilterFunc) => filter(value);
+const reduceApplyFilter = <T = FilterType>(value:any, filter:FilterFuncType<T>) => filter(value);
 
-const thru:FilterFuncWithOption = (options:any[]) => (value:any):any => value;
+const thru = ((options:any[]) => (value:any):any => value);
 
 export class Filters {
 
-  static create(filters:IFilterInfo[], manager:IFilterManager):(FilterFunc|EventFilterFunc)[] {
-    const filterFuncs = [];
+  static create<T = FilterType>(filters:IFilterInfo[], manager:FilterManager<T>):FilterFuncType<T>[] {
+    const filterFuncs:FilterFuncType<T>[] = [];
     for(let i = 0; i < filters.length; i++) {
       const filter = filters[i];
-      filterFuncs.push(manager.getFilterFunc(filter.name)(filter.options));
+      const filterFuncWithOptions = manager.getFilterFunc(filter.name);
+      const filterFunc = filterFuncWithOptions(filter.options) as FilterFuncType<T>;
+      filterFuncs.push(filterFunc);
     }
     return filterFuncs;
   }
 }
 
-export class FilterManager {
+export class FilterManager<T = FilterType> implements IFilterManager<T> {
   ambigousNames:Set<string> = new Set;
-  funcByName:(Map<string, FilterFuncWithOption|EventFilterFuncWithOption>) = new Map;
+  funcByName:Map<string,FilterFuncWithOptionType<T>> = new Map;
 
   /**
    * register user defined filter, check duplicate name
    */
-  registerFilter(funcName:string, filterFunc:FilterFuncWithOption|EventFilterFuncWithOption):void {
+  registerFilter(funcName:string, filterFunc:FilterFuncWithOptionType<T>) {
     const isNotNullThru = funcName.endsWith("*");
     const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
 
     if (this.funcByName.has(realFuncName)) {
       utils.raise(`${this.constructor.name}: ${realFuncName} is already registered`);
     }
-    const wrappedFunc = !isNotNullThru ? nullthru(filterFunc) : filterFunc;
-    (this.funcByName as Map<string, FilterFuncWithOption|EventFilterFuncWithOption>).set(realFuncName, wrappedFunc);
+    const wrappedFunc = !isNotNullThru ? nullthru<T>(filterFunc) : filterFunc;
+    this.funcByName.set(realFuncName, wrappedFunc as FilterFuncWithOptionType<T>);
   }
 
   /**
    * get filter function by name
    */
-  getFilterFunc(name:string):FilterFuncWithOption {
+  getFilterFunc(name:string):FilterFuncWithOptionType<T> {
     this.ambigousNames.has(name) && utils.raise(`${this.constructor.name}: ${name} is ambigous`);
-    return (this.funcByName.get(name) ?? thru) as FilterFuncWithOption;
+    return this.funcByName.get(name) ?? thru as FilterFuncWithOptionType<T>;
   }
 
-  static applyFilter(value:any, filters:(FilterFunc|EventFilterFunc)[]):any {
+  static applyFilter<T>(value:any, filters:(FilterFuncType<T>)[]):any {
     return filters.reduce(reduceApplyFilter, value);
   }
 }
 
-export class OutputFilterManager extends FilterManager {
+export class OutputFilterManager extends FilterManager<FilterType.Output> {
   constructor() {
     super();
     this.ambigousNames = new Set(OutputFilterManager.#ambigousNames);
@@ -356,7 +358,7 @@ class InputFilters {
   static boolean      = (options:any[]) => (value:any):any => (value === "false" || value === "") ? false : true;
 }
 
-export class InputFilterManager extends FilterManager {
+export class InputFilterManager extends FilterManager<FilterType.Input> {
   constructor() {
     super();
     this.ambigousNames = new Set(InputFilterManager.#ambigousNames);
@@ -390,7 +392,7 @@ class EventFilters {
   static nsp = this.noStopPropagation;
 }
 
-export class EventFilterManager extends FilterManager {
+export class EventFilterManager extends FilterManager<FilterType.Event> {
   constructor() {
     super();
     this.ambigousNames = new Set(EventFilterManager.#ambigousNames);

@@ -7,7 +7,8 @@ import { StateReadOnlyHandler } from "./StateReadOnlyHandler";
 import { StateWriteHandler } from "./StateWriteHandler";
 import { IState, Proxies } from "./types";
 
-export function getProxies(component:IComponent, state:Object):Proxies {
+export function getProxies(component:IComponent, State:typeof Object):Proxies {
+  const state = Reflect.construct(State, []);
   const accessorProperties = new Set(getAccessorProperties(state));
   const dependencies:DependentProps = new DependentProps(Reflect.get(state, DEPENDENCIES) ?? {});
   return {

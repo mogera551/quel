@@ -1,3 +1,4 @@
+import { IPropertyAccess } from "../binding/types";
 import { IComponent } from "../component/types";
 import { IProxy } from "../dot-notation/types";
 import { ILoopContext } from "../loopContext/types";
@@ -9,12 +10,14 @@ export type Dependencies = {
 
 export type StateClass = typeof Object;
 
-export interface IProxyState {
+export type UpdateItem = [string, number[]];
+
+export interface IProxyStatePartial {
   [key:PropertyKey]:any,
   // callback
-  [ConnectedCallbackSymbol]:() => void,
-  [DisconnectedCallbackSymbol]:() => void,
-  [UpdatedCallbackSymbol]:() => void,
+  [ConnectedCallbackSymbol]:() => Promise<void>,
+  [DisconnectedCallbackSymbol]:() => Promise<void>,
+  [UpdatedCallbackSymbol]:(updateItems:IPropertyAccess[]) => void,
   // api
   [DirectryCallApiSymbol]:(prop:string, loopContext:ILoopContext, event:Event) => Promise<void>,
   [NotifyForDependentPropsApiSymbol]:(prop:string, indexes:number[]) => void,
@@ -28,7 +31,13 @@ export interface IProxyState {
   $component:IComponent,
 }
 
-export type IState = IProxy & IProxyState;
+export interface IProxyReadonlyStatePartial {
+  // api
+  [ClearCacheApiSymbol]:() => void,
+
+}
+
+export type IState = IProxy & IProxyStatePartial;
 
 export type Proxies = {
   base:IState, write:IState, readonly:IState

@@ -1,6 +1,8 @@
+import { IBindingManager, IBindingSummary } from "../binding/types";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
-import { State, StateClass } from "../state/types";
+import { IState, Proxies, StateClass } from "../state/types";
+import { PromiseWithResolvers } from "../types";
 
 export type ComponentModuleConfig = {
   extends?:string; // for customized built-in element, like extends="button"
@@ -91,10 +93,39 @@ export interface IComponentBase {
 }
 
 export interface ICustomComponent {
-  state:State;
-  get parentComponent():IComponentBase & HTMLElement;
-  connectedCallback():void;
-  disconnectedCallback():void;
+  state:IState;
+  states:Proxies;
+  get component():IComponent & HTMLElement;
+  get parentComponent():IComponent & HTMLElement;
+  get initialPromises():PromiseWithResolvers<void>;
+  get alivePromises():PromiseWithResolvers<void>;
+  set alivePromises(promises:PromiseWithResolvers<void>);
+  get baseState():IState;
+  get writeState():IState;
+  get readonlyState():IState;
+  get currentState():IState;
+  get rootBindingManager():IBindingManager;
+  set rootBindingManager(bindingManager:IBindingManager);
+  get viewRootElement():ShadowRoot|HTMLElement;
+  get queryRoot():ShadowRoot|HTMLElement;
+  get pseudoParentNode():Node;
+  set pseudoParentNode(node:Node);
+  get pseudoNode():Node;
+  set pseudoNode(node:Node);
+  get isWritable():boolean;
+  stateWritable(callback:()=>Promise<void>):Promise<void>;
+  get cachableInBuilding():boolean;
+  cacheInBuilding(callback:(component:IComponent)=>void):void;
+  get shadowRootOrDocument():ShadowRoot|Document;
+  get contextRevision():number;
+  set contextRevision(revision:number);
+  useContextRevision(callback:(revision:number)=>void):void;
+  get bindingSummary():IBindingSummary;
+
+  build():Promise<void>;
+
+  connectedCallback():Promise<void>;
+  disconnectedCallback():Promise<void>;
 } 
 
 export type Constructor<T = {}> = new (...args: any[]) => T;

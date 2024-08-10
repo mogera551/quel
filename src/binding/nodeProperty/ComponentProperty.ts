@@ -1,40 +1,36 @@
-import "../../types.js";
-import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
 import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils";
 import { ElementBase } from "./ElementBase";
-import { IBinding } from "../types.js";
+import { IBinding, IPropertyAccess, IStateProperty } from "../types.js";
 import { IFilterInfo } from "../../filter/types.js";
+import { ILoopContext } from "../../loopContext/types";
+import { IComponent } from "../../component/types.js";
+import { IsComponentSymbol } from "../../component/Const.js";
+import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/Const.js";
+import { PropertyAccess } from "../PropertyAccess.js";
 
 export class BindingPropertyAccess {
-  /** @type {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} */
-  #viewModelProperty;
+  #stateProperty:IStateProperty;
 
-  /** @type {string} */
-  get name() {
-    return this.#viewModelProperty.name;
+  get name():string {
+    return this.#stateProperty.name;
   }
 
-  /** @type {number[]} */
-  get indexes() {
-    return this.#viewModelProperty.indexes;
+  get indexes():number[] {
+    return this.#stateProperty.indexes;
   }
 
-  /** @type {import("../../loopContext/LoopContext.js").LoopContext} */
-  get loopContext() {
-    return this.#viewModelProperty.binding.loopContext;
+  get loopContext():ILoopContext {
+    return this.#stateProperty.binding.loopContext;
   }
-  /**
-   * 
-   * @param {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelProperty
-   */
-  constructor(viewModelProperty) {
-    this.#viewModelProperty = viewModelProperty;
+
+  constructor(stateProperty:IStateProperty) {
+    this.#stateProperty = stateProperty;
   }
 }
 
 export class ComponentProperty extends ElementBase {
-  get propName():string {
+  get propertyName():string {
     return this.nameElements[1];
   }
 
@@ -42,20 +38,14 @@ export class ComponentProperty extends ElementBase {
     return true;
   }
 
-  // todo: この型は正しいか確認する
-  get thisComponent():any {
-    return this.node;
+  get thisComponent():IComponent {
+    return this.node as IComponent;
   }
 
-  /**
-   * 
-   * @param {import("../Binding.js").Binding} binding
-   * @param {HTMLInputElement} node 
-   * @param {string} name 
-   * @param {FilterInfo[]} filters 
-   */
   constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
-    if (!(node.constructor[Symbols.isComponent])) utils.raise("ComponentProperty: not Component");
+    if (Reflect.get(node, IsComponentSymbol) !== true) utils.raise("ComponentProperty: not Quel Component");
+    // todo: バインドするプロパティ名のチェック
+    // 「*」を含まないようにする
     super(binding, node, name, filters);
   }
 
@@ -63,30 +53,33 @@ export class ComponentProperty extends ElementBase {
     return super.value;
   }
   set value(value) {
-    this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${this.propName}`, []]]); 
-    this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](this.propName, []);
+    try {
+      this.thisComponent.state[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
+      this.thisComponent.state[NotifyForDependentPropsApiSymbol](this.propertyName, []);
+    } catch(e) {
+      console.log(e);
+    }
   }
   /**
    * 初期化処理
    * コンポーネントプロパティのバインドを行う
    */
   initialize() {
-    this.thisComponent.props[Symbols.bindProperty](this.propName, new BindingPropertyAccess(this.binding.viewModelProperty));
+    this.thisComponent.props[Symbols.bindProperty](this.propName, new BindingPropertyAccess(this.binding.stateProperty));
   }
 
   /**
    * 更新後処理
-   * @param {Map<string,PropertyAccess>} propertyAccessByViewModelPropertyKey 
    */
-  postUpdate(propertyAccessByViewModelPropertyKey) {
-    const viewModelProperty = this.binding.viewModelProperty.name;
-    const propName = this.propName;
-    for(const [key, propertyAccess] of propertyAccessByViewModelPropertyKey.entries()) {
-      if (propertyAccess.propName.name === viewModelProperty || propertyAccess.propName.setOfParentPaths.has(viewModelProperty)) {
-        const remain = propertyAccess.propName.name.slice(viewModelProperty.length);
+  postUpdate(propertyAccessBystatePropertyKey:Map<string,IPropertyAccess>):void {
+    const statePropertyName = this.binding.stateProperty.name;
+    for(const [key, propertyAccess] of propertyAccessBystatePropertyKey.entries()) {
+      if (propertyAccess.patternName === statePropertyName || 
+        propertyAccess.patternNameInfo.setOfParentPaths.has(statePropertyName)) {
+        const remain = propertyAccess.patternName.slice(statePropertyName.length);
 //        console.log(`componentProperty:postUpdate(${propName}${remain})`);
-        this.thisComponent.viewModel?.[Symbols.updatedCallback]([[`${propName}${remain}`, propertyAccess.indexes]]);
-        this.thisComponent.viewModel?.[Symbols.notifyForDependentProps](`${propName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.state[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
+        this.thisComponent.state[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
       }
     }
   }

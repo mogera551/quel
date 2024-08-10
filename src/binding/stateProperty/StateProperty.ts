@@ -4,13 +4,13 @@ import { getPatternNameInfo } from "../../dot-notation/PatternName";
 import { getPropertyNameInfo } from "../../dot-notation/PropertyName";
 import { Binding } from "../Binding";
 import { IBinding, IStateProperty } from "../types";
-import { IFilterInfo, FilterFunc } from "../../filter/types";
+import { IFilterInfo, FilterFunc, FilterType } from "../../filter/types";
 import { IPatternNameInfo, IPropertyNameInfo } from "../../dot-notation/types";
-import { State } from "../../state/types";
+import { IState } from "../../state/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../../dot-notation/Const";
 
 export class StateProperty implements IStateProperty {
-  get state():State {
+  get state():IState {
     return this.#binding.component.state;
   }
 
@@ -88,7 +88,7 @@ export class StateProperty implements IStateProperty {
   }
 
   get filteredValue():any {
-    return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
+    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<FilterType.Output>(this.value, this.filters);
   }
 
   // applyToViewModel()の対象かどうか
@@ -104,7 +104,7 @@ export class StateProperty implements IStateProperty {
   constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create(filters, binding.component.filters.out) as FilterFunc[];
+    this.#filters = Filters.create<FilterType.Output>(filters, binding.component.outputFilterManager);
     this.#propertyName = getPropertyNameInfo(name);
     this.#patternName = getPatternNameInfo(name);
     this.#level = this.#patternName.level;
@@ -113,7 +113,7 @@ export class StateProperty implements IStateProperty {
   assign(binding:Binding, name:string, filters:IFilterInfo[]):IStateProperty {
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create(filters, binding.component.filters.out) as FilterFunc[];
+    this.#filters = Filters.create<FilterType.Output>(filters, binding.component.outputFilterManager);
     this.#propertyName = getPropertyNameInfo(name);
     this.#patternName = getPatternNameInfo(name);
     this.#level = this.#patternName.level;
