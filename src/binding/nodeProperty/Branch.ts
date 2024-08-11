@@ -1,8 +1,8 @@
 import { TemplateProperty } from "./TemplateProperty";
 import { utils } from "../../utils";
 import { BindingManager } from "../Binding";
-import { IBinding } from "../types";
-import { IFilterInfo } from "../../filter/types";
+import { IBinding } from "../../@types/binding";
+import { IFilterInfo } from "../../@types/filter";
 
 export class Branch extends TemplateProperty {
   get value():boolean {

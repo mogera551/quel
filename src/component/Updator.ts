@@ -1,16 +1,10 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
 import { StateBaseHandler } from "../state/StateBaseHandler";
-import { config } from "../Config.js";
-import { IComponent, IProcess, IUpdator } from "./types.js";
-import { IState } from "../state/types.js";
-import { IBinding, IPropertyAccess } from "../binding/types.js";
-import { StateProperty } from "../binding/stateProperty/StateProperty.js";
-import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../state/Const.js";
-import { util } from "../../node_modules/webpack/types.js";
-import { utils } from "../utils.js";
-
-
+import { config } from "../Config";
+import { IComponent, IProcess, IUpdator } from "../@types/component";
+import { IState } from "../@types/state";
+import { IBinding, IPropertyAccess } from "../@types/binding";
+import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../state/Const";
+import { utils } from "../utils";
 
 const getPropAccessKey = (prop:IPropertyAccess):string => prop.patternName + "\t" + prop.indexes.toString();
 const executeProcess = (process:IProcess) => async ():Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);

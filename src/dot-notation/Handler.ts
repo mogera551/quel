@@ -1,10 +1,10 @@
 
-import { IPropertyNameInfo, IPatternNameInfo, IHandler } from "./types";
+import { IPropertyNameInfo, IPatternNameInfo, IHandler } from "../@types/dotNotation";
 import { getPropertyNameInfo } from "./PropertyName";
 import { getPatternNameInfo } from "./PatternName";
 import { GetDirectSymbol, RE_CONTEXT_INDEX, SetDirectSymbol, WILDCARD } from "./Const";
 import { utils } from "../utils";
-import { IProxy } from "./types";
+import { IProxy } from "../@types/dotNotation";
 
 export class Handler implements IHandler {
   #stackIndexes:number[][] = [];

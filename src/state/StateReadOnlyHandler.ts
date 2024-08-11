@@ -6,7 +6,7 @@ import { StateBaseHandler } from "./StateBaseHandler";
 import { Callback } from "./Callback";
 import { Api } from "./Api";
 import { SpecialProp } from "./SpecialProp";
-import { IState } from "./types";
+import { IState } from "../@types/state";
 
 export class StateReadOnlyHandler extends StateBaseHandler {
   #cache = new StateCache;

@@ -1,6 +1,6 @@
 import { getPatternNameInfo } from "../dot-notation/PatternName";
-import { IPatternNameInfo } from "../dot-notation/types";
-import { IPropertyAccess } from "./types";
+import { IPatternNameInfo } from "../@types/dotNotation";
+import { IPropertyAccess } from "../@types/binding";
 
 export class PropertyAccess implements IPropertyAccess {
   patternName:string;

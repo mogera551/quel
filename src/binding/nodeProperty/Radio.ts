@@ -1,9 +1,8 @@
 import { MultiValue } from "./MultiValue";
-import { IMultiValue } from "./types";
 import { utils } from "../../utils";
 import { ElementBase } from "./ElementBase";
-import { IFilterInfo } from "../../filter/types";
-import { IBinding } from "../types";
+import { FilterType, IFilterInfo } from "../../@types/filter";
+import { IBinding, IMultiValue } from "../../@types/binding";
 import { FilterManager } from "../../filter/Manager";
 
 export class Radio extends ElementBase {
@@ -25,7 +24,7 @@ export class Radio extends ElementBase {
   _filteredValue:IMultiValue = new MultiValue(undefined, false);
   get filteredValue():IMultiValue {
     const multiValue:IMultiValue = this.value;
-    this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;
+    this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter<FilterType.Input>(multiValue.value, this.filters) : multiValue.value;
     this._filteredValue.enabled = multiValue.enabled;
     return this._filteredValue;
   }

@@ -5,7 +5,7 @@ import {
 } from "./Const";
 import { dispatchCustomEvent } from "./Event";
 import { StateBaseHandler } from "./StateBaseHandler";
-import { IState, SupprotCallbackSymbols } from "./types";
+import { IState, SupprotCallbackSymbols } from "../@types/state";
 
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";

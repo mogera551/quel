@@ -1,6 +1,6 @@
-import { GetDirectSymbol, SetDirectSymbol } from "./Const";
+import { GetDirectSymbol, SetDirectSymbol } from "../dot-notation/Const";
 
-export interface IPropertyNameInfo {
+interface IPropertyNameInfo {
   name: string; // name property
   isPrimitive: boolean; // true if name don't has dot, wildcard
   isDotted: boolean; // true if name has dot
@@ -11,7 +11,7 @@ export interface IPropertyNameInfo {
   lastIncompleteIndex: number; // last index of wildcard
 }
 
-export interface IPatternNameInfo {
+interface IPatternNameInfo {
   name: string; // name property
   pathNames: string[]; // array, from separating name property by dot
   parentPathNames: string[]; // pathNames without last element
@@ -25,7 +25,7 @@ export interface IPatternNameInfo {
   wildcardNames: string[]; // list of wildcard names
 }
 
-export interface IHandler {
+interface IHandler {
   get lastIndexes():number[];
   get lastIndexesString():string;
   get stackIndexes():number[][];
@@ -41,7 +41,7 @@ export interface IHandler {
   set(target:Object, prop:PropertyKey, value:any, receiver:any):boolean;
 }
 
-export interface IProxy {
+interface IProxy {
   [GetDirectSymbol]:(patternName:string, indexes:number[]) => any;
   [SetDirectSymbol]:(patternName:string, indexes:number[], value:any) => boolean;
   $1:number;

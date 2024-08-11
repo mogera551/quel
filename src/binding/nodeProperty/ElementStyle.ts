@@ -1,6 +1,6 @@
-import { IFilterInfo } from "../../filter/types";
+import { IFilterInfo } from "../../@types/filter";
 import { utils } from "../../utils";
-import { IBinding } from "../types";
+import { IBinding } from "../../@types/binding";
 import { ElementBase } from "./ElementBase";
 
 export class ElementStyle extends ElementBase {

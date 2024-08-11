@@ -1,8 +1,8 @@
 import { Symbols } from "../../Symbols.js";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { EventFilterFunc, FilterType, IFilterInfo } from "../../filter/types";
+import { EventFilterFunc, FilterType, IFilterInfo } from "../../@types/filter.js";
 import { utils } from "../../utils";
-import { IBinding } from "../types";
+import { IBinding } from "../../@types/binding";
 import { ElementBase } from "./ElementBase";
 
 const PREFIX = "on";

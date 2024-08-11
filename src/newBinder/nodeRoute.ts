@@ -1,4 +1,4 @@
-import { NodeRoute } from "./types";
+import { NodeRoute } from "../@types/binder";
 
 /**
  * get indexes of childNodes from root node to the node 

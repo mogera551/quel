@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { NodeType } from "./types";
+import { NodeType } from "../@types/binder";
 
 const createNodeKey = (node:Node):string => node.constructor.name + "\t" + ((node instanceof Comment) ? (node.textContent?.[2] ?? "") : "");
 

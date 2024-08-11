@@ -1,6 +1,6 @@
-import { IBindingManager, IBinding } from "../binding/types.js";
+import { IBindingManager, IBinding } from "../binding/Binding.js";
 import { getPatternNameInfo } from "../dot-notation/PatternName.js";
-import { ILoopContext } from "./types";
+import { ILoopContext } from "../@types/loopContext.js";
 
 export class LoopContext implements ILoopContext {
   #bindingManager:IBindingManager;

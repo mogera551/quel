@@ -3,7 +3,7 @@ import { BindNodeInfo } from './BindNodeInfo';
 import { getBindText } from './bindText';
 import { getCommentNodes } from './commentNodes';
 import { getNodeType } from './nodeType';
-import { IBindNodeInfo } from './types';
+import { IBindNodeInfo } from '../@types/binder';
 
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;

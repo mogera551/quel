@@ -1,4 +1,4 @@
-import { ElementBase } from "./ElementBase.js";
+import { ElementBase } from "./ElementBase";
 
 export class ElementAttribute extends ElementBase {
   get attributeName():string {

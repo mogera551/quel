@@ -1,11 +1,11 @@
-import { IComponent } from "../component/types";
+import { IComponent } from "../@types/component";
 import { getAccessorProperties } from "./AccessorProperties"
 import { DEPENDENCIES } from "./Const";
 import { DependentProps } from "./DependentProps";
 import { StateBaseHandler } from "./StateBaseHandler"
 import { StateReadOnlyHandler } from "./StateReadOnlyHandler";
 import { StateWriteHandler } from "./StateWriteHandler";
-import { IState, Proxies } from "./types";
+import { IState, Proxies } from "../@types/state";
 
 export function getProxies(component:IComponent, State:typeof Object):Proxies {
   const state = Reflect.construct(State, []);

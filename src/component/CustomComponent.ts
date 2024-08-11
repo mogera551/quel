@@ -1,13 +1,13 @@
-import { IUpdator, IComponentBase, Constructor, ICustomComponent, IComponent } from "./types";
+import { IUpdator, IComponentBase, Constructor, ICustomComponent, IComponent } from "../@types/component";
 import { getProxies } from "../state/Proxies";
 import { isAttachable } from "./AttachShadow";
 import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
 import { ConnectedCallbackSymbol } from "../state/Const";
-import { IState, Proxies } from "../state/types";
+import { IState, Proxies } from "../@types/state";
 import { BindingManager } from "../binding/Binding";
 import { utils } from "../utils";
-import { IBindingManager, IBindingSummary } from "../binding/types";
+import { IBindingManager, IBindingSummary } from "../@types/binding";
 import { BindingSummary } from "../binding/BindingSummary";
 import { Updator } from "./Updator";
 

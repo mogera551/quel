@@ -2,10 +2,10 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol, GetDependentPropsApiSymbol } from "./Const";
 import { Handler } from "../dot-notation/Handler";
 import { DependentProps } from "./DependentProps";
-import { IState } from "./types";
-import { IComponent } from "../component/types";
-import { ILoopContext } from "../loopContext/types";
-import { IPropertyAccess } from "../binding/types";
+import { IState } from "../@types/state";
+import { IComponent } from "../@types/component";
+import { ILoopContext } from "../@types/loopContext";
+import { IPropertyAccess } from "../binding/Binding";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { GetDirectSymbol } from "../dot-notation/Const";

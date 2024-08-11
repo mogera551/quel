@@ -1,13 +1,13 @@
-import { utils } from "../utils.js";
+import { utils } from "../utils";
 //import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext";
 import { Binder } from "../newBinder/Binder";
-import { INodeProperty, IStateProperty, IBinding, IBindingManager } from "./types";
-import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types.js";
-import { IFilterInfo } from "../filter/types.js";
-import { ILoopContext } from "../loopContext/types.js";
-import { IState } from "../state/types.js";
-import { IComponent } from "../component/types.js";
+import { INodeProperty, IStateProperty, IBinding, IBindingManager } from "../@types/binding";
+import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
+import { IFilterInfo } from "../@types/filter";
+import { ILoopContext } from "../@types/loopContext";
+import { IState } from "../@types/state";
+import { IComponent } from "../@types/component";
 
 let seq = 0;
 

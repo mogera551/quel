@@ -6,9 +6,9 @@ import { config } from "../Config.js";
 import { MixedDialog } from "./MixedDialog.js";
 import { MixedPopover } from "../popover/MixedPopover.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
-import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase } from "./types";
+import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase } from "../@types/component";
 import { replaceBaseClass } from "./ReplaceBaseClass.js";
-import { StateClass } from "../state/types";
+import { StateClass } from "../@types/state";
 
 const moduleByConstructor:Map<Function,IModule> = new Map;
 const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;

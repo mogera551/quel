@@ -1,5 +1,5 @@
 import { WILDCARD, DELIMITER } from "./Const";
-import { IPatternNameInfo } from "./types";
+import { IPatternNameInfo } from "../@types/dotNotation";
 
 function _getPatternNameInfo(name:string):IPatternNameInfo {
   const pathNames = name.split(DELIMITER);

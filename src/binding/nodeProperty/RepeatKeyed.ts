@@ -1,7 +1,7 @@
 import { BindingManager } from "../Binding";
 import { utils } from "../../utils";
 import { Repeat } from "./Repeat";
-import { IBindingManager } from "../types";
+import { IBindingManager } from "../../@types/binding";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 

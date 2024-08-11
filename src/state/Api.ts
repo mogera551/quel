@@ -1,11 +1,11 @@
-import { IComponent } from "../component/types";
-import { ILoopContext } from "../loopContext/types";
+import { IComponent } from "../@types/component";
+import { ILoopContext } from "../@types/loopContext";
 import { 
   DirectryCallApiSymbol, NotifyForDependentPropsApiSymbol, GetDependentPropsApiSymbol, 
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
 } from "./Const";
 import { StateBaseHandler } from "./StateBaseHandler";
-import { IDependentProps, IState, SupportApiSymbols } from "./types";
+import { IDependentProps, IState, SupportApiSymbols } from "../@types/state";
 
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";

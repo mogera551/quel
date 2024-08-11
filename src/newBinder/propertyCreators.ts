@@ -1,7 +1,7 @@
 import { utils } from "../utils";
-import { PropertyCreators, NodePropertyCreator, StatePropertyCreator } from "./types";
-import { IBinding, IBindingManager, INodeProperty, IStateProperty } from "../binding/types";
-import { IFilterInfo } from "../filter/types";
+import { PropertyCreators, NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
+import { IBinding, IBindingManager, INodeProperty, IStateProperty } from "../binding/Binding";
+import { IFilterInfo } from "../@types/filter";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { ContextIndex } from "../binding/stateProperty/ContextIndex";

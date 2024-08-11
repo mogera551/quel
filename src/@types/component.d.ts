@@ -1,7 +1,6 @@
-import { IBinding, IBindingManager, IBindingSummary, IPropertyAccess } from "../binding/types";
-import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
-import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
-import { IState, Proxies, StateClass } from "../state/types";
+import { IBinding, IBindingManager, IBindingSummary, IPropertyAccess } from "./binding";
+import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
+import { IState, Proxies, StateClass } from "./state";
 
 type ComponentModuleConfig = {
   extends?:string; // for customized built-in element, like extends="button"
@@ -58,9 +57,9 @@ type CustomElementInfo = {
 }
 
 type FilterManagers = {
-  inputFilterManager:InputFilterManager, 
-  outputFilterManager:OutputFilterManager, 
-  eventFilterManager:EventFilterManager
+  inputFilterManager:IFilterManager<FilterType.Input>, 
+  outputFilterManager:IFilterManager<FilterType.Output>, 
+  eventFilterManager:IFilterManager<FilterType.Event>
 };
 
 interface IComponentBase {
@@ -86,9 +85,9 @@ interface IComponentBase {
   // is costomized built-in element
   get isCostomizedBuiltInElement():boolean;
   get filterManagers():FilterManagers;
-  get inputFilterManager():InputFilterManager;
-  get outputFilterManager():OutputFilterManager;
-  get eventFilterManager():EventFilterManager;
+  get inputFilterManager():IFilterManager<FilterType.Input>;
+  get outputFilterManager():IFilterManager<FilterType.Output>;
+  get eventFilterManager():IFilterManager<FilterType.Event>;
 }
 
 interface ICustomComponent {

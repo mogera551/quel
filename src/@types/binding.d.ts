@@ -1,11 +1,11 @@
-import { IComponent } from "../component/types";
-import { IPatternNameInfo, IPropertyNameInfo } from "../dot-notation/types";
-import { FilterFunc, IFilterInfo } from "../filter/types";
-import { ILoopContext } from "../loopContext/types";
-import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
-import { IState } from "../state/types";
+import { IComponent } from "./component";
+import { IPatternNameInfo, IPropertyNameInfo } from "./dotNotation";
+import { FilterFunc, IFilterInfo } from "./filter";
+import { ILoopContext } from "./loopContext";
+import { NodePropertyCreator, StatePropertyCreator } from "./binder";
+import { IState } from "./state";
 
-export interface INodeProperty {
+interface INodeProperty {
   node: Node;
   name: string;
   nameElements: string[];
@@ -25,7 +25,7 @@ export interface INodeProperty {
   dispose():void;
 }
 
-export interface IStateProperty {
+interface IStateProperty {
   state: IState;
   name: string;
   propertyName: IPropertyNameInfo;
@@ -50,7 +50,7 @@ export interface IStateProperty {
 
 }
 
-export interface IBinding {
+interface IBinding {
   id: number;
   bindingManager: IBindingManager;
   nodeProperty: INodeProperty;
@@ -76,7 +76,7 @@ export interface IBinding {
 
 }
 
-export interface IBindingManager {
+interface IBindingManager {
   component: any;
   bindings: IBinding[];
   nodes: Node[];
@@ -97,7 +97,7 @@ export interface IBindingManager {
   dispose():void;
 }
 
-export interface IBindingSummary {
+interface IBindingSummary {
   get updated(): boolean;
   set updated(value: boolean);
   get updateRevision(): number;
@@ -112,8 +112,13 @@ export interface IBindingSummary {
   update(callback:(summary:IBindingSummary)=>any):void;
 }
 
-export type IPropertyAccess = {
+interface IPropertyAccess {
   patternName: string;
   indexes: number[];
   get patternNameInfo():IPatternNameInfo;
+}
+
+interface IMultiValue {
+  value:any;
+  enabled:boolean;
 }

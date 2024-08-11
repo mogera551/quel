@@ -1,8 +1,8 @@
-import { IPropertyAccess } from "../binding/types";
-import { IComponent } from "../component/types";
-import { IProxy } from "../dot-notation/types";
-import { ILoopContext } from "../loopContext/types";
-import { ClearCacheApiSymbol, ConnectedCallbackSymbol, CreateBufferApiSymbol, DirectryCallApiSymbol, DisconnectedCallbackSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "./Const";
+import { IPropertyAccess } from "../binding";
+import { IComponent } from "./component";
+import { IProxy } from "./dotNotation";
+import { ILoopContext } from "./loopContext";
+import { ClearCacheApiSymbol, ConnectedCallbackSymbol, CreateBufferApiSymbol, DirectryCallApiSymbol, DisconnectedCallbackSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../state/Const";
 
 export type Dependencies = {
   [key:string]:string[]

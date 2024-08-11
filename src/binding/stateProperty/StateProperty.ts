@@ -3,15 +3,15 @@ import { FilterManager, Filters } from "../../filter/Manager";
 import { getPatternNameInfo } from "../../dot-notation/PatternName";
 import { getPropertyNameInfo } from "../../dot-notation/PropertyName";
 import { Binding } from "../Binding";
-import { IBinding, IStateProperty } from "../types";
-import { IFilterInfo, FilterFunc, FilterType } from "../../filter/types";
-import { IPatternNameInfo, IPropertyNameInfo } from "../../dot-notation/types";
-import { IState } from "../../state/types";
+import { IBinding, IStateProperty } from "../../@types/binding";
+import { IFilterInfo, FilterFunc, FilterType } from "../../@types/filter";
+import { IPatternNameInfo, IPropertyNameInfo } from "../../@types/dotNotation";
+import { IState } from "../../@types/state";
 import { GetDirectSymbol, SetDirectSymbol } from "../../dot-notation/Const";
 
 export class StateProperty implements IStateProperty {
   get state():IState {
-    return this.#binding.component.state;
+    return this.#binding.component.baseState;
   }
 
   #name:string;

@@ -1,10 +1,10 @@
 import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils";
 import { ElementBase } from "./ElementBase";
-import { IBinding, IPropertyAccess, IStateProperty } from "../types.js";
-import { IFilterInfo } from "../../filter/types.js";
-import { ILoopContext } from "../../loopContext/types";
-import { IComponent } from "../../component/types.js";
+import { IBinding, IPropertyAccess, IStateProperty } from "../../@types/binding";
+import { IFilterInfo } from "../../@types/filter.js";
+import { ILoopContext } from "../../@types/loopContext.js";
+import { IComponent } from "../../@types/component.js";
 import { IsComponentSymbol } from "../../component/Const.js";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/Const.js";
 import { PropertyAccess } from "../PropertyAccess.js";
@@ -54,8 +54,8 @@ export class ComponentProperty extends ElementBase {
   }
   set value(value) {
     try {
-      this.thisComponent.state[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
-      this.thisComponent.state[NotifyForDependentPropsApiSymbol](this.propertyName, []);
+      this.thisComponent.baseState[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
+      this.thisComponent.baseState[NotifyForDependentPropsApiSymbol](this.propertyName, []);
     } catch(e) {
       console.log(e);
     }
@@ -78,8 +78,8 @@ export class ComponentProperty extends ElementBase {
         propertyAccess.patternNameInfo.setOfParentPaths.has(statePropertyName)) {
         const remain = propertyAccess.patternName.slice(statePropertyName.length);
 //        console.log(`componentProperty:postUpdate(${propName}${remain})`);
-        this.thisComponent.state[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
-        this.thisComponent.state[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.baseState[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
+        this.thisComponent.baseState[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
       }
     }
   }

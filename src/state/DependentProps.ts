@@ -1,6 +1,6 @@
 import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { getPropertyNameInfo } from "../dot-notation/PropertyName";
-import { IDependentProps, Dependencies } from "./types";
+import { IDependentProps, Dependencies } from "../@types/state";
 
 /**
  * $dependentPropsを表現

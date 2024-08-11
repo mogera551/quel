@@ -1,8 +1,8 @@
 import { NodeProperty } from "./NodeProperty";
 import { utils } from "../../utils";
-import { IBinding } from "../types";
-import { IFilterInfo } from "../../filter/types";
-import * as Template from "../../component/Template.js";
+import { IBinding } from "../../@types/binding";
+import { IFilterInfo } from "../../@types/filter";
+import * as Template from "../../component/Template";
 
 const PREFIX = "@@|";
 

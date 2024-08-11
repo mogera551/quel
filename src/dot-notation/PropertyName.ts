@@ -1,5 +1,5 @@
 
-import { IPropertyNameInfo } from "./types";
+import { IPropertyNameInfo } from "../@types/dotNotation";
 
 function _getPropertyNameInfo(name:string):IPropertyNameInfo {
   const indexes = [];

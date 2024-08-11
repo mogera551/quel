@@ -1,5 +1,5 @@
-import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from './types';
-import { IBinding } from '../binding/types';
+import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from '../@types/binder';
+import { IBinding } from '../binding/Binding';
 import { replaceTextNode } from './replaceTextNode';
 import { removeAttribute } from './removeAttribute';
 import { getIsInputable } from './isInputable';

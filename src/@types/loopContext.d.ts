@@ -1,4 +1,4 @@
-import { IBinding, IBindingManager } from "../binding/types";
+import { IBinding, IBindingManager } from "./binding";
 
 export interface ILoopContext {
   bindingManager:IBindingManager;
