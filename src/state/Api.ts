@@ -6,6 +6,7 @@ import {
 } from "./Const";
 import { StateBaseHandler } from "./StateBaseHandler";
 import { IDependentProps, IState, SupportApiSymbols } from "../@types/state";
+import { PropertyAccess } from "../binding/PropertyAccess";
 
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
@@ -29,13 +30,11 @@ const callFuncBySymbol = {
   [NotifyForDependentPropsApiSymbol]:
     ({state, stateProxy, handler}:{state:Object, stateProxy:IState, handler:StateBaseHandler}) => 
       (prop:string, indexes:number[]) => 
-        handler.addNotify(state, { propertyName:prop, indexes }, stateProxy),
+        handler.addNotify(state, new PropertyAccess(prop, indexes), stateProxy),
   [GetDependentPropsApiSymbol]:({handler}:{handler:StateBaseHandler}) => ():IDependentProps => handler.dependencies,
   [ClearCacheApiSymbol]:({handler}:{handler:StateBaseHandler}) => () => handler.clearCache(),
-  // todo: componentをHTMLElementからComponentに変更
   [CreateBufferApiSymbol]:({stateProxy}:{stateProxy:IState}) => (component:IComponent) => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
-  // todo: componentをHTMLElementからComponentに変更
-  [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IState}) => (buffer:any, component:IComponent) => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
+  [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IState}) => (buffer:any, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
 export class Api {

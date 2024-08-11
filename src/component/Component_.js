@@ -1,9 +1,9 @@
 import { IsComponentSymbol, ModuleSymbol, CustomElementInfoSymbol, SetCustomElementInfoSymbol, FilterManagersSymbol, SetFilterManagersSymbol } from "../@symbols/component.js";
 import { Module } from "./Module.js";
-import { MixedComponent } from "./MixedComponent.js";
+import { MixedComponent } from "./MixedComponent_.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
-import { MixedDialog } from "./MixedDialog.js";
+import { MixedDialog } from "./MixedDialog_.js";
 import { MixedPopover } from "../popover/MixedPopover.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager.js";
 

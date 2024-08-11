@@ -122,3 +122,9 @@ interface IMultiValue {
   value:any;
   enabled:boolean;
 }
+
+interface IBindingPropertyAccess {
+  get name():string;
+  get indexes():number[];
+  get loopContext():ILoopContext;
+}

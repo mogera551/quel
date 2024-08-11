@@ -1,15 +1,15 @@
 import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils";
 import { ElementBase } from "./ElementBase";
-import { IBinding, IPropertyAccess, IStateProperty } from "../../@types/binding";
+import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../../@types/binding";
 import { IFilterInfo } from "../../@types/filter.js";
 import { ILoopContext } from "../../@types/loopContext.js";
 import { IComponent } from "../../@types/component.js";
-import { IsComponentSymbol } from "../../@symbols/component.js";
+import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.js";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/Const.js";
 import { PropertyAccess } from "../PropertyAccess.js";
 
-export class BindingPropertyAccess {
+export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;
 
   get name():string {
@@ -54,8 +54,8 @@ export class ComponentProperty extends ElementBase {
   }
   set value(value) {
     try {
-      this.thisComponent.baseState[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
-      this.thisComponent.baseState[NotifyForDependentPropsApiSymbol](this.propertyName, []);
+      this.thisComponent.currentState[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
+      this.thisComponent.currentState[NotifyForDependentPropsApiSymbol](this.propertyName, []);
     } catch(e) {
       console.log(e);
     }
@@ -65,7 +65,7 @@ export class ComponentProperty extends ElementBase {
    * コンポーネントプロパティのバインドを行う
    */
   initialize() {
-    this.thisComponent.props[Symbols.bindProperty](this.propName, new BindingPropertyAccess(this.binding.stateProperty));
+    this.thisComponent.props[BindPropertySymbol](this.propertyName, new BindingPropertyAccess(this.binding.stateProperty));
   }
 
   /**
@@ -78,8 +78,8 @@ export class ComponentProperty extends ElementBase {
         propertyAccess.patternNameInfo.setOfParentPaths.has(statePropertyName)) {
         const remain = propertyAccess.patternName.slice(statePropertyName.length);
 //        console.log(`componentProperty:postUpdate(${propName}${remain})`);
-        this.thisComponent.baseState[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
-        this.thisComponent.baseState[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
+        this.thisComponent.currentState[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
+        this.thisComponent.currentState[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
       }
     }
   }

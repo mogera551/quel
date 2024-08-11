@@ -1,3 +1,4 @@
+import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
 import { IBinding, IBindingManager, IBindingSummary, IPropertyAccess } from "./binding";
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
 import { IState, Proxies, StateClass } from "./state";
@@ -97,7 +98,7 @@ interface ICustomComponent {
   get initialPromises():PromiseWithResolvers<void>;
   get alivePromises():PromiseWithResolvers<void>;
   set alivePromises(promises:PromiseWithResolvers<void>);
-  get baseState():IState;
+  get baseState():Object;
   get writableState():IState;
   get readonlyState():IState;
   get currentState():IState;
@@ -119,6 +120,7 @@ interface ICustomComponent {
   useContextRevision(callback:(revision:number)=>void):void;
   get bindingSummary():IBindingSummary;
   get updator():IUpdator;
+  get props():IProps;
 
   build():Promise<void>;
 
@@ -126,9 +128,22 @@ interface ICustomComponent {
   disconnectedCallback():Promise<void>;
 } 
 
+interface IDialogComponent {
+  get dialogPromises():PromiseWithResolvers<any>|undefined;
+  set dialogPromises(promises:PromiseWithResolvers<any>|undefined);
+  get returnValue():string;
+  set returnValue(value:string);
+  get useBufferedBind():boolean;
+  asyncShowModal(props:{[key:string]:any}):Promise<any>;
+  asyncShow(props:{[key:string]:any}):Promise<any>;
+  showModal():void;
+  show():void;
+  close(result:any):void;
+}
+
 type Constructor<T = {}> = new (...args: any[]) => T;
 
-type IComponent = IComponentBase & ICustomComponent & HTMLElement;
+type IComponent = IComponentBase & ICustomComponent & IDialogComponent & HTMLElement;
 
 interface IProcess {
   target:Function;
@@ -138,7 +153,6 @@ interface IProcess {
 
 interface IUpdator {
   component:IComponent;
-  state:IState;
   processQueue:IProcess[];
   updatedStateProperties:IPropertyAccess[];
   expandedStateProperties:IPropertyAccess[];
@@ -157,4 +171,18 @@ interface IUpdator {
   execCallback(callback:()=>any):Promise<void>;
   exec():Promise<void>;
   applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>any):void;
+}
+
+interface IProps {
+  [BindPropertySymbol](prop:string, propAccess:IBindingPropertyAccess);
+  [SetBufferSymbol](buffer:{[key:string]:any});
+  [GetBufferSymbol]():{[key:string]:any};
+  [ClearBufferSymbol]():void;
+  [CreateBufferSymbol]():{[key:string]:any};
+  [FlushBufferSymbol]():void;
+  [ClearSymbol]():void;
+  get(target:any, prop:PropertyKey, receiver:IProps):any;
+  set(target:any, prop:PropertyKey, value:any, receiver:IProps):boolean;
+  ownKeys(target:IProps):(symbol|string)[];
+  getOwnPropertyDescriptor(target:IProps, prop:string|symbol):PropertyDescriptor;
 }

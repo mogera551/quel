@@ -12,7 +12,6 @@ const compareExpandableBindings = (a:IBinding, b:IBinding):number => a.stateProp
 
 export class Updator implements IUpdator {
   component:IComponent;
-  state:IState;
   processQueue:IProcess[] = [];
   updatedStateProperties:IPropertyAccess[] = [];
   expandedStateProperties:IPropertyAccess[] = [];
@@ -22,7 +21,6 @@ export class Updator implements IUpdator {
 
   constructor(component:IComponent) {
     this.component = component;
-    this.state = component.baseState;
   }
 
   addProcess(target:Function, thisArgument:object, argumentList:any[]):void {
@@ -177,7 +175,7 @@ export class Updator implements IUpdator {
   applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>void):void {
     if (this.updatedBindings.has(binding)) return;
     try {
-      callback(this);
+      callback(this as IUpdator);
     } finally {
       this.updatedBindings.add(binding);
     }

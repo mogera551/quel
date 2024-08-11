@@ -23,8 +23,8 @@ interface IProxyStatePartial {
   [NotifyForDependentPropsApiSymbol]:(prop:string, indexes:number[]) => void,
   [GetDependentPropsApiSymbol]:() => IDependentProps,
   [ClearCacheApiSymbol]:() => void,
-  [CreateBufferApiSymbol]:(component:IComponent) => void,
-  [FlushBufferApiSymbol]:(buffer:any, component:IComponent) => void,
+  [CreateBufferApiSymbol]:(component:IComponent) => {[key:string]:any},
+  [FlushBufferApiSymbol]:(buffer:any, component:IComponent) => boolean,
   // special property
   $globals:any, // todo: anyを変更
   $dependentProps:Dependencies,
@@ -40,7 +40,7 @@ interface IProxyReadonlyStatePartial {
 type IState = IProxy & IProxyStatePartial;
 
 type Proxies = {
-  base:IState, write:IState, readonly:IState
+  base:Object, write:IState, readonly:IState
 }
 
 const _SupprotCallbackSymbols = [

@@ -8,20 +8,21 @@ import { IProxy } from "../@types/dotNotation";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 
 export class Handler implements IHandler {
-  #stackIndexes:number[][] = [];
-  get lastIndexes():number[] {
+  #stackIndexes:(number[]|undefined)[] = [];
+  get lastIndexes():number[]|undefined {
     return this.#stackIndexes[this.#stackIndexes.length - 1] ?? [];
   }
 
   #lastIndexesString:(string|undefined) = undefined;
   get lastIndexesString():string {
     if (typeof this.#lastIndexesString === "undefined") {
+      if (typeof this.lastIndexes === "undefined") utils.raise("lastIndexes is undefined");
       this.#lastIndexesString = this.lastIndexes.join(",");
     }
     return this.#lastIndexesString;
   }
 
-  get stackIndexes():number[][] {
+  get stackIndexes():(number[]|undefined)[] {
     return this.#stackIndexes;
   }
 
@@ -130,14 +131,14 @@ export class Handler implements IHandler {
       if (prop[0] === "$") {
         const match = RE_CONTEXT_INDEX.exec(prop);
         if (match) {
-          return lastIndexes[Number(match[1]) - 1];
+          return (lastIndexes ?? utils.raise("lastIndexes is null"))[Number(match[1]) - 1];
         }
       } else if (prop[0] === "@") {
         const propertyName = prop.slice(1);
-        return this.getExpandLastIndex(target, receiver)(propertyName, lastIndexes);
+        return this.getExpandLastIndex(target, receiver)(propertyName, lastIndexes ?? utils.raise("lastIndexes is null"));
       }
       const propertyNameInfo = getPropertyNameInfo(prop);
-      const indexes = propertyNameInfo.indexes.map((index, i) => index ?? lastIndexes[i]);
+      const indexes = propertyNameInfo.indexes.map((index, i) => index ?? (lastIndexes ?? utils.raise("lastIndexes is null"))[i]);
       return this.getByPatternNameAndIndexes(target, {patternName:propertyNameInfo.patternName, indexes}, receiver);
     } while(false);
     return Reflect.get(target, prop, receiver);
@@ -156,10 +157,10 @@ export class Handler implements IHandler {
         }
       } else if (prop[0] === "@") {
         const propertyName = prop.slice(1);
-        return this.setExpandLastIndex(target, receiver)(propertyName, lastIndexes, value);
+        return this.setExpandLastIndex(target, receiver)(propertyName, lastIndexes ?? utils.raise("lastIndexes is null"), value);
       }
       const propertyNameInfo = getPropertyNameInfo(prop);
-      const indexes = propertyNameInfo.indexes.map((index, i) => index ?? lastIndexes[i]);
+      const indexes = propertyNameInfo.indexes.map((index, i) => index ?? (lastIndexes ?? utils.raise("lastIndexes is null"))[i]);
       return this.setByPatternNameAndIndexes(target, {patternName:propertyNameInfo.patternName, indexes, value}, receiver);
     } while(false);
     return Reflect.set(target, prop, value, receiver);

@@ -1,4 +1,4 @@
-import { IUpdator, IComponentBase, Constructor, ICustomComponent, IComponent } from "../@types/component";
+import { IUpdator, IComponentBase, Constructor, ICustomComponent, IComponent, IProps } from "../@types/component";
 import { getProxies } from "../state/Proxies";
 import { isAttachable } from "./AttachShadow";
 import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
@@ -10,6 +10,7 @@ import { utils } from "../utils";
 import { IBindingManager, IBindingSummary } from "../@types/binding";
 import { BindingSummary } from "../binding/BindingSummary";
 import { Updator } from "./Updator";
+import { createProps } from "./Props";
 
 const pseudoComponentByNode:Map<Node,IComponentBase & HTMLElement> = new Map;
 
@@ -54,10 +55,10 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
   
 //      this._cachableInBuilding = false;
   
-      this.#updator = new Updator(component);      
+      this.#updator = new Updator(component);
+      this.#props = createProps(component);  
     }
 
-    //#props;
     //#globals;
     #states:Proxies;
     get states():Proxies {
@@ -88,7 +89,7 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
       this.#alivePromises = promises;
     }
 
-    get baseState():IState {
+    get baseState():Object {
       return this.#states.base;
     }
     get writableState():IState {
@@ -200,6 +201,11 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
     get updator():IUpdator {
       return this.#updator;
     }
+
+    #props:IProps;
+    get props():IProps {
+      return this.#props;
+    }
   
     async build() {
       const component = this.component;
@@ -236,7 +242,7 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
         }
       }
 
-      await component.baseState[ConnectedCallbackSymbol]();
+      await component.currentState[ConnectedCallbackSymbol]();
 
       component.cacheInBuilding((component:IComponent) => {
         // build binding tree and dom 

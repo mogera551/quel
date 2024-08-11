@@ -11,7 +11,7 @@ import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
 
 export class StateProperty implements IStateProperty {
   get state():IState {
-    return this.#binding.component.baseState;
+    return this.#binding.component.currentState;
   }
 
   #name:string;

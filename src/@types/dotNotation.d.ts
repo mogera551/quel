@@ -1,4 +1,4 @@
-import { GetDirectSymbol, SetDirectSymbol } from "../dot-notation/Const";
+import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 
 interface IPropertyNameInfo {
   name: string; // name property
@@ -26,9 +26,9 @@ interface IPatternNameInfo {
 }
 
 interface IHandler {
-  get lastIndexes():number[];
+  get lastIndexes():(number[]|undefined);
   get lastIndexesString():string;
-  get stackIndexes():number[][];
+  get stackIndexes():(number[]|undefined)[];
   pushIndexes(indexes:number[], callback:()=>void):void;
   getByPatternNameAndIndexes(target:Object, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:any):any;
   setByPatternNameAndIndexes(target:Object, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:any):boolean;
