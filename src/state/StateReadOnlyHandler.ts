@@ -1,7 +1,6 @@
 import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { utils } from "../utils";
 import { StateCache } from "./Cache";
-import { AccessorPropertiesSymbol } from "./Const";
 import { StateBaseHandler } from "./StateBaseHandler";
 import { Callback } from "./Callback";
 import { Api } from "./Api";
@@ -47,7 +46,7 @@ export class StateReadOnlyHandler extends StateBaseHandler {
 
   }
 
-  setByPatternNameAndIndexes(target:Object, {patternName, indexes, value}:{patternName:string, indexes:number[], value:IState}, receiver:any):boolean {
+  setByPatternNameAndIndexes(target:Object, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:IState):boolean {
     utils.raise("StateReadOnlyHandler: State is read only");
   }
 

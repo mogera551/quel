@@ -5,7 +5,7 @@ import { IBinding, IPropertyAccess, IStateProperty } from "../../@types/binding"
 import { IFilterInfo } from "../../@types/filter.js";
 import { ILoopContext } from "../../@types/loopContext.js";
 import { IComponent } from "../../@types/component.js";
-import { IsComponentSymbol } from "../../component/Const.js";
+import { IsComponentSymbol } from "../../@symbols/component.js";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/Const.js";
 import { PropertyAccess } from "../PropertyAccess.js";
 

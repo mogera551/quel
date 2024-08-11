@@ -1,3 +1,4 @@
+import { IComponent } from "../@types/component";
 import { utils } from "../utils";
 
 const GLOBALS_PROPERTY = "$globals";
@@ -11,21 +12,19 @@ export const properties = new Set([
 ]);
 
 type FuncByName = {
-  [name:string]:({component, state}:{component:HTMLElement, state:Object}) => any
+  [name:string]:({component, state}:{component:IComponent, state:Object}) => any
 }
 
 const funcByName:FuncByName = {
-  // todo: componentをHTMLElementからComponentに変更
   // todo: undefinedを返すからcomponent.globalsを返すように変更
-  [GLOBALS_PROPERTY]: ({component}:{component:HTMLElement, state:Object}) => undefined, // component.globals,
-  [DEPENDENT_PROPS_PROPERTY]: ({state}:{component:HTMLElement, state:Object}) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
-  // todo: componentをHTMLElementからComponentに変更
+  [GLOBALS_PROPERTY]: ({component}:{component:IComponent, state:Object}) => undefined, // component.globals,
+  [DEPENDENT_PROPS_PROPERTY]: ({state}:{component:IComponent, state:Object}) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
   // todo: undefinedを返すからcreateUserComponent(component)を返すように変更
-  [COMPONENT_PROPERTY]: ({component}:{component:HTMLElement, state:Object}) => undefined, // createUserComponent(component),
+  [COMPONENT_PROPERTY]: ({component}:{component:IComponent, state:Object}) => undefined, // createUserComponent(component),
 }
 
 export class SpecialProp {
-  static get(component:HTMLElement, state:Object, name:string):any {
+  static get(component:IComponent, state:Object, name:string):any {
     return funcByName[name]?.({component, state}) ?? utils.raise(`SpecialProp: ${name} is not found`);
   }
 

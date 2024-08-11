@@ -4,15 +4,15 @@ import { IProxy } from "./dotNotation";
 import { ILoopContext } from "./loopContext";
 import { ClearCacheApiSymbol, ConnectedCallbackSymbol, CreateBufferApiSymbol, DirectryCallApiSymbol, DisconnectedCallbackSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../state/Const";
 
-export type Dependencies = {
+type Dependencies = {
   [key:string]:string[]
 }
 
-export type StateClass = typeof Object;
+type StateClass = typeof Object;
 
-export type UpdateItem = [string, number[]];
+type UpdateItem = [string, number[]];
 
-export interface IProxyStatePartial {
+interface IProxyStatePartial {
   [key:PropertyKey]:any,
   // callback
   [ConnectedCallbackSymbol]:() => Promise<void>,
@@ -31,15 +31,15 @@ export interface IProxyStatePartial {
   $component:IComponent,
 }
 
-export interface IProxyReadonlyStatePartial {
+interface IProxyReadonlyStatePartial {
   // api
   [ClearCacheApiSymbol]:() => void,
 
 }
 
-export type IState = IProxy & IProxyStatePartial;
+type IState = IProxy & IProxyStatePartial;
 
-export type Proxies = {
+type Proxies = {
   base:IState, write:IState, readonly:IState
 }
 
@@ -49,7 +49,7 @@ const _SupprotCallbackSymbols = [
   UpdatedCallbackSymbol
 ] as const;
 
-export type SupprotCallbackSymbols = typeof _SupprotCallbackSymbols[number];
+type SupprotCallbackSymbols = typeof _SupprotCallbackSymbols[number];
 
 const _SupportApiSymbols = [
   DirectryCallApiSymbol,
@@ -60,13 +60,16 @@ const _SupportApiSymbols = [
   FlushBufferApiSymbol
 ] as const;
 
-export type SupportApiSymbols = typeof _SupportApiSymbols[number];
+type SupportApiSymbols = typeof _SupportApiSymbols[number];
 
-export interface IDependentProps {
+interface IDependentProps {
   get propsByRefProp():Map<string,Set<string>>;
   hasDefaultProp(prop:string):boolean;
   addDefaultProp(prop:string):void;
   setDependentProps(props:Dependencies):void;
-
 }
 
+interface IDirectlyCallContext {
+  get loopContext():ILoopContext;
+  callback(loopContext:ILoopContext, directlyCallback:()=>Promise<void>):Promise<void>;
+}

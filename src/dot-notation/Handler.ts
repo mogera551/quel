@@ -2,9 +2,10 @@
 import { IPropertyNameInfo, IPatternNameInfo, IHandler } from "../@types/dotNotation";
 import { getPropertyNameInfo } from "./PropertyName";
 import { getPatternNameInfo } from "./PatternName";
-import { GetDirectSymbol, RE_CONTEXT_INDEX, SetDirectSymbol, WILDCARD } from "./Const";
+import { RE_CONTEXT_INDEX, WILDCARD } from "./Const";
 import { utils } from "../utils";
 import { IProxy } from "../@types/dotNotation";
+import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 
 export class Handler implements IHandler {
   #stackIndexes:number[][] = [];
@@ -24,7 +25,7 @@ export class Handler implements IHandler {
     return this.#stackIndexes;
   }
 
-  pushIndexes(indexes:number[], callback:()=>void):void {
+  pushIndexes(indexes:number[], callback:()=>any):any {
     this.#lastIndexesString = undefined;
     this.#stackIndexes.push(indexes);
     try {
@@ -108,7 +109,7 @@ export class Handler implements IHandler {
     return this.pushIndexes(indexes, () => this.getByPatternNameAndIndexes(target, {patternName, indexes}, receiver));
   }
 
-  setDirect = (target:Object, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:IProxy) => {
+  setDirect = (target:Object, {patternName, indexes, value}:{patternName:string, indexes:number[], value:any}, receiver:IProxy):boolean => {
     return this.pushIndexes(indexes, () => this.setByPatternNameAndIndexes(target, { patternName, indexes, value }, receiver));
   }
 

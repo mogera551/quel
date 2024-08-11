@@ -1,4 +1,4 @@
-import { IsComponentSymbol, ModuleSymbol, CustomElementInfoSymbol, SetCustomElementInfoSymbol, FilterManagersSymbol, SetFilterManagersSymbol } from "./Const.js";
+import { IsComponentSymbol, ModuleSymbol, CustomElementInfoSymbol, SetCustomElementInfoSymbol, FilterManagersSymbol, SetFilterManagersSymbol } from "../@symbols/component.js";
 import { Module } from "./Module.js";
 import { MixedComponent } from "./MixedComponent.js";
 import { utils } from "../utils.js";

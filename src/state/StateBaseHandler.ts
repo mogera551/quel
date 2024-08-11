@@ -5,10 +5,10 @@ import { DependentProps } from "./DependentProps";
 import { IState } from "../@types/state";
 import { IComponent } from "../@types/component";
 import { ILoopContext } from "../@types/loopContext";
-import { IPropertyAccess } from "../binding/Binding";
+import { IPropertyAccess } from "../@types/binding";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { getPatternNameInfo } from "../dot-notation/PatternName";
-import { GetDirectSymbol } from "../dot-notation/Const";
+import { GetDirectSymbol } from "../@symbols/dotNotation";
 
 export class StateBaseHandler extends Handler  {
   #accessorProperties:Set<string>;
@@ -53,14 +53,14 @@ export class StateBaseHandler extends Handler  {
     return Reflect.has(target, prop) || prop === AccessorPropertiesSymbol || prop === DependenciesSymbol;
   }
 
-  addProcess(process:()=>void, target:Object, indexes:number[]):void {
+  addProcess(target:Function, thisArg:IState, argumentArray:any[]):void {
     // todo: ここに処理を追加
     this.component.updator.addProcess(target, thisArg, argumentArray);
   }
 
-  addNotify(target:Object, {propertyName, indexes}:{propertyName:string, indexes:number[]}, receiver:IState) {
+  addNotify(target:Object, propertyAccess:IPropertyAccess, receiver:IState) {
     // todo: ここに処理を追加
-    this.#component.updator?.addUpdatedStateProperty(Object.assign({}, propertyAccess));
+    this.#component.updator.addUpdatedStateProperty(Object.assign({}, propertyAccess));
   }
 
   clearCache() {

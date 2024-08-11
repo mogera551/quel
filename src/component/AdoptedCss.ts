@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import { IComponent } from "../@types/component";
 
 const ADOPTED_VAR_NAME = '--adopted-css';
