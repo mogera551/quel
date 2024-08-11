@@ -1,6 +1,7 @@
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
 import { IBinding, IBindingManager, IBindingSummary, IPropertyAccess } from "./binding";
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
+import { IGlobalData } from "./global";
 import { IState, Proxies, StateClass } from "./state";
 
 type ComponentModuleConfig = {
@@ -121,6 +122,7 @@ interface ICustomComponent {
   get bindingSummary():IBindingSummary;
   get updator():IUpdator;
   get props():IProps;
+  get globals():IGlobalData;
 
   build():Promise<void>;
 
@@ -141,9 +143,19 @@ interface IDialogComponent {
   close(result:any):void;
 }
 
+interface IPopoverComponent {
+  get canceled():boolean;
+  set canceled(value:boolean);
+  get popoverPromises():PromiseWithResolvers<any>|undefined;
+  set popoverPromises(promises:PromiseWithResolvers<any>|undefined);
+  get popoverContextIndexesById():Map<string,number[]>;
+  asyncShowPopover(props:{[key:string]:any}):Promise<any>;
+  hidePopover():void;
+  cancelPopover():void;
+}
 type Constructor<T = {}> = new (...args: any[]) => T;
 
-type IComponent = IComponentBase & ICustomComponent & IDialogComponent & HTMLElement;
+type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
 
 interface IProcess {
   target:Function;

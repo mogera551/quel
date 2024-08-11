@@ -11,8 +11,10 @@ import { IBindingManager, IBindingSummary } from "../@types/binding";
 import { BindingSummary } from "../binding/BindingSummary";
 import { Updator } from "./Updator";
 import { createProps } from "./Props";
+import { IGlobalData } from "../@types/global";
+import { createGlobals } from "./Globals";
 
-const pseudoComponentByNode:Map<Node,IComponentBase & HTMLElement> = new Map;
+const pseudoComponentByNode:Map<Node,IComponent> = new Map;
 
 const getParentComponent = (_node:Node):Node|undefined => {
   do {
@@ -35,28 +37,12 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
     constructor(...args:any[]) {
       super();
       const component = this.component;
-//      this._isWritable = false;
       this.#states = getProxies(component, component.State); // create view model
-//      this._props = createProps(this); // create property for parent component connection
-//      this._globals = createGlobals(); // create property for global connection
-//      this._initialPromises = undefined;
-//      this._alivePromises = undefined;
-  
-  
-//      this._pseudoParentNode = undefined;
-//      this._pseudoNode = undefined;
-      
- //     this._filters = undefined;
-  
       this.#bindingSummary = new BindingSummary;
-  
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
-  
-  
-//      this._cachableInBuilding = false;
-  
       this.#updator = new Updator(component);
-      this.#props = createProps(component);  
+      this.#props = createProps(component);
+      this.#globals = createGlobals(component);  
     }
 
     //#globals;
@@ -205,6 +191,11 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
     #props:IProps;
     get props():IProps {
       return this.#props;
+    }
+
+    #globals:IGlobalData;
+    get globals():IGlobalData {
+      return this.#globals;
     }
   
     async build() {

@@ -1,5 +1,4 @@
 import { utils } from "../utils";
-//import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager.js";
 import { LoopContext } from "../loopContext/LoopContext";
 import { Binder } from "../newBinder/Binder";
 import { INodeProperty, IStateProperty, IBinding, IBindingManager } from "../@types/binding";
@@ -8,6 +7,7 @@ import { IFilterInfo } from "../@types/filter";
 import { ILoopContext } from "../@types/loopContext";
 import { IState } from "../@types/state";
 import { IComponent } from "../@types/component";
+import { Popover } from "../popover/Popover";
 
 let seq = 0;
 
@@ -379,7 +379,7 @@ export class BindingManager implements IBindingManager {
       bindingManager = new BindingManager(component, template, uuid, parentBinding);
       bindingManager.initialize();
     }
-    // Popover.initialize(bindingManager);
+    Popover.initialize(bindingManager);
     return bindingManager;
   }
 

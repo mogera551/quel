@@ -4,7 +4,7 @@ import { MixedComponent } from "./MixedComponent_.js";
 import { utils } from "../utils.js";
 import { config } from "../Config.js";
 import { MixedDialog } from "./MixedDialog_.js";
-import { MixedPopover } from "../popover/MixedPopover.js";
+import { MixedPopover } from "../popover/MixedPopover_.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager.js";
 
 /** @type {Map<Function,Module>} */

@@ -4,7 +4,7 @@ import { MixedComponent } from "./MixedComponent_.js";
 import { utils } from "../utils";
 import { config } from "../Config.js";
 import { MixedDialog } from "./MixedDialog_.js";
-import { MixedPopover } from "../popover/MixedPopover.js";
+import { MixedPopover } from "../popover/MixedPopover_.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase } from "../@types/component";
 import { replaceBaseClass } from "./ReplaceBaseClass.js";

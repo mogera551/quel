@@ -77,7 +77,7 @@ interface IBinding {
 }
 
 interface IBindingManager {
-  component: any;
+  component: IComponent;
   bindings: IBinding[];
   nodes: Node[];
   elements: Element[];
