@@ -2,24 +2,21 @@ import "../types.js";
 import { Symbols } from "../Symbols.js";
 import { StateBaseHandler } from "../state/StateBaseHandler";
 import { config } from "../Config.js";
-import { IComponent } from "./types.js";
+import { IComponent, IProcess, IUpdator } from "./types.js";
 import { IState } from "../state/types.js";
 import { IBinding, IPropertyAccess } from "../binding/types.js";
 import { StateProperty } from "../binding/stateProperty/StateProperty.js";
 import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../state/Const.js";
 import { util } from "../../node_modules/webpack/types.js";
+import { utils } from "../utils.js";
 
-interface IProcess {
-  target:Function;
-  thisArgument:object;
-  argumentList:any[];
-}
+
 
 const getPropAccessKey = (prop:IPropertyAccess):string => prop.patternName + "\t" + prop.indexes.toString();
 const executeProcess = (process:IProcess) => async ():Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
-const compareExpandableBindings = (a:StateProperty, b:StateProperty):number => a.patternName.level - b.patternName.level;
+const compareExpandableBindings = (a:IBinding, b:IBinding):number => a.stateProperty.patternName.level - b.stateProperty.patternName.level;
 
-export class Updator {
+export class Updator implements IUpdator {
   component:IComponent;
   state:IState;
   processQueue:IProcess[] = [];
@@ -31,10 +28,10 @@ export class Updator {
 
   constructor(component:IComponent) {
     this.component = component;
-    this.state = component.state;
+    this.state = component.baseState;
   }
 
-  addProcess(target:Function, thisArgument:object, argumentList:any[]) {
+  addProcess(target:Function, thisArgument:object, argumentList:any[]):void {
     this.processQueue.push({ target, thisArgument, argumentList });
     if (this.executing) return;
     this.exec();
@@ -65,7 +62,7 @@ export class Updator {
       }
       if (this.updatedStateProperties.length > 0) {
         // call updatedCallback, and add processQeueue
-        this.component.writeState[UpdatedCallbackSymbol](this.updatedStateProperties);
+        this.component.writableState[UpdatedCallbackSymbol](this.updatedStateProperties);
         totalUpdatedStateProperties.push(...this.updatedStateProperties);
         this.updatedStateProperties.length = 0;
       }
@@ -86,11 +83,6 @@ export class Updator {
     return expandedStateProperties;
   }
 
-  /**
-   * 
-   * @param {Map<string,PropertyAccess>} expandedStatePropertyByKey 
-   * @param {{ component:Component }} param1 
-   */
   rebuildBinding(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
     // bindingの再構築
     // 再構築するのは、更新したプロパティのみでいいかも→ダメだった。
@@ -99,13 +91,12 @@ export class Updator {
     // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
     const component = this.component;
     const bindingSummary = component.bindingSummary;
-    /** @type {Binding[]} */
     const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
     bindingSummary.update((bindingSummary) => {
       for(let i = 0; i < expandableBindings.length; i++) {
         const binding = expandableBindings[i];
         if (!bindingSummary.exists(binding)) continue;
-        if (expandedStatePropertyByKey.has(binding.viewModelProperty.key)) {
+        if (expandedStatePropertyByKey.has(binding.stateProperty.key)) {
           binding.applyToNode();
         }
       }
@@ -124,18 +115,13 @@ export class Updator {
       setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
     }
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-      const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? util.raise(`binding not found: ${parentKey}`);
+      const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? utils.raise(`binding not found: ${parentKey}`);
       for(const binding of bindings) {
         binding.applyToChildNodes(setOfIndex);
       }
     }
   }
 
-  /**
-   * 
-   * @param {Map<string,PropertyAccess>} expandedStatePropertyByKey 
-   * @param {{ component:Component, updatedBindings:Set<binding> }} param1 
-   */
   updateNode(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
     const component = this.component;
     const bindingSummary = component.bindingSummary;
@@ -156,11 +142,8 @@ export class Updator {
       binding.nodeProperty.postUpdate(expandedStatePropertyByKey);
     }
   }
-  /**
-   * 
-   * @param {()=>any} callback 
-   */
-  async execCallback(callback) {
+
+  async execCallback(callback:()=>any):Promise<void> {
     this.executing = true;
     config.debug && performance.mark('Updator.exec:start');
     try {
@@ -178,15 +161,11 @@ export class Updator {
     }
   }
 
-  /**
-   * 
-   * @param {{ updatedBindings:Set<Binding>, component:Component }} param0 
-   */
-  async exec({ updatedBindings, component } = this) {
+  async exec():Promise<void> {
     await this.execCallback(async () => {
       while(this.getProcessQueue().length > 0) {
-        updatedBindings.clear();
-        component.contextRevision++;
+        this.updatedBindings.clear();
+        this.component.contextRevision++;
 
         const updatedStateProperties = await this.process();
         const expandedStateProperties = this.expandStateProperties(updatedStateProperties);
@@ -201,19 +180,12 @@ export class Updator {
     });
   }
 
-  /**
-   * 
-   * @param {Binding} binding 
-   * @param {(updator:Updator)=>any} callback 
-   * @param {{ updatedBindings:Set<Binding> }} param2
-   * @returns {void}
-   */
-  applyNodeUpdatesByBinding(binding, callback, { updatedBindings } = this) {
-    if (updatedBindings.has(binding)) return;
+  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>void):void {
+    if (this.updatedBindings.has(binding)) return;
     try {
       callback(this);
     } finally {
-      updatedBindings.add(binding);
+      this.updatedBindings.add(binding);
     }
   }
 }

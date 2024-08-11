@@ -55,7 +55,7 @@ export class StateBaseHandler extends Handler  {
 
   addProcess(process:()=>void, target:Object, indexes:number[]):void {
     // todo: ここに処理を追加
-    this.component.updator?.addProcess(target, thisArg, argumentArray);
+    this.component.updator.addProcess(target, thisArg, argumentArray);
   }
 
   addNotify(target:Object, {propertyName, indexes}:{propertyName:string, indexes:number[]}, receiver:IState) {

@@ -64,9 +64,7 @@ export class NodeProperty {
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    const workFilters = filters.slice(0)
-    workFilters.reverse();
-    this.#filters = Filters.create<FilterType.Input>(workFilters, binding.component.inputFilterManager);
+    this.#filters = Filters.create<FilterType.Input>(filters.toReversed(), binding.component.inputFilterManager);
   }
 
   assign(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {

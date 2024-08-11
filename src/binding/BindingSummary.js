@@ -1,6 +1,6 @@
 import { config } from "../Config.js";
 import { Symbols } from "../Symbols.js";
-import "../types.js";
+import "../types";
 import { utils } from "../utils.js";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty.js";
 

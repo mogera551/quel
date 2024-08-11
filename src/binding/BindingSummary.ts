@@ -1,5 +1,4 @@
 import { config } from "../Config";
-import { mapGroupBy } from "../MapGroupBy.js";
 import { utils } from "../utils";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty";
 import { IBinding, IBindingSummary } from "./types";
@@ -102,7 +101,7 @@ export class BindingSummary implements IBindingSummary {
   rebuild(bindings:Set<IBinding>):void {
     this.#allBindings = bindings;
     const arrayBindings = Array.from(bindings);
-    this.#bindingsByKey = mapGroupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
+    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
     this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
     this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
   }

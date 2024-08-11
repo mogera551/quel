@@ -1,10 +1,9 @@
-import { IBindingManager, IBindingSummary } from "../binding/types";
+import { IBinding, IBindingManager, IBindingSummary, IPropertyAccess } from "../binding/types";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
 import { IState, Proxies, StateClass } from "../state/types";
-import { PromiseWithResolvers } from "../types";
 
-export type ComponentModuleConfig = {
+type ComponentModuleConfig = {
   extends?:string; // for customized built-in element, like extends="button"
   debug?:boolean; // debug mode for the component, default is false
   useShadowRoot?:boolean; // attach shadow root to the component, default is false
@@ -15,17 +14,17 @@ export type ComponentModuleConfig = {
   useOverscrollBehavior?:boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
 }
 
-export type ComponentModuleOptions = {
+type ComponentModuleOptions = {
   extends?:string; // for customized built-in element, like extends="button"
 }
 
-export type ComponentModuleFilters = {
+type ComponentModuleFilters = {
   input?:{[key:string]:FilterFuncWithOption};
   output?:{[key:string]:FilterFuncWithOption};
   event?:{[key:string]:EventFilterFuncWithOption};
 }
 
-export type ComponentModule = {
+type ComponentModule = {
   html?:string;
   css?:string;
   State?:typeof Object;
@@ -36,7 +35,7 @@ export type ComponentModule = {
   moduleConfig?:ComponentModuleConfig;
 }
 
-export interface IModule {
+interface IModule {
   uuid: string;
   html: string;
   css?: string;
@@ -51,20 +50,20 @@ export interface IModule {
   componentModulesForRegister?: {[key:string]:IModule};
 }
 
-export type CustomElementInfo = {
+type CustomElementInfo = {
   lowerTagName:string; // lower case tag name
   selectorName:string; // local selector name
   isAutonomousCustomElement:boolean; // is autonomous custom element
   isCostomizedBuiltInElement:boolean; // is customized built-in element
 }
 
-export type FilterManagers = {
+type FilterManagers = {
   inputFilterManager:InputFilterManager, 
   outputFilterManager:OutputFilterManager, 
   eventFilterManager:EventFilterManager
 };
 
-export interface IComponentBase {
+interface IComponentBase {
   get module():IModule;
   get isQuelComponent():boolean;
   get customElementInfo():CustomElementInfo;
@@ -92,8 +91,7 @@ export interface IComponentBase {
   get eventFilterManager():EventFilterManager;
 }
 
-export interface ICustomComponent {
-  state:IState;
+interface ICustomComponent {
   states:Proxies;
   get component():IComponent & HTMLElement;
   get parentComponent():IComponent & HTMLElement;
@@ -101,7 +99,7 @@ export interface ICustomComponent {
   get alivePromises():PromiseWithResolvers<void>;
   set alivePromises(promises:PromiseWithResolvers<void>);
   get baseState():IState;
-  get writeState():IState;
+  get writableState():IState;
   get readonlyState():IState;
   get currentState():IState;
   get rootBindingManager():IBindingManager;
@@ -121,6 +119,7 @@ export interface ICustomComponent {
   set contextRevision(revision:number);
   useContextRevision(callback:(revision:number)=>void):void;
   get bindingSummary():IBindingSummary;
+  get updator():IUpdator;
 
   build():Promise<void>;
 
@@ -128,6 +127,35 @@ export interface ICustomComponent {
   disconnectedCallback():Promise<void>;
 } 
 
-export type Constructor<T = {}> = new (...args: any[]) => T;
+type Constructor<T = {}> = new (...args: any[]) => T;
 
-export type IComponent = IComponentBase & ICustomComponent & HTMLElement;
+type IComponent = IComponentBase & ICustomComponent & HTMLElement;
+
+interface IProcess {
+  target:Function;
+  thisArgument:object;
+  argumentList:any[];
+}
+
+interface IUpdator {
+  component:IComponent;
+  state:IState;
+  processQueue:IProcess[];
+  updatedStateProperties:IPropertyAccess[];
+  expandedStateProperties:IPropertyAccess[];
+  updatedBindings:Set<IBinding>;
+
+  executing:boolean;
+
+  addProcess(target:Function, thisArgument:object, argumentList:any[]):void;
+  getProcessQueue():IProcess[];
+  addUpdatedStateProperty(prop:IPropertyAccess):void;
+  process():Promise<IPropertyAccess[]>;
+  expandStateProperties(updatedStateProperties:IPropertyAccess[]):IPropertyAccess[];
+  rebuildBinding(expandedStatePropertyByKey:Map<string,IPropertyAccess>):void;
+  updateChildNodes(expandedStateProperties:IPropertyAccess[]):void;
+  updateNode(expandedStatePropertyByKey:Map<string,IPropertyAccess>):void;
+  execCallback(callback:()=>any):Promise<void>;
+  exec():Promise<void>;
+  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>any):void;
+}

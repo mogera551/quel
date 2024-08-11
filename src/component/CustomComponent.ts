@@ -1,15 +1,15 @@
-import { Constructor, IComponent, IComponentBase, ICustomComponent } from "./types";
+import { IUpdator, IComponentBase, Constructor, ICustomComponent, IComponent } from "./types";
 import { getProxies } from "../state/Proxies";
 import { isAttachable } from "./AttachShadow";
 import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
 import { ConnectedCallbackSymbol } from "../state/Const";
 import { IState, Proxies } from "../state/types";
-import { PromiseWithResolvers } from "../types";
 import { BindingManager } from "../binding/Binding";
-import { promiseWithResolvers } from "../PromiseWithResolvers.js";
 import { utils } from "../utils";
-import { IBindingManager } from "../binding/types";
+import { IBindingManager, IBindingSummary } from "../binding/types";
+import { BindingSummary } from "../binding/BindingSummary";
+import { Updator } from "./Updator";
 
 const pseudoComponentByNode:Map<Node,IComponentBase & HTMLElement> = new Map;
 
@@ -35,7 +35,7 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
       super();
       const component = this.component;
 //      this._isWritable = false;
-      this.#states = getProxies(component, component.State as State); // create view model
+      this.#states = getProxies(component, component.State); // create view model
 //      this._props = createProps(this); // create property for parent component connection
 //      this._globals = createGlobals(); // create property for global connection
 //      this._initialPromises = undefined;
@@ -47,18 +47,18 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
       
  //     this._filters = undefined;
   
-//      this._bindingSummary = new BindingSummary;
+      this.#bindingSummary = new BindingSummary;
   
-      this.#initialPromises = promiseWithResolvers() as PromiseWithResolvers<void>; // promises for initialize
+      this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
   
   
 //      this._cachableInBuilding = false;
   
-      this._updator = new Updator(this);      
+      this.#updator = new Updator(component);      
     }
 
-    #props;
-    #globals;
+    //#props;
+    //#globals;
     #states:Proxies;
     get states():Proxies {
       return this.#states;
@@ -91,14 +91,14 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
     get baseState():IState {
       return this.#states.base;
     }
-    get writabeState():IState {
+    get writableState():IState {
       return this.#states.write;
     }
     get readonlyState():IState {
       return this.#states.readonly;
     }
     get currentState():IState {
-      return this.isWritable ? this.writabeState : this.readonlyState;
+      return this.isWritable ? this.writableState : this.readonlyState;
     }
 
     #rootBindingManager?:IBindingManager;
@@ -190,6 +190,16 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
       this.#contextRevision++;
       callback(this.#contextRevision);
     }
+
+    #bindingSummary:IBindingSummary;
+    get bindingSummary():IBindingSummary {
+      return this.#bindingSummary;
+    }
+
+    #updator:IUpdator;
+    get updator():IUpdator {
+      return this.#updator;
+    }
   
     async build() {
       const component = this.component;
@@ -270,7 +280,7 @@ function CustomComponent<TBase extends Constructor>(Base: TBase) {
         }
   
         // promises for alive
-        component.alivePromises = promiseWithResolvers();
+        component.alivePromises = Promise.withResolvers<void>();
   
         await this.build();
         
