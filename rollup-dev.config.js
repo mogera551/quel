@@ -1,7 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 
 export default {
-  input: 'src/exports.js',
+  input: 'src/exports.ts',
 	output: {
 		file: 'dist/quel.js',
 	},  

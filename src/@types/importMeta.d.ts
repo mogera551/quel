@@ -1,6 +1,6 @@
-export const dummy = false;
+export {};
 
-interface ImportMeta_ {
+export interface ImportMeta_ {
   url: string;
   resolve(specifier: string): string;
 }

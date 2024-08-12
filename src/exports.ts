@@ -1,7 +1,8 @@
-export { generateComponentClass, registerComponentModules } from "./component/Component";
-export { loader } from "./loader/QuelLoader";
 export { config } from "./Config";
 export { getCustomTagFromImportMeta, importHtmlFromImportMeta, importCssFromImportMeta } from "./helper";
+/*
+export { generateComponentClass, registerComponentModules } from "./component/Component";
+export { loader } from "./loader/QuelLoader";
 export { bootFromImportMeta } from "./Boot";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "./@types/filter";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "./filter/Manager";
@@ -26,3 +27,4 @@ export function registerGlobal(data:{[key:string]:any}) {
 }
 
 await import("./polyfill/load");
+*/
