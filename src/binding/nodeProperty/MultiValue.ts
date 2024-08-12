@@ -1,4 +1,4 @@
-import { IMultiValue } from "../../@types/binding";
+import { IMultiValue } from "../types";
 
 export class MultiValue implements IMultiValue {
   value:any;

@@ -118,11 +118,6 @@ interface IPropertyAccess {
   get patternNameInfo():IPatternNameInfo;
 }
 
-interface IMultiValue {
-  value:any;
-  enabled:boolean;
-}
-
 interface IBindingPropertyAccess {
   get name():string;
   get indexes():number[];
