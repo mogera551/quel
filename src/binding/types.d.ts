@@ -1,4 +1,4 @@
-import "../../nop";
+import "../nop";
 
 interface IMultiValue {
   value:any;

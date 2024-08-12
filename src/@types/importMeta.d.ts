@@ -1,6 +1,6 @@
-export {};
+import "../nop";
 
-export interface ImportMeta_ {
+interface ImportMeta_ {
   url: string;
   resolve(specifier: string): string;
 }
