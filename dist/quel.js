@@ -9,28 +9,15 @@ const config = {
 };
 
 function getCustomTagFromImportMeta(importMeta) {
-    return importMeta.url;
+    const url = new URL(importMeta.url);
+    const tagName = url.search.slice(1);
+    return tagName;
 }
-function importHtmlFromImportMeta(importMeta) {
-    return importMeta.url;
+async function importHtmlFromImportMeta(importMeta) {
+    return await fetch(importMeta.url.replace(".js", ".html")).then(response => response.text());
 }
-function importCssFromImportMeta(importMeta) {
-    return importMeta.url;
+async function importCssFromImportMeta(importMeta) {
+    return await fetch(importMeta.url.replace(".js", ".css")).then(response => response.text());
 }
-/*
-export function getCustomTagFromImportMeta(importMeta:ImportMeta):string {
-  const url = new URL(importMeta.url);
-  const tagName = url.search.slice(1);
-  return tagName;
-}
-
-export async function importHtmlFromImportMeta(importMeta:ImportMeta):Promise<string> {
-  return await fetch(importMeta.url.replace(".js", ".html")).then(response => response.text());
-}
-
-export async function importCssFromImportMeta(importMeta:ImportMeta):Promise<string> {
-  return await fetch(importMeta.url.replace(".js", ".css")).then(response => response.text());
-}
-*/
 
 export { config, getCustomTagFromImportMeta, importCssFromImportMeta, importHtmlFromImportMeta };
