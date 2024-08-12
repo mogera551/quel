@@ -1,3 +1,5 @@
+export const dummy = false;
+
 interface ObjectConstructor {
   /**
    * Groups members of an iterable according to the return value of the passed callback.
