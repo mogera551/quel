@@ -1,5 +1,6 @@
 import { utils } from "../utils";
 import { IComponent } from "../@types/component";
+import { createUserComponent } from "../component/UserProxy";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
@@ -16,11 +17,9 @@ type FuncByName = {
 }
 
 const funcByName:FuncByName = {
-  // todo: undefinedを返すからcomponent.globalsを返すように変更
-  [GLOBALS_PROPERTY]: ({component}:{component:IComponent, state:Object}) => undefined, // component.globals,
+  [GLOBALS_PROPERTY]: ({component}:{component:IComponent, state:Object}) => component.globals, // component.globals,
   [DEPENDENT_PROPS_PROPERTY]: ({state}:{component:IComponent, state:Object}) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
-  // todo: undefinedを返すからcreateUserComponent(component)を返すように変更
-  [COMPONENT_PROPERTY]: ({component}:{component:IComponent, state:Object}) => undefined, // createUserComponent(component),
+  [COMPONENT_PROPERTY]: ({component}:{component:IComponent, state:Object}) => createUserComponent(component),
 }
 
 export class SpecialProp {

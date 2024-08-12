@@ -8,7 +8,6 @@ import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../
 import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
-import { replaceBaseClass } from "./ReplaceBaseClass.js";
 
 const moduleByConstructor:Map<Function,IModule> = new Map;
 const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;
@@ -18,8 +17,8 @@ const filterManagersByTagName:Map<string,FilterManagers> = new Map;
  * generate unique component class
  */
 export const generateComponentClass = (componentModule:ComponentModule):typeof HTMLElement => {
-  const getBaseClass = function (module:IModule):typeof HTMLElement {
-    const baseClass = class extends HTMLElement implements IComponentBase {
+  const getBaseClass = function (module:IModule, baseConstructor:typeof HTMLElement):typeof HTMLElement {
+    const baseClass = class extends baseConstructor implements IComponentBase {
       #module?:IModule;
       get module():IModule {
         if (typeof this.#module === "undefined") {
@@ -157,12 +156,14 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         return this.filterManagers.eventFilterManager;
       }
 
-      /**
-       */
       constructor() {
         super();
         this.#setCustomElementInfo();
         this.#setFilterManagers();
+      }
+      static baseClass:Function = baseConstructor;
+      get baseClass():Function {
+        return Reflect.get(this.constructor, "baseClass");
       }
     };
     moduleByConstructor.set(baseClass, module);
@@ -174,25 +175,13 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
   module.config = Object.assign({}, componentModule.moduleConfig);
   module.options = Object.assign({}, componentModule.options);
 
-  // generate new class, for customElements not define same class
-  const componentClass = getBaseClass(module);
 
   const extendsTag = module.config?.extends ?? module.options?.extends;
-  if (typeof extendsTag === "undefined") {
-    // case of autonomous custom element
-  } else {
-    // case of customized built-in element
-    // change class extends to extends constructor
-    // See http://var.blog.jp/archives/75174484.html
-    /** @type {HTMLElement.constructor} */
-    replaceBaseClass(componentClass, extendsTag);
-/*
-    const extendClass = document.createElement(extendsTag).constructor;
-    componentClass.prototype.__proto__ = extendClass.prototype;
-    componentClass.__proto__ = extendClass;
-*/
-  }
+  const baseConstructor = extendsTag ? document.createElement(extendsTag).constructor : HTMLElement;
+  // generate new class, for customElements not define same class
+  const componentClass = getBaseClass(module, baseConstructor as typeof HTMLElement);
 
+  // mix in component class
   const extendedComponentClass = PopoverComponent(DialogComponent(CustomComponent(componentClass))); 
 
   // register component's subcomponents 

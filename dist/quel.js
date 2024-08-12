@@ -1482,6 +1482,37 @@ class Api {
     }
 }
 
+function existsProperty(baseClass, prop) {
+    if (typeof baseClass.prototype[prop] !== "undefined")
+        return true;
+    if (baseClass.prototype === Object.prototype)
+        return false;
+    return existsProperty(Object.getPrototypeOf(baseClass), prop);
+}
+const permittedProps = new Set([
+    "addProcess", "viewRootElement ", "queryRoot",
+    "asyncShowModal", "asyncShow",
+    "asyncShowPopover", "cancelPopover"
+]);
+class UserProxyHandler {
+    get(target, prop) {
+        if (permittedProps.has(prop)) {
+            return Reflect.get(target, prop);
+        }
+        else {
+            if (existsProperty(target.baseClass, prop)) {
+                return Reflect.get(target, prop);
+            }
+            else {
+                utils.raise(`property ${prop} is not found in ${target.baseClass.name}`);
+            }
+        }
+    }
+}
+function createUserComponent(component) {
+    return new Proxy(component, new UserProxyHandler);
+}
+
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
 const COMPONENT_PROPERTY = "$component";
@@ -1491,11 +1522,9 @@ const properties = new Set([
     COMPONENT_PROPERTY,
 ]);
 const funcByName = {
-    // todo: undefinedを返すからcomponent.globalsを返すように変更
-    [GLOBALS_PROPERTY]: ({ component }) => undefined, // component.globals,
+    [GLOBALS_PROPERTY]: ({ component }) => component.globals, // component.globals,
     [DEPENDENT_PROPS_PROPERTY]: ({ state }) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
-    // todo: undefinedを返すからcreateUserComponent(component)を返すように変更
-    [COMPONENT_PROPERTY]: ({ component }) => undefined, // createUserComponent(component),
+    [COMPONENT_PROPERTY]: ({ component }) => createUserComponent(component),
 };
 class SpecialProp {
     static get(component, state, name) {
@@ -4374,19 +4403,6 @@ function PopoverComponent(Base) {
     };
 }
 
-/**
- * 
- * @param {typeof Compoenent} componentClass 
- * @param {string} extendsTag 
- * @returns {typeof Compoenent}
- */
-function replaceBaseClass(componentClass, extendsTag) {
-  const extendClass = document.createElement(extendsTag).constructor;
-  componentClass.prototype.__proto__ = extendClass.prototype;
-  componentClass.__proto__ = extendClass;
-  return componentClass;
-}
-
 const moduleByConstructor = new Map;
 const customElementInfoByTagName = new Map;
 const filterManagersByTagName = new Map;
@@ -4394,8 +4410,8 @@ const filterManagersByTagName = new Map;
  * generate unique component class
  */
 const generateComponentClass = (componentModule) => {
-    const getBaseClass = function (module) {
-        const baseClass = class extends HTMLElement {
+    const getBaseClass = function (module, baseConstructor) {
+        const baseClass = class extends baseConstructor {
             #module;
             get module() {
                 if (typeof this.#module === "undefined") {
@@ -4510,12 +4526,14 @@ const generateComponentClass = (componentModule) => {
             get eventFilterManager() {
                 return this.filterManagers.eventFilterManager;
             }
-            /**
-             */
             constructor() {
                 super();
                 this.#setCustomElementInfo();
                 this.#setFilterManagers();
+            }
+            static baseClass = baseConstructor;
+            get baseClass() {
+                return Reflect.get(this.constructor, "baseClass");
             }
         };
         moduleByConstructor.set(baseClass, module);
@@ -4525,22 +4543,11 @@ const generateComponentClass = (componentModule) => {
     module.filters = Object.assign({}, componentModule.filters);
     module.config = Object.assign({}, componentModule.moduleConfig);
     module.options = Object.assign({}, componentModule.options);
-    // generate new class, for customElements not define same class
-    const componentClass = getBaseClass(module);
     const extendsTag = module.config?.extends ?? module.options?.extends;
-    if (typeof extendsTag === "undefined") ;
-    else {
-        // case of customized built-in element
-        // change class extends to extends constructor
-        // See http://var.blog.jp/archives/75174484.html
-        /** @type {HTMLElement.constructor} */
-        replaceBaseClass(componentClass, extendsTag);
-        /*
-            const extendClass = document.createElement(extendsTag).constructor;
-            componentClass.prototype.__proto__ = extendClass.prototype;
-            componentClass.__proto__ = extendClass;
-        */
-    }
+    const baseConstructor = extendsTag ? document.createElement(extendsTag).constructor : HTMLElement;
+    // generate new class, for customElements not define same class
+    const componentClass = getBaseClass(module, baseConstructor);
+    // mix in component class
     const extendedComponentClass = PopoverComponent(DialogComponent(CustomComponent(componentClass)));
     // register component's subcomponents 
     registerComponentModules(module.componentModulesForRegister ?? {});

@@ -90,6 +90,7 @@ interface IComponentBase {
   get inputFilterManager():IFilterManager<FilterType.Input>;
   get outputFilterManager():IFilterManager<FilterType.Output>;
   get eventFilterManager():IFilterManager<FilterType.Event>;
+  get baseClass():Function;  
 }
 
 interface ICustomComponent {
