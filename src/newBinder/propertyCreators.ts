@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { PropertyCreators } from "../@types/binder";
+import { PropertyCreators } from "./types";
 import { IBinding, INodeProperty, IStateProperty } from "../@types/binding";
 import { IFilterInfo } from "../@types/filter";
 import { StateProperty } from "../binding/stateProperty/StateProperty";

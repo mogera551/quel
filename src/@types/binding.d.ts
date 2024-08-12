@@ -2,7 +2,7 @@ import { IComponent } from "./component";
 import { IPatternNameInfo, IPropertyNameInfo } from "./dotNotation";
 import { FilterFunc, IFilterInfo } from "./filter";
 import { ILoopContext } from "./loopContext";
-import { NodePropertyCreator, StatePropertyCreator } from "./binder";
+import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IState } from "./state";
 
 interface INodeProperty {

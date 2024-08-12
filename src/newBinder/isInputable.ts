@@ -1,4 +1,4 @@
-import { NodeType } from "../@types/binder";
+import { NodeType } from "./types";
 
 /**
  * ユーザー操作によりデフォルト値が変わるかどうか

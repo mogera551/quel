@@ -1,6 +1,6 @@
 import { utils } from "../utils.js";
 import { IFilterInfo } from "../@types/filter";
-import { ParseBindTextInfo } from "../@types/binder.js";
+import { ParseBindTextInfo } from "./types";
 
 const SAMENAME = "@";
 const DEFAULT = "$";

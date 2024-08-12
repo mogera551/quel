@@ -1,5 +1,5 @@
 import { IBinding, IBindingManager } from "../@types/binding";
-import { IBindNodeInfo } from "../@types/binder";
+import { IBindNodeInfo } from "./types";
 import { findNodeByNodeRoute } from "./nodeRoute";
 
 export function createBindings(content:DocumentFragment, bindingManager:IBindingManager, nodeInfos:IBindNodeInfo[]):IBinding[] {

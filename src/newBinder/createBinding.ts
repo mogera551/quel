@@ -1,5 +1,5 @@
 import { IBindingManager } from "../@types/binding";
-import { ParseBindTextInfo, PropertyCreators } from "../@types/binder";
+import { ParseBindTextInfo, PropertyCreators } from "./types";
 import { Binding } from "../binding/Binding";
 
 export const createBinding = (bindTextInfo:ParseBindTextInfo, propertyCreators:PropertyCreators) => 

@@ -1,4 +1,4 @@
-import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from '../@types/binder';
+import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from './types';
 import { IBinding } from '../@types/binding';
 import { replaceTextNode } from './replaceTextNode';
 import { removeAttribute } from './removeAttribute';
