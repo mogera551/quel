@@ -1,6 +1,10 @@
 import { ComponentModule } from "../@types/component";
-import { importMetaResolve } from "./ImportMetaResolve.js";
 import { registerComponentModule } from "./Component";
+import { ImportMeta_ } from "../@types/importMeta";
+
+function importMetaResolve(importMeta:ImportMeta_, path:string):string {
+  return importMeta.resolve(path);
+}
 
 function toComment(html:string):string {
   return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
@@ -16,7 +20,7 @@ function fromComment(html:string):string {
 
 export async function loadSingleFileComponent(path:string):Promise<ComponentModule> {
   const template = document.createElement("template");
-  const response = await fetch(importMetaResolve(import.meta, path));
+  const response = await fetch(importMetaResolve(import.meta as ImportMeta_, path));
   template.innerHTML = toComment(await response.text());
 
   let scriptModule;

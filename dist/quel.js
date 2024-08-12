@@ -4618,9 +4618,8 @@ async function bootFromImportMeta(importMeta, configPath) {
 }
 
 function importMetaResolve(importMeta, path) {
-  return importMeta.resolve(path);
+    return importMeta.resolve(path);
 }
-
 function toComment(html) {
     return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
         return `<!--{{${expr}}}-->`;
