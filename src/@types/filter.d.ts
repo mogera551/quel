@@ -1,15 +1,11 @@
-export const _ = foo;
+import "../nop";
 
 interface IFilterInfo {
   name: string;
   options: string[];
 }
 
-enum FilterType {
-  Input,
-  Output,
-  Event
-}
+type FilterType = "input" | "output" | "event";
 
 type FilterFunc = (options:any[])=>(value:any)=>any;
 type FilterFuncWithOption = (options:any[])=>FilterFunc;
@@ -17,14 +13,14 @@ type EventFilterFunc = (event:Event)=>Event;
 type EventFilterFuncWithOption = (options:string[])=>EventFilterFunc;
 
 type FilterFuncType<T = FilterType> = 
-  T extends FilterType.Input ? FilterFunc : 
-  T extends FilterType.Output ? FilterFunc : 
-  T extends FilterType.Event ? EventFilterFunc : never;
+  T extends "input" ? FilterFunc : 
+  T extends "output" ? FilterFunc : 
+  T extends "event" ? EventFilterFunc : never;
 
 type FilterFuncWithOptionType<T = FilterType> = 
-  T extends FilterType.Input ? FilterFuncWithOption :
-  T extends FilterType.Output ? FilterFuncWithOption :
-  T extends FilterType.Event ? EventFilterFuncWithOption : never;
+  T extends "input" ? FilterFuncWithOption :
+  T extends "output" ? FilterFuncWithOption :
+  T extends "event" ? EventFilterFuncWithOption : never;
 
 interface IFilterManager<T = FilterType> {
   ambigousNames:Set<string>;
@@ -34,6 +30,6 @@ interface IFilterManager<T = FilterType> {
 }
 
 type IFilterManagerType<T = FilterType> =
-  T extends FilterType.Input ? IFilterManager<FilterFuncWithOptionType<T>> :
-  T extends FilterType.Output ? IFilterManager<FilterFuncWithOptionType<T>> :
-  T extends FilterType.Event ? IFilterManager<EventFilterFuncWithOption> : never;
+  T extends "input" ? IFilterManager<FilterFuncWithOptionType<T>> :
+  T extends "output" ? IFilterManager<FilterFuncWithOptionType<T>> :
+  T extends "event" ? IFilterManager<EventFilterFuncWithOption> : never;

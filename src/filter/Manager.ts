@@ -280,7 +280,7 @@ export class FilterManager<T = FilterType> implements IFilterManager<T> {
   }
 }
 
-export class OutputFilterManager extends FilterManager<FilterType.Output> {
+export class OutputFilterManager extends FilterManager<"output"> {
   constructor() {
     super();
     this.ambigousNames = new Set(OutputFilterManager.#ambigousNames);
@@ -295,7 +295,7 @@ export class OutputFilterManager extends FilterManager<FilterType.Output> {
       for(const funcName of group.prototypeFuncs) {
         const isNotNullThru = funcName.endsWith("*");
         const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
-        const func = createPrototypeFilterFunc<FilterType.Output>(group.objectClass, realFuncName);
+        const func = createPrototypeFilterFunc<"output">(group.objectClass, realFuncName);
         if (typeof func !== "undefined") {
           const wrappedFunc = !isNotNullThru ? nullthru(func) : func;
           group.prefix && funcByName.set(`${group.prefix}.${realFuncName}`, wrappedFunc);
@@ -310,7 +310,7 @@ export class OutputFilterManager extends FilterManager<FilterType.Output> {
       for(const funcName of group.staticFuncs) {
         const isNotNullThru = funcName.endsWith("*");
         const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
-        const func = createStaticFilterFunc<FilterType.Output>(group.objectClass, realFuncName);
+        const func = createStaticFilterFunc<"output">(group.objectClass, realFuncName);
         if (typeof func !== "undefined") {
           const wrappedFunc = !isNotNullThru ? nullthru(func) : func;
           group.prefix && funcByName.set(`${group.prefix}.${realFuncName}`, wrappedFunc);
@@ -358,7 +358,7 @@ class InputFilters {
   static boolean      = (options:any[]) => (value:any):any => (value === "false" || value === "") ? false : true;
 }
 
-export class InputFilterManager extends FilterManager<FilterType.Input> {
+export class InputFilterManager extends FilterManager<"input"> {
   constructor() {
     super();
     this.ambigousNames = new Set(InputFilterManager.#ambigousNames);
@@ -392,7 +392,7 @@ class EventFilters {
   static nsp = this.noStopPropagation;
 }
 
-export class EventFilterManager extends FilterManager<FilterType.Event> {
+export class EventFilterManager extends FilterManager<"event"> {
   constructor() {
     super();
     this.ambigousNames = new Set(EventFilterManager.#ambigousNames);

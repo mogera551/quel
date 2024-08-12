@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { FilterFunc, FilterType, IFilterInfo } from "../../@types/filter";
+import { FilterFunc, IFilterInfo } from "../../@types/filter";
 import { IBinding, IPropertyAccess } from "../../@types/binding";
 import { FilterManager, Filters } from "../../filter/Manager";
 
@@ -33,7 +33,7 @@ export class NodeProperty {
 
   /** @type {any} */
   get filteredValue() {
-    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<FilterType.Input>(this.value, this.filters);
+    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<"input">(this.value, this.filters);
   }
 
   // applyToNode()の対象かどうか
@@ -64,7 +64,7 @@ export class NodeProperty {
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = Filters.create<FilterType.Input>(filters.toReversed(), binding.component.inputFilterManager);
+    this.#filters = Filters.create<"input">(filters.toReversed(), binding.component.inputFilterManager);
   }
 
   assign(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
@@ -74,7 +74,7 @@ export class NodeProperty {
     this.#nameElements = name.split(".");
     const workFilters = filters.slice(0)
     workFilters.reverse();
-    this.#filters = Filters.create<FilterType.Input>(workFilters, binding.component.inputFilterManager);
+    this.#filters = Filters.create<"input">(workFilters, binding.component.inputFilterManager);
     return this;
   }
 

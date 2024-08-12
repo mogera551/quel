@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { EventFilterFunc, FilterType, IFilterInfo } from "../../@types/filter.js";
+import { EventFilterFunc, IFilterInfo } from "../../@types/filter.js";
 import { IBinding } from "../../@types/binding";
 import { DirectryCallApiSymbol } from "../../@symbols/state.js";
 import { FilterManager, Filters } from "../../filter/Manager";
@@ -35,7 +35,7 @@ export class ElementEvent extends ElementBase {
   constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
-    this.#eventFilters = Filters.create<FilterType.Event>(filters, binding.component.eventFilterManager);
+    this.#eventFilters = Filters.create<"event">(filters, binding.component.eventFilterManager);
   }
 
   /**
@@ -57,7 +57,7 @@ export class ElementEvent extends ElementBase {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!(this.binding.component?.bindingSummary.exists(this.binding) ?? false)) return;
     // event filter
-    event = this.eventFilters.length > 0 ? FilterManager.applyFilter<FilterType.Event>(event, this.eventFilters) : event;
+    event = this.eventFilters.length > 0 ? FilterManager.applyFilter<"event">(event, this.eventFilters) : event;
     !(Reflect.has(event, "noStopPropagation") ?? false) && event.stopPropagation();
     this.binding.component.updator.addProcess(this.directlyCall, this, [event]);
   }

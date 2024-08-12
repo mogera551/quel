@@ -31,12 +31,6 @@ interface IProxyStatePartial {
   $component:IComponent,
 }
 
-interface IProxyReadonlyStatePartial {
-  // api
-  [ClearCacheApiSymbol]:() => void,
-
-}
-
 type IState = IProxy & IProxyStatePartial;
 
 type Proxies = {

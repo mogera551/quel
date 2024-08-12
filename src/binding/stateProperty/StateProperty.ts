@@ -1,5 +1,5 @@
 import { IBinding, IStateProperty } from "../../@types/binding";
-import { IFilterInfo, FilterFunc, FilterType } from "../../@types/filter";
+import { IFilterInfo, FilterFunc } from "../../@types/filter";
 import { IPatternNameInfo, IPropertyNameInfo } from "../../@types/dotNotation";
 import { IState } from "../../@types/state";
 import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
@@ -88,7 +88,7 @@ export class StateProperty implements IStateProperty {
   }
 
   get filteredValue():any {
-    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<FilterType.Output>(this.value, this.filters);
+    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<"output">(this.value, this.filters);
   }
 
   // applyToViewModel()の対象かどうか
@@ -104,7 +104,7 @@ export class StateProperty implements IStateProperty {
   constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create<FilterType.Output>(filters, binding.component.outputFilterManager);
+    this.#filters = Filters.create<"output">(filters, binding.component.outputFilterManager);
     this.#propertyName = getPropertyNameInfo(name);
     this.#patternName = getPatternNameInfo(name);
     this.#level = this.#patternName.level;
@@ -113,7 +113,7 @@ export class StateProperty implements IStateProperty {
   assign(binding:Binding, name:string, filters:IFilterInfo[]):IStateProperty {
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create<FilterType.Output>(filters, binding.component.outputFilterManager);
+    this.#filters = Filters.create<"output">(filters, binding.component.outputFilterManager);
     this.#propertyName = getPropertyNameInfo(name);
     this.#patternName = getPatternNameInfo(name);
     this.#level = this.#patternName.level;

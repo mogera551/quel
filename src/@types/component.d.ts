@@ -59,9 +59,9 @@ type CustomElementInfo = {
 }
 
 type FilterManagers = {
-  inputFilterManager:IFilterManager<FilterType.Input>, 
-  outputFilterManager:IFilterManager<FilterType.Output>, 
-  eventFilterManager:IFilterManager<FilterType.Event>
+  inputFilterManager:IFilterManager<"input">, 
+  outputFilterManager:IFilterManager<"output">, 
+  eventFilterManager:IFilterManager<"event">
 };
 
 interface IComponentBase {
@@ -87,9 +87,9 @@ interface IComponentBase {
   // is costomized built-in element
   get isCostomizedBuiltInElement():boolean;
   get filterManagers():FilterManagers;
-  get inputFilterManager():IFilterManager<FilterType.Input>;
-  get outputFilterManager():IFilterManager<FilterType.Output>;
-  get eventFilterManager():IFilterManager<FilterType.Event>;
+  get inputFilterManager():IFilterManager<"input">;
+  get outputFilterManager():IFilterManager<"output">;
+  get eventFilterManager():IFilterManager<"event">;
   get baseClass():Function;  
 }
 
