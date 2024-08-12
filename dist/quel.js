@@ -4055,19 +4055,6 @@ function CustomComponent(Base) {
                 this.#isWritable = false;
             }
         }
-        #cachableInBuilding = false;
-        get cachableInBuilding() {
-            return this.#cachableInBuilding;
-        }
-        cacheInBuilding(callback) {
-            this.#cachableInBuilding = true;
-            try {
-                callback(this.component);
-            }
-            finally {
-                this.#cachableInBuilding = false;
-            }
-        }
         // find parent shadow root, or document, for adoptedCSS 
         get shadowRootOrDocument() {
             const component = this.component;
@@ -4143,27 +4130,27 @@ function CustomComponent(Base) {
                     component.style.overscrollBehavior = "contain";
                 }
             }
-            await component.currentState[ConnectedCallbackSymbol]();
-            component.cacheInBuilding((component) => {
-                // build binding tree and dom 
-                component.bindingSummary.update((summary) => {
-                    const uuid = component.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-                    component.rootBindingManager = BindingManager.create(component, component.template, uuid);
-                    component.rootBindingManager.postCreate();
-                });
-                if (component.useWebComponent) {
-                    // case of useWebComponent,
-                    // then append fragment block to viewRootElement
-                    component.viewRootElement.appendChild(component.rootBindingManager.fragment);
-                }
-                else {
-                    // case of no useWebComponent, 
-                    // then insert fragment block before pseudo node nextSibling
-                    component.viewRootElement.insertBefore(component.rootBindingManager.fragment, component.pseudoNode.nextSibling);
-                    // child nodes add pseudoComponentByNode
-                    component.rootBindingManager.nodes.forEach(node => pseudoComponentByNode.set(node, component));
-                }
+            component.stateWritable(async () => {
+                await component.currentState[ConnectedCallbackSymbol]();
             });
+            // build binding tree and dom 
+            component.bindingSummary.update((summary) => {
+                const uuid = component.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+                component.rootBindingManager = BindingManager.create(component, component.template, uuid);
+                component.rootBindingManager.postCreate();
+            });
+            if (component.useWebComponent) {
+                // case of useWebComponent,
+                // then append fragment block to viewRootElement
+                component.viewRootElement.appendChild(component.rootBindingManager.fragment);
+            }
+            else {
+                // case of no useWebComponent, 
+                // then insert fragment block before pseudo node nextSibling
+                component.viewRootElement.insertBefore(component.rootBindingManager.fragment, component.pseudoNode.nextSibling);
+                // child nodes add pseudoComponentByNode
+                component.rootBindingManager.nodes.forEach(node => pseudoComponentByNode.set(node, component));
+            }
         }
         async connectedCallback() {
             const component = this.component;

@@ -115,8 +115,6 @@ interface ICustomComponent {
   set pseudoNode(node:Node);
   get isWritable():boolean;
   stateWritable(callback:()=>Promise<void>):Promise<void>;
-  get cachableInBuilding():boolean;
-  cacheInBuilding(callback:(component:IComponent)=>void):void;
   get shadowRootOrDocument():ShadowRoot|Document;
   get contextRevision():number;
   set contextRevision(revision:number);
