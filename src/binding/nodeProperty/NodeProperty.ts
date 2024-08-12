@@ -81,7 +81,7 @@ export class NodeProperty {
   initialize() {
   }
 
-  postUpdate(propertyAccessByViewModelPropertyKey:Map<string,IPropertyAccess>) {
+  postUpdate(propertyAccessByStatePropertyKey:Map<string,IPropertyAccess>) {
   }
 
   isSameValue(value:any):boolean {

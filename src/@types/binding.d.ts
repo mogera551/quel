@@ -19,7 +19,7 @@ interface INodeProperty {
   loopable: boolean;
   assign(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]):INodeProperty;
   initialize():void;
-  postUpdate(propertyAccessByViewModelPropertyKey:Map<string,IPropertyAccess>):void;
+  postUpdate(propertyAccessByStatePropertyKey:Map<string,IPropertyAccess>):void;
   isSameValue(value:any):boolean;
   applyToChildNodes(indexes:Set<number>):void;
   dispose():void;

@@ -106,7 +106,7 @@ export class Handler implements IHandler {
     return result;
   }
 
-  getDirect = (target:Object, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:IProxy) => ():any => {
+  getDirect = (target:Object, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:IProxy):any => {
     return this.pushIndexes(indexes, () => this.getByPatternNameAndIndexes(target, {patternName, indexes}, receiver));
   }
 

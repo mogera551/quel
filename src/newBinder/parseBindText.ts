@@ -29,7 +29,7 @@ type ReturnParseStateProperty = {stateProperty:string,filters:IFilterInfo[]};
  * parse expression
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  */
-const parseViewModelProperty = (text:string):ReturnParseStateProperty => {
+const parseStateProperty = (text:string):ReturnParseStateProperty => {
   const [stateProperty, ...filterTexts] = text.split("|").map(trim);
   return {stateProperty, filters:filterTexts.map(parseFilter)};
 };
@@ -40,7 +40,7 @@ const parseViewModelProperty = (text:string):ReturnParseStateProperty => {
  */
 const parseExpression = (expr:string, defaultName:string):ParseBindTextInfo => {
   const [nodeProperty, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
-  const { stateProperty, filters } = parseViewModelProperty(statePropertyText);
+  const { stateProperty, filters } = parseStateProperty(statePropertyText);
   return { nodeProperty, stateProperty, filters };
 };
 

@@ -14,7 +14,7 @@ export class ElementClass extends ElementBase {
     return this.element.classList.contains(this.className);
   }
   set value(value:any) {
-    if (typeof value !== "boolean") utils.raise(`ElementClass: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not boolean`, );
+    if (typeof value !== "boolean") utils.raise(`ElementClass: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
   }
 

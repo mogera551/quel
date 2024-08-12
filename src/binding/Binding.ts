@@ -73,7 +73,6 @@ export class Binding implements IBinding {
     node:Node, 
     nodePropertyName:string, 
     nodePropertyCreator:NodePropertyCreator, 
-    state:IState,
     statePropertyName:string, 
     statePropertyCreator:StatePropertyCreator,
     filters:IFilterInfo[]
@@ -105,9 +104,9 @@ export class Binding implements IBinding {
     const { component, nodeProperty, stateProperty } = this
     component.updator.applyNodeUpdatesByBinding(this, () => {
       if (!nodeProperty.applicable) return;
-      const filteredViewModelValue = stateProperty.filteredValue ?? "";
-      if (nodeProperty.isSameValue(filteredViewModelValue)) return;
-      nodeProperty.value = filteredViewModelValue;
+      const filteredStateValue = stateProperty.filteredValue ?? "";
+      if (nodeProperty.isSameValue(filteredStateValue)) return;
+      nodeProperty.value = filteredStateValue;
     });
   }
 
@@ -334,7 +333,7 @@ export class BindingManager implements IBindingManager {
   }
 
   /**
-   * apply value to ViewModel
+   * apply value to State
    */
   applyToState() {
     for(let i = 0; i < this.#bindings.length; i++) {

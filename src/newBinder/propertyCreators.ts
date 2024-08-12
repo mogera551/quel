@@ -55,7 +55,7 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
 };
 
 /**
- * get constructors for NodeProperty and ViewModelProperty
+ * get constructors for NodeProperty and StateProperty
  */
 export const getPropertyCreators = (node:Node, nodePropertyName:string, statePropertyName:string, useKeyed:boolean):PropertyCreators => {
   const statePropertyClass = regexp.test(statePropertyName) ? ContextIndex : StateProperty;

@@ -13,10 +13,7 @@ export class StateWriteHandler extends StateBaseHandler {
   #directlyCallContext:IDirectlyCallContext = new DirectlyCallContext;
 
   /**
-   * プロパティ情報からViewModelの値を取得する
-   * @param {ViewModel} target 
-   * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}  
-   * @param {Proxy} receiver 
+   * プロパティ情報からStateの値を取得する
    */
   getByPatternNameAndIndexes(target:Object, {patternName, indexes}:{patternName:string, indexes:number[]}, receiver:IState) {
     const patterNameInfo = getPatternNameInfo(patternName);
@@ -30,7 +27,7 @@ export class StateWriteHandler extends StateBaseHandler {
   }
 
   /**
-   * プロパティ情報からViewModelの値を設定する
+   * プロパティ情報からStateの値を設定する
    */
   setByPatternNameAndIndexes(target:Object, { patternName, indexes, value }:{patternName:string, indexes:number[], value:any}, receiver:IState) {
     const patterNameInfo = getPatternNameInfo(patternName);
@@ -64,17 +61,10 @@ export class StateWriteHandler extends StateBaseHandler {
     if (patternNameInfo.level === 0 || prop.at(0) === "@") return;
     const wildcardPatternNameInfo = getPatternNameInfo(patternNameInfo.wildcardNames[patternNameInfo.wildcardNames.length - 1]);
     const loopContext = this.#directlyCallContext.loopContext.find(wildcardPatternNameInfo.parentPath);
-    if (typeof loopContext === "undefined") utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
+    if (typeof loopContext === "undefined") utils.raise(`StateWriteHandler: ${prop} is outside loop`);
     return loopContext;
   }
 
-  /**
-   * 
-   * @param {ViewModel} target 
-   * @param {string} prop 
-   * @param {Proxy} receiver 
-   * @returns {any}
-   */
   get(target:Object, prop:PropertyKey, receiver:IState):any {
     if (typeof prop === "symbol") {
       const supportCallbackSymbol = Callback.getSupportSymbol(prop);

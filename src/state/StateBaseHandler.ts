@@ -39,7 +39,7 @@ export class StateBaseHandler extends Handler  {
     } else if (prop === DependenciesSymbol) {
       return this.#dependencies;
     }
-    return Reflect.get(target, prop, receiver);
+    return super.get(target, prop, receiver);
   }
 
   ownKeys(target: Object): (string|symbol)[] {
@@ -60,7 +60,7 @@ export class StateBaseHandler extends Handler  {
 
   addNotify(target:Object, propertyAccess:IPropertyAccess, receiver:IState) {
     // todo: ここに処理を追加
-    this.#component.updator.addUpdatedStateProperty(Object.assign({}, propertyAccess));
+    this.#component.updator.addUpdatedStateProperty(propertyAccess);
   }
 
   clearCache() {

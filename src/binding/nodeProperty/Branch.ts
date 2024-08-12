@@ -13,7 +13,7 @@ export class Branch extends TemplateProperty {
    * Set value to bind/unbind child bindingManager
    */
   set value(value:any) {
-    if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not boolean`, );
+    if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     if (this.value !== value) {
       if (value) {
         const bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);

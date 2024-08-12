@@ -17,8 +17,9 @@ import { createGlobals } from "./Globals";
 const pseudoComponentByNode:Map<Node,IComponent> = new Map;
 
 const getParentComponent = (_node:Node):Node|undefined => {
+  let node:Node|null = _node;
   do {
-    let node = _node.parentNode;
+    node = node.parentNode;
     if (node == null) return undefined;
     if (Reflect.get(node, "isQuelComponent")) return node;
     if (node instanceof ShadowRoot) {

@@ -22,7 +22,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       #module?:IModule;
       get module():IModule {
         if (typeof this.#module === "undefined") {
-          this.#module = moduleByConstructor.get(this.constructor) ?? utils.raise(`module is not found for ${this.constructor.name}`);
+          this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
         }
         return this.#module;
       }
@@ -165,7 +165,12 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       get baseClass():Function {
         return Reflect.get(this.constructor, "baseClass");
       }
+      static thisClass:Function|undefined;
+      get thisClass():Function {
+        return Reflect.get(this.constructor, "thisClass");
+      }
     };
+    baseClass.thisClass = baseClass;
     moduleByConstructor.set(baseClass, module);
     return baseClass;
   };

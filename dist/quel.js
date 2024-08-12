@@ -1184,7 +1184,7 @@ let Handler$1 = class Handler {
         }
         return result;
     };
-    getDirect = (target, { patternName, indexes }, receiver) => () => {
+    getDirect = (target, { patternName, indexes }, receiver) => {
         return this.pushIndexes(indexes, () => this.getByPatternNameAndIndexes(target, { patternName, indexes }, receiver));
     };
     setDirect = (target, { patternName, indexes, value }, receiver) => {
@@ -1274,7 +1274,7 @@ class StateBaseHandler extends Handler$1 {
         else if (prop === DependenciesSymbol) {
             return this.#dependencies;
         }
-        return Reflect.get(target, prop, receiver);
+        return super.get(target, prop, receiver);
     }
     ownKeys(target) {
         return Reflect.ownKeys(target).concat([
@@ -1291,7 +1291,7 @@ class StateBaseHandler extends Handler$1 {
     }
     addNotify(target, propertyAccess, receiver) {
         // todo: ここに処理を追加
-        this.#component.updator.addUpdatedStateProperty(Object.assign({}, propertyAccess));
+        this.#component.updator.addUpdatedStateProperty(propertyAccess);
     }
     clearCache() {
     }
@@ -1617,10 +1617,7 @@ class DirectlyCallContext {
 class StateWriteHandler extends StateBaseHandler {
     #directlyCallContext = new DirectlyCallContext;
     /**
-     * プロパティ情報からViewModelの値を取得する
-     * @param {ViewModel} target
-     * @param {{propName:import("../../modules/dot-notation/dot-notation.js").PropertyName}}
-     * @param {Proxy} receiver
+     * プロパティ情報からStateの値を取得する
      */
     getByPatternNameAndIndexes(target, { patternName, indexes }, receiver) {
         const patterNameInfo = getPatternNameInfo(patternName);
@@ -1632,7 +1629,7 @@ class StateWriteHandler extends StateBaseHandler {
             super.getByPatternNameAndIndexes(target, { patternName, indexes }, receiver);
     }
     /**
-     * プロパティ情報からViewModelの値を設定する
+     * プロパティ情報からStateの値を設定する
      */
     setByPatternNameAndIndexes(target, { patternName, indexes, value }, receiver) {
         const patterNameInfo = getPatternNameInfo(patternName);
@@ -1668,16 +1665,9 @@ class StateWriteHandler extends StateBaseHandler {
         const wildcardPatternNameInfo = getPatternNameInfo(patternNameInfo.wildcardNames[patternNameInfo.wildcardNames.length - 1]);
         const loopContext = this.#directlyCallContext.loopContext.find(wildcardPatternNameInfo.parentPath);
         if (typeof loopContext === "undefined")
-            utils.raise(`WritableViewModelHandler: ${prop} is outside loop`);
+            utils.raise(`StateWriteHandler: ${prop} is outside loop`);
         return loopContext;
     }
-    /**
-     *
-     * @param {ViewModel} target
-     * @param {string} prop
-     * @param {Proxy} receiver
-     * @returns {any}
-     */
     get(target, prop, receiver) {
         if (typeof prop === "symbol") {
             const supportCallbackSymbol = Callback.getSupportSymbol(prop);
@@ -1978,7 +1968,7 @@ const parseFilter = (text) => {
  * parse expression
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  */
-const parseViewModelProperty = (text) => {
+const parseStateProperty = (text) => {
     const [stateProperty, ...filterTexts] = text.split("|").map(trim);
     return { stateProperty, filters: filterTexts.map(parseFilter) };
 };
@@ -1988,7 +1978,7 @@ const parseViewModelProperty = (text) => {
  */
 const parseExpression = (expr, defaultName) => {
     const [nodeProperty, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
-    const { stateProperty, filters } = parseViewModelProperty(statePropertyText);
+    const { stateProperty, filters } = parseStateProperty(statePropertyText);
     return { nodeProperty, stateProperty, filters };
 };
 /**
@@ -2125,7 +2115,7 @@ class StateProperty {
     get filteredValue() {
         return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
     }
-    // applyToViewModel()の対象かどうか
+    // applyToState()の対象かどうか
     get applicable() {
         return true;
     }
@@ -2231,7 +2221,7 @@ class NodeProperty {
     }
     initialize() {
     }
-    postUpdate(propertyAccessByViewModelPropertyKey) {
+    postUpdate(propertyAccessByStatePropertyKey) {
     }
     isSameValue(value) {
         return this.value === value;
@@ -2302,7 +2292,7 @@ class Repeat extends TemplateProperty {
     }
     set value(value) {
         if (!Array.isArray(value))
-            utils.raise(`Repeat: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not array`);
+            utils.raise(`Repeat: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         if (this.value < value.length) {
             this.binding.children.forEach(applyToNodeFunc);
             for (let newIndex = this.value; newIndex < value.length; newIndex++) {
@@ -2339,7 +2329,7 @@ class Branch extends TemplateProperty {
      */
     set value(value) {
         if (typeof value !== "boolean")
-            utils.raise(`Branch: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not boolean`);
+            utils.raise(`Branch: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`);
         if (this.value !== value) {
             if (value) {
                 const bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
@@ -2383,7 +2373,7 @@ class ElementClassName extends ElementBase {
     }
     set value(value) {
         if (!Array.isArray(value))
-            utils.raise(`ElementClassName: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not array`);
+            utils.raise(`ElementClassName: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         this.element.className = value.join(" ");
     }
     constructor(binding, node, name, filters) {
@@ -2405,7 +2395,7 @@ class Checkbox extends ElementBase {
     }
     set value(value) {
         if (!Array.isArray(value))
-            utils.raise(`Checkbox: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not array`);
+            utils.raise(`Checkbox: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         const multiValue = this.filteredValue;
         this.inputElement.checked = value.some(v => v === multiValue.value);
     }
@@ -2525,7 +2515,7 @@ class ElementClass extends ElementBase {
     }
     set value(value) {
         if (typeof value !== "boolean")
-            utils.raise(`ElementClass: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not boolean`);
+            utils.raise(`ElementClass: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`);
         value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
     }
     constructor(binding, node, name, filters) {
@@ -2677,7 +2667,7 @@ class RepeatKeyed extends Repeat {
     }
     set value(values) {
         if (!Array.isArray(values))
-            utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.ViewModel['${this.binding.stateProperty.name}'] is not array`);
+            utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         this.#fromIndexByValue.clear();
         this.#lastIndexes.clear();
         this.#setOfNewIndexes.clear();
@@ -2801,7 +2791,7 @@ const nodePropertyConstructorByFirstName = {
     "props": ComponentProperty,
 };
 /**
- * get constructors for NodeProperty and ViewModelProperty
+ * get constructors for NodeProperty and StateProperty
  */
 const getPropertyCreators = (node, nodePropertyName, statePropertyName, useKeyed) => {
     const statePropertyClass = regexp.test(statePropertyName) ? ContextIndex : StateProperty;
@@ -3114,7 +3104,7 @@ class Binding {
         }
         return this.#isSelectValue;
     }
-    constructor(bindingManager, node, nodePropertyName, nodePropertyCreator, state, statePropertyName, statePropertyCreator, filters) {
+    constructor(bindingManager, node, nodePropertyName, nodePropertyCreator, statePropertyName, statePropertyCreator, filters) {
         // assignを呼ぶとbindingManagerなどがundefinedになるので、constructorで初期化
         this.#id = ++seq;
         this.#bindingManager = bindingManager;
@@ -3139,10 +3129,10 @@ class Binding {
         component.updator.applyNodeUpdatesByBinding(this, () => {
             if (!nodeProperty.applicable)
                 return;
-            const filteredViewModelValue = stateProperty.filteredValue ?? "";
-            if (nodeProperty.isSameValue(filteredViewModelValue))
+            const filteredStateValue = stateProperty.filteredValue ?? "";
+            if (nodeProperty.isSameValue(filteredStateValue))
                 return;
-            nodeProperty.value = filteredViewModelValue;
+            nodeProperty.value = filteredStateValue;
         });
     }
     /**
@@ -3339,7 +3329,7 @@ class BindingManager {
         }
     }
     /**
-     * apply value to ViewModel
+     * apply value to State
      */
     applyToState() {
         for (let i = 0; i < this.#bindings.length; i++) {
@@ -3948,8 +3938,9 @@ function createGlobals(component) {
 
 const pseudoComponentByNode = new Map;
 const getParentComponent = (_node) => {
+    let node = _node;
     do {
-        let node = _node.parentNode;
+        node = node.parentNode;
         if (node == null)
             return undefined;
         if (Reflect.get(node, "isQuelComponent"))
@@ -4415,7 +4406,7 @@ const generateComponentClass = (componentModule) => {
             #module;
             get module() {
                 if (typeof this.#module === "undefined") {
-                    this.#module = moduleByConstructor.get(this.constructor) ?? utils.raise(`module is not found for ${this.constructor.name}`);
+                    this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
                 }
                 return this.#module;
             }
@@ -4535,7 +4526,12 @@ const generateComponentClass = (componentModule) => {
             get baseClass() {
                 return Reflect.get(this.constructor, "baseClass");
             }
+            static thisClass;
+            get thisClass() {
+                return Reflect.get(this.constructor, "thisClass");
+            }
         };
+        baseClass.thisClass = baseClass;
         moduleByConstructor.set(baseClass, module);
         return baseClass;
     };

@@ -91,7 +91,7 @@ export class StateProperty implements IStateProperty {
     return this.filters.length === 0 ? this.value : FilterManager.applyFilter<"output">(this.value, this.filters);
   }
 
-  // applyToViewModel()の対象かどうか
+  // applyToState()の対象かどうか
   get applicable():boolean {
     return true;
   }
