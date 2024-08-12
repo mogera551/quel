@@ -1,8 +1,8 @@
-import { BindingManager } from "../Binding";
-import { TemplateProperty } from "./TemplateProperty";
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { IBinding, IBindingManager } from "../../@types/binding";
+import { BindingManager } from "../Binding";
+import { TemplateProperty } from "./TemplateProperty";
 
 const applyToNodeFunc = (bindingManager:IBindingManager):void => bindingManager.applyToNode();
 

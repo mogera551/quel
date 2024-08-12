@@ -1,6 +1,6 @@
-import "../types.js";
+import "../types_.js";
 import { utils } from "../utils.js";
-import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager.js";
+import { bindingManagersByUUID, createBindingManager } from "./ReuseBindingManager_.js";
 import { LoopContext } from "../loopContext/LoopContext.js";
 import { Binder } from "../newBinder/Binder.js";
 
@@ -25,7 +25,7 @@ export class Binding {
     return this.#nodeProperty
   }
 
-  /** @type { import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty } viewmodel property */
+  /** @type { import("./viewModelProperty/ViewModelProperty_.js").ViewModelProperty } viewmodel property */
   #viewModelProperty;
   get viewModelProperty() {
     return this.#viewModelProperty;
@@ -73,7 +73,7 @@ export class Binding {
    * @param {string} nodePropertyName
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
    * @param {string} viewModelPropertyName
-   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor 
+   * @param {typeof import("./viewModelProperty/ViewModelProperty_.js").ViewModelProperty} viewModelPropertyConstructor 
    * @param {FilterInfo[]} filters
    */
   constructor(bindingManager,
@@ -91,7 +91,7 @@ export class Binding {
    * @param {string} nodePropertyName
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
    * @param {string} viewModelPropertyName
-   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor 
+   * @param {typeof import("./viewModelProperty/ViewModelProperty_.js").ViewModelProperty} viewModelPropertyConstructor 
    * @param {FilterInfo[]} filters
    * @returns {Binding}
    */
@@ -207,7 +207,7 @@ export class Binding {
    * @param {string} nodePropertyName
    * @param {typeof import("./nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor 
    * @param {string} viewModelPropertyName
-   * @param {typeof import("./viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor
+   * @param {typeof import("./viewModelProperty/ViewModelProperty_.js").ViewModelProperty} viewModelPropertyConstructor
    * @param {FilterInfo[]} filters
    */
   static create(bindingManager,

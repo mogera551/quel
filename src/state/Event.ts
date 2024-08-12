@@ -1,6 +1,6 @@
 
 import { utils } from "../utils";
-import { ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol } from "./Const";
+import { ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol } from "../@symbols/state";
 
 const CONNECTED_EVENT = "connected";
 const DISCONNECTED_EVENT = "disconnected";
@@ -10,17 +10,17 @@ type UpdatedArgs = {
   props:any[];
 };
 
-const createConnectedDetail = (...args:any):void => {};
-const createDisconnectedDetail = (...args:any):void => {};
-const createUpdatedDetail = (...args:any):UpdatedArgs => ({props:args});
+const createConnectedDetail = (...args:any[]):void => {};
+const createDisconnectedDetail = (...args:any[]):void => {};
+const createUpdatedDetail = (...args:any[]):UpdatedArgs => ({props:args});
 
-const createDetailFn = {
+const createDetailFn:{[key:symbol]:(...args:any[])=>any} = {
   [ConnectedEventSymbol]: createConnectedDetail,
   [DisconnectedEventSymbol]: createDisconnectedDetail,
   [UpdatedEventSymbol]: createUpdatedDetail,
 };
 
-const customEventNames = {
+const customEventNames:{[key:symbol]:string} = {
   [ConnectedEventSymbol]: CONNECTED_EVENT,
   [DisconnectedEventSymbol]: DISCONNECTED_EVENT,
   [UpdatedEventSymbol]: UPDATED_EVENT,

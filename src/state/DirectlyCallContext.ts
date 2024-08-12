@@ -1,6 +1,6 @@
+import { utils } from "../utils";
 import { ILoopContext } from "../@types/loopContext.js";
 import { IDirectlyCallContext } from "../@types/state.js";
-import { utils } from "../utils";
 
 /**
  * DirectlyCall時、context情報の復帰を行う

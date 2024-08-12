@@ -1,6 +1,6 @@
 
 
-import "../types.js";
+import "../types_.js";
 import "../@types/binder.js";
 import { utils } from "../utils.js";
 import { getDefaultProperty } from "./defaultProperty.js";

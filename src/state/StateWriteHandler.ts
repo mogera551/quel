@@ -1,9 +1,8 @@
+import { utils } from "../utils";
 import { ILoopContext } from "../@types/loopContext";
 import { IDirectlyCallContext, IState } from "../@types/state";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { getPatternNameInfo } from "../dot-notation/PatternName";
-import { getPropertyNameInfo } from "../dot-notation/PropertyName";
-import { utils } from "../utils";
 import { Api } from "./Api";
 import { Callback } from "./Callback";
 import { DirectlyCallContext } from "./DirectlyCallContext";

@@ -1,5 +1,5 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
+import "../types_.js";
+import { Symbols } from "../Symbols_.js";
 
 const CONNECTED_EVENT = "connected";
 const DISCONNECTED_EVENT = "disconnected";

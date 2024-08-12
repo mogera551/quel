@@ -1,13 +1,11 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
-import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
-import { IComponent, IProps } from "../@types/component";
-import { IBinding, IBindingPropertyAccess, IPropertyAccess } from "../@types/binding";
-import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
-import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../state/Const.js";
-import { getPatternNameInfo } from "../dot-notation/PatternName.js";
 import { utils } from "../utils.js";
+import { IComponent, IProps } from "../@types/component";
+import { IBindingPropertyAccess } from "../@types/binding";
+import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
+import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component.js";
+import { RE_CONTEXT_INDEX } from "../dot-notation/Const";
+import { getPatternNameInfo } from "../dot-notation/PatternName.js";
 
 const getPopoverContextIndexes = (component:IComponent):number[]|undefined => {
   const id = component.id;

@@ -1,8 +1,8 @@
-import { Symbols } from "../../Symbols.js";
-import { FilterManager, Filters } from "../../filter/Manager";
-import { EventFilterFunc, FilterType, IFilterInfo } from "../../@types/filter.js";
 import { utils } from "../../utils";
+import { EventFilterFunc, FilterType, IFilterInfo } from "../../@types/filter.js";
 import { IBinding } from "../../@types/binding";
+import { DirectryCallApiSymbol } from "../../@symbols/state.js";
+import { FilterManager, Filters } from "../../filter/Manager";
 import { ElementBase } from "./ElementBase";
 
 const PREFIX = "on";
@@ -49,8 +49,8 @@ export class ElementEvent extends ElementBase {
   async directlyCall(event:Event) {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!(this.binding.component?.bindingSummary.exists(this.binding) ?? false)) return;
-    const { stateProperty = undefined, loopContext = undefined } = this.binding ?? {};
-    return stateProperty?.state[Symbols.directlyCall](stateProperty.name, loopContext, event);
+    const { stateProperty, loopContext } = this.binding;
+    return stateProperty.state[DirectryCallApiSymbol](stateProperty.name, loopContext, event);
   }
 
   eventHandler(event:Event) {

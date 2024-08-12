@@ -1,6 +1,6 @@
 import { config } from "../Config.js";
-import { Symbols } from "../Symbols.js";
-import "../types.js"
+import { Symbols } from "../Symbols_.js";
+import "../types_.js"
 import { utils } from "../utils.js";
 
 /**

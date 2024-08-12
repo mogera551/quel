@@ -2,16 +2,16 @@ import { utils } from "../utils";
 import {
   ConnectedCallbackSymbol, DisconnectedCallbackSymbol, UpdatedCallbackSymbol,
   ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol,
-} from "./Const";
+} from "../@symbols/state";
+import { IState, SupprotCallbackSymbols } from "../@types/state";
 import { dispatchCustomEvent } from "./Event";
 import { StateBaseHandler } from "./StateBaseHandler";
-import { IState, SupprotCallbackSymbols } from "../@types/state";
 
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
 const UPDATED_CALLBACK = "$updatedCallback";
 
-const callbackNameBySymbol = {
+const callbackNameBySymbol:{[key:symbol]:string} = {
   [ConnectedCallbackSymbol]: CONNECTED_CALLBACK,
   [DisconnectedCallbackSymbol]: DISCONNECTED_CALLBACK,
   [UpdatedCallbackSymbol]: UPDATED_CALLBACK,
@@ -23,7 +23,7 @@ const allCallbacks = new Set([
   UpdatedCallbackSymbol,
 ]);
 
-const callbackToEvent = {
+const callbackToEvent:{[key:symbol]:symbol} = {
   [ConnectedCallbackSymbol]: ConnectedEventSymbol,
   [DisconnectedCallbackSymbol]: DisconnectedEventSymbol,
   [UpdatedCallbackSymbol]: UpdatedEventSymbol,

@@ -1,4 +1,4 @@
-import "../types.js"
+import "../types_.js"
 import { Callback } from "./Callback.js";
 import { Api } from "./Api.js";
 import { utils } from "../utils.js";

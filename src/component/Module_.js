@@ -1,5 +1,5 @@
 import { config } from "../Config.js";
-import "../types.js";
+import "../types_.js";
 import { utils } from "../utils.js";
 import * as Template from "./Template.js";
 import * as StyleSheet from "./StyleSheet.js";

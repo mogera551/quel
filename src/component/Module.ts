@@ -1,8 +1,8 @@
-import { config } from "../Config";
 import { utils } from "../utils";
+import { ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions, IModule } from "../@types/component";
+import { config } from "../Config";
 import * as Template from "./Template";
 import * as StyleSheet from "./StyleSheet";
-import { ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions, IModule } from "../@types/component";
 
 export class Module implements IModule{
   #uuid:string = utils.createUUID();

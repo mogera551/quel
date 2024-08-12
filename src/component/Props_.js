@@ -1,5 +1,5 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
+import "../types_.js";
+import { Symbols } from "../Symbols_.js";
 import { PropertyName, RE_CONTEXT_INDEX } from "../../modules/dot-notation/dot-notation.js";
 
 /**

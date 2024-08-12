@@ -203,21 +203,21 @@ const defaultFilterGroup:FilterGroup = {
   ]),
 };
 
-function createPrototypeFilterFunc(ObjectClass:ClassName , FuncName:string):(FilterFuncWithOption|undefined) {
+function createPrototypeFilterFunc<T = FilterType>(ObjectClass:ClassName , FuncName:string):(FilterFuncWithOptionType<T>|undefined) {
   if (Reflect.has(ObjectClass, "prototype")) {
     const prototype = Reflect.get(ObjectClass, "prototype");
     if (Reflect.has(prototype, FuncName)) {
       const func = Reflect.get(prototype, FuncName);
-      return (options:any[]) => (value:any) => func.apply(value, options);
+      return ((options:any[]) => (value:any) => func.apply(value, options)) as FilterFuncWithOptionType<T>;
     }
   }
   return undefined;
 }
 
-function createStaticFilterFunc(ObjectClass:ClassName, FuncName:string):(FilterFuncWithOption|undefined) {
+function createStaticFilterFunc<T = FilterType>(ObjectClass:ClassName, FuncName:string):(FilterFuncWithOptionType<T>|undefined) {
   if (Reflect.has(ObjectClass, FuncName)) {
     const func = Reflect.get(ObjectClass, FuncName);
-    return (options:any[]) => (value:any) => func.apply(null, [value, ...options]);
+    return ((options:any[]) => (value:any) => func.apply(null, [value, ...options])) as FilterFuncWithOptionType<T>;
   }
   return undefined;
 }
@@ -295,7 +295,7 @@ export class OutputFilterManager extends FilterManager<FilterType.Output> {
       for(const funcName of group.prototypeFuncs) {
         const isNotNullThru = funcName.endsWith("*");
         const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
-        const func = createPrototypeFilterFunc(group.objectClass, realFuncName);
+        const func = createPrototypeFilterFunc<FilterType.Output>(group.objectClass, realFuncName);
         if (typeof func !== "undefined") {
           const wrappedFunc = !isNotNullThru ? nullthru(func) : func;
           group.prefix && funcByName.set(`${group.prefix}.${realFuncName}`, wrappedFunc);
@@ -310,7 +310,7 @@ export class OutputFilterManager extends FilterManager<FilterType.Output> {
       for(const funcName of group.staticFuncs) {
         const isNotNullThru = funcName.endsWith("*");
         const realFuncName = isNotNullThru ? funcName.slice(0, -1) : funcName;
-        const func = createStaticFilterFunc(group.objectClass, realFuncName);
+        const func = createStaticFilterFunc<FilterType.Output>(group.objectClass, realFuncName);
         if (typeof func !== "undefined") {
           const wrappedFunc = !isNotNullThru ? nullthru(func) : func;
           group.prefix && funcByName.set(`${group.prefix}.${realFuncName}`, wrappedFunc);

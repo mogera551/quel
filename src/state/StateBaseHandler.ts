@@ -1,14 +1,14 @@
 
-import { AccessorPropertiesSymbol, DependenciesSymbol, GetDependentPropsApiSymbol } from "./Const";
-import { Handler } from "../dot-notation/Handler";
-import { DependentProps } from "./DependentProps";
+import { AccessorPropertiesSymbol, DependenciesSymbol, GetDependentPropsApiSymbol } from "../@symbols/state";
 import { IState } from "../@types/state";
 import { IComponent } from "../@types/component";
 import { ILoopContext } from "../@types/loopContext";
 import { IPropertyAccess } from "../@types/binding";
+import { GetDirectSymbol } from "../@symbols/dotNotation";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { getPatternNameInfo } from "../dot-notation/PatternName";
-import { GetDirectSymbol } from "../@symbols/dotNotation";
+import { Handler } from "../dot-notation/Handler";
+import { DependentProps } from "./DependentProps";
 
 export class StateBaseHandler extends Handler  {
   #accessorProperties:Set<string>;

@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 
 export class Cache {
   /** @type {Map<PropertyName,Map<string,any>>} */

@@ -1,4 +1,4 @@
-import { Symbols } from "../Symbols.js";
+import { Symbols } from "../Symbols_.js";
 import { dispatchCustomEvent } from "./Event.js";
 import { ViewModelHandlerBase } from "./ViewModelHandlerBase.js";
 

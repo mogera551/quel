@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 import { DependentProps } from "./DependentProps.js";
 import { ReadOnlyViewModelHandler } from "./ReadOnlyViewModelHandler.js";
 import { viewModelize } from "./ViewModelize.js";

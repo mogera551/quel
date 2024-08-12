@@ -1,4 +1,4 @@
-import { Symbols } from "../../Symbols.js";
+import { Symbols } from "../../Symbols_.js";
 import { FilterManager, Filters } from "../../filter/Manager.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";

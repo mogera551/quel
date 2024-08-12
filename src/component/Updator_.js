@@ -1,5 +1,5 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
+import "../types_.js";
+import { Symbols } from "../Symbols_.js";
 import { ViewModelHandlerBase } from "../viewModel/ViewModelHandlerBase.js";
 import { config } from "../Config.js";
 

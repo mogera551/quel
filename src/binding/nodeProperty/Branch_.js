@@ -3,7 +3,7 @@
  * @typedef {import("../Binding.js").Binding} Binding
  * @typedef {import("../Binding.js").BindingManager} BindingManager
  */
-import "../../types.js";
+import "../../types_.js";
 import { TemplateProperty } from "./TemplateProperty.js";
 import { utils } from "../../utils.js";
 import { BindingManager } from "../Binding.js";

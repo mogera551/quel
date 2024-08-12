@@ -1,11 +1,11 @@
-import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { utils } from "../utils";
+import { IState } from "../@types/state";
+import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { StateCache } from "./Cache";
 import { StateBaseHandler } from "./StateBaseHandler";
 import { Callback } from "./Callback";
 import { Api } from "./Api";
 import { SpecialProp } from "./SpecialProp";
-import { IState } from "../@types/state";
 
 export class StateReadOnlyHandler extends StateBaseHandler {
   #cache = new StateCache;

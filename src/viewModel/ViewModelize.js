@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 /**

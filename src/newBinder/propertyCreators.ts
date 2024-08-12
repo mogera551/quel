@@ -1,6 +1,6 @@
 import { utils } from "../utils";
-import { PropertyCreators, NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
-import { IBinding, IBindingManager, INodeProperty, IStateProperty } from "../binding/Binding";
+import { PropertyCreators } from "../@types/binder";
+import { IBinding, INodeProperty, IStateProperty } from "../@types/binding";
 import { IFilterInfo } from "../@types/filter";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
@@ -15,7 +15,7 @@ import { ElementClass } from "../binding/nodeProperty/ElementClass";
 import { ElementAttribute } from "../binding/nodeProperty/ElementAttribute";
 import { ElementStyle } from "../binding/nodeProperty/ElementStyle";
 import { ElementProperty } from "../binding/nodeProperty/ElementProperty";
-import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty_.js";
+import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty";
 import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
 
 const regexp = RegExp(/^\$[0-9]+$/);
@@ -57,7 +57,7 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
 /**
  * get constructors for NodeProperty and ViewModelProperty
  */
-export const getPropertyCreators = (node:Node, nodePropertyName:string, statePropertyName:string, useKeyed:boolean):PropertyCreators {
+export const getPropertyCreators = (node:Node, nodePropertyName:string, statePropertyName:string, useKeyed:boolean):PropertyCreators => {
   const statePropertyClass = regexp.test(statePropertyName) ? ContextIndex : StateProperty;
   let nodePropertyClass:typeof NodeProperty;
   do {
@@ -84,5 +84,6 @@ export const getPropertyCreators = (node:Node, nodePropertyName:string, statePro
   } while(false);
   return { 
     nodePropertyCreator:createNodeProperty(nodePropertyClass),
-    statePropertyCreator:createStateProperty(statePropertyClass), };
+    statePropertyCreator:createStateProperty(statePropertyClass), 
+  };
 }

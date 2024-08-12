@@ -1,11 +1,11 @@
-import "../../types.js";
+import "../../types_.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
-import { Symbols } from "../../Symbols.js";
+import { Symbols } from "../../Symbols_.js";
 import { utils } from "../../utils.js";
 import { ElementBase } from "./ElementBase.js";
 
 export class BindingPropertyAccess {
-  /** @type {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} */
+  /** @type {import("../viewModelProperty/ViewModelProperty_.js").ViewModelProperty} */
   #viewModelProperty;
 
   /** @type {string} */
@@ -24,7 +24,7 @@ export class BindingPropertyAccess {
   }
   /**
    * 
-   * @param {import("../viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelProperty
+   * @param {import("../viewModelProperty/ViewModelProperty_.js").ViewModelProperty} viewModelProperty
    */
   constructor(viewModelProperty) {
     this.#viewModelProperty = viewModelProperty;

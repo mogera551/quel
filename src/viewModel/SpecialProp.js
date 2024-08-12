@@ -1,5 +1,5 @@
 import { createUserComponent } from "../component/UserProxy.js";
-import "../types.js";
+import "../types_.js";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";

@@ -1,5 +1,5 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
+import "../types_.js";
+import { Symbols } from "../Symbols_.js";
 import { createProps } from "./Props.js";
 import { createGlobals } from "./Globals.js";
 import { isAttachable } from "./AttachShadow.js";

@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 import { Binding, BindingManager } from "../binding/Binding.js";
 
 /** 

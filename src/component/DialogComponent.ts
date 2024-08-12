@@ -1,9 +1,9 @@
 
+import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
 import { Constructor, IComponent, IDialogComponent } from "../@types/component";
-import { utils } from "../utils";
 
-function CustomComponent<TBase extends Constructor>(Base: TBase) {
+export function DialogComponent<TBase extends Constructor>(Base: TBase) {
   return class extends Base implements IDialogComponent {
     #dialogPromises:PromiseWithResolvers<any>|undefined;
     get dialogPromises():PromiseWithResolvers<any>|undefined {

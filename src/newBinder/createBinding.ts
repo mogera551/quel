@@ -1,6 +1,6 @@
-import { IBindingManager } from "../binding/Binding";
-import { Binding } from "../binding/Binding";
+import { IBindingManager } from "../@types/binding";
 import { ParseBindTextInfo, PropertyCreators } from "../@types/binder";
+import { Binding } from "../binding/Binding";
 
 export const createBinding = (bindTextInfo:ParseBindTextInfo, propertyCreators:PropertyCreators) => 
   (bindingManager:IBindingManager, node:Node) => 

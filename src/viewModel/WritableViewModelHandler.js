@@ -1,5 +1,5 @@
 import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { Symbols } from "../Symbols.js";
+import { Symbols } from "../Symbols_.js";
 import { utils } from "../utils.js";
 import { Api } from "./Api.js";
 import { Callback } from "./Callback.js";

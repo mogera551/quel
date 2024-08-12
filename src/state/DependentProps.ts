@@ -1,11 +1,10 @@
+import { IDependentProps, Dependencies } from "../@types/state";
 import { getPatternNameInfo } from "../dot-notation/PatternName";
 import { getPropertyNameInfo } from "../dot-notation/PropertyName";
-import { IDependentProps, Dependencies } from "../@types/state";
 
 /**
  * $dependentPropsを表現
  */
-
 export class DependentProps implements IDependentProps {
   #defaultProps:Set<string> = new Set;
   #propsByRefProp:Map<string,Set<string>> = new Map;

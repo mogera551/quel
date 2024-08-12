@@ -1,6 +1,6 @@
+import { ComponentModule } from "../@types/component";
 import { importMetaResolve } from "./ImportMetaResolve.js";
 import { registerComponentModule } from "./Component";
-import { ComponentModule } from "../@types/component.js";
 
 function toComment(html:string):string {
   return html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {

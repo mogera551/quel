@@ -1,13 +1,13 @@
-import { MultiValue } from "../nodeProperty/MultiValue";
-import { FilterManager, Filters } from "../../filter/Manager";
-import { getPatternNameInfo } from "../../dot-notation/PatternName";
-import { getPropertyNameInfo } from "../../dot-notation/PropertyName";
-import { Binding } from "../Binding";
 import { IBinding, IStateProperty } from "../../@types/binding";
 import { IFilterInfo, FilterFunc, FilterType } from "../../@types/filter";
 import { IPatternNameInfo, IPropertyNameInfo } from "../../@types/dotNotation";
 import { IState } from "../../@types/state";
 import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
+import { MultiValue } from "../nodeProperty/MultiValue";
+import { FilterManager, Filters } from "../../filter/Manager";
+import { getPatternNameInfo } from "../../dot-notation/PatternName";
+import { getPropertyNameInfo } from "../../dot-notation/PropertyName";
+import { Binding } from "../Binding";
 
 export class StateProperty implements IStateProperty {
   get state():IState {

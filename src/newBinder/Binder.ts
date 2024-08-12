@@ -1,9 +1,9 @@
 
 
 import { IBindNodeInfo } from "../@types/binder";
+import { IBinding, IBindingManager } from "../@types/binding";
 import { parseTemplate } from "./parseTemplate";
 import { createBindings } from "./createBindings";
-import { IBinding, IBindingManager } from "../binding/Binding";
 
 const UUID_DATASET = "uuid";
 

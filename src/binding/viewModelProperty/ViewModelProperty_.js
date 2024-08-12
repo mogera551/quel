@@ -1,7 +1,7 @@
-import "../../types.js";
+import "../../types_.js";
 import { MultiValue } from "../nodeProperty/MultiValue.js";
 import { PropertyName } from "../../../modules/dot-notation/dot-notation.js";
-import { Symbols } from "../../Symbols.js";
+import { Symbols } from "../../Symbols_.js";
 import { FilterManager, Filters } from "../../filter/Manager.js";
 
 export class ViewModelProperty {

@@ -1,6 +1,6 @@
-import "../types.js";
+import "../types_.js";
 import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
-import { Symbols } from "../Symbols.js";
+import { Symbols } from "../Symbols_.js";
 
 export class ViewModelHandlerBase extends Handler {
   /** @type {Component} */

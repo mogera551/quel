@@ -1,5 +1,3 @@
-//import "../types.js";
-//import { Symbols } from "../Symbols.js";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { BoundByComponentSymbol } from "../@symbols/global";
 import { IComponent } from "../@types/component";
@@ -7,7 +5,6 @@ import { IGlobalData } from "../@types/global";
 import { Handler } from "../dot-notation/Handler";
 import { getPropertyNameInfo } from "../dot-notation/PropertyName";
 import { GlobalData } from "../global/Data";
-//import { PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobalData> {
   #component:IComponent;

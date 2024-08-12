@@ -1,8 +1,8 @@
 import { utils } from "../utils.js";
 import { Repeat } from "../binding/nodeProperty/Repeat.js";
 import { Branch } from "../binding/nodeProperty/Branch.js";
-import { ViewModelProperty } from "../binding/viewModelProperty/ViewModelProperty.js";
-import { ContextIndex } from "../binding/viewModelProperty/ContextIndex.js";
+import { ViewModelProperty } from "../binding/viewModelProperty/ViewModelProperty_.js";
+import { ContextIndex } from "../binding/viewModelProperty/ContextIndex_.js";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty.js";
 import { ElementClassName } from "../binding/nodeProperty/ElementClassName.js"
 import { Checkbox } from "../binding/nodeProperty/Checkbox.js";

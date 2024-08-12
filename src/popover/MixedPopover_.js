@@ -1,5 +1,5 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
+import "../types_.js";
+import { Symbols } from "../Symbols_.js";
 import { utils } from "../utils.js";
 
 export class MixedPopover {

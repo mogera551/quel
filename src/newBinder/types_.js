@@ -5,7 +5,7 @@
  * @property {string} viewModelProperty property name of viewModel to bind
  * @property {FilterInfo[]} filters filter information list
  * @property {typeof import("../binding/nodeProperty/NodeProperty.js").NodeProperty} nodePropertyConstructor
- * @property {typeof import("../binding/viewModelProperty/ViewModelProperty.js").ViewModelProperty} viewModelPropertyConstructor
+ * @property {typeof import("../binding/viewModelProperty/ViewModelProperty_.js").ViewModelProperty} viewModelPropertyConstructor
  * @property {(bindingManager:BindingManager,node:Node)=>Binding} createBinding
  */
 

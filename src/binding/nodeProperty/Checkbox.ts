@@ -1,9 +1,9 @@
-import { ElementBase } from "./ElementBase";
-import { MultiValue } from "./MultiValue";
 import { utils } from "../../utils";
-import { FilterManager } from "../../filter/Manager";
 import { IFilterInfo, FilterType } from "../../@types/filter";
 import { IBinding, IMultiValue } from "../../@types/binding";
+import { ElementBase } from "./ElementBase";
+import { MultiValue } from "./MultiValue";
+import { FilterManager } from "../../filter/Manager";
 
 export class Checkbox extends ElementBase {
   get inputElement():HTMLInputElement {

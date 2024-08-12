@@ -1,5 +1,5 @@
-import "../types.js";
-import { Symbols } from "../Symbols.js";
+import "../types_.js";
+import { Symbols } from "../Symbols_.js";
 import { Handler, PropertyName } from "../../modules/dot-notation/dot-notation.js";
 
 class GlobalDataHandler extends Handler {

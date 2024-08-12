@@ -1,12 +1,11 @@
-import { Symbols } from "../../Symbols.js";
 import { utils } from "../../utils";
-import { ElementBase } from "./ElementBase";
 import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../../@types/binding";
 import { IFilterInfo } from "../../@types/filter.js";
 import { ILoopContext } from "../../@types/loopContext.js";
 import { IComponent } from "../../@types/component.js";
 import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.js";
-import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/Const.js";
+import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@symbols/state";
+import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess.js";
 
 export class BindingPropertyAccess implements IBindingPropertyAccess{

@@ -1,5 +1,5 @@
-import { IComponent } from "../@types/component";
 import { utils } from "../utils";
+import { IComponent } from "../@types/component";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";

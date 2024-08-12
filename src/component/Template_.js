@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 import { utils } from "../utils.js";
 
 const DATASET_BIND_PROPERTY = "data-bind";

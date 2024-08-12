@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 import { Loader, Registrar } from "../../modules/vanilla-module-loader/vanilla_module_loader.js";
 import { registerComponentModule } from "../component/Component.js";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager.js";

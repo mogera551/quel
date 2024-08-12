@@ -1,8 +1,8 @@
-import { MultiValue } from "./MultiValue";
 import { utils } from "../../utils";
-import { ElementBase } from "./ElementBase";
 import { FilterType, IFilterInfo } from "../../@types/filter";
 import { IBinding, IMultiValue } from "../../@types/binding";
+import { MultiValue } from "./MultiValue";
+import { ElementBase } from "./ElementBase";
 import { FilterManager } from "../../filter/Manager";
 
 export class Radio extends ElementBase {

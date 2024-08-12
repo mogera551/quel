@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 import { registerComponentModule } from "./Component.js";
 
 /**

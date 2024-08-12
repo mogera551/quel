@@ -1,10 +1,10 @@
-import { SetDirectSymbol } from "../@symbols/dotNotation";
-import { BoundByComponentSymbol } from "../@symbols/global";
 import { IComponent } from "../@types/component";
 import { IGlobalData } from "../@types/global";
+import { SetDirectSymbol } from "../@symbols/dotNotation";
+import { BoundByComponentSymbol } from "../@symbols/global";
+import { NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { Handler } from "../dot-notation/Handler";
 import { getPropertyNameInfo } from "../dot-notation/PropertyName";
-import { NotifyForDependentPropsApiSymbol } from "../state/Const";
 
 class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalData> {
   #setOfComponentByProp:Map<string,Set<IComponent>> = new Map;

@@ -1,17 +1,17 @@
-import { IUpdator, IComponentBase, Constructor, ICustomComponent, IComponent, IProps } from "../@types/component";
+import { utils } from "../utils";
+import { IUpdator, Constructor, ICustomComponent, IComponent, IProps } from "../@types/component";
+import { IState, Proxies } from "../@types/state";
+import { ConnectedCallbackSymbol } from "../@symbols/state";
+import { IBindingManager, IBindingSummary } from "../@types/binding";
+import { IGlobalData } from "../@types/global";
 import { getProxies } from "../state/Proxies";
 import { isAttachable } from "./AttachShadow";
 import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
-import { ConnectedCallbackSymbol } from "../state/Const";
-import { IState, Proxies } from "../@types/state";
 import { BindingManager } from "../binding/Binding";
-import { utils } from "../utils";
-import { IBindingManager, IBindingSummary } from "../@types/binding";
 import { BindingSummary } from "../binding/BindingSummary";
 import { Updator } from "./Updator";
 import { createProps } from "./Props";
-import { IGlobalData } from "../@types/global";
 import { createGlobals } from "./Globals";
 
 const pseudoComponentByNode:Map<Node,IComponent> = new Map;
@@ -32,7 +32,7 @@ const getParentComponent = (_node:Node):Node|undefined => {
 
 const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
-function CustomComponent<TBase extends Constructor>(Base: TBase) {
+export function CustomComponent<TBase extends Constructor>(Base: TBase) {
   return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();

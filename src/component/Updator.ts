@@ -1,10 +1,9 @@
+import { utils } from "../utils";
+import { IComponent, IProcess, IUpdator } from "../@types/component";
+import { IBinding, IPropertyAccess } from "../@types/binding";
+import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../@symbols/state";
 import { StateBaseHandler } from "../state/StateBaseHandler";
 import { config } from "../Config";
-import { IComponent, IProcess, IUpdator } from "../@types/component";
-import { IState } from "../@types/state";
-import { IBinding, IPropertyAccess } from "../@types/binding";
-import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../state/Const";
-import { utils } from "../utils";
 
 const getPropAccessKey = (prop:IPropertyAccess):string => prop.patternName + "\t" + prop.indexes.toString();
 const executeProcess = (process:IProcess) => async ():Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);

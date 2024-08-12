@@ -1,14 +1,13 @@
-import { IsComponentSymbol, ModuleSymbol, CustomElementInfoSymbol, SetCustomElementInfoSymbol, FilterManagersSymbol, SetFilterManagersSymbol } from "../@symbols/component";
-import { Module } from "./Module.js";
-import { MixedComponent } from "./MixedComponent_.js";
 import { utils } from "../utils";
-import { config } from "../Config.js";
-import { MixedDialog } from "./MixedDialog_.js";
-import { MixedPopover } from "../popover/MixedPopover_.js";
-import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
-import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase } from "../@types/component";
-import { replaceBaseClass } from "./ReplaceBaseClass.js";
+import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase, IComponent } from "../@types/component";
 import { StateClass } from "../@types/state";
+import { Module } from "./Module";
+import { config } from "../Config";
+import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
+import { CustomComponent } from "./CustomComponent";
+import { DialogComponent } from "./DialogComponent";
+import { PopoverComponent } from "./PopoverComponent";
+import { replaceBaseClass } from "./ReplaceBaseClass.js";
 
 const moduleByConstructor:Map<Function,IModule> = new Map;
 const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;
@@ -16,10 +15,8 @@ const filterManagersByTagName:Map<string,FilterManagers> = new Map;
 
 /**
  * generate unique component class
- * @param {ComponentModule} componentModule 
- * @returns {Component.constructor}
  */
-export const generateComponentClass = (componentModule:ComponentModule) => {
+export const generateComponentClass = (componentModule:ComponentModule):typeof HTMLElement => {
   const getBaseClass = function (module:IModule):typeof HTMLElement {
     const baseClass = class extends HTMLElement implements IComponentBase {
       #module?:IModule;
@@ -159,37 +156,13 @@ export const generateComponentClass = (componentModule:ComponentModule) => {
         return this.filterManagers.eventFilterManager;
       }
 
-      /** @type {CSSStyleSheet|undefined} */
-      static localStyleSheet;
-
-      /**  */
-      static initializeCallbacks = [];
-
-      static accessiblePropertiesFn = [];
-
-      static allProperties = [ "initialize", "accessibleProperties", "allProperties" ];
-
       /**
        */
       constructor() {
         super();
         this.#setCustomElementInfo();
         this.#setFilterManagers();
-        //this.initialize();
       }
-/*
-      initialize() {
-        this.constructor.initializeCallbacks.forEach(callback => callback.apply(this, []));
-      }
-
-      get accessibleProperties() {
-        const accessibleProperties = [];
-        return this.constructor.accessiblePropertiesFn.flatMap(fn => fn.apply(this, []) ?? []).concat(accessibleProperties);
-      }
-      get allProperties() {
-        return this.constructor.allProperties;
-      }
-*/
     };
     moduleByConstructor.set(baseClass, module);
     return baseClass;
@@ -219,54 +192,19 @@ export const generateComponentClass = (componentModule:ComponentModule) => {
 */
   }
 
-  /**
-   * mix in class
-   * @param {Object.constructor} mixedClass
-   */
-  const classMixIn = (mixedClass) => {
-    // static properties and static accessors
-    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass))) {
-      // exclude name, length, prototype
-      if (!desc.enumerable && typeof desc.get === "undefined") continue;
-      if (key === "accessibleProperties") {
-        componentClass.accessiblePropertiesFn.push(desc.get ?? (() => desc.value));
-      } else {
-        Object.defineProperty(componentClass, key, desc);
-      }
-      componentClass.allProperties.push(key);
-    }
-    // instance accessors and methods
-    for(let [key, desc] of Object.entries(Object.getOwnPropertyDescriptors(mixedClass.prototype))) {
-      // exclude constructor
-      if (key === "constructor") continue;
-      if (key === "initializeCallback") {
-        componentClass.initializeCallbacks.push(desc.value);
-      } else if (key === "accessibleProperties") {
-        componentClass.accessiblePropertiesFn.push(desc.get ?? (() => desc.value));
-      } else {
-        Object.defineProperty(componentClass.prototype, key, desc);
-      }
-      componentClass.allProperties.push(key);
-    }
-
-  }
-  classMixIn(MixedComponent);
-  classMixIn(MixedDialog);
-  classMixIn(MixedPopover);
+  const extendedComponentClass = PopoverComponent(DialogComponent(CustomComponent(componentClass))); 
 
   // register component's subcomponents 
-  registerComponentModules(module.componentModulesForRegister);
+  registerComponentModules(module.componentModulesForRegister ?? {});
 
-  return componentClass;
+  return extendedComponentClass;
 }
 
 /**
  * register component class with tag name, call customElements.define
  * generate component class from componentModule
- * @param {string} customElementName 
- * @param {ComponentModule} componentModule 
  */
-export function registerComponentModule(customElementName, componentModule) {
+export function registerComponentModule(customElementName:string, componentModule:ComponentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = generateComponentClass(componentModule);
   const extendsTag = componentModule.moduleConfig?.extends ?? componentModule.options?.extends;
@@ -277,12 +215,8 @@ export function registerComponentModule(customElementName, componentModule) {
   }
 }
 
-/**
- * 
- * @param {Object<string,ComponentModule>} componentModules 
- */
-export function registerComponentModules(componentModules) {
-  for(const [customElementName, userComponentModule] of Object.entries(componentModules ?? {})) {
+export function registerComponentModules(componentModules:{[key:string]:ComponentModule}) {
+  for(const [customElementName, userComponentModule] of Object.entries(componentModules)) {
     registerComponentModule(customElementName, userComponentModule);
   }
 }

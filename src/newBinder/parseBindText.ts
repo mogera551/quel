@@ -1,5 +1,5 @@
-import { IFilterInfo } from "../@types/filter";
 import { utils } from "../utils.js";
+import { IFilterInfo } from "../@types/filter";
 import { ParseBindTextInfo } from "../@types/binder.js";
 
 const SAMENAME = "@";

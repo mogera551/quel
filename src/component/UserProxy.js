@@ -1,4 +1,4 @@
-import "../types.js";
+import "../types_.js";
 import { getPropertyNameInfo } from "../dot-notation/PropertyName.js";
 
 const bindValue = (target) => (value) => (typeof value === "function") ? value.bind(target) : value;

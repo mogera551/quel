@@ -1,5 +1,5 @@
-import { IBindingManager } from "../@types/binding";
 import { utils } from "../utils";
+import { IBindingManager } from "../@types/binding";
 
 type SetContextIndexes = () => void;
 
