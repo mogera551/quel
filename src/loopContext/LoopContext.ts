@@ -1,4 +1,4 @@
-import { IBindingManager, IBinding } from "../binding/Binding.js";
+import { IBindingManager, IBinding } from "../@types/binding";
 import { getPatternNameInfo } from "../dot-notation/PatternName.js";
 import { ILoopContext } from "../@types/loopContext.js";
 

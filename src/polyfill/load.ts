@@ -1,5 +1,5 @@
-import "./map-group-by.js";
-import "./object-group-by.js";
-import "./promise-with-resolvers.js";
-import "./array-to-sorted.js";
-import "./array-to-reversed.js";
+import "./map-group-by";
+import "./object-group-by";
+import "./promise-with-resolvers";
+import "./array-to-sorted";
+import "./array-to-reversed";

@@ -46,11 +46,16 @@ class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalData> {
 }
 
 export class GlobalData {
-  static create():IGlobalData {
-    return new Proxy<Object>({}, new GlobalDataHandler) as IGlobalData;
+  static create(data:{[key:string]:any} = {}):IGlobalData {
+    return new Proxy<Object>(data, new GlobalDataHandler) as IGlobalData;
   }
 
-  static data:IGlobalData = this.create();
-
+  static #data:IGlobalData = this.create();
+  static get data():IGlobalData {
+    return this.#data;
+  }
+  static set data(data:Object) {
+    this.#data = this.create(data);
+  }
 }
 

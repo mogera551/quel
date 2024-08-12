@@ -1,6 +1,7 @@
 import { utils } from "../utils";
 import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase, IComponent } from "../@types/component";
 import { StateClass } from "../@types/state";
+import { FilterFuncWithOption, EventFilterFuncWithOption } from "../@types/filter";
 import { Module } from "./Module";
 import { config } from "../Config";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";

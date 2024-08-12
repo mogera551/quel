@@ -1,6 +1,6 @@
 import { loader } from "./loader/QuelLoader";
 import { config } from "./Config";
-import { ImportMeta_ } from "./@types/polyfill";
+import { ImportMeta_ } from "./@types/importMeta";
 
 const DEFAULT_CONFIG_PATH = "./quel.config.json";
 

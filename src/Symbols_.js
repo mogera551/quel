@@ -1,4 +1,4 @@
-import { name as myname } from "./myname.js";
+import { name as myname } from "./myname_.js";
 import { Symbols as DotNotationSymbols } from "../modules/dot-notation/dot-notation.js";
 
 /**
