@@ -58,7 +58,8 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
       const replaceElements:Element[] = Array.from(element.querySelectorAll(customComponentKebabName));
       for(const oldElement of replaceElements) {
         const newElement = document.createElement(`${customComponentKebabName}-${componentUuid}`);
-        for(const attr of oldElement.attributes) {
+        for(let i = 0; i < oldElement.attributes.length; i++) {
+          const attr = oldElement.attributes[i];
           newElement.setAttribute(attr.name, attr.value);
         }
         newElement.setAttribute("data-orig-tag-name", customComponentKebabName);
@@ -67,7 +68,8 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
       const changeIsElements:Element[] = Array.from(element.querySelectorAll(`[is="${customComponentKebabName}"]`));
       for(const oldElement of changeIsElements) {
         const newElement = document.createElement(oldElement.tagName, { is:`${customComponentKebabName}-${componentUuid}` });
-        for(const attr of oldElement.attributes) {
+        for(let i = 0; i < oldElement.attributes.length; i++) {
+          const attr = oldElement.attributes[i];
           if (attr.name === "is") continue;
           newElement.setAttribute(attr.name, attr.value);
         }

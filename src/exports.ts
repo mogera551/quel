@@ -1,13 +1,12 @@
 export { config } from "./Config";
 export { getCustomTagFromImportMeta, importHtmlFromImportMeta, importCssFromImportMeta } from "./helper";
-/*
-export { generateComponentClass, registerComponentModules } from "./component/Component";
 export { loader } from "./loader/QuelLoader";
 export { bootFromImportMeta } from "./Boot";
+export { generateComponentClass, registerComponentModules } from "./component/Component";
+export { loadSingleFileComponent, registerSingleFileComponents } from "./component/SingleFile";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "./@types/filter";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "./filter/Manager";
 import { GlobalData } from "./global/Data";
-export { loadSingleFileComponent, registerSingleFileComponents } from "./component/SingleFile";
 
 type FilterFuncWithOptions = {
   input:FilterFuncWithOption, output:FilterFuncWithOption, event:EventFilterFuncWithOption
@@ -26,5 +25,4 @@ export function registerGlobal(data:{[key:string]:any}) {
   Object.assign(GlobalData.data, data);
 }
 
-await import("./polyfill/load");
-*/
+import "./polyfill/load";

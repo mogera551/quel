@@ -37,10 +37,10 @@ type GetDefaultPropertyByNodeType = {
 }
 
 const getDefaultPropertyByNodeType:GetDefaultPropertyByNodeType = {
-  [NodeType.HTMLElement]: getDefaultPropertyHTMLElement,
-  [NodeType.SVGElement]:  undefinedProperty,
-  [NodeType.Text]:        textContentProperty,
-  [NodeType.Template]:    undefinedProperty,
+  HTMLElement: getDefaultPropertyHTMLElement,
+  SVGElement:  undefinedProperty,
+  Text:        textContentProperty,
+  Template:    undefinedProperty,
 }
 
 /**

@@ -14,10 +14,10 @@ type IsInputableFn = {
 }
 
 const isInputableFn:IsInputableFn = {
-  [NodeType.HTMLElement]: isInputableHTMLElement,
-  [NodeType.SVGElement]:  alwaysFalse,
-  [NodeType.Text]:        alwaysFalse,
-  [NodeType.Template]:    alwaysFalse,
+  HTMLElement: isInputableHTMLElement,
+  SVGElement:  alwaysFalse,
+  Text:        alwaysFalse,
+  Template:    alwaysFalse,
 }
 
 export const getIsInputable = (node:Node, nodeType:NodeType):boolean => isInputableFn[nodeType](node);

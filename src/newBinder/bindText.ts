@@ -17,10 +17,10 @@ const getBindTextFromTemplate:BindTextFn = (node:Node) => getByUUID(node.textCon
 type BindTextByNodeType = {[key in NodeType]:BindTextFn};
 
 const bindTextByNodeType:BindTextByNodeType = {
-  [NodeType.HTMLElement]: getBindTextFromHTMLElement,
-  [NodeType.SVGElement]:  getBindTextFromSVGElement,
-  [NodeType.Text]:        getBindTextFromText,
-  [NodeType.Template]:    getBindTextFromTemplate,
+  HTMLElement: getBindTextFromHTMLElement,
+  SVGElement:  getBindTextFromSVGElement,
+  Text:        getBindTextFromText,
+  Template:    getBindTextFromTemplate,
 }
 
 export const getBindText = (node:Node, nodeType:NodeType):string => bindTextByNodeType[nodeType](node);

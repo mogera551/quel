@@ -17,7 +17,8 @@ export function create(cssText:string, uuid:string):CSSStyleSheet {
 }
 
 export function localizeStyleSheet(styleSheet:CSSStyleSheet, localSelector:string):CSSStyleSheet {
-  for(let rule of styleSheet.cssRules) {
+  for(let i = 0; i < styleSheet.cssRules.length; i++) {
+    const rule = styleSheet.cssRules[i];
     if (rule instanceof CSSStyleRule) {
       const newSelectorText = rule.selectorText.split(",").map(selector => {
         if (selector.trim().startsWith(":host")) {

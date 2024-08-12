@@ -13,10 +13,10 @@ type ReplaceTextNodeFn = {
 }
 
 const replaceTextNodeFn:ReplaceTextNodeFn = {
-  [NodeType.Text]:        replaceTextNodeText,
-  [NodeType.HTMLElement]: itsSelf,
-  [NodeType.SVGElement]:  itsSelf,
-  [NodeType.Template]:    itsSelf,
+  Text:        replaceTextNodeText,
+  HTMLElement: itsSelf,
+  SVGElement:  itsSelf,
+  Template:    itsSelf,
 }
 
 /**

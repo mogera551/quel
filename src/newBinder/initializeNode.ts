@@ -54,10 +54,10 @@ type InitializeNodeByNodeType = {
 }
 
 const initializeNodeByNodeType:InitializeNodeByNodeType = {
-  [NodeType.HTMLElement]: initializeHTMLElement,
-  [NodeType.SVGElement]:  thru,
-  [NodeType.Text]:        thru,
-  [NodeType.Template]:    thru,
+  HTMLElement: initializeHTMLElement,
+  SVGElement:  thru,
+  Text:        thru,
+  Template:    thru,
 };
 
 export const initializeNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:IBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);

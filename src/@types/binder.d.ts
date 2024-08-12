@@ -1,12 +1,15 @@
 import { IBinding, IBindingManager, INodeProperty, IStateProperty } from "./binding";
 import { IFilterInfo } from "./filter";
 
+type NodeType = "HTMLElement" | "SVGElement" | "Text" | "Template";
+/*
 enum NodeType {
   HTMLElement = 1,
   SVGElement = 2,
   Text = 3,
   Template = 4,
 }
+*/
 
 type ParseBindTextInfo = {
   nodeProperty: string;

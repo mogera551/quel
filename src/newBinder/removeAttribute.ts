@@ -15,10 +15,10 @@ type RemoveAttributeByNodeType = {
 }
 
 const removeAttributeByNodeType:RemoveAttributeByNodeType = {
-  [NodeType.HTMLElement]: removeAttributeFromElement,
-  [NodeType.SVGElement]:  removeAttributeFromElement,
-  [NodeType.Text]:        thru,
-  [NodeType.Template]:    thru,
+  HTMLElement: removeAttributeFromElement,
+  SVGElement:  removeAttributeFromElement,
+  Text:        thru,
+  Template:    thru,
 }
 
 /**
