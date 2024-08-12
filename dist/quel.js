@@ -1155,7 +1155,7 @@ let Handler$1 = class Handler {
         const patternNameInfo = getPatternNameInfo(propertyNameInfo.patternName);
         const expandingPatterName = patternNameInfo.wildcardNames[levelIndex];
         const expandingPatternNameInfo = getPatternNameInfo(expandingPatterName);
-        const values = this.getByPatternNameAndIndexes(target, { patternName: expandingPatternNameInfo.parentPath, indexes }, receiver)();
+        const values = this.getByPatternNameAndIndexes(target, { patternName: expandingPatternNameInfo.parentPath, indexes }, receiver);
         Array.isArray(values) || utils.raise("values is not an array");
         return { values, levelIndex, indexes };
     }
@@ -1599,7 +1599,7 @@ class StateReadOnlyHandler extends StateBaseHandler {
 class DirectlyCallContext {
     #loopContext;
     get loopContext() {
-        return this.#loopContext ?? utils.raise("DirectlyCallContext: loopContext is not set");
+        return this.#loopContext;
     }
     async callback(loopContext, directlyCallback) {
         if (typeof this.#loopContext !== "undefined")
@@ -3564,7 +3564,9 @@ class Updator {
             setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
         }
         for (const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-            const bindings = bindingSummary.bindingsByKey.get(parentKey) ?? utils.raise(`binding not found: ${parentKey}`);
+            const bindings = bindingSummary.bindingsByKey.get(parentKey);
+            if (typeof bindings === "undefined")
+                continue;
             for (const binding of bindings) {
                 binding.applyToChildNodes(setOfIndex);
             }

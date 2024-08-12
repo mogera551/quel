@@ -76,7 +76,7 @@ export class Handler implements IHandler {
     const patternNameInfo = getPatternNameInfo(propertyNameInfo.patternName);
     const expandingPatterName = patternNameInfo.wildcardNames[levelIndex];
     const expandingPatternNameInfo = getPatternNameInfo(expandingPatterName);
-    const values = this.getByPatternNameAndIndexes(target, {patternName:expandingPatternNameInfo.parentPath, indexes}, receiver)();
+    const values = this.getByPatternNameAndIndexes(target, {patternName:expandingPatternNameInfo.parentPath, indexes}, receiver);
     Array.isArray(values) || utils.raise("values is not an array");
     return { values, levelIndex, indexes };
   }

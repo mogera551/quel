@@ -64,6 +64,6 @@ interface IDependentProps {
 }
 
 interface IDirectlyCallContext {
-  get loopContext():ILoopContext;
+  get loopContext():ILoopContext|undefined;
   callback(loopContext:ILoopContext, directlyCallback:()=>Promise<void>):Promise<void>;
 }

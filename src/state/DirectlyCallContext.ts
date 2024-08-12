@@ -7,8 +7,8 @@ import { IDirectlyCallContext } from "../@types/state.js";
  */
 export class DirectlyCallContext implements IDirectlyCallContext {
   #loopContext:ILoopContext|undefined;
-  get loopContext():ILoopContext {
-    return this.#loopContext ?? utils.raise("DirectlyCallContext: loopContext is not set");
+  get loopContext():ILoopContext|undefined {
+    return this.#loopContext;
   }
 
   async callback(loopContext:ILoopContext, directlyCallback:()=>Promise<void>):Promise<void> {
