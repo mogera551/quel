@@ -1,59 +1,5 @@
-import { allStates } from "./states.js";
-
-export const html = `
-<div class="container">
-  <div>
-    <table class="table table-striped">
-      <colgroup>
-        <col class="col-md-3">
-        <col class="col-md-3">
-        <col class="col-md-2">
-        <col class="col-md-2">
-        <col class="col-md-2">
-      </colgroup>
-      <thead>
-        <tr>
-          <th class="text-center">State</th>
-          <th class="text-center">Capital City</th>
-          <th class="text-center">Population</th>
-          <th class="text-center">Percent of Region's Population</th>
-          <th class="text-center">Percent of Total Population</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ loop:regions }}
-          {{ loop:regions.*.states }}
-            <tr>
-              <td class="text-center">{{ regions.*.states.*.name }}</td>
-              <td class="text-center">{{ regions.*.states.*.capital }}</td>
-              <td class="text-right" data-bind="
-                class.over:  regions.*.states.*.population|ge,5000000;
-                class.under: regions.*.states.*.population|lt,1000000;
-              ">{{ regions.*.states.*.population|number.toLocaleString }}</td>
-              <td class="text-right">{{ regions.*.states.*.shareOfRegionPopulation|percent,2 }}</td>
-              <td class="text-right">{{ regions.*.states.*.shareOfPopulation|percent,2 }}</td>
-            </tr>
-          {{ endloop: }}
-          <tr class="summary">
-            <td class="text-center" colspan="2">{{ regions.* }}</td>
-            <td class="text-right">{{ regions.*.population|number.toLocaleString }}</td>
-            <td></td>
-            <td class="text-right">{{ regions.*.shareOfPopulation|percent,2 }}</td>
-          </tr>
-        {{ endloop: }}
-      </tbody>
-      <tfoot>
-        <tr class="summary">
-          <td class="text-center" colspan="2">Total</td>
-          <td class="text-right">{{ totalPopulation|number.toLocaleString }}</td>
-          <td></td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-</div>
-`;
+<script type="module">
+import { allStates } from "states";
 
 const summaryPopulation = (sum, population) => sum + population;
 
@@ -120,3 +66,58 @@ export const filters = {
     "percent": options => value => (Number(value) * 100).toFixed(options[0]),
   }
 }
+
+</script>
+
+<div class="container">
+  <div>
+    <table class="table table-striped">
+      <colgroup>
+        <col class="col-md-3">
+        <col class="col-md-3">
+        <col class="col-md-2">
+        <col class="col-md-2">
+        <col class="col-md-2">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="text-center">State</th>
+          <th class="text-center">Capital City</th>
+          <th class="text-center">Population</th>
+          <th class="text-center">Percent of Region's Population</th>
+          <th class="text-center">Percent of Total Population</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ loop:regions }}
+          {{ loop:regions.*.states }}
+            <tr>
+              <td class="text-center">{{ regions.*.states.*.name }}</td>
+              <td class="text-center">{{ regions.*.states.*.capital }}</td>
+              <td class="text-right" data-bind="
+                class.over:  regions.*.states.*.population|ge,5000000;
+                class.under: regions.*.states.*.population|lt,1000000;
+              ">{{ regions.*.states.*.population|number.toLocaleString }}</td>
+              <td class="text-right">{{ regions.*.states.*.shareOfRegionPopulation|percent,2 }}</td>
+              <td class="text-right">{{ regions.*.states.*.shareOfPopulation|percent,2 }}</td>
+            </tr>
+          {{ endloop: }}
+          <tr class="summary">
+            <td class="text-center" colspan="2">{{ regions.* }}</td>
+            <td class="text-right">{{ regions.*.population|number.toLocaleString }}</td>
+            <td></td>
+            <td class="text-right">{{ regions.*.shareOfPopulation|percent,2 }}</td>
+          </tr>
+        {{ endloop: }}
+      </tbody>
+      <tfoot>
+        <tr class="summary">
+          <td class="text-center" colspan="2">Total</td>
+          <td class="text-right">{{ totalPopulation|number.toLocaleString }}</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
