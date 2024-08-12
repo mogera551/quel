@@ -3,7 +3,6 @@ import { INodeProperty, IStateProperty, IBinding, IBindingManager } from "../@ty
 import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IFilterInfo } from "../@types/filter";
 import { ILoopContext } from "../@types/loopContext";
-import { IState } from "../@types/state";
 import { IComponent } from "../@types/component";
 import { LoopContext } from "../loopContext/LoopContext";
 import { Binder } from "../newBinder/Binder";
