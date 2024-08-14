@@ -26,6 +26,10 @@ interface INewPatternNameInfo {
   wildcardNames: string[]; // ワイルドカードのリスト  ex. "a.*.c.*"の場合、["a.*", "a.*.c.*"]
 }
 
+interface INewHandler {
+  
+}
+
 interface IHandler {
   get lastIndexes():(number[]|undefined);
   get lastIndexesString():string;
