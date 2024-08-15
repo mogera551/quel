@@ -1,6 +1,7 @@
 import "../nop";
 
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
+import { StackSymbol } from "./Const";
 
 interface INewPropertyNameInfo {
   name: string; // プロパティ名
@@ -27,7 +28,7 @@ interface INewPatternNameInfo {
 }
 
 interface INewHandler {
-  
+  [StackSymbol]:(indexes:number[], callback:()=>any) => any;
 }
 
 interface IHandler {
