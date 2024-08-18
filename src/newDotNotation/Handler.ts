@@ -81,8 +81,9 @@ export class Handler {
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = this.lastStackIndexes;
     const wildcardIndexes = propInfo.wildcardIndexes.map(
-      (i, index) => (i === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
+      (i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
     );
+    console.log(wildcardIndexes, propInfo.wildcardIndexes, lastStackIndexes);
     const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
     const wildcardPath = propInfo.wildcardPaths.at(index) ?? "";
     const wildcardPathInfo = getPropInfo(wildcardPath);
@@ -105,7 +106,9 @@ export class Handler {
   _setExpand(target:object, prop:string, value:any, receiver:object) {
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = this.lastStackIndexes;
-    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    const wildcardIndexes = propInfo.wildcardIndexes.map(
+      (i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
+    );
     const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
     const wildcardPath = propInfo.wildcardPaths.at(index) ?? "";
     const wildcardPathInfo = getPropInfo(wildcardPath);

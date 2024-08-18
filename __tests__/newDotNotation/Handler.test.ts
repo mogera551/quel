@@ -196,7 +196,8 @@ describe("Handler", () => {
   });
 
   it("should call get/set method", () => {
-    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ] };
+    const sym = Symbol("sym");
+    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ],[sym]:"aaa" };
     const receiver = target;
 
     const fnGet = handler.get(target, GetDirectSymbol, receiver);
@@ -207,10 +208,19 @@ describe("Handler", () => {
     expect(fnGet("@aaa.*.*", [1])).toEqual([111, 222, 333]);
 
     expect(fnGet("@aaa.*.0", [])).toEqual([11, 111, 1111]);
-    // expect(fnGet("@aaa.*.0", [2])).toEqual([11, 111, 1111]);
+    expect(fnGet("@aaa.*.0", [2])).toEqual([11, 111, 1111]);
 
     expect(fnGet("constructor", [])).toEqual(Object);
+    expect(fnGet(sym, [])).toBe("aaa");
 
+    const fnSet = handler.get(target, SetDirectSymbol, receiver);
+    expect(() => {
+      fnSet("$1", [2, 1], 5)
+    }).toThrow("context index($1) is read only");
+    fnSet(sym, [], "bbb");
+    expect(fnGet(sym, [])).toBe("bbb");
+    fnSet("@aaa.*.*", [0], [ 11111, 22222, 33333 ]);
+    expect(fnGet("@aaa.*.*", [0])).toEqual([ 11111, 22222, 33333 ]);
   });
 
 });
