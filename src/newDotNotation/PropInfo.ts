@@ -10,11 +10,13 @@ function _getPropInfo(name:string):IPropInfo {
   const paths = [];
   const patternPaths = [];
   const wildcardPaths = [];
+  let lastIncompleteWildcardIndex = -1;
   for(let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (element === "*") {
       wildcardIndexes.push(undefined);
       patternElements[i] = "*";
+      lastIncompleteWildcardIndex = wildcardIndexes.length - 1;
     } else {
       const number = Number(element);
       if (!Number.isNaN(number)) {
@@ -40,6 +42,7 @@ function _getPropInfo(name:string):IPropInfo {
     wildcardPaths,
     wildcardCount,
     wildcardIndexes,
+    lastIncompleteWildcardIndex,
   }
 }
 

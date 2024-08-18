@@ -16,4 +16,5 @@ export interface IPropInfo {
   wildcardPaths: string[];
   wildcardCount: number;
   wildcardIndexes: (number|undefined)[];
+  lastIncompleteWildcardIndex: number;
 }

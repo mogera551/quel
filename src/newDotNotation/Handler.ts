@@ -1,10 +1,12 @@
+import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
+import { utils } from "../utils";
 import { getPropInfo } from "./PropInfo";
 import { IPropInfo } from "./types";
 
 const getValue = (
   target:object, 
   propInfo:IPropInfo, 
-  wildcardIndexes:number[], 
+  wildcardIndexes:(number|undefined)[], 
   receiver:object, 
 ) => (pathIndex:number, wildcardIndex:number):any => {
   const path = propInfo.paths[pathIndex];
@@ -22,7 +24,7 @@ const getValue = (
   const isWildcard = element === "*";
   const parentValue = getValue(target, propInfo, wildcardIndexes, receiver)(pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0));
   if (isWildcard) {
-    return parentValue[wildcardIndexes[wildcardIndex]];
+    return parentValue[wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcardIndexes[${wildcardIndex}] is undefined`)];
   } else {
     return parentValue[element];
   }
@@ -30,11 +32,11 @@ const getValue = (
 
 
 export class Handler {
-  _stackIndexes:number[][] = [];
-  get lastStackIndexes():number[] {
+  _stackIndexes:(undefined|number)[][] = [];
+  get lastStackIndexes():(undefined|number)[] {
     return this._stackIndexes[this._stackIndexes.length - 1] ?? [];
   }
-  withIndexes(indexes:number[], callback:()=>void):any {
+  withIndexes(indexes:(number|undefined)[], callback:()=>void):any {
     this._stackIndexes.push(indexes);
     try {
       return callback();
@@ -66,7 +68,7 @@ export class Handler {
         const lastElement = propInfo.elements[propInfo.elements.length - 1];
         const parentValue = _getValue(propInfo.paths.length - 2, propInfo.wildcardCount - (lastPatternElement === "*" ? 1 : 0) - 1);
         if (lastPatternElement === "*") {
-          parentValue[wildcardIndexes[wildcardIndexes.length - 1]] = value;
+          parentValue[wildcardIndexes[wildcardIndexes.length - 1] ?? utils.raise("wildcard is undefined")] = value;
         } else {
           parentValue[lastElement] = value;
         }
@@ -78,7 +80,9 @@ export class Handler {
   _getExpand(target:object, prop:string, receiver:object) {
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = this.lastStackIndexes;
-    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    const wildcardIndexes = propInfo.wildcardIndexes.map(
+      (i, index) => (i === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
+    );
     const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
     const wildcardPath = propInfo.wildcardPaths.at(index) ?? "";
     const wildcardPathInfo = getPropInfo(wildcardPath);
@@ -125,14 +129,58 @@ export class Handler {
 
   _getDirect = (target:object, prop:string, indexes:number[], receiver:object) => {
     return this.withIndexes(indexes, () => {
-      return this._get(target, prop, receiver);
+      return this.get(target, prop, receiver);
     });
   }
 
   _setDirect = (target:object, prop:string, indexes:number[], value:any, receiver:object):boolean => {
     return this.withIndexes(indexes, () => {
-      return this._set(target, prop, value, receiver);
+      return this.set(target, prop, value, receiver);
     });
+  }
+
+  get(target:object, prop:PropertyKey, receiver:object):any {
+    const isPropString = typeof prop === "string";
+    do {
+      if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) break;
+      if (prop === GetDirectSymbol) {
+        return (prop:string, indexes:number[])=>this._getDirect.apply(this, [target, prop, indexes, receiver]);
+      }
+      if (prop === SetDirectSymbol) {
+        return (prop:string, indexes:number[], value:any)=>
+          this._setDirect.apply(this, [target, prop, indexes, value, receiver]);
+      }
+      if (!isPropString) break;
+      if (prop[0] === "$") {
+        const index = Number(prop.slice(1));
+        if (isNaN(index)) break;
+        return this.lastStackIndexes[index - 1];
+      } else if (prop[0] === "@") {
+        const propertyName = prop.slice(1);
+        return this._getExpand(target, propertyName, receiver);
+      }
+      return this._get(target, prop, receiver);
+    } while(false);
+    return Reflect.get(target, prop, receiver);
+  }
+
+  set(target:object, prop:PropertyKey, value:any, receiver:object):boolean {
+    const isPropString = typeof prop === "string";
+    do {
+      if (isPropString && prop.startsWith("@@__")) break;
+      if (!isPropString) break;
+      if (prop[0] === "$") {
+        const index = Number(prop.slice(1));
+        if (isNaN(index)) break;
+        utils.raise(`context index(${prop}) is read only`);
+      } else if (prop[0] === "@") {
+        const propertyName = prop.slice(1);
+        this._setExpand(target, propertyName, value, receiver);
+        return true;
+      }
+      return this._set(target, prop, value, receiver);
+    } while(false);
+    return Reflect.set(target, prop, value, receiver);
   }
 
 }

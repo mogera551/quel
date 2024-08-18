@@ -13,6 +13,7 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual([]);
     expect(propInfo.wildcardCount).toBe(0);
     expect(propInfo.wildcardIndexes).toEqual([]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(-1);
   });
 
   it('should return the correct prop info for a nested property', () => {
@@ -26,6 +27,7 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual([]);
     expect(propInfo.wildcardCount).toBe(0);
     expect(propInfo.wildcardIndexes).toEqual([]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(-1);
   });
 
   it('should return the correct prop info for a property with wildcard', () => {
@@ -39,6 +41,7 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual(['person.*']);
     expect(propInfo.wildcardCount).toBe(1);
     expect(propInfo.wildcardIndexes).toEqual([undefined]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(0);
   });
 
   it('should return the correct prop info for a property with wildcard', () => {
@@ -52,6 +55,7 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual(['person.*', 'person.*.city.*']);
     expect(propInfo.wildcardCount).toBe(2);
     expect(propInfo.wildcardIndexes).toEqual([undefined, undefined]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(1);
   });
 
   it('should return the correct prop info for a property with number', () => {
@@ -65,6 +69,7 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual(['person.*', 'person.*.city.*']);
     expect(propInfo.wildcardCount).toBe(2);
     expect(propInfo.wildcardIndexes).toEqual([0, 1]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(-1);
   });
 
   it('should return the correct prop info for a property with number', () => {
@@ -78,6 +83,7 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual(['person.*', 'person.*.city.*']);
     expect(propInfo.wildcardCount).toBe(2);
     expect(propInfo.wildcardIndexes).toEqual([undefined, 1]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(0);
   });
 
   it('should return the correct prop info for a property with number', () => {
@@ -91,6 +97,7 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual(['person.*', 'person.*.city.*']);
     expect(propInfo.wildcardCount).toBe(2);
     expect(propInfo.wildcardIndexes).toEqual([0, undefined]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(1);
   });
 
   it('should return the correct prop info for a simple property', () => {
@@ -104,5 +111,6 @@ describe('getPropInfo', () => {
     expect(propInfo.wildcardPaths).toEqual([]);
     expect(propInfo.wildcardCount).toBe(0);
     expect(propInfo.wildcardIndexes).toEqual([]);
+    expect(propInfo.lastIncompleteWildcardIndex).toBe(-1);
   });
 });

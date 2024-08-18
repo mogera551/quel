@@ -1,5 +1,6 @@
 import 'jest';
 import { Handler } from "../../src/newDotNotation/Handler";
+import { GetDirectSymbol, SetDirectSymbol } from '../../src/@symbols/dotNotation';
 
 describe("Handler", () => {
   let handler: Handler;
@@ -164,6 +165,52 @@ describe("Handler", () => {
     expect(handler._getExpand(target, "aaa.*", receiver)).toEqual([44, 44, 44]);
     handler._setExpand(target, "aaa.*", [55, 66, 77], receiver);
     expect(handler._getExpand(target, "aaa.*", receiver)).toEqual([55, 66, 77]);
+  });
+
+  it("should call get/set method", () => {
+    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ] };
+    const receiver = target;
+    expect(handler.get(target, "aaa", receiver)).toEqual([ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ]);
+    expect(handler.get(target, "aaa.0", receiver)).toEqual([11, 22, 33]);
+    expect(handler.get(target, "aaa.0.0", receiver)).toBe(11);
+    const fnGet = handler.get(target, GetDirectSymbol, receiver);
+    expect(fnGet("aaa.*", [0])).toEqual([11, 22, 33]);
+    expect(fnGet("aaa.*.*", [0, 0])).toBe(11);
+    expect(fnGet("aaa.*", [1])).toEqual([111, 222, 333]);
+    expect(fnGet("aaa.*.*", [1, 1])).toBe(222);
+    const fnSet = handler.get(target, SetDirectSymbol, receiver);
+    fnSet("aaa.*.*", [0, 0], 11111);
+    expect(fnGet("aaa.*.*", [0, 0])).toEqual(11111);
+    fnSet("aaa.*.*", [1, 1], 22222);
+    expect(fnGet("aaa.*.*", [1, 1])).toEqual(22222);
+  });
+
+  it("should call get/set method", () => {
+    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ] };
+    const receiver = target;
+
+    const fnGet = handler.get(target, GetDirectSymbol, receiver);
+    expect(fnGet("aaa.0.0", [1, 1])).toBe(11);
+    expect(fnGet("aaa.*.0", [1, 1])).toBe(111);
+    expect(fnGet("aaa.0.*", [1, 1])).toBe(22);
+  });
+
+  it("should call get/set method", () => {
+    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ] };
+    const receiver = target;
+
+    const fnGet = handler.get(target, GetDirectSymbol, receiver);
+    expect(fnGet("$1", [2, 1])).toBe(2);
+    expect(fnGet("$2", [2, 1])).toBe(1);
+
+    expect(fnGet("@aaa.*.*", [2])).toEqual([1111, 2222, 3333]);
+    expect(fnGet("@aaa.*.*", [1])).toEqual([111, 222, 333]);
+
+    expect(fnGet("@aaa.*.0", [])).toEqual([11, 111, 1111]);
+    // expect(fnGet("@aaa.*.0", [2])).toEqual([11, 111, 1111]);
+
+    expect(fnGet("constructor", [])).toEqual(Object);
+
   });
 
 });
