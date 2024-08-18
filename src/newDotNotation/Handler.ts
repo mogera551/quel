@@ -61,7 +61,7 @@ export class Handler {
       const lastStackIndexes = this.lastStackIndexes;
       const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
       const _getValue = getValue(target, propInfo, wildcardIndexes, receiver);
-      return this.withIndexes(wildcardIndexes, () => {
+      this.withIndexes(wildcardIndexes, () => {
         const lastPatternElement = propInfo.patternElements[propInfo.patternElements.length - 1];
         const lastElement = propInfo.elements[propInfo.elements.length - 1];
         const parentValue = _getValue(propInfo.paths.length - 2, propInfo.wildcardCount - (lastPatternElement === "*" ? 1 : 0) - 1);
@@ -70,12 +70,69 @@ export class Handler {
         } else {
           parentValue[lastElement] = value;
         }
-        return true;
       });
     }
     return true;
   }
 
+  _getExpand(target:object, prop:string, receiver:object) {
+    const propInfo = getPropInfo(prop);
+    const lastStackIndexes = this.lastStackIndexes;
+    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
+    const wildcardPath = propInfo.wildcardPaths.at(index) ?? "";
+    const wildcardPathInfo = getPropInfo(wildcardPath);
+    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? "";
+    const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
+    const _getValue = getValue(target, wildcardParentPathInfo, wildcardIndexes, receiver);
+    return this.withIndexes(wildcardIndexes, () => {
+      const parentValue = _getValue(wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1);
+      const values = [];
+      for(let i = 0; i < parentValue.length; i++) {
+        wildcardIndexes[index] = i;
+        values.push(this.withIndexes(wildcardIndexes, () => {
+          return this._get(target, propInfo.pattern, receiver);
+        }));
+      }
+      return values;
+    });
+  }
 
+  _setExpand(target:object, prop:string, value:any, receiver:object) {
+    const propInfo = getPropInfo(prop);
+    const lastStackIndexes = this.lastStackIndexes;
+    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
+    const wildcardPath = propInfo.wildcardPaths.at(index) ?? "";
+    const wildcardPathInfo = getPropInfo(wildcardPath);
+    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? "";
+    const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
+    const _getValue = getValue(target, wildcardParentPathInfo, wildcardIndexes, receiver);
+    this.withIndexes(wildcardIndexes, () => {
+      const parentValue = _getValue(wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1);
+      for(let i = 0; i < parentValue.length; i++) {
+        wildcardIndexes[index] = i;
+        this.withIndexes(wildcardIndexes, () => {
+          if (Array.isArray(value)) {
+            this._set(target, propInfo.pattern, value[i], receiver);
+          } else {
+            this._set(target, propInfo.pattern, value, receiver);
+          }
+        });
+      }
+    });
+  }
+
+  _getDirect = (target:object, prop:string, indexes:number[], receiver:object) => {
+    return this.withIndexes(indexes, () => {
+      return this._get(target, prop, receiver);
+    });
+  }
+
+  _setDirect = (target:object, prop:string, indexes:number[], value:any, receiver:object):boolean => {
+    return this.withIndexes(indexes, () => {
+      return this._set(target, prop, value, receiver);
+    });
+  }
 
 }

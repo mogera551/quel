@@ -130,4 +130,40 @@ describe("Handler", () => {
     const receiver = target;
     expect(handler._get(target, "bbb", receiver)).toBe(undefined);
   });
+
+  it("should call _getExpand method", () => {
+    const target = { aaa:[ 11, 22, 33 ] };
+    const receiver = target;
+    expect(handler._getExpand(target, "aaa.*", receiver)).toEqual([11, 22, 33]);
+  });
+
+  it("should call _getExpand method", () => {
+    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ] };
+    const receiver = target;
+    expect(handler._getExpand(target, "aaa.0.*", receiver)).toEqual([11, 22, 33]);
+    expect(handler._getExpand(target, "aaa.1.*", receiver)).toEqual([111, 222, 333]);
+    expect(handler._getExpand(target, "aaa.2.*", receiver)).toEqual([1111, 2222, 3333]);
+    expect(handler._getExpand(target, "aaa.*.0", receiver)).toEqual([11, 111, 1111]);
+    expect(handler._getExpand(target, "aaa.*.1", receiver)).toEqual([22, 222, 2222]);
+    expect(handler._getExpand(target, "aaa.*.2", receiver)).toEqual([33, 333, 3333]);
+    handler.withIndexes([0], () => {
+      expect(handler._getExpand(target, "aaa.*.*", receiver)).toEqual([11, 22, 33]);
+    });
+    handler.withIndexes([1], () => {
+      expect(handler._getExpand(target, "aaa.*.*", receiver)).toEqual([111, 222, 333]);
+    });
+    handler.withIndexes([2], () => {
+      expect(handler._getExpand(target, "aaa.*.*", receiver)).toEqual([1111, 2222, 3333]);
+    });
+  });
+
+  it("should call _setExpand method", () => {
+    const target = { aaa:[ 11, 22, 33 ] };
+    const receiver = target;
+    handler._setExpand(target, "aaa.*", 44, receiver);
+    expect(handler._getExpand(target, "aaa.*", receiver)).toEqual([44, 44, 44]);
+    handler._setExpand(target, "aaa.*", [55, 66, 77], receiver);
+    expect(handler._getExpand(target, "aaa.*", receiver)).toEqual([55, 66, 77]);
+  });
+
 });
