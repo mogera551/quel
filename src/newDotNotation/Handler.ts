@@ -1,4 +1,5 @@
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
+import { IState } from "../@types/state";
 import { utils } from "../utils";
 import { getPropInfo } from "./PropInfo";
 import { IPropInfo } from "./types";
@@ -31,7 +32,7 @@ const getValue = (
 }
 
 
-export class Handler {
+export class Handler implements ProxyHandler<IState> {
   _stackIndexes:(undefined|number)[][] = [];
   get lastStackIndexes():(undefined|number)[] {
     return this._stackIndexes[this._stackIndexes.length - 1] ?? [];
@@ -185,5 +186,4 @@ export class Handler {
     } while(false);
     return Reflect.set(target, prop, value, receiver);
   }
-
 }

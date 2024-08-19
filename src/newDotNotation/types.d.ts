@@ -1,4 +1,5 @@
 
+import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import "../nop";
 
 type PropType = "primitive" | "object" | "array";
@@ -17,4 +18,26 @@ export interface IPropInfo {
   wildcardCount: number;
   wildcardIndexes: (number|undefined)[];
   lastIncompleteWildcardIndex: number;
+}
+
+export interface IState {
+  [GetDirectSymbol]:(prop:string, indexes:number[])=>any;
+  [SetDirectSymbol]:(prop:string, indexes:number[], value:any)=>boolean;
+  $1:number;
+  $2:number;
+  $3:number;
+  $4:number;
+  $5:number;
+  $6:number;
+  $7:number;
+  $8:number;
+  $9:number;
+  $10:number;
+  $11:number;
+  $12:number;
+  $13:number;
+  $14:number;
+  $15:number;
+  $16:number;
+  [key:string]:any;
 }
