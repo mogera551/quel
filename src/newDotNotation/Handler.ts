@@ -1,8 +1,7 @@
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
-import { IState } from "../@types/state";
 import { utils } from "../utils";
 import { getPropInfo } from "./PropInfo";
-import { IPropInfo } from "./types";
+import { IDotNotationHandler, IPropInfo } from "./types";
 
 const getValue = (
   target:object, 
@@ -31,8 +30,10 @@ const getValue = (
   }
 }
 
-
-export class Handler implements ProxyHandler<IState> {
+/**
+ * ドット記法でプロパティを取得するためのハンドラ
+ */
+export class Handler implements ProxyHandler<IDotNotationHandler> {
   _stackIndexes:(undefined|number)[][] = [];
   get lastStackIndexes():(undefined|number)[] {
     return this._stackIndexes[this._stackIndexes.length - 1] ?? [];

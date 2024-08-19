@@ -20,7 +20,7 @@ export interface IPropInfo {
   lastIncompleteWildcardIndex: number;
 }
 
-export interface IState {
+export interface IDotNotationHandler {
   [GetDirectSymbol]:(prop:string, indexes:number[])=>any;
   [SetDirectSymbol]:(prop:string, indexes:number[], value:any)=>boolean;
   $1:number;
