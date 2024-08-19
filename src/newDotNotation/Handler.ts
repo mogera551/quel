@@ -24,7 +24,7 @@ const getValue = (
   const isWildcard = element === "*";
   const parentValue = getValue(target, propInfo, wildcardIndexes, receiver)(pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0));
   if (isWildcard) {
-    return parentValue[wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcardIndexes[${wildcardIndex}] is undefined`)];
+    return parentValue[wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)];
   } else {
     return parentValue[element];
   }
@@ -85,9 +85,9 @@ export class Handler {
     );
     console.log(wildcardIndexes, propInfo.wildcardIndexes, lastStackIndexes);
     const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
-    const wildcardPath = propInfo.wildcardPaths.at(index) ?? "";
+    const wildcardPath = propInfo.wildcardPaths.at(index) ?? utils.raise(`wildcard path is undefined`);
     const wildcardPathInfo = getPropInfo(wildcardPath);
-    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? "";
+    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
     const _getValue = getValue(target, wildcardParentPathInfo, wildcardIndexes, receiver);
     return this.withIndexes(wildcardIndexes, () => {
@@ -110,9 +110,9 @@ export class Handler {
       (i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
     );
     const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
-    const wildcardPath = propInfo.wildcardPaths.at(index) ?? "";
+    const wildcardPath = propInfo.wildcardPaths.at(index) ?? utils.raise(`wildcard path is undefined`);
     const wildcardPathInfo = getPropInfo(wildcardPath);
-    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? "";
+    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
     const _getValue = getValue(target, wildcardParentPathInfo, wildcardIndexes, receiver);
     this.withIndexes(wildcardIndexes, () => {
