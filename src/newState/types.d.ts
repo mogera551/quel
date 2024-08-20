@@ -7,3 +7,14 @@ interface IBaseStatePartial {
   [DependenciesSymbol]:IDependentProps;
 }
 export type IBaseState = IDotNotationHandler & IBaseStatePartial;
+
+type Dependencies = {
+  [key:string]:string[]
+}
+
+interface IDependentProps {
+  get propsByRefProp():Map<string,Set<string>>;
+  hasDefaultProp(prop:string):boolean;
+  addDefaultProp(prop:string):void;
+  // setDependentProps(props:Dependencies):void;
+}
