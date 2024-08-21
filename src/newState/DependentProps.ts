@@ -9,7 +9,7 @@ export class DependentProps implements IDependentProps {
   #propsByRefProp:Map<string,Set<string>> = new Map;
 
   constructor(props:Dependencies) {
-    this.#setDependentProps(props);
+    this.setDependentProps(props);
   }
 
   get propsByRefProp():Map<string,Set<string>> {
@@ -31,7 +31,7 @@ export class DependentProps implements IDependentProps {
     }
   }
 
-  #setDependentProps(props:Dependencies):void {
+  setDependentProps(props:Dependencies):void {
     for(const [prop, refProps] of Object.entries(props)) {
       for(const refProp of refProps) {
         this.#propsByRefProp.get(refProp)?.add(prop) ?? this.#propsByRefProp.set(refProp, new Set([prop]));

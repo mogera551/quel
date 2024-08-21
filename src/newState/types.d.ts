@@ -8,13 +8,18 @@ interface IBaseStatePartial {
 }
 export type IBaseState = IDotNotationHandler & IBaseStatePartial;
 
-type Dependencies = {
+export type Dependencies = {
   [key:string]:string[]
 }
 
-interface IDependentProps {
+export interface IDependentProps {
   get propsByRefProp():Map<string,Set<string>>;
   hasDefaultProp(prop:string):boolean;
   addDefaultProp(prop:string):void;
-  // setDependentProps(props:Dependencies):void;
+  setDependentProps(props:Dependencies):void; //todo:後でprivateに変更する
+}
+
+export type StateInfo = {
+  accessorProperties: Set<string>;
+  dependentProps: IDependentProps;
 }
