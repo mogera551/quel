@@ -22,10 +22,10 @@ export interface IBinding {
 }
 
 export interface IContentBindings {
-  template: string;
-  listBindings: IBinding[];
+  template: HTMLTemplateElement;
+  listBinding: IBinding[];
   parentBinding?: IBinding;
-  loopContext: ILoopContext;
-  component: IComponent;
+  get loopContext(): ILoopContext;
+  get component(): IComponent;
 
 }
