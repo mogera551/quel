@@ -3,6 +3,7 @@ import { IPropInfo } from './types';
 
 const _cache = new Map<string, IPropInfo>();
 
+// todo: パターンのキャッシュも考える
 function _getPropInfo(name:string):IPropInfo {
   const elements = name.split(".");
   const patternElements = elements.slice(0);

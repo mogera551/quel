@@ -18,6 +18,7 @@ export interface IBinding {
   stateProeprty: IStateProperty;
   listContentBindings: IContentBindings[];
   parentContentBindings: IContentBindings;
+  loopable: boolean;
   get component(): IComponent;
 }
 

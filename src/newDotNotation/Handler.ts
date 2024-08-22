@@ -6,12 +6,12 @@ import { IDotNotationHandler, IPropInfo } from "./types";
 /**
  * ドット記法でプロパティを取得するためのハンドラ
  */
-export class Handler implements ProxyHandler<IDotNotationHandler> {
+export class Handler implements IDotNotationHandler {
   _stackIndexes:(undefined|number)[][] = [];
   get lastStackIndexes():(undefined|number)[] {
     return this._stackIndexes[this._stackIndexes.length - 1] ?? [];
   }
-  withIndexes(indexes:(number|undefined)[], callback:()=>void):any {
+  withIndexes(indexes:(number|undefined)[], callback:()=>any):any {
     this._stackIndexes.push(indexes);
     try {
       return callback();
@@ -24,26 +24,29 @@ export class Handler implements ProxyHandler<IDotNotationHandler> {
     return Reflect.get(target, prop, receiver);
   }
 
-  _getValue = (
+  _getValue(
     target:object, 
-    propInfo:IPropInfo, 
+    patternPaths:string[],
+    patternElements:string[],
     wildcardIndexes:(number|undefined)[], 
+    pathIndex:number, wildcardIndex:number,
     receiver:object, 
-  ) => (pathIndex:number, wildcardIndex:number):any => {
-    const path = propInfo.paths[pathIndex];
+  ):any {
+    const path = patternPaths[pathIndex];
     if (path in target) {
       return this._getPropertyValue(target, path, receiver);
     }
-    const pattern = propInfo.patternPaths[pathIndex];
-    if (path !== pattern) {
-      if (pattern in target) {
-        return this._getPropertyValue(target, pattern, receiver);
-      }
-    }
     if (pathIndex === 0) return undefined; 
-    const element = propInfo.patternElements[pathIndex];
+    const element = patternElements[pathIndex];
     const isWildcard = element === "*";
-    const parentValue = this._getValue(target, propInfo, wildcardIndexes, receiver)(pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0));
+    const parentValue = this._getValue(
+      target, 
+      patternPaths,
+      patternElements,
+      wildcardIndexes, 
+      pathIndex - 1, 
+      wildcardIndex - (isWildcard ? 1 : 0), 
+      receiver);
     const lastIndex = isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element;
     return parentValue[lastIndex];
   }
@@ -52,9 +55,15 @@ export class Handler implements ProxyHandler<IDotNotationHandler> {
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = this.lastStackIndexes;
     const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-    const _getValue = this._getValue(target, propInfo, wildcardIndexes, receiver);
     return this.withIndexes(wildcardIndexes, () => {
-      return _getValue(propInfo.paths.length - 1, propInfo.wildcardCount - 1);
+      return this._getValue(
+        target, 
+        propInfo.patternPaths,
+        propInfo.patternElements, 
+        wildcardIndexes, 
+        propInfo.paths.length - 1, 
+        propInfo.wildcardCount - 1, 
+        receiver);
     });
   }
 
@@ -65,11 +74,17 @@ export class Handler implements ProxyHandler<IDotNotationHandler> {
     } else {
       const lastStackIndexes = this.lastStackIndexes;
       const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-      const _getValue = this._getValue(target, propInfo, wildcardIndexes, receiver);
       this.withIndexes(wildcardIndexes, () => {
         const lastPatternElement = propInfo.patternElements[propInfo.patternElements.length - 1];
         const lastElement = propInfo.elements[propInfo.elements.length - 1];
-        const parentValue = _getValue(propInfo.paths.length - 2, propInfo.wildcardCount - (lastPatternElement === "*" ? 1 : 0) - 1);
+        const parentValue = this._getValue(
+          target, 
+          propInfo.patternPaths, 
+          propInfo.patternElements,
+          wildcardIndexes, 
+          propInfo.paths.length - 2, 
+          propInfo.wildcardCount - (lastPatternElement === "*" ? 1 : 0) - 1, 
+          receiver);
         if (lastPatternElement === "*") {
           parentValue[wildcardIndexes[wildcardIndexes.length - 1] ?? utils.raise("wildcard is undefined")] = value;
         } else {
@@ -92,9 +107,15 @@ export class Handler implements ProxyHandler<IDotNotationHandler> {
     const wildcardPathInfo = getPropInfo(wildcardPath);
     const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-    const _getValue = this._getValue(target, wildcardParentPathInfo, wildcardIndexes, receiver);
     return this.withIndexes(wildcardIndexes, () => {
-      const parentValue = _getValue(wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1);
+      const parentValue = this._getValue(
+        target, 
+        wildcardParentPathInfo.patternPaths, 
+        wildcardParentPathInfo.patternElements,
+        wildcardIndexes, 
+        wildcardParentPathInfo.paths.length - 1, 
+        wildcardParentPathInfo.wildcardCount - 1, 
+        receiver);
       const values = [];
       for(let i = 0; i < parentValue.length; i++) {
         wildcardIndexes[index] = i;
@@ -117,9 +138,15 @@ export class Handler implements ProxyHandler<IDotNotationHandler> {
     const wildcardPathInfo = getPropInfo(wildcardPath);
     const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-    const _getValue = this._getValue(target, wildcardParentPathInfo, wildcardIndexes, receiver);
     this.withIndexes(wildcardIndexes, () => {
-      const parentValue = _getValue(wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1);
+      const parentValue = this._getValue(
+        target, 
+        wildcardParentPathInfo.patternPaths, 
+        wildcardParentPathInfo.patternElements,
+        wildcardIndexes, 
+        wildcardParentPathInfo.paths.length - 1, 
+        wildcardParentPathInfo.wildcardCount - 1, 
+        receiver);
       for(let i = 0; i < parentValue.length; i++) {
         wildcardIndexes[index] = i;
         this.withIndexes(wildcardIndexes, Array.isArray(value) ? 

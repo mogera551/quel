@@ -21,6 +21,29 @@ export interface IPropInfo {
 }
 
 export interface IDotNotationHandler {
+  _stackIndexes:(undefined|number)[][] = [];
+  get lastStackIndexes():(undefined|number)[];
+  withIndexes(indexes:(number|undefined)[], callback:()=>any):any;
+  _getPropertyValue(target:object, prop:string, receiver:object):any;
+  _getValue(
+    target:object, 
+    patternPaths:string[],
+    patternElements:string[],
+    wildcardIndexes:(number|undefined)[], 
+    pathIndex:number, wildcardIndex:number,
+    receiver:object, 
+  ):any;
+  _get(target:object, prop:string, receiver:object):any;
+  _set(target:object, prop:string, value:any, receiver:object):boolean;
+  _getExpand(target:object, prop:string, receiver:object):any[];
+  _setExpand(target:object, prop:string, value:any, receiver:object):any;
+  _getDirect(target:object, prop:string, indexes:number[], receiver:object):any;
+  _setDirect(target:object, prop:string, indexes:number[], value:any, receiver:object):boolean;
+  get(target:object, prop:PropertyKey, receiver:object):any;
+  set(target:object, prop:PropertyKey, value:any, receiver:object):boolean;
+}
+
+export interface IDotNotationProxy {
   [GetDirectSymbol]:(prop:string, indexes:number[])=>any;
   [SetDirectSymbol]:(prop:string, indexes:number[], value:any)=>boolean;
   $1:number;
