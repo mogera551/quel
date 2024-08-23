@@ -1,22 +1,23 @@
 
+import { INewLoopContext } from "../newLoopContext/types";
 import "../nop";
 
-export interface INodeProperty {
+export interface INewNodeProperty {
   node: Node;
   name: string;
-  binding: IBinding;
+  binding: INewBinding;
 }
 
-export interface IStateProperty {
+export interface INewStateProperty {
   state: IState;
   name: string;
-  binding: IBinding;
+  binding: INewBinding;
 }
 
-export interface IBinding {
-  nodeProperty: INodeProperty;
-  stateProeprty: IStateProperty;
-  listContentBindings: IContentBindings[];
+export interface INewBinding {
+  nodeProperty: INewNodeProperty;
+  stateProeprty: INewStateProperty;
+  childrenContentBindings: IContentBindings[];
   parentContentBindings: IContentBindings;
   loopable: boolean;
   get component(): IComponent;
@@ -24,9 +25,11 @@ export interface IBinding {
 
 export interface IContentBindings {
   template: HTMLTemplateElement;
-  listBinding: IBinding[];
-  parentBinding?: IBinding;
-  get loopContext(): ILoopContext;
-  get component(): IComponent;
+  childrenBinding: INewBinding[];
+  parentBinding?: INewBinding;
+  loopContext: INewLoopContext | undefined;
+  currentLoopContext: INewLoopContext | undefined;
+  component: IComponent;
+  parentContentBindings: IContentBindings | undefined;
 
 }

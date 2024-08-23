@@ -5,7 +5,7 @@ import { IFilterInfo } from "../@types/filter";
 import { ILoopContext } from "../@types/loopContext";
 import { IComponent } from "../@types/component";
 import { LoopContext } from "../loopContext/LoopContext";
-import { Binder } from "../newBinder/Binder";
+import { Binder } from "../binder/Binder";
 import { Popover } from "../popover/Popover";
 
 let seq = 0;
