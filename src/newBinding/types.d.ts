@@ -1,46 +1,74 @@
 
-import { INewLoopContext } from "../newLoopContext/types";
 import "../nop";
+import { INewLoopContext } from "../newLoopContext/types";
+import { IPropInfo } from "../newDotNotation/types";
+
+export interface INewPropertyAccess {
+  readonly pattern: string;
+  readonly indexes: number[];
+  readonly propInfo: IPropInfo;
+}
+
+export interface INewBindingPropertyAccess {
+  readonly name: string;
+  readonly indexes: number[];
+  readonly loopContext?: INewLoopContext;
+}
 
 export interface INewNodeProperty {
-  node: Node;
-  name: string;
-  binding: INewBinding;
+  readonly node: Node;
+  readonly name: string;
+  readonly binding: INewBinding;
+  readonly applicable: boolean;
+  readonly expandable: boolean;
+  readonly isSelectValue: boolean;
+  readonly loopable: boolean;
+  value: any;
+  readonly filteredValue: any;
+  postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>):void;
 }
 
 export interface INewStateProperty {
-  state: IState;
-  name: string;
-  binding: INewBinding;
+  readonly state: IState;
+  readonly name: string;
+  readonly binding: INewBinding;
+  value: any;
+  readonly filteredValue: any;
+  readonly indexes: number[];
+  getChildValue(index:number):any;
+  setChildValue(index:number, value:any):void;
 }
 
 export interface INewBinding {
-  id: string;
-  nodeProperty: INewNodeProperty;
-  stateProeprty: INewStateProperty;
-  childrenContentBindings: IContentBindings[];
-  parentContentBindings: IContentBindings;
-  loopable: boolean;
-  component: IComponent;
+  readonly id: string;
+  readonly nodeProperty: INewNodeProperty;
+  readonly stateProperty: INewStateProperty;
+  readonly childrenContentBindings: IContentBindings[];
+  readonly parentContentBindings: IContentBindings;
+  readonly loopable: boolean;
+  readonly component: IComponent;
   appendChildContentBindings(contentBindings: IContentBindings): void;
+  replaceChildContentBindings(contentBindings: IContentBindings, index: number): void;
   removeAllChildrenContentBindings(): IContentBindings[];
   dispose(): void;
 }
 
 export interface IContentBindings {
-  template: HTMLTemplateElement;
-  childrenBinding: INewBinding[];
+  readonly template: HTMLTemplateElement;
+  readonly childrenBinding: INewBinding[];
   parentBinding?: INewBinding;
-  loopContext: INewLoopContext | undefined;
-  currentLoopContext: INewLoopContext | undefined;
-  component: IComponent;
-  parentContentBindings: IContentBindings | undefined;
+  readonly loopContext?: INewLoopContext;
+  readonly currentLoopContext?: INewLoopContext;
+  readonly component: IComponent;
+  readonly parentContentBindings?: IContentBindings;
 
-  fragment: DocumentFragment;
-  childNodes: Node[];
+  readonly fragment: DocumentFragment;
+  readonly childNodes: Node[];
+  readonly lastChildNode?: Node;
 
   initialize():void;
   applyToNode():void;
+  removeChildNodes():void;
   dispose():void;
 }
 

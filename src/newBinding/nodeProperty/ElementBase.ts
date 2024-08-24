@@ -1,6 +1,5 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
-import { IBinding } from "../../@types/binding";
 import { NodeProperty } from "./NodeProperty";
 import { INewBinding } from "../types";
 

@@ -20,8 +20,8 @@ export class Repeat extends TemplateProperty {
       this.binding.childrenContentBindings.forEach(applyToNodeFunc);
       for(let newIndex = this.value as number; newIndex < value.length; newIndex++) {
         const contentBindings = createContentBindings(this.template, this.binding);
-        this.binding.appendChild(contentBindings);
-        contentBindings.postCreate();
+        this.binding.appendChildContentBindings(contentBindings);
+        // contentBindings.postCreate();
       }
     } else if (this.value as number > value.length) {
       const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);

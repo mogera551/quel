@@ -1,6 +1,5 @@
 import { utils } from "../../utils";
 import { EventFilterFunc, IFilterInfo } from "../../@types/filter.js";
-import { IBinding } from "../../@types/binding";
 import { DirectryCallApiSymbol } from "../../@symbols/state.js";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { ElementBase } from "./ElementBase";
@@ -50,8 +49,10 @@ export class ElementEvent extends ElementBase {
   async directlyCall(event:Event) {
     // 再構築などでバインドが削除されている場合は処理しない
     if (!(this.binding.component?.bindingSummary.exists(this.binding) ?? false)) return;
-    const { stateProperty, loopContext } = this.binding;
-    return stateProperty.state[DirectryCallApiSymbol](stateProperty.name, loopContext, event);
+    return this.binding.stateProperty.state[DirectryCallApiSymbol](
+      this.binding.stateProperty.name, 
+      this.binding.parentContentBindings.currentLoopContext, 
+      event);
   }
 
   eventHandler(event:Event) {

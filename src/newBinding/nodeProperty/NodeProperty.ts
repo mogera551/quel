@@ -2,7 +2,7 @@ import { utils } from "../../utils";
 import { FilterFunc, IFilterInfo } from "../../@types/filter";
 import { IPropertyAccess } from "../../@types/binding";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { INewBinding, INewNodeProperty } from "../types";
+import { INewBinding, INewNodeProperty, INewPropertyAccess } from "../types";
 
 export class NodeProperty implements INewNodeProperty {
   #node:Node;
@@ -71,7 +71,7 @@ export class NodeProperty implements INewNodeProperty {
   initialize() {
   }
 
-  postUpdate(propertyAccessByStatePropertyKey:Map<string,IPropertyAccess>) {
+  postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>) {
   }
 
   isSameValue(value:any):boolean {

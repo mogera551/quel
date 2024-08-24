@@ -20,7 +20,7 @@ class Binding implements INewBinding {
     return this.#nodeProperty;
   }
   // todo: このgetterを使うか検討
-  get stateProeprty(): INewStateProperty {
+  get stateProperty(): INewStateProperty {
     return this.#stateProperty;
   }
   get parentContentBindings(): IContentBindings {
@@ -51,6 +51,12 @@ class Binding implements INewBinding {
 
   appendChildContentBindings(contentBindings: IContentBindings): void {
     this.childrenContentBindings.push(contentBindings);
+    const lastChild = this.childrenContentBindings[this.childrenContentBindings.length - 1];
+    (typeof lastChild === "undefined")
+  }
+
+  replaceChildContentBindings(contentBindings: IContentBindings, index: number): void {
+    this.childrenContentBindings[index] = contentBindings;
   }
 
   removeAllChildrenContentBindings(): IContentBindings[] {
@@ -60,6 +66,11 @@ class Binding implements INewBinding {
   }
 
   applyToNode(): void {
+    // ToDo: ここに処理を追加
+  }
+
+  applyTostate(): void {
+    // ToDo: ここに処理を追加
   }
 
   dispose(): void {

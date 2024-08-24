@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
-import { IBindingManager } from "../../@types/binding";
-import { BindingManager } from "../Binding";
 import { Repeat } from "./Repeat";
+import { IContentBindings } from "../types";
+import { createContentBindings } from "../ContentBindings";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
@@ -16,7 +16,7 @@ export class RepeatKeyed extends Repeat {
 
   #setOfNewIndexes:Set<number> = new Set;
 
-  #lastChildByNewIndex:Map<number,IBindingManager> = new Map;
+  #lastChildByNewIndex:Map<number,IContentBindings> = new Map;
 
   get loopable():boolean {
     return true;
@@ -44,70 +44,74 @@ export class RepeatKeyed extends Repeat {
         // 元のインデックスがある場合（既存）
         this.#fromIndexByValue.set(value, lastIndex + 1); // 
         this.#lastIndexes.add(lastIndex);
-        this.#lastChildByNewIndex.set(newIndex, this.binding.children[lastIndex]);
+        this.#lastChildByNewIndex.set(newIndex, this.binding.childrenContentBindings[lastIndex]);
       }
     }
-    for(let i = 0; i < this.binding.children.length; i++) {
+    for(let i = 0; i < this.binding.childrenContentBindings.length; i++) {
       if (this.#lastIndexes.has(i)) continue;
-      this.binding.children[i].dispose();
+      this.binding.childrenContentBindings[i].dispose();
     }
 
-    const oldChildren:IBindingManager[] = this.binding.children.slice(0);
-    let beforeBindingManager:IBindingManager|undefined;
+    const oldChildren:IContentBindings[] = this.binding.childrenContentBindings.slice(0);
+    let beforeContentBindings:IContentBindings|undefined;
     const parentNode:Node = this.node.parentNode ?? utils.raise("parentNode is null");
     for(let i = 0; i < values.length; i++) {
       const newIndex = i;
-      let bindingManager:IBindingManager;
-      const beforeNode = beforeBindingManager?.lastNode ?? this.node;
+      let contentBindings:IContentBindings;
+      const beforeNode = beforeContentBindings?.lastChildNode ?? this.node;
       if (this.#setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
-        (newIndex < this.binding.children.length) ? (this.binding.children[newIndex] = bindingManager) : this.binding.children.push(bindingManager);
-        parentNode?.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
-        bindingManager.postCreate();
+        contentBindings = createContentBindings(this.binding.component, this.binding);
+        (newIndex < this.binding.childrenContentBindings.length) ? 
+          (this.binding.childrenContentBindings[newIndex] = contentBindings) : 
+          this.binding.childrenContentBindings.push(contentBindings);
+        parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
+        // contentBindings.postCreate();
       } else {
         // 元のインデックスがある場合（既存）
-        bindingManager = this.#lastChildByNewIndex.get(newIndex) ?? utils.raise("bindingManager is undefined");
-        if (bindingManager.nodes?.[0]?.previousSibling !== beforeNode) {
-          bindingManager.removeNodes();
-          parentNode.insertBefore(bindingManager.fragment, beforeNode.nextSibling ?? null);
+        contentBindings = this.#lastChildByNewIndex.get(newIndex) ?? utils.raise("contentBindings is undefined");
+        if (contentBindings.childNodes[0]?.previousSibling !== beforeNode) {
+          contentBindings.removeChildNodes();
+          parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
         }
-        (newIndex < this.binding.children.length) ? (this.binding.children[newIndex] = bindingManager) : this.binding.children.push(bindingManager);
-        bindingManager.applyToNode();
+        (newIndex < this.binding.childrenContentBindings.length) ? 
+          (this.binding.childrenContentBindings[newIndex] = contentBindings) : 
+          this.binding.childrenContentBindings.push(contentBindings);
+        contentBindings.applyToNode();
       }
-      beforeBindingManager = bindingManager;
+      beforeContentBindings = contentBindings;
     }
-    if (values.length < this.binding.children.length) {
-      this.binding.children.length = values.length;
+    if (values.length < this.binding.childrenContentBindings.length) {
+      this.binding.childrenContentBindings.length = values.length;
     }
     this.#lastValue = values.slice();
   }
 
   applyToChildNodes(setOfIndex:Set<number>) {
-    const bindingManagerByValue:Map<any,IBindingManager> = new Map;
+    const contentBindingsByValue:Map<any,IContentBindings> = new Map;
     for(const index of setOfIndex) {
-      const bindingManager = this.binding.children[index];
-      if (typeof bindingManager === "undefined") continue;
+      const contentBindings = this.binding.childrenContentBindings[index];
+      if (typeof contentBindings === "undefined") continue;
       const oldValue = this.#lastValue[index];
       const typeofOldValue = typeof oldValue;
       if (typeofOldValue === "undefined") continue;
       if (setOfPrimitiveType.has(typeofOldValue)) continue;
-      bindingManager.removeNodes();
-      bindingManagerByValue.set(oldValue, bindingManager);
+      contentBindings.removeChildNodes();
+      contentBindingsByValue.set(oldValue, contentBindings);
     }
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.stateProperty.getChildValue(index);
       const typeofNewValue = typeof newValue;
       if (typeofNewValue === "undefined") continue;
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
-      let bindingManager = bindingManagerByValue.get(newValue);
-      if (typeof bindingManager === "undefined") {
-        bindingManager = BindingManager.create(this.binding.component, this.template, this.uuid, this.binding);
-        this.binding.replaceChild(index, bindingManager);
-        bindingManager.postCreate();
+      let contentBindings = contentBindingsByValue.get(newValue);
+      if (typeof contentBindings === "undefined") {
+        contentBindings = createContentBindings(this.binding.component, this.binding);
+        this.binding.replaceChildContentBindings(contentBindings, index);
+        // contentBindings.postCreate();
       } else {
-        this.binding.replaceChild(index, bindingManager);
-        bindingManager.applyToNode();
+        this.binding.replaceChildContentBindings(contentBindings, index);
+        contentBindings.applyToNode();
       }
     }
     this.#lastValue = this.binding.stateProperty.value.slice();

@@ -29,7 +29,7 @@ export class StateProperty implements INewStateProperty {
   }
 
   get indexes():number[] {
-    const indexes = this.binding.parentContentBindings?.loopContext?.indexes ?? [];
+    const indexes = this.binding.parentContentBindings?.currentLoopContext?.indexes ?? [];
     return indexes.length === this.level ? indexes : indexes.slice(0 , this.level);
   }
 

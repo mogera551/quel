@@ -1,15 +1,15 @@
 import { utils } from "../../utils";
-import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../../@types/binding";
 import { IFilterInfo } from "../../@types/filter.js";
-import { ILoopContext } from "../../@types/loopContext.js";
 import { IComponent } from "../../@types/component.js";
 import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.js";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@symbols/state";
 import { ElementBase } from "./ElementBase";
-import { PropertyAccess } from "../PropertyAccess.js";
+import { PropertyAccess } from "../PropertyAccess";
+import { INewBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../types";
+import { INewLoopContext } from "../../newLoopContext/types";
 
-export class BindingPropertyAccess implements IBindingPropertyAccess{
-  #stateProperty:IStateProperty;
+export class BindingPropertyAccess implements INewBindingPropertyAccess{
+  #stateProperty:INewStateProperty;
 
   get name():string {
     return this.#stateProperty.name;
@@ -19,11 +19,11 @@ export class BindingPropertyAccess implements IBindingPropertyAccess{
     return this.#stateProperty.indexes;
   }
 
-  get loopContext():ILoopContext {
-    return this.#stateProperty.binding.loopContext;
+  get loopContext():INewLoopContext | undefined {
+    return this.#stateProperty.binding.parentContentBindings.currentLoopContext;
   }
 
-  constructor(stateProperty:IStateProperty) {
+  constructor(stateProperty:INewStateProperty) {
     this.#stateProperty = stateProperty;
   }
 }
@@ -41,7 +41,7 @@ export class ComponentProperty extends ElementBase {
     return this.node as IComponent;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (Reflect.get(node, IsComponentSymbol) !== true) utils.raise("ComponentProperty: not Quel Component");
     // todo: バインドするプロパティ名のチェック
     // 「*」を含まないようにする
@@ -53,7 +53,7 @@ export class ComponentProperty extends ElementBase {
   }
   set value(value) {
     try {
-      this.thisComponent.currentState[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
+      // this.thisComponent.currentState[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
       this.thisComponent.currentState[NotifyForDependentPropsApiSymbol](this.propertyName, []);
     } catch(e) {
       console.log(e);
@@ -70,12 +70,12 @@ export class ComponentProperty extends ElementBase {
   /**
    * 更新後処理
    */
-  postUpdate(propertyAccessBystatePropertyKey:Map<string,IPropertyAccess>):void {
+  postUpdate(propertyAccessBystatePropertyKey:Map<string,INewPropertyAccess>):void {
     const statePropertyName = this.binding.stateProperty.name;
     for(const [key, propertyAccess] of propertyAccessBystatePropertyKey.entries()) {
-      if (propertyAccess.patternName === statePropertyName || 
-        propertyAccess.patternNameInfo.setOfParentPaths.has(statePropertyName)) {
-        const remain = propertyAccess.patternName.slice(statePropertyName.length);
+      if (propertyAccess.pattern === statePropertyName || 
+        propertyAccess.propInfo.patternPaths.includes(statePropertyName)) {
+        const remain = propertyAccess.pattern.slice(statePropertyName.length);
 //        console.log(`componentProperty:postUpdate(${propName}${remain})`);
         this.thisComponent.currentState[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
         this.thisComponent.currentState[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);

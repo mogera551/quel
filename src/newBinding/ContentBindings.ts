@@ -49,6 +49,10 @@ class ContentBindings implements IContentBindings {
     return this.#childNodes;
   }
 
+  get lastChildNode(): Node | undefined {
+    return this.childNodes[this.childNodes.length - 1];
+  }
+
   get currentLoopContext(): INewLoopContext | undefined {
     if (typeof this.#loopContext === "undefined") {
       return this.parentContentBindings?.loopContext;
@@ -56,7 +60,6 @@ class ContentBindings implements IContentBindings {
       return this.#loopContext;
     }
   }
-
 
   get parentContentBindings(): IContentBindings | undefined {
     return this.parentBinding?.parentContentBindings;
