@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { StateProperty } from "./StateProperty";
-import { Binding } from "../Binding";
+import { INewBinding } from "../types";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -23,7 +23,7 @@ export class ContextIndex extends StateProperty {
     return "";
   }
 
-  constructor(binding:Binding, name:string, filters:IFilterInfo[]) {
+  constructor(binding:INewBinding, name:string, filters:IFilterInfo[]) {
     if (!regexp.test(name)) utils.raise(`ContextIndex: invalid name ${name}`);
     super(binding, name, filters);
     this.#index = Number(name.slice(1)) - 1;

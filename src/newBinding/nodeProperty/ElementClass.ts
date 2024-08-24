@@ -2,6 +2,7 @@ import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { IBinding } from "../../@types/binding";
 import { ElementBase } from "./ElementBase";
+import { INewBinding } from "../types";
 
 const PREFIX = "class.";
 
@@ -18,7 +19,7 @@ export class ElementClass extends ElementBase {
     value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementClass: invalid property name ${name}`);
     super(binding, node, name, filters);
   }

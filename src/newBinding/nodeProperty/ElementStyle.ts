@@ -2,6 +2,7 @@ import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { IBinding } from "../../@types/binding";
 import { ElementBase } from "./ElementBase";
+import { INewBinding } from "../types";
 
 export class ElementStyle extends ElementBase {
   get htmlElement():HTMLElement {
@@ -19,7 +20,7 @@ export class ElementStyle extends ElementBase {
     this.htmlElement.style.setProperty(this.styleName, value);
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");
     super(binding, node, name, filters);
   }

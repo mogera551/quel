@@ -4,6 +4,7 @@ import { IBinding } from "../../@types/binding";
 import { DirectryCallApiSymbol } from "../../@symbols/state.js";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { ElementBase } from "./ElementBase";
+import { INewBinding } from "../types";
 
 const PREFIX = "on";
 
@@ -32,7 +33,7 @@ export class ElementEvent extends ElementBase {
     return this.#eventFilters;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
     this.#eventFilters = Filters.create<"event">(filters, binding.component.eventFilterManager);
