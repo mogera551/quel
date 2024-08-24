@@ -15,12 +15,16 @@ export interface INewStateProperty {
 }
 
 export interface INewBinding {
+  id: string;
   nodeProperty: INewNodeProperty;
   stateProeprty: INewStateProperty;
   childrenContentBindings: IContentBindings[];
   parentContentBindings: IContentBindings;
   loopable: boolean;
-  get component(): IComponent;
+  component: IComponent;
+  appendChildContentBindings(contentBindings: IContentBindings): void;
+  removeAllChildrenContentBindings(): IContentBindings[];
+  dispose(): void;
 }
 
 export interface IContentBindings {
@@ -32,4 +36,10 @@ export interface IContentBindings {
   component: IComponent;
   parentContentBindings: IContentBindings | undefined;
 
+  fragment: DocumentFragment;
+  childNodes: Node[];
+
+  initialize():void;
+  applyToNode():void;
+  dispose():void;
 }
