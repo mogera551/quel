@@ -2,6 +2,7 @@ import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, D
 import { IGlobalData } from "../@types/global";
 import { IDependentProps } from "../@types/state";
 import { IDotNotationHandler, IDotNotationProxy } from "../newDotNotation/types";
+import { INewLoopContext } from "../newLoopContext/types";
 
 export interface IStateHandler {
   readonly accessorProperties: Set<string>;
@@ -9,7 +10,7 @@ export interface IStateHandler {
   readonly component: IComponent;
   addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
   clearCache():void;
-  directlyCallback(loopContext:ILoopContext, callback:() => void):void;
+  directlyCallback(loopContext:INewLoopContext, callback:() => Promise<void>):Promise<void>;
   addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
 }
 

@@ -1,8 +1,8 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
 import { IComponent } from "../@types/component";
-import { ILoopContext } from "../@types/loopContext";
-import { PropertyAccess } from "../binding/PropertyAccess";
+import { PropertyAccess } from "../newBinding/PropertyAccess";
 import { Handler as DotNotationHandler } from "../newDotNotation/Handler";
+import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
 import { Api } from "./Api";
 import { Callback } from "./Callback";
@@ -83,8 +83,7 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   clearCache():void {
 
   }
-  directlyCallback(loopContext:ILoopContext, callback:() => void):void {
-
+  async directlyCallback(loopContext:INewLoopContext, callback:() => Promise<void>):Promise<void> {
   }
   addProcess(process: () => Promise<void>, stateProxy: IStateProxy, indexes: number[]): void {
   }

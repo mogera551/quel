@@ -15,6 +15,7 @@ export class LoopContext implements INewLoopContext{
       if (contentBindings.loopContext !== this) {
         return contentBindings.loopContext;
       }
+      contentBindings = contentBindings.parentBinding?.parentContentBindings;
     }
     return undefined; // 仮実装
   }

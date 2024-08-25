@@ -50,49 +50,53 @@ export class Handler implements IDotNotationHandler {
     const lastIndex = isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element;
     return parentValue[lastIndex];
   }
-    
-  _get(target:object, prop:string, receiver:object) {
-    const propInfo = getPropInfo(prop);
-    const lastStackIndexes = this.lastStackIndexes;
-    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-    return this.withIndexes(wildcardIndexes, () => {
+
+  __get(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object) {
+    return this.withIndexes(indexes, () => {
       return this._getValue(
         target, 
         propInfo.patternPaths,
         propInfo.patternElements, 
-        wildcardIndexes, 
+        indexes, 
         propInfo.paths.length - 1, 
         propInfo.wildcardCount - 1, 
         receiver);
     });
   }
+    
+  _get(target:object, prop:string, receiver:object) {
+    const propInfo = getPropInfo(prop);
+    const lastStackIndexes = this.lastStackIndexes;
+    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    return this.__get(target, propInfo, wildcardIndexes, receiver);
+  }
+
+  __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object):boolean {
+    this.withIndexes(indexes, () => {
+      const lastPatternElement = propInfo.patternElements[propInfo.patternElements.length - 1];
+      const lastElement = propInfo.elements[propInfo.elements.length - 1];
+      const parentValue = this._getValue(
+        target, 
+        propInfo.patternPaths, 
+        propInfo.patternElements,
+        indexes, 
+        propInfo.paths.length - 2, 
+        propInfo.wildcardCount - (lastPatternElement === "*" ? 1 : 0) - 1, 
+        receiver);
+      if (lastPatternElement === "*") {
+        parentValue[indexes[indexes.length - 1] ?? utils.raise("wildcard is undefined")] = value;
+      } else {
+        parentValue[lastElement] = value;
+      }
+    });
+    return true;
+  }
 
   _set(target:object, prop:string, value:any, receiver:object):boolean {
     const propInfo = getPropInfo(prop);
-    if (propInfo.elements.length === 1) {
-      Reflect.set(target, prop, value, receiver);
-    } else {
-      const lastStackIndexes = this.lastStackIndexes;
-      const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-      this.withIndexes(wildcardIndexes, () => {
-        const lastPatternElement = propInfo.patternElements[propInfo.patternElements.length - 1];
-        const lastElement = propInfo.elements[propInfo.elements.length - 1];
-        const parentValue = this._getValue(
-          target, 
-          propInfo.patternPaths, 
-          propInfo.patternElements,
-          wildcardIndexes, 
-          propInfo.paths.length - 2, 
-          propInfo.wildcardCount - (lastPatternElement === "*" ? 1 : 0) - 1, 
-          receiver);
-        if (lastPatternElement === "*") {
-          parentValue[wildcardIndexes[wildcardIndexes.length - 1] ?? utils.raise("wildcard is undefined")] = value;
-        } else {
-          parentValue[lastElement] = value;
-        }
-      });
-    }
-    return true;
+    const lastStackIndexes = this.lastStackIndexes;
+    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    return this.__set(target, propInfo, wildcardIndexes, value, receiver);
   }
 
   _getExpand(target:object, prop:string, receiver:object) {

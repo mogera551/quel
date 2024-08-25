@@ -35,6 +35,8 @@ export interface IDotNotationHandler {
   ):any;
   _get(target:object, prop:string, receiver:object):any;
   _set(target:object, prop:string, value:any, receiver:object):boolean;
+  __get(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object):any;
+  __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object):boolean;
   _getExpand(target:object, prop:string, receiver:object):any[];
   _setExpand(target:object, prop:string, value:any, receiver:object):any;
   _getDirect(target:object, prop:string, indexes:number[], receiver:object):any;

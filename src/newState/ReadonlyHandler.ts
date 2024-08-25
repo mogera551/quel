@@ -1,4 +1,5 @@
 import { IPropInfo } from "../newDotNotation/types";
+import { utils } from "../utils";
 import { Handler } from "./Handler";
 
 export class ReadonlyHandler extends Handler {
@@ -28,6 +29,10 @@ export class ReadonlyHandler extends Handler {
 
   clearCache():void {
     this.#cache.clear();
+  }
+
+  set(target:object, prop:string, value:any, receiver:object):boolean {
+    utils.raise("ReadonlyHandler: set is not allowed");
   }
 
 }

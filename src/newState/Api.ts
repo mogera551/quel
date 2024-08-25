@@ -6,6 +6,7 @@ import {
 } from "../@symbols/state";
 import { IDependentProps, IStateHandler, IStateProxy, SupportApiSymbols } from "./types";
 import { PropertyAccess } from "../binding/PropertyAccess";
+import { INewLoopContext } from "../newLoopContext/types";
 
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
@@ -21,9 +22,9 @@ const apiFunctions = new Set([
 
 const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
   [DirectryCallApiSymbol]:({state, stateProxy, handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
-    async (prop:string, loopContext:ILoopContext, event:Event):Promise<void> => 
+    async (prop:string, loopContext:INewLoopContext, event:Event):Promise<void> => 
       handler.directlyCallback(loopContext, async () => 
-        Reflect.apply(Reflect.get(state, prop), stateProxy, [event, ...(loopContext?.allIndexes ?? [])]) as void
+        Reflect.apply(Reflect.get(state, prop), stateProxy, [event, ...(loopContext?.indexes ?? [])]) as void
       ),
   [NotifyForDependentPropsApiSymbol]:
     ({state, stateProxy, handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
