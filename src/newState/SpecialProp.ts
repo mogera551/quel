@@ -1,6 +1,7 @@
 import { utils } from "../utils";
 import { IComponent } from "../@types/component";
 import { createUserComponent } from "../component/UserProxy";
+import { IStateHandler, IStateProxy } from "./types";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
@@ -20,6 +21,10 @@ const funcByName:FuncByName = {
   [GLOBALS_PROPERTY]: ({component}:{component:IComponent, state:Object}) => component.globals, // component.globals,
   [DEPENDENT_PROPS_PROPERTY]: ({state}:{component:IComponent, state:Object}) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
   [COMPONENT_PROPERTY]: ({component}:{component:IComponent, state:Object}) => createUserComponent(component),
+}
+
+export function getSpecialProps(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:string):any {
+  return funcByName[prop]?.({component:handler.component, state});
 }
 
 export class SpecialProp {

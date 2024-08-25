@@ -22,7 +22,7 @@ const allCallbacks:Set<PropertyKey> = new Set([
   UpdatedCallbackSymbol,
 ]);
 
-const callbackToEvent:{[key:PropertyKey]:symbol} = {
+const callbackToEvent:{[key:symbol]:symbol} = {
   [ConnectedCallbackSymbol]: ConnectedEventSymbol,
   [DisconnectedCallbackSymbol]: DisconnectedEventSymbol,
   [UpdatedCallbackSymbol]: UpdatedEventSymbol,
@@ -31,14 +31,14 @@ const callbackToEvent:{[key:PropertyKey]:symbol} = {
 type State = {[key:string]:any};
 
 const applyCallback = 
-(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:PropertyKey) => 
+(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol) => 
 (...args:any) => 
 async ():Promise<void> => {
   (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
   dispatchCustomEvent(handler.component, callbackToEvent[prop], args);
 };
 
-export function getCallback(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:PropertyKey):(()=>any)|undefined {
+export function getCallback(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol):(()=>any)|undefined {
   return (allCallbacks.has(prop)) ? (
     (prop === ConnectedCallbackSymbol) ? 
       (...args:any) => applyCallback(state, stateProxy, handler, prop)(...args)() : 

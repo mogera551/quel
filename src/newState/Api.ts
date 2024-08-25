@@ -11,7 +11,7 @@ import { INewLoopContext } from "../newLoopContext/types";
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 
-const callFuncBySymbol:{[key:PropertyKey]:(...args:any[])=>any} = {
+const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
   [DirectryCallApiSymbol]:({state, stateProxy, handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
     async (prop:string, loopContext:INewLoopContext, event:Event):Promise<void> => 
       handler.directlyCallback(loopContext, async () => 
@@ -27,6 +27,6 @@ const callFuncBySymbol:{[key:PropertyKey]:(...args:any[])=>any} = {
   [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (buffer:{[key:string]:any}, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
-export function getApi(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:PropertyKey):(()=>void|undefined) {
+export function getApi(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol):(()=>void|undefined) {
   return callFuncBySymbol[prop]?.({state, stateProxy, handler});
 }

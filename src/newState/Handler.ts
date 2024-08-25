@@ -6,6 +6,7 @@ import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
 import { getApi } from "./Api";
 import { getCallback } from "./Callback";
+import { getSpecialProps } from "./SpecialProp";
 import { getStateInfo } from "./StateInfo";
 import { IDependentProps, IStateHandler, IStateProxy } from "./types";
 
@@ -66,8 +67,11 @@ export class Handler extends DotNotationHandler implements IStateHandler {
         getCallback(target as Object, receiver, this, prop) ??
         getApi(target as Object, receiver, this, prop) ?? 
         super.get(target, prop, receiver);
+    } else if (typeof prop === "string") {
+      return getSpecialProps(target as Object, receiver, this, prop) ?? super.get(target, prop, receiver);
+    } else {
+      return super.get(target, prop, receiver);
     }
-    return super.get(target, prop, receiver);
   }
 
   addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void {
