@@ -6,24 +6,24 @@ type PropType = "primitive" | "object" | "array";
 type ArrayIncompleteType = "none" | "parital" | "all";
 
 export interface IPropInfo {
-  name: string; // The original name
+  readonly name: string; // The original name
 //  type: PropType; // The type of the property
 //  incompleteType: ArrayIncompleteType; // The type of the array
-  pattern:string; // The pattern 
-  elements: string[];
-  patternElements: string[];
-  paths: string[];
-  patternPaths: string[];
-  wildcardPaths: string[];
-  wildcardCount: number;
-  wildcardIndexes: (number|undefined)[];
-  lastIncompleteWildcardIndex: number;
+  readonly pattern: string; // The pattern 
+  readonly elements: string[];
+  readonly patternElements: string[];
+  readonly paths: string[];
+  readonly patternPaths: string[];
+  readonly wildcardPaths: string[];
+  readonly wildcardCount: number;
+  readonly wildcardIndexes: (number|undefined)[];
+  readonly lastIncompleteWildcardIndex: number;
 }
 
 export interface IDotNotationHandler {
-  _stackIndexes:(undefined|number)[][] = [];
-  get lastStackIndexes():(undefined|number)[];
-  withIndexes(indexes:(number|undefined)[], callback:()=>any):any;
+  _stackIndexes: (undefined|number)[][];
+  lastStackIndexes: (undefined|number)[];
+  withIndexes(indexes:(number|undefined)[], callback:() => any): any;
   _getPropertyValue(target:object, prop:string, receiver:object):any;
   _getValue(
     target:object, 
@@ -44,23 +44,23 @@ export interface IDotNotationHandler {
 }
 
 export interface IDotNotationProxy {
-  [GetDirectSymbol]:(prop:string, indexes:number[])=>any;
-  [SetDirectSymbol]:(prop:string, indexes:number[], value:any)=>boolean;
-  $1:number;
-  $2:number;
-  $3:number;
-  $4:number;
-  $5:number;
-  $6:number;
-  $7:number;
-  $8:number;
-  $9:number;
-  $10:number;
-  $11:number;
-  $12:number;
-  $13:number;
-  $14:number;
-  $15:number;
-  $16:number;
+  [GetDirectSymbol](prop:string, indexes:number[]): any;
+  [SetDirectSymbol](prop:string, indexes:number[], value:any): boolean;
+  readonly $1?: number;
+  readonly $2?: number;
+  readonly $3?: number;
+  readonly $4?: number;
+  readonly $5?: number;
+  readonly $6?: number;
+  readonly $7?: number;
+  readonly $8?: number;
+  readonly $9?: number;
+  readonly $10?: number;
+  readonly $11?: number;
+  readonly $12?: number;
+  readonly $13?: number;
+  readonly $14?: number;
+  readonly $15?: number;
+  readonly $16?: number;
   [key:string]:any;
 }

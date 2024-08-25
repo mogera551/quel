@@ -4,9 +4,9 @@ import { IDependentProps } from "../@types/state";
 import { IDotNotationHandler, IDotNotationProxy } from "../newDotNotation/types";
 
 export interface IStateHandler {
-  get accessorProperties():Set<string>;
-  get dependentProps():IDependentProps;
-  get component():IComponent;
+  readonly accessorProperties: Set<string>;
+  readonly dependentProps: IDependentProps;
+  readonly component: IComponent;
   addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
   clearCache():void;
   directlyCallback(loopContext:ILoopContext, callback:() => void):void;
@@ -14,37 +14,37 @@ export interface IStateHandler {
 }
 
 interface IStateProxyPartial {
-  [AccessorPropertiesSymbol]:Set<string>;
-  [DependenciesSymbol]:IDependentProps;
+  readonly [AccessorPropertiesSymbol]: Set<string>;
+  readonly [DependenciesSymbol]: IDependentProps;
   // API
-  [DirectryCallApiSymbol]:(prop:string, loopContext:ILoopContext, event:Event) => romise<void>;
-  [NotifyForDependentPropsApiSymbol]:(prop:string, indexes:number[]) => void;
-  [GetDependentPropsApiSymbol]:() => IDependentProps;
-  [ClearCacheApiSymbol]:() => void;
-  [CreateBufferApiSymbol]:(component:IComponent) => void;
-  [FlushBufferApiSymbol]:(buffer:{[key:string]:any}, component:IComponent) => boolean;
+  [DirectryCallApiSymbol](prop:string, loopContext:ILoopContext, event:Event): Promise<void>;
+  [NotifyForDependentPropsApiSymbol](prop:string, indexes:number[]): void;
+  [GetDependentPropsApiSymbol](): IDependentProps;
+  [ClearCacheApiSymbol](): void;
+  [CreateBufferApiSymbol](component:IComponent): void;
+  [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:IComponent): boolean;
   // Special Property
-  $globals:IGlobalData;
-  $dependentProps:Dependencies;
-  $component:IComponent; // todo:後でIUserComponentに変更する
+  readonly $globals: IGlobalData;
+  readonly $dependentProps: Dependencies;
+  readonly $component: IComponent; // todo:後でIUserComponentに変更する
 
 }
 export type IStateProxy = IDotNotationProxy & IStateProxyPartial;
 
 export type Dependencies = {
-  [key:string]:string[]
+  readonly [key:string]: string[]
 }
 
 export interface IDependentProps {
-  get propsByRefProp():Map<string,Set<string>>;
+  readonly propsByRefProp: Map<string,Set<string>>;
   hasDefaultProp(prop:string):boolean;
   addDefaultProp(prop:string):void;
   setDependentProps(props:Dependencies):void; //todo:後でprivateに変更する
 }
 
 export type StateInfo = {
-  accessorProperties: Set<string>;
-  dependentProps: IDependentProps;
+  readonly accessorProperties: Set<string>;
+  readonly dependentProps: IDependentProps;
 }
 
 const _SupprotCallbackSymbols = [
