@@ -197,7 +197,7 @@ describe("Handler", () => {
 
   it("should call get/set method", () => {
     const sym = Symbol("sym");
-    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ],[sym]:"aaa", $bbb:"bbb", "@@__":"@@" };
+    const target = { aaa:[ [11, 22, 33], [111, 222, 333], [1111, 2222, 3333] ],[sym]:"aaa", $bbb:"bbb", ddd:100, "@@__":"@@" };
     const receiver = target;
 
     const fnGet = handler.get(target, GetDirectSymbol, receiver);
@@ -233,6 +233,12 @@ describe("Handler", () => {
     expect(fnGet("$bbb", [])).toBe("BBB");
     fnSet("@@__", [], "@@@@");
     expect(fnGet("@@__", [])).toBe("@@@@");
+    expect(() => {
+      fnGet("@ddd.*", []);
+    }).toThrow("parent value is not array");
+    expect(() => {
+      fnSet("@ddd.*", [200]);
+    }).toThrow("parent value is not array");
 
   });
 

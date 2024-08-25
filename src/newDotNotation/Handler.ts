@@ -72,6 +72,9 @@ export class Handler implements IDotNotationHandler {
   }
 
   __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object):boolean {
+    if (propInfo.paths.length === 1) {
+      return Reflect.set(target, propInfo.paths[0], value, receiver);
+    }
     this.withIndexes(indexes, () => {
       const lastPatternElement = propInfo.patternElements[propInfo.patternElements.length - 1];
       const lastElement = propInfo.elements[propInfo.elements.length - 1];
@@ -120,6 +123,7 @@ export class Handler implements IDotNotationHandler {
         wildcardParentPathInfo.paths.length - 1, 
         wildcardParentPathInfo.wildcardCount - 1, 
         receiver);
+      if (!Array.isArray(parentValue)) utils.raise(`parent value is not array`);
       const values = [];
       for(let i = 0; i < parentValue.length; i++) {
         wildcardIndexes[index] = i;
@@ -151,6 +155,7 @@ export class Handler implements IDotNotationHandler {
         wildcardParentPathInfo.paths.length - 1, 
         wildcardParentPathInfo.wildcardCount - 1, 
         receiver);
+      if (!Array.isArray(parentValue)) utils.raise(`parent value is not array`);
       for(let i = 0; i < parentValue.length; i++) {
         wildcardIndexes[index] = i;
         this.withIndexes(wildcardIndexes, Array.isArray(value) ? 
