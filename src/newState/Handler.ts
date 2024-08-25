@@ -4,8 +4,8 @@ import { PropertyAccess } from "../newBinding/PropertyAccess";
 import { Handler as DotNotationHandler } from "../newDotNotation/Handler";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
-import { Api } from "./Api";
-import { Callback } from "./Callback";
+import { getApi } from "./Api";
+import { getCallback } from "./Callback";
 import { getStateInfo } from "./StateInfo";
 import { IDependentProps, IStateHandler, IStateProxy } from "./types";
 
@@ -15,8 +15,7 @@ import { IDependentProps, IStateHandler, IStateProxy } from "./types";
  */
 
 type ObjectBySymbol = {
-  [AccessorPropertiesSymbol]:Set<string>,
-  [DependenciesSymbol]:IDependentProps
+  [key:PropertyKey]:any
 }
 
 export class Handler extends DotNotationHandler implements IStateHandler {
@@ -63,29 +62,26 @@ export class Handler extends DotNotationHandler implements IStateHandler {
 
   get(target:Object, prop:PropertyKey, receiver:IStateProxy):any {
     if (typeof prop === "symbol") {
-      const object = this.#objectBySymbol[prop as keyof ObjectBySymbol];
-      if (typeof object !== "undefined") return object;
-      const supportCallbackSymbol = Callback.getSupportSymbol(prop);
-      if (typeof supportCallbackSymbol !== "undefined") {
-        return Callback.get(target, receiver, this, supportCallbackSymbol);
-      }
-      const supportApiSymbol = Api.getSupportSymbol(prop);
-      if (typeof supportApiSymbol !== "undefined") {
-        return Api.get(target, receiver, this, supportApiSymbol);
-      }
+      return this.#objectBySymbol[prop] ?? 
+        getCallback(target as Object, receiver, this, prop) ??
+        getApi(target as Object, receiver, this, prop) ?? 
+        super.get(target, prop, receiver);
     }
     return super.get(target, prop, receiver);
   }
 
   addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void {
-
+    // ToDo: 処理を実装する
   }
+
   clearCache():void {
-
   }
+
   async directlyCallback(loopContext:INewLoopContext, callback:() => Promise<void>):Promise<void> {
   }
+
   addProcess(process: () => Promise<void>, stateProxy: IStateProxy, indexes: number[]): void {
+    // ToDO: 処理を実装する
   }
 
 }

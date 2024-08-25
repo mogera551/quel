@@ -11,16 +11,7 @@ import { INewLoopContext } from "../newLoopContext/types";
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 
-const apiFunctions = new Set([
-  DirectryCallApiSymbol,
-  NotifyForDependentPropsApiSymbol,
-  GetDependentPropsApiSymbol,
-  ClearCacheApiSymbol,
-  CreateBufferApiSymbol,
-  FlushBufferApiSymbol,
-]);
-
-const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
+const callFuncBySymbol:{[key:PropertyKey]:(...args:any[])=>any} = {
   [DirectryCallApiSymbol]:({state, stateProxy, handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
     async (prop:string, loopContext:INewLoopContext, event:Event):Promise<void> => 
       handler.directlyCallback(loopContext, async () => 
@@ -36,19 +27,6 @@ const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
   [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (buffer:{[key:string]:any}, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
-export class Api {
-  static get(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:SupportApiSymbols) {
-    return callFuncBySymbol[prop]?.({state, stateProxy, handler});
-  }
-
-  static has(prop:PropertyKey):boolean {
-    if (typeof prop === "string" || typeof prop === "number") return false;
-    return apiFunctions.has(prop);
-  }
-
-  static getSupportSymbol(prop:PropertyKey):SupportApiSymbols|undefined {
-    if (typeof prop === "string" || typeof prop === "number") return undefined;
-    return apiFunctions.has(prop) ? prop as SupportApiSymbols : undefined;
-  }
-
+export function getApi(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:PropertyKey):(()=>void|undefined) {
+  return callFuncBySymbol[prop]?.({state, stateProxy, handler});
 }
