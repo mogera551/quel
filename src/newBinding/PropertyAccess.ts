@@ -22,8 +22,8 @@ export class PropertyAccess implements INewPropertyAccess {
     return this.#propInfo;
   }
 
-  constructor(patternName:string, indexes:number[] = []) {
-    this.#pattern = patternName;
+  constructor(pattern:string, indexes:number[] = []) {
+    this.#pattern = pattern;
     this.#indexes = indexes;
   }
 }
