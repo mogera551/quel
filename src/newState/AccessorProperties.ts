@@ -13,7 +13,6 @@ function getDescByNames(target:any):PropertyDescriptors {
   let object = target;
   while(object !== Object.prototype) {
     const descs = Object.getOwnPropertyDescriptors(object);
-    console.log("descs", descs);
     for(const [name, desc] of Object.entries(descs)) {
       if (Reflect.has(descByNames, name)) continue;
       descByNames[name] = desc;

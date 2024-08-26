@@ -39,13 +39,18 @@ export interface INewStateProperty {
   setChildValue(index:number, value:any):void;
 }
 
-export interface INewBinding {
+export interface INewBindingBase {
+  readonly childrenContentBindings: IContentBindingsBase[];
+  readonly parentContentBindings: IContentBindingsBase;
+  readonly loopable: boolean;
+}
+
+export interface INewBinding extends INewBindingBase {
   readonly id: string;
   readonly nodeProperty: INewNodeProperty;
   readonly stateProperty: INewStateProperty;
   readonly childrenContentBindings: IContentBindings[];
   readonly parentContentBindings: IContentBindings;
-  readonly loopable: boolean;
   readonly component: IComponent;
   appendChildContentBindings(contentBindings: IContentBindings): void;
   replaceChildContentBindings(contentBindings: IContentBindings, index: number): void;
@@ -53,12 +58,17 @@ export interface INewBinding {
   dispose(): void;
 }
 
-export interface IContentBindings {
+export interface IContentBindingsBase {
+  readonly childrenBinding: INewBindingBase[];
+  parentBinding?: INewBindingBase;
+  readonly loopContext?: INewLoopContext;
+  readonly currentLoopContext?: INewLoopContext;
+}
+
+export interface IContentBindings extends IContentBindingsBase {
   readonly template: HTMLTemplateElement;
   readonly childrenBinding: INewBinding[];
   parentBinding?: INewBinding;
-  readonly loopContext?: INewLoopContext;
-  readonly currentLoopContext?: INewLoopContext;
   readonly component: IComponent;
   readonly parentContentBindings?: IContentBindings;
 
@@ -71,6 +81,8 @@ export interface IContentBindings {
   removeChildNodes():void;
   dispose():void;
 }
+
+type IContentBindings = IContentBindingsHierarchy & IContentBindingsPartial;
 
 export interface IMultiValue {
   value:any;

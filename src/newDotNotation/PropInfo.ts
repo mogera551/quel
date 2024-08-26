@@ -1,16 +1,47 @@
 
 import { IPropInfo } from './types';
 
-const _cache = new Map<string, IPropInfo>();
+type PatternInfo = {
+  patternElements:string[],
+  patternPaths:string[],
+  wildcardPaths:string[]
+}
 
-// todo: パターンのキャッシュも考える
+const _cachePropInfo = new Map<string, IPropInfo>();
+const _cachePatternInfo = new Map<string, PatternInfo>();
+
+function _getPatternInfo(pattern:string):PatternInfo {
+  const patternElements = pattern.split(".");
+  const patternPaths = [];
+  const wildcardPaths = [];
+  for(let i = 0; i < patternElements.length; i++) {
+    const patternElement = patternElements[i];
+    if (patternElement === "*") {
+      wildcardPaths.push(patternElements.slice(0, i + 1).join("."));
+    }
+    patternPaths.push(patternElements.slice(0, i + 1).join("."));
+  }
+  return {
+    patternElements,
+    patternPaths,
+    wildcardPaths,
+  }
+}
+
+function getPatternInfo(pattern:string):PatternInfo {
+  if (_cachePatternInfo.has(pattern)) {
+    return _cachePatternInfo.get(pattern)!;
+  }
+  const patternInfo = _getPatternInfo(pattern);
+  _cachePatternInfo.set(pattern, patternInfo);
+  return patternInfo;
+}
+
 function _getPropInfo(name:string):IPropInfo {
   const elements = name.split(".");
   const patternElements = elements.slice(0);
   const wildcardIndexes:(number|undefined)[] = [];
   const paths = [];
-  const patternPaths = [];
-  const wildcardPaths = [];
   let lastIncompleteWildcardIndex = -1;
   for(let i = 0; i < elements.length; i++) {
     const element = elements[i];
@@ -26,32 +57,26 @@ function _getPropInfo(name:string):IPropInfo {
       }
     }
     paths.push(elements.slice(0, i + 1).join("."));
-    patternPaths.push(patternElements.slice(0, i + 1).join("."));
-    if (patternElements[i] === "*") {
-      wildcardPaths.push(patternPaths[i]);
-    }
   }
   const pattern = patternElements.join(".");
   const wildcardCount = wildcardIndexes.length;
-  return {
+  return Object.assign({
     name,
     pattern,
     elements,
     patternElements,
     paths,
-    patternPaths,
-    wildcardPaths,
     wildcardCount,
     wildcardIndexes,
     lastIncompleteWildcardIndex,
-  }
+  }, getPatternInfo(pattern));
 }
 
 export function getPropInfo(name:string):IPropInfo {
-  if (_cache.has(name)) {
-    return _cache.get(name)!;
+  if (_cachePropInfo.has(name)) {
+    return _cachePropInfo.get(name)!;
   }
   const propInfo = _getPropInfo(name);
-  _cache.set(name, propInfo);
+  _cachePropInfo.set(name, propInfo);
   return propInfo;
 }

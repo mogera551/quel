@@ -1,23 +1,30 @@
-import { IContentBindings } from "../newBinding/types";
+import { IContentBindings, IContentBindingsBase } from "../newBinding/types";
 import { utils } from "../utils";
 import { INewLoopContext } from "./types";
 
 export class LoopContext implements INewLoopContext{
-  #contentBindings: IContentBindings;
+  #contentBindings: IContentBindingsBase;
   #index?: number;
-  constructor(contentBindings: IContentBindings) {
+  #parentLoopContext?: INewLoopContext;
+  #parentLoopCache = false;
+  constructor(contentBindings: IContentBindingsBase) {
+    contentBindings.parentBinding?.loopable === true || utils.raise("parentBinding is not loopable");
     this.#contentBindings = contentBindings;
   }
 
   get parentLoopContext(): INewLoopContext | undefined {
-    let contentBindings:IContentBindings | undefined = this.#contentBindings.parentContentBindings;
-    while (typeof contentBindings !== "undefined") {
-      if (contentBindings.loopContext !== this) {
-        return contentBindings.loopContext;
+    if (!this.#parentLoopCache) {
+      let curContentBindings:IContentBindingsBase | undefined = this.#contentBindings.parentBinding?.parentContentBindings;
+      while (typeof curContentBindings !== "undefined") {
+        if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext !== this) {
+          break;
+        }
+        curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
       }
-      contentBindings = contentBindings.parentBinding?.parentContentBindings;
+      this.#parentLoopContext = curContentBindings?.loopContext;
+      this.#parentLoopCache = true;
     }
-    return undefined; // 仮実装
+    return this.#parentLoopContext;
   }
 
   get index(): number {
@@ -38,6 +45,7 @@ export class LoopContext implements INewLoopContext{
   }
 
   clearIndex(): void {
+    this.#parentLoopCache = false;
     this.#index = undefined;
   }
 }

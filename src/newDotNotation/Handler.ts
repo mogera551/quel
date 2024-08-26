@@ -108,7 +108,6 @@ export class Handler implements IDotNotationHandler {
     const wildcardIndexes = propInfo.wildcardIndexes.map(
       (i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
     );
-    console.log(wildcardIndexes, propInfo.wildcardIndexes, lastStackIndexes);
     const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
     const wildcardPath = propInfo.wildcardPaths.at(index) ?? utils.raise(`wildcard path is undefined`);
     const wildcardPathInfo = getPropInfo(wildcardPath);
