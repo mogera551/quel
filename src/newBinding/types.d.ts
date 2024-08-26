@@ -2,6 +2,7 @@
 import "../nop";
 import { INewLoopContext } from "../newLoopContext/types";
 import { IPropInfo } from "../newDotNotation/types";
+import { IUpdator } from "../@types/component";
 
 export interface INewPropertyAccess {
   readonly pattern: string;
@@ -25,7 +26,11 @@ export interface INewNodeProperty {
   readonly loopable: boolean;
   value: any;
   readonly filteredValue: any;
+  initialize(): void;
   postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>):void;
+  equals(value:any): boolean;
+  applyToChildNodes(setOfIndex:Set<number>);
+  dispose(): void;
 }
 
 export interface INewStateProperty {
@@ -35,8 +40,11 @@ export interface INewStateProperty {
   value: any;
   readonly filteredValue: any;
   readonly indexes: number[];
+  readonly applicable: boolean;
+  readonly key: string;
   getChildValue(index:number):any;
   setChildValue(index:number, value:any):void;
+  initialize(): void;
 }
 
 export interface INewBindingBase {
@@ -53,6 +61,15 @@ export interface INewBinding extends INewBindingBase {
   readonly childrenContentBindings: IContentBindings[];
   readonly parentContentBindings: IContentBindings;
   readonly component: IComponent;
+  readonly expandable: boolean;
+  readonly updator: IUpdator;
+  readonly bindingSummary: INewBindingSummary;
+  applyToNode();
+  applyToChildNodes(setOfIndex:Set<number>);
+  applyToState();
+  defaultEventHandler: (event:Event)=>void;
+  execDefaultEventHandler(event:Event);
+  initialize();
   appendChildContentBindings(contentBindings: IContentBindings): void;
   replaceChildContentBindings(contentBindings: IContentBindings, index: number): void;
   removeAllChildrenContentBindings(): IContentBindings[];
@@ -83,9 +100,23 @@ export interface IContentBindings extends IContentBindingsBase {
   dispose():void;
 }
 
-type IContentBindings = IContentBindingsHierarchy & IContentBindingsPartial;
-
 export interface IMultiValue {
   value:any;
   enabled:boolean;
 }
+
+export interface INewBindingSummary {
+  get updated(): boolean;
+  set updated(value: boolean);
+  get updateRevision(): number;
+  get bindingsByKey(): Map<string,INewBinding[]>;
+  get expandableBindings(): Set<INewBinding>;
+  get componentBindings(): Set<INewBinding>;
+  get allBindings(): Set<INewBinding>;
+  add(binding:INewBinding):void;
+  delete(binding:INewBinding):void;
+  exists(binding:INewBinding):boolean;
+  flush():void;
+  update(callback:(summary:INewBindingSummary)=>any):void;
+}
+

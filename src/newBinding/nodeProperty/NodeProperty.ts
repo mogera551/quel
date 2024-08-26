@@ -74,7 +74,7 @@ export class NodeProperty implements INewNodeProperty {
   postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>) {
   }
 
-  isSameValue(value:any):boolean {
+  equals(value:any):boolean {
     return this.value === value;
   }
 

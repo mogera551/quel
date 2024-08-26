@@ -36,7 +36,7 @@ export class Radio extends ElementBase {
     super(binding, node, name, filters);
   }
 
-  isSameValue(value:any):boolean {
+  equals(value:any):boolean {
     return false;
   }
 }

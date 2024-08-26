@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { IBinding } from "../../@types/binding";
-import { IMultiValue } from "../types";
+import { IMultiValue, INewBinding } from "../types";
 import { ElementBase } from "./ElementBase";
 import { MultiValue } from "./MultiValue";
 import { FilterManager } from "../../filter/Manager";
@@ -32,13 +32,13 @@ export class Checkbox extends ElementBase {
     return this._filteredValue;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Checkbox: not htmlInputElement");
     if ((node as HTMLInputElement).type !== "checkbox") utils.raise("Checkbox: not checkbox");
     super(binding, node, name, filters);
   }
 
-  isSameValue(value:any):boolean {
+  equals(value:any):boolean {
     return false;
   }
 }

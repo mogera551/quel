@@ -83,7 +83,7 @@ export class ComponentProperty extends ElementBase {
     }
   }
 
-  isSameValue(value:any):boolean {
+  equals(value:any):boolean {
     return false;
   }
 

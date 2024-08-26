@@ -1,7 +1,8 @@
-import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings } from "./types";
-import { IComponent } from "../@types/component";
+import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary } from "./types";
+import { IComponent, IUpdator } from "../@types/component";
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
 import { IFilterInfo } from "../@types/filter";
+import { utils } from "../utils";
 
 let id = 1;
 class Binding implements INewBinding {
@@ -32,10 +33,19 @@ class Binding implements INewBinding {
     return this.#parentContentBindings;
   }
   get loopable(): boolean {
-    return false;
+    return this.#nodeProperty.loopable;
+  }
+  get expandable(): boolean {
+    return this.#nodeProperty.expandable;
   }
   get component(): IComponent {
     return this.#parentContentBindings.component;
+  }
+  get updator(): IUpdator {
+    return this.component.updator;
+  }
+  get bindingSummary(): INewBindingSummary {
+//    return this.component.bindingSummary;
   }
 
   constructor(
@@ -54,31 +64,77 @@ class Binding implements INewBinding {
     this.#stateProperty = statePropertyCreator(this, statePropertyName, inputFilters);
   }
 
+  applyToNode() {
+    const { updator, nodeProperty, stateProperty } = this
+    updator.applyNodeUpdatesByBinding(this, () => {
+      if (!nodeProperty.applicable) return;
+      const filteredStateValue = stateProperty.filteredValue ?? "";
+      if (nodeProperty.equals(filteredStateValue)) return;
+      nodeProperty.value = filteredStateValue;
+    });
+  }
+
+  applyToChildNodes(setOfIndex:Set<number>) {
+    const { updator } = this;
+    updator.applyNodeUpdatesByBinding(this, () => {
+      this.nodeProperty.applyToChildNodes(setOfIndex);
+    });
+  }
+
+  applyToState() {
+    const { stateProperty, nodeProperty } = this;
+    if (!stateProperty.applicable) return;
+    stateProperty.value = nodeProperty.filteredValue;
+  }
+
+  /**
+   */
+  execDefaultEventHandler(event:Event) {
+    if (!(this.bindingSummary.exists(this) ?? false)) return;
+    event.stopPropagation();
+    this.updator.addProcess(this.applyToState, this, []);
+  }
+
+  #defaultEventHandler:(((event:Event)=>void)|undefined) = undefined;
+  get defaultEventHandler():((event:Event)=>void) {
+    if (typeof this.#defaultEventHandler === "undefined") {
+      this.#defaultEventHandler = (binding => event => binding.execDefaultEventHandler(event))(this);
+    }
+    return this.#defaultEventHandler;
+  }
+
+  initialize() {
+    this.nodeProperty.initialize();
+    this.stateProperty.initialize();
+  }
+
   appendChildContentBindings(contentBindings: IContentBindings): void {
+    if (!this.expandable) utils.raise("Binding.appendChild: not expandable");
     this.childrenContentBindings.push(contentBindings);
-    const lastChild = this.childrenContentBindings[this.childrenContentBindings.length - 1];
-    (typeof lastChild === "undefined")
-    // ToDo:DOM操作を行う
+    // DOM
+    const lastChildContentBindings = this.childrenContentBindings[this.childrenContentBindings.length - 1];
+    const parentNode = this.nodeProperty.node.parentNode;
+    const beforeNode = lastChildContentBindings?.lastChildNode ?? this.nodeProperty.node;
+    parentNode?.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
   }
 
   replaceChildContentBindings(contentBindings: IContentBindings, index: number): void {
+    if (!this.expandable) utils.raise("Binding.replaceChild: not expandable");
     this.childrenContentBindings[index] = contentBindings;
-    // ToDo:DOM操作を行う
+    // DOM
+    const lastChildContentBindings = this.childrenContentBindings[index - 1];
+    const parentNode = this.nodeProperty.node.parentNode;
+    const beforeNode = lastChildContentBindings?.lastChildNode ?? this.nodeProperty.node;
+    parentNode?.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
   }
 
   removeAllChildrenContentBindings(): IContentBindings[] {
-    const removed = this.childrenContentBindings;
+    const removedContentBindings = this.childrenContentBindings;
     this.childrenContentBindings = [];
-    // ToDo:DOM操作を行う
-    return removed;
-  }
-
-  applyToNode(): void {
-    // ToDo: ここに処理を追加
-  }
-
-  applyTostate(): void {
-    // ToDo: ここに処理を追加
+    for(let i = 0; i < removedContentBindings.length; i++) {
+      removedContentBindings[i].dispose();
+    }
+    return removedContentBindings;
   }
 
   dispose(): void {

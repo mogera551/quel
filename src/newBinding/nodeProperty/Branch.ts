@@ -34,7 +34,7 @@ export class Branch extends TemplateProperty {
     super(binding, node, name, filters);
   }
 
-  isSameValue(value:any):boolean {
+  equals(value:any):boolean {
     return false;
   }
 }

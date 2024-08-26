@@ -1,10 +1,10 @@
 import { INewBinding, IContentBindings } from "../newBinding/types";
 
 export interface INewLoopContext {
-  parentLoopContext?: INewLoopContext;
-  index: number;
-  indexes: number[];
-  patternName:string;
+  readonly parentLoopContext?: INewLoopContext;
+  readonly index: number;
+  readonly indexes: number[];
+  readonly patternName:string;
   clearIndex():void;
   find(patternName:string):INewLoopContext | undefined;
 }

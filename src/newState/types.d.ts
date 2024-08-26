@@ -14,7 +14,7 @@ export interface IStateHandler {
   addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
 }
 
-interface IStateProxyPartial {
+export interface IStateProxy extends IDotNotationProxy {
   readonly [AccessorPropertiesSymbol]: Set<string>;
   readonly [DependenciesSymbol]: IDependentProps;
   // API
@@ -30,7 +30,6 @@ interface IStateProxyPartial {
   readonly $component: IComponent; // todo:後でIUserComponentに変更する
 
 }
-export type IStateProxy = IDotNotationProxy & IStateProxyPartial;
 
 export type Dependencies = {
   readonly [key:string]: string[]
