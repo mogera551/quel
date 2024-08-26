@@ -1,16 +1,10 @@
 
-import { IPropInfo } from './types';
-
-type PatternInfo = {
-  patternElements:string[],
-  patternPaths:string[],
-  wildcardPaths:string[]
-}
+import { IPatternInfo, IPropInfo } from './types';
 
 const _cachePropInfo = new Map<string, IPropInfo>();
-const _cachePatternInfo = new Map<string, PatternInfo>();
+const _cachePatternInfo = new Map<string, IPatternInfo>();
 
-function _getPatternInfo(pattern:string):PatternInfo {
+function _getPatternInfo(pattern:string):IPatternInfo {
   const patternElements = pattern.split(".");
   const patternPaths = [];
   const wildcardPaths = [];
@@ -28,7 +22,7 @@ function _getPatternInfo(pattern:string):PatternInfo {
   }
 }
 
-function getPatternInfo(pattern:string):PatternInfo {
+export function getPatternInfo(pattern:string):IPatternInfo {
   if (_cachePatternInfo.has(pattern)) {
     return _cachePatternInfo.get(pattern)!;
   }

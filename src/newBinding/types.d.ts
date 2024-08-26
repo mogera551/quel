@@ -43,6 +43,7 @@ export interface INewBindingBase {
   readonly childrenContentBindings: IContentBindingsBase[];
   readonly parentContentBindings: IContentBindingsBase;
   readonly loopable: boolean;
+  readonly statePropertyName: string;
 }
 
 export interface INewBinding extends INewBindingBase {

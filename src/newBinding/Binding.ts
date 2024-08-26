@@ -25,6 +25,9 @@ class Binding implements INewBinding {
   get stateProperty(): INewStateProperty {
     return this.#stateProperty;
   }
+  get statePropertyName(): string {
+    return this.#stateProperty.name;
+  }
   get parentContentBindings(): IContentBindings {
     return this.#parentContentBindings;
   }

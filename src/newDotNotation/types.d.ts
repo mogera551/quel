@@ -5,18 +5,19 @@ import "../nop";
 type PropType = "primitive" | "object" | "array";
 type ArrayIncompleteType = "none" | "parital" | "all";
 
-export interface IPropInfo {
-  readonly name: string; // The original name
-//  type: PropType; // The type of the property
-//  incompleteType: ArrayIncompleteType; // The type of the array
-  readonly pattern: string; // The pattern 
-  readonly elements: string[];
+export interface IPatternInfo {
   readonly patternElements: string[];
-  readonly paths: string[];
   readonly patternPaths: string[];
   readonly wildcardPaths: string[];
-  readonly wildcardCount: number;
+}
+
+export interface IPropInfo extends IPatternInfo {
+  readonly name: string; // The original name
+  readonly pattern: string; // The pattern 
+  readonly elements: string[];
+  readonly paths: string[];
   readonly wildcardIndexes: (number|undefined)[];
+  readonly wildcardCount: number;
   readonly lastIncompleteWildcardIndex: number;
 }
 

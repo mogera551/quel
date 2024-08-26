@@ -1,4 +1,6 @@
 import { IContentBindings, IContentBindingsBase } from "../newBinding/types";
+import { getPatternInfo } from "../newDotNotation/PropInfo";
+import { IPatternInfo } from "../newDotNotation/types";
 import { utils } from "../utils";
 import { INewLoopContext } from "./types";
 
@@ -7,19 +9,33 @@ export class LoopContext implements INewLoopContext{
   #index?: number;
   #parentLoopContext?: INewLoopContext;
   #parentLoopCache = false;
+  #statePropertyName: string;
+  #patternInfo: IPatternInfo;
   constructor(contentBindings: IContentBindingsBase) {
     contentBindings.parentBinding?.loopable === true || utils.raise("parentBinding is not loopable");
+    this.#statePropertyName = contentBindings.parentBinding?.statePropertyName ?? utils.raise("statePropertyName is undefined");
     this.#contentBindings = contentBindings;
+    this.#patternInfo = getPatternInfo(this.#statePropertyName + ".*");
   }
 
+  get patternName(): string {
+    return this.#patternInfo.wildcardPaths.at(-1) ?? utils.raise("patternName is undefined");
+  }
   get parentLoopContext(): INewLoopContext | undefined {
     if (!this.#parentLoopCache) {
-      let curContentBindings:IContentBindingsBase | undefined = this.#contentBindings.parentBinding?.parentContentBindings;
-      while (typeof curContentBindings !== "undefined") {
-        if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext !== this) {
-          break;
+      const parentPattern = this.#patternInfo.wildcardPaths.at(-2);
+      let curContentBindings:IContentBindingsBase | undefined = undefined;
+      if (typeof parentPattern !== "undefined") {
+        curContentBindings = this.#contentBindings.parentBinding?.parentContentBindings;        
+        while (typeof curContentBindings !== "undefined") {
+          if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === parentPattern) {
+            break;
+          }
+          curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
         }
-        curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
+        if (typeof curContentBindings === "undefined") {
+          utils.raise("parentLoopContext is undefined");
+        }
       }
       this.#parentLoopContext = curContentBindings?.loopContext;
       this.#parentLoopCache = true;
