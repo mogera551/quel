@@ -61,17 +61,23 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
   }
 
+  #getBySymbol(target:Object, prop:symbol, receiver:IStateProxy):any {
+    return this.#objectBySymbol[prop] ?? 
+      getCallback(target as Object, receiver, this, prop) ?? 
+      getApi(target as Object, receiver, this, prop) ?? 
+      super.get(target, prop, receiver);
+  }
+  #getByString(target:Object, prop:string, receiver:IStateProxy):any {
+    return getSpecialProps(target as Object, receiver, this, prop) ?? super.get(target, prop, receiver);
+  }
+
+  #getterByType:{[key:string]:(...args:any)=>any} = {
+    "symbol": this.#getBySymbol,
+    "string": this.#getByString
+  }
+
   get(target:Object, prop:PropertyKey, receiver:IStateProxy):any {
-    if (typeof prop === "symbol") {
-      return this.#objectBySymbol[prop] ?? 
-        getCallback(target as Object, receiver, this, prop) ??
-        getApi(target as Object, receiver, this, prop) ?? 
-        super.get(target, prop, receiver);
-    } else if (typeof prop === "string") {
-      return getSpecialProps(target as Object, receiver, this, prop) ?? super.get(target, prop, receiver);
-    } else {
-      return super.get(target, prop, receiver);
-    }
+    return this.#getterByType[typeof prop]?.(target, prop, receiver) ?? super.get(target, prop, receiver);
   }
 
   addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void {

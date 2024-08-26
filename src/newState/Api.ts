@@ -1,5 +1,4 @@
 import { IComponent } from "../@types/component";
-import { ILoopContext } from "../@types/loopContext";
 import { 
   DirectryCallApiSymbol, NotifyForDependentPropsApiSymbol, GetDependentPropsApiSymbol, 
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol

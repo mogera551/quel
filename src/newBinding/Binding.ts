@@ -8,7 +8,9 @@ class Binding implements INewBinding {
   #id:number;
   #nodeProperty: INewNodeProperty;
   #stateProperty: INewStateProperty;
+  // ToDo: このプロパティはchildrenとしたほうがいいのか？
   childrenContentBindings: IContentBindings[] = [];
+  // ToDo: このプロパティはparentとしたほうがいいのか？
   #parentContentBindings: IContentBindings;
 
   get id(): string {
@@ -53,15 +55,18 @@ class Binding implements INewBinding {
     this.childrenContentBindings.push(contentBindings);
     const lastChild = this.childrenContentBindings[this.childrenContentBindings.length - 1];
     (typeof lastChild === "undefined")
+    // ToDo:DOM操作を行う
   }
 
   replaceChildContentBindings(contentBindings: IContentBindings, index: number): void {
     this.childrenContentBindings[index] = contentBindings;
+    // ToDo:DOM操作を行う
   }
 
   removeAllChildrenContentBindings(): IContentBindings[] {
     const removed = this.childrenContentBindings;
     this.childrenContentBindings = [];
+    // ToDo:DOM操作を行う
     return removed;
   }
 

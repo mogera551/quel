@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import {
   ConnectedCallbackSymbol, DisconnectedCallbackSymbol, UpdatedCallbackSymbol,
   ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol,
