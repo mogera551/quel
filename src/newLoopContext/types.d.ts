@@ -6,4 +6,5 @@ export interface INewLoopContext {
   indexes: number[];
   patternName:string;
   clearIndex():void;
+  find(patternName:string):INewLoopContext | undefined;
 }

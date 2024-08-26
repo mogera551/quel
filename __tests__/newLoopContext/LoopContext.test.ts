@@ -141,5 +141,9 @@ describe("LoopContext", () => {
     }).toThrow("parentLoopContext is undefined");
     expect(contentBindings3.loopContext?.patternName).toBe("bbb.*.*");
 
+    expect(contentBindings3.loopContext?.find("aaa.*")).toBe(contentBindings2.loopContext);
+    expect(contentBindings3.loopContext?.find("bbb.*.*")).toBe(contentBindings3.loopContext);
+    expect(contentBindings3.loopContext?.find("bbb.*.*.*")).toBeUndefined();
+
   });
 });

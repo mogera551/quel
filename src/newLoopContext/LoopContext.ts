@@ -64,4 +64,15 @@ export class LoopContext implements INewLoopContext{
     this.#parentLoopCache = false;
     this.#index = undefined;
   }
+
+  find(patternName: string): INewLoopContext | undefined {
+    let curContentBindings:IContentBindingsBase | undefined = this.#contentBindings;
+    while (typeof curContentBindings !== "undefined") {
+      if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === patternName) {
+        break;
+      }
+      curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
+    }
+    return curContentBindings?.loopContext;
+  }
 }
