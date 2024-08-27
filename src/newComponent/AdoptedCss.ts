@@ -1,7 +1,4 @@
-import { IComponent } from "../@types/component";
-
 const ADOPTED_VAR_NAME = '--adopted-css';
-
 const styleSheetByName:Map<string,CSSStyleSheet> = new Map;
 
 /**
@@ -68,7 +65,7 @@ export function getStyleSheetList(names:string[]):CSSStyleSheet[] {
 /**
  * get name list from component style variable '--adopted-css'
  */
-export function getNamesFromComponent(component:IComponent & Element):string[] {
+export function getNamesFromComponent(component:Element):string[] {
   // get adopted css names from component style variable '--adopted-css'
   return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
 }

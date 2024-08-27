@@ -3,6 +3,7 @@ import "../nop";
 import { INewLoopContext } from "../newLoopContext/types";
 import { IPropInfo } from "../newDotNotation/types";
 import { IUpdator } from "../@types/component";
+import { INewComponent, INewUpdator } from "../newComponent/types";
 
 export interface INewPropertyAccess {
   readonly pattern: string;
@@ -42,6 +43,7 @@ export interface INewStateProperty {
   readonly indexes: number[];
   readonly applicable: boolean;
   readonly key: string;
+  readonly propInfo: IPropInfo;
   getChildValue(index:number):any;
   setChildValue(index:number, value:any):void;
   initialize(): void;
@@ -60,9 +62,9 @@ export interface INewBinding extends INewBindingBase {
   readonly stateProperty: INewStateProperty;
   readonly childrenContentBindings: IContentBindings[];
   readonly parentContentBindings: IContentBindings;
-  readonly component: IComponent;
+  readonly component: INewComponent;
   readonly expandable: boolean;
-  readonly updator: IUpdator;
+  readonly updator: INewUpdator;
   readonly bindingSummary: INewBindingSummary;
   applyToNode();
   applyToChildNodes(setOfIndex:Set<number>);
@@ -106,17 +108,16 @@ export interface IMultiValue {
 }
 
 export interface INewBindingSummary {
-  get updated(): boolean;
-  set updated(value: boolean);
-  get updateRevision(): number;
-  get bindingsByKey(): Map<string,INewBinding[]>;
-  get expandableBindings(): Set<INewBinding>;
-  get componentBindings(): Set<INewBinding>;
-  get allBindings(): Set<INewBinding>;
-  add(binding:INewBinding):void;
-  delete(binding:INewBinding):void;
-  exists(binding:INewBinding):boolean;
-  flush():void;
-  update(callback:(summary:INewBindingSummary)=>any):void;
+  updated: boolean;
+  readonly updateRevision: number;
+  readonly bindingsByKey: Map<string,INewBinding[]>;
+  readonly expandableBindings: Set<INewBinding>;
+  readonly componentBindings: Set<INewBinding>;
+  readonly allBindings: Set<INewBinding>;
+  add(binding: INewBinding): void;
+  delete(binding: INewBinding): void;
+  exists(binding: INewBinding): boolean;
+  flush(): void;
+  update(callback:(summary: INewBindingSummary)=>any): void;
 }
 

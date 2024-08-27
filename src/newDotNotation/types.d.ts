@@ -70,5 +70,5 @@ export interface IDotNotationProxy {
   readonly $14?: number;
   readonly $15?: number;
   readonly $16?: number;
-  [key:string]:any;
+  [key:PropertyKey]:any;
 }

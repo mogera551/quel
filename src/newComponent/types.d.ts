@@ -1,10 +1,11 @@
 import "../nop";
 
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { IBinding, IBindingManager, IBindingSummary, IPropertyAccess } from "./binding";
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
-import { IGlobalData } from "./global";
-import { IState, Proxies, StateClass } from "./state";
+import { IGlobalDataProxy } from "../newGlobal/global";
+import { IState, Proxies, StateClass } from "./state"; // ToDo
+import { IContentBindings, INewBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "../newBinding/types";
+import { IStateProxy } from "../newState/types";
 
 export type NewComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -97,106 +98,96 @@ export interface INewComponentBase {
 }
 
 export interface INewCustomComponent {
-  states:Proxies;
-  get component():IComponent & HTMLElement;
-  get parentComponent():IComponent & HTMLElement;
-  get initialPromises():PromiseWithResolvers<void>;
-  get alivePromises():PromiseWithResolvers<void>;
-  set alivePromises(promises:PromiseWithResolvers<void>);
-  get baseState():Object;
-  get writableState():IState;
-  get readonlyState():IState;
-  get currentState():IState;
-  get rootBindingManager():IBindingManager;
-  set rootBindingManager(bindingManager:IBindingManager);
-  get viewRootElement():ShadowRoot|HTMLElement;
-  get queryRoot():ShadowRoot|HTMLElement;
-  get pseudoParentNode():Node;
-  set pseudoParentNode(node:Node);
-  get pseudoNode():Node;
-  set pseudoNode(node:Node);
-  get isWritable():boolean;
-  stateWritable(callback:()=>Promise<void>):Promise<void>;
-  get shadowRootOrDocument():ShadowRoot|Document;
-  get contextRevision():number;
-  set contextRevision(revision:number);
-  useContextRevision(callback:(revision:number)=>void):void;
-  get bindingSummary():IBindingSummary;
-  get updator():IUpdator;
-  get props():IProps;
-  get globals():IGlobalData;
+  states: Proxies; // ToDo
+  readonly component: INewComponent & HTMLElement;
+  readonly parentComponent?: INewComponent & HTMLElement;
+  readonly initialPromises: PromiseWithResolvers<void>;
+  alivePromises: PromiseWithResolvers<void>;
+  readonly baseState: Object;
+  readonly writableState: IStateProxy;
+  readonly readonlyState: IStateProxy;
+  readonly currentState: IStateProxy;
+  rootBindingManager: IContentBindings; // ToDo
+  readonly viewRootElement: ShadowRoot | HTMLElement;
+  readonly queryRoot: ShadowRoot | HTMLElement;
+  pseudoParentNode?: Node;
+  pseudoNode?: Node;
+  readonly isWritable: boolean;
+  stateWritable(callback: ()=> Promise<void>): Promise<void>; // ToDo名前変更
+  readonly shadowRootOrDocument: ShadowRoot|Document;
+  contextRevision: number;
+  useContextRevision(callback: (revision:number)=>void):void;
+  readonly bindingSummary: INewBindingSummary;
+  readonly updator: IUpdator; // ToDO
+  readonly props: IProps; // ToDO
+  readonly globals: IGlobalDataProxy; // ToDO
 
   build():Promise<void>;
-
   connectedCallback():Promise<void>;
   disconnectedCallback():Promise<void>;
 } 
 
-export interface IDialogComponent {
-  get dialogPromises():PromiseWithResolvers<any>|undefined;
-  set dialogPromises(promises:PromiseWithResolvers<any>|undefined);
-  get returnValue():string;
-  set returnValue(value:string);
-  get useBufferedBind():boolean;
-  asyncShowModal(props:{[key:string]:any}):Promise<any>;
-  asyncShow(props:{[key:string]:any}):Promise<any>;
-  showModal():void;
-  show():void;
-  close(result:any):void;
+export interface INewDialogComponent {
+  dialogPromises: PromiseWithResolvers<any>|undefined;
+  returnValue: string;
+  readonly useBufferedBind: boolean;
+  asyncShowModal(props: {[key: string]: any}): Promise<any>;
+  asyncShow(props: {[key: string]: any}): Promise<any>;
+  showModal(): void;
+  show(): void;
+  close(result:any): void;
 }
 
-export interface IPopoverComponent {
-  get canceled():boolean;
-  set canceled(value:boolean);
-  get popoverPromises():PromiseWithResolvers<any>|undefined;
-  set popoverPromises(promises:PromiseWithResolvers<any>|undefined);
-  get popoverContextIndexesById():Map<string,number[]>;
-  asyncShowPopover(props:{[key:string]:any}):Promise<any>;
-  hidePopover():void;
-  cancelPopover():void;
+export interface INewPopoverComponent {
+  canceled: boolean;
+  popoverPromises: PromiseWithResolvers<any>|undefined;
+  readonly popoverContextIndexesById: Map<string,number[]>;
+  asyncShowPopover(props: {[key: string]: any}): Promise<any>;
+  hidePopover(): void;
+  cancelPopover(): void;
 }
 export type Constructor<T = {}> = new (...args: any[]) => T;
 
-export type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
+export type INewComponent = INewComponentBase & INewCustomComponent & INewDialogComponent & INewPopoverComponent & HTMLElement;
 
-export interface IProcess {
-  target:Function;
-  thisArgument:object;
-  argumentList:any[];
+export interface INewProcess {
+  readonly target:Function;
+  readonly thisArgument:object;
+  readonly argumentList:any[];
 }
 
-export interface IUpdator {
-  component:IComponent;
-  processQueue:IProcess[];
-  updatedStateProperties:IPropertyAccess[];
-  expandedStateProperties:IPropertyAccess[];
-  updatedBindings:Set<IBinding>;
+export interface INewUpdator {
+  component: INewComponent;
+  processQueue: INewProcess[];
+  updatedStateProperties: INewPropertyAccess[];
+  expandedStateProperties: INewPropertyAccess[];
+  updatedBindings: Set<INewBinding>;
 
-  executing:boolean;
+  executing: boolean;
 
-  addProcess(target:Function, thisArgument:object, argumentList:any[]):void;
-  getProcessQueue():IProcess[];
-  addUpdatedStateProperty(prop:IPropertyAccess):void;
-  process():Promise<IPropertyAccess[]>;
-  expandStateProperties(updatedStateProperties:IPropertyAccess[]):IPropertyAccess[];
-  rebuildBinding(expandedStatePropertyByKey:Map<string,IPropertyAccess>):void;
-  updateChildNodes(expandedStateProperties:IPropertyAccess[]):void;
-  updateNode(expandedStatePropertyByKey:Map<string,IPropertyAccess>):void;
-  execCallback(callback:()=>any):Promise<void>;
-  exec():Promise<void>;
-  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>any):void;
+  addProcess(target: Function, thisArgument: object, argumentList: any[]): void;
+  getProcessQueue(): INewProcess[];
+  addUpdatedStateProperty(prop: INewPropertyAccess): void;
+  process():Promise<INewPropertyAccess[]>;
+  expandStateProperties(updatedStateProperties: INewPropertyAccess[]): INewPropertyAccess[];
+  rebuildBinding(expandedStatePropertyByKey: Map<string,INewPropertyAccess>): void;
+  updateChildNodes(expandedStateProperties: INewPropertyAccess[]): void;
+  updateNode(expandedStatePropertyByKey: Map<string, INewPropertyAccess>): void;
+  execCallback(callback: ()=>any): Promise<void>;
+  exec(): Promise<void>;
+  applyNodeUpdatesByBinding(binding: INewBinding, callback:(updator: INewUpdator)=>any): void;
 }
 
-export interface IProps {
-  [BindPropertySymbol](prop:string, propAccess:IBindingPropertyAccess);
-  [SetBufferSymbol](buffer:{[key:string]:any});
-  [GetBufferSymbol]():{[key:string]:any};
-  [ClearBufferSymbol]():void;
-  [CreateBufferSymbol]():{[key:string]:any};
-  [FlushBufferSymbol]():void;
-  [ClearSymbol]():void;
-  get(target:any, prop:PropertyKey, receiver:IProps):any;
-  set(target:any, prop:PropertyKey, value:any, receiver:IProps):boolean;
-  ownKeys(target:IProps):(symbol|string)[];
-  getOwnPropertyDescriptor(target:IProps, prop:string|symbol):PropertyDescriptor;
+export interface INewProps {
+  [BindPropertySymbol](prop: string, propAccess: INewBindingPropertyAccess): void;
+  [SetBufferSymbol](buffer: {[key: string]: any}): void;
+  [GetBufferSymbol](): {[key: string]: any};
+  [ClearBufferSymbol](): void;
+  [CreateBufferSymbol]():{[key: string]: any};
+  [FlushBufferSymbol](): void;
+  [ClearSymbol](): void;
+  get(target: any, prop: PropertyKey, receiver: INewProps): any;
+  set(target: any, prop: PropertyKey, value: any, receiver: INewProps): boolean;
+  ownKeys(target: INewProps): (symbol|string)[];
+  getOwnPropertyDescriptor(target: INewProps, prop: string|symbol): PropertyDescriptor;
 }

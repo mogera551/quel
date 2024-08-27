@@ -1,8 +1,8 @@
 import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary } from "./types";
-import { IComponent, IUpdator } from "../@types/component";
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
 import { IFilterInfo } from "../@types/filter";
 import { utils } from "../utils";
+import { INewComponent, INewUpdator } from "../newComponent/types";
 
 let id = 1;
 class Binding implements INewBinding {
@@ -38,14 +38,14 @@ class Binding implements INewBinding {
   get expandable(): boolean {
     return this.#nodeProperty.expandable;
   }
-  get component(): IComponent {
+  get component(): INewComponent {
     return this.#parentContentBindings.component;
   }
-  get updator(): IUpdator {
+  get updator(): INewUpdator {
     return this.component.updator;
   }
   get bindingSummary(): INewBindingSummary {
-//    return this.component.bindingSummary;
+    return this.component.bindingSummary;
   }
 
   constructor(

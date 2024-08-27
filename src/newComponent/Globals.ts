@@ -1,17 +1,17 @@
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { BoundByComponentSymbol } from "../@symbols/global";
-import { IComponent } from "../@types/component";
-import { IGlobalData } from "../@types/global";
-import { Handler } from "../dot-notation/Handler";
-import { getPropertyNameInfo } from "../dot-notation/PropertyName";
-import { GlobalData } from "../global/Data";
+import { GlobalData } from "../newGlobal/Data";
+import { IGlobalDataProxy } from "../newGlobal/types";
+import { Handler } from "../newDotNotation/Handler";
+import { INewComponent } from "./types";
+import { getPropInfo } from "../newDotNotation/PropInfo";
 
-class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobalData> {
-  #component:IComponent;
+class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy> {
+  #component:INewComponent;
 
   setOfProps:Set<string> = new Set;
 
-  constructor(component:IComponent) {
+  constructor(component:INewComponent) {
     super();
     this.#component = component;
   }
@@ -45,24 +45,24 @@ class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobal
    * @param {Proxy<Handler>} receiver 
    * @returns 
    */
-  get(target:Object, prop:PropertyKey, receiver:IGlobalData) {
+  get(target:Object, prop:PropertyKey, receiver:IGlobalDataProxy) {
     if (prop ===  GetDirectSymbol) {
       return this.directGet;
     } else if (prop ===  SetDirectSymbol) {
       return this.directSet;
     }
     if (typeof prop !== "string") return Reflect.get(target, prop, receiver);
-    const { patternName, indexes } = getPropertyNameInfo(prop);
-    return this.directGet(patternName, indexes as number[]);
+    const { pattern, wildcardIndexes } = getPropInfo(prop);
+    return this.directGet(pattern, wildcardIndexes as number[]);
   }
 
-  set(target:Object, prop:PropertyKey, value:any, receiver:IGlobalData):boolean {
+  set(target:Object, prop:PropertyKey, value:any, receiver:IGlobalDataProxy):boolean {
     if (typeof prop !== "string") return Reflect.set(target, prop, value, receiver);
-    const { patternName, indexes } = getPropertyNameInfo(prop);
-    return this.directSet(patternName, indexes as number[], value);
+    const { pattern, wildcardIndexes } = getPropInfo(prop);
+    return this.directSet(pattern, wildcardIndexes as number[], value);
   }
 }
 
-export function createGlobals(component:IComponent):IGlobalData {
-  return new Proxy<Object>({}, new ComponentGlobalDataHandler(component)) as IGlobalData;
+export function createGlobals(component:INewComponent):IGlobalDataProxy {
+  return new Proxy<Object>({}, new ComponentGlobalDataHandler(component)) as IGlobalDataProxy;
 }

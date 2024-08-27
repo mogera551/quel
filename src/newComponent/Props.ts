@@ -1,56 +1,55 @@
 import { utils } from "../utils.js";
-import { IComponent, IProps } from "../@types/component";
-import { IBindingPropertyAccess } from "../@types/binding";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component.js";
-import { RE_CONTEXT_INDEX } from "../dot-notation/Const";
-import { getPatternNameInfo } from "../dot-notation/PatternName.js";
+import { INewComponent, INewProps } from "./types.js";
+import { INewBindingPropertyAccess } from "../newBinding/types.js";
+import { getPatternInfo } from "../newDotNotation/PropInfo.js";
 
-const getPopoverContextIndexes = (component:IComponent):number[]|undefined => {
+const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
+
+function getPopoverContextIndexes(component:INewComponent):number[]|undefined {
   const id = component.id;
   return component.parentComponent?.popoverContextIndexesById?.get(id);
 }
 
-const contextLoopIndexes = (handler:Handler, props:IBindingPropertyAccess):number[] => {
+const contextLoopIndexes = (handler:Handler, props:INewBindingPropertyAccess):number[] => {
   let indexes;
-  const propName = getPatternNameInfo(props.name);
-  if (propName.level > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
-    indexes = getPopoverContextIndexes(handler.component)?.slice(0 , propName.level);
+  const patternInfo = getPatternInfo(props.name);
+  if (patternInfo.wildcardPaths.length > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
+    indexes = getPopoverContextIndexes(handler.component)?.slice(0 , patternInfo.wildcardPaths.length);
   }
   return indexes ?? props.indexes;
 }
 
-class Handler implements ProxyHandler<IProps> {
+class Handler implements ProxyHandler<INewProps> {
 
-  constructor(component:IComponent) {
+  constructor(component: INewComponent) {
     this.#component = component;
   }
 
-  #component:IComponent;
-  get component():IComponent {
+  #component: INewComponent;
+  get component(): INewComponent {
     return this.#component;
   }
 
-  #buffer?:{[key:string]:any};
+  #buffer?:{[key: string]: any};
   get buffer() {
     return this.#buffer;
   }
 
-  #binds:{prop:string, propAccess:IBindingPropertyAccess}[] = [];
-  get binds():{prop:string, propAccess:IBindingPropertyAccess}[] {
+  #binds:{prop: string, propAccess: INewBindingPropertyAccess}[] = [];
+  get binds(): {prop: string, propAccess: INewBindingPropertyAccess}[] {
     return this.#binds;
   }
 
-  #saveBindProperties:{[key:string]:any} = {};
+  #saveBindProperties:{[key: string]: any} = {};
 
   /**
    * bind parent component's property
-   * @param {string} prop 
-   * @param {{name:string,indexes:number[]}|undefined} propAccess 
    */
-  #bindProperty(prop:string, propAccess?:IBindingPropertyAccess) {
-    const getFunc = (handler:Handler, name:string, props?:IBindingPropertyAccess) => function () {
+  #bindProperty(prop: string, propAccess?: INewBindingPropertyAccess) {
+    const getFunc = (handler: Handler, name: string, props?: INewBindingPropertyAccess) => function () {
       if (typeof handler.buffer !== "undefined") {
         return handler.buffer[name];
       } else {
@@ -58,27 +57,27 @@ class Handler implements ProxyHandler<IProps> {
         const match = RE_CONTEXT_INDEX.exec(props.name);
         if (match) {
           const loopIndex = Number(match[1]) - 1;
-          let indexes = props.loopContext.indexes;
+          let indexes = props.loopContext?.indexes ?? []; // todo: loopContextがundefinedの場合の処理
           if (indexes.length === 0 && handler.component.hasAttribute("popover")) {
             indexes = getPopoverContextIndexes(handler.component) ?? [];
           }
           return indexes[loopIndex];
         } else {
           const loopIndexes = contextLoopIndexes(handler, props);
-          return handler.component.parentComponent.readonlyState[GetDirectSymbol](props.name, loopIndexes);
+          return handler.component.parentComponent?.readonlyState[GetDirectSymbol](props.name, loopIndexes) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
         }
       }
     };
     /**
      * return parent component's property setter function
      */
-    const setFunc = (handler:Handler, name:string, props?:IBindingPropertyAccess) => function (value:any) {
+    const setFunc = (handler:Handler, name:string, props?:INewBindingPropertyAccess) => function (value:any) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
       } else {
         if (typeof props === "undefined") utils.raise(`PropertyAccess is required`);
         const loopIndexes = contextLoopIndexes(handler, props);
-        handler.component.parentComponent.writableState[SetDirectSymbol](props.name, loopIndexes, value);
+        handler.component.parentComponent?.writableState[SetDirectSymbol](props.name, loopIndexes, value) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
       }
       return true;
     };
@@ -121,14 +120,14 @@ class Handler implements ProxyHandler<IProps> {
 
   #createBuffer():{[key:string]:any} {
     let buffer:{[key:string]:any}|undefined;
-    buffer = this.#component.parentComponent.readonlyState[CreateBufferApiSymbol](this.#component);
+    buffer = this.#component.parentComponent?.readonlyState[CreateBufferApiSymbol](this.#component) ?? utils.raise(`CreateBufferApiSymbol is not found`);
     if (typeof buffer !== "undefined") {
       return buffer;
     }
     buffer = {};
     this.#binds.forEach(({ prop, propAccess }) => {
       const loopIndexes = contextLoopIndexes(this, propAccess);
-      buffer[prop] = this.#component.parentComponent.readonlyState[GetDirectSymbol](propAccess.name, loopIndexes);     
+      buffer[prop] = this.#component.parentComponent?.readonlyState[GetDirectSymbol](propAccess.name, loopIndexes) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
     });
     return buffer;
   }
@@ -136,11 +135,11 @@ class Handler implements ProxyHandler<IProps> {
   #flushBuffer() {
     if (typeof this.#buffer !== "undefined") {
       const buffer = this.#buffer;
-      const result = this.#component.parentComponent.writableState[FlushBufferApiSymbol](buffer, this.#component);
+      const result = this.#component.parentComponent?.writableState[FlushBufferApiSymbol](buffer, this.#component) ?? utils.raise(`FlushBufferApiSymbol is not found`);
       if (result !== true) {
         this.#binds.forEach(({ prop, propAccess }) => {
           const loopIndexes = contextLoopIndexes(this, propAccess);
-          this.#component.parentComponent.writableState[SetDirectSymbol](propAccess.name, loopIndexes, buffer[prop]);     
+          this.#component.parentComponent?.writableState[SetDirectSymbol](propAccess.name, loopIndexes, buffer[prop]) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
         });
       }
     }
@@ -157,9 +156,9 @@ class Handler implements ProxyHandler<IProps> {
   /**
    * Proxy.get
    */
-  get(target:any, prop:PropertyKey, receiver:IProps):any {
+  get(target:any, prop:PropertyKey, receiver:INewProps):any {
     if (prop === BindPropertySymbol) {
-      return (prop:string, propAccess:IBindingPropertyAccess) => this.#bindProperty(prop, propAccess);
+      return (prop:string, propAccess:INewBindingPropertyAccess) => this.#bindProperty(prop, propAccess);
     } else if (prop === SetBufferSymbol) {
       return (buffer:{[key:string]:any}) => this.#setBuffer(buffer);
     } else if (prop === GetBufferSymbol) {
@@ -176,7 +175,7 @@ class Handler implements ProxyHandler<IProps> {
     return this.#component.currentState[prop];
   }
 
-  set(target:any, prop:PropertyKey, value:any, receiver:IProps):boolean {
+  set(target:any, prop:PropertyKey, value:any, receiver:INewProps):boolean {
     this.#component.writableState[prop] = value;
     return true;
   }
@@ -184,7 +183,7 @@ class Handler implements ProxyHandler<IProps> {
   /**
    * Proxy.ownKeys
    */
-  ownKeys(target:IProps):(symbol|string)[] {
+  ownKeys(target:INewProps):(symbol|string)[] {
     if (typeof this.buffer !== "undefined") {
       return Reflect.ownKeys(this.buffer);
     } else {
@@ -195,7 +194,7 @@ class Handler implements ProxyHandler<IProps> {
   /**
    * Proxy.getOwnPropertyDescriptor
    */
-  getOwnPropertyDescriptor(target:IProps, prop:string|symbol):PropertyDescriptor { // プロパティ毎に呼ばれます
+  getOwnPropertyDescriptor(target:INewProps, prop:string|symbol):PropertyDescriptor { // プロパティ毎に呼ばれます
     return {
       enumerable: true,
       configurable: true
@@ -204,6 +203,6 @@ class Handler implements ProxyHandler<IProps> {
   }
 }
 
-export function createProps(component:IComponent):IProps {
-  return new Proxy<Object>({}, new Handler(component)) as IProps;
+export function createProps(component:INewComponent):INewProps {
+  return new Proxy<Object>({}, new Handler(component)) as INewProps;
 }

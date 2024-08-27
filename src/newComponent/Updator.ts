@@ -1,24 +1,23 @@
-import { utils } from "../utils";
-import { IComponent, IProcess, IUpdator } from "../@types/component";
-import { IBinding, IPropertyAccess } from "../@types/binding";
 import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../@symbols/state";
-import { StateBaseHandler } from "../state/StateBaseHandler";
 import { config } from "../Config";
+import { INewComponent, INewProcess, INewUpdator } from "./types";
+import { INewBinding, INewPropertyAccess } from "../newBinding/types";
+import { makeNotifyForDependentProps } from "../newState/MakeNotify";
 
-const getPropAccessKey = (prop:IPropertyAccess):string => prop.patternName + "\t" + prop.indexes.toString();
-const executeProcess = (process:IProcess) => async ():Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
-const compareExpandableBindings = (a:IBinding, b:IBinding):number => a.stateProperty.patternName.level - b.stateProperty.patternName.level;
+const getPropAccessKey = (prop: INewPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
+const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
+const compareExpandableBindings = (a: INewBinding, b: INewBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
-export class Updator implements IUpdator {
-  component:IComponent;
-  processQueue:IProcess[] = [];
-  updatedStateProperties:IPropertyAccess[] = [];
-  expandedStateProperties:IPropertyAccess[] = [];
-  updatedBindings:Set<IBinding> = new Set();
+export class Updator implements INewUpdator {
+  component: INewComponent;
+  processQueue: INewProcess[] = [];
+  updatedStateProperties: INewPropertyAccess[] = [];
+  expandedStateProperties: INewPropertyAccess[] = [];
+  updatedBindings: Set<INewBinding> = new Set();
 
   executing = false;
 
-  constructor(component:IComponent) {
+  constructor(component:INewComponent) {
     this.component = component;
   }
 
@@ -28,11 +27,11 @@ export class Updator implements IUpdator {
     this.exec();
   }
 
-  getProcessQueue():IProcess[] {
+  getProcessQueue():INewProcess[] {
     return this.processQueue;
   }
 
-  addUpdatedStateProperty(prop:IPropertyAccess):void {
+  addUpdatedStateProperty(prop:INewPropertyAccess):void {
     this.updatedStateProperties.push(prop);
   }
 
@@ -41,9 +40,9 @@ export class Updator implements IUpdator {
    * @param {{ component:Component, processQueue:Process[], updatedStateProperties:PropertyAccess[] }} param0 
    * @returns {Promise<PropertyAccess[]>}
    */
-  async process():Promise<IPropertyAccess[]> {
+  async process():Promise<INewPropertyAccess[]> {
 
-    const totalUpdatedStateProperties:IPropertyAccess[] = [];
+    const totalUpdatedStateProperties:INewPropertyAccess[] = [];
     // event callback, and update state
     while (this.processQueue.length > 0) {
       const processes = this.processQueue.slice(0);
@@ -63,18 +62,18 @@ export class Updator implements IUpdator {
     return totalUpdatedStateProperties;
   }
 
-  expandStateProperties(updatedStateProperties:IPropertyAccess[]):IPropertyAccess[] {
+  expandStateProperties(updatedStateProperties:INewPropertyAccess[]):INewPropertyAccess[] {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
-      expandedStateProperties.push(...StateBaseHandler.makeNotifyForDependentProps(
+      expandedStateProperties.push(...makeNotifyForDependentProps(
         this.component.readonlyState, updatedStateProperties[i]
       ));
     }
     return expandedStateProperties;
   }
 
-  rebuildBinding(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
+  rebuildBinding(expandedStatePropertyByKey:Map<string,INewPropertyAccess>) {
     // bindingの再構築
     // 再構築するのは、更新したプロパティのみでいいかも→ダメだった。
     // expandedStatePropertyByKeyに、branch、repeatが含まれている場合、それらのbindingを再構築する
@@ -94,15 +93,15 @@ export class Updator implements IUpdator {
     });
   }
 
-  updateChildNodes(expandedStateProperties:IPropertyAccess[]) {
+  updateChildNodes(expandedStateProperties:INewPropertyAccess[]) {
     const component = this.component;
     const bindingSummary = component.bindingSummary;
     const setOfIndexByParentKey:Map<string,Set<number>> = new Map;
     for(const propertyAccess of expandedStateProperties) {
-      if (propertyAccess.patternNameInfo.lastPathName !== "*") continue;
+      if (propertyAccess.propInfo.patternElements.at(-1) !== "*") continue;
       const lastIndex = propertyAccess.indexes?.at(-1);
       if (typeof lastIndex === "undefined") continue;
-      const parentKey = propertyAccess.patternNameInfo.parentPath + "\t" + propertyAccess.indexes.slice(0, -1);
+      const parentKey = propertyAccess.propInfo.patternPaths.at(-2) + "\t" + propertyAccess.indexes.slice(0, -1);
       setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
     }
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
@@ -114,7 +113,7 @@ export class Updator implements IUpdator {
     }
   }
 
-  updateNode(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
+  updateNode(expandedStatePropertyByKey:Map<string,INewPropertyAccess>) {
     const component = this.component;
     const bindingSummary = component.bindingSummary;
     const selectBindings = [];
@@ -123,7 +122,7 @@ export class Updator implements IUpdator {
       if (typeof bindings === "undefined") continue;
       for(let i = 0; i < bindings.length; i++) {
         const binding = bindings[i];
-        binding.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
+        binding.nodeProperty.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
       }
     }
     for(let i = 0; i < selectBindings.length; i++) {
@@ -172,10 +171,10 @@ export class Updator implements IUpdator {
     });
   }
 
-  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>void):void {
+  applyNodeUpdatesByBinding(binding:INewBinding, callback:(updator:INewUpdator)=>void):void {
     if (this.updatedBindings.has(binding)) return;
     try {
-      callback(this as IUpdator);
+      callback(this);
     } finally {
       this.updatedBindings.add(binding);
     }
