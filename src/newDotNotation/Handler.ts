@@ -1,3 +1,4 @@
+import { util } from "../../node_modules/webpack/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { utils } from "../utils";
 import { getPropInfo } from "./PropInfo";
@@ -20,13 +21,11 @@ export class Handler implements IDotNotationHandler {
   withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:()=>any):any {
     const allIndexes = [];
     let buffer:Indexes = [];
-    for(let i = 0; i < indexes.length; i++) {
+    for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
       buffer = buffer.concat(indexes[i]);
       allIndexes.push(buffer)
     }
-    console.log(allIndexes);
     for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
-      console.log(patternInfo.wildcardPaths[i]);
       this._namedStackIndexes.get(patternInfo.wildcardPaths[i])?.push(allIndexes[i]) ?? 
         this._namedStackIndexes.set(patternInfo.wildcardPaths[i], [allIndexes[i]]);
     }
@@ -36,7 +35,6 @@ export class Handler implements IDotNotationHandler {
     } finally {
       for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
         const c = this._namedStackIndexes.get(patternInfo.wildcardPaths[i])?.pop(); 
-        console.log(patternInfo.wildcardPaths[i], c);
       }
       this._stackIndexes.pop();
     }
@@ -135,7 +133,7 @@ export class Handler implements IDotNotationHandler {
     const wildcardPathInfo = getPropInfo(wildcardPath);
     const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-    return this.withIndexes(wildcardParentPathInfo, wildcardIndexes, () => {
+    return this.withIndexes(propInfo, wildcardIndexes, () => {
       const parentValue = this._getValue(
         target, 
         wildcardParentPathInfo.patternPaths, 
@@ -167,7 +165,7 @@ export class Handler implements IDotNotationHandler {
     const wildcardPathInfo = getPropInfo(wildcardPath);
     const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-    this.withIndexes(wildcardParentPathInfo, wildcardIndexes, () => {
+    this.withIndexes(propInfo, wildcardIndexes, () => {
       const parentValue = this._getValue(
         target, 
         wildcardParentPathInfo.patternPaths, 
@@ -187,14 +185,18 @@ export class Handler implements IDotNotationHandler {
   }
 
   _getDirect = (target:object, prop:string, indexes:number[], receiver:object) => {
-    const propInfo = getPropInfo(prop);
+    if (typeof prop !== "string") utils.raise(`prop is not string`);
+    const pattern = prop[0] === "@" ? prop.slice(1) : prop;
+    const propInfo = getPropInfo(pattern);
     return this.withIndexes(propInfo, indexes, () => {
       return this.get(target, prop, receiver);
     });
   }
 
   _setDirect = (target:object, prop:string, indexes:number[], value:any, receiver:object):boolean => {
-    const propInfo = getPropInfo(prop);
+    if (typeof prop !== "string") utils.raise(`prop is not string`);
+    const pattern = prop[0] === "@" ? prop.slice(1) : prop;
+    const propInfo = getPropInfo(pattern);
     return this.withIndexes(propInfo, indexes, () => {
       return this.set(target, prop, value, receiver);
     });

@@ -22,8 +22,8 @@ describe("Handler", () => {
   it("should update stack indexes and execute the callback", () => {
     const callback = () => {
       expect(handler._stackIndexes).toEqual([[1, 2, 3]]);
-      expect(handler._namedStackIndexes.keys()).toEqual(["aaa.*", "aaa.*.*", "aaa.*.*.*"]);
-      expect(handler._namedStackIndexes.values()).toEqual([[1], [1,2], [1,2,3]]);
+      expect(Array.from(handler._namedStackIndexes.keys())).toEqual(["aaa.*", "aaa.*.*", "aaa.*.*.*"]);
+      expect(Array.from(handler._namedStackIndexes.values())).toEqual([[[1]], [[1,2]], [[1,2,3]]]);
     };
     const pattern = getPatternInfo("aaa.*.*.*");
     handler.withIndexes(pattern, [1, 2, 3], callback);
@@ -218,7 +218,9 @@ describe("Handler", () => {
     expect(fnGet("@aaa.*.0", [2])).toEqual([11, 111, 1111]);
 
     expect(fnGet("constructor", [])).toEqual(Object);
-    expect(fnGet(sym, [])).toBe("aaa");
+    expect(() => {
+      fnGet(sym, [])
+    }).toThrow("prop is not string");
     expect(fnGet("$bbb", [])).toBe("bbb");
     expect(fnGet("@@__", [])).toBe("@@");
 
@@ -226,8 +228,12 @@ describe("Handler", () => {
     expect(() => {
       fnSet("$1", [2, 1], 5)
     }).toThrow("context index($1) is read only");
-    fnSet(sym, [], "bbb");
-    expect(fnGet(sym, [])).toBe("bbb");
+    expect(() => {
+      fnSet(sym, [], "bbb");
+    }).toThrow("prop is not string");
+    expect(() => {
+      fnGet(sym, [])
+    }).toThrow("prop is not string");
     fnSet("@aaa.*.*", [0], [ 11111, 22222, 33333 ]);
     expect(fnGet("@aaa.*.*", [0])).toEqual([ 11111, 22222, 33333 ]);
     expect(() => {
