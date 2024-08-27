@@ -6,97 +6,97 @@ import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterMan
 import { IGlobalData } from "./global";
 import { IState, Proxies, StateClass } from "./state";
 
-type ComponentModuleConfig = {
-  extends?:string; // for customized built-in element, like extends="button"
-  debug?:boolean; // debug mode for the component, default is false
-  useShadowRoot?:boolean; // attach shadow root to the component, default is false
-  useKeyed?:boolean; // use keyed, default is true. keyed is used for the component instance.
-  useWebComponent?:boolean; // use web component, default is true. if false then no use custom element.
-  useLocalTagName?:boolean; // use local tag name, default is true. local custom tag is unique in the document.
-  useLocalSelector?:boolean; // use local selector, default is true. local selector is unique in the document.
-  useOverscrollBehavior?:boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
+export type NewComponentModuleConfig = {
+  readonly extends?: string; // for customized built-in element, like extends="button"
+  readonly debug?: boolean; // debug mode for the component, default is false
+  readonly useShadowRoot?: boolean; // attach shadow root to the component, default is false
+  readonly useKeyed?: boolean; // use keyed, default is true. keyed is used for the component instance.
+  readonly useWebComponent?: boolean; // use web component, default is true. if false then no use custom element.
+  readonly useLocalTagName?: boolean; // use local tag name, default is true. local custom tag is unique in the document.
+  readonly useLocalSelector?: boolean; // use local selector, default is true. local selector is unique in the document.
+  readonly useOverscrollBehavior?: boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
 }
 
-type ComponentModuleOptions = {
-  extends?:string; // for customized built-in element, like extends="button"
+export type NewComponentModuleOptions = {
+  readonly extends?: string; // for customized built-in element, like extends="button"
 }
 
-type ComponentModuleFilters = {
-  input?:{[key:string]:FilterFuncWithOption};
-  output?:{[key:string]:FilterFuncWithOption};
-  event?:{[key:string]:EventFilterFuncWithOption};
+export type NewComponentModuleFilters = {
+  readonly input?: {[key: string]: FilterFuncWithOption};
+  readonly output?: {[key: string]: FilterFuncWithOption};
+  readonly event?: {[key: string]: EventFilterFuncWithOption};
 }
 
-type ComponentModule = {
-  html?:string;
-  css?:string;
-  State?:typeof Object;
-  componentModules?:{[key:string]:ComponentModule};
-  config?:ComponentModuleConfig;
-  options?:ComponentModuleOptions;
-  filters?:ComponentModuleFilters;
-  moduleConfig?:ComponentModuleConfig;
+export type NewComponentModule = {
+  readonly html?: string;
+  readonly css?: string;
+  readonly State?:typeof Object;
+  readonly componentModules?:{[key:string]:NewComponentModule};
+  readonly config?: NewComponentModuleConfig;
+  readonly options?: NewComponentModuleOptions;
+  readonly filters?: NewComponentModuleFilters;
+  readonly moduleConfig?: NewComponentModuleConfig;
 }
 
-interface IModule {
-  uuid: string;
-  html: string;
-  css?: string;
-  template: HTMLTemplateElement;
-  styleSheet?: CSSStyleSheet;
-  State: typeof Object;
-  config: ComponentModuleConfig;
-  moduleConfig: ComponentModuleConfig;
-  options: ComponentModuleOptions;
-  filters: ComponentModuleFilters;
-  componentModules?: {[key:string]:IModule};
-  componentModulesForRegister?: {[key:string]:IModule};
+export interface INewModule {
+  readonly uuid: string;
+  readonly html: string;
+  readonly css?: string;
+  readonly template: HTMLTemplateElement;
+  readonly styleSheet?: CSSStyleSheet;
+  readonly State: typeof Object;
+  readonly config: NewComponentModuleConfig;
+  readonly moduleConfig: NewComponentModuleConfig;
+  readonly options: NewComponentModuleOptions;
+  readonly filters: NewComponentModuleFilters;
+  readonly componentModules?: {[key: string]: INewModule};
+  readonly componentModulesForRegister?: {[key: string]: INewModule};
 }
 
-type CustomElementInfo = {
-  lowerTagName:string; // lower case tag name
-  selectorName:string; // local selector name
-  isAutonomousCustomElement:boolean; // is autonomous custom element
-  isCostomizedBuiltInElement:boolean; // is customized built-in element
+export type NewCustomElementInfo = {
+  readonly lowerTagName: string; // lower case tag name
+  readonly selectorName: string; // local selector name
+  readonly isAutonomousCustomElement: boolean; // is autonomous custom element
+  readonly isCostomizedBuiltInElement: boolean; // is customized built-in element
 }
 
-type FilterManagers = {
-  inputFilterManager:IFilterManager<"input">, 
-  outputFilterManager:IFilterManager<"output">, 
-  eventFilterManager:IFilterManager<"event">
+export type NewFilterManagers = {
+  readonly inputFilterManager: IFilterManager<"input">, 
+  readonly outputFilterManager: IFilterManager<"output">, 
+  readonly eventFilterManager: IFilterManager<"event">
 };
 
-interface IComponentBase {
-  get module():IModule;
-  get isQuelComponent():boolean;
-  get customElementInfo():CustomElementInfo;
-  get template():HTMLTemplateElement;
-  get styleSheet():CSSStyleSheet|undefined;
-  get State():StateClass;
-  get inputFilters():{[key:string]:FilterFuncWithOption};
-  get outputFilters():{[key:string]:FilterFuncWithOption};
-  get eventFilters():{[key:string]:EventFilterFuncWithOption};
-  get useShadowRoot():boolean;
-  get useWebComponent():boolean;
-  get useLocalTagName():boolean;
-  get useKeyed():boolean;
-  get useLocalSelector():boolean;
-  get useOverscrollBehavior():boolean;
-  get lowerTagName():string;
-  get selectorName():string;
+export interface INewComponentBase {
+  readonly module: INewModule;
+  readonly isQuelComponent: boolean;
+  readonly customElementInfo: NewCustomElementInfo;
+  readonly template: HTMLTemplateElement;
+  readonly styleSheet?: CSSStyleSheet;
+  readonly State: StateClass;
+  readonly inputFilters: {[key: string]: FilterFuncWithOption};
+  readonly outputFilters: {[key: string]: FilterFuncWithOption};
+  readonly eventFilters: {[key: string]: EventFilterFuncWithOption};
+  readonly useShadowRoot: boolean;
+  readonly useWebComponent: boolean;
+  readonly useLocalTagName: boolean;
+  readonly useKeyed: boolean;
+  readonly useLocalSelector: boolean;
+  readonly useOverscrollBehavior: boolean;
+  readonly lowerTagName: string;
+  readonly selectorName: string;
   // is autonomous custom element 
-  get isAutonomousCustomElement():boolean;
+  readonly isAutonomousCustomElement: boolean;
   // is costomized built-in element
-  get isCostomizedBuiltInElement():boolean;
-  get filterManagers():FilterManagers;
-  get inputFilterManager():IFilterManager<"input">;
-  get outputFilterManager():IFilterManager<"output">;
-  get eventFilterManager():IFilterManager<"event">;
-  get baseClass():Function;
-  get thisClass():Function;
+  readonly isCostomizedBuiltInElement: boolean;
+  readonly filterManagers: NewFilterManagers;
+  readonly inputFilterManager: IFilterManager<"input">;
+  readonly outputFilterManager: IFilterManager<"output">;
+  readonly eventFilterManager: IFilterManager<"event">;
+  readonly baseClass: Function;
+  readonly thisClass: Function;
 }
 
-interface ICustomComponent {
+export interface INewCustomComponent {
   states:Proxies;
   get component():IComponent & HTMLElement;
   get parentComponent():IComponent & HTMLElement;
@@ -132,7 +132,7 @@ interface ICustomComponent {
   disconnectedCallback():Promise<void>;
 } 
 
-interface IDialogComponent {
+export interface IDialogComponent {
   get dialogPromises():PromiseWithResolvers<any>|undefined;
   set dialogPromises(promises:PromiseWithResolvers<any>|undefined);
   get returnValue():string;
@@ -145,7 +145,7 @@ interface IDialogComponent {
   close(result:any):void;
 }
 
-interface IPopoverComponent {
+export interface IPopoverComponent {
   get canceled():boolean;
   set canceled(value:boolean);
   get popoverPromises():PromiseWithResolvers<any>|undefined;
@@ -155,17 +155,17 @@ interface IPopoverComponent {
   hidePopover():void;
   cancelPopover():void;
 }
-type Constructor<T = {}> = new (...args: any[]) => T;
+export type Constructor<T = {}> = new (...args: any[]) => T;
 
-type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
+export type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
 
-interface IProcess {
+export interface IProcess {
   target:Function;
   thisArgument:object;
   argumentList:any[];
 }
 
-interface IUpdator {
+export interface IUpdator {
   component:IComponent;
   processQueue:IProcess[];
   updatedStateProperties:IPropertyAccess[];
@@ -187,7 +187,7 @@ interface IUpdator {
   applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>any):void;
 }
 
-interface IProps {
+export interface IProps {
   [BindPropertySymbol](prop:string, propAccess:IBindingPropertyAccess);
   [SetBufferSymbol](buffer:{[key:string]:any});
   [GetBufferSymbol]():{[key:string]:any};
