@@ -1,6 +1,7 @@
 import 'jest';
 import { Handler } from "../../src/newDotNotation/Handler";
 import { GetDirectSymbol, SetDirectSymbol } from '../../src/@symbols/dotNotation';
+import { getPatternInfo } from '../../src/newDotNotation/PropInfo';
 
 describe("Handler", () => {
   let handler: Handler;
@@ -21,8 +22,11 @@ describe("Handler", () => {
   it("should update stack indexes and execute the callback", () => {
     const callback = () => {
       expect(handler._stackIndexes).toEqual([[1, 2, 3]]);
+      expect(handler._namedStackIndexes.keys()).toEqual(["aaa.*", "aaa.*.*", "aaa.*.*.*"]);
+      expect(handler._namedStackIndexes.values()).toEqual([[1], [1,2], [1,2,3]]);
     };
-    handler.withIndexes([1, 2, 3], callback);
+    const pattern = getPatternInfo("aaa.*.*.*");
+    handler.withIndexes(pattern, [1, 2, 3], callback);
     //expect(callback).toHaveBeenCalled();
   });
 
@@ -112,7 +116,8 @@ describe("Handler", () => {
   it("should call _get method with array property", () => {
     const target = { aaa:[ 11, 22, 33, 44 ] };
     const receiver = target;
-    handler.withIndexes([0], () => {
+    const pattern = getPatternInfo("aaa.*");
+    handler.withIndexes(pattern, [0], () => {
       expect(handler._get(target, "aaa.*", receiver)).toBe(11);
     });
   });
@@ -120,7 +125,8 @@ describe("Handler", () => {
   it("should call _set method with array property", () => {
     const target = { aaa:[ 11, 22, 33, 44 ] };
     const receiver = target;
-    handler.withIndexes([0], () => {
+    const pattern = getPatternInfo("aaa.*");
+    handler.withIndexes(pattern, [0], () => {
       expect(handler._set(target, "aaa.*", 111, receiver)).toBe(true);
     });
     expect(handler._get(target, "aaa.0", receiver)).toBe(111);
@@ -147,13 +153,14 @@ describe("Handler", () => {
     expect(handler._getExpand(target, "aaa.*.0", receiver)).toEqual([11, 111, 1111]);
     expect(handler._getExpand(target, "aaa.*.1", receiver)).toEqual([22, 222, 2222]);
     expect(handler._getExpand(target, "aaa.*.2", receiver)).toEqual([33, 333, 3333]);
-    handler.withIndexes([0], () => {
+    const pattern = getPatternInfo("aaa.*.*");
+    handler.withIndexes(pattern, [0], () => {
       expect(handler._getExpand(target, "aaa.*.*", receiver)).toEqual([11, 22, 33]);
     });
-    handler.withIndexes([1], () => {
+    handler.withIndexes(pattern, [1], () => {
       expect(handler._getExpand(target, "aaa.*.*", receiver)).toEqual([111, 222, 333]);
     });
-    handler.withIndexes([2], () => {
+    handler.withIndexes(pattern, [2], () => {
       expect(handler._getExpand(target, "aaa.*.*", receiver)).toEqual([1111, 2222, 3333]);
     });
   });

@@ -21,10 +21,15 @@ export interface IPropInfo extends IPatternInfo {
   readonly lastIncompleteWildcardIndex: number;
 }
 
+export type Indexes = (undefined|number)[];
+export type StackIndexes = Indexes[];
+
 export interface IDotNotationHandler {
-  _stackIndexes: (undefined|number)[][];
-  lastStackIndexes: (undefined|number)[];
-  withIndexes(indexes:(number|undefined)[], callback:() => any): any;
+  _stackIndexes: StackIndexes;
+  _namedStackIndexes: Map<string, StackIndexes>;
+  lastStackIndexes: Indexes;
+  getLastIndexes(pattern: string): Indexes;
+  withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:() => any): any;
   _getPropertyValue(target:object, prop:string, receiver:object):any;
   _getValue(
     target:object, 
