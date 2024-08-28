@@ -257,4 +257,20 @@ describe("Handler", () => {
 
   });
 
+  it("should call get method with symbol property", () => {
+    const sym = Symbol("sym");
+    const target = { [sym]:1000 };
+    const receiver = target;
+    expect(handler.get(target, sym, receiver)).toBe(1000);
+  });
+
+  it("should call get method with symbol property", () => {
+    const sym = Symbol("sym");
+    const target = { [sym]:1000 };
+    const receiver = target;
+    expect(handler.get(target, sym, receiver)).toBe(1000);
+    expect(handler.set(target, sym, 2000, receiver)).toBe(true);
+    expect(handler.get(target, sym, receiver)).toBe(2000);
+  });
+
 });

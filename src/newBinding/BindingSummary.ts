@@ -10,7 +10,7 @@ const filerComponentBindings = (binding:INewBinding):boolean => binding.nodeProp
 /**
  * BindingSummary
  */
-export class BindingSummary implements INewBindingSummary {
+class BindingSummary implements INewBindingSummary {
   #updated:boolean = false;
   get updated() {
     return this.#updated;
@@ -105,4 +105,8 @@ export class BindingSummary implements INewBindingSummary {
     this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
     this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
   }
+}
+
+export function createBindingSummary():INewBindingSummary {
+  return new BindingSummary;
 }

@@ -1,6 +1,7 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
 import { IComponent } from "../@types/component";
 import { PropertyAccess } from "../newBinding/PropertyAccess";
+import { INewComponent } from "../newComponent/types";
 import { Handler as DotNotationHandler } from "../newDotNotation/Handler";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
@@ -20,7 +21,7 @@ type ObjectBySymbol = {
 }
 
 export class Handler extends DotNotationHandler implements IStateHandler {
-  #component:IComponent;
+  #component:INewComponent;
   #accessorProperties: Set<string>;
   #dependentProps: IDependentProps;
   #objectBySymbol: ObjectBySymbol;
@@ -30,10 +31,10 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   get dependentProps():IDependentProps {
     return this.#dependentProps;
   }
-  get component():IComponent {
+  get component():INewComponent {
     return this.#component;
   }
-  constructor(component:IComponent) {
+  constructor(component:INewComponent) {
     super();
     this.#component = component;
     if (typeof component.baseState === "undefined") utils.raise("baseState is undefined");

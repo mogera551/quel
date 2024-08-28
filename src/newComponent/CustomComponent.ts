@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { IUpdator, Constructor, ICustomComponent, IComponent, IProps } from "../@types/component";
+//import { IUpdator, Constructor, ICustomComponent, IComponent, IProps } from "../@types/component";
 import { IState, Proxies } from "../@types/state";
 import { ConnectedCallbackSymbol } from "../@symbols/state";
 import { IBindingManager, IBindingSummary } from "../@types/binding";
@@ -13,62 +13,63 @@ import { BindingSummary } from "../binding/BindingSummary";
 import { Updator } from "./Updator";
 import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
+import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor } from "./types";
+import { IProxies, IStateProxy } from "../newState/types";
+import { IContentBindings, INewBindingSummary } from "../newBinding/types";
+import { IGlobalDataProxy } from "../newGlobal/types";
+import { createContentBindings } from "../newBinding/ContentBindings";
+import { createBindingSummary } from "../newBinding/BindingSummary";
+import { createProxies } from "../newState/Proxies";
 
-const pseudoComponentByNode:Map<Node,IComponent> = new Map;
+const pseudoComponentByNode:Map<Node,INewComponent> = new Map;
 
-const getParentComponent = (_node:Node):Node|undefined => {
+const getParentComponent = (_node:Node):INewComponent|undefined => {
   let node:Node|null = _node;
   do {
     node = node.parentNode;
     if (node == null) return undefined;
-    if (Reflect.get(node, "isQuelComponent")) return node;
+    if (Reflect.get(node, "isQuelComponent") === true) return node as INewComponent;
     if (node instanceof ShadowRoot) {
-      if (Reflect.get(node.host, "isQuelComponent")) return node.host;
+      if (Reflect.get(node.host, "isQuelComponent") === true) return node.host as INewComponent;
       node = node.host;
     }
-    const component = pseudoComponentByNode.get(node);
-    if (typeof component !== "undefined") return component;
+    const psuedoComponent = pseudoComponentByNode.get(node);
+    if (typeof psuedoComponent !== "undefined") return psuedoComponent;
   } while(true);
 };
 
 const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
 export function CustomComponent<TBase extends Constructor>(Base: TBase) {
-  return class extends Base implements ICustomComponent {
+  return class extends Base implements INewCustomComponent {
     constructor(...args:any[]) {
       super();
       const component = this.component;
-      this.#states = getProxies(component, component.State); // create view model
-      this.#bindingSummary = new BindingSummary;
+      this.#stateProxies = createProxies(component, Reflect.construct(component.State, [])); // create view model
+      this.#bindingSummary = createBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = new Updator(component);
       this.#props = createProps(component);
       this.#globals = createGlobals(component);  
     }
 
-    //#globals;
-    #states:Proxies;
-    get states():Proxies {
-      return this.#states;
+    get component():INewComponent & HTMLElement {
+      return this as unknown as INewComponent & HTMLElement;
     }
-
-    get component():IComponent & HTMLElement {
-      return this as unknown as IComponent & HTMLElement;
-    }
-    #parentComponent?:IComponent & HTMLElement;
-    get parentComponent():IComponent & HTMLElement {
+    #parentComponent?:INewComponent & HTMLElement;
+    get parentComponent():INewComponent & HTMLElement {
       if (typeof this.#parentComponent === "undefined") {
-        this.#parentComponent = getParentComponent(this.component as Node) as IComponent & HTMLElement;
+        this.#parentComponent = getParentComponent(this.component as Node) as INewComponent & HTMLElement;
       }
       return this.#parentComponent;
     }
 
-    #initialPromises:PromiseWithResolvers<void>;
+    #initialPromises: PromiseWithResolvers<void>;
     get initialPromises():PromiseWithResolvers<void> {
       return this.#initialPromises;
     }
 
-    #alivePromises:PromiseWithResolvers<void>|undefined;
+    #alivePromises: PromiseWithResolvers<void>|undefined;
     get alivePromises():PromiseWithResolvers<void> {
       return this.#alivePromises ?? utils.raise("alivePromises is undefined");
     }
@@ -76,24 +77,19 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
       this.#alivePromises = promises;
     }
 
-    get baseState():Object {
-      return this.#states.base;
+    #stateProxies:IProxies;
+    get baseState(): Object {
+      return this.#stateProxies.baseState;
     }
-    get writableState():IState {
-      return this.#states.write;
-    }
-    get readonlyState():IState {
-      return this.#states.readonly;
-    }
-    get currentState():IState {
-      return this.isWritable ? this.writableState : this.readonlyState;
+    get state(): IStateProxy {
+      return this.#stateProxies.state;
     }
 
-    #rootBindingManager?:IBindingManager;
-    get rootBindingManager():IBindingManager {
+    #rootBindingManager?: IContentBindings;
+    get rootBindingManager(): IContentBindings {
       return this.#rootBindingManager ?? utils.raise("rootBindingManager is undefined");
     }
-    set rootBindingManager(bindingManager:IBindingManager) {
+    set rootBindingManager(bindingManager: IContentBindings) {
       this.#rootBindingManager = bindingManager;
     }
 
@@ -120,29 +116,22 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
     }
 
     // pseudo node（use, case of useWebComponent is false） */
-    #pseudoNode:Node|undefined;
-    get pseudoNode():Node {
+    #pseudoNode?: Node;
+    get pseudoNode(): Node {
       return this.#pseudoNode ?? utils.raise("pseudoNode is undefined");
     }
     set pseudoNode(node:Node) {
       this.#pseudoNode = node;
     }
 
-    #isWritable:boolean = false;
-    get isWritable():boolean {
-      return this.#isWritable;
-    }
-    async stateWritable(callback:()=>Promise<void>):Promise<void> {
-      this.#isWritable = true;
-      try {
-        await callback();
-      } finally {
-        this.#isWritable = false;
-      }
+    async stateWritable(callback:()=>Promise<void>): Promise<void> {
+      return await this.#stateProxies.writable(async () => {
+        return await callback();
+      });
     }
 
     // find parent shadow root, or document, for adoptedCSS 
-    get shadowRootOrDocument():ShadowRoot|Document {
+    get shadowRootOrDocument(): ShadowRoot|Document {
       const component = this.component;
       let node = component.parentNode;
       while(node) {
@@ -166,23 +155,23 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
       callback(this.#contextRevision);
     }
 
-    #bindingSummary:IBindingSummary;
-    get bindingSummary():IBindingSummary {
+    #bindingSummary: INewBindingSummary;
+    get bindingSummary(): INewBindingSummary {
       return this.#bindingSummary;
     }
 
-    #updator:IUpdator;
-    get updator():IUpdator {
+    #updator: INewUpdator;
+    get updator(): INewUpdator {
       return this.#updator;
     }
 
-    #props:IProps;
-    get props():IProps {
+    #props: INewProps;
+    get props(): INewProps {
       return this.#props;
     }
 
-    #globals:IGlobalData;
-    get globals():IGlobalData {
+    #globals: IGlobalDataProxy;
+    get globals(): IGlobalDataProxy {
       return this.#globals;
     }
   
@@ -222,14 +211,15 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
       }
 
       component.stateWritable(async () => {
-        await component.currentState[ConnectedCallbackSymbol]();
+        await component.state[ConnectedCallbackSymbol]();
       });
 
       // build binding tree and dom 
       component.bindingSummary.update((summary) => {
         const uuid = component.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-        component.rootBindingManager = BindingManager.create(component, component.template, uuid);
-        component.rootBindingManager.postCreate();
+        // ToDo: unknownをなるべく避ける
+        component.rootBindingManager = createContentBindings(component.template, undefined, this as unknown as INewComponent);
+        //component.rootBindingManager.postCreate();
       });
       if (component.useWebComponent) {
         // case of useWebComponent,
@@ -238,9 +228,9 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
       } else {
         // case of no useWebComponent, 
         // then insert fragment block before pseudo node nextSibling
-        component.viewRootElement.insertBefore(component.rootBindingManager.fragment, component.pseudoNode.nextSibling);
+        component.viewRootElement.insertBefore(component.rootBindingManager.fragment, component.pseudoNode?.nextSibling ?? null);
         // child nodes add pseudoComponentByNode
-        component.rootBindingManager.nodes.forEach(node => pseudoComponentByNode.set(node, component));
+        component.rootBindingManager.childNodes.forEach(node => pseudoComponentByNode.set(node, component));
       }
     }
 

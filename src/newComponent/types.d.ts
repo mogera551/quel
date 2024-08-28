@@ -46,10 +46,10 @@ export interface INewModule {
   readonly template: HTMLTemplateElement;
   readonly styleSheet?: CSSStyleSheet;
   readonly State: typeof Object;
-  readonly config: NewComponentModuleConfig;
+  config: NewComponentModuleConfig;
   readonly moduleConfig: NewComponentModuleConfig;
-  readonly options: NewComponentModuleOptions;
-  readonly filters: NewComponentModuleFilters;
+  options: NewComponentModuleOptions;
+  filters: NewComponentModuleFilters;
   readonly componentModules?: {[key: string]: INewModule};
   readonly componentModulesForRegister?: {[key: string]: INewModule};
 }
@@ -98,21 +98,22 @@ export interface INewComponentBase {
 }
 
 export interface INewCustomComponent {
-  states: Proxies; // ToDo
+//  states: Proxies; // ToDo
   readonly component: INewComponent & HTMLElement;
   readonly parentComponent?: INewComponent & HTMLElement;
   readonly initialPromises: PromiseWithResolvers<void>;
   alivePromises: PromiseWithResolvers<void>;
   readonly baseState: Object;
-  readonly writableState: IStateProxy;
-  readonly readonlyState: IStateProxy;
-  readonly currentState: IStateProxy;
+  readonly state: IStateProxy;
+//  readonly writableState: IStateProxy;
+//  readonly readonlyState: IStateProxy;
+//  readonly currentState: IStateProxy;
   rootBindingManager: IContentBindings; // ToDo
   readonly viewRootElement: ShadowRoot | HTMLElement;
   readonly queryRoot: ShadowRoot | HTMLElement;
   pseudoParentNode?: Node;
   pseudoNode?: Node;
-  readonly isWritable: boolean;
+//  readonly isWritable: boolean;
   stateWritable(callback: ()=> Promise<void>): Promise<void>; // ToDo名前変更
   readonly shadowRootOrDocument: ShadowRoot|Document;
   contextRevision: number;

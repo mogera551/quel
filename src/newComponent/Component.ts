@@ -1,5 +1,4 @@
 import { utils } from "../utils";
-import { IModule, ComponentModule, CustomElementInfo, FilterManagers, IComponentBase, IComponent } from "../@types/component";
 import { StateClass } from "../@types/state";
 import { FilterFuncWithOption, EventFilterFuncWithOption } from "../@types/filter";
 import { Module } from "./Module";
@@ -8,19 +7,21 @@ import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../
 import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
+import { INewComponentBase, INewModule, NewComponentModule, NewCustomElementInfo, NewFilterManagers } from "./types";
+import { IComponentBase } from "../@types/component";
 
-const moduleByConstructor:Map<Function,IModule> = new Map;
-const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;
-const filterManagersByTagName:Map<string,FilterManagers> = new Map;
+const moduleByConstructor:Map<Function,INewModule> = new Map;
+const customElementInfoByTagName:Map<string,NewCustomElementInfo> = new Map;
+const filterManagersByTagName:Map<string,NewFilterManagers> = new Map;
 
 /**
  * generate unique component class
  */
-export const generateComponentClass = (componentModule:ComponentModule):typeof HTMLElement => {
-  const getBaseClass = function (module:IModule, baseConstructor:typeof HTMLElement):typeof HTMLElement {
-    const baseClass = class extends baseConstructor implements IComponentBase {
-      #module?:IModule;
-      get module():IModule {
+export const generateComponentClass = (componentModule:NewComponentModule):typeof HTMLElement => {
+  const getBaseClass = function (module:INewModule, baseConstructor:typeof HTMLElement):typeof HTMLElement {
+    const baseClass = class extends baseConstructor implements INewComponentBase {
+      #module?:INewModule;
+      get module():INewModule {
         if (typeof this.#module === "undefined") {
           this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
         }
@@ -30,8 +31,8 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       get isQuelComponent():boolean {
         return true;
       }
-      #customElementInfo?:CustomElementInfo;
-      get customElementInfo():CustomElementInfo {
+      #customElementInfo?:NewCustomElementInfo;
+      get customElementInfo():NewCustomElementInfo {
         if (typeof this.#customElementInfo === "undefined") {
           this.#customElementInfo = customElementInfoByTagName.get(this.tagName) ?? utils.raise(`customElementInfo is not found for ${this.tagName}`);
         }
@@ -50,27 +51,27 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         }
       }
 
-      get template():HTMLTemplateElement {
+      get template(): HTMLTemplateElement {
         return this.module.template;
       }
 
-      get styleSheet():CSSStyleSheet|undefined {
+      get styleSheet(): CSSStyleSheet|undefined {
         return this.module.styleSheet;
       }
 
-      get State():StateClass {
+      get State(): typeof Object {
         return this.module.State;
       }
 
-      get inputFilters():{[key:string]:FilterFuncWithOption} {
+      get inputFilters():{[key:string]: FilterFuncWithOption} {
         return this.module.filters.input ?? {};
       }
 
-      get outputFilters():{[key:string]:FilterFuncWithOption} {
+      get outputFilters():{[key:string]: FilterFuncWithOption} {
         return this.module.filters.output ?? {};
       }
 
-      get eventFilters():{[key:string]:EventFilterFuncWithOption} {
+      get eventFilters():{[key:string]: EventFilterFuncWithOption} {
         return this.module.filters.event ?? {};
       }
 
@@ -116,8 +117,8 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         return this.customElementInfo.isCostomizedBuiltInElement;
       }
 
-      #filterManagers?:FilterManagers;
-      get filterManagers():FilterManagers {
+      #filterManagers?: NewFilterManagers;
+      get filterManagers(): NewFilterManagers {
         if (typeof this.#filterManagers === "undefined") {
           this.#filterManagers = filterManagersByTagName.get(this.tagName) ?? utils.raise(`filterManagers is not found for ${this.tagName}`);
         }
@@ -144,15 +145,15 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         }
       }
 
-      get inputFilterManager():InputFilterManager {
+      get inputFilterManager(): InputFilterManager {
         return this.filterManagers.inputFilterManager;
       }
 
-      get outputFilterManager():OutputFilterManager {
+      get outputFilterManager(): OutputFilterManager {
         return this.filterManagers.outputFilterManager;
       }
 
-      get eventFilterManager() {
+      get eventFilterManager(): EventFilterManager {
         return this.filterManagers.eventFilterManager;
       }
 
@@ -161,12 +162,12 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         this.#setCustomElementInfo();
         this.#setFilterManagers();
       }
-      static baseClass:Function = baseConstructor;
+      static baseClass: Function = baseConstructor;
       get baseClass():Function {
         return Reflect.get(this.constructor, "baseClass");
       }
-      static thisClass:Function|undefined;
-      get thisClass():Function {
+      static thisClass: Function|undefined;
+      get thisClass(): Function {
         return Reflect.get(this.constructor, "thisClass");
       }
     };
@@ -175,7 +176,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
     return baseClass;
   };
 
-  const module:IModule = Object.assign(new Module, componentModule);
+  const module:INewModule = Object.assign(new Module, componentModule);
   module.filters = Object.assign({}, componentModule.filters);
   module.config = Object.assign({}, componentModule.moduleConfig);
   module.options = Object.assign({}, componentModule.options);
@@ -199,7 +200,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
  * register component class with tag name, call customElements.define
  * generate component class from componentModule
  */
-export function registerComponentModule(customElementName:string, componentModule:ComponentModule) {
+export function registerComponentModule(customElementName:string, componentModule:NewComponentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = generateComponentClass(componentModule);
   const extendsTag = componentModule.moduleConfig?.extends ?? componentModule.options?.extends;
@@ -210,7 +211,7 @@ export function registerComponentModule(customElementName:string, componentModul
   }
 }
 
-export function registerComponentModules(componentModules:{[key:string]:ComponentModule}) {
+export function registerComponentModules(componentModules:{[key:string]:NewComponentModule}) {
   for(const [customElementName, userComponentModule] of Object.entries(componentModules)) {
     registerComponentModule(customElementName, userComponentModule);
   }

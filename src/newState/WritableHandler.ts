@@ -1,6 +1,6 @@
 import { PropertyAccess } from "../newBinding/PropertyAccess";
 import { getPropInfo } from "../newDotNotation/PropInfo";
-import { IPropInfo } from "../newDotNotation/types";
+import { Indexes, IPropInfo } from "../newDotNotation/types";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
@@ -28,6 +28,11 @@ export class WritableHandler extends Handler {
     });
   }
 
+  getLastIndexes(pattern: string): Indexes {
+    // ToDo: 実装する
+    return [];
+  }
+  
   __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:IStateProxy):boolean {
     try {
       return super.__set(target, propInfo, indexes, value, receiver);

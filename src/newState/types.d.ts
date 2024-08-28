@@ -47,6 +47,12 @@ export type StateInfo = {
   readonly dependentProps: IDependentProps;
 }
 
+export interface IProxies {
+  readonly baseState: Object;
+  readonly state: IStateProxy;
+  writable(callback: () => Promise<void>): Promise<void>;
+}
+
 const _SupprotCallbackSymbols = [
   ConnectedCallbackSymbol,
   DisconnectedCallbackSymbol,
