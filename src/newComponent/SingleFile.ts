@@ -51,7 +51,6 @@ export async function registerSingleFileComponent(customElementName:string, path
   registerComponentModule(customElementName, componentModule);
 }
 
-
 export async function registerSingleFileComponents(pathToSingleFileComponentByCustomElementName:{[key:string]:string}) {
   for(const [customElementName, pathToSingleFileComponent] of Object.entries(pathToSingleFileComponentByCustomElementName ?? {})) {
     registerSingleFileComponent(customElementName, pathToSingleFileComponent);

@@ -64,7 +64,7 @@ class Handler implements ProxyHandler<INewProps> {
           return indexes[loopIndex];
         } else {
           const loopIndexes = contextLoopIndexes(handler, props);
-          return handler.component.parentComponent?.readonlyState[GetDirectSymbol](props.name, loopIndexes) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
+          return handler.component.parentComponent?.states.current[GetDirectSymbol](props.name, loopIndexes) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
         }
       }
     };
@@ -77,7 +77,9 @@ class Handler implements ProxyHandler<INewProps> {
       } else {
         if (typeof props === "undefined") utils.raise(`PropertyAccess is required`);
         const loopIndexes = contextLoopIndexes(handler, props);
-        handler.component.parentComponent?.writableState[SetDirectSymbol](props.name, loopIndexes, value) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
+        handler.component.parentComponent?.stateWritable(async () => {
+          handler.component.parentComponent?.states.current[SetDirectSymbol](props.name, loopIndexes, value) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
+        });
       }
       return true;
     };
@@ -120,14 +122,14 @@ class Handler implements ProxyHandler<INewProps> {
 
   #createBuffer():{[key:string]:any} {
     let buffer:{[key:string]:any}|undefined;
-    buffer = this.#component.parentComponent?.readonlyState[CreateBufferApiSymbol](this.#component) ?? utils.raise(`CreateBufferApiSymbol is not found`);
+    buffer = this.#component.parentComponent?.states.current[CreateBufferApiSymbol](this.#component) ?? utils.raise(`CreateBufferApiSymbol is not found`);
     if (typeof buffer !== "undefined") {
       return buffer;
     }
     buffer = {};
     this.#binds.forEach(({ prop, propAccess }) => {
       const loopIndexes = contextLoopIndexes(this, propAccess);
-      buffer[prop] = this.#component.parentComponent?.readonlyState[GetDirectSymbol](propAccess.name, loopIndexes) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
+      buffer[prop] = this.#component.parentComponent?.states.current[GetDirectSymbol](propAccess.name, loopIndexes) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
     });
     return buffer;
   }
@@ -135,13 +137,15 @@ class Handler implements ProxyHandler<INewProps> {
   #flushBuffer() {
     if (typeof this.#buffer !== "undefined") {
       const buffer = this.#buffer;
-      const result = this.#component.parentComponent?.writableState[FlushBufferApiSymbol](buffer, this.#component) ?? utils.raise(`FlushBufferApiSymbol is not found`);
-      if (result !== true) {
-        this.#binds.forEach(({ prop, propAccess }) => {
-          const loopIndexes = contextLoopIndexes(this, propAccess);
-          this.#component.parentComponent?.writableState[SetDirectSymbol](propAccess.name, loopIndexes, buffer[prop]) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
-        });
-      }
+      this.#component.parentComponent?.stateWritable(async () => {
+        const result = this.#component.parentComponent?.states.current[FlushBufferApiSymbol](buffer, this.#component) ?? utils.raise(`FlushBufferApiSymbol is not found`);
+        if (result !== true) {
+          this.#binds.forEach(({ prop, propAccess }) => {
+            const loopIndexes = contextLoopIndexes(this, propAccess);
+            this.#component.parentComponent?.states.current[SetDirectSymbol](propAccess.name, loopIndexes, buffer[prop]) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
+          });
+        }
+      });
     }
   }
 
@@ -176,7 +180,9 @@ class Handler implements ProxyHandler<INewProps> {
   }
 
   set(target:any, prop:PropertyKey, value:any, receiver:INewProps):boolean {
-    this.#component.writableState[prop] = value;
+    this.#component.stateWritable(async () => {
+      this.#component.states.current[prop] = value;
+    });
     return true;
   }
 

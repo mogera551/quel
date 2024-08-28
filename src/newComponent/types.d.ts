@@ -5,7 +5,7 @@ import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterMan
 import { IGlobalDataProxy } from "../newGlobal/global";
 import { IState, Proxies, StateClass } from "./state"; // ToDo
 import { IContentBindings, INewBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "../newBinding/types";
-import { IStateProxy } from "../newState/types";
+import { IStateProxy, IStates } from "../newState/types";
 
 export type NewComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -98,13 +98,13 @@ export interface INewComponentBase {
 }
 
 export interface INewCustomComponent {
-//  states: Proxies; // ToDo
   readonly component: INewComponent & HTMLElement;
   readonly parentComponent?: INewComponent & HTMLElement;
   readonly initialPromises: PromiseWithResolvers<void>;
   alivePromises: PromiseWithResolvers<void>;
+  readonly states: IStates;
   readonly baseState: Object;
-  readonly state: IStateProxy;
+  readonly currentState: IStateProxy;
 //  readonly writableState: IStateProxy;
 //  readonly readonlyState: IStateProxy;
 //  readonly currentState: IStateProxy;

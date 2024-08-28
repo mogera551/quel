@@ -52,13 +52,16 @@ export class Updator implements INewUpdator {
       }
       if (this.updatedStateProperties.length > 0) {
         // call updatedCallback, and add processQeueue
-        this.component.writableState[UpdatedCallbackSymbol](this.updatedStateProperties);
-        totalUpdatedStateProperties.push(...this.updatedStateProperties);
-        this.updatedStateProperties.length = 0;
+        await this.component.stateWritable(async () => {
+          this.component.states.current[UpdatedCallbackSymbol](this.updatedStateProperties);
+          totalUpdatedStateProperties.push(...this.updatedStateProperties);
+          this.updatedStateProperties.length = 0;
+        });
       }
     }
+    // ToDo: 要検討
     // cache clear
-    this.component.readonlyState[ClearCacheApiSymbol]();
+    // this.component.states.current[ClearCacheApiSymbol]();
     return totalUpdatedStateProperties;
   }
 
@@ -67,7 +70,7 @@ export class Updator implements INewUpdator {
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
       expandedStateProperties.push(...makeNotifyForDependentProps(
-        this.component.readonlyState, updatedStateProperties[i]
+        this.component.states.current, updatedStateProperties[i]
       ));
     }
     return expandedStateProperties;

@@ -1,15 +1,15 @@
 
 import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { Constructor, IComponent, IDialogComponent } from "../@types/component";
+import { INewComponent, INewDialogComponent, Constructor } from "./types";
 
 export function DialogComponent<TBase extends Constructor>(Base: TBase) {
-  return class extends Base implements IDialogComponent {
-    #dialogPromises:PromiseWithResolvers<any>|undefined;
-    get dialogPromises():PromiseWithResolvers<any>|undefined {
+  return class extends Base implements INewDialogComponent {
+    #dialogPromises?: PromiseWithResolvers<any>;
+    get dialogPromises(): PromiseWithResolvers<any>|undefined {
       return this.#dialogPromises;
     }
-    set dialogPromises(value:PromiseWithResolvers<any>|undefined) {
+    set dialogPromises(value: PromiseWithResolvers<any>|undefined) {
       this.#dialogPromises = value;
     }
 
@@ -26,8 +26,9 @@ export function DialogComponent<TBase extends Constructor>(Base: TBase) {
       return component.hasAttribute("buffered-bind");
     }
   
-    get #component():IComponent {
-      return this as unknown as IComponent;
+    get #component(): INewComponent {
+      // ToDo: unknownを避けたい
+      return this as unknown as INewComponent;
     }
     constructor(...args:any[]) {
       super();
@@ -68,14 +69,14 @@ export function DialogComponent<TBase extends Constructor>(Base: TBase) {
       return component.dialogPromises.promise;
     }
   
-    async asyncShowModal(props:{[key:string]:any}):Promise<void> {
+    async asyncShowModal(props: {[key: string]: any}): Promise<void> {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: asyncShowModal is only for HTMLDialogElement");
       }
       return this.#show(props, true);
     }
 
-    async asyncShow(props:{[key:string]:any}):Promise<void> {
+    async asyncShow(props: {[key: string]: any}): Promise<void> {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: asyncShow is only for HTMLDialogElement");
       }

@@ -47,9 +47,9 @@ export type StateInfo = {
   readonly dependentProps: IDependentProps;
 }
 
-export interface IProxies {
-  readonly baseState: Object;
-  readonly state: IStateProxy;
+export interface IStates {
+  readonly base: Object;
+  readonly current: IStateProxy;
   writable(callback: () => Promise<void>): Promise<void>;
 }
 

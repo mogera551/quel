@@ -1,37 +1,37 @@
 
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { Constructor, IComponent } from "../@types/component";
-import { IPopoverComponent } from "../@types/component";
 import { NotifyForDependentPropsApiSymbol } from "../@symbols/state";
+import { INewComponent, INewPopoverComponent, Constructor } from "./types";
 
 export function PopoverComponent<TBase extends Constructor>(Base: TBase) {
-  return class extends Base implements IPopoverComponent {
-    #canceled:boolean = false;
-    get canceled():boolean {
+  return class extends Base implements INewPopoverComponent {
+    #canceled: boolean = false;
+    get canceled(): boolean {
       return this.#canceled;
     }
-    set canceled(value:boolean) {
+    set canceled(value: boolean) {
       this.#canceled = value;
     }
 
-    #popoverPromises:PromiseWithResolvers<any>|undefined;
-    get popoverPromises():PromiseWithResolvers<any>|undefined {
+    #popoverPromises?: PromiseWithResolvers<any>;
+    get popoverPromises(): PromiseWithResolvers<any>|undefined {
       return this.#popoverPromises;
     }
     set popoverPromises(value:PromiseWithResolvers<any>|undefined) {
       this.#popoverPromises = value;
     }
 
-    #popoverContextIndexesById:Map<string,number[]>|undefined;
-    get popoverContextIndexesById():Map<string,number[]> {
+    #popoverContextIndexesById?: Map<string,number[]>;
+    get popoverContextIndexesById(): Map<string,number[]> {
       if (typeof this.#popoverContextIndexesById === "undefined") {
         this.#popoverContextIndexesById = new Map;
       }
       return this.#popoverContextIndexesById;
     }
   
-    get #component():IComponent {
-      return this as unknown as IComponent;
+    get #component():INewComponent {
+      // ToDo: unknownを避けたい
+      return this as unknown as INewComponent;
     }
     constructor(...args:any[]) {
       super();

@@ -14,12 +14,12 @@ import { Updator } from "./Updator";
 import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
 import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor } from "./types";
-import { IProxies, IStateProxy } from "../newState/types";
+import { IStateProxy, IStates } from "../newState/types";
 import { IContentBindings, INewBindingSummary } from "../newBinding/types";
 import { IGlobalDataProxy } from "../newGlobal/types";
 import { createContentBindings } from "../newBinding/ContentBindings";
 import { createBindingSummary } from "../newBinding/BindingSummary";
-import { createProxies } from "../newState/Proxies";
+import { createStates } from "../newState/States";
 
 const pseudoComponentByNode:Map<Node,INewComponent> = new Map;
 
@@ -45,7 +45,7 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
     constructor(...args:any[]) {
       super();
       const component = this.component;
-      this.#stateProxies = createProxies(component, Reflect.construct(component.State, [])); // create view model
+      this.#states = createStates(component, Reflect.construct(component.State, [])); // create view model
       this.#bindingSummary = createBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = new Updator(component);
@@ -77,12 +77,15 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
       this.#alivePromises = promises;
     }
 
-    #stateProxies:IProxies;
-    get baseState(): Object {
-      return this.#stateProxies.baseState;
+    #states: IStates;
+    get states(): IStates {
+      return this.#states;
     }
-    get state(): IStateProxy {
-      return this.#stateProxies.state;
+    get baseState(): Object {
+      return this.#states.base;
+    }
+    get currentState(): IStateProxy {
+      return this.#states.current;
     }
 
     #rootBindingManager?: IContentBindings;
@@ -125,7 +128,7 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
     }
 
     async stateWritable(callback:()=>Promise<void>): Promise<void> {
-      return await this.#stateProxies.writable(async () => {
+      return await this.#states.writable(async () => {
         return await callback();
       });
     }
@@ -211,7 +214,7 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
       }
 
       component.stateWritable(async () => {
-        await component.state[ConnectedCallbackSymbol]();
+        await component.states.current[ConnectedCallbackSymbol]();
       });
 
       // build binding tree and dom 

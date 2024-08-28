@@ -1,10 +1,10 @@
 import { ClearCacheApiSymbol } from "../@symbols/state";
 import { INewComponent } from "../newComponent/types";
 import { ReadonlyHandler } from "./ReadonlyHandler";
-import { IProxies, IStateProxy } from "./types";
+import { IStates, IStateProxy } from "./types";
 import { WritableHandler } from "./WritableHandler";
 
-class Proxies implements IProxies {
+class States implements IStates {
   #baseState: Object;
   #readonlyState: IStateProxy;
   #writableState: IStateProxy;
@@ -15,7 +15,7 @@ class Proxies implements IProxies {
     this.#writableState = new Proxy(baseState, new WritableHandler(component)) as IStateProxy;
   }
 
-  get baseState():Object {
+  get base():Object {
     return this.#baseState;
   }
 
@@ -29,7 +29,7 @@ class Proxies implements IProxies {
     }
   }
 
-  get state(): IStateProxy {
+  get current(): IStateProxy {
     return this.#writable ? this.#writableState : this.#readonlyState;
   }
 
@@ -43,6 +43,6 @@ class Proxies implements IProxies {
   }
 }
 
-export function createProxies(component:INewComponent, baseState: Object):IProxies {
-  return new Proxies(component, baseState);
+export function createStates(component:INewComponent, baseState: Object):IStates {
+  return new States(component, baseState);
 }
