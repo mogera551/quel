@@ -61,7 +61,7 @@ export class RepeatKeyed extends Repeat {
       const beforeNode = beforeContentBindings?.lastChildNode ?? this.node;
       if (this.#setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
-        contentBindings = createContentBindings(this.binding.component, this.binding);
+        contentBindings = createContentBindings(this.template, this.binding);
         (newIndex < this.binding.childrenContentBindings.length) ? 
           (this.binding.childrenContentBindings[newIndex] = contentBindings) : 
           this.binding.childrenContentBindings.push(contentBindings);
@@ -106,7 +106,7 @@ export class RepeatKeyed extends Repeat {
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
       let contentBindings = contentBindingsByValue.get(newValue);
       if (typeof contentBindings === "undefined") {
-        contentBindings = createContentBindings(this.binding.component, this.binding);
+        contentBindings = createContentBindings(this.template, this.binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
         // contentBindings.postCreate();
       } else {

@@ -9,17 +9,17 @@ const PREFIX = "on";
 
 export class ElementEvent extends ElementBase {
   // nameのonの後ろを取得する
-  get eventType():string {
+  get eventType(): string {
     return this.name.slice(PREFIX.length); // on～
   }
 
   // applyToNode()の対象かどうか
-  get applicable():boolean {
+  get applicable(): boolean {
     return false;
   }
 
   // イベントハンドラ
-  #handler:((event:Event)=>void)|undefined;
+  #handler?: (event:Event)=>void;
   get handler():(event:Event)=>void {
     if (typeof this.#handler === "undefined") {
       this.#handler = event => this.eventHandler(event);

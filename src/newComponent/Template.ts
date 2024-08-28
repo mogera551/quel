@@ -3,7 +3,7 @@ import { utils } from "../utils";
 const DATASET_BIND_PROPERTY = "data-bind";
 const DATASET_UUID_PROPERTY = "data-uuid";
 
-const templateByUUID:Map<string,HTMLTemplateElement> = new Map;
+const templateByUUID:{[key: string]: HTMLTemplateElement } = {};
 
 /**
  * HTMLの変換
@@ -107,7 +107,7 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
       }
       template.setAttribute(DATASET_UUID_PROPERTY, uuid);
       replaceTemplate(template.content);
-      templateByUUID.set(uuid, template);
+      templateByUUID[uuid] = template;
     }
   };
   replaceTemplate(root.content);
@@ -119,7 +119,7 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
  * UUIDからHTMLTemplateElementオブジェクトを取得(ループや分岐条件のブロック)
  */
 export function getByUUID(uuid:string):(HTMLTemplateElement|undefined) {
-  return templateByUUID.get(uuid);
+  return templateByUUID[uuid];
 }
 
 /**
@@ -129,6 +129,6 @@ export function create(html:string, componentUuid:string, customComponentNames:s
   const template = document.createElement("template");
   template.innerHTML = replaceTag(html, componentUuid, customComponentNames);
   template.setAttribute(DATASET_UUID_PROPERTY, componentUuid);
-  templateByUUID.set(componentUuid, template);
+  templateByUUID[componentUuid] = template;
   return template;
 }

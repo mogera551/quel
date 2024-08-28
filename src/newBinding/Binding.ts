@@ -3,6 +3,7 @@ import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
 import { IFilterInfo } from "../@types/filter";
 import { utils } from "../utils";
 import { INewComponent, INewUpdator } from "../newComponent/types";
+import { IStateProxy } from "../newState/types";
 
 let id = 1;
 class Binding implements INewBinding {
@@ -46,6 +47,12 @@ class Binding implements INewBinding {
   }
   get bindingSummary(): INewBindingSummary {
     return this.component.bindingSummary;
+  }
+  get state(): IStateProxy {
+    return this.component.states.current;
+  }
+  get selectorName(): string {
+    return this.component.selectorName;
   }
 
   constructor(

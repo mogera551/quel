@@ -12,7 +12,7 @@ export class ContextIndex extends StateProperty {
   }
 
   get value():number {
-    return this.binding.parentContentBindings?.loopContext?.indexes[this.index] ?? utils.raise(`ContextIndex: invalid index ${this.name}`);
+    return this.binding.parentContentBindings?.currentLoopContext?.indexes[this.index] ?? utils.raise(`ContextIndex: invalid index ${this.name}`);
   }
 
   get indexes():number[] {

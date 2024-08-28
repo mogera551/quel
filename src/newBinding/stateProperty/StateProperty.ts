@@ -1,6 +1,5 @@
 import { INewBinding, INewStateProperty } from "../types";
 import { IFilterInfo, FilterFunc } from "../../@types/filter";
-import { IState } from "../../@types/state";
 import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
@@ -9,8 +8,8 @@ import { getPropInfo } from "../../newDotNotation/PropInfo";
 import { IStateProxy } from "../../newState/types";
 
 export class StateProperty implements INewStateProperty {
-  get state():IStateProxy {
-    return this.#binding.component.currentState;
+  get state(): IStateProxy {
+    return this.#binding.state;
   }
 
   #name:string;

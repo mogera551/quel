@@ -31,8 +31,8 @@ export const generateComponentClass = (componentModule:NewComponentModule):typeo
       get isQuelComponent():boolean {
         return true;
       }
-      #customElementInfo?:NewCustomElementInfo;
-      get customElementInfo():NewCustomElementInfo {
+      #customElementInfo?: NewCustomElementInfo;
+      get customElementInfo(): NewCustomElementInfo {
         if (typeof this.#customElementInfo === "undefined") {
           this.#customElementInfo = customElementInfoByTagName.get(this.tagName) ?? utils.raise(`customElementInfo is not found for ${this.tagName}`);
         }
@@ -180,7 +180,6 @@ export const generateComponentClass = (componentModule:NewComponentModule):typeo
   module.filters = Object.assign({}, componentModule.filters);
   module.config = Object.assign({}, componentModule.moduleConfig);
   module.options = Object.assign({}, componentModule.options);
-
 
   const extendsTag = module.config?.extends ?? module.options?.extends;
   const baseConstructor = extendsTag ? document.createElement(extendsTag).constructor : HTMLElement;

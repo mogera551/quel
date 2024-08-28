@@ -4,6 +4,7 @@ import { INewLoopContext } from "../newLoopContext/types";
 import { IPropInfo } from "../newDotNotation/types";
 import { IUpdator } from "../@types/component";
 import { INewComponent, INewUpdator } from "../newComponent/types";
+import { IStateProxy } from "../newState/types";
 
 export interface INewPropertyAccess {
   readonly pattern: string;
@@ -66,6 +67,7 @@ export interface INewBinding extends INewBindingBase {
   readonly expandable: boolean;
   readonly updator: INewUpdator;
   readonly bindingSummary: INewBindingSummary;
+  readonly state: IStateProxy
   applyToNode();
   applyToChildNodes(setOfIndex:Set<number>);
   applyToState();
