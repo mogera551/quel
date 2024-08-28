@@ -14,7 +14,7 @@ export class Branch extends TemplateProperty {
    * Set value to bind/unbind child bindingManager
    */
   set value(value:any) {
-    if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
+    if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     if (this.value !== value) {
       if (value) {
         const constentBindings = createContentBindings(this.template, this.binding);

@@ -1,6 +1,6 @@
 import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary } from "./types";
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
-import { IFilterInfo } from "../@types/filter";
+import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
@@ -53,6 +53,15 @@ class Binding implements INewBinding {
   }
   get selectorName(): string {
     return this.component.selectorName;
+  }
+  get eventFilterManager(): IFilterManager<"event"> {
+    return this.component.eventFilterManager;
+  }
+  get inputFilterManager(): IFilterManager<"input"> {
+    return this.component.inputFilterManager;
+  }
+  get outputFilterManager(): IFilterManager<"output"> {
+    return this.component.outputFilterManager;
   }
 
   constructor(

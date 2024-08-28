@@ -35,7 +35,7 @@ export class ElementEvent extends ElementBase {
   constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
-    this.#eventFilters = Filters.create<"event">(filters, binding.component.eventFilterManager);
+    this.#eventFilters = Filters.create<"event">(filters, binding.eventFilterManager);
   }
 
   /**
@@ -48,7 +48,7 @@ export class ElementEvent extends ElementBase {
 
   async directlyCall(event:Event) {
     // 再構築などでバインドが削除されている場合は処理しない
-    if (!(this.binding.component?.bindingSummary.exists(this.binding) ?? false)) return;
+    if (!(this.binding.bindingSummary.exists(this.binding))) return;
     return this.binding.stateProperty.state[DirectryCallApiSymbol](
       this.binding.stateProperty.name, 
       this.binding.parentContentBindings.currentLoopContext, 
@@ -57,10 +57,10 @@ export class ElementEvent extends ElementBase {
 
   eventHandler(event:Event) {
     // 再構築などでバインドが削除されている場合は処理しない
-    if (!(this.binding.component?.bindingSummary.exists(this.binding) ?? false)) return;
+    if (!(this.binding.bindingSummary.exists(this.binding))) return;
     // event filter
     event = this.eventFilters.length > 0 ? FilterManager.applyFilter<"event">(event, this.eventFilters) : event;
     !(Reflect.has(event, "noStopPropagation") ?? false) && event.stopPropagation();
-    this.binding.component.updator.addProcess(this.directlyCall, this, [event]);
+    this.binding.updator.addProcess(this.directlyCall, this, [event]);
   }
 }

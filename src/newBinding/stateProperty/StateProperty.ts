@@ -97,7 +97,7 @@ export class StateProperty implements INewStateProperty {
   constructor(binding:INewBinding, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#name = name;
-    this.#filters = Filters.create<"output">(filters, binding.component.outputFilterManager);
+    this.#filters = Filters.create<"output">(filters, binding.outputFilterManager);
     this.#propInfo = getPropInfo(name);
     this.#level = this.#propInfo.wildcardCount;
   }

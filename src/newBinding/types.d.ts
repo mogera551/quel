@@ -68,6 +68,10 @@ export interface INewBinding extends INewBindingBase {
   readonly updator: INewUpdator;
   readonly bindingSummary: INewBindingSummary;
   readonly state: IStateProxy
+  readonly selectorName: string;
+  readonly eventFilterManager: IFilterManager<"event">;
+  readonly inputFilterManager: IFilterManager<"input">;
+  readonly outputFilterManager: IFilterManager<"output">;
   applyToNode();
   applyToChildNodes(setOfIndex:Set<number>);
   applyToState();

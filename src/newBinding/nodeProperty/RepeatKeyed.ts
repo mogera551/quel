@@ -28,7 +28,7 @@ export class RepeatKeyed extends Repeat {
     return this.#lastValue;
   }
   set value(values) {
-    if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
+    if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
     this.#fromIndexByValue.clear();
     this.#lastIndexes.clear();
     this.#setOfNewIndexes.clear();

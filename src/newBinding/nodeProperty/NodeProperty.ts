@@ -65,7 +65,7 @@ export class NodeProperty implements INewNodeProperty {
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = Filters.create<"input">(filters.toReversed(), binding.component.inputFilterManager);
+    this.#filters = Filters.create<"input">(filters.toReversed(), binding.inputFilterManager);
   }
 
   initialize() {

@@ -18,7 +18,7 @@ export class Checkbox extends ElementBase {
   }
 
   set value(value:any[]) {
-    if (!Array.isArray(value)) utils.raise(`Checkbox: ${this.binding.component.selectorName}.State['${this.binding.stateProperty.name}'] is not array`, );
+    if (!Array.isArray(value)) utils.raise(`Checkbox: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`, );
     const multiValue = this.filteredValue;
     this.inputElement.checked = value.some(v => v === multiValue.value);
   }
