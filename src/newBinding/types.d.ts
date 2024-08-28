@@ -57,17 +57,19 @@ export interface INewBindingBase {
   readonly statePropertyName: string;
 }
 
+export type IComponentPartial = Pick<INewComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
+
 export interface INewBinding extends INewBindingBase {
   readonly id: string;
   readonly nodeProperty: INewNodeProperty;
   readonly stateProperty: INewStateProperty;
   readonly childrenContentBindings: IContentBindings[];
   readonly parentContentBindings: IContentBindings;
-  readonly component: INewComponent;
+  readonly component: IComponentPartial;
   readonly expandable: boolean;
+  readonly state: IStateProxy
   readonly updator: INewUpdator;
   readonly bindingSummary: INewBindingSummary;
-  readonly state: IStateProxy
   readonly selectorName: string;
   readonly eventFilterManager: IFilterManager<"event">;
   readonly inputFilterManager: IFilterManager<"input">;

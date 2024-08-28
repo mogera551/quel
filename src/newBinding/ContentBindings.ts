@@ -5,10 +5,10 @@ import { INewComponent } from "../newComponent/types";
 import { LoopContext } from "../newLoopContext/LoopContext";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
-import { INewBinding, IContentBindings } from "./types";
+import { INewBinding, IContentBindings, IComponentPartial } from "./types";
 
 class ContentBindings implements IContentBindings {
-  #component?: INewComponent;
+  #component?: IComponentPartial;
   template: HTMLTemplateElement;
   #childrenBinding?: INewBinding[];
   #parentBinding?: INewBinding;
@@ -16,7 +16,7 @@ class ContentBindings implements IContentBindings {
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
 
-  get component(): INewComponent {
+  get component(): IComponentPartial {
     if (typeof this.#component === "undefined") {
       utils.raise("component is undefined");
     }
@@ -76,7 +76,7 @@ class ContentBindings implements IContentBindings {
   constructor(
     template: HTMLTemplateElement,
     parentBinding?: INewBinding,
-    component?: INewComponent,
+    component?: IComponentPartial,
   ) {
     if (typeof component === "undefined" && typeof parentBinding === "undefined") {
       utils.raise("component and parentBinding are undefined");
@@ -123,7 +123,7 @@ const cache = new Map<string, IContentBindings[]>;
 export function createContentBindings(
   template:HTMLTemplateElement, 
   parentBinding?:INewBinding, 
-  component?:INewComponent
+  component?:IComponentPartial
 ):IContentBindings {
   const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
   const contentBindings = cache.get(uuid)?.pop();

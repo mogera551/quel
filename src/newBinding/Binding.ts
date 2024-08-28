@@ -1,4 +1,4 @@
-import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary } from "./types";
+import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary, IComponentPartial } from "./types";
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
@@ -39,7 +39,7 @@ class Binding implements INewBinding {
   get expandable(): boolean {
     return this.#nodeProperty.expandable;
   }
-  get component(): INewComponent {
+  get component(): IComponentPartial {
     return this.#parentContentBindings.component;
   }
   get updator(): INewUpdator {
