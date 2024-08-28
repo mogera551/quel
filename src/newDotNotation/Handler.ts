@@ -2,40 +2,52 @@ import { util } from "../../node_modules/webpack/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { utils } from "../utils";
 import { getPropInfo } from "./PropInfo";
-import { IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, StackIndexes } from "./types";
+import { IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, StackIndexes } from "./types";
 
-type NamedStackIndexdes = Map<string,StackIndexes>
+class WildcardIndexes implements IWildcardIndexes {
+  #baseIndexes: Indexes;
+  #indexes?: Indexes;
+  get indexes(): Indexes {
+    if (typeof this.#indexes === "undefined") {
+      this.#indexes = this.#baseIndexes.slice(0, this.wildcardCount);
+    }
+    return this.#indexes;
+  }
+  wildcardCount: number;
+  pattern: string;
+  constructor(pattern: string, wildcardCount: number, indexes: Indexes) {
+    this.pattern = pattern;
+    this.wildcardCount = wildcardCount;
+    this.#baseIndexes = indexes;
+    this.#indexes = (wildcardCount === indexes.length) ? indexes : undefined;
+  }
+}
 
 /**
  * ドット記法でプロパティを取得するためのハンドラ
  */
 export class Handler implements IDotNotationHandler {
-  _stackIndexes:StackIndexes = [];
-  _namedStackIndexes:NamedStackIndexdes = new Map<string,StackIndexes>();
-  get lastStackIndexes():(undefined|number)[] {
+  _stackIndexes: StackIndexes = [];
+  _stackNamedWildcardIndexes: NamedWildcardIndexes[] = [];
+  get lastStackIndexes(): Indexes {
     return this._stackIndexes[this._stackIndexes.length - 1] ?? [];
   }
-  getLastIndexes(pattern:string):Indexes {
-    return this._namedStackIndexes.get(pattern)?.at(-1) ?? [];
+  getLastIndexes(pattern:string): Indexes {
+    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? [];
   }
   withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:()=>any):any {
-    const allIndexes = [];
-    let buffer:Indexes = [];
+    const namedWildcardIndexes: NamedWildcardIndexes = {};
     for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
-      buffer = buffer.concat(indexes[i]);
-      allIndexes.push(buffer)
+      const wildcardPath = patternInfo.wildcardPaths[i];
+      namedWildcardIndexes[wildcardPath] = 
+        new WildcardIndexes(wildcardPath, i + 1, indexes);
     }
-    for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
-      this._namedStackIndexes.get(patternInfo.wildcardPaths[i])?.push(allIndexes[i]) ?? 
-        this._namedStackIndexes.set(patternInfo.wildcardPaths[i], [allIndexes[i]]);
-    }
+    this._stackNamedWildcardIndexes.push(namedWildcardIndexes);
     this._stackIndexes.push(indexes);
     try {
       return callback();
     } finally {
-      for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
-        const c = this._namedStackIndexes.get(patternInfo.wildcardPaths[i])?.pop(); 
-      }
+      this._stackNamedWildcardIndexes.pop();
       this._stackIndexes.pop();
     }
   }

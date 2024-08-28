@@ -24,9 +24,19 @@ export interface IPropInfo extends IPatternInfo {
 export type Indexes = (undefined|number)[];
 export type StackIndexes = Indexes[];
 
+export interface IWildcardIndexes {
+  indexes: Indexes;
+  wildcardCount: number;
+  pattern: string;
+}
+
+export type NamedWildcardIndexes = {
+  [key:string]:IWildcardIndexes;
+}
+
 export interface IDotNotationHandler {
   _stackIndexes: StackIndexes;
-  _namedStackIndexes: Map<string, StackIndexes>;
+  _stackNamedWildcardIndexes:NamedWildcardIndexes[];
   lastStackIndexes: Indexes;
   getLastIndexes(pattern: string): Indexes;
   withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:() => any): any;

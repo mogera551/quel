@@ -22,9 +22,11 @@ describe("Handler", () => {
   it("should update stack indexes and execute the callback", () => {
     const callback = () => {
       expect(handler._stackIndexes).toEqual([[1, 2, 3]]);
-      expect(Array.from(handler._namedStackIndexes.keys())).toEqual(["aaa.*", "aaa.*.*", "aaa.*.*.*"]);
-      expect(Array.from(handler._namedStackIndexes.values())).toEqual([[[1]], [[1,2]], [[1,2,3]]]);
-    };
+      expect(Array.from(Object.keys(handler._stackNamedWildcardIndexes[0]))).toEqual(["aaa.*", "aaa.*.*", "aaa.*.*.*"]);
+      expect(Array.from(handler._stackNamedWildcardIndexes[0]["aaa.*"].indexes)).toEqual([1]);
+      expect(Array.from(handler._stackNamedWildcardIndexes[0]["aaa.*.*"].indexes)).toEqual([1, 2]);
+      expect(Array.from(handler._stackNamedWildcardIndexes[0]["aaa.*.*.*"].indexes)).toEqual([1, 2, 3]);
+    }
     const pattern = getPatternInfo("aaa.*.*.*");
     handler.withIndexes(pattern, [1, 2, 3], callback);
     //expect(callback).toHaveBeenCalled();
