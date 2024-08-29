@@ -4,7 +4,7 @@ import { ReadonlyHandler } from "./ReadonlyHandler";
 import { IStates, IStateProxy } from "./types";
 import { WritableHandler } from "./WritableHandler";
 
-type IComponentForHandler = Pick<INewComponent, "baseState" | "updator">;
+type IComponentForHandler = Pick<INewComponent, "baseState" | "updator"> & HTMLElement;
 
 class States implements IStates {
   #baseState: Object;

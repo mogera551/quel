@@ -34,13 +34,13 @@ const applyCallback =
 (...args:any) => 
 async ():Promise<void> => {
   (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
-  dispatchCustomEvent(handler.component, callbackToEvent[prop], args);
+  dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
 };
 
 export function getCallback(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol):(()=>any)|undefined {
   return (allCallbacks.has(prop)) ? (
     (prop === ConnectedCallbackSymbol) ? 
       (...args:any) => applyCallback(state, stateProxy, handler, prop)(...args)() : 
-      (...args:any) => handler.addProcess(applyCallback(state, stateProxy, handler, prop)(...args), stateProxy, [])
+      (...args:any) => handler.updator.addProcess(applyCallback(state, stateProxy, handler, prop)(...args), stateProxy, [])
   ) : undefined;
 }

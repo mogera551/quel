@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import { createUserComponent } from "../newComponent/UserProxy";
 import { IStateHandler, IStateProxy } from "./types";
 import { INewComponent } from "../newComponent/types";
@@ -6,33 +5,32 @@ import { INewComponent } from "../newComponent/types";
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
 const COMPONENT_PROPERTY = "$component";
+const ADD_PROCESS_PROPERTY = "$addProcess";
 
 export const properties = new Set([
   GLOBALS_PROPERTY,
   DEPENDENT_PROPS_PROPERTY,
   COMPONENT_PROPERTY,
+  ADD_PROCESS_PROPERTY,
 ]);
 
+type FuncArgs = {state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:string};
+
+type FuncInterface = (args:FuncArgs) => any;
+
 type FuncByName = {
-  [name:string]:({component, state}:{component:INewComponent, state:Object}) => any
+  [name:string]: FuncInterface
 }
 
+
 const funcByName:FuncByName = {
-  [GLOBALS_PROPERTY]: ({component}:{component:INewComponent, state:Object}) => component.globals, // component.globals,
-  [DEPENDENT_PROPS_PROPERTY]: ({state}:{component:INewComponent, state:Object}) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
-  [COMPONENT_PROPERTY]: ({component}:{component:INewComponent, state:Object}) => createUserComponent(component),
+  [GLOBALS_PROPERTY]: ({handler}:FuncArgs) => (handler.element as INewComponent).globals, // component.globals,
+  [DEPENDENT_PROPS_PROPERTY]: ({state}:FuncArgs) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
+  [COMPONENT_PROPERTY]: ({handler}:FuncArgs) => createUserComponent((handler.element as INewComponent)),
+  [ADD_PROCESS_PROPERTY]: ({handler, stateProxy}:FuncArgs) => (func:Function) => handler.updator.addProcess(func, stateProxy, [])
 }
 
 export function getSpecialProps(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:string):any {
-  return funcByName[prop]?.({component:handler.component, state});
+  return funcByName[prop]?.({state, stateProxy, handler, prop});
 }
 
-export class SpecialProp {
-  static get(component:INewComponent, state:Object, name:string):any {
-    return funcByName[name]?.({component, state}) ?? utils.raise(`SpecialProp: ${name} is not found`);
-  }
-
-  static has(name:string) {
-    return properties.has(name);
-  }
-}

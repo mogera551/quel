@@ -1,5 +1,4 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
-import { PropertyAccess } from "../newBinding/PropertyAccess";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { Handler as DotNotationHandler } from "../newDotNotation/Handler";
 import { INewLoopContext } from "../newLoopContext/types";
@@ -19,7 +18,7 @@ type ObjectBySymbol = {
   [key:PropertyKey]:any
 }
 
-type IComponentForHandler = Pick<INewComponent, "baseState" | "updator">;
+type IComponentForHandler = Pick<INewComponent, "baseState" | "updator"> & HTMLElement;
 
 export class Handler extends DotNotationHandler implements IStateHandler {
   #component:IComponentForHandler;
@@ -31,6 +30,9 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   }
   get dependentProps():IDependentProps {
     return this.#dependentProps;
+  }
+  get element():HTMLElement {
+    return this.#component;
   }
   get component():IComponentForHandler {
     return this.#component;
@@ -85,18 +87,9 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     return this.#getterByType[typeof prop]?.(target, prop, receiver) ?? super.get(target, prop, receiver);
   }
 
-  addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void {
-    // ToDo: 処理を実装する
-  }
-
   clearCache():void {
   }
 
   async directlyCallback(loopContext:INewLoopContext, callback:() => Promise<void>):Promise<void> {
   }
-
-  addProcess(process: () => Promise<void>, stateProxy: IStateProxy, indexes: number[]): void {
-    // ToDO: 処理を実装する
-  }
-
 }

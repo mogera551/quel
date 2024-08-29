@@ -8,12 +8,12 @@ import { INewLoopContext } from "../newLoopContext/types";
 export interface IStateHandler {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
-//  readonly component: INewComponent;
+  readonly element: HTMLElement;
   readonly updator: INewUpdator;
-  addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
+//  addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
   clearCache():void;
   directlyCallback(loopContext:INewLoopContext, callback:() => Promise<void>):Promise<void>;
-  addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
+//  addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
 }
 
 export interface IStateProxy extends IDotNotationProxy {

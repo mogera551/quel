@@ -3,7 +3,7 @@ import {
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
 } from "../@symbols/state";
 import { IDependentProps, IStateHandler, IStateProxy, SupportApiSymbols } from "./types";
-import { PropertyAccess } from "../binding/PropertyAccess";
+import { PropertyAccess } from "../newBinding/PropertyAccess";
 import { INewLoopContext } from "../newLoopContext/types";
 import { INewComponent } from "../newComponent/types";
 
@@ -17,9 +17,9 @@ const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
         Reflect.apply(Reflect.get(state, prop), stateProxy, [event, ...(loopContext?.indexes ?? [])]) as void
       ),
   [NotifyForDependentPropsApiSymbol]:
-    ({state, stateProxy, handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
+    ({handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
       (prop:string, indexes:number[]):void => 
-        handler.addNotify(state, new PropertyAccess(prop, indexes), stateProxy),
+        handler.updator.addUpdatedStateProperty(new PropertyAccess(prop, indexes)),
   [GetDependentPropsApiSymbol]:({handler}:{handler:IStateHandler}) => ():IDependentProps => handler.dependentProps,
   [ClearCacheApiSymbol]:({handler}:{handler:IStateHandler}) => ():void => handler.clearCache(),
   [CreateBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (component:INewComponent):void => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
