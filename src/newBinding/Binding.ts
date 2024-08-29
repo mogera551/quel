@@ -2,7 +2,7 @@ import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INe
 import { NodePropertyCreator, StatePropertyCreator } from "../newBinder/types";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
-import { INewComponent, INewUpdator } from "../newComponent/types";
+import { INewUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
 
 let id = 1;
@@ -169,5 +169,7 @@ export function createBinding(
   statePropertyCreator: StatePropertyCreator,
   inputFilters: IFilterInfo[]
 ): INewBinding {
-  return new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
+  const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
+  binding.initialize();
+  return binding;
 }

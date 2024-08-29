@@ -29,11 +29,11 @@ class WildcardIndexes implements IWildcardIndexes {
 export class Handler implements IDotNotationHandler {
   _stackIndexes: StackIndexes = [];
   _stackNamedWildcardIndexes: NamedWildcardIndexes[] = [];
-  get lastStackIndexes(): Indexes {
-    return this._stackIndexes[this._stackIndexes.length - 1] ?? [];
+  get lastStackIndexes(): Indexes | undefined {
+    return this._stackIndexes[this._stackIndexes.length - 1];
   }
-  getLastIndexes(pattern:string): Indexes {
-    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? [];
+  getLastIndexes(pattern:string): Indexes | undefined {
+    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes;
   }
   withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:()=>any):any {
     const namedWildcardIndexes: NamedWildcardIndexes = {};
@@ -98,7 +98,7 @@ export class Handler implements IDotNotationHandler {
     
   _get(target:object, prop:string, receiver:object) {
     const propInfo = getPropInfo(prop);
-    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
     const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
     return this.__get(target, propInfo, wildcardIndexes, receiver);
   }
@@ -129,14 +129,14 @@ export class Handler implements IDotNotationHandler {
 
   _set(target:object, prop:string, value:any, receiver:object):boolean {
     const propInfo = getPropInfo(prop);
-    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
     const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
     return this.__set(target, propInfo, wildcardIndexes, value, receiver);
   }
 
   _getExpand(target:object, prop:string, receiver:object) {
     const propInfo = getPropInfo(prop);
-    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
     const wildcardIndexes = propInfo.wildcardIndexes.map(
       (i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
     );
@@ -168,7 +168,7 @@ export class Handler implements IDotNotationHandler {
 
   _setExpand(target:object, prop:string, value:any, receiver:object) {
     const propInfo = getPropInfo(prop);
-    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
     const wildcardIndexes = propInfo.wildcardIndexes.map(
       (i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index])
     );
@@ -229,7 +229,7 @@ export class Handler implements IDotNotationHandler {
       if (prop[0] === "$") {
         const index = Number(prop.slice(1));
         if (isNaN(index)) break;
-        return this.lastStackIndexes[index - 1];
+        return (this.lastStackIndexes ?? [])[index - 1];
       } else if (prop[0] === "@") {
         const propertyName = prop.slice(1);
         return this._getExpand(target, propertyName, receiver);

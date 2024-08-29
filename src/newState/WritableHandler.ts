@@ -27,8 +27,8 @@ export class WritableHandler extends Handler {
     });
   }
 
-  getLastIndexes(pattern: string): Indexes {
-    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes ?? [];
+  getLastIndexes(pattern: string): Indexes | undefined{
+    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
   }
   
   __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:IStateProxy):boolean {

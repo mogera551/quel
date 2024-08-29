@@ -5483,10 +5483,10 @@ let Handler$1 = class Handler {
     _stackIndexes = [];
     _stackNamedWildcardIndexes = [];
     get lastStackIndexes() {
-        return this._stackIndexes[this._stackIndexes.length - 1] ?? [];
+        return this._stackIndexes[this._stackIndexes.length - 1];
     }
     getLastIndexes(pattern) {
-        return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? [];
+        return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes;
     }
     withIndexes(patternInfo, indexes, callback) {
         const namedWildcardIndexes = {};
@@ -5528,7 +5528,7 @@ let Handler$1 = class Handler {
     }
     _get(target, prop, receiver) {
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
         const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
         return this.__get(target, propInfo, wildcardIndexes, receiver);
     }
@@ -5551,13 +5551,13 @@ let Handler$1 = class Handler {
     }
     _set(target, prop, value, receiver) {
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
         const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
         return this.__set(target, propInfo, wildcardIndexes, value, receiver);
     }
     _getExpand(target, prop, receiver) {
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
         const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index]));
         const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
         const wildcardPath = propInfo.wildcardPaths.at(index) ?? utils.raise(`wildcard path is undefined`);
@@ -5580,7 +5580,7 @@ let Handler$1 = class Handler {
     }
     _setExpand(target, prop, value, receiver) {
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "");
+        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
         const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index]));
         const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
         const wildcardPath = propInfo.wildcardPaths.at(index) ?? utils.raise(`wildcard path is undefined`);
@@ -5634,7 +5634,7 @@ let Handler$1 = class Handler {
                 const index = Number(prop.slice(1));
                 if (isNaN(index))
                     break;
-                return this.lastStackIndexes[index - 1];
+                return (this.lastStackIndexes ?? [])[index - 1];
             }
             else if (prop[0] === "@") {
                 const propertyName = prop.slice(1);
@@ -6210,12 +6210,6 @@ class ElementEvent extends ElementBase {
     get eventFilters() {
         return this.#eventFilters;
     }
-    get filterManager() {
-        return this.binding.eventFilterManager;
-    }
-    get filterCreator() {
-        return Filters.create;
-    }
     constructor(binding, node, name, filters) {
         if (!name.startsWith(PREFIX$1))
             utils.raise(`ElementEvent: invalid property name ${name}`);
@@ -6241,7 +6235,9 @@ class ElementEvent extends ElementBase {
             return;
         // event filter
         event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
-        !(Reflect.has(event, "noStopPropagation") ?? false) && event.stopPropagation();
+        if ((Reflect.get(event, "noStopPropagation") ?? false) === false) {
+            event.stopPropagation();
+        }
         this.binding.updator.addProcess(this.directlyCall, this, [event]);
     }
 }
@@ -6826,7 +6822,9 @@ class Binding {
     }
 }
 function createBinding$1(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters) {
-    return new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
+    const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
+    binding.initialize();
+    return binding;
 }
 
 const createBinding = (bindTextInfo, propertyCreators) => (contentBindings, node) => createBinding$1(contentBindings, node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyCreator, bindTextInfo.inputFilters, bindTextInfo.stateProperty, propertyCreators.statePropertyCreator, bindTextInfo.outputFilters);
@@ -7632,7 +7630,7 @@ class WritableHandler extends Handler {
         });
     }
     getLastIndexes(pattern) {
-        return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes ?? [];
+        return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
     }
     __set(target, propInfo, indexes, value, receiver) {
         try {

@@ -32,15 +32,6 @@ export class ElementEvent extends ElementBase {
     return this.#eventFilters;
   }
 
-  get filterManager() {
-    return this.binding.eventFilterManager;
-    
-  }
-
-  get filterCreator() {
-    return Filters.create<"event">;
-  }
-
   constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
@@ -69,7 +60,9 @@ export class ElementEvent extends ElementBase {
     if (!(this.binding.bindingSummary.exists(this.binding))) return;
     // event filter
     event = this.eventFilters.length > 0 ? FilterManager.applyFilter<"event">(event, this.eventFilters) : event;
-    !(Reflect.has(event, "noStopPropagation") ?? false) && event.stopPropagation();
+    if ((Reflect.get(event, "noStopPropagation") ?? false) === false) {
+      event.stopPropagation();
+    }
     this.binding.updator.addProcess(this.directlyCall, this, [event]);
   }
 }

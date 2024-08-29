@@ -37,8 +37,8 @@ export type NamedWildcardIndexes = {
 export interface IDotNotationHandler {
   _stackIndexes: StackIndexes;
   _stackNamedWildcardIndexes:NamedWildcardIndexes[];
-  lastStackIndexes: Indexes;
-  getLastIndexes(pattern: string): Indexes;
+  lastStackIndexes: Indexes | undefined;
+  getLastIndexes(pattern: string): Indexes | undefined;
   withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:() => any): any;
   _getPropertyValue(target:object, prop:string, receiver:object):any;
   _getValue(
