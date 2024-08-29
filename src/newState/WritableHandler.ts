@@ -37,7 +37,7 @@ export class WritableHandler extends Handler {
     try {
       return super.__set(target, propInfo, indexes, value, receiver);
     } finally {
-      this.addNotify(target, new PropertyAccess(propInfo.pattern, indexes as number[]), receiver);
+      this.updator.addUpdatedStateProperty(new PropertyAccess(propInfo.pattern, indexes as number[]));
     }
   }
 /*

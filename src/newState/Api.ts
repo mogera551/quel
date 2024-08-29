@@ -1,4 +1,3 @@
-import { IComponent } from "../@types/component";
 import { 
   DirectryCallApiSymbol, NotifyForDependentPropsApiSymbol, GetDependentPropsApiSymbol, 
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
@@ -6,6 +5,7 @@ import {
 import { IDependentProps, IStateHandler, IStateProxy, SupportApiSymbols } from "./types";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { INewLoopContext } from "../newLoopContext/types";
+import { INewComponent } from "../newComponent/types";
 
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
@@ -22,8 +22,8 @@ const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
         handler.addNotify(state, new PropertyAccess(prop, indexes), stateProxy),
   [GetDependentPropsApiSymbol]:({handler}:{handler:IStateHandler}) => ():IDependentProps => handler.dependentProps,
   [ClearCacheApiSymbol]:({handler}:{handler:IStateHandler}) => ():void => handler.clearCache(),
-  [CreateBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (component:IComponent):void => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
-  [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (buffer:{[key:string]:any}, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
+  [CreateBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (component:INewComponent):void => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
+  [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (buffer:{[key:string]:any}, component:INewComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
 export function getApi(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol):(()=>void|undefined) {

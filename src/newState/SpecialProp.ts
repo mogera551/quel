@@ -1,7 +1,7 @@
 import { utils } from "../utils";
-import { IComponent } from "../@types/component";
-import { createUserComponent } from "../component/UserProxy";
+import { createUserComponent } from "../newComponent/UserProxy";
 import { IStateHandler, IStateProxy } from "./types";
+import { INewComponent } from "../newComponent/types";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
@@ -14,13 +14,13 @@ export const properties = new Set([
 ]);
 
 type FuncByName = {
-  [name:string]:({component, state}:{component:IComponent, state:Object}) => any
+  [name:string]:({component, state}:{component:INewComponent, state:Object}) => any
 }
 
 const funcByName:FuncByName = {
-  [GLOBALS_PROPERTY]: ({component}:{component:IComponent, state:Object}) => component.globals, // component.globals,
-  [DEPENDENT_PROPS_PROPERTY]: ({state}:{component:IComponent, state:Object}) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
-  [COMPONENT_PROPERTY]: ({component}:{component:IComponent, state:Object}) => createUserComponent(component),
+  [GLOBALS_PROPERTY]: ({component}:{component:INewComponent, state:Object}) => component.globals, // component.globals,
+  [DEPENDENT_PROPS_PROPERTY]: ({state}:{component:INewComponent, state:Object}) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
+  [COMPONENT_PROPERTY]: ({component}:{component:INewComponent, state:Object}) => createUserComponent(component),
 }
 
 export function getSpecialProps(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:string):any {
@@ -28,7 +28,7 @@ export function getSpecialProps(state:Object, stateProxy:IStateProxy, handler:IS
 }
 
 export class SpecialProp {
-  static get(component:IComponent, state:Object, name:string):any {
+  static get(component:INewComponent, state:Object, name:string):any {
     return funcByName[name]?.({component, state}) ?? utils.raise(`SpecialProp: ${name} is not found`);
   }
 

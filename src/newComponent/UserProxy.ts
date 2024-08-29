@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { INewComponent } from "./types";
+import { INewComponent, INewUserComponent } from "./types";
 
 function existsProperty(baseClass:Function, prop:PropertyKey):boolean {
   if (typeof baseClass.prototype[prop] !== "undefined") return true;
@@ -27,6 +27,6 @@ class UserProxyHandler {
   }
 }
 
-export function createUserComponent(component: INewComponent): INewComponent {
+export function createUserComponent(component: INewComponent): INewUserComponent {
   return new Proxy(component, new UserProxyHandler);
 }

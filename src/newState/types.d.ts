@@ -1,13 +1,15 @@
 import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { IGlobalData } from "../@types/global";
 import { IDependentProps } from "../@types/state";
+import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IDotNotationHandler, IDotNotationProxy } from "../newDotNotation/types";
 import { INewLoopContext } from "../newLoopContext/types";
 
 export interface IStateHandler {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
-  readonly component: IComponent;
+  readonly component: INewComponent;
+  readonly updator: INewUpdator;
   addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
   clearCache():void;
   directlyCallback(loopContext:INewLoopContext, callback:() => Promise<void>):Promise<void>;
@@ -22,12 +24,12 @@ export interface IStateProxy extends IDotNotationProxy {
   [NotifyForDependentPropsApiSymbol](prop:string, indexes:number[]): void;
   [GetDependentPropsApiSymbol](): IDependentProps;
   [ClearCacheApiSymbol](): void;
-  [CreateBufferApiSymbol](component:IComponent): void;
-  [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:IComponent): boolean;
+  [CreateBufferApiSymbol](component:INewComponent): void;
+  [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:INewComponent): boolean;
   // Special Property
   readonly $globals: IGlobalData;
   readonly $dependentProps: Dependencies;
-  readonly $component: IComponent; // todo:後でIUserComponentに変更する
+  readonly $component: INewComponent; // todo:後でIUserComponentに変更する
 
 }
 

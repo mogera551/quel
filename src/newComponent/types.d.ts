@@ -192,3 +192,10 @@ export interface INewProps {
   ownKeys(target: INewProps): (symbol|string)[];
   getOwnPropertyDescriptor(target: INewProps, prop: string|symbol): PropertyDescriptor;
 }
+
+// ToDo: addProcessをどうするか検討
+export type INewUserComponent = Pick<
+  INewComponentBase & INewCustomComponent & INewDialogComponent & INewPopoverComponent,
+  /* "addProcess" | */ "viewRootElement" | "queryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
+>;
+

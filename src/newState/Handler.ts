@@ -1,7 +1,6 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
-import { IComponent } from "../@types/component";
 import { PropertyAccess } from "../newBinding/PropertyAccess";
-import { INewComponent } from "../newComponent/types";
+import { INewComponent, INewUpdator } from "../newComponent/types";
 import { Handler as DotNotationHandler } from "../newDotNotation/Handler";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
@@ -33,6 +32,9 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   }
   get component():INewComponent {
     return this.#component;
+  }
+  get updator(): INewUpdator {
+    return this.component.updator;
   }
   constructor(component:INewComponent) {
     super();
