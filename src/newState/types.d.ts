@@ -8,7 +8,7 @@ import { INewLoopContext } from "../newLoopContext/types";
 export interface IStateHandler {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
-  readonly component: INewComponent;
+//  readonly component: INewComponent;
   readonly updator: INewUpdator;
   addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
   clearCache():void;

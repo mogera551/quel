@@ -1,4 +1,4 @@
-import { IContentBindings, IContentBindingsBase } from "../newBinding/types";
+import { IContentBindingsBase } from "../newBinding/types";
 import { getPatternInfo } from "../newDotNotation/PropInfo";
 import { IPatternInfo } from "../newDotNotation/types";
 import { utils } from "../utils";

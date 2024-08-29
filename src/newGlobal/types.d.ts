@@ -4,6 +4,6 @@ import { IDotNotationProxy } from "../newDotNotation/types";
 import { INewComponent } from "../newComponent/types";
 
 export interface IGlobalDataProxy extends IDotNotationProxy {
-  [BoundByComponentSymbol]:(component:INewComponent, prop:string)=>void;
+  [BoundByComponentSymbol]:(component:Pick<INewComponent,"states">, prop:string)=>void;
 };
 

@@ -1,9 +1,9 @@
 
 import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { INewComponent, INewDialogComponent, Constructor } from "./types";
+import { INewComponent, INewDialogComponent, Constructor, INewCustomComponent, INewComponentBase } from "./types";
 
-export function DialogComponent<TBase extends Constructor>(Base: TBase) {
+export function DialogComponent<TBase extends Constructor<HTMLElement & INewComponentBase & INewCustomComponent>>(Base: TBase) {
   return class extends Base implements INewDialogComponent {
     #dialogPromises?: PromiseWithResolvers<any>;
     get dialogPromises(): PromiseWithResolvers<any>|undefined {
@@ -22,51 +22,44 @@ export function DialogComponent<TBase extends Constructor>(Base: TBase) {
     }
 
     get useBufferedBind() {
-      const component = this.#component;
-      return component.hasAttribute("buffered-bind");
+      return this.hasAttribute("buffered-bind");
     }
   
-    get #component(): INewComponent {
-      // ToDo: unknownを避けたい
-      return this as unknown as INewComponent;
-    }
     constructor(...args:any[]) {
       super();
-      const component = this.#component;
-      component.addEventListener("closed", () => {
-        if (typeof component.dialogPromises !== "undefined") {
-          if (component.returnValue === "") {
-            component.dialogPromises.reject();
+      this.addEventListener("closed", () => {
+        if (typeof this.dialogPromises !== "undefined") {
+          if (this.returnValue === "") {
+            this.dialogPromises.reject();
           } else {
-            const buffer = component.props[GetBufferSymbol]();
-            component.props[ClearBufferSymbol]();
-            component.dialogPromises.resolve(buffer);
+            const buffer = this.props[GetBufferSymbol]();
+            this.props[ClearBufferSymbol]();
+            this.dialogPromises.resolve(buffer);
           }
-          component.dialogPromises = undefined;
+          this.dialogPromises = undefined;
         }
-        if (component.useBufferedBind && typeof component.parentComponent !== "undefined") {
-          if (component.returnValue !== "") {
-            component.props[FlushBufferSymbol]();
+        if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+          if (this.returnValue !== "") {
+            this.props[FlushBufferSymbol]();
           }
         }
       });
-      component.addEventListener("close", () => {
+      this.addEventListener("close", () => {
         const closedEvent = new CustomEvent("closed");
-        component.dispatchEvent(closedEvent);
+        this.dispatchEvent(closedEvent);
       });
     }
 
     async #show(props:{[key:string]:any}, modal = true) {
-      const component = this.#component;
-      component.returnValue = "";
-      component.dialogPromises = Promise.withResolvers();
-      component.props[SetBufferSymbol](props);
+      this.returnValue = "";
+      this.dialogPromises = Promise.withResolvers();
+      this.props[SetBufferSymbol](props);
       if (modal) {
-        HTMLDialogElement.prototype.showModal.apply(component);
+        HTMLDialogElement.prototype.showModal.apply(this);
       } else {
-        HTMLDialogElement.prototype.show.apply(component);
+        HTMLDialogElement.prototype.show.apply(this);
       }
-      return component.dialogPromises.promise;
+      return this.dialogPromises.promise;
     }
   
     async asyncShowModal(props: {[key: string]: any}): Promise<void> {
@@ -87,34 +80,31 @@ export function DialogComponent<TBase extends Constructor>(Base: TBase) {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
       }
-      const component = this.#component;
-      if (component.useBufferedBind && typeof component.parentComponent !== "undefined") {
-        component.returnValue = "";
-        const buffer = component.props[CreateBufferSymbol]();
-        component.props[SetBufferSymbol](buffer);
+      if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+        this.returnValue = "";
+        const buffer = this.props[CreateBufferSymbol]();
+        this.props[SetBufferSymbol](buffer);
       }
-      return HTMLDialogElement.prototype.showModal.apply(component);
+      return HTMLDialogElement.prototype.showModal.apply(this);
     }
 
     show() {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: show is only for HTMLDialogElement");
       }
-      const component = this.#component;
-      if (component.useBufferedBind && typeof component.parentComponent !== "undefined") {
-        component.returnValue = "";
-        const buffer = component.props[CreateBufferSymbol]();
-        component.props[SetBufferSymbol](buffer);
+      if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+        this.returnValue = "";
+        const buffer = this.props[CreateBufferSymbol]();
+        this.props[SetBufferSymbol](buffer);
       }
-      return HTMLDialogElement.prototype.show.apply(component);
+      return HTMLDialogElement.prototype.show.apply(this);
     }
 
     close(returnValue:string = "") {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: close is only for HTMLDialogElement");
       }
-      const component = this.#component;
-      return HTMLDialogElement.prototype.close.apply(component, [returnValue]);
+      return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
     }
       
   };

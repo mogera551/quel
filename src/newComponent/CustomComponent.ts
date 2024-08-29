@@ -1,19 +1,12 @@
 import { utils } from "../utils";
-//import { IUpdator, Constructor, ICustomComponent, IComponent, IProps } from "../@types/component";
-import { IState, Proxies } from "../@types/state";
 import { ConnectedCallbackSymbol } from "../@symbols/state";
-import { IBindingManager, IBindingSummary } from "../@types/binding";
-import { IGlobalData } from "../@types/global";
-import { getProxies } from "../state/Proxies";
 import { isAttachable } from "./AttachShadow";
 import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
-import { BindingManager } from "../binding/Binding";
-import { BindingSummary } from "../binding/BindingSummary";
-import { Updator } from "./Updator";
+import { createUpdator } from "./Updator";
 import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
-import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor } from "./types";
+import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor, INewComponentBase } from "./types";
 import { IStateProxy, IStates } from "../newState/types";
 import { IContentBindings, INewBindingSummary } from "../newBinding/types";
 import { IGlobalDataProxy } from "../newGlobal/types";
@@ -21,9 +14,9 @@ import { createContentBindings } from "../newBinding/ContentBindings";
 import { createBindingSummary } from "../newBinding/BindingSummary";
 import { createStates } from "../newState/States";
 
-const pseudoComponentByNode:Map<Node,INewComponent> = new Map;
+const pseudoComponentByNode:Map<Node, INewComponent> = new Map;
 
-const getParentComponent = (_node:Node):INewComponent|undefined => {
+const getParentComponent = (_node:Node): INewComponent|undefined => {
   let node:Node|null = _node;
   do {
     node = node.parentNode;
@@ -40,26 +33,26 @@ const getParentComponent = (_node:Node):INewComponent|undefined => {
 
 const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
-export function CustomComponent<TBase extends Constructor>(Base: TBase) {
+export function CustomComponent<TBase extends Constructor<HTMLElement & INewComponentBase>>(Base: TBase) {
   return class extends Base implements INewCustomComponent {
     constructor(...args:any[]) {
       super();
       const component = this.component;
-      this.#states = createStates(component, Reflect.construct(component.State, [])); // create view model
+      this.#states = createStates(this, Reflect.construct(component.State, [])); // create view model
       this.#bindingSummary = createBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
-      this.#updator = new Updator(component);
-      this.#props = createProps(component);
+      this.#updator = createUpdator(this);
+      this.#props = createProps(this);
       this.#globals = createGlobals(component);  
     }
 
-    get component():INewComponent & HTMLElement {
-      return this as unknown as INewComponent & HTMLElement;
+    get component():INewComponent {
+      return this as unknown as INewComponent;
     }
-    #parentComponent?:INewComponent & HTMLElement;
-    get parentComponent():INewComponent & HTMLElement {
+    #parentComponent?:INewComponent;
+    get parentComponent():INewComponent {
       if (typeof this.#parentComponent === "undefined") {
-        this.#parentComponent = getParentComponent(this.component as Node) as INewComponent & HTMLElement;
+        this.#parentComponent = getParentComponent(this.component as Node) as INewComponent;
       }
       return this.#parentComponent;
     }
@@ -265,10 +258,6 @@ export function CustomComponent<TBase extends Constructor>(Base: TBase) {
   
     }
     async disconnectedCallback() {
-
     }
-
-
-
   };
 }

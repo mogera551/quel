@@ -29,8 +29,7 @@ export class WritableHandler extends Handler {
   }
 
   getLastIndexes(pattern: string): Indexes {
-    // ToDo: 実装する
-    return [];
+    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes ?? [];
   }
   
   __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:IStateProxy):boolean {
@@ -40,42 +39,4 @@ export class WritableHandler extends Handler {
       this.updator.addUpdatedStateProperty(new PropertyAccess(propInfo.pattern, indexes as number[]));
     }
   }
-/*
-  #findLoopContext(prop:string):ILoopContext|undefined {
-    if (typeof this.#directlyCallContext.loopContext === "undefined") return;
-    if (typeof prop !== "string" || prop.startsWith("@@__") || prop === "constructor") return;
-    const patternNameInfo = getPatternNameInfo(prop);
-    if (patternNameInfo.level === 0 || prop.at(0) === "@") return;
-    const wildcardPatternNameInfo = getPatternNameInfo(patternNameInfo.wildcardNames[patternNameInfo.wildcardNames.length - 1]);
-    const loopContext = this.#directlyCallContext.loopContext.find(wildcardPatternNameInfo.parentPath);
-    if (typeof loopContext === "undefined") utils.raise(`StateWriteHandler: ${prop} is outside loop`);
-    return loopContext;
-  }
-
-  get(target:Object, prop:PropertyKey, receiver:IState):any {
-    if (typeof prop === "symbol") {
-      const supportCallbackSymbol = Callback.getSupportSymbol(prop);
-      if (typeof supportCallbackSymbol !== "undefined") {
-        return Callback.get(target, receiver, this, supportCallbackSymbol);
-      }
-      const supportApiSymbol = Api.getSupportSymbol(prop);
-      if (typeof supportApiSymbol !== "undefined") {
-        return Api.get(target, receiver, this, supportApiSymbol);
-      }
-    }
-    if (typeof prop !== "string") return super.get(target, prop, receiver);
-    const loopContext = this.#findLoopContext(prop);
-    return (typeof loopContext !== "undefined") ?
-      this.getDirect(target, { patternName:prop, indexes:loopContext.allIndexes}, receiver) :
-      super.get(target, prop, receiver);
-  }
-
-  set(target:Object, prop:PropertyKey, value:any, receiver:IState):boolean {
-    if (typeof prop !== "string") return super.set(target, prop, value, receiver);
-    const loopContext = this.#findLoopContext(prop);
-    return (typeof loopContext !== "undefined") ?
-      this.setDirect(target, { patternName:prop, indexes:loopContext.allIndexes, value}, receiver) :
-      super.set(target, prop, value, receiver);
-  }
-*/
 }

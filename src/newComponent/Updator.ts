@@ -1,15 +1,18 @@
 import { ClearCacheApiSymbol, UpdatedCallbackSymbol } from "../@symbols/state";
 import { config } from "../Config";
 import { INewComponent, INewProcess, INewUpdator } from "./types";
-import { INewBinding, INewPropertyAccess } from "../newBinding/types";
+import { INewBinding, INewBindingSummary, INewPropertyAccess } from "../newBinding/types";
 import { makeNotifyForDependentProps } from "../newState/MakeNotify";
+import { IStates } from "../newState/types";
 
 const getPropAccessKey = (prop: INewPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
 const compareExpandableBindings = (a: INewBinding, b: INewBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
-export class Updator implements INewUpdator {
-  component: INewComponent;
+type IComponentForUpdator = Pick<INewComponent, "states" | "bindingSummary" | "contextRevision">;
+
+class Updator implements INewUpdator {
+  #component: IComponentForUpdator;
   processQueue: INewProcess[] = [];
   updatedStateProperties: INewPropertyAccess[] = [];
   expandedStateProperties: INewPropertyAccess[] = [];
@@ -17,8 +20,20 @@ export class Updator implements INewUpdator {
 
   executing = false;
 
-  constructor(component:INewComponent) {
-    this.component = component;
+  get states(): IStates {
+    return this.#component.states;
+  }
+
+  get bindingSummary(): INewBindingSummary {
+    return this.#component.bindingSummary;
+  }
+
+  get component(): IComponentForUpdator {
+    return this.#component;
+  }
+
+  constructor(component:IComponentForUpdator) {
+    this.#component = component;
   }
 
   addProcess(target:Function, thisArgument:object, argumentList:any[]):void {
@@ -40,7 +55,7 @@ export class Updator implements INewUpdator {
    * @param {{ component:Component, processQueue:Process[], updatedStateProperties:PropertyAccess[] }} param0 
    * @returns {Promise<PropertyAccess[]>}
    */
-  async process():Promise<INewPropertyAccess[]> {
+  async process(): Promise<INewPropertyAccess[]> {
 
     const totalUpdatedStateProperties:INewPropertyAccess[] = [];
     // event callback, and update state
@@ -48,12 +63,12 @@ export class Updator implements INewUpdator {
       const processes = this.processQueue.slice(0);
       this.processQueue.length = 0;
       for(let i = 0; i < processes.length; i++) {
-        await this.component.stateWritable(executeProcess(processes[i]));
+        await this.states.writable(executeProcess(processes[i]));
       }
       if (this.updatedStateProperties.length > 0) {
         // call updatedCallback, and add processQeueue
-        await this.component.stateWritable(async () => {
-          this.component.states.current[UpdatedCallbackSymbol](this.updatedStateProperties);
+        await this.states.writable(async () => {
+          this.states.current[UpdatedCallbackSymbol](this.updatedStateProperties);
           totalUpdatedStateProperties.push(...this.updatedStateProperties);
           this.updatedStateProperties.length = 0;
         });
@@ -61,7 +76,7 @@ export class Updator implements INewUpdator {
     }
     // ToDo: 要検討
     // cache clear
-    // this.component.states.current[ClearCacheApiSymbol]();
+    // this.states.current[ClearCacheApiSymbol]();
     return totalUpdatedStateProperties;
   }
 
@@ -70,7 +85,7 @@ export class Updator implements INewUpdator {
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
       expandedStateProperties.push(...makeNotifyForDependentProps(
-        this.component.states.current, updatedStateProperties[i]
+        this.states.current, updatedStateProperties[i]
       ));
     }
     return expandedStateProperties;
@@ -82,8 +97,7 @@ export class Updator implements INewUpdator {
     // expandedStatePropertyByKeyに、branch、repeatが含まれている場合、それらのbindingを再構築する
     // 再構築する際、branch、repeatの子ノードは更新する
     // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
-    const component = this.component;
-    const bindingSummary = component.bindingSummary;
+    const bindingSummary = this.bindingSummary;
     const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
     bindingSummary.update((bindingSummary) => {
       for(let i = 0; i < expandableBindings.length; i++) {
@@ -97,8 +111,7 @@ export class Updator implements INewUpdator {
   }
 
   updateChildNodes(expandedStateProperties:INewPropertyAccess[]) {
-    const component = this.component;
-    const bindingSummary = component.bindingSummary;
+    const bindingSummary = this.bindingSummary;
     const setOfIndexByParentKey:Map<string,Set<number>> = new Map;
     for(const propertyAccess of expandedStateProperties) {
       if (propertyAccess.propInfo.patternElements.at(-1) !== "*") continue;
@@ -117,8 +130,7 @@ export class Updator implements INewUpdator {
   }
 
   updateNode(expandedStatePropertyByKey:Map<string,INewPropertyAccess>) {
-    const component = this.component;
-    const bindingSummary = component.bindingSummary;
+    const bindingSummary = this.bindingSummary;
     const selectBindings = [];
     for(const key of expandedStatePropertyByKey.keys()) {
       const bindings = bindingSummary.bindingsByKey.get(key);
@@ -182,4 +194,8 @@ export class Updator implements INewUpdator {
       this.updatedBindings.add(binding);
     }
   }
+}
+
+export function createUpdator(component:IComponentForUpdator):INewUpdator {
+  return new Updator(component);
 }

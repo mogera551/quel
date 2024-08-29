@@ -6,8 +6,10 @@ import { INewComponent } from "../newComponent/types";
 import { IGlobalDataProxy } from "./types";
 import { getPropInfo } from "../newDotNotation/PropInfo";
 
+type IComponentForGlobalData = Pick<INewComponent, "states">;
+
 class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy> {
-  #setOfComponentByProp:Map<string,Set<INewComponent>> = new Map;
+  #setOfComponentByProp:Map<string,Set<IComponentForGlobalData>> = new Map;
 
   /**
    * 
@@ -18,7 +20,7 @@ class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy
    */
   get(target:any, prop:PropertyKey, receiver:IGlobalDataProxy) {
     if (prop === BoundByComponentSymbol) {
-      return (component:INewComponent, prop:string) => {
+      return (component:IComponentForGlobalData, prop:string) => {
         let setOfComponent = this.#setOfComponentByProp.get(prop);
         if (typeof setOfComponent === "undefined") {
           this.#setOfComponentByProp.set(prop, new Set([ component ]));
@@ -37,12 +39,11 @@ class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy
     let setOfComponent = this.#setOfComponentByProp.get(pattern);
     if (setOfComponent) {
       for(const component of setOfComponent) {
-        component.currentState[NotifyForDependentPropsApiSymbol]("$globals." + pattern, wildcardIndexes as number[]);
+        component.states.current[NotifyForDependentPropsApiSymbol]("$globals." + pattern, wildcardIndexes as number[]);
       }
     }
     return result;
   }
-
 }
 
 export class GlobalData {

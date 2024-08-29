@@ -8,12 +8,13 @@ import { getPatternInfo } from "../newDotNotation/PropInfo.js";
 
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 
-function getPopoverContextIndexes(component:INewComponent):number[]|undefined {
-  const id = component.id;
-  return component.parentComponent?.popoverContextIndexesById?.get(id);
+type IComponentForProps = Pick<INewComponent, "baseState" | "parentComponent" | "states"> & HTMLElement;
+
+function getPopoverContextIndexes(component:IComponentForProps): number[] | undefined {
+  return component.parentComponent?.popoverContextIndexesById?.get(component.id);
 }
 
-const contextLoopIndexes = (handler:Handler, props:INewBindingPropertyAccess):number[] => {
+const contextLoopIndexes = (handler:Handler, props:INewBindingPropertyAccess): number[] => {
   let indexes;
   const patternInfo = getPatternInfo(props.name);
   if (patternInfo.wildcardPaths.length > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
@@ -24,12 +25,12 @@ const contextLoopIndexes = (handler:Handler, props:INewBindingPropertyAccess):nu
 
 class Handler implements ProxyHandler<INewProps> {
 
-  constructor(component: INewComponent) {
+  constructor(component: IComponentForProps) {
     this.#component = component;
   }
 
-  #component: INewComponent;
-  get component(): INewComponent {
+  #component: IComponentForProps;
+  get component(): IComponentForProps {
     return this.#component;
   }
 
@@ -77,7 +78,7 @@ class Handler implements ProxyHandler<INewProps> {
       } else {
         if (typeof props === "undefined") utils.raise(`PropertyAccess is required`);
         const loopIndexes = contextLoopIndexes(handler, props);
-        handler.component.parentComponent?.stateWritable(async () => {
+        handler.component.parentComponent?.states.writable(async () => {
           handler.component.parentComponent?.states.current[SetDirectSymbol](props.name, loopIndexes, value) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
         });
       }
@@ -108,7 +109,7 @@ class Handler implements ProxyHandler<INewProps> {
     this.#buffer = buffer;
     for(const key in buffer) {
       this.#bindProperty(key);
-      this.#component.currentState[NotifyForDependentPropsApiSymbol](key, []);
+      this.#component.states.current[NotifyForDependentPropsApiSymbol](key, []);
     }
   }
 
@@ -122,7 +123,8 @@ class Handler implements ProxyHandler<INewProps> {
 
   #createBuffer():{[key:string]:any} {
     let buffer:{[key:string]:any}|undefined;
-    buffer = this.#component.parentComponent?.states.current[CreateBufferApiSymbol](this.#component) ?? utils.raise(`CreateBufferApiSymbol is not found`);
+    // ToDo: as INewComponentを修正する
+    buffer = this.#component.parentComponent?.states.current[CreateBufferApiSymbol](this.#component as INewComponent) ?? utils.raise(`CreateBufferApiSymbol is not found`);
     if (typeof buffer !== "undefined") {
       return buffer;
     }
@@ -138,7 +140,8 @@ class Handler implements ProxyHandler<INewProps> {
     if (typeof this.#buffer !== "undefined") {
       const buffer = this.#buffer;
       this.#component.parentComponent?.stateWritable(async () => {
-        const result = this.#component.parentComponent?.states.current[FlushBufferApiSymbol](buffer, this.#component) ?? utils.raise(`FlushBufferApiSymbol is not found`);
+        // ToDo: as INewComponentを修正する
+        const result = this.#component.parentComponent?.states.current[FlushBufferApiSymbol](buffer, this.#component as INewComponent) ?? utils.raise(`FlushBufferApiSymbol is not found`);
         if (result !== true) {
           this.#binds.forEach(({ prop, propAccess }) => {
             const loopIndexes = contextLoopIndexes(this, propAccess);
@@ -176,11 +179,11 @@ class Handler implements ProxyHandler<INewProps> {
     } else if (prop === ClearSymbol) {
       return () => this.#clear();
     }
-    return this.#component.currentState[prop];
+    return this.#component.states.current[prop];
   }
 
   set(target:any, prop:PropertyKey, value:any, receiver:INewProps):boolean {
-    this.#component.stateWritable(async () => {
+    this.#component.states.writable(async () => {
       this.#component.states.current[prop] = value;
     });
     return true;
@@ -209,6 +212,6 @@ class Handler implements ProxyHandler<INewProps> {
   }
 }
 
-export function createProps(component:INewComponent):INewProps {
+export function createProps(component:IComponentForProps):INewProps {
   return new Proxy<Object>({}, new Handler(component)) as INewProps;
 }

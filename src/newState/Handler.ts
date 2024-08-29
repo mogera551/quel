@@ -19,8 +19,10 @@ type ObjectBySymbol = {
   [key:PropertyKey]:any
 }
 
+type IComponentForHandler = Pick<INewComponent, "baseState" | "updator">;
+
 export class Handler extends DotNotationHandler implements IStateHandler {
-  #component:INewComponent;
+  #component:IComponentForHandler;
   #accessorProperties: Set<string>;
   #dependentProps: IDependentProps;
   #objectBySymbol: ObjectBySymbol;
@@ -30,13 +32,13 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   get dependentProps():IDependentProps {
     return this.#dependentProps;
   }
-  get component():INewComponent {
+  get component():IComponentForHandler {
     return this.#component;
   }
   get updator(): INewUpdator {
     return this.component.updator;
   }
-  constructor(component:INewComponent) {
+  constructor(component:IComponentForHandler) {
     super();
     this.#component = component;
     if (typeof component.baseState === "undefined") utils.raise("baseState is undefined");

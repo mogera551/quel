@@ -7,7 +7,7 @@ import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../
 import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
-import { INewComponentBase, INewModule, NewComponentModule, NewCustomElementInfo, NewFilterManagers } from "./types";
+import { Constructor, INewComponentBase, INewModule, NewComponentModule, NewCustomElementInfo, NewFilterManagers } from "./types";
 import { IComponentBase } from "../@types/component";
 
 const moduleByConstructor:Map<Function,INewModule> = new Map;
@@ -18,7 +18,7 @@ const filterManagersByTagName:Map<string,NewFilterManagers> = new Map;
  * generate unique component class
  */
 export const generateComponentClass = (componentModule:NewComponentModule):typeof HTMLElement => {
-  const getBaseClass = function (module:INewModule, baseConstructor:typeof HTMLElement):typeof HTMLElement {
+  const getBaseClass = function (module:INewModule, baseConstructor:typeof HTMLElement):Constructor<HTMLElement & INewComponentBase>  {
     const baseClass = class extends baseConstructor implements INewComponentBase {
       #module?:INewModule;
       get module():INewModule {

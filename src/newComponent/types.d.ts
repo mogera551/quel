@@ -141,8 +141,8 @@ export interface INewDialogComponent {
 
 export interface INewPopoverComponent {
   canceled: boolean;
-  popoverPromises: PromiseWithResolvers<any>|undefined;
-  readonly popoverContextIndexesById: Map<string,number[]>;
+  popoverPromises: PromiseWithResolvers<any> | undefined;
+  readonly popoverContextIndexesById: Map<string, number[]>;
   asyncShowPopover(props: {[key: string]: any}): Promise<any>;
   hidePopover(): void;
   cancelPopover(): void;
@@ -158,11 +158,13 @@ export interface INewProcess {
 }
 
 export interface INewUpdator {
-  component: INewComponent;
-  processQueue: INewProcess[];
-  updatedStateProperties: INewPropertyAccess[];
-  expandedStateProperties: INewPropertyAccess[];
-  updatedBindings: Set<INewBinding>;
+//  component: INewComponent;
+  readonly processQueue: INewProcess[];
+  readonly updatedStateProperties: INewPropertyAccess[];
+  readonly expandedStateProperties: INewPropertyAccess[];
+  readonly updatedBindings: Set<INewBinding>;
+  readonly states: IStates;
+  readonly bindingSummary: INewBindingSummary;
 
   executing: boolean;
 

@@ -6,12 +6,14 @@ import { Handler } from "../newDotNotation/Handler";
 import { INewComponent } from "./types";
 import { getPropInfo } from "../newDotNotation/PropInfo";
 
+type IComponentForGlobalData = Pick<INewComponent, "states">;
+
 class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy> {
-  #component:INewComponent;
+  #component:IComponentForGlobalData;
 
   setOfProps:Set<string> = new Set;
 
-  constructor(component:INewComponent) {
+  constructor(component:IComponentForGlobalData) {
     super();
     this.#component = component;
   }
@@ -48,7 +50,7 @@ class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobal
   get(target:Object, prop:PropertyKey, receiver:IGlobalDataProxy) {
     if (prop ===  GetDirectSymbol) {
       return this.directGet;
-    } else if (prop ===  SetDirectSymbol) {
+    } else if (prop === SetDirectSymbol) {
       return this.directSet;
     }
     if (typeof prop !== "string") return Reflect.get(target, prop, receiver);

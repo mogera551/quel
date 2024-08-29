@@ -1,9 +1,9 @@
 
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
 import { NotifyForDependentPropsApiSymbol } from "../@symbols/state";
-import { INewComponent, INewPopoverComponent, Constructor } from "./types";
+import { INewComponent, INewPopoverComponent, Constructor, INewDialogComponent, INewCustomComponent, INewComponentBase } from "./types";
 
-export function PopoverComponent<TBase extends Constructor>(Base: TBase) {
+export function PopoverComponent<TBase extends Constructor<HTMLElement & INewComponentBase & INewCustomComponent & INewDialogComponent>>(Base: TBase) {
   return class extends Base implements INewPopoverComponent {
     #canceled: boolean = false;
     get canceled(): boolean {
@@ -29,75 +29,67 @@ export function PopoverComponent<TBase extends Constructor>(Base: TBase) {
       return this.#popoverContextIndexesById;
     }
   
-    get #component():INewComponent {
-      // ToDo: unknownを避けたい
-      return this as unknown as INewComponent;
-    }
     constructor(...args:any[]) {
       super();
-      const component = this.#component;
-      component.addEventListener("hidden", () => {
-        if (typeof component.popoverPromises !== "undefined") {
-          if (component.canceled) {
-            component.popoverPromises.reject();
+      this.addEventListener("hidden", () => {
+        if (typeof this.popoverPromises !== "undefined") {
+          if (this.canceled) {
+            this.popoverPromises.reject();
           } else {
-            const buffer = component.props[GetBufferSymbol]();
-            component.props[ClearBufferSymbol]();
-            component.popoverPromises.resolve(buffer);
+            const buffer = this.props[GetBufferSymbol]();
+            this.props[ClearBufferSymbol]();
+            this.popoverPromises.resolve(buffer);
           }
-          component.popoverPromises = undefined;
+          this.popoverPromises = undefined;
         }
-        if (component.useBufferedBind && typeof component.parentComponent !== "undefined") {
-          if (!component.canceled) {
-            component.props[FlushBufferSymbol]();
+        if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+          if (!this.canceled) {
+            this.props[FlushBufferSymbol]();
           }
         }
-        component.canceled = true;
+        this.canceled = true;
         // remove loop context
-        const id = component.id;
+        const id = this.id;
         if (typeof id !== "undefined") {
-          component.popoverContextIndexesById.delete(id);
+          this.popoverContextIndexesById.delete(id);
         }
       });
-      component.addEventListener("shown", () => {
-        component.canceled = true;
-        if (component.useBufferedBind && typeof component.parentComponent !== "undefined") {
-          const buffer = component.props[CreateBufferSymbol]();
-          component.props[SetBufferSymbol](buffer);
+      this.addEventListener("shown", () => {
+        this.canceled = true;
+        if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+          const buffer = this.props[CreateBufferSymbol]();
+          this.props[SetBufferSymbol](buffer);
         }
-        for(const key in component.props) {
-          component.currentState[NotifyForDependentPropsApiSymbol](key, []);
+        for(const key in this.props) {
+          this.currentState[NotifyForDependentPropsApiSymbol](key, []);
         }
       });
-      component.addEventListener("toggle", (e:Event) => {
+      this.addEventListener("toggle", (e:Event) => {
         const toggleEvent = e as ToggleEvent;
         if (toggleEvent.newState === "closed") {
           const hiddenEvent = new CustomEvent("hidden");
-          component.dispatchEvent(hiddenEvent);
+          this.dispatchEvent(hiddenEvent);
         } else if (toggleEvent.newState === "open") {
           const shownEvent = new CustomEvent("shown");
-          component.dispatchEvent(shownEvent);
+          this.dispatchEvent(shownEvent);
         }
       });
     }
 
     async asyncShowPopover(props:{[key:string]:any}):Promise<any> {
-      const component = this.#component;
-      component.popoverPromises = Promise.withResolvers();
-      component.props[SetBufferSymbol](props);
-      HTMLElement.prototype.showPopover.apply(component);
-      return component.popoverPromises.promise;
+      this.popoverPromises = Promise.withResolvers();
+      this.props[SetBufferSymbol](props);
+      HTMLElement.prototype.showPopover.apply(this);
+      return this.popoverPromises.promise;
     }
 
     hidePopover() {
-      const component = this.#component;
-      component.canceled = false;
-      HTMLElement.prototype.hidePopover.apply(component);
+      this.canceled = false;
+      HTMLElement.prototype.hidePopover.apply(this);
     }
 
     cancelPopover() {
-      const component = this.#component;
-      HTMLElement.prototype.hidePopover.apply(component);
+      HTMLElement.prototype.hidePopover.apply(this);
     }
   };
 }
