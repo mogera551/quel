@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { FilterFunc, IFilterInfo } from "../../@types/filter";
+import { FilterFunc, IFilterInfo, IFilterManager } from "../../@types/filter";
 import { IPropertyAccess } from "../../@types/binding";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { INewBinding, INewNodeProperty, INewPropertyAccess } from "../types";
@@ -65,7 +65,7 @@ export class NodeProperty implements INewNodeProperty {
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = Filters.create<"input">(filters.toReversed(), binding.inputFilterManager);
+    this.#filters = Filters.create<"input">(filters, this.binding.inputFilterManager);
   }
 
   initialize() {

@@ -32,6 +32,15 @@ export class ElementEvent extends ElementBase {
     return this.#eventFilters;
   }
 
+  get filterManager() {
+    return this.binding.eventFilterManager;
+    
+  }
+
+  get filterCreator() {
+    return Filters.create<"event">;
+  }
+
   constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);

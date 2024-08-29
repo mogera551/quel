@@ -10,7 +10,8 @@ export type NodeType = "HTMLElement" | "SVGElement" | "Text" | "Template";
 export type ParseBindTextInfo = {
   nodeProperty: string;
   stateProperty: string;
-  filters: IFilterInfo[];
+  inputFilters: IFilterInfo[];
+  outputFilters: IFilterInfo[];
 }
 
 export type PropertyCreators = {
@@ -33,7 +34,7 @@ export interface IBindNodeInfo {
   bindTextInfos: BindTextInfo[];
   isInputable: boolean;
   defaultProperty: string;
-  initializeNode(node:Node,bindings:INewBinding[]):void;
+  initializeNode(node:Node, bindings:INewBinding[]):void;
 }
 
 export interface IBinder {

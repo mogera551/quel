@@ -24,14 +24,14 @@ const parseFilter = (text:string):IFilterInfo => {
   return {name, options:options.map(decode)};
 };
 
-type ReturnParseStateProperty = {stateProperty:string,filters:IFilterInfo[]};
+type ReturnParseStateProperty = {property:string,filters:IFilterInfo[]};
 /**
  * parse expression
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  */
-const parseStateProperty = (text:string):ReturnParseStateProperty => {
-  const [stateProperty, ...filterTexts] = text.split("|").map(trim);
-  return {stateProperty, filters:filterTexts.map(parseFilter)};
+const parseProperty = (text:string):ReturnParseStateProperty => {
+  const [property, ...filterTexts] = text.split("|").map(trim);
+  return {property, filters:filterTexts.map(parseFilter)};
 };
 
 /**
@@ -39,9 +39,10 @@ const parseStateProperty = (text:string):ReturnParseStateProperty => {
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  */
 const parseExpression = (expr:string, defaultName:string):ParseBindTextInfo => {
-  const [nodeProperty, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
-  const { stateProperty, filters } = parseStateProperty(statePropertyText);
-  return { nodeProperty, stateProperty, filters };
+  const [nodePropertyText, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
+  const { property:nodeProperty, filters:inputFilters } = parseProperty(nodePropertyText);
+  const { property:stateProperty, filters:outputFilters } = parseProperty(statePropertyText);
+  return { nodeProperty, stateProperty, inputFilters, outputFilters };
 };
 
 /**
@@ -49,11 +50,11 @@ const parseExpression = (expr:string, defaultName:string):ParseBindTextInfo => {
  */
 const parseBindText = (text:string, defaultName:string):ParseBindTextInfo[] => {
   return text.split(";").map(trim).filter(has).map(s => { 
-    let { nodeProperty, stateProperty, filters } = parseExpression(s, DEFAULT);
+    let { nodeProperty, stateProperty, inputFilters, outputFilters } = parseExpression(s, DEFAULT);
     stateProperty = stateProperty === SAMENAME ? nodeProperty : stateProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
     typeof nodeProperty === "undefined" && utils.raise("parseBindText: default property undefined");
-    return { nodeProperty, stateProperty, filters };
+    return { nodeProperty, stateProperty, inputFilters, outputFilters };
   });
 };
 

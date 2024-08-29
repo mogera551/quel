@@ -1,5 +1,4 @@
 import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from './types';
-import { IBinding } from '../@types/binding';
 import { replaceTextNode } from './replaceTextNode';
 import { removeAttribute } from './removeAttribute';
 import { getIsInputable } from './isInputable';
@@ -9,6 +8,7 @@ import { getPropertyCreators } from './propertyCreators';
 import { createBinding } from './createBinding';
 import { computeNodeRoute } from './nodeRoute';
 import { initializeNode } from './initializeNode';
+import { INewBinding } from '../newBinding/types';
 
 export class BindNodeInfo implements IBindNodeInfo {
   nodeType: NodeType;
@@ -17,7 +17,7 @@ export class BindNodeInfo implements IBindNodeInfo {
   bindTextInfos: BindTextInfo[];
   isInputable: boolean;
   defaultProperty: string;
-  initializeNode: (node:Node,bindings:IBinding[])=>void;
+  initializeNode: (node:Node,bindings:INewBinding[])=>void;
   constructor(
     nodeType: NodeType, 
     nodeRoute: NodeRoute, 
@@ -25,7 +25,7 @@ export class BindNodeInfo implements IBindNodeInfo {
     bindTextInfos: BindTextInfo[], 
     isInputable: boolean, 
     defaultProperty: string, 
-    initializeNode: (bindInfo:IBindNodeInfo)=>(node:Node,bindings:IBinding[])=>void
+    initializeNode: (bindInfo:IBindNodeInfo)=>(node:Node,bindings:INewBinding[])=>void
   ) {
     this.nodeType = nodeType;
     this.nodeRoute = nodeRoute;

@@ -5,6 +5,7 @@ import { IPropInfo } from "../newDotNotation/types";
 import { IUpdator } from "../@types/component";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
+import { FilterFunc } from "../@types/filter";
 
 export interface INewPropertyAccess {
   readonly pattern: string;
@@ -28,6 +29,7 @@ export interface INewNodeProperty {
   readonly loopable: boolean;
   value: any;
   readonly filteredValue: any;
+  
   initialize(): void;
   postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>):void;
   equals(value:any): boolean;
@@ -36,7 +38,7 @@ export interface INewNodeProperty {
 }
 
 export interface INewStateProperty {
-  readonly state: IState;
+  readonly state: IStateProxy;
   readonly name: string;
   readonly binding: INewBinding;
   value: any;
