@@ -66,7 +66,7 @@ export class RepeatKeyed extends Repeat {
           (this.binding.childrenContentBindings[newIndex] = contentBindings) : 
           this.binding.childrenContentBindings.push(contentBindings);
         parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
-        // contentBindings.postCreate();
+        contentBindings.postCreate();
       } else {
         // 元のインデックスがある場合（既存）
         contentBindings = this.#lastChildByNewIndex.get(newIndex) ?? utils.raise("contentBindings is undefined");

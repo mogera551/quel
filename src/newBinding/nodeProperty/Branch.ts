@@ -19,7 +19,7 @@ export class Branch extends TemplateProperty {
       if (value) {
         const constentBindings = createContentBindings(this.template, this.binding);
         this.binding.appendChildContentBindings(constentBindings);
-        //bindingManager.postCreate();
+        constentBindings.postCreate();
       } else {
         const removedContentBindings = this.binding.removeAllChildrenContentBindings();
         removedContentBindings.forEach(constentBindings => constentBindings.dispose());

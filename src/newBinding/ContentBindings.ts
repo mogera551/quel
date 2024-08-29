@@ -100,9 +100,46 @@ class ContentBindings implements IContentBindings {
     this.fragment.append(...this.childNodes);
   }
 
-  applyToNode():void {
-    // ToDo:再帰的に行うかどうかは要検討
-//    this.childrenBinding.forEach(binding => binding.applyToNode());
+  /**
+   * apply value to node
+   */
+  applyToNode() {
+    // apply value to node exluding select tag, and apply select tag value
+    const selectBindings = [];
+    for(let i = 0; i < this.childrenBinding.length; i++) {
+      const binding = this.childrenBinding[i];
+      if (binding.nodeProperty.isSelectValue) {
+        selectBindings.push(binding);
+      } else {
+        binding.applyToNode();
+      }
+    }
+    for(let i = 0; i < selectBindings.length; i++) {
+      selectBindings[i].applyToNode();
+    }
+  }
+
+  /**
+   * apply value to State
+   */
+  applyToState() {
+    for(let i = 0; i < this.childrenBinding.length; i++) {
+      this.childrenBinding[i].applyToState();
+    }
+  }
+
+  /**
+   * register bindings to summary
+   */
+  registerBindingsToSummary() {
+    for(let i = 0; i < this.childrenBinding.length; i++) {
+      this.component.bindingSummary.add(this.childrenBinding[i]);
+    }
+  }
+
+  postCreate() {
+    this.registerBindingsToSummary();
+    this.applyToNode();
   }
 
   dispose(): void {

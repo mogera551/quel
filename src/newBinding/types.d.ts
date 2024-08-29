@@ -105,6 +105,7 @@ export interface IContentBindings extends IContentBindingsBase {
   readonly lastChildNode?: Node;
 
   initialize():void;
+  postCreate():void;
   applyToNode():void;
   removeChildNodes():void;
   dispose():void;
