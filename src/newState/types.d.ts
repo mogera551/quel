@@ -16,7 +16,11 @@ export interface IStateHandler {
 //  addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
 }
 
-export interface IStateProxy extends IDotNotationProxy {
+export interface IBaseState  {
+  readonly $dependentProps: Dependencies;
+}
+
+export interface IStateProxy extends IDotNotationProxy, IBaseState {
   readonly [AccessorPropertiesSymbol]: Set<string>;
   readonly [DependenciesSymbol]: IDependentProps;
   // API
@@ -28,9 +32,7 @@ export interface IStateProxy extends IDotNotationProxy {
   [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:INewComponent): boolean;
   // Special Property
   readonly $globals: IGlobalData;
-  readonly $dependentProps: Dependencies;
   readonly $component: INewComponent; // todo:後でIUserComponentに変更する
-
 }
 
 export type Dependencies = {

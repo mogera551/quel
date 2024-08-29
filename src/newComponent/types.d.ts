@@ -103,18 +103,11 @@ export interface INewCustomComponent {
   readonly initialPromises: PromiseWithResolvers<void>;
   alivePromises: PromiseWithResolvers<void>;
   readonly states: IStates;
-  readonly baseState: Object;
-  readonly currentState: IStateProxy;
-//  readonly writableState: IStateProxy;
-//  readonly readonlyState: IStateProxy;
-//  readonly currentState: IStateProxy;
   rootBindingManager: IContentBindings; // ToDo
   readonly viewRootElement: ShadowRoot | HTMLElement;
   readonly queryRoot: ShadowRoot | HTMLElement;
   pseudoParentNode?: Node;
   pseudoNode?: Node;
-//  readonly isWritable: boolean;
-  stateWritable(callback: ()=> Promise<void>): Promise<void>; // ToDo名前変更
   readonly shadowRootOrDocument: ShadowRoot|Document;
   contextRevision: number;
   useContextRevision(callback: (revision:number)=>void):void;

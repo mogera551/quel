@@ -65,6 +65,6 @@ class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobal
   }
 }
 
-export function createGlobals(component:INewComponent):IGlobalDataProxy {
+export function createGlobals(component: IComponentForGlobalData):IGlobalDataProxy {
   return new Proxy<Object>({}, new ComponentGlobalDataHandler(component)) as IGlobalDataProxy;
 }

@@ -37,22 +37,21 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
   return class extends Base implements INewCustomComponent {
     constructor(...args:any[]) {
       super();
-      const component = this.component;
-      this.#states = createStates(this, Reflect.construct(component.State, [])); // create view model
+      this.#states = createStates(this, Reflect.construct(this.State, [])); // create view model
       this.#bindingSummary = createBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);
       this.#props = createProps(this);
-      this.#globals = createGlobals(component);  
+      this.#globals = createGlobals(this);  
     }
 
     get component():INewComponent {
       return this as unknown as INewComponent;
     }
     #parentComponent?:INewComponent;
-    get parentComponent():INewComponent {
+    get parentComponent(): INewComponent | undefined {
       if (typeof this.#parentComponent === "undefined") {
-        this.#parentComponent = getParentComponent(this.component as Node) as INewComponent;
+        this.#parentComponent = getParentComponent(this);
       }
       return this.#parentComponent;
     }
@@ -74,12 +73,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
     get states(): IStates {
       return this.#states;
     }
-    get baseState(): Object {
-      return this.#states.base;
-    }
-    get currentState(): IStateProxy {
-      return this.#states.current;
-    }
 
     #rootBindingManager?: IContentBindings;
     get rootBindingManager(): IContentBindings {
@@ -90,8 +83,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
     }
 
     get viewRootElement():ShadowRoot|HTMLElement {
-      const component = this.component;
-      return component.useWebComponent ? (component.shadowRoot ?? component) : component.pseudoParentNode as HTMLElement;
+      return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode as HTMLElement;
     }
 
     // alias view root element */
@@ -102,8 +94,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
     // parent node（use, case of useWebComponent is false）
     #pseudoParentNode:Node|undefined;
     get pseudoParentNode():Node {
-      const component = this.component;
-      return !component.useWebComponent ? 
+      return !this.useWebComponent ? 
         (this.#pseudoParentNode ?? utils.raise("pseudoParentNode is undefined")) : 
         utils.raise("mixInComponent: useWebComponent must be false");
     }
@@ -120,16 +111,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
       this.#pseudoNode = node;
     }
 
-    async stateWritable(callback:()=>Promise<void>): Promise<void> {
-      return await this.#states.writable(async () => {
-        return await callback();
-      });
-    }
-
     // find parent shadow root, or document, for adoptedCSS 
     get shadowRootOrDocument(): ShadowRoot|Document {
-      const component = this.component;
-      let node = component.parentNode;
+      let node = this.parentNode;
       while(node) {
         if (node instanceof ShadowRoot) {
           return node;
@@ -172,66 +156,63 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
     }
   
     async build() {
-      const component = this.component;
-      if (isAttachable(component.tagName.toLowerCase()) && component.useShadowRoot && component.useWebComponent) {
-        const shadowRoot = component.attachShadow({mode: 'open'});
-        const names = getNamesFromComponent(component);
+      if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
+        const shadowRoot = this.attachShadow({mode: 'open'});
+        const names = getNamesFromComponent(this);
         const styleSheets = getStyleSheetList(names);
-        if (typeof component.styleSheet !== "undefined" ) {
-          styleSheets.push(component.styleSheet);
+        if (typeof this.styleSheet !== "undefined" ) {
+          styleSheets.push(this.styleSheet);
         }
         shadowRoot.adoptedStyleSheets = styleSheets;
       } else {
-        if (typeof component.styleSheet !== "undefined") {
-          let adoptedStyleSheet = component.styleSheet;
-          if (component.useLocalSelector) {
-            const localStyleSheet = localStyleSheetByTagName.get(component.tagName);
+        if (typeof this.styleSheet !== "undefined") {
+          let adoptedStyleSheet = this.styleSheet;
+          if (this.useLocalSelector) {
+            const localStyleSheet = localStyleSheetByTagName.get(this.tagName);
             if (typeof localStyleSheet !== "undefined") {
               adoptedStyleSheet = localStyleSheet;
             } else {
-              adoptedStyleSheet = localizeStyleSheet(component.styleSheet, component.selectorName);
-              localStyleSheetByTagName.set(component.tagName, adoptedStyleSheet);
+              adoptedStyleSheet = localizeStyleSheet(this.styleSheet, this.selectorName);
+              localStyleSheetByTagName.set(this.tagName, adoptedStyleSheet);
             }
           }
-          const shadowRootOrDocument = component.shadowRootOrDocument;
+          const shadowRootOrDocument = this.shadowRootOrDocument;
           const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
           if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
             shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
           }
         }
       }
-      if (component.useOverscrollBehavior) {
-        if (component.tagName === "DIALOG" || component.hasAttribute("popover")) {
-          component.style.overscrollBehavior = "contain";
+      if (this.useOverscrollBehavior) {
+        if (this.tagName === "DIALOG" || this.hasAttribute("popover")) {
+          this.style.overscrollBehavior = "contain";
         }
       }
 
-      component.stateWritable(async () => {
-        await component.states.current[ConnectedCallbackSymbol]();
+      this.states.writable(async () => {
+        await this.states.current[ConnectedCallbackSymbol]();
       });
 
       // build binding tree and dom 
-      component.bindingSummary.update((summary) => {
-        const uuid = component.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-        // ToDo: unknownをなるべく避ける
-        component.rootBindingManager = createContentBindings(component.template, undefined, this as unknown as INewComponent);
-        //component.rootBindingManager.postCreate();
+      this.bindingSummary.update((summary) => {
+        const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+        this.rootBindingManager = createContentBindings(this.template, undefined, this);
+        this.rootBindingManager.postCreate();
       });
-      if (component.useWebComponent) {
+      if (this.useWebComponent) {
         // case of useWebComponent,
         // then append fragment block to viewRootElement
-        component.viewRootElement.appendChild(component.rootBindingManager.fragment);
+        this.viewRootElement.appendChild(this.rootBindingManager.fragment);
       } else {
         // case of no useWebComponent, 
         // then insert fragment block before pseudo node nextSibling
-        component.viewRootElement.insertBefore(component.rootBindingManager.fragment, component.pseudoNode?.nextSibling ?? null);
+        this.viewRootElement.insertBefore(this.rootBindingManager.fragment, this.pseudoNode?.nextSibling ?? null);
         // child nodes add pseudoComponentByNode
-        component.rootBindingManager.childNodes.forEach(node => pseudoComponentByNode.set(node, component));
+        this.rootBindingManager.childNodes.forEach(node => pseudoComponentByNode.set(node, this as unknown as INewComponent));
       }
     }
 
     async connectedCallback() {
-      const component = this.component;
       try {
         // wait for parent component initialize
         if (this.parentComponent) {
@@ -239,16 +220,16 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
         } else {
         }
   
-        if (!component.useWebComponent) {
+        if (!this.useWebComponent) {
           // case of no useWebComponent
-          const comment = document.createComment(`@@/${component.tagName}`);
-          component.pseudoParentNode = component.parentNode ?? utils.raise("parentNode is undefined");
-          component.pseudoNode = comment;
-          component.pseudoParentNode.replaceChild(comment, component);
+          const comment = document.createComment(`@@/${this.tagName}`);
+          this.pseudoParentNode = this.parentNode ?? utils.raise("parentNode is undefined");
+          this.pseudoNode = comment;
+          this.pseudoParentNode.replaceChild(comment, this);
         }
   
         // promises for alive
-        component.alivePromises = Promise.withResolvers<void>();
+        this.alivePromises = Promise.withResolvers<void>();
   
         await this.build();
         

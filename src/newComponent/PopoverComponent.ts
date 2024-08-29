@@ -61,7 +61,7 @@ export function PopoverComponent<TBase extends Constructor<HTMLElement & INewCom
           this.props[SetBufferSymbol](buffer);
         }
         for(const key in this.props) {
-          this.currentState[NotifyForDependentPropsApiSymbol](key, []);
+          this.states.current[NotifyForDependentPropsApiSymbol](key, []);
         }
       });
       this.addEventListener("toggle", (e:Event) => {

@@ -7,7 +7,7 @@ import { getApi } from "./Api";
 import { getCallback } from "./Callback";
 import { getSpecialProps } from "./SpecialProp";
 import { getStateInfo } from "./StateInfo";
-import { IDependentProps, IStateHandler, IStateProxy } from "./types";
+import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "./types";
 
 /**
  * ステートを扱うためのベースハンドラ
@@ -18,48 +18,49 @@ type ObjectBySymbol = {
   [key:PropertyKey]:any
 }
 
-type IComponentForHandler = Pick<INewComponent, "baseState" | "updator"> & HTMLElement;
+type IComponentForHandler = Pick<INewComponent, "states" | "updator"> & HTMLElement;
 
 export class Handler extends DotNotationHandler implements IStateHandler {
-  #component:IComponentForHandler;
+  #component: IComponentForHandler;
   #accessorProperties: Set<string>;
   #dependentProps: IDependentProps;
   #objectBySymbol: ObjectBySymbol;
-  get accessorProperties():Set<string> {
+  get accessorProperties(): Set<string> {
     return this.#accessorProperties;
   }
-  get dependentProps():IDependentProps {
+  get dependentProps(): IDependentProps {
     return this.#dependentProps;
   }
-  get element():HTMLElement {
+  get element(): HTMLElement {
     return this.#component;
   }
-  get component():IComponentForHandler {
+  get component(): IComponentForHandler {
     return this.#component;
   }
   get updator(): INewUpdator {
     return this.component.updator;
   }
-  constructor(component:IComponentForHandler) {
+  constructor(component: IComponentForHandler, base: Object) {
     super();
     this.#component = component;
-    if (typeof component.baseState === "undefined") utils.raise("baseState is undefined");
-    const { accessorProperties, dependentProps } = getStateInfo(component.baseState as IStateProxy); // todo: あとで型を変更
+    const { accessorProperties, dependentProps } = getStateInfo(base as IBaseState);
     this.#accessorProperties = accessorProperties;
     this.#dependentProps = dependentProps;
     this.#objectBySymbol = {
       [AccessorPropertiesSymbol]: this.#accessorProperties,
       [DependenciesSymbol]: this.#dependentProps
     };
+    this.#getterByType["symbol"] = (target: Object, prop: symbol, receiver: IStateProxy):any => this.#getBySymbol.apply(this, [target, prop, receiver]);
+    this.#getterByType["string"] = (target: Object, prop: string, receiver: IStateProxy):any => this.#getByString.apply(this, [target, prop, receiver]);
   }
 
   _getValue(
-    target:object, 
-    patternPaths:string[],
-    patternElements:string[],
-    wildcardIndexes:(number|undefined)[], 
-    pathIndex:number, wildcardIndex:number,
-    receiver:object, 
+    target: object, 
+    patternPaths: string[],
+    patternElements: string[],
+    wildcardIndexes: (number|undefined)[], 
+    pathIndex: number, wildcardIndex: number,
+    receiver: object, 
   ):any {
     if (patternPaths.length > 1) {
       const pattern = patternPaths[pathIndex];
@@ -68,28 +69,25 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
   }
 
-  #getBySymbol(target:Object, prop:symbol, receiver:IStateProxy):any {
+  #getBySymbol(target: Object, prop: symbol, receiver: IStateProxy):any {
     return this.#objectBySymbol[prop] ?? 
       getCallback(target as Object, receiver, this, prop) ?? 
       getApi(target as Object, receiver, this, prop) ?? 
-      super.get(target, prop, receiver);
+      undefined;
   }
-  #getByString(target:Object, prop:string, receiver:IStateProxy):any {
-    return getSpecialProps(target as Object, receiver, this, prop) ?? super.get(target, prop, receiver);
-  }
-
-  #getterByType:{[key:string]:(...args:any)=>any} = {
-    "symbol": this.#getBySymbol,
-    "string": this.#getByString
+  #getByString(target: Object, prop: string, receiver: IStateProxy):any {
+    return getSpecialProps(target, receiver, this, prop) ?? undefined;
   }
 
-  get(target:Object, prop:PropertyKey, receiver:IStateProxy):any {
+  #getterByType:{[key: string]: (...args: any) => any} = {};
+
+  get(target: Object, prop: PropertyKey, receiver: IStateProxy): any {
     return this.#getterByType[typeof prop]?.(target, prop, receiver) ?? super.get(target, prop, receiver);
   }
 
-  clearCache():void {
+  clearCache(): void {
   }
 
-  async directlyCallback(loopContext:INewLoopContext, callback:() => Promise<void>):Promise<void> {
+  async directlyCallback(loopContext: INewLoopContext, callback:() => Promise<void>): Promise<void> {
   }
 }

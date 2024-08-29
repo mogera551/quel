@@ -4,21 +4,21 @@ import { ReadonlyHandler } from "./ReadonlyHandler";
 import { IStates, IStateProxy } from "./types";
 import { WritableHandler } from "./WritableHandler";
 
-type IComponentForHandler = Pick<INewComponent, "baseState" | "updator"> & HTMLElement;
+type IComponentForHandler = Pick<INewComponent, "states" | "updator"> & HTMLElement;
 
 class States implements IStates {
-  #baseState: Object;
+  #base: Object;
   #readonlyState: IStateProxy;
   #writableState: IStateProxy;
   #_writable = false;
-  constructor(component: IComponentForHandler, baseState: Object) {
-    this.#baseState = baseState;
-    this.#readonlyState = new Proxy(baseState, new ReadonlyHandler(component)) as IStateProxy;
-    this.#writableState = new Proxy(baseState, new WritableHandler(component)) as IStateProxy;
+  constructor(component: IComponentForHandler, base: Object) {
+    this.#base = base;
+    this.#readonlyState = new Proxy(base, new ReadonlyHandler(component, base)) as IStateProxy;
+    this.#writableState = new Proxy(base, new WritableHandler(component, base)) as IStateProxy;
   }
 
   get base():Object {
-    return this.#baseState;
+    return this.#base;
   }
 
   get #writable(): boolean {
@@ -45,6 +45,6 @@ class States implements IStates {
   }
 }
 
-export function createStates(component:IComponentForHandler, baseState: Object):IStates {
-  return new States(component, baseState);
+export function createStates(component:IComponentForHandler, base: Object):IStates {
+  return new States(component, base);
 }

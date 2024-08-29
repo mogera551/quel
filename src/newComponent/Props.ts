@@ -8,7 +8,7 @@ import { getPatternInfo } from "../newDotNotation/PropInfo.js";
 
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 
-type IComponentForProps = Pick<INewComponent, "baseState" | "parentComponent" | "states"> & HTMLElement;
+type IComponentForProps = Pick<INewComponent, "parentComponent" | "states"> & HTMLElement;
 
 function getPopoverContextIndexes(component:IComponentForProps): number[] | undefined {
   return component.parentComponent?.popoverContextIndexesById?.get(component.id);
@@ -85,7 +85,7 @@ class Handler implements ProxyHandler<INewProps> {
       return true;
     };
     // save
-    this.#saveBindProperties[prop] = Object.getOwnPropertyDescriptor(this.#component.baseState, prop) ?? {
+    this.#saveBindProperties[prop] = Object.getOwnPropertyDescriptor(this.#component.states.base, prop) ?? {
       value: undefined,
       writable: true,
       enumerable: true,
@@ -93,7 +93,7 @@ class Handler implements ProxyHandler<INewProps> {
     };
 
     // define component's property
-    Object.defineProperty(this.#component.baseState, prop, {
+    Object.defineProperty(this.#component.states.base, prop, {
       get: getFunc(this, prop, propAccess),
       set: setFunc(this, prop, propAccess),
       configurable: true,
@@ -139,7 +139,7 @@ class Handler implements ProxyHandler<INewProps> {
   #flushBuffer() {
     if (typeof this.#buffer !== "undefined") {
       const buffer = this.#buffer;
-      this.#component.parentComponent?.stateWritable(async () => {
+      this.#component.parentComponent?.states.writable(async () => {
         // ToDo: as INewComponentを修正する
         const result = this.#component.parentComponent?.states.current[FlushBufferApiSymbol](buffer, this.#component as INewComponent) ?? utils.raise(`FlushBufferApiSymbol is not found`);
         if (result !== true) {
@@ -156,7 +156,7 @@ class Handler implements ProxyHandler<INewProps> {
     this.#buffer = undefined;
     this.#binds = [];
     for(const [key, desc] of Object.entries(this.#saveBindProperties)) {
-      Object.defineProperty(this.#component.baseState, key, desc);
+      Object.defineProperty(this.#component.states.base, key, desc);
     }
     this.#saveBindProperties = {};
   }
