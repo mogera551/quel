@@ -4,12 +4,12 @@ import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@symbols/state";
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
-import { IBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../../@types/binding";
+import { IBinding, INewBindingPropertyAccess, INewPropertyAccess, IStateProperty } from "../../@types/binding";
 import { INewLoopContext } from "../../@types/loopContext";
 import { INewComponent } from "../../@types/component";
 
 export class BindingPropertyAccess implements INewBindingPropertyAccess{
-  #stateProperty:INewStateProperty;
+  #stateProperty:IStateProperty;
 
   get name():string {
     return this.#stateProperty.name;
@@ -23,7 +23,7 @@ export class BindingPropertyAccess implements INewBindingPropertyAccess{
     return this.#stateProperty.binding.parentContentBindings.currentLoopContext;
   }
 
-  constructor(stateProperty:INewStateProperty) {
+  constructor(stateProperty:IStateProperty) {
     this.#stateProperty = stateProperty;
   }
 }

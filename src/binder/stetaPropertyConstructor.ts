@@ -1,6 +1,6 @@
 import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
-import { IBinding, INewStateProperty } from "../@types/binding";
+import { IBinding, IStateProperty } from "../@types/binding";
 import { IFilterInfo } from "../@types/filter";
 import { StatePropertyCreator } from "../@types/binder";
 
@@ -8,7 +8,7 @@ const regexp = RegExp(/^\$[0-9]+$/);
 
 const createStateProperty = 
 (StatePropertyConstructor:typeof StateProperty):StatePropertyCreator =>
-(binding:IBinding, name:string, filters:IFilterInfo[]):INewStateProperty => 
+(binding:IBinding, name:string, filters:IFilterInfo[]):IStateProperty => 
 {
   return Reflect.construct(StatePropertyConstructor, [binding, name, filters]);
 }

@@ -1,9 +1,9 @@
-import { IBinding, IContentBindings, INewNodeProperty, INewStateProperty } from "./binding";
+import { IBinding, IContentBindings, INodeProperty, IStateProperty } from "./binding";
 import { IStateProxy } from "../newState/types";
 import { IFilterInfo } from "./filter";
 
-type NodePropertyCreator = (binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) => INewNodeProperty;
-type StatePropertyCreator = (binding:IBinding, name:string, filters:IFilterInfo[]) => INewStateProperty;
+type NodePropertyCreator = (binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) => INodeProperty;
+type StatePropertyCreator = (binding:IBinding, name:string, filters:IFilterInfo[]) => IStateProperty;
 
 type NodeType = "HTMLElement" | "SVGElement" | "Text" | "Template";
 

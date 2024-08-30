@@ -1,9 +1,9 @@
 import { utils } from "../../utils";
 import { FilterFunc, IFilterInfo } from "../../@types/filter";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { IBinding, INewNodeProperty, INewPropertyAccess } from "../../@types/binding";
+import { IBinding, INodeProperty, INewPropertyAccess } from "../../@types/binding";
 
-export class NodeProperty implements INewNodeProperty {
+export class NodeProperty implements INodeProperty {
   #node:Node;
   get node():Node {
     return this.#node;

@@ -18,7 +18,7 @@ interface INewBindingPropertyAccess {
   readonly loopContext?: INewLoopContext;
 }
 
-interface INewNodeProperty {
+interface INodeProperty {
   readonly node: Node;
   readonly name: string;
   readonly binding: IBinding;
@@ -36,7 +36,7 @@ interface INewNodeProperty {
   dispose(): void;
 }
 
-interface INewStateProperty {
+interface IStateProperty {
   readonly state: IStateProxy;
   readonly name: string;
   readonly binding: IBinding;
@@ -62,8 +62,8 @@ type IComponentPartial = Pick<INewComponent, "useKeyed" | "selectorName" | "even
 
 interface IBinding extends INewBindingBase {
   readonly id: string;
-  readonly nodeProperty: INewNodeProperty;
-  readonly stateProperty: INewStateProperty;
+  readonly nodeProperty: INodeProperty;
+  readonly stateProperty: IStateProperty;
   readonly childrenContentBindings: IContentBindings[];
   readonly parentContentBindings: IContentBindings;
   readonly component?: IComponentPartial;

@@ -1,4 +1,4 @@
-import { IBinding, INewStateProperty } from "../../@types/binding";
+import { IBinding, IStateProperty } from "../../@types/binding";
 import { IFilterInfo, FilterFunc } from "../../@types/filter";
 import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
 import { MultiValue } from "../nodeProperty/MultiValue";
@@ -8,7 +8,7 @@ import { getPropInfo } from "../../dotNotation/PropInfo";
 import { IStateProxy } from "../../@types/state";
 import { utils } from "../../utils";
 
-export class StateProperty implements INewStateProperty {
+export class StateProperty implements IStateProperty {
   get state(): IStateProxy {
     return this.#binding.state ?? utils.raise("StateProperty: state is undefined");
   }

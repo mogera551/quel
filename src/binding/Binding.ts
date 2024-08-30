@@ -1,4 +1,4 @@
-import { IBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary, IComponentPartial } from "../@types/binding";
+import { IBinding, INodeProperty, IStateProperty, IContentBindings, INewBindingSummary, IComponentPartial } from "../@types/binding";
 import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
@@ -8,8 +8,8 @@ import { IStateProxy } from "../@types/state";
 let id = 1;
 class Binding implements IBinding {
   #id:number;
-  #nodeProperty: INewNodeProperty;
-  #stateProperty: INewStateProperty;
+  #nodeProperty: INodeProperty;
+  #stateProperty: IStateProperty;
   // ToDo: このプロパティはchildrenとしたほうがいいのか？
   childrenContentBindings: IContentBindings[] = [];
   // ToDo: このプロパティはparentとしたほうがいいのか？
@@ -20,11 +20,11 @@ class Binding implements IBinding {
   }
 
   // todo: このgetterを使うか検討
-  get nodeProperty(): INewNodeProperty {
+  get nodeProperty(): INodeProperty {
     return this.#nodeProperty;
   }
   // todo: このgetterを使うか検討
-  get stateProperty(): INewStateProperty {
+  get stateProperty(): IStateProperty {
     return this.#stateProperty;
   }
   get statePropertyName(): string {
