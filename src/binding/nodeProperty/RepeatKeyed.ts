@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
 import { Repeat } from "./Repeat";
-import { IContentBindings, ILoopable } from "../types";
+import { IContentBindings, ILoopable } from "../../@types/types";
 import { createContentBindings } from "../ContentBindings";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);

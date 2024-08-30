@@ -1,4 +1,4 @@
-import { INewBinding, INewStateProperty } from "../types";
+import { INewBinding, INewStateProperty } from "../../@types/types";
 import { IFilterInfo, FilterFunc } from "../../@types/filter";
 import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
 import { MultiValue } from "../nodeProperty/MultiValue";

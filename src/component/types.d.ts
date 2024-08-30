@@ -4,7 +4,7 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
 import { IGlobalDataProxy } from "../global/global";
 import { IState, Proxies, StateClass } from "./state"; // ToDo
-import { IContentBindings, INewBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "../binding/types";
+import { IContentBindings, INewBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "../@types/types";
 import { IStateProxy, IStates } from "../newState/types";
 
 export type NewComponentModuleConfig = {

@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { ElementBase } from "./ElementBase";
-import { INewBinding } from "../types";
+import { INewBinding } from "../../@types/types";
 
 export class ElementStyle extends ElementBase {
   get htmlElement():HTMLElement {
