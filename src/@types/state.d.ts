@@ -1,6 +1,6 @@
 import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { IDependentProps } from "../newState/types";
-import { INewComponent, INewUpdator } from "../newComponent/types";
+import { INewComponent, IUpdator } from "../newComponent/types";
 import { IDotNotationHandler, IDotNotationProxy } from "./dotNotation";
 import { IGlobalDataProxy } from "./global";
 import { ILoopContext } from "./loopContext";
@@ -9,7 +9,7 @@ interface IStateHandler {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
   readonly element: HTMLElement;
-  readonly updator: INewUpdator;
+  readonly updator: IUpdator;
 //  addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
   clearCache():void;
   directlyCallback(loopContext:ILoopContext, callback:() => Promise<void>):Promise<void>;

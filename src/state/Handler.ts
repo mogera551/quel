@@ -1,5 +1,5 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
-import { INewComponent, INewUpdator } from "../@types/component";
+import { INewComponent, IUpdator } from "../@types/component";
 import { Handler as DotNotationHandler } from "../dotNotation/Handler";
 import { ILoopContext } from "../@types/loopContext";
 import { getApi } from "./Api";
@@ -36,7 +36,7 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   get component(): IComponentForHandler {
     return this.#component;
   }
-  get updator(): INewUpdator {
+  get updator(): IUpdator {
     return this.component.updator;
   }
   constructor(component: IComponentForHandler, base: Object) {

@@ -112,9 +112,9 @@ interface INewCustomComponent {
   contextRevision: number;
   useContextRevision(callback: (revision:number)=>void):void;
   readonly bindingSummary: INewBindingSummary;
-  readonly updator: IUpdator; // ToDO
-  readonly props: IProps; // ToDO
-  readonly globals: IGlobalDataProxy; // ToDO
+  readonly updator: IUpdator;
+  readonly props: IProps;
+  readonly globals: IGlobalDataProxy;
 
   build():Promise<void>;
   connectedCallback():Promise<void>;
@@ -150,7 +150,7 @@ interface INewProcess {
   readonly argumentList:any[];
 }
 
-interface INewUpdator {
+interface IUpdator {
 //  component: INewComponent;
   readonly processQueue: INewProcess[];
   readonly updatedStateProperties: INewPropertyAccess[];
@@ -171,10 +171,10 @@ interface INewUpdator {
   updateNode(expandedStatePropertyByKey: Map<string, INewPropertyAccess>): void;
   execCallback(callback: ()=>any): Promise<void>;
   exec(): Promise<void>;
-  applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: INewUpdator)=>any): void;
+  applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;
 }
 
-interface INewProps {
+interface IProps {
   [BindPropertySymbol](prop: string, propAccess: IBindingPropertyAccess): void;
   [SetBufferSymbol](buffer: {[key: string]: any}): void;
   [GetBufferSymbol](): {[key: string]: any};
@@ -182,10 +182,10 @@ interface INewProps {
   [CreateBufferSymbol]():{[key: string]: any};
   [FlushBufferSymbol](): void;
   [ClearSymbol](): void;
-  get(target: any, prop: PropertyKey, receiver: INewProps): any;
-  set(target: any, prop: PropertyKey, value: any, receiver: INewProps): boolean;
-  ownKeys(target: INewProps): (symbol|string)[];
-  getOwnPropertyDescriptor(target: INewProps, prop: string|symbol): PropertyDescriptor;
+  get(target: any, prop: PropertyKey, receiver: IProps): any;
+  set(target: any, prop: PropertyKey, value: any, receiver: IProps): boolean;
+  ownKeys(target: IProps): (symbol|string)[];
+  getOwnPropertyDescriptor(target: IProps, prop: string|symbol): PropertyDescriptor;
 }
 
 // ToDo: addProcessをどうするか検討

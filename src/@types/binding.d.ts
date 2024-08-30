@@ -2,7 +2,7 @@
 import "../nop";
 import { ILoopContext } from "./loopContext";
 import { IPropInfo } from "./dotNotation";
-import { INewComponent, INewUpdator } from "../newComponent/types";
+import { INewComponent, IUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
 import { FilterFunc } from "./filter";
 
@@ -69,7 +69,7 @@ interface IBinding extends IBindingBase {
   readonly component?: IComponentPartial;
   readonly expandable: boolean;
   readonly state?: IStateProxy
-  readonly updator?: INewUpdator;
+  readonly updator?: IUpdator;
   readonly bindingSummary?: INewBindingSummary;
   readonly selectorName?: string;
   readonly eventFilterManager?: IFilterManager<"event">;

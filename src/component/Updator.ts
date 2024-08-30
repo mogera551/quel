@@ -1,6 +1,6 @@
 import { UpdatedCallbackSymbol } from "../@symbols/state";
 import { config } from "../Config";
-import { INewComponent, INewProcess, INewUpdator } from "../@types/component";
+import { INewComponent, INewProcess, IUpdator } from "../@types/component";
 import { IBinding, INewBindingSummary, INewPropertyAccess } from "../@types/binding";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
 import { IStates } from "../@types/state";
@@ -11,7 +11,7 @@ const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateP
 
 type IComponentForUpdator = Pick<INewComponent, "states" | "bindingSummary" | "contextRevision">;
 
-class Updator implements INewUpdator {
+class Updator implements IUpdator {
   #component: IComponentForUpdator;
   processQueue: INewProcess[] = [];
   updatedStateProperties: INewPropertyAccess[] = [];
@@ -186,7 +186,7 @@ class Updator implements INewUpdator {
     });
   }
 
-  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:INewUpdator)=>void):void {
+  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>void):void {
     if (this.updatedBindings.has(binding)) return;
     try {
       callback(this);
@@ -196,6 +196,6 @@ class Updator implements INewUpdator {
   }
 }
 
-export function createUpdator(component:IComponentForUpdator):INewUpdator {
+export function createUpdator(component:IComponentForUpdator):IUpdator {
   return new Updator(component);
 }

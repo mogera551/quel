@@ -6,7 +6,7 @@ import { localizeStyleSheet } from "./StyleSheet";
 import { createUpdator } from "./Updator";
 import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
-import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor, INewComponentBase } from "../@types/component";
+import { INewComponent, INewCustomComponent, IProps, IUpdator, Constructor, INewComponentBase } from "../@types/component";
 import { IStates } from "../@types/state";
 import { IContentBindings, INewBindingSummary } from "../@types/binding";
 import { IGlobalDataProxy } from "../@types/global";
@@ -140,13 +140,13 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
       return this.#bindingSummary;
     }
 
-    #updator: INewUpdator;
-    get updator(): INewUpdator {
+    #updator: IUpdator;
+    get updator(): IUpdator {
       return this.#updator;
     }
 
-    #props: INewProps;
-    get props(): INewProps {
+    #props: IProps;
+    get props(): IProps {
       return this.#props;
     }
 

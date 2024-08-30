@@ -2,7 +2,7 @@ import { IBinding, INodeProperty, IStateProperty, IContentBindings, INewBindingS
 import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
-import { INewUpdator } from "../@types/component";
+import { IUpdator } from "../@types/component";
 import { IStateProxy } from "../@types/state";
 
 let id = 1;
@@ -42,7 +42,7 @@ class Binding implements IBinding {
   get component(): IComponentPartial | undefined {
     return this.#parentContentBindings.component;
   }
-  get updator(): INewUpdator | undefined {
+  get updator(): IUpdator | undefined {
     return this.component?.updator;
   }
   get bindingSummary(): INewBindingSummary | undefined {

@@ -2,7 +2,7 @@ import { utils } from "../utils.js";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component.js";
-import { INewComponent, INewProps } from "../@types/component.js";
+import { INewComponent, IProps } from "../@types/component.js";
 import { IBindingPropertyAccess } from "../@types/binding.js";
 import { getPatternInfo } from "../dotNotation/PropInfo.js";
 
@@ -23,7 +23,7 @@ const contextLoopIndexes = (handler:Handler, props:IBindingPropertyAccess): numb
   return indexes ?? props.indexes;
 }
 
-class Handler implements ProxyHandler<INewProps> {
+class Handler implements ProxyHandler<IProps> {
 
   constructor(component: IComponentForProps) {
     this.#component = component;
@@ -163,7 +163,7 @@ class Handler implements ProxyHandler<INewProps> {
   /**
    * Proxy.get
    */
-  get(target:any, prop:PropertyKey, receiver:INewProps):any {
+  get(target:any, prop:PropertyKey, receiver:IProps):any {
     if (prop === BindPropertySymbol) {
       return (prop:string, propAccess:IBindingPropertyAccess) => this.#bindProperty(prop, propAccess);
     } else if (prop === SetBufferSymbol) {
@@ -182,7 +182,7 @@ class Handler implements ProxyHandler<INewProps> {
     return this.#component.states.current[prop];
   }
 
-  set(target:any, prop:PropertyKey, value:any, receiver:INewProps):boolean {
+  set(target:any, prop:PropertyKey, value:any, receiver:IProps):boolean {
     this.#component.states.writable(async () => {
       this.#component.states.current[prop] = value;
     });
@@ -192,7 +192,7 @@ class Handler implements ProxyHandler<INewProps> {
   /**
    * Proxy.ownKeys
    */
-  ownKeys(target:INewProps):(symbol|string)[] {
+  ownKeys(target:IProps):(symbol|string)[] {
     if (typeof this.buffer !== "undefined") {
       return Reflect.ownKeys(this.buffer);
     } else {
@@ -203,7 +203,7 @@ class Handler implements ProxyHandler<INewProps> {
   /**
    * Proxy.getOwnPropertyDescriptor
    */
-  getOwnPropertyDescriptor(target:INewProps, prop:string|symbol):PropertyDescriptor { // プロパティ毎に呼ばれます
+  getOwnPropertyDescriptor(target:IProps, prop:string|symbol):PropertyDescriptor { // プロパティ毎に呼ばれます
     return {
       enumerable: true,
       configurable: true
@@ -212,6 +212,6 @@ class Handler implements ProxyHandler<INewProps> {
   }
 }
 
-export function createProps(component:IComponentForProps):INewProps {
-  return new Proxy<Object>({}, new Handler(component)) as INewProps;
+export function createProps(component:IComponentForProps):IProps {
+  return new Proxy<Object>({}, new Handler(component)) as IProps;
 }
