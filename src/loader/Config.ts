@@ -1,4 +1,4 @@
-import { CaseType } from "../@types/loader";
+import { CaseType } from "./types";
 
 const DEFAULT_NAME_TYPE:CaseType = "lowerCamel";
 const DEAFULT_PATH:string = "./";

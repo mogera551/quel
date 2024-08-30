@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption, IFilterManager, FilterFuncType, FilterType, FilterFuncWithOptionType } from "../@types/filter";
+import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption, IFilterManager, FilterFuncType, FilterType, FilterFuncWithOptionType } from "./types";
 
 /**
  * ambigous name:

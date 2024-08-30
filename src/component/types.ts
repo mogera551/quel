@@ -1,10 +1,10 @@
-import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
-import { IGlobalDataProxy } from "./global";
-import { Proxies, StateClass, IStateProxy, IStates } from "./state";
-import { IContentBindings, IBinding, IBindingPropertyAccess, IBindingSummary, INewPropertyAccess } from "./binding";
+import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
+import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
+import { IGlobalDataProxy } from "../global/types";
+import { IStates } from "../state/types";
+import { IContentBindings, IBinding, IBindingPropertyAccess, IBindingSummary, INewPropertyAccess } from "../binding/types";
 
-type ComponentModuleConfig = {
+export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
   readonly debug?: boolean; // debug mode for the component, default is false
   readonly useShadowRoot?: boolean; // attach shadow root to the component, default is false
@@ -15,17 +15,17 @@ type ComponentModuleConfig = {
   readonly useOverscrollBehavior?: boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
 }
 
-type ComponentModuleOptions = {
+export type ComponentModuleOptions = {
   readonly extends?: string; // for customized built-in element, like extends="button"
 }
 
-type ComponentModuleFilters = {
+export type ComponentModuleFilters = {
   readonly input?: {[key: string]: FilterFuncWithOption};
   readonly output?: {[key: string]: FilterFuncWithOption};
   readonly event?: {[key: string]: EventFilterFuncWithOption};
 }
 
-type ComponentModule = {
+export type ComponentModule = {
   readonly html?: string;
   readonly css?: string;
   readonly State?:typeof Object;
@@ -36,7 +36,7 @@ type ComponentModule = {
   readonly moduleConfig?: ComponentModuleConfig;
 }
 
-interface IModule {
+export interface IModule {
   readonly uuid: string;
   readonly html: string;
   readonly css?: string;
@@ -51,26 +51,26 @@ interface IModule {
   readonly componentModulesForRegister?: {[key: string]: IModule};
 }
 
-type CustomElementInfo = {
+export type CustomElementInfo = {
   readonly lowerTagName: string; // lower case tag name
   readonly selectorName: string; // local selector name
   readonly isAutonomousCustomElement: boolean; // is autonomous custom element
   readonly isCostomizedBuiltInElement: boolean; // is customized built-in element
 }
 
-type FilterManagers = {
+export type FilterManagers = {
   readonly inputFilterManager: IFilterManager<"input">, 
   readonly outputFilterManager: IFilterManager<"output">, 
   readonly eventFilterManager: IFilterManager<"event">
 };
 
-interface IComponentBase {
+export interface IComponentBase {
   readonly module: IModule;
   readonly isQuelComponent: boolean;
   readonly customElementInfo: CustomElementInfo;
   readonly template: HTMLTemplateElement;
   readonly styleSheet?: CSSStyleSheet;
-  readonly State: StateClass;
+  readonly State: typeof Object;
   readonly inputFilters: {[key: string]: FilterFuncWithOption};
   readonly outputFilters: {[key: string]: FilterFuncWithOption};
   readonly eventFilters: {[key: string]: EventFilterFuncWithOption};
@@ -94,7 +94,7 @@ interface IComponentBase {
   readonly thisClass: Function;
 }
 
-interface ICustomComponent {
+export interface ICustomComponent {
   readonly component: IComponent & HTMLElement;
   readonly parentComponent?: IComponent & HTMLElement;
   readonly initialPromises: PromiseWithResolvers<void>;
@@ -118,7 +118,7 @@ interface ICustomComponent {
   disconnectedCallback():Promise<void>;
 } 
 
-interface IDialogComponent {
+export interface IDialogComponent {
   dialogPromises: PromiseWithResolvers<any>|undefined;
   returnValue: string;
   readonly useBufferedBind: boolean;
@@ -129,7 +129,7 @@ interface IDialogComponent {
   close(result:any): void;
 }
 
-interface IPopoverComponent {
+export interface IPopoverComponent {
   canceled: boolean;
   popoverPromises: PromiseWithResolvers<any> | undefined;
   readonly popoverContextIndexesById: Map<string, number[]>;
@@ -137,17 +137,18 @@ interface IPopoverComponent {
   hidePopover(): void;
   cancelPopover(): void;
 }
-type Constructor<T = {}> = new (...args: any[]) => T;
 
-type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
+export type Constructor<T = {}> = new (...args: any[]) => T;
 
-interface INewProcess {
+export type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
+
+export interface INewProcess {
   readonly target:Function;
   readonly thisArgument:object;
   readonly argumentList:any[];
 }
 
-interface IUpdator {
+export interface IUpdator {
 //  component: IComponent;
   readonly processQueue: INewProcess[];
   readonly updatedStateProperties: INewPropertyAccess[];
@@ -171,7 +172,7 @@ interface IUpdator {
   applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;
 }
 
-interface IProps {
+export interface IProps {
   [BindPropertySymbol](prop: string, propAccess: IBindingPropertyAccess): void;
   [SetBufferSymbol](buffer: {[key: string]: any}): void;
   [GetBufferSymbol](): {[key: string]: any};

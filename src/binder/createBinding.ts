@@ -1,11 +1,11 @@
-import { ParseBindTextInfo, PropertyCreators } from "../@types/binder";
-import { createBinding as create } from "../binding/Binding";
-import { IContentBindings } from "../@types/binding";
+import { ParseBindTextInfo, PropertyCreators } from "./types";
+import { createBinding } from "../binding/Binding";
+import { IContentBindings } from "../binding/types";
 
-export const createBinding = 
+export const createBindingWithBindInfo = 
 (bindTextInfo: ParseBindTextInfo, propertyCreators: PropertyCreators) => 
 (contentBindings: IContentBindings, node: Node) => 
-  create(
+  createBinding(
     contentBindings,
     node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyCreator, 
     bindTextInfo.inputFilters,

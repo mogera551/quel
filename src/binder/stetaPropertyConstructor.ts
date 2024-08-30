@@ -1,8 +1,8 @@
 import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
-import { IBinding, IStateProperty } from "../@types/binding";
-import { IFilterInfo } from "../@types/filter";
-import { StatePropertyCreator } from "../@types/binder";
+import { IBinding, IStateProperty } from "../binding/types";
+import { IFilterInfo } from "../filter/types";
+import { StatePropertyCreator } from "./types";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 

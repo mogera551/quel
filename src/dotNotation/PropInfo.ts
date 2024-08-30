@@ -1,6 +1,6 @@
 
 import { all } from '../../node_modules/axios/index';
-import { IPatternInfo, IPropInfo } from '../@types/dotNotation';
+import { IPatternInfo, IPropInfo } from './types';
 
 const _cachePropInfo: { [key: string]: IPropInfo } = {};
 const _cachePatternInfo: { [key: string]: IPatternInfo } = {};

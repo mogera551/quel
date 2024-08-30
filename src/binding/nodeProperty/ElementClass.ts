@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../@types/filter";
+import { IFilterInfo } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
-import { IBinding } from "../../@types/binding";
+import { IBinding } from "../types";
 
 const PREFIX = "class.";
 

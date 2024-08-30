@@ -1,12 +1,12 @@
 import { utils } from "../utils";
-import { FilterFuncWithOption, EventFilterFuncWithOption } from "../@types/filter";
+import { FilterFuncWithOption, EventFilterFuncWithOption } from "../filter/types";
 import { Module } from "./Module";
 import { config } from "../Config";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
-import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers } from "../@types/component";
+import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers } from "./types";
 
 const moduleByConstructor:Map<Function,IModule> = new Map;
 const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;

@@ -1,9 +1,9 @@
-import { UpdatedCallbackSymbol } from "../@symbols/state";
+import { UpdatedCallbackSymbol } from "../state/symbols";
 import { config } from "../Config";
-import { IComponent, INewProcess, IUpdator } from "../@types/component";
-import { IBinding, IBindingSummary, INewPropertyAccess } from "../@types/binding";
+import { IComponent, INewProcess, IUpdator } from "./types";
+import { IBinding, IBindingSummary, INewPropertyAccess } from "../binding/types";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
-import { IStates } from "../@types/state";
+import { IStates } from "../state/types";
 
 const getPropAccessKey = (prop: INewPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);

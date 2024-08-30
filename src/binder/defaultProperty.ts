@@ -1,4 +1,4 @@
-import { NodeType } from "../@types/binder";
+import { NodeType } from "./types";
 
 const DEFAULT_PROPERTY = "textContent";
 

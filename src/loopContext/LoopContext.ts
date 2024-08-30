@@ -1,8 +1,8 @@
-import { IContentBindingsBase, ILoopable, IBinding } from "../@types/binding";
+import { IContentBindingsBase, ILoopable, IBinding } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/PropInfo";
-import { IPatternInfo } from "../@types/dotNotation";
+import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
-import { ILoopContext } from "../@types/loopContext";
+import { ILoopContext } from "./types";
 
 export class LoopContext implements ILoopContext{
   #revision?: number;

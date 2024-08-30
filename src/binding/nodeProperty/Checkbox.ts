@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../@types/filter";
-import { IMultiValue, IBinding } from "../../@types/binding";
+import { IFilterInfo } from "../../filter/types";
+import { IMultiValue, IBinding } from "../types";
 import { ElementBase } from "./ElementBase";
 import { MultiValue } from "./MultiValue";
 import { FilterManager } from "../../filter/Manager";

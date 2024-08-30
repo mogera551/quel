@@ -1,9 +1,9 @@
 import { utils } from "../../utils";
-import { EventFilterFunc, IFilterInfo } from "../../@types/filter.js";
-import { DirectryCallApiSymbol } from "../../@symbols/state.js";
+import { EventFilterFunc, IFilterInfo } from "../../filter/types.js";
+import { DirectryCallApiSymbol } from "../../state/symbols.js";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { ElementBase } from "./ElementBase";
-import { IBinding } from "../../@types/binding";
+import { IBinding } from "../types";
 
 const PREFIX = "on";
 
@@ -27,7 +27,7 @@ export class ElementEvent extends ElementBase {
     return this.#handler;
   }
 
-  #eventFilters:EventFilterFunc[] = [];
+  #eventFilters:EventFilterFunc[];
   get eventFilters() {
     return this.#eventFilters;
   }

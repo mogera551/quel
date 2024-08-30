@@ -1,8 +1,8 @@
 import {
   ConnectedCallbackSymbol, DisconnectedCallbackSymbol, UpdatedCallbackSymbol,
   ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol,
-} from "../@symbols/state";
-import { IStateProxy, IStateHandler } from "../@types/state";
+} from "./symbols";
+import { IStateProxy, IStateHandler } from "./types";
 import { dispatchCustomEvent } from "./Event";
 
 const CONNECTED_CALLBACK = "$connectedCallback";

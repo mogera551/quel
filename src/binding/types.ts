@@ -1,24 +1,23 @@
 
-import "../nop";
-import { ILoopContext } from "./loopContext";
-import { IPropInfo } from "./dotNotation";
-import { IComponent, IUpdator } from "./component";
-import { IStateProxy } from "./state";
-import { FilterFunc } from "./filter";
+import { ILoopContext } from "../loopContext/types";
+import { IPropInfo } from "../dotNotation/types";
+import { IComponent, IUpdator } from "../component/types";
+import { IStateProxy } from "../state/types";
+import { IFilterManager } from "../filter/types";
 
-interface INewPropertyAccess {
+export interface INewPropertyAccess {
   readonly pattern: string;
   readonly indexes: number[];
   readonly propInfo: IPropInfo;
 }
 
-interface IBindingPropertyAccess {
+export interface IBindingPropertyAccess {
   readonly name: string;
   readonly indexes: number[];
   readonly loopContext?: ILoopContext;
 }
 
-interface INodeProperty {
+export interface INodeProperty {
   readonly node: Node;
   readonly name: string;
   readonly binding: IBinding;
@@ -32,11 +31,11 @@ interface INodeProperty {
   initialize(): void;
   postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>):void;
   equals(value:any): boolean;
-  applyToChildNodes(setOfIndex:Set<number>);
+  applyToChildNodes(setOfIndex:Set<number>): void;
   dispose(): void;
 }
 
-interface IStateProperty {
+export interface IStateProperty {
   readonly state: IStateProxy;
   readonly name: string;
   readonly binding: IBinding;
@@ -52,16 +51,16 @@ interface IStateProperty {
   dispose(): void;
 }
 
-interface IBindingBase {
+export interface IBindingBase {
   readonly childrenContentBindings: IContentBindingsBase[];
   readonly parentContentBindings: IContentBindingsBase;
   readonly loopable: boolean;
   readonly statePropertyName: string;
 }
 
-type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
+export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
 
-interface IBinding extends IBindingBase {
+export interface IBinding extends IBindingBase {
   readonly id: string;
   readonly nodeProperty: INodeProperty;
   readonly stateProperty: IStateProperty;
@@ -73,29 +72,29 @@ interface IBinding extends IBindingBase {
   readonly updator?: IUpdator;
   readonly bindingSummary?: IBindingSummary;
   readonly selectorName?: string;
-  readonly eventFilterManager?: IFilterManager<"event">;
-  readonly inputFilterManager?: IFilterManager<"input">;
-  readonly outputFilterManager?: IFilterManager<"output">;
-  applyToNode();
-  applyToChildNodes(setOfIndex:Set<number>);
-  applyToState();
+  readonly eventFilterManager: IFilterManager<"event">;
+  readonly inputFilterManager: IFilterManager<"input">;
+  readonly outputFilterManager: IFilterManager<"output">;
+  applyToNode(): void;
+  applyToChildNodes(setOfIndex:Set<number>) :void;
+  applyToState(): void;
   defaultEventHandler: (event:Event)=>void;
-  execDefaultEventHandler(event:Event);
-  initialize();
+  execDefaultEventHandler(event:Event): void;
+  initialize(): void;
   appendChildContentBindings(contentBindings: IContentBindings): void;
   replaceChildContentBindings(contentBindings: IContentBindings, index: number): void;
   removeAllChildrenContentBindings(): IContentBindings[];
   dispose(): void;
 }
 
-interface IContentBindingsBase {
+export interface IContentBindingsBase {
   readonly childrenBinding: IBindingBase[];
   parentBinding?: IBindingBase;
   readonly loopContext?: ILoopContext;
   readonly currentLoopContext?: ILoopContext;
 }
 
-interface IContentBindings extends IContentBindingsBase {
+export interface IContentBindings extends IContentBindingsBase {
   readonly template: HTMLTemplateElement;
   readonly childrenBinding: IBinding[];
   parentBinding?: IBinding;
@@ -113,12 +112,12 @@ interface IContentBindings extends IContentBindingsBase {
   dispose():void;
 }
 
-interface IMultiValue {
+export interface IMultiValue {
   value:any;
   enabled:boolean;
 }
 
-interface IBindingSummary {
+export interface IBindingSummary {
   updated: boolean;
   readonly updateRevision: number;
   readonly bindingsByKey: Map<string,IBinding[]>;
@@ -132,6 +131,6 @@ interface IBindingSummary {
   update(callback:(summary: IBindingSummary)=>any): void;
 }
 
-interface ILoopable {
+export interface ILoopable {
   readonly revision: number;
 }

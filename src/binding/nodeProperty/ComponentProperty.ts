@@ -1,12 +1,12 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../@types/filter.js";
-import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.js";
-import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@symbols/state";
+import { IFilterInfo } from "../../filter/types.js";
+import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols.js";
+import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
-import { IBinding, IBindingPropertyAccess, INewPropertyAccess, IStateProperty } from "../../@types/binding";
-import { ILoopContext } from "../../@types/loopContext";
-import { IComponent } from "../../@types/component";
+import { IBinding, IBindingPropertyAccess, INewPropertyAccess, IStateProperty } from "../types";
+import { ILoopContext } from "../../loopContext/types";
+import { IComponent } from "../../component/types";
 
 export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;

@@ -1,7 +1,7 @@
 
-import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { NotifyForDependentPropsApiSymbol } from "../@symbols/state";
-import { IComponent, IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "../@types/component";
+import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
+import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
+import { IComponent, IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
 
 export function PopoverComponent<TBase extends Constructor<HTMLElement & IComponentBase & ICustomComponent & IDialogComponent>>(Base: TBase) {
   return class extends Base implements IPopoverComponent {

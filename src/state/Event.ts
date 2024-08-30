@@ -1,6 +1,6 @@
 
 import { utils } from "../utils";
-import { ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol } from "../@symbols/state";
+import { ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol } from "./symbols";
 
 const CONNECTED_EVENT = "connected";
 const DISCONNECTED_EVENT = "disconnected";

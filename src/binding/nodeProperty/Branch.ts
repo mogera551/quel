@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
-import { IBinding } from "../../@types/binding";
-import { IFilterInfo } from "../../@types/filter";
+import { IBinding } from "../types";
+import { IFilterInfo } from "../../filter/types";
 import { TemplateProperty } from "./TemplateProperty";
 import { createContentBindings } from "../ContentBindings";
 

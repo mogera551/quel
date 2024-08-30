@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../@types/filter";
+import { IFilterInfo } from "../../filter/types";
 import { StateProperty } from "./StateProperty";
-import { IBinding } from "../../@types/binding";
+import { IBinding } from "../types";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 

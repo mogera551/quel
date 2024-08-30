@@ -4,7 +4,7 @@ export { loader } from "./loader/QuelLoader";
 export { bootFromImportMeta } from "./Boot";
 export { generateComponentClass, registerComponentModules } from "./component/Component";
 export { loadSingleFileComponent, registerSingleFileComponents } from "./component/SingleFile";
-import { EventFilterFuncWithOption, FilterFuncWithOption } from "./@types/filter";
+import { EventFilterFuncWithOption, FilterFuncWithOption } from "./filter/types";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "./filter/Manager";
 import { GlobalData } from "./global/Data";
 

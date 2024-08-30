@@ -1,5 +1,5 @@
-import { INewPropertyAccess } from "../@types/binding";
-import { IPropInfo } from "../@types/dotNotation";
+import { INewPropertyAccess } from "./types";
+import { IPropInfo } from "../dotNotation/types";
 import { getPropInfo } from "../dotNotation/PropInfo";
 
 export class PropertyAccess implements INewPropertyAccess {

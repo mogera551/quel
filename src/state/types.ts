@@ -1,10 +1,10 @@
-import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
-import { IComponent, IUpdator } from "./component";
-import { IDotNotationHandler, IDotNotationProxy } from "./dotNotation";
-import { IGlobalDataProxy } from "./global";
-import { ILoopContext } from "./loopContext";
+import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "./symbols";
+import { IComponent, IUpdator } from "../component/types";
+import { IDotNotationProxy } from "../dotNotation/types";
+import { IGlobalDataProxy } from "../global/types";
+import { ILoopContext } from "../loopContext/types";
 
-interface IStateHandler {
+export interface IStateHandler {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
   readonly element: HTMLElement;
@@ -15,11 +15,11 @@ interface IStateHandler {
 //  addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
 }
 
-interface IBaseState  {
+export interface IBaseState  {
   readonly $dependentProps: Dependencies;
 }
 
-interface IStateProxy extends IDotNotationProxy, IBaseState {
+export interface IStateProxy extends IDotNotationProxy, IBaseState {
   readonly [AccessorPropertiesSymbol]: Set<string>;
   readonly [DependenciesSymbol]: IDependentProps;
   // API
@@ -34,21 +34,21 @@ interface IStateProxy extends IDotNotationProxy, IBaseState {
   readonly $component: IComponent; // todo:後でIUserComponentに変更する
 }
 
-type Dependencies = {
+export type Dependencies = {
   readonly [key:string]: string[]
 }
 
-interface IDependentProps {
+export interface IDependentProps {
   readonly propsByRefProp: {[ key: string ]: Set<string>};
   setDefaultProp(prop:string):void;
 }
 
-type StateInfo = {
+export type StateInfo = {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
 }
 
-interface IStates {
+export interface IStates {
   readonly base: Object;
   readonly current: IStateProxy;
   writable(callback: () => Promise<void>): Promise<void>;

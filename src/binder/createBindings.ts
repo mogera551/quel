@@ -1,6 +1,6 @@
-import { IBindNodeInfo } from "../@types/binder";
+import { IBindNodeInfo } from "./types";
 import { findNodeByNodeRoute } from "./nodeRoute";
-import { IContentBindings, IBinding } from "../@types/binding";
+import { IContentBindings, IBinding } from "../binding/types";
 
 export function createBindings(content: DocumentFragment, contentBindings: IContentBindings, nodeInfos: IBindNodeInfo[]): IBinding[] {
   const bindings: IBinding[] = [];

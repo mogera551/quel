@@ -1,14 +1,14 @@
-import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from '../@types/binder';
+import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from './types';
 import { replaceTextNode } from './replaceTextNode';
 import { removeAttribute } from './removeAttribute';
 import { getIsInputable } from './isInputable';
 import { parse } from './parseBindText';
 import { getDefaultProperty } from './defaultProperty';
 import { getPropertyCreators } from './propertyCreators';
-import { createBinding } from './createBinding';
+import { createBindingWithBindInfo } from './createBinding';
 import { computeNodeRoute } from './nodeRoute';
 import { initializeNode } from './initializeNode';
-import { IBinding } from '../@types/binding';
+import { IBinding } from '../binding/types';
 
 export class BindNodeInfo implements IBindNodeInfo {
   nodeType: NodeType;
@@ -47,7 +47,7 @@ export class BindNodeInfo implements IBindNodeInfo {
       const parseBindTextInfo = parseBindTextInfos[j];
       const { nodeProperty, stateProperty } = parseBindTextInfo;
       const propertyCreators = getPropertyCreators(node, nodeProperty, stateProperty, useKeyed);
-      bindTextInfos.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBinding(parseBindTextInfo, propertyCreators) });
+      bindTextInfos.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
     }
     const nodeRoute = computeNodeRoute(node);
     const nodeRouteKey = nodeRoute.join(",");

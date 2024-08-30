@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../@types/filter";
+import { IFilterInfo } from "../../filter/types";
 import { TemplateProperty } from "./TemplateProperty";
-import { IContentBindings, IBinding, ILoopable } from "../../@types/binding";
+import { IContentBindings, IBinding, ILoopable } from "../types";
 import { createContentBindings } from "../ContentBindings";
 
 const applyToNodeFunc = (contentBindings:IContentBindings):void => contentBindings.applyToNode();

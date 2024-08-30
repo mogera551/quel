@@ -1,6 +1,4 @@
-import { IBinding, IContentBindings } from "./binding";
-
-interface ILoopContext {
+export interface ILoopContext {
   readonly parentLoopContext?: ILoopContext;
   readonly index: number;
   readonly indexes: number[];

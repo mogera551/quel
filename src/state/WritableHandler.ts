@@ -1,9 +1,9 @@
 import { PropertyAccess } from "../binding/PropertyAccess";
-import { Indexes, IPropInfo } from "../@types/dotNotation";
-import { ILoopContext } from "../@types/loopContext";
+import { Indexes, IPropInfo } from "../dotNotation/types";
+import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
-import { IStateProxy } from "../@types/state";
+import { IStateProxy } from "./types";
 
 export class WritableHandler extends Handler {
   #loopContext?: ILoopContext;

@@ -1,9 +1,9 @@
-import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial } from "../@types/binding";
-import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
-import { IFilterInfo, IFilterManager } from "../@types/filter";
+import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial } from "./types";
+import { NodePropertyCreator, StatePropertyCreator } from "../binder/types";
+import { IFilterInfo, IFilterManager } from "../filter/types";
 import { utils } from "../utils";
-import { IUpdator } from "../@types/component";
-import { IStateProxy } from "../@types/state";
+import { IUpdator } from "../component/types";
+import { IStateProxy } from "../state/types";
 
 let id = 1;
 class Binding implements IBinding {

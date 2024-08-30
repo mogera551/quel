@@ -1,6 +1,6 @@
 import { utils } from "../utils";
-import { NodePropertyCreator } from "../@types/binder";
-import { IFilterInfo } from "../@types/filter";
+import { NodePropertyCreator } from "./types";
+import { IFilterInfo } from "../filter/types";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { Repeat } from "../binding/nodeProperty/Repeat";
 import { Branch } from "../binding/nodeProperty/Branch";
@@ -14,7 +14,7 @@ import { ElementStyle } from "../binding/nodeProperty/ElementStyle";
 import { ElementProperty } from "../binding/nodeProperty/ElementProperty";
 import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty";
 import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
-import { IBinding, INodeProperty } from "../@types/binding";
+import { IBinding, INodeProperty } from "../binding/types";
 
 type NodePropertyConstructorByName = {[key:string]:typeof NodeProperty};
 type NodePropertyConstructorByNameByIsComment = {[key:number]:NodePropertyConstructorByName};

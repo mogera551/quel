@@ -1,5 +1,5 @@
 import { toKebabCase } from "./KebabCase";
-import { CaseType, CaseTypeNames } from "../@types/loader";
+import { CaseType, CaseTypeNames } from "./types";
 
 export function getNameByCaseType(name:string):CaseTypeNames {
   const kebabName = toKebabCase(name) as string;

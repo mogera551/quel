@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../@types/filter";
+import { IFilterInfo } from "../../filter/types";
 import { NodeProperty } from "./NodeProperty";
-import { IBinding } from "../../@types/binding";
+import { IBinding } from "../types";
 
 export class ElementBase extends NodeProperty {
   get element():Element {

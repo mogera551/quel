@@ -41,7 +41,7 @@
  * load file:
  * import { mainSelector } from ./components/MyappComponents.js
  */
-import { PrefixResult } from "../@types/loader";
+import { PrefixResult } from "./types";
 
 export class Prefix {
   prefix:string;

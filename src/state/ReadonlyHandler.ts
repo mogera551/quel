@@ -1,4 +1,4 @@
-import { IPropInfo } from "../@types/dotNotation";
+import { IPropInfo } from "../dotNotation/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
 

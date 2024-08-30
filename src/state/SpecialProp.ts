@@ -1,6 +1,6 @@
 import { createUserComponent } from "../component/UserProxy";
-import { IStateHandler, IStateProxy } from "../@types/state";
-import { IComponent } from "../@types/component";
+import { IStateHandler, IStateProxy } from "./types";
+import { IComponent } from "../component/types";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";

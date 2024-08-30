@@ -1,8 +1,8 @@
 import { createBinder } from "../binder/Binder";
 import { LoopContext } from "../loopContext/LoopContext";
-import { ILoopContext } from "../@types/loopContext";
+import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
-import { IBinding, IContentBindings, IComponentPartial } from "../@types/binding";
+import { IBinding, IContentBindings, IComponentPartial } from "./types";
 
 class ContentBindings implements IContentBindings {
   #component?: IComponentPartial;

@@ -1,12 +1,12 @@
-import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
-import { IComponent, IUpdator } from "../@types/component";
+import { AccessorPropertiesSymbol, DependenciesSymbol } from "./symbols";
+import { IComponent, IUpdator } from "../component/types";
 import { Handler as DotNotationHandler } from "../dotNotation/Handler";
-import { ILoopContext } from "../@types/loopContext";
+import { ILoopContext } from "../loopContext/types";
 import { getApi } from "./Api";
 import { getCallback } from "./Callback";
 import { getSpecialProps } from "./SpecialProp";
 import { getStateInfo } from "./StateInfo";
-import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "../@types/state";
+import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "./types";
 
 /**
  * ステートを扱うためのベースハンドラ

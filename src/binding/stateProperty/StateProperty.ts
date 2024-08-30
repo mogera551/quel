@@ -1,11 +1,11 @@
-import { IBinding, IStateProperty } from "../../@types/binding";
-import { IFilterInfo, FilterFunc } from "../../@types/filter";
-import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
+import { IBinding, IStateProperty } from "../types";
+import { IFilterInfo, FilterFunc } from "../../filter/types";
+import { GetDirectSymbol, SetDirectSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { IPropInfo } from "../../@types/dotNotation";
+import { IPropInfo } from "../../dotNotation/types";
 import { getPropInfo } from "../../dotNotation/PropInfo";
-import { IStateProxy } from "../../@types/state";
+import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
 
 export class StateProperty implements IStateProperty {

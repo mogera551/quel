@@ -2349,7 +2349,7 @@ class ElementEvent extends ElementBase {
         }
         return this.#handler;
     }
-    #eventFilters = [];
+    #eventFilters;
     get eventFilters() {
         return this.#eventFilters;
     }
@@ -2972,13 +2972,13 @@ class Binding {
         this.childrenContentBindings = [];
     }
 }
-function createBinding$1(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters) {
+function createBinding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters) {
     const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
     binding.initialize();
     return binding;
 }
 
-const createBinding = (bindTextInfo, propertyCreators) => (contentBindings, node) => createBinding$1(contentBindings, node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyCreator, bindTextInfo.inputFilters, bindTextInfo.stateProperty, propertyCreators.statePropertyCreator, bindTextInfo.outputFilters);
+const createBindingWithBindInfo = (bindTextInfo, propertyCreators) => (contentBindings, node) => createBinding(contentBindings, node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyCreator, bindTextInfo.inputFilters, bindTextInfo.stateProperty, propertyCreators.statePropertyCreator, bindTextInfo.outputFilters);
 
 /**
  * get indexes of childNodes from root node to the node
@@ -3075,7 +3075,7 @@ class BindNodeInfo {
             const parseBindTextInfo = parseBindTextInfos[j];
             const { nodeProperty, stateProperty } = parseBindTextInfo;
             const propertyCreators = getPropertyCreators(node, nodeProperty, stateProperty, useKeyed);
-            bindTextInfos.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBinding(parseBindTextInfo, propertyCreators) });
+            bindTextInfos.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
         }
         const nodeRoute = computeNodeRoute(node);
         const nodeRouteKey = nodeRoute.join(",");

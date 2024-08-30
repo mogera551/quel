@@ -1,4 +1,4 @@
-import { NodeType } from "../@types/binder";
+import { NodeType } from "./types";
 
 const DATASET_BIND_PROPERTY = 'data-bind';
 
