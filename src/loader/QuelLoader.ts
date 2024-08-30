@@ -1,7 +1,7 @@
 import { ComponentModule } from "../@types/component";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../@types/filter";
 import { Loader } from "./Loader.js";
-import { registerComponentModule } from "../component/Component";
+import { registerComponentModule } from "../newComponent/Component";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { Registrar } from "./types";
 

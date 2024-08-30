@@ -1,7 +1,7 @@
 import { IBinding } from "../@types/binding";
 import { NodeType, IBindNodeInfo } from "./types";
-import { Checkbox } from "../binding/nodeProperty/Checkbox";
-import { Radio } from "../binding/nodeProperty/Radio";
+import { Checkbox } from "../newBinding/nodeProperty/Checkbox";
+import { Radio } from "../newBinding/nodeProperty/Radio";
 import { INewBinding } from "../newBinding/types";
 
 const DEFAULT_EVENT = "oninput";
