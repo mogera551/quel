@@ -3,7 +3,7 @@ import { BoundByComponentSymbol } from "../@symbols/global";
 import { NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { Handler } from "../dotNotation/Handler";
 import { INewComponent } from "../@types/component";
-import { IGlobalDataProxy } from "./types";
+import { IGlobalDataProxy } from "../@types/types";
 import { getPropInfo } from "../dotNotation/PropInfo";
 
 type IComponentForGlobalData = Pick<INewComponent, "states">;
