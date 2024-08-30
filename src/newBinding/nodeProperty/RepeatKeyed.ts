@@ -108,7 +108,7 @@ export class RepeatKeyed extends Repeat {
       if (typeof contentBindings === "undefined") {
         contentBindings = createContentBindings(this.template, this.binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
-        // contentBindings.postCreate();
+        contentBindings.postCreate();
       } else {
         this.binding.replaceChildContentBindings(contentBindings, index);
         contentBindings.applyToNode();

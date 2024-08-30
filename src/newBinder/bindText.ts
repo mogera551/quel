@@ -1,5 +1,5 @@
 import { NodeType } from "./types";
-import { getByUUID } from "../component/Template";
+import { getByUUID } from "../newComponent/Template";
 
 const BIND_DATASET = "bind";
 

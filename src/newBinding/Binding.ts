@@ -39,29 +39,29 @@ class Binding implements INewBinding {
   get expandable(): boolean {
     return this.#nodeProperty.expandable;
   }
-  get component(): IComponentPartial {
+  get component(): IComponentPartial | undefined {
     return this.#parentContentBindings.component;
   }
-  get updator(): INewUpdator {
-    return this.component.updator;
+  get updator(): INewUpdator | undefined {
+    return this.component?.updator;
   }
-  get bindingSummary(): INewBindingSummary {
-    return this.component.bindingSummary;
+  get bindingSummary(): INewBindingSummary | undefined {
+    return this.component?.bindingSummary;
   }
-  get state(): IStateProxy {
-    return this.component.states.current;
+  get state(): IStateProxy | undefined {
+    return this.component?.states.current;
   }
-  get selectorName(): string {
-    return this.component.selectorName;
+  get selectorName(): string | undefined{
+    return this.component?.selectorName;
   }
   get eventFilterManager(): IFilterManager<"event"> {
-    return this.component.eventFilterManager;
+    return this.component?.eventFilterManager ?? utils.raise("Binding.eventFilterManager: undefined");
   }
   get inputFilterManager(): IFilterManager<"input"> {
-    return this.component.inputFilterManager;
+    return this.component?.inputFilterManager ?? utils.raise("Binding.inputFilterManager: undefined");
   }
   get outputFilterManager(): IFilterManager<"output"> {
-    return this.component.outputFilterManager;
+    return this.component?.outputFilterManager ?? utils.raise("Binding.outputFilterManager: undefined");
   }
 
   constructor(
@@ -82,7 +82,7 @@ class Binding implements INewBinding {
 
   applyToNode() {
     const { updator, nodeProperty, stateProperty } = this
-    updator.applyNodeUpdatesByBinding(this, () => {
+    updator?.applyNodeUpdatesByBinding(this, () => {
       if (!nodeProperty.applicable) return;
       const filteredStateValue = stateProperty.filteredValue ?? "";
       if (nodeProperty.equals(filteredStateValue)) return;
@@ -92,7 +92,7 @@ class Binding implements INewBinding {
 
   applyToChildNodes(setOfIndex:Set<number>) {
     const { updator } = this;
-    updator.applyNodeUpdatesByBinding(this, () => {
+    updator?.applyNodeUpdatesByBinding(this, () => {
       this.nodeProperty.applyToChildNodes(setOfIndex);
     });
   }
@@ -106,9 +106,9 @@ class Binding implements INewBinding {
   /**
    */
   execDefaultEventHandler(event:Event) {
-    if (!(this.bindingSummary.exists(this) ?? false)) return;
+    if (!(this.bindingSummary?.exists(this) ?? false)) return;
     event.stopPropagation();
-    this.updator.addProcess(this.applyToState, this, []);
+    this.updator?.addProcess(this.applyToState, this, []);
   }
 
   #defaultEventHandler:(((event:Event)=>void)|undefined) = undefined;

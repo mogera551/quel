@@ -6,10 +6,11 @@ import { FilterManager, Filters } from "../../filter/Manager";
 import { IPropInfo } from "../../newDotNotation/types";
 import { getPropInfo } from "../../newDotNotation/PropInfo";
 import { IStateProxy } from "../../newState/types";
+import { utils } from "../../utils";
 
 export class StateProperty implements INewStateProperty {
   get state(): IStateProxy {
-    return this.#binding.state;
+    return this.#binding.state ?? utils.raise("StateProperty: state is undefined");
   }
 
   #name:string;

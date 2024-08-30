@@ -16,10 +16,7 @@ class ContentBindings implements IContentBindings {
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
 
-  get component(): IComponentPartial {
-    if (typeof this.#component === "undefined") {
-      utils.raise("component is undefined");
-    }
+  get component(): IComponentPartial | undefined {
     return this.#component;
   }
 
@@ -90,7 +87,7 @@ class ContentBindings implements IContentBindings {
   }
 
   initialize() {
-    const binder = createBinder(this.template, this.component.useKeyed);
+    const binder = createBinder(this.template, this.component?.useKeyed ?? utils.raise("useKeyed is undefined"));
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#childrenBinding = binder.createBindings(this.#fragment, this);
     this.#childNodes = Array.from(this.#fragment.childNodes);
@@ -133,7 +130,8 @@ class ContentBindings implements IContentBindings {
    */
   registerBindingsToSummary() {
     for(let i = 0; i < this.childrenBinding.length; i++) {
-      this.component.bindingSummary.add(this.childrenBinding[i]);
+      const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
+      bindingSummary.add(this.childrenBinding[i]);
     }
   }
 

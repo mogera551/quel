@@ -67,15 +67,15 @@ export interface INewBinding extends INewBindingBase {
   readonly stateProperty: INewStateProperty;
   readonly childrenContentBindings: IContentBindings[];
   readonly parentContentBindings: IContentBindings;
-  readonly component: IComponentPartial;
+  readonly component?: IComponentPartial;
   readonly expandable: boolean;
-  readonly state: IStateProxy
-  readonly updator: INewUpdator;
-  readonly bindingSummary: INewBindingSummary;
-  readonly selectorName: string;
-  readonly eventFilterManager: IFilterManager<"event">;
-  readonly inputFilterManager: IFilterManager<"input">;
-  readonly outputFilterManager: IFilterManager<"output">;
+  readonly state?: IStateProxy
+  readonly updator?: INewUpdator;
+  readonly bindingSummary?: INewBindingSummary;
+  readonly selectorName?: string;
+  readonly eventFilterManager?: IFilterManager<"event">;
+  readonly inputFilterManager?: IFilterManager<"input">;
+  readonly outputFilterManager?: IFilterManager<"output">;
   applyToNode();
   applyToChildNodes(setOfIndex:Set<number>);
   applyToState();
@@ -99,7 +99,7 @@ export interface IContentBindings extends IContentBindingsBase {
   readonly template: HTMLTemplateElement;
   readonly childrenBinding: INewBinding[];
   parentBinding?: INewBinding;
-  readonly component: IComponent;
+  readonly component?: IComponent;
   readonly parentContentBindings?: IContentBindings;
 
   readonly fragment: DocumentFragment;

@@ -64,7 +64,9 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   ):any {
     if (patternPaths.length > 1) {
       const pattern = patternPaths[pathIndex];
-      !this.dependentProps.hasDefaultProp(pattern) && this.dependentProps.addDefaultProp(pattern);
+      if (!this.dependentProps.hasDefaultProp(pattern)) {
+        this.dependentProps.addDefaultProp(pattern);
+      }
     }
     return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
   }

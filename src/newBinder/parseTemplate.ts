@@ -11,7 +11,6 @@ export function parseTemplate(template:HTMLTemplateElement, useKeyed:boolean):IB
   const nodeInfos:IBindNodeInfo[] = [];
   const rootElement = template.content;
   const nodes = (Array.from(rootElement.querySelectorAll(SELECTOR)) as Node[]).concat(getCommentNodes(rootElement));
-  nodeInfos.length = 0;
   for(let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
     const nodeType = getNodeType(node);

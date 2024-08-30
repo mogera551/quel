@@ -917,13 +917,13 @@ function _getAccessorProperties$1(target) {
     }
     return accessorProperties;
 }
-const _cache$7 = new Map();
+const _cache$8 = new Map();
 function getAccessorProperties$1(target) {
-    let retValue = _cache$7.get(target.constructor);
+    let retValue = _cache$8.get(target.constructor);
     if (typeof retValue === "undefined") {
         retValue = _getAccessorProperties$1(target);
         if ({}.constructor !== target.constructor)
-            _cache$7.set(target.constructor, retValue);
+            _cache$8.set(target.constructor, retValue);
     }
     return retValue;
 }
@@ -965,9 +965,9 @@ function _getPatternNameInfo(name) {
         wildcardNames,
     };
 }
-const _cache$6 = {};
+const _cache$7 = {};
 function getPatternNameInfo(name) {
-    return _cache$6[name] ?? (_cache$6[name] = _getPatternNameInfo(name));
+    return _cache$7[name] ?? (_cache$7[name] = _getPatternNameInfo(name));
 }
 
 function _getPropertyNameInfo(name) {
@@ -1001,9 +1001,9 @@ function _getPropertyNameInfo(name) {
         lastIncompleteIndex,
     };
 }
-const _cache$5 = {};
+const _cache$6 = {};
 function getPropertyNameInfo(name) {
-    return _cache$5[name] ?? (_cache$5[name] = _getPropertyNameInfo(name));
+    return _cache$6[name] ?? (_cache$6[name] = _getPropertyNameInfo(name));
 }
 
 /**
@@ -1993,7 +1993,7 @@ const parseBindText$1 = (text, defaultName) => {
         return { nodeProperty, stateProperty, filters };
     });
 };
-const _cache$4 = {};
+const _cache$5 = {};
 /**
  * parse bind text and return BindTextInfo[], if hit cache return cache value
  */
@@ -2001,7 +2001,7 @@ function parse$1(text, defaultName) {
     if (text.trim() === "")
         return [];
     const key = text + "\t" + defaultName;
-    return _cache$4[key] ?? (_cache$4[key] = parseBindText$1(text, defaultName));
+    return _cache$5[key] ?? (_cache$5[key] = parseBindText$1(text, defaultName));
 }
 
 const DEFAULT_PROPERTY$1 = "textContent";
@@ -3003,7 +3003,7 @@ function createBindings$1(content, bindingManager, nodeInfos) {
 }
 
 const UUID_DATASET$1 = "uuid";
-const _cache$3 = {};
+const _cache$4 = {};
 let Binder$1 = class Binder {
     template;
     uuid;
@@ -3018,7 +3018,7 @@ let Binder$1 = class Binder {
     }
     static create(template, useKeyed) {
         const uuid = template.dataset[UUID_DATASET$1] ?? "";
-        return _cache$3[uuid] ?? (_cache$3[uuid] = new Binder(template, uuid, useKeyed));
+        return _cache$4[uuid] ?? (_cache$4[uuid] = new Binder(template, uuid, useKeyed));
     }
 };
 
@@ -5871,7 +5871,7 @@ const parseBindText = (text, defaultName) => {
         return { nodeProperty, stateProperty, inputFilters, outputFilters };
     });
 };
-const _cache$2 = {};
+const _cache$3 = {};
 /**
  * parse bind text and return BindTextInfo[], if hit cache return cache value
  */
@@ -5879,7 +5879,7 @@ function parse(text, defaultName) {
     if (text.trim() === "")
         return [];
     const key = text + "\t" + defaultName;
-    return _cache$2[key] ?? (_cache$2[key] = parseBindText(text, defaultName));
+    return _cache$3[key] ?? (_cache$3[key] = parseBindText(text, defaultName));
 }
 
 const DEFAULT_PROPERTY = "textContent";
@@ -6225,20 +6225,20 @@ class ElementEvent extends ElementBase {
     }
     async directlyCall(event) {
         // 再構築などでバインドが削除されている場合は処理しない
-        if (!(this.binding.bindingSummary.exists(this.binding)))
+        if (!(this.binding.bindingSummary?.exists(this.binding)) ?? false)
             return;
         return this.binding.stateProperty.state[DirectryCallApiSymbol](this.binding.stateProperty.name, this.binding.parentContentBindings.currentLoopContext, event);
     }
     eventHandler(event) {
         // 再構築などでバインドが削除されている場合は処理しない
-        if (!(this.binding.bindingSummary.exists(this.binding)))
+        if (!(this.binding.bindingSummary?.exists(this.binding) ?? false))
             return;
         // event filter
         event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
         if ((Reflect.get(event, "noStopPropagation") ?? false) === false) {
             event.stopPropagation();
         }
-        this.binding.updator.addProcess(this.directlyCall, this, [event]);
+        this.binding.updator?.addProcess(this.directlyCall, this, [event]);
     }
 }
 
@@ -6479,7 +6479,7 @@ class RepeatKeyed extends Repeat {
             if (typeof contentBindings === "undefined") {
                 contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.replaceChildContentBindings(contentBindings, index);
-                // contentBindings.postCreate();
+                contentBindings.postCreate();
             }
             else {
                 this.binding.replaceChildContentBindings(contentBindings, index);
@@ -6550,7 +6550,7 @@ function getNodePropertyConstructor(node, propertyName, useKeyed) {
 
 class StateProperty {
     get state() {
-        return this.#binding.state;
+        return this.#binding.state ?? utils.raise("StateProperty: state is undefined");
     }
     #name;
     get name() {
@@ -6720,25 +6720,25 @@ class Binding {
         return this.#parentContentBindings.component;
     }
     get updator() {
-        return this.component.updator;
+        return this.component?.updator;
     }
     get bindingSummary() {
-        return this.component.bindingSummary;
+        return this.component?.bindingSummary;
     }
     get state() {
-        return this.component.states.current;
+        return this.component?.states.current;
     }
     get selectorName() {
-        return this.component.selectorName;
+        return this.component?.selectorName;
     }
     get eventFilterManager() {
-        return this.component.eventFilterManager;
+        return this.component?.eventFilterManager ?? utils.raise("Binding.eventFilterManager: undefined");
     }
     get inputFilterManager() {
-        return this.component.inputFilterManager;
+        return this.component?.inputFilterManager ?? utils.raise("Binding.inputFilterManager: undefined");
     }
     get outputFilterManager() {
-        return this.component.outputFilterManager;
+        return this.component?.outputFilterManager ?? utils.raise("Binding.outputFilterManager: undefined");
     }
     constructor(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters) {
         this.#id = ++id;
@@ -6748,7 +6748,7 @@ class Binding {
     }
     applyToNode() {
         const { updator, nodeProperty, stateProperty } = this;
-        updator.applyNodeUpdatesByBinding(this, () => {
+        updator?.applyNodeUpdatesByBinding(this, () => {
             if (!nodeProperty.applicable)
                 return;
             const filteredStateValue = stateProperty.filteredValue ?? "";
@@ -6759,7 +6759,7 @@ class Binding {
     }
     applyToChildNodes(setOfIndex) {
         const { updator } = this;
-        updator.applyNodeUpdatesByBinding(this, () => {
+        updator?.applyNodeUpdatesByBinding(this, () => {
             this.nodeProperty.applyToChildNodes(setOfIndex);
         });
     }
@@ -6772,10 +6772,10 @@ class Binding {
     /**
      */
     execDefaultEventHandler(event) {
-        if (!(this.bindingSummary.exists(this) ?? false))
+        if (!(this.bindingSummary?.exists(this) ?? false))
             return;
         event.stopPropagation();
-        this.updator.addProcess(this.applyToState, this, []);
+        this.updator?.addProcess(this.applyToState, this, []);
     }
     #defaultEventHandler = undefined;
     get defaultEventHandler() {
@@ -6940,7 +6940,7 @@ const getBindTextFromSVGElement = (node) => node.dataset[BIND_DATASET$1] ?? "";
 /** get text to bind from textContent property */
 const getBindTextFromText = (node) => node.textContent?.slice(3) ?? "";
 /** get text to bind from template's data-bind attribute, looking up by textContent property */
-const getBindTextFromTemplate = (node) => getByUUID$1(node.textContent?.slice(3) ?? "")?.dataset[BIND_DATASET$1] ?? "";
+const getBindTextFromTemplate = (node) => getByUUID(node.textContent?.slice(3) ?? "")?.dataset[BIND_DATASET$1] ?? "";
 const bindTextByNodeType = {
     HTMLElement: getBindTextFromHTMLElement,
     SVGElement: getBindTextFromSVGElement,
@@ -6972,7 +6972,6 @@ function parseTemplate(template, useKeyed) {
     const nodeInfos = [];
     const rootElement = template.content;
     const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
-    nodeInfos.length = 0;
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const nodeType = getNodeType(node);
@@ -7001,7 +7000,7 @@ function createBindings(content, contentBindings, nodeInfos) {
 }
 
 const UUID_DATASET = "uuid";
-const _cache$1 = {};
+const _cache$2 = {};
 class Binder {
     #template;
     #nodeInfos;
@@ -7015,7 +7014,7 @@ class Binder {
 }
 function createBinder(template, useKeyed) {
     const uuid = template.dataset[UUID_DATASET] ?? "";
-    return _cache$1[uuid] ?? (_cache$1[uuid] = new Binder(template, useKeyed));
+    return _cache$2[uuid] ?? (_cache$2[uuid] = new Binder(template, useKeyed));
 }
 
 class LoopContext {
@@ -7096,9 +7095,6 @@ class ContentBindings {
     #childNodes;
     #fragment;
     get component() {
-        if (typeof this.#component === "undefined") {
-            utils.raise("component is undefined");
-        }
         return this.#component;
     }
     get childrenBinding() {
@@ -7156,7 +7152,7 @@ class ContentBindings {
         this.template = template;
     }
     initialize() {
-        const binder = createBinder(this.template, this.component.useKeyed);
+        const binder = createBinder(this.template, this.component?.useKeyed ?? utils.raise("useKeyed is undefined"));
         this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
         this.#childrenBinding = binder.createBindings(this.#fragment, this);
         this.#childNodes = Array.from(this.#fragment.childNodes);
@@ -7196,7 +7192,8 @@ class ContentBindings {
      */
     registerBindingsToSummary() {
         for (let i = 0; i < this.childrenBinding.length; i++) {
-            this.component.bindingSummary.add(this.childrenBinding[i]);
+            const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
+            bindingSummary.add(this.childrenBinding[i]);
         }
     }
     postCreate() {
@@ -7466,13 +7463,13 @@ function _getAccessorProperties(target) {
     }
     return accessorProperties;
 }
-const _cache = new Map();
+const _cache$1 = new Map();
 function getAccessorProperties(target) {
-    let retValue = _cache.get(target.constructor);
+    let retValue = _cache$1.get(target.constructor);
     if (typeof retValue === "undefined") {
         retValue = _getAccessorProperties(target);
         if ({}.constructor !== target.constructor)
-            _cache.set(target.constructor, retValue);
+            _cache$1.set(target.constructor, retValue);
     }
     return retValue;
 }
@@ -7512,11 +7509,20 @@ class DependentProps {
 }
 
 const DEPENDENT_PROPS = "$dependentProps";
+const _cache = new Map;
 function getStateInfo(state) {
-    return {
-        accessorProperties: new Set(getAccessorProperties(state)),
-        dependentProps: new DependentProps(state[DEPENDENT_PROPS] ?? {})
-    };
+    // readonlyとwritableで同じものを使う
+    if (_cache.has(state)) {
+        return _cache.get(state);
+    }
+    else {
+        const stateInfo = {
+            accessorProperties: new Set(getAccessorProperties(state)),
+            dependentProps: new DependentProps(state[DEPENDENT_PROPS] ?? {})
+        };
+        _cache.set(state, stateInfo);
+        return stateInfo;
+    }
 }
 
 class Handler extends Handler$1 {
@@ -7555,7 +7561,9 @@ class Handler extends Handler$1 {
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         if (patternPaths.length > 1) {
             const pattern = patternPaths[pathIndex];
-            !this.dependentProps.hasDefaultProp(pattern) && this.dependentProps.addDefaultProp(pattern);
+            if (!this.dependentProps.hasDefaultProp(pattern)) {
+                this.dependentProps.addDefaultProp(pattern);
+            }
         }
         return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
     }
