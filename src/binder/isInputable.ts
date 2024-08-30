@@ -1,4 +1,4 @@
-import { NodeType } from "./types";
+import { NodeType } from "../@types/types";
 
 /**
  * ユーザー操作によりデフォルト値が変わるかどうか

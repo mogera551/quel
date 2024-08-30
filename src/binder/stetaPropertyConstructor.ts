@@ -2,7 +2,7 @@ import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
 import { INewBinding, INewStateProperty } from "../binding/types";
 import { IFilterInfo } from "../@types/filter";
-import { StatePropertyCreator } from "./types";
+import { StatePropertyCreator } from "../@types/types";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 

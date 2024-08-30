@@ -1,5 +1,5 @@
 import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary, IComponentPartial } from "./types";
-import { NodePropertyCreator, StatePropertyCreator } from "../binder/types";
+import { NodePropertyCreator, StatePropertyCreator } from "../@types/types";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
 import { INewUpdator } from "../component/types";

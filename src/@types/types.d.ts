@@ -1,6 +1,6 @@
 import { INewBinding, IContentBindings, INewNodeProperty, INewStateProperty } from "../binding/types";
 import { IStateProxy } from "../newState/types";
-import { IFilterInfo } from "../@types/filter";
+import { IFilterInfo } from "./filter";
 
 export type NodePropertyCreator = (binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) => INewNodeProperty;
 export type StatePropertyCreator = (binding:INewBinding, name:string, filters:IFilterInfo[]) => INewStateProperty;

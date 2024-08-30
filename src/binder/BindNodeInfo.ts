@@ -1,4 +1,4 @@
-import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from './types';
+import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParseBindTextInfo } from '../@types/types';
 import { replaceTextNode } from './replaceTextNode';
 import { removeAttribute } from './removeAttribute';
 import { getIsInputable } from './isInputable';
