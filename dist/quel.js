@@ -2115,6 +2115,10 @@ class TemplateProperty extends NodeProperty {
 
 const applyToNodeFunc = (contentBindings) => contentBindings.applyToNode();
 class Repeat extends TemplateProperty {
+    #revision = 0;
+    get revision() {
+        return this.#revision;
+    }
     get loopable() {
         return true;
     }
@@ -2124,6 +2128,7 @@ class Repeat extends TemplateProperty {
     set value(value) {
         if (!Array.isArray(value))
             utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
+        this.#revision++;
         if (this.value < value.length) {
             this.binding.childrenContentBindings.forEach(applyToNodeFunc);
             for (let newIndex = this.value; newIndex < value.length; newIndex++) {
@@ -2488,6 +2493,10 @@ class RepeatKeyed extends Repeat {
     #lastIndexes = new Set;
     #setOfNewIndexes = new Set;
     #lastChildByNewIndex = new Map;
+    #revision = 0;
+    get revision() {
+        return this.#revision;
+    }
     get loopable() {
         return true;
     }
@@ -2498,6 +2507,7 @@ class RepeatKeyed extends Repeat {
     set value(values) {
         if (!Array.isArray(values))
             utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
+        this.#revision++;
         this.#fromIndexByValue.clear();
         this.#lastIndexes.clear();
         this.#setOfNewIndexes.clear();
@@ -2558,6 +2568,7 @@ class RepeatKeyed extends Repeat {
         this.#lastValue = values.slice();
     }
     applyToChildNodes(setOfIndex) {
+        this.#revision++;
         const contentBindingsByValue = new Map;
         for (const index of setOfIndex) {
             const contentBindings = this.binding.childrenContentBindings[index];
@@ -3122,6 +3133,7 @@ function createBinder(template, useKeyed) {
 }
 
 class LoopContext {
+    #revision;
     #contentBindings;
     #index;
     #parentLoopContext;
@@ -3159,9 +3171,13 @@ class LoopContext {
         return this.#parentLoopContext;
     }
     get index() {
-        if (typeof this.#index === "undefined") {
+        // todo: unknownをなんとかする
+        const revision = (this.#contentBindings.parentBinding?.nodeProperty).revision;
+        if (typeof this.#index === "undefined" || this.#revision !== revision) {
             this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ??
                 utils.raise("parentBinding is undefined");
+            this.#parentLoopCache = false;
+            this.#revision = revision;
         }
         return this.#index;
     }
@@ -3173,10 +3189,6 @@ class LoopContext {
         else {
             return [...this.parentLoopContext.indexes, this.index];
         }
-    }
-    clearIndex() {
-        this.#parentLoopCache = false;
-        this.#index = undefined;
     }
     find(patternName) {
         let curContentBindings = this.#contentBindings;

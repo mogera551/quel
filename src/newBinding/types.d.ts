@@ -132,3 +132,6 @@ export interface INewBindingSummary {
   update(callback:(summary: INewBindingSummary)=>any): void;
 }
 
+export interface ILoopable {
+  readonly revision: number;
+}

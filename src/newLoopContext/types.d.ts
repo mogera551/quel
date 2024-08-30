@@ -5,6 +5,5 @@ export interface INewLoopContext {
   readonly index: number;
   readonly indexes: number[];
   readonly patternName:string;
-  clearIndex():void;
   find(patternName:string):INewLoopContext | undefined;
 }

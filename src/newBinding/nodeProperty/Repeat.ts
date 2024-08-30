@@ -1,12 +1,17 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { TemplateProperty } from "./TemplateProperty";
-import { IContentBindings, INewBinding } from "../types";
+import { IContentBindings, INewBinding, ILoopable } from "../types";
 import { createContentBindings } from "../ContentBindings";
 
 const applyToNodeFunc = (contentBindings:IContentBindings):void => contentBindings.applyToNode();
 
-export class Repeat extends TemplateProperty {
+export class Repeat extends TemplateProperty implements ILoopable {
+  #revision = 0;
+  get revision(): number {
+    return this.#revision;
+  }
+
   get loopable():boolean {
     return true;
   }
@@ -16,6 +21,7 @@ export class Repeat extends TemplateProperty {
   }
   set value(value:any[]) {
     if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
+    this.#revision++;
     if (this.value as number < value.length) {
       this.binding.childrenContentBindings.forEach(applyToNodeFunc);
       for(let newIndex = this.value as number; newIndex < value.length; newIndex++) {

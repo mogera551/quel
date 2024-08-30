@@ -1,10 +1,11 @@
-import { IContentBindingsBase } from "../newBinding/types";
+import { IContentBindingsBase, ILoopable, INewBinding } from "../newBinding/types";
 import { getPatternInfo } from "../newDotNotation/PropInfo";
 import { IPatternInfo } from "../newDotNotation/types";
 import { utils } from "../utils";
 import { INewLoopContext } from "./types";
 
 export class LoopContext implements INewLoopContext{
+  #revision?: number;
   #contentBindings: IContentBindingsBase;
   #index?: number;
   #parentLoopContext?: INewLoopContext;
@@ -44,9 +45,13 @@ export class LoopContext implements INewLoopContext{
   }
 
   get index(): number {
-    if (typeof this.#index === "undefined") {
+    // todo: unknownをなんとかする
+    const revision = ((this.#contentBindings.parentBinding as INewBinding)?.nodeProperty as unknown as ILoopable).revision;
+    if (typeof this.#index === "undefined" || this.#revision !== revision) {
       this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ?? 
         utils.raise("parentBinding is undefined");
+      this.#parentLoopCache = false;
+      this.#revision = revision;
     }
     return this.#index;
   }
@@ -58,11 +63,6 @@ export class LoopContext implements INewLoopContext{
     } else {
       return [...this.parentLoopContext.indexes, this.index];
     }
-  }
-
-  clearIndex(): void {
-    this.#parentLoopCache = false;
-    this.#index = undefined;
   }
 
   find(patternName: string): INewLoopContext | undefined {
