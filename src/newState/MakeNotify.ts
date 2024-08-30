@@ -1,8 +1,8 @@
 import { GetDependentPropsApiSymbol } from "../@symbols/state";
-import { INewPropertyAccess } from "../newBinding/types";
+import { INewPropertyAccess } from "../binding/types";
 import { getPatternInfo } from "../newDotNotation/PropInfo";
 import { IStateProxy } from "./types";
-import { PropertyAccess } from "../newBinding/PropertyAccess";
+import { PropertyAccess } from "../binding/PropertyAccess";
 import { GetDirectSymbol } from "../@symbols/dotNotation";
 
 export function makeNotifyForDependentProps(state:IStateProxy, propertyAccess:INewPropertyAccess, setOfSavePropertyAccessKeys:Set<string> = new Set([])):INewPropertyAccess[] {

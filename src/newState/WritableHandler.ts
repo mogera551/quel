@@ -1,4 +1,4 @@
-import { PropertyAccess } from "../newBinding/PropertyAccess";
+import { PropertyAccess } from "../binding/PropertyAccess";
 import { Indexes, IPropInfo } from "../newDotNotation/types";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";

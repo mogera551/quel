@@ -1,20 +1,20 @@
 import { utils } from "../utils";
 import { NodePropertyCreator } from "./types";
 import { IFilterInfo } from "../@types/filter";
-import { NodeProperty } from "../newBinding/nodeProperty/NodeProperty";
-import { Repeat } from "../newBinding/nodeProperty/Repeat";
-import { Branch } from "../newBinding/nodeProperty/Branch";
-import { ElementClassName } from "../newBinding/nodeProperty/ElementClassName"
-import { Checkbox } from "../newBinding/nodeProperty/Checkbox";
-import { Radio } from "../newBinding/nodeProperty/Radio";
-import { ElementEvent } from "../newBinding/nodeProperty/ElementEvent";
-import { ElementClass } from "../newBinding/nodeProperty/ElementClass";
-import { ElementAttribute } from "../newBinding/nodeProperty/ElementAttribute";
-import { ElementStyle } from "../newBinding/nodeProperty/ElementStyle";
-import { ElementProperty } from "../newBinding/nodeProperty/ElementProperty";
-import { ComponentProperty } from "../newBinding/nodeProperty/ComponentProperty";
-import { RepeatKeyed } from "../newBinding/nodeProperty/RepeatKeyed";
-import { INewBinding, INewNodeProperty } from "../newBinding/types";
+import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
+import { Repeat } from "../binding/nodeProperty/Repeat";
+import { Branch } from "../binding/nodeProperty/Branch";
+import { ElementClassName } from "../binding/nodeProperty/ElementClassName"
+import { Checkbox } from "../binding/nodeProperty/Checkbox";
+import { Radio } from "../binding/nodeProperty/Radio";
+import { ElementEvent } from "../binding/nodeProperty/ElementEvent";
+import { ElementClass } from "../binding/nodeProperty/ElementClass";
+import { ElementAttribute } from "../binding/nodeProperty/ElementAttribute";
+import { ElementStyle } from "../binding/nodeProperty/ElementStyle";
+import { ElementProperty } from "../binding/nodeProperty/ElementProperty";
+import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty";
+import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
+import { INewBinding, INewNodeProperty } from "../binding/types";
 
 type NodePropertyConstructorByName = {[key:string]:typeof NodeProperty};
 type NodePropertyConstructorByNameByIsComment = {[key:number]:NodePropertyConstructorByName};

@@ -1,4 +1,4 @@
-import { INewBinding, IContentBindings, INewNodeProperty, INewStateProperty } from "../newBinding/types";
+import { INewBinding, IContentBindings, INewNodeProperty, INewStateProperty } from "../binding/types";
 import { IStateProxy } from "../newState/types";
 import { IFilterInfo } from "../@types/filter";
 

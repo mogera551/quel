@@ -8,10 +8,10 @@ import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
 import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor, INewComponentBase } from "./types";
 import { IStateProxy, IStates } from "../newState/types";
-import { IContentBindings, INewBindingSummary } from "../newBinding/types";
+import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../newGlobal/types";
-import { createContentBindings } from "../newBinding/ContentBindings";
-import { createBindingSummary } from "../newBinding/BindingSummary";
+import { createContentBindings } from "../binding/ContentBindings";
+import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../newState/States";
 
 const pseudoComponentByNode:Map<Node, INewComponent> = new Map;

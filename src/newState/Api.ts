@@ -3,7 +3,7 @@ import {
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
 } from "../@symbols/state";
 import { IDependentProps, IStateHandler, IStateProxy, SupportApiSymbols } from "./types";
-import { PropertyAccess } from "../newBinding/PropertyAccess";
+import { PropertyAccess } from "../binding/PropertyAccess";
 import { INewLoopContext } from "../newLoopContext/types";
 import { INewComponent } from "../newComponent/types";
 
