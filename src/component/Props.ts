@@ -4,7 +4,7 @@ import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApi
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component.js";
 import { INewComponent, INewProps } from "./types.js";
 import { INewBindingPropertyAccess } from "../binding/types.js";
-import { getPatternInfo } from "../newDotNotation/PropInfo.js";
+import { getPatternInfo } from "../dotNotation/PropInfo.js";
 
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 

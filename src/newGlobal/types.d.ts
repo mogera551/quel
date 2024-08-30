@@ -1,6 +1,6 @@
 import "../nop";
 import { BoundByComponentSymbol } from "../@symbols/global";
-import { IDotNotationProxy } from "../newDotNotation/types";
+import { IDotNotationProxy } from "../dotNotation/types";
 import { INewComponent } from "../newComponent/types";
 
 export interface IGlobalDataProxy extends IDotNotationProxy {

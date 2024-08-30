@@ -1,6 +1,6 @@
 import { IContentBindingsBase, ILoopable, INewBinding } from "../binding/types";
-import { getPatternInfo } from "../newDotNotation/PropInfo";
-import { IPatternInfo } from "../newDotNotation/types";
+import { getPatternInfo } from "../dotNotation/PropInfo";
+import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
 import { INewLoopContext } from "./types";
 

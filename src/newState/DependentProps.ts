@@ -1,5 +1,5 @@
 import { IDependentProps, Dependencies } from "./types";
-import { getPropInfo } from "../newDotNotation/PropInfo";
+import { getPropInfo } from "../dotNotation/PropInfo";
 
 /**
  * $dependentPropsを表現

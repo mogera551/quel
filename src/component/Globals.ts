@@ -2,9 +2,9 @@ import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { BoundByComponentSymbol } from "../@symbols/global";
 import { GlobalData } from "../newGlobal/Data";
 import { IGlobalDataProxy } from "../newGlobal/types";
-import { Handler } from "../newDotNotation/Handler";
+import { Handler } from "../dotNotation/Handler";
 import { INewComponent } from "./types";
-import { getPropInfo } from "../newDotNotation/PropInfo";
+import { getPropInfo } from "../dotNotation/PropInfo";
 
 type IComponentForGlobalData = Pick<INewComponent, "states">;
 

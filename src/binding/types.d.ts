@@ -1,7 +1,7 @@
 
 import "../nop";
 import { INewLoopContext } from "../newLoopContext/types";
-import { IPropInfo } from "../newDotNotation/types";
+import { IPropInfo } from "../dotNotation/types";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
 import { FilterFunc } from "../@types/filter";

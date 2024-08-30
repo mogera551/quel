@@ -1,5 +1,5 @@
 import { PropertyAccess } from "../binding/PropertyAccess";
-import { Indexes, IPropInfo } from "../newDotNotation/types";
+import { Indexes, IPropInfo } from "../dotNotation/types";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";

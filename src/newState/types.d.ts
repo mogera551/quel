@@ -1,7 +1,7 @@
 import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { IDependentProps } from "../newState/types";
 import { INewComponent, INewUpdator } from "../newComponent/types";
-import { IDotNotationHandler, IDotNotationProxy } from "../newDotNotation/types";
+import { IDotNotationHandler, IDotNotationProxy } from "../dotNotation/types";
 import { IGlobalDataProxy } from "../newGlobal/types";
 import { INewLoopContext } from "../newLoopContext/types";
 
