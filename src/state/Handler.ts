@@ -6,7 +6,7 @@ import { getApi } from "./Api";
 import { getCallback } from "./Callback";
 import { getSpecialProps } from "./SpecialProp";
 import { getStateInfo } from "./StateInfo";
-import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "./types";
+import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "../@types/types";
 
 /**
  * ステートを扱うためのベースハンドラ

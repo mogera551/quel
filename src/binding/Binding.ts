@@ -3,7 +3,7 @@ import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
 import { INewUpdator } from "../@types/component";
-import { IStateProxy } from "../state/types";
+import { IStateProxy } from "../@types/types";
 
 let id = 1;
 class Binding implements INewBinding {

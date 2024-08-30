@@ -3,7 +3,7 @@ import { config } from "../Config";
 import { INewComponent, INewProcess, INewUpdator } from "../@types/component";
 import { INewBinding, INewBindingSummary, INewPropertyAccess } from "../@types/binding";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
-import { IStates } from "../state/types";
+import { IStates } from "../@types/types";
 
 const getPropAccessKey = (prop: INewPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);

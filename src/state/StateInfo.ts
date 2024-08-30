@@ -1,6 +1,6 @@
 import { getAccessorProperties } from "./AccessorProperties";
 import { DependentProps } from "./DependentProps";
-import { IBaseState, StateInfo } from "./types";
+import { IBaseState, StateInfo } from "../@types/types";
 
 const DEPENDENT_PROPS = "$dependentProps";
 
