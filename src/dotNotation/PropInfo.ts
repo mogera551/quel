@@ -1,5 +1,5 @@
 
-import { IPatternInfo, IPropInfo } from './types';
+import { IPatternInfo, IPropInfo } from '../@types/types';
 
 const _cachePropInfo = new Map<string, IPropInfo>();
 const _cachePatternInfo = new Map<string, IPatternInfo>();

@@ -2,7 +2,7 @@ import { util } from "../../node_modules/webpack/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { utils } from "../utils";
 import { getPropInfo } from "./PropInfo";
-import { IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, StackIndexes } from "./types";
+import { IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, StackIndexes } from "../@types/types";
 
 class WildcardIndexes implements IWildcardIndexes {
   #baseIndexes: Indexes;
