@@ -1660,11 +1660,32 @@ let Handler$1 = class Handler {
         return this.__set(target, propInfo, wildcardIndexes, value, receiver);
     }
     _getExpand(target, prop, receiver) {
+        // ex.
+        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
+        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        // prop = "aaa.1.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        // prop = "aaa.*.bbb.1.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
-        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index]));
-        const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
-        const wildcardPath = propInfo.wildcardPaths.at(index) ?? utils.raise(`wildcard path is undefined`);
+        let lastIndexes = undefined;
+        for (let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {
+            const wildcardPath = propInfo.wildcardPaths[i];
+            lastIndexes = this.getLastIndexes(wildcardPath);
+            if (typeof lastIndexes !== "undefined")
+                break;
+        }
+        lastIndexes = lastIndexes ?? [];
+        let _lastIndex = undefined;
+        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => {
+            if (typeof i === "undefined") {
+                _lastIndex = index;
+                return lastIndexes[index];
+            }
+            else {
+                return i;
+            }
+        });
+        const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
+        const wildcardPath = propInfo.wildcardPaths.at(lastIndex) ?? utils.raise(`wildcard path is undefined`);
         const wildcardPathInfo = getPropInfo(wildcardPath);
         const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
         const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
@@ -1674,7 +1695,7 @@ let Handler$1 = class Handler {
                 utils.raise(`parent value is not array`);
             const values = [];
             for (let i = 0; i < parentValue.length; i++) {
-                wildcardIndexes[index] = i;
+                wildcardIndexes[lastIndex] = i;
                 values.push(this.withIndexes(propInfo, wildcardIndexes, () => {
                     return this._get(target, propInfo.pattern, receiver);
                 }));
@@ -1684,10 +1705,26 @@ let Handler$1 = class Handler {
     }
     _setExpand(target, prop, value, receiver) {
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
-        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => (index === propInfo.lastIncompleteWildcardIndex) ? undefined : (i ?? lastStackIndexes[index]));
-        const index = wildcardIndexes.findIndex(i => typeof i === "undefined");
-        const wildcardPath = propInfo.wildcardPaths.at(index) ?? utils.raise(`wildcard path is undefined`);
+        let lastIndexes = undefined;
+        for (let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {
+            const wildcardPath = propInfo.wildcardPaths[i];
+            lastIndexes = this.getLastIndexes(wildcardPath);
+            if (typeof lastIndexes !== "undefined")
+                break;
+        }
+        lastIndexes = lastIndexes ?? [];
+        let _lastIndex = undefined;
+        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => {
+            if (typeof i === "undefined") {
+                _lastIndex = index;
+                return lastIndexes[index];
+            }
+            else {
+                return i;
+            }
+        });
+        const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
+        const wildcardPath = propInfo.wildcardPaths.at(lastIndex) ?? utils.raise(`wildcard path is undefined`);
         const wildcardPathInfo = getPropInfo(wildcardPath);
         const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
         const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
@@ -1696,7 +1733,7 @@ let Handler$1 = class Handler {
             if (!Array.isArray(parentValue))
                 utils.raise(`parent value is not array`);
             for (let i = 0; i < parentValue.length; i++) {
-                wildcardIndexes[index] = i;
+                wildcardIndexes[lastIndex] = i;
                 this.withIndexes(propInfo, wildcardIndexes, Array.isArray(value) ?
                     () => this._set(target, propInfo.pattern, value[i], receiver) :
                     () => this._set(target, propInfo.pattern, value, receiver));
