@@ -2,7 +2,7 @@ import {
   DirectryCallApiSymbol, NotifyForDependentPropsApiSymbol, GetDependentPropsApiSymbol, 
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
 } from "../@symbols/state";
-import { IDependentProps, IStateHandler, IStateProxy, SupportApiSymbols } from "../@types/types";
+import { IDependentProps, IStateHandler, IStateProxy, SupportApiSymbols } from "../@types/state";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { INewLoopContext } from "../@types/loopContext";
 import { INewComponent } from "../@types/component";

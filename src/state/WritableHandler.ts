@@ -3,7 +3,7 @@ import { Indexes, IPropInfo } from "../@types/dotNotation";
 import { INewLoopContext } from "../@types/loopContext";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
-import { IStateProxy } from "../@types/types";
+import { IStateProxy } from "../@types/state";
 
 export class WritableHandler extends Handler {
   #loopContext:INewLoopContext|undefined;

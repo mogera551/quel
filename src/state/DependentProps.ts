@@ -1,4 +1,4 @@
-import { IDependentProps, Dependencies } from "../@types/types";
+import { IDependentProps, Dependencies } from "../@types/state";
 import { getPropInfo } from "../dotNotation/PropInfo";
 
 /**
