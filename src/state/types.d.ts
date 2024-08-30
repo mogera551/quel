@@ -3,7 +3,7 @@ import { IDependentProps } from "../newState/types";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IDotNotationHandler, IDotNotationProxy } from "../@types/dotNotation";
 import { IGlobalDataProxy } from "../@types/global";
-import { INewLoopContext } from "../@types/types";
+import { INewLoopContext } from "../@types/loopContext";
 
 export interface IStateHandler {
   readonly accessorProperties: Set<string>;

@@ -1,6 +1,6 @@
 
 import "../nop";
-import { INewLoopContext } from "./types";
+import { INewLoopContext } from "./loopContext";
 import { IPropInfo } from "./dotNotation";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";

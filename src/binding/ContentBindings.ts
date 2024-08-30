@@ -1,6 +1,6 @@
 import { createBinder } from "../binder/Binder";
 import { LoopContext } from "../loopContext/LoopContext";
-import { INewLoopContext } from "../@types/types";
+import { INewLoopContext } from "../@types/loopContext";
 import { utils } from "../utils";
 import { INewBinding, IContentBindings, IComponentPartial } from "../@types/binding";
 
