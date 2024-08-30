@@ -6,24 +6,24 @@ import { localizeStyleSheet } from "./StyleSheet";
 import { createUpdator } from "./Updator";
 import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
-import { INewComponent, INewCustomComponent, IProps, IUpdator, Constructor, INewComponentBase } from "../@types/component";
+import { IComponent, ICustomComponent, IProps, IUpdator, Constructor, IComponentBase } from "../@types/component";
 import { IStates } from "../@types/state";
-import { IContentBindings, INewBindingSummary } from "../@types/binding";
+import { IContentBindings, IBindingSummary } from "../@types/binding";
 import { IGlobalDataProxy } from "../@types/global";
 import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../state/States";
 
-const pseudoComponentByNode:Map<Node, INewComponent> = new Map;
+const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 
-const getParentComponent = (_node:Node): INewComponent|undefined => {
+const getParentComponent = (_node:Node): IComponent|undefined => {
   let node:Node|null = _node;
   do {
     node = node.parentNode;
     if (node == null) return undefined;
-    if (Reflect.get(node, "isQuelComponent") === true) return node as INewComponent;
+    if (Reflect.get(node, "isQuelComponent") === true) return node as IComponent;
     if (node instanceof ShadowRoot) {
-      if (Reflect.get(node.host, "isQuelComponent") === true) return node.host as INewComponent;
+      if (Reflect.get(node.host, "isQuelComponent") === true) return node.host as IComponent;
       node = node.host;
     }
     const psuedoComponent = pseudoComponentByNode.get(node);
@@ -33,8 +33,8 @@ const getParentComponent = (_node:Node): INewComponent|undefined => {
 
 const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
-export function CustomComponent<TBase extends Constructor<HTMLElement & INewComponentBase>>(Base: TBase) {
-  return class extends Base implements INewCustomComponent {
+export function CustomComponent<TBase extends Constructor<HTMLElement & IComponentBase>>(Base: TBase) {
+  return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();
       this.#states = createStates(this, Reflect.construct(this.State, [])); // create view model
@@ -45,11 +45,11 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
       this.#globals = createGlobals(this);  
     }
 
-    get component():INewComponent {
-      return this as unknown as INewComponent;
+    get component():IComponent {
+      return this as unknown as IComponent;
     }
-    #parentComponent?:INewComponent;
-    get parentComponent(): INewComponent | undefined {
+    #parentComponent?:IComponent;
+    get parentComponent(): IComponent | undefined {
       if (typeof this.#parentComponent === "undefined") {
         this.#parentComponent = getParentComponent(this);
       }
@@ -135,8 +135,8 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
       callback(this.#contextRevision);
     }
 
-    #bindingSummary: INewBindingSummary;
-    get bindingSummary(): INewBindingSummary {
+    #bindingSummary: IBindingSummary;
+    get bindingSummary(): IBindingSummary {
       return this.#bindingSummary;
     }
 
@@ -208,7 +208,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & INewComp
         // then insert fragment block before pseudo node nextSibling
         this.viewRootElement.insertBefore(this.rootBindingManager.fragment, this.pseudoNode?.nextSibling ?? null);
         // child nodes add pseudoComponentByNode
-        this.rootBindingManager.childNodes.forEach(node => pseudoComponentByNode.set(node, this as unknown as INewComponent));
+        this.rootBindingManager.childNodes.forEach(node => pseudoComponentByNode.set(node, this as unknown as IComponent));
       }
     }
 

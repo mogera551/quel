@@ -1,7 +1,7 @@
 import { utils } from "../utils";
 import { config } from "../Config";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty";
-import { IBinding, INewBindingSummary } from "../@types/binding";
+import { IBinding, IBindingSummary } from "../@types/binding";
 
 const pickKey = (binding:IBinding):string => binding.stateProperty.key;
 const filterExpandableBindings = (binding:IBinding):boolean => binding.nodeProperty.expandable;
@@ -10,7 +10,7 @@ const filerComponentBindings = (binding:IBinding):boolean => binding.nodePropert
 /**
  * BindingSummary
  */
-class BindingSummary implements INewBindingSummary {
+class BindingSummary implements IBindingSummary {
   #updated:boolean = false;
   get updated() {
     return this.#updated;
@@ -86,7 +86,7 @@ class BindingSummary implements INewBindingSummary {
     }
   }
 
-  update(callback:(summary:INewBindingSummary)=>any):void {
+  update(callback:(summary:IBindingSummary)=>any):void {
     this.#updating = true;
     this.#updated = false;
     this.#updateRevision++;
@@ -107,6 +107,6 @@ class BindingSummary implements INewBindingSummary {
   }
 }
 
-export function createBindingSummary():INewBindingSummary {
+export function createBindingSummary():IBindingSummary {
   return new BindingSummary;
 }

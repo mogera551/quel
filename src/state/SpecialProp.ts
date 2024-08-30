@@ -1,6 +1,6 @@
 import { createUserComponent } from "../component/UserProxy";
 import { IStateHandler, IStateProxy } from "../@types/state";
-import { INewComponent } from "../@types/component";
+import { IComponent } from "../@types/component";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
@@ -24,9 +24,9 @@ type FuncByName = {
 
 
 const funcByName:FuncByName = {
-  [GLOBALS_PROPERTY]: ({handler}:FuncArgs) => (handler.element as INewComponent).globals, // component.globals,
+  [GLOBALS_PROPERTY]: ({handler}:FuncArgs) => (handler.element as IComponent).globals, // component.globals,
   [DEPENDENT_PROPS_PROPERTY]: ({state}:FuncArgs) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
-  [COMPONENT_PROPERTY]: ({handler}:FuncArgs) => createUserComponent((handler.element as INewComponent)),
+  [COMPONENT_PROPERTY]: ({handler}:FuncArgs) => createUserComponent((handler.element as IComponent)),
   [ADD_PROCESS_PROPERTY]: ({handler, stateProxy}:FuncArgs) => (func:Function) => handler.updator.addProcess(func, stateProxy, [])
 }
 

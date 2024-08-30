@@ -1,4 +1,4 @@
-import { NewComponentModule } from "../@types/component";
+import { ComponentModule } from "../@types/component";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../@types/filter";
 import { Loader } from "./Loader.js";
 import { registerComponentModule } from "../component/Component";
@@ -35,7 +35,7 @@ const QuelLoaderRegistrar:Registrar = (name:string, module:any):void => {
       customElements.define(name, module as CustomElementConstructor);
     } else {
       if ("State" in module && "html" in module) {
-        registerComponentModule(name, module as NewComponentModule);
+        registerComponentModule(name, module as ComponentModule);
       }
     }
   }

@@ -2,13 +2,13 @@ import { utils } from "../utils.js";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component.js";
-import { INewComponent, IProps } from "../@types/component.js";
+import { IComponent, IProps } from "../@types/component.js";
 import { IBindingPropertyAccess } from "../@types/binding.js";
 import { getPatternInfo } from "../dotNotation/PropInfo.js";
 
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 
-type IComponentForProps = Pick<INewComponent, "parentComponent" | "states"> & HTMLElement;
+type IComponentForProps = Pick<IComponent, "parentComponent" | "states"> & HTMLElement;
 
 function getPopoverContextIndexes(component:IComponentForProps): number[] | undefined {
   return component.parentComponent?.popoverContextIndexesById?.get(component.id);
@@ -124,7 +124,7 @@ class Handler implements ProxyHandler<IProps> {
   #createBuffer():{[key:string]:any} {
     let buffer:{[key:string]:any}|undefined;
     // ToDo: as INewComponentを修正する
-    buffer = this.#component.parentComponent?.states.current[CreateBufferApiSymbol](this.#component as INewComponent) ?? utils.raise(`CreateBufferApiSymbol is not found`);
+    buffer = this.#component.parentComponent?.states.current[CreateBufferApiSymbol](this.#component as IComponent) ?? utils.raise(`CreateBufferApiSymbol is not found`);
     if (typeof buffer !== "undefined") {
       return buffer;
     }
@@ -141,7 +141,7 @@ class Handler implements ProxyHandler<IProps> {
       const buffer = this.#buffer;
       this.#component.parentComponent?.states.writable(async () => {
         // ToDo: as INewComponentを修正する
-        const result = this.#component.parentComponent?.states.current[FlushBufferApiSymbol](buffer, this.#component as INewComponent) ?? utils.raise(`FlushBufferApiSymbol is not found`);
+        const result = this.#component.parentComponent?.states.current[FlushBufferApiSymbol](buffer, this.#component as IComponent) ?? utils.raise(`FlushBufferApiSymbol is not found`);
         if (result !== true) {
           this.#binds.forEach(({ prop, propAccess }) => {
             const loopIndexes = contextLoopIndexes(this, propAccess);

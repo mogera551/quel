@@ -1,5 +1,5 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
-import { INewComponent, IUpdator } from "../@types/component";
+import { IComponent, IUpdator } from "../@types/component";
 import { Handler as DotNotationHandler } from "../dotNotation/Handler";
 import { ILoopContext } from "../@types/loopContext";
 import { getApi } from "./Api";
@@ -17,7 +17,7 @@ type ObjectBySymbol = {
   [key:PropertyKey]:any
 }
 
-type IComponentForHandler = Pick<INewComponent, "states" | "updator"> & HTMLElement;
+type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTMLElement;
 
 export class Handler extends DotNotationHandler implements IStateHandler {
   #component: IComponentForHandler;

@@ -3,10 +3,10 @@ import { BoundByComponentSymbol } from "../@symbols/global";
 import { GlobalData } from "../global/Data";
 import { IGlobalDataProxy } from "../@types/global";
 import { Handler } from "../dotNotation/Handler";
-import { INewComponent } from "../@types/component";
+import { IComponent } from "../@types/component";
 import { getPropInfo } from "../dotNotation/PropInfo";
 
-type IComponentForGlobalData = Pick<INewComponent, "states">;
+type IComponentForGlobalData = Pick<IComponent, "states">;
 
 class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy> {
   #component:IComponentForGlobalData;

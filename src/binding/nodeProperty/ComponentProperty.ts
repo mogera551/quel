@@ -6,7 +6,7 @@ import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
 import { IBinding, IBindingPropertyAccess, INewPropertyAccess, IStateProperty } from "../../@types/binding";
 import { ILoopContext } from "../../@types/loopContext";
-import { INewComponent } from "../../@types/component";
+import { IComponent } from "../../@types/component";
 
 export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;
@@ -37,8 +37,8 @@ export class ComponentProperty extends ElementBase {
     return true;
   }
 
-  get thisComponent():INewComponent {
-    return this.node as INewComponent;
+  get thisComponent():IComponent {
+    return this.node as IComponent;
   }
 
   constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {

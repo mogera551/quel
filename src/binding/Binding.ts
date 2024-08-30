@@ -1,4 +1,4 @@
-import { IBinding, INodeProperty, IStateProperty, IContentBindings, INewBindingSummary, IComponentPartial } from "../@types/binding";
+import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial } from "../@types/binding";
 import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
@@ -45,7 +45,7 @@ class Binding implements IBinding {
   get updator(): IUpdator | undefined {
     return this.component?.updator;
   }
-  get bindingSummary(): INewBindingSummary | undefined {
+  get bindingSummary(): IBindingSummary | undefined {
     return this.component?.bindingSummary;
   }
   get state(): IStateProxy | undefined {

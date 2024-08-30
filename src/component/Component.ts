@@ -6,20 +6,20 @@ import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../
 import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
-import { Constructor, INewComponentBase, INewModule, NewComponentModule, NewCustomElementInfo, NewFilterManagers } from "../@types/component";
+import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers } from "../@types/component";
 
-const moduleByConstructor:Map<Function,INewModule> = new Map;
-const customElementInfoByTagName:Map<string,NewCustomElementInfo> = new Map;
-const filterManagersByTagName:Map<string,NewFilterManagers> = new Map;
+const moduleByConstructor:Map<Function,IModule> = new Map;
+const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;
+const filterManagersByTagName:Map<string,FilterManagers> = new Map;
 
 /**
  * generate unique component class
  */
-export const generateComponentClass = (componentModule:NewComponentModule):typeof HTMLElement => {
-  const getBaseClass = function (module:INewModule, baseConstructor:typeof HTMLElement):Constructor<HTMLElement & INewComponentBase>  {
-    const baseClass = class extends baseConstructor implements INewComponentBase {
-      #module?:INewModule;
-      get module():INewModule {
+export const generateComponentClass = (componentModule:ComponentModule):typeof HTMLElement => {
+  const getBaseClass = function (module:IModule, baseConstructor:typeof HTMLElement):Constructor<HTMLElement & IComponentBase>  {
+    const baseClass = class extends baseConstructor implements IComponentBase {
+      #module?:IModule;
+      get module():IModule {
         if (typeof this.#module === "undefined") {
           this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
         }
@@ -29,8 +29,8 @@ export const generateComponentClass = (componentModule:NewComponentModule):typeo
       get isQuelComponent():boolean {
         return true;
       }
-      #customElementInfo?: NewCustomElementInfo;
-      get customElementInfo(): NewCustomElementInfo {
+      #customElementInfo?: CustomElementInfo;
+      get customElementInfo(): CustomElementInfo {
         if (typeof this.#customElementInfo === "undefined") {
           this.#customElementInfo = customElementInfoByTagName.get(this.tagName) ?? utils.raise(`customElementInfo is not found for ${this.tagName}`);
         }
@@ -115,8 +115,8 @@ export const generateComponentClass = (componentModule:NewComponentModule):typeo
         return this.customElementInfo.isCostomizedBuiltInElement;
       }
 
-      #filterManagers?: NewFilterManagers;
-      get filterManagers(): NewFilterManagers {
+      #filterManagers?: FilterManagers;
+      get filterManagers(): FilterManagers {
         if (typeof this.#filterManagers === "undefined") {
           this.#filterManagers = filterManagersByTagName.get(this.tagName) ?? utils.raise(`filterManagers is not found for ${this.tagName}`);
         }
@@ -174,7 +174,7 @@ export const generateComponentClass = (componentModule:NewComponentModule):typeo
     return baseClass;
   };
 
-  const module:INewModule = Object.assign(new Module, componentModule);
+  const module:IModule = Object.assign(new Module, componentModule);
   module.filters = Object.assign({}, componentModule.filters);
   module.config = Object.assign({}, componentModule.moduleConfig);
   module.options = Object.assign({}, componentModule.options);
@@ -197,7 +197,7 @@ export const generateComponentClass = (componentModule:NewComponentModule):typeo
  * register component class with tag name, call customElements.define
  * generate component class from componentModule
  */
-export function registerComponentModule(customElementName:string, componentModule:NewComponentModule) {
+export function registerComponentModule(customElementName:string, componentModule:ComponentModule) {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = generateComponentClass(componentModule);
   const extendsTag = componentModule.moduleConfig?.extends ?? componentModule.options?.extends;
@@ -208,7 +208,7 @@ export function registerComponentModule(customElementName:string, componentModul
   }
 }
 
-export function registerComponentModules(componentModules:{[key:string]:NewComponentModule}) {
+export function registerComponentModules(componentModules:{[key:string]:ComponentModule}) {
   for(const [customElementName, userComponentModule] of Object.entries(componentModules)) {
     registerComponentModule(customElementName, userComponentModule);
   }

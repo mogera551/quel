@@ -1,10 +1,10 @@
 import { ClearCacheApiSymbol } from "../@symbols/state";
-import { INewComponent } from "../@types/component";
+import { IComponent } from "../@types/component";
 import { ReadonlyHandler } from "./ReadonlyHandler";
 import { IStates, IStateProxy } from "../@types/state";
 import { WritableHandler } from "./WritableHandler";
 
-type IComponentForHandler = Pick<INewComponent, "states" | "updator"> & HTMLElement;
+type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTMLElement;
 
 class States implements IStates {
   #base: Object;

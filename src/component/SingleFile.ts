@@ -1,6 +1,6 @@
 import { registerComponentModule } from "./Component";
 import { ImportMeta_ } from "../@types/importMeta";
-import { NewComponentModule } from "../@types/component";
+import { ComponentModule } from "../@types/component";
 
 function importMetaResolve(importMeta:ImportMeta_, path:string):string {
   return importMeta.resolve(path);
@@ -18,7 +18,7 @@ function fromComment(html:string):string {
   });
 }
 
-export async function loadSingleFileComponent(path:string):Promise<NewComponentModule> {
+export async function loadSingleFileComponent(path:string):Promise<ComponentModule> {
   const template = document.createElement("template");
   const response = await fetch(importMetaResolve(import.meta as ImportMeta_, path));
   template.innerHTML = toComment(await response.text());

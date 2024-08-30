@@ -1,6 +1,6 @@
 import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { IDependentProps } from "../newState/types";
-import { INewComponent, IUpdator } from "../newComponent/types";
+import { IComponent, IUpdator } from "../newComponent/types";
 import { IDotNotationHandler, IDotNotationProxy } from "./dotNotation";
 import { IGlobalDataProxy } from "./global";
 import { ILoopContext } from "./loopContext";
@@ -28,11 +28,11 @@ interface IStateProxy extends IDotNotationProxy, IBaseState {
   [NotifyForDependentPropsApiSymbol](prop:string, indexes:number[]): void;
   [GetDependentPropsApiSymbol](): IDependentProps;
   [ClearCacheApiSymbol](): void;
-  [CreateBufferApiSymbol](component:INewComponent): void;
-  [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:INewComponent): boolean;
+  [CreateBufferApiSymbol](component:IComponent): void;
+  [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:IComponent): boolean;
   // Special Property
   readonly $globals: IGlobalDataProxy;
-  readonly $component: INewComponent; // todo:後でIUserComponentに変更する
+  readonly $component: IComponent; // todo:後でIUserComponentに変更する
 }
 
 type Dependencies = {
@@ -56,22 +56,3 @@ interface IStates {
   readonly current: IStateProxy;
   writable(callback: () => Promise<void>): Promise<void>;
 }
-
-const _SupprotCallbackSymbols = [
-  ConnectedCallbackSymbol,
-  DisconnectedCallbackSymbol,
-  UpdatedCallbackSymbol
-] as const;
-
-type SupprotCallbackSymbols = typeof _SupprotCallbackSymbols[number];
-
-const _SupportApiSymbols = [
-  DirectryCallApiSymbol,
-  NotifyForDependentPropsApiSymbol,
-  GetDependentPropsApiSymbol,
-  ClearCacheApiSymbol,
-  CreateBufferApiSymbol,
-  FlushBufferApiSymbol
-] as const;
-
-type SupportApiSymbols = typeof _SupportApiSymbols[number];

@@ -1,7 +1,7 @@
 import { UpdatedCallbackSymbol } from "../@symbols/state";
 import { config } from "../Config";
-import { INewComponent, INewProcess, IUpdator } from "../@types/component";
-import { IBinding, INewBindingSummary, INewPropertyAccess } from "../@types/binding";
+import { IComponent, INewProcess, IUpdator } from "../@types/component";
+import { IBinding, IBindingSummary, INewPropertyAccess } from "../@types/binding";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
 import { IStates } from "../@types/state";
 
@@ -9,7 +9,7 @@ const getPropAccessKey = (prop: INewPropertyAccess):string => prop.pattern + "\t
 const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
 const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
-type IComponentForUpdator = Pick<INewComponent, "states" | "bindingSummary" | "contextRevision">;
+type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary" | "contextRevision">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
@@ -24,7 +24,7 @@ class Updator implements IUpdator {
     return this.#component.states;
   }
 
-  get bindingSummary(): INewBindingSummary {
+  get bindingSummary(): IBindingSummary {
     return this.#component.bindingSummary;
   }
 

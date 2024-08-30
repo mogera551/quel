@@ -2,9 +2,9 @@ import { utils } from "../utils";
 import { config } from "../Config";
 import * as Template from "./Template";
 import * as StyleSheet from "./StyleSheet";
-import { INewModule, NewComponentModuleConfig, NewComponentModuleFilters, NewComponentModuleOptions } from "../@types/component";
+import { IModule, ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions } from "../@types/component";
 
-export class Module implements INewModule {
+export class Module implements IModule {
   #uuid:string = utils.createUUID();
   get uuid(): string {
     return this.#uuid;
@@ -25,22 +25,22 @@ export class Module implements INewModule {
 
   State:typeof Object = class {} as typeof Object;
 
-  config: NewComponentModuleConfig = {};
+  config: ComponentModuleConfig = {};
 
-  moduleConfig: NewComponentModuleConfig = {};
+  moduleConfig: ComponentModuleConfig = {};
 
-  options: NewComponentModuleOptions = {};
+  options: ComponentModuleOptions = {};
 
-  filters: NewComponentModuleFilters = {};
+  filters: ComponentModuleFilters = {};
 
-  componentModules?: {[key: string]: INewModule};
+  componentModules?: {[key: string]: IModule};
 
-  get componentModulesForRegister(): {[key:string]: INewModule}|undefined {
+  get componentModulesForRegister(): {[key:string]: IModule}|undefined {
     if (this.config.useLocalTagName ?? config.useLocalTagName) {
       // case of useLocalName with true,
       // subcompnents tag name convert to the name with uuid
       if (typeof this.componentModules !== "undefined") {
-        const componentModules: {[key: string]: INewModule} = {};
+        const componentModules: {[key: string]: IModule} = {};
         for(const [customElementName, componentModule] of Object.entries(this.componentModules)) {
           componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
         }

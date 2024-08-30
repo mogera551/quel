@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { INewComponent, INewUserComponent } from "../@types/component";
+import { IComponent, IUserComponent } from "../@types/component";
 
 function existsProperty(baseClass:Function, prop:PropertyKey):boolean {
   if (typeof baseClass.prototype[prop] !== "undefined") return true;
@@ -14,7 +14,7 @@ const permittedProps = new Set([
 ]);
 
 class UserProxyHandler {
-  get(target: INewComponent, prop: string) {
+  get(target: IComponent, prop: string) {
     if (permittedProps.has(prop)) {
       return Reflect.get(target, prop);
     } else {
@@ -27,6 +27,6 @@ class UserProxyHandler {
   }
 }
 
-export function createUserComponent(component: INewComponent): INewUserComponent {
+export function createUserComponent(component: IComponent): IUserComponent {
   return new Proxy(component, new UserProxyHandler);
 }

@@ -4,10 +4,10 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
 import { IGlobalDataProxy } from "../global/global";
 import { IState, Proxies, StateClass } from "./state"; // ToDo
-import { IContentBindings, IBinding, IBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "./binding";
+import { IContentBindings, IBinding, IBindingPropertyAccess, IBindingSummary, INewPropertyAccess } from "./binding";
 import { IStateProxy, IStates } from "../newState/types";
 
-type NewComponentModuleConfig = {
+type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
   readonly debug?: boolean; // debug mode for the component, default is false
   readonly useShadowRoot?: boolean; // attach shadow root to the component, default is false
@@ -18,59 +18,59 @@ type NewComponentModuleConfig = {
   readonly useOverscrollBehavior?: boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
 }
 
-type NewComponentModuleOptions = {
+type ComponentModuleOptions = {
   readonly extends?: string; // for customized built-in element, like extends="button"
 }
 
-type NewComponentModuleFilters = {
+type ComponentModuleFilters = {
   readonly input?: {[key: string]: FilterFuncWithOption};
   readonly output?: {[key: string]: FilterFuncWithOption};
   readonly event?: {[key: string]: EventFilterFuncWithOption};
 }
 
-type NewComponentModule = {
+type ComponentModule = {
   readonly html?: string;
   readonly css?: string;
   readonly State?:typeof Object;
-  readonly componentModules?:{[key:string]:NewComponentModule};
-  readonly config?: NewComponentModuleConfig;
-  readonly options?: NewComponentModuleOptions;
-  readonly filters?: NewComponentModuleFilters;
-  readonly moduleConfig?: NewComponentModuleConfig;
+  readonly componentModules?:{[key:string]:ComponentModule};
+  readonly config?: ComponentModuleConfig;
+  readonly options?: ComponentModuleOptions;
+  readonly filters?: ComponentModuleFilters;
+  readonly moduleConfig?: ComponentModuleConfig;
 }
 
-interface INewModule {
+interface IModule {
   readonly uuid: string;
   readonly html: string;
   readonly css?: string;
   readonly template: HTMLTemplateElement;
   readonly styleSheet?: CSSStyleSheet;
   readonly State: typeof Object;
-  config: NewComponentModuleConfig;
-  readonly moduleConfig: NewComponentModuleConfig;
-  options: NewComponentModuleOptions;
-  filters: NewComponentModuleFilters;
-  readonly componentModules?: {[key: string]: INewModule};
-  readonly componentModulesForRegister?: {[key: string]: INewModule};
+  config: ComponentModuleConfig;
+  readonly moduleConfig: ComponentModuleConfig;
+  options: ComponentModuleOptions;
+  filters: ComponentModuleFilters;
+  readonly componentModules?: {[key: string]: IModule};
+  readonly componentModulesForRegister?: {[key: string]: IModule};
 }
 
-type NewCustomElementInfo = {
+type CustomElementInfo = {
   readonly lowerTagName: string; // lower case tag name
   readonly selectorName: string; // local selector name
   readonly isAutonomousCustomElement: boolean; // is autonomous custom element
   readonly isCostomizedBuiltInElement: boolean; // is customized built-in element
 }
 
-type NewFilterManagers = {
+type FilterManagers = {
   readonly inputFilterManager: IFilterManager<"input">, 
   readonly outputFilterManager: IFilterManager<"output">, 
   readonly eventFilterManager: IFilterManager<"event">
 };
 
-interface INewComponentBase {
-  readonly module: INewModule;
+interface IComponentBase {
+  readonly module: IModule;
   readonly isQuelComponent: boolean;
-  readonly customElementInfo: NewCustomElementInfo;
+  readonly customElementInfo: CustomElementInfo;
   readonly template: HTMLTemplateElement;
   readonly styleSheet?: CSSStyleSheet;
   readonly State: StateClass;
@@ -89,7 +89,7 @@ interface INewComponentBase {
   readonly isAutonomousCustomElement: boolean;
   // is costomized built-in element
   readonly isCostomizedBuiltInElement: boolean;
-  readonly filterManagers: NewFilterManagers;
+  readonly filterManagers: FilterManagers;
   readonly inputFilterManager: IFilterManager<"input">;
   readonly outputFilterManager: IFilterManager<"output">;
   readonly eventFilterManager: IFilterManager<"event">;
@@ -97,9 +97,9 @@ interface INewComponentBase {
   readonly thisClass: Function;
 }
 
-interface INewCustomComponent {
-  readonly component: INewComponent & HTMLElement;
-  readonly parentComponent?: INewComponent & HTMLElement;
+interface ICustomComponent {
+  readonly component: IComponent & HTMLElement;
+  readonly parentComponent?: IComponent & HTMLElement;
   readonly initialPromises: PromiseWithResolvers<void>;
   alivePromises: PromiseWithResolvers<void>;
   readonly states: IStates;
@@ -111,7 +111,7 @@ interface INewCustomComponent {
   readonly shadowRootOrDocument: ShadowRoot|Document;
   contextRevision: number;
   useContextRevision(callback: (revision:number)=>void):void;
-  readonly bindingSummary: INewBindingSummary;
+  readonly bindingSummary: IBindingSummary;
   readonly updator: IUpdator;
   readonly props: IProps;
   readonly globals: IGlobalDataProxy;
@@ -121,7 +121,7 @@ interface INewCustomComponent {
   disconnectedCallback():Promise<void>;
 } 
 
-interface INewDialogComponent {
+interface IDialogComponent {
   dialogPromises: PromiseWithResolvers<any>|undefined;
   returnValue: string;
   readonly useBufferedBind: boolean;
@@ -132,7 +132,7 @@ interface INewDialogComponent {
   close(result:any): void;
 }
 
-interface INewPopoverComponent {
+interface IPopoverComponent {
   canceled: boolean;
   popoverPromises: PromiseWithResolvers<any> | undefined;
   readonly popoverContextIndexesById: Map<string, number[]>;
@@ -142,7 +142,7 @@ interface INewPopoverComponent {
 }
 type Constructor<T = {}> = new (...args: any[]) => T;
 
-type INewComponent = INewComponentBase & INewCustomComponent & INewDialogComponent & INewPopoverComponent & HTMLElement;
+type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
 
 interface INewProcess {
   readonly target:Function;
@@ -151,13 +151,13 @@ interface INewProcess {
 }
 
 interface IUpdator {
-//  component: INewComponent;
+//  component: IComponent;
   readonly processQueue: INewProcess[];
   readonly updatedStateProperties: INewPropertyAccess[];
   readonly expandedStateProperties: INewPropertyAccess[];
   readonly updatedBindings: Set<IBinding>;
   readonly states: IStates;
-  readonly bindingSummary: INewBindingSummary;
+  readonly bindingSummary: IBindingSummary;
 
   executing: boolean;
 
@@ -189,8 +189,8 @@ interface IProps {
 }
 
 // ToDo: addProcessをどうするか検討
-export type INewUserComponent = Pick<
-  INewComponentBase & INewCustomComponent & INewDialogComponent & INewPopoverComponent,
+export type IUserComponent = Pick<
+  IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,
   /* "addProcess" | */ "viewRootElement" | "queryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
 >;
 

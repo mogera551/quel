@@ -1,10 +1,10 @@
 
 import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { INewComponent, INewDialogComponent, Constructor, INewCustomComponent, INewComponentBase } from "../@types/component";
+import { IComponent, IDialogComponent, Constructor, ICustomComponent, IComponentBase } from "../@types/component";
 
-export function DialogComponent<TBase extends Constructor<HTMLElement & INewComponentBase & INewCustomComponent>>(Base: TBase) {
-  return class extends Base implements INewDialogComponent {
+export function DialogComponent<TBase extends Constructor<HTMLElement & IComponentBase & ICustomComponent>>(Base: TBase) {
+  return class extends Base implements IDialogComponent {
     #dialogPromises?: PromiseWithResolvers<any>;
     get dialogPromises(): PromiseWithResolvers<any>|undefined {
       return this.#dialogPromises;

@@ -2,7 +2,7 @@
 import "../nop";
 import { ILoopContext } from "./loopContext";
 import { IPropInfo } from "./dotNotation";
-import { INewComponent, IUpdator } from "../newComponent/types";
+import { IComponent, IUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
 import { FilterFunc } from "./filter";
 
@@ -58,7 +58,7 @@ interface IBindingBase {
   readonly statePropertyName: string;
 }
 
-type IComponentPartial = Pick<INewComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
+type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
 
 interface IBinding extends IBindingBase {
   readonly id: string;
@@ -70,7 +70,7 @@ interface IBinding extends IBindingBase {
   readonly expandable: boolean;
   readonly state?: IStateProxy
   readonly updator?: IUpdator;
-  readonly bindingSummary?: INewBindingSummary;
+  readonly bindingSummary?: IBindingSummary;
   readonly selectorName?: string;
   readonly eventFilterManager?: IFilterManager<"event">;
   readonly inputFilterManager?: IFilterManager<"input">;
@@ -117,7 +117,7 @@ interface IMultiValue {
   enabled:boolean;
 }
 
-interface INewBindingSummary {
+interface IBindingSummary {
   updated: boolean;
   readonly updateRevision: number;
   readonly bindingsByKey: Map<string,IBinding[]>;
@@ -128,7 +128,7 @@ interface INewBindingSummary {
   delete(binding: IBinding): void;
   exists(binding: IBinding): boolean;
   flush(): void;
-  update(callback:(summary: INewBindingSummary)=>any): void;
+  update(callback:(summary: IBindingSummary)=>any): void;
 }
 
 interface ILoopable {
