@@ -2,7 +2,7 @@ import { utils } from "../utils.js";
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component.js";
-import { INewComponent, INewProps } from "../@types/types.js";
+import { INewComponent, INewProps } from "../@types/component.js";
 import { INewBindingPropertyAccess } from "../@types/binding.js";
 import { getPatternInfo } from "../dotNotation/PropInfo.js";
 

@@ -6,7 +6,7 @@ import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
 import { INewBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../../@types/binding";
 import { INewLoopContext } from "../../loopContext/types";
-import { INewComponent } from "../../@types/types";
+import { INewComponent } from "../../@types/component";
 
 export class BindingPropertyAccess implements INewBindingPropertyAccess{
   #stateProperty:INewStateProperty;

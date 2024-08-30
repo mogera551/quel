@@ -2,7 +2,7 @@ import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INe
 import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
-import { INewUpdator } from "../@types/types";
+import { INewUpdator } from "../@types/component";
 import { IStateProxy } from "../state/types";
 
 let id = 1;

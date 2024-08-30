@@ -1,6 +1,6 @@
 import { UpdatedCallbackSymbol } from "../@symbols/state";
 import { config } from "../Config";
-import { INewComponent, INewProcess, INewUpdator } from "../@types/types";
+import { INewComponent, INewProcess, INewUpdator } from "../@types/component";
 import { INewBinding, INewBindingSummary, INewPropertyAccess } from "../@types/binding";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
 import { IStates } from "../state/types";

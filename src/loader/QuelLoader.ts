@@ -1,4 +1,4 @@
-import { NewComponentModule } from "../@types/types";
+import { NewComponentModule } from "../@types/component";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../@types/filter";
 import { Loader } from "./Loader.js";
 import { registerComponentModule } from "../component/Component";
