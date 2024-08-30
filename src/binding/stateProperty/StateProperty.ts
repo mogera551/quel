@@ -3,7 +3,7 @@ import { IFilterInfo, FilterFunc } from "../../@types/filter";
 import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { IPropInfo } from "../../@types/types";
+import { IPropInfo } from "../../@types/dotNotation";
 import { getPropInfo } from "../../dotNotation/PropInfo";
 import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";

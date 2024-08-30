@@ -1,5 +1,5 @@
 
-import { IPatternInfo, IPropInfo } from '../@types/types';
+import { IPatternInfo, IPropInfo } from '../@types/dotNotation';
 
 const _cachePropInfo = new Map<string, IPropInfo>();
 const _cachePatternInfo = new Map<string, IPatternInfo>();
