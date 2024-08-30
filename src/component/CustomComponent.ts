@@ -7,12 +7,12 @@ import { createUpdator } from "./Updator";
 import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
 import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor, INewComponentBase } from "./types";
-import { IStateProxy, IStates } from "../newState/types";
+import { IStates } from "../state/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
-import { createStates } from "../newState/States";
+import { createStates } from "../state/States";
 
 const pseudoComponentByNode:Map<Node, INewComponent> = new Map;
 

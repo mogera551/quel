@@ -5,7 +5,7 @@ import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { IPropInfo } from "../../dotNotation/types";
 import { getPropInfo } from "../../dotNotation/PropInfo";
-import { IStateProxy } from "../../newState/types";
+import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
 
 export class StateProperty implements INewStateProperty {
