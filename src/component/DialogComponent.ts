@@ -1,7 +1,7 @@
 
 import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
-import { INewComponent, INewDialogComponent, Constructor, INewCustomComponent, INewComponentBase } from "./types";
+import { INewComponent, INewDialogComponent, Constructor, INewCustomComponent, INewComponentBase } from "../@types/types";
 
 export function DialogComponent<TBase extends Constructor<HTMLElement & INewComponentBase & INewCustomComponent>>(Base: TBase) {
   return class extends Base implements INewDialogComponent {

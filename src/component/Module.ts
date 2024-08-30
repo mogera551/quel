@@ -2,7 +2,7 @@ import { utils } from "../utils";
 import { config } from "../Config";
 import * as Template from "./Template";
 import * as StyleSheet from "./StyleSheet";
-import { INewModule, NewComponentModuleConfig, NewComponentModuleFilters, NewComponentModuleOptions } from "./types";
+import { INewModule, NewComponentModuleConfig, NewComponentModuleFilters, NewComponentModuleOptions } from "../@types/types";
 
 export class Module implements INewModule {
   #uuid:string = utils.createUUID();

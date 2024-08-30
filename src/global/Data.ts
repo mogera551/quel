@@ -2,7 +2,7 @@ import { SetDirectSymbol } from "../@symbols/dotNotation";
 import { BoundByComponentSymbol } from "../@symbols/global";
 import { NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { Handler } from "../dotNotation/Handler";
-import { INewComponent } from "../component/types";
+import { INewComponent } from "../@types/types";
 import { IGlobalDataProxy } from "./types";
 import { getPropInfo } from "../dotNotation/PropInfo";
 

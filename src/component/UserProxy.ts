@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { INewComponent, INewUserComponent } from "./types";
+import { INewComponent, INewUserComponent } from "../@types/types";
 
 function existsProperty(baseClass:Function, prop:PropertyKey):boolean {
   if (typeof baseClass.prototype[prop] !== "undefined") return true;
