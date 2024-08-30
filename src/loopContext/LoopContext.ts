@@ -2,13 +2,13 @@ import { IContentBindingsBase, ILoopable, IBinding } from "../@types/binding";
 import { getPatternInfo } from "../dotNotation/PropInfo";
 import { IPatternInfo } from "../@types/dotNotation";
 import { utils } from "../utils";
-import { INewLoopContext } from "../@types/loopContext";
+import { ILoopContext } from "../@types/loopContext";
 
-export class LoopContext implements INewLoopContext{
+export class LoopContext implements ILoopContext{
   #revision?: number;
   #contentBindings: IContentBindingsBase;
   #index?: number;
-  #parentLoopContext?: INewLoopContext;
+  #parentLoopContext?: ILoopContext;
   #parentLoopCache = false;
   #statePropertyName: string;
   #patternInfo: IPatternInfo;
@@ -22,7 +22,7 @@ export class LoopContext implements INewLoopContext{
   get patternName(): string {
     return this.#patternInfo.wildcardPaths.at(-1) ?? utils.raise("patternName is undefined");
   }
-  get parentLoopContext(): INewLoopContext | undefined {
+  get parentLoopContext(): ILoopContext | undefined {
     if (!this.#parentLoopCache) {
       const parentPattern = this.#patternInfo.wildcardPaths.at(-2);
       let curContentBindings:IContentBindingsBase | undefined = undefined;
@@ -65,7 +65,7 @@ export class LoopContext implements INewLoopContext{
     }
   }
 
-  find(patternName: string): INewLoopContext | undefined {
+  find(patternName: string): ILoopContext | undefined {
     let curContentBindings:IContentBindingsBase | undefined = this.#contentBindings;
     while (typeof curContentBindings !== "undefined") {
       if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === patternName) {

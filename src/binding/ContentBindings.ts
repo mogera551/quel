@@ -1,6 +1,6 @@
 import { createBinder } from "../binder/Binder";
 import { LoopContext } from "../loopContext/LoopContext";
-import { INewLoopContext } from "../@types/loopContext";
+import { ILoopContext } from "../@types/loopContext";
 import { utils } from "../utils";
 import { IBinding, IContentBindings, IComponentPartial } from "../@types/binding";
 
@@ -9,7 +9,7 @@ class ContentBindings implements IContentBindings {
   template: HTMLTemplateElement;
   #childrenBinding?: IBinding[];
   #parentBinding?: IBinding;
-  #loopContext?: INewLoopContext;
+  #loopContext?: ILoopContext;
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
 
@@ -33,7 +33,7 @@ class ContentBindings implements IContentBindings {
     this.#component = value?.component ?? this.#component;
   }
 
-  get loopContext(): INewLoopContext | undefined {
+  get loopContext(): ILoopContext | undefined {
     return this.#loopContext;
   }
 
@@ -48,7 +48,7 @@ class ContentBindings implements IContentBindings {
     return this.childNodes[this.childNodes.length - 1];
   }
 
-  get currentLoopContext(): INewLoopContext | undefined {
+  get currentLoopContext(): ILoopContext | undefined {
     if (typeof this.#loopContext === "undefined") {
       return this.parentContentBindings?.loopContext;
     } else {

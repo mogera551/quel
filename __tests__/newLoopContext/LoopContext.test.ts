@@ -1,12 +1,12 @@
 import 'jest';
-import { IContentBindingsBase, INewBindingBase } from "../../src/newBinding/types";
+import { IContentBindingsBase, IBindingBase } from "../../src/newBinding/types";
 import { LoopContext } from "../../src/newLoopContext/LoopContext";
 
 class ContentBindingsBase implements IContentBindingsBase {
-  parentBinding: INewBindingBase | undefined;
-  childrenBinding: INewBindingBase[];
+  parentBinding: IBindingBase | undefined;
+  childrenBinding: IBindingBase[];
   loopContext: LoopContext | undefined;
-  constructor(parentBinding?: INewBindingBase) {
+  constructor(parentBinding?: IBindingBase) {
     this.childrenBinding = [];
     if (typeof parentBinding !== "undefined") {
       this.parentBinding = parentBinding;
@@ -18,7 +18,7 @@ class ContentBindingsBase implements IContentBindingsBase {
   }
 }
 
-class Binding implements INewBindingBase {
+class Binding implements IBindingBase {
   parentContentBindings: IContentBindingsBase;
   childrenContentBindings: IContentBindingsBase[];
   loopable: boolean;

@@ -1,7 +1,7 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
 import { INewComponent, INewUpdator } from "../@types/component";
 import { Handler as DotNotationHandler } from "../dotNotation/Handler";
-import { INewLoopContext } from "../@types/loopContext";
+import { ILoopContext } from "../@types/loopContext";
 import { getApi } from "./Api";
 import { getCallback } from "./Callback";
 import { getSpecialProps } from "./SpecialProp";
@@ -89,6 +89,6 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   clearCache(): void {
   }
 
-  async directlyCallback(loopContext: INewLoopContext, callback:() => Promise<void>): Promise<void> {
+  async directlyCallback(loopContext: ILoopContext, callback:() => Promise<void>): Promise<void> {
   }
 }

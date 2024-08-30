@@ -4,7 +4,7 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
 import { IGlobalDataProxy } from "../global/global";
 import { IState, Proxies, StateClass } from "./state"; // ToDo
-import { IContentBindings, IBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "./binding";
+import { IContentBindings, IBinding, IBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "./binding";
 import { IStateProxy, IStates } from "../newState/types";
 
 type NewComponentModuleConfig = {
@@ -175,7 +175,7 @@ interface INewUpdator {
 }
 
 interface INewProps {
-  [BindPropertySymbol](prop: string, propAccess: INewBindingPropertyAccess): void;
+  [BindPropertySymbol](prop: string, propAccess: IBindingPropertyAccess): void;
   [SetBufferSymbol](buffer: {[key: string]: any}): void;
   [GetBufferSymbol](): {[key: string]: any};
   [ClearBufferSymbol](): void;

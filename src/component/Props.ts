@@ -3,7 +3,7 @@ import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component.js";
 import { INewComponent, INewProps } from "../@types/component.js";
-import { INewBindingPropertyAccess } from "../@types/binding.js";
+import { IBindingPropertyAccess } from "../@types/binding.js";
 import { getPatternInfo } from "../dotNotation/PropInfo.js";
 
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
@@ -14,7 +14,7 @@ function getPopoverContextIndexes(component:IComponentForProps): number[] | unde
   return component.parentComponent?.popoverContextIndexesById?.get(component.id);
 }
 
-const contextLoopIndexes = (handler:Handler, props:INewBindingPropertyAccess): number[] => {
+const contextLoopIndexes = (handler:Handler, props:IBindingPropertyAccess): number[] => {
   let indexes;
   const patternInfo = getPatternInfo(props.name);
   if (patternInfo.wildcardPaths.length > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
@@ -39,8 +39,8 @@ class Handler implements ProxyHandler<INewProps> {
     return this.#buffer;
   }
 
-  #binds:{prop: string, propAccess: INewBindingPropertyAccess}[] = [];
-  get binds(): {prop: string, propAccess: INewBindingPropertyAccess}[] {
+  #binds:{prop: string, propAccess: IBindingPropertyAccess}[] = [];
+  get binds(): {prop: string, propAccess: IBindingPropertyAccess}[] {
     return this.#binds;
   }
 
@@ -49,8 +49,8 @@ class Handler implements ProxyHandler<INewProps> {
   /**
    * bind parent component's property
    */
-  #bindProperty(prop: string, propAccess?: INewBindingPropertyAccess) {
-    const getFunc = (handler: Handler, name: string, props?: INewBindingPropertyAccess) => function () {
+  #bindProperty(prop: string, propAccess?: IBindingPropertyAccess) {
+    const getFunc = (handler: Handler, name: string, props?: IBindingPropertyAccess) => function () {
       if (typeof handler.buffer !== "undefined") {
         return handler.buffer[name];
       } else {
@@ -72,7 +72,7 @@ class Handler implements ProxyHandler<INewProps> {
     /**
      * return parent component's property setter function
      */
-    const setFunc = (handler:Handler, name:string, props?:INewBindingPropertyAccess) => function (value:any) {
+    const setFunc = (handler:Handler, name:string, props?:IBindingPropertyAccess) => function (value:any) {
       if (typeof handler.buffer !== "undefined") {
         handler.buffer[name] = value;
       } else {
@@ -165,7 +165,7 @@ class Handler implements ProxyHandler<INewProps> {
    */
   get(target:any, prop:PropertyKey, receiver:INewProps):any {
     if (prop === BindPropertySymbol) {
-      return (prop:string, propAccess:INewBindingPropertyAccess) => this.#bindProperty(prop, propAccess);
+      return (prop:string, propAccess:IBindingPropertyAccess) => this.#bindProperty(prop, propAccess);
     } else if (prop === SetBufferSymbol) {
       return (buffer:{[key:string]:any}) => this.#setBuffer(buffer);
     } else if (prop === GetBufferSymbol) {

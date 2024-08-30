@@ -4,11 +4,11 @@ import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@symbols/state";
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
-import { IBinding, INewBindingPropertyAccess, INewPropertyAccess, IStateProperty } from "../../@types/binding";
-import { INewLoopContext } from "../../@types/loopContext";
+import { IBinding, IBindingPropertyAccess, INewPropertyAccess, IStateProperty } from "../../@types/binding";
+import { ILoopContext } from "../../@types/loopContext";
 import { INewComponent } from "../../@types/component";
 
-export class BindingPropertyAccess implements INewBindingPropertyAccess{
+export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;
 
   get name():string {
@@ -19,7 +19,7 @@ export class BindingPropertyAccess implements INewBindingPropertyAccess{
     return this.#stateProperty.indexes;
   }
 
-  get loopContext():INewLoopContext | undefined {
+  get loopContext():ILoopContext | undefined {
     return this.#stateProperty.binding.parentContentBindings.currentLoopContext;
   }
 

@@ -1,9 +1,9 @@
 import { IBinding, IContentBindings } from "./binding";
 
-interface INewLoopContext {
-  readonly parentLoopContext?: INewLoopContext;
+interface ILoopContext {
+  readonly parentLoopContext?: ILoopContext;
   readonly index: number;
   readonly indexes: number[];
   readonly patternName:string;
-  find(patternName:string):INewLoopContext | undefined;
+  find(patternName:string):ILoopContext | undefined;
 }

@@ -1,6 +1,6 @@
 
 import "../nop";
-import { INewLoopContext } from "./loopContext";
+import { ILoopContext } from "./loopContext";
 import { IPropInfo } from "./dotNotation";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
@@ -12,10 +12,10 @@ interface INewPropertyAccess {
   readonly propInfo: IPropInfo;
 }
 
-interface INewBindingPropertyAccess {
+interface IBindingPropertyAccess {
   readonly name: string;
   readonly indexes: number[];
-  readonly loopContext?: INewLoopContext;
+  readonly loopContext?: ILoopContext;
 }
 
 interface INodeProperty {
@@ -51,7 +51,7 @@ interface IStateProperty {
   initialize(): void;
 }
 
-interface INewBindingBase {
+interface IBindingBase {
   readonly childrenContentBindings: IContentBindingsBase[];
   readonly parentContentBindings: IContentBindingsBase;
   readonly loopable: boolean;
@@ -60,7 +60,7 @@ interface INewBindingBase {
 
 type IComponentPartial = Pick<INewComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
 
-interface IBinding extends INewBindingBase {
+interface IBinding extends IBindingBase {
   readonly id: string;
   readonly nodeProperty: INodeProperty;
   readonly stateProperty: IStateProperty;
@@ -88,10 +88,10 @@ interface IBinding extends INewBindingBase {
 }
 
 interface IContentBindingsBase {
-  readonly childrenBinding: INewBindingBase[];
-  parentBinding?: INewBindingBase;
-  readonly loopContext?: INewLoopContext;
-  readonly currentLoopContext?: INewLoopContext;
+  readonly childrenBinding: IBindingBase[];
+  parentBinding?: IBindingBase;
+  readonly loopContext?: ILoopContext;
+  readonly currentLoopContext?: ILoopContext;
 }
 
 interface IContentBindings extends IContentBindingsBase {

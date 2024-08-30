@@ -1,13 +1,13 @@
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { Indexes, IPropInfo } from "../@types/dotNotation";
-import { INewLoopContext } from "../@types/loopContext";
+import { ILoopContext } from "../@types/loopContext";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
 import { IStateProxy } from "../@types/state";
 
 export class WritableHandler extends Handler {
-  #loopContext:INewLoopContext|undefined;
-  async withLoopContext(loopContext:INewLoopContext, callback:()=>Promise<void>):Promise<void> {
+  #loopContext:ILoopContext|undefined;
+  async withLoopContext(loopContext:ILoopContext, callback:()=>Promise<void>):Promise<void> {
     if (typeof this.#loopContext !== "undefined") utils.raise("Writable: already set loopContext");
     this.#loopContext = loopContext;
     try {
@@ -17,7 +17,7 @@ export class WritableHandler extends Handler {
     }
   }
 
-  async directlyCallback(loopContext:INewLoopContext, callback:()=>Promise<void>):Promise<void> {
+  async directlyCallback(loopContext:ILoopContext, callback:()=>Promise<void>):Promise<void> {
     return this.withLoopContext(loopContext, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
