@@ -1,40 +1,37 @@
 import { IDependentProps, Dependencies } from "../@types/state";
-import { getPropInfo } from "../dotNotation/PropInfo";
+import { getPatternInfo, getPropInfo } from "../dotNotation/PropInfo";
 
 /**
  * $dependentPropsを表現
  */
 export class DependentProps implements IDependentProps {
-  #defaultProps:Set<string> = new Set;
-  #propsByRefProp:Map<string,Set<string>> = new Map;
+  #defaultProps: Set<string> = new Set;
+  #propsByRefProp: {[ key: string ]: Set<string>} = {};
 
   constructor(props:Dependencies) {
-    this.setDependentProps(props);
+    this.#setDependentProps(props);
   }
 
-  get propsByRefProp():Map<string,Set<string>> {
+  get propsByRefProp(): {[ key: string ]: Set<string>} {
     return this.#propsByRefProp;
   }
 
-  hasDefaultProp(prop:string):boolean {
-    return this.#defaultProps.has(prop);
-  }
-
-  addDefaultProp(prop:string):void {
-    const propInfo = getPropInfo(prop);
-    for(let i = propInfo.patternPaths.length - 1; i >= 1; i--) {
-      const parentPattern = propInfo.patternPaths[i - 1];
-      const pattern = propInfo.patternPaths[i];
-      this.#propsByRefProp.get(parentPattern)?.add(pattern) ?? 
-        this.#propsByRefProp.set(parentPattern, new Set([pattern]));
+  setDefaultProp(pattern: string): void {
+    if (this.#defaultProps.has(pattern)) return;
+    const patternInfo = getPatternInfo(pattern);
+    for(let i = patternInfo.patternPaths.length - 1; i >= 1; i--) {
+      const parentPattern = patternInfo.patternPaths[i - 1];
+      const pattern = patternInfo.patternPaths[i];
+      this.#propsByRefProp[parentPattern]?.add(pattern) ?? 
+        (this.#propsByRefProp[parentPattern] = new Set([pattern]));
       this.#defaultProps.add(pattern);
     }
   }
 
-  setDependentProps(props:Dependencies):void {
+  #setDependentProps(props:Dependencies):void {
     for(const [prop, refProps] of Object.entries(props)) {
       for(const refProp of refProps) {
-        this.#propsByRefProp.get(refProp)?.add(prop) ?? this.#propsByRefProp.set(refProp, new Set([prop]));
+        this.#propsByRefProp[refProp]?.add(prop) ?? (this.#propsByRefProp[refProp] = new Set([prop]));
       }
     }
   }

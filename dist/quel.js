@@ -1091,7 +1091,7 @@ function makeNotifyForDependentProps(state, propertyAccess, setOfSavePropertyAcc
         return [];
     setOfSavePropertyAccessKeys.add(propertyAccessKey);
     const dependentProps = state[GetDependentPropsApiSymbol]();
-    const setOfProps = dependentProps.propsByRefProp.get(propInfo.pattern);
+    const setOfProps = dependentProps.propsByRefProp[propInfo.pattern];
     const propertyAccesses = [];
     if (typeof setOfProps === "undefined")
         return [];
@@ -3631,30 +3631,29 @@ function getAccessorProperties(target) {
  */
 class DependentProps {
     #defaultProps = new Set;
-    #propsByRefProp = new Map;
+    #propsByRefProp = {};
     constructor(props) {
-        this.setDependentProps(props);
+        this.#setDependentProps(props);
     }
     get propsByRefProp() {
         return this.#propsByRefProp;
     }
-    hasDefaultProp(prop) {
-        return this.#defaultProps.has(prop);
-    }
-    addDefaultProp(prop) {
-        const propInfo = getPropInfo(prop);
-        for (let i = propInfo.patternPaths.length - 1; i >= 1; i--) {
-            const parentPattern = propInfo.patternPaths[i - 1];
-            const pattern = propInfo.patternPaths[i];
-            this.#propsByRefProp.get(parentPattern)?.add(pattern) ??
-                this.#propsByRefProp.set(parentPattern, new Set([pattern]));
+    setDefaultProp(pattern) {
+        if (this.#defaultProps.has(pattern))
+            return;
+        const patternInfo = getPatternInfo(pattern);
+        for (let i = patternInfo.patternPaths.length - 1; i >= 1; i--) {
+            const parentPattern = patternInfo.patternPaths[i - 1];
+            const pattern = patternInfo.patternPaths[i];
+            this.#propsByRefProp[parentPattern]?.add(pattern) ??
+                (this.#propsByRefProp[parentPattern] = new Set([pattern]));
             this.#defaultProps.add(pattern);
         }
     }
-    setDependentProps(props) {
+    #setDependentProps(props) {
         for (const [prop, refProps] of Object.entries(props)) {
             for (const refProp of refProps) {
-                this.#propsByRefProp.get(refProp)?.add(prop) ?? this.#propsByRefProp.set(refProp, new Set([prop]));
+                this.#propsByRefProp[refProp]?.add(prop) ?? (this.#propsByRefProp[refProp] = new Set([prop]));
             }
         }
     }
@@ -3712,10 +3711,7 @@ class Handler extends Handler$1 {
     }
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         if (patternPaths.length > 1) {
-            const pattern = patternPaths[pathIndex];
-            if (!this.dependentProps.hasDefaultProp(pattern)) {
-                this.dependentProps.addDefaultProp(pattern);
-            }
+            this.dependentProps.setDefaultProp(patternPaths[pathIndex]);
         }
         return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
     }
@@ -3768,14 +3764,17 @@ class ReadonlyHandler extends Handler {
 
 class WritableHandler extends Handler {
     #loopContext;
+    #setLoopContext = false;
     async withLoopContext(loopContext, callback) {
-        if (typeof this.#loopContext !== "undefined")
+        if (this.#setLoopContext)
             utils.raise("Writable: already set loopContext");
+        this.#setLoopContext = true;
         this.#loopContext = loopContext;
         try {
             return await callback();
         }
         finally {
+            this.#setLoopContext = false;
             this.#loopContext = undefined;
         }
     }

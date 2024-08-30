@@ -1,5 +1,5 @@
 import { IBinding, IContentBindings, INodeProperty, IStateProperty } from "./binding";
-import { IStateProxy } from "../newState/types";
+import { IStateProxy } from "./state";
 import { IFilterInfo } from "./filter";
 
 type NodePropertyCreator = (binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) => INodeProperty;

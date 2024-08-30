@@ -6,18 +6,21 @@ import { Handler } from "./Handler";
 import { IStateProxy } from "../@types/state";
 
 export class WritableHandler extends Handler {
-  #loopContext:ILoopContext|undefined;
-  async withLoopContext(loopContext:ILoopContext, callback:()=>Promise<void>):Promise<void> {
-    if (typeof this.#loopContext !== "undefined") utils.raise("Writable: already set loopContext");
+  #loopContext?: ILoopContext;
+  #setLoopContext: boolean = false;
+  async withLoopContext(loopContext: ILoopContext | undefined, callback: ()=> Promise<void>): Promise<void> {
+    if (this.#setLoopContext) utils.raise("Writable: already set loopContext");
+    this.#setLoopContext = true;
     this.#loopContext = loopContext;
     try {
       return await callback();
     } finally {
+      this.#setLoopContext = false;
       this.#loopContext = undefined;
     }
   }
 
-  async directlyCallback(loopContext:ILoopContext, callback:()=>Promise<void>):Promise<void> {
+  async directlyCallback(loopContext: ILoopContext | undefined, callback:() => Promise<void>): Promise<void> {
     return this.withLoopContext(loopContext, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
@@ -27,7 +30,7 @@ export class WritableHandler extends Handler {
     });
   }
 
-  getLastIndexes(pattern: string): Indexes | undefined{
+  getLastIndexes(pattern: string): Indexes | undefined {
     return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
   }
   

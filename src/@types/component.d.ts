@@ -1,11 +1,8 @@
-import "../nop";
-
 import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../@symbols/component";
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
-import { IGlobalDataProxy } from "../global/global";
-import { IState, Proxies, StateClass } from "./state"; // ToDo
+import { IGlobalDataProxy } from "./global";
+import { Proxies, StateClass, IStateProxy, IStates } from "./state";
 import { IContentBindings, IBinding, IBindingPropertyAccess, IBindingSummary, INewPropertyAccess } from "./binding";
-import { IStateProxy, IStates } from "../newState/types";
 
 type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"

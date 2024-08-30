@@ -62,10 +62,7 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     receiver: object, 
   ):any {
     if (patternPaths.length > 1) {
-      const pattern = patternPaths[pathIndex];
-      if (!this.dependentProps.hasDefaultProp(pattern)) {
-        this.dependentProps.addDefaultProp(pattern);
-      }
+      this.dependentProps.setDefaultProp(patternPaths[pathIndex]);
     }
     return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
   }
@@ -89,6 +86,6 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   clearCache(): void {
   }
 
-  async directlyCallback(loopContext: ILoopContext, callback:() => Promise<void>): Promise<void> {
+  async directlyCallback(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void> {
   }
 }

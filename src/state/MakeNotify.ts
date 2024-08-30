@@ -11,7 +11,7 @@ export function makeNotifyForDependentProps(state:IStateProxy, propertyAccess:IN
   if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
   setOfSavePropertyAccessKeys.add(propertyAccessKey);
   const dependentProps = state[GetDependentPropsApiSymbol]();
-  const setOfProps = dependentProps.propsByRefProp.get(propInfo.pattern);
+  const setOfProps = dependentProps.propsByRefProp[propInfo.pattern];
   const propertyAccesses = [];
   if (typeof setOfProps === "undefined") return [];
   for(const prop of setOfProps) {

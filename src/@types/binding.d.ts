@@ -2,8 +2,8 @@
 import "../nop";
 import { ILoopContext } from "./loopContext";
 import { IPropInfo } from "./dotNotation";
-import { IComponent, IUpdator } from "../newComponent/types";
-import { IStateProxy } from "../newState/types";
+import { IComponent, IUpdator } from "./component";
+import { IStateProxy } from "./state";
 import { FilterFunc } from "./filter";
 
 interface INewPropertyAccess {
@@ -99,7 +99,7 @@ interface IContentBindings extends IContentBindingsBase {
   readonly template: HTMLTemplateElement;
   readonly childrenBinding: IBinding[];
   parentBinding?: IBinding;
-  readonly component?: IComponent;
+  readonly component?: IComponentPartial;
   readonly parentContentBindings?: IContentBindings;
 
   readonly fragment: DocumentFragment;
