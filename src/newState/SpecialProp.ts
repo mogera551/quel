@@ -1,6 +1,6 @@
-import { createUserComponent } from "../newComponent/UserProxy";
+import { createUserComponent } from "../component/UserProxy";
 import { IStateHandler, IStateProxy } from "./types";
-import { INewComponent } from "../newComponent/types";
+import { INewComponent } from "../component/types";
 
 const GLOBALS_PROPERTY = "$globals";
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";

@@ -2,7 +2,6 @@ import { utils } from "../../utils";
 import { INewBinding } from "../types";
 import { IFilterInfo } from "../../@types/filter";
 import { TemplateProperty } from "./TemplateProperty";
-import { IContentBindings } from "../types";
 import { createContentBindings } from "../ContentBindings";
 
 export class Branch extends TemplateProperty {

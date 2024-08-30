@@ -1,5 +1,5 @@
 import { ClearCacheApiSymbol } from "../@symbols/state";
-import { INewComponent } from "../newComponent/types";
+import { INewComponent } from "../component/types";
 import { ReadonlyHandler } from "./ReadonlyHandler";
 import { IStates, IStateProxy } from "./types";
 import { WritableHandler } from "./WritableHandler";
