@@ -21,7 +21,7 @@ interface INewBindingPropertyAccess {
 interface INewNodeProperty {
   readonly node: Node;
   readonly name: string;
-  readonly binding: INewBinding;
+  readonly binding: IBinding;
   readonly applicable: boolean;
   readonly expandable: boolean;
   readonly isSelectValue: boolean;
@@ -39,7 +39,7 @@ interface INewNodeProperty {
 interface INewStateProperty {
   readonly state: IStateProxy;
   readonly name: string;
-  readonly binding: INewBinding;
+  readonly binding: IBinding;
   value: any;
   readonly filteredValue: any;
   readonly indexes: number[];
@@ -60,7 +60,7 @@ interface INewBindingBase {
 
 type IComponentPartial = Pick<INewComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
 
-interface INewBinding extends INewBindingBase {
+interface IBinding extends INewBindingBase {
   readonly id: string;
   readonly nodeProperty: INewNodeProperty;
   readonly stateProperty: INewStateProperty;
@@ -96,8 +96,8 @@ interface IContentBindingsBase {
 
 interface IContentBindings extends IContentBindingsBase {
   readonly template: HTMLTemplateElement;
-  readonly childrenBinding: INewBinding[];
-  parentBinding?: INewBinding;
+  readonly childrenBinding: IBinding[];
+  parentBinding?: IBinding;
   readonly component?: IComponent;
   readonly parentContentBindings?: IContentBindings;
 
@@ -120,13 +120,13 @@ interface IMultiValue {
 interface INewBindingSummary {
   updated: boolean;
   readonly updateRevision: number;
-  readonly bindingsByKey: Map<string,INewBinding[]>;
-  readonly expandableBindings: Set<INewBinding>;
-  readonly componentBindings: Set<INewBinding>;
-  readonly allBindings: Set<INewBinding>;
-  add(binding: INewBinding): void;
-  delete(binding: INewBinding): void;
-  exists(binding: INewBinding): boolean;
+  readonly bindingsByKey: Map<string,IBinding[]>;
+  readonly expandableBindings: Set<IBinding>;
+  readonly componentBindings: Set<IBinding>;
+  readonly allBindings: Set<IBinding>;
+  add(binding: IBinding): void;
+  delete(binding: IBinding): void;
+  exists(binding: IBinding): boolean;
   flush(): void;
   update(callback:(summary: INewBindingSummary)=>any): void;
 }

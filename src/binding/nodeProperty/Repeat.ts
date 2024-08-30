@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { TemplateProperty } from "./TemplateProperty";
-import { IContentBindings, INewBinding, ILoopable } from "../../@types/binding";
+import { IContentBindings, IBinding, ILoopable } from "../../@types/binding";
 import { createContentBindings } from "../ContentBindings";
 
 const applyToNodeFunc = (contentBindings:IContentBindings):void => contentBindings.applyToNode();
@@ -38,7 +38,7 @@ export class Repeat extends TemplateProperty implements ILoopable {
     }
   }
 
-  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
     super(binding, node, name, filters);
   }

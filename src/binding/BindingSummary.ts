@@ -1,11 +1,11 @@
 import { utils } from "../utils";
 import { config } from "../Config";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty";
-import { INewBinding, INewBindingSummary } from "../@types/binding";
+import { IBinding, INewBindingSummary } from "../@types/binding";
 
-const pickKey = (binding:INewBinding):string => binding.stateProperty.key;
-const filterExpandableBindings = (binding:INewBinding):boolean => binding.nodeProperty.expandable;
-const filerComponentBindings = (binding:INewBinding):boolean => binding.nodeProperty.constructor === ComponentProperty;
+const pickKey = (binding:IBinding):string => binding.stateProperty.key;
+const filterExpandableBindings = (binding:IBinding):boolean => binding.nodeProperty.expandable;
+const filerComponentBindings = (binding:IBinding):boolean => binding.nodeProperty.constructor === ComponentProperty;
 
 /**
  * BindingSummary
@@ -27,45 +27,45 @@ class BindingSummary implements INewBindingSummary {
   }
 
   // viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す 
-  #bindingsByKey:Map<string, INewBinding[]> = new Map; // Object<string,Binding[]>：16ms、Map<string,Binding[]>：9.2ms
-  get bindingsByKey():Map<string, INewBinding[]> {
+  #bindingsByKey:Map<string, IBinding[]> = new Map; // Object<string,Binding[]>：16ms、Map<string,Binding[]>：9.2ms
+  get bindingsByKey():Map<string, IBinding[]> {
     if (this.#updating) utils.raise("BindingSummary.bindingsByKey can only be called after BindingSummary.update()");
     return this.#bindingsByKey;
   }
 
   // if/loopを持つbinding
-  #expandableBindings:Set<INewBinding> = new Set;
-  get expandableBindings():Set<INewBinding> {
+  #expandableBindings:Set<IBinding> = new Set;
+  get expandableBindings():Set<IBinding> {
     if (this.#updating) utils.raise("BindingSummary.expandableBindings can only be called after BindingSummary.update()");
     return this.#expandableBindings;
   }
 
   // componentを持つbinding
-  #componentBindings:Set<INewBinding> = new Set;
-  get componentBindings():Set<INewBinding> {
+  #componentBindings:Set<IBinding> = new Set;
+  get componentBindings():Set<IBinding> {
     if (this.#updating) utils.raise("BindingSummary.componentBindings can only be called after BindingSummary.update()");
     return this.#componentBindings;
   }
 
   // 全binding
-  #allBindings:Set<INewBinding> = new Set;
-  get allBindings():Set<INewBinding> {
+  #allBindings:Set<IBinding> = new Set;
+  get allBindings():Set<IBinding> {
     return this.#allBindings;
   }
 
-  add(binding:INewBinding) {
+  add(binding:IBinding) {
     if (!this.#updating) utils.raise("BindingSummary.add() can only be called in BindingSummary.update()");
     this.#updated = true;
     this.#allBindings.add(binding);
   }
 
-  delete(binding:INewBinding) {
+  delete(binding:IBinding) {
     if (!this.#updating) utils.raise("BindingSummary.delete() can only be called in BindingSummary.update()");
     this.#updated = true;
     this.#allBindings.delete(binding);
   }
 
-  exists(binding:INewBinding):boolean {
+  exists(binding:IBinding):boolean {
     return this.#allBindings.has(binding);
   }
 
@@ -98,10 +98,10 @@ class BindingSummary implements INewBindingSummary {
     }
   }
 
-  rebuild(bindings:Set<INewBinding>):void {
+  rebuild(bindings:Set<IBinding>):void {
     this.#allBindings = bindings;
     const arrayBindings = Array.from(bindings);
-    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,INewBinding[]>;
+    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
     this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
     this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
   }

@@ -1,4 +1,4 @@
-import { INewBinding, IContentBindings } from "./binding";
+import { IBinding, IContentBindings } from "./binding";
 
 interface INewLoopContext {
   readonly parentLoopContext?: INewLoopContext;

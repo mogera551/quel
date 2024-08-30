@@ -1,6 +1,6 @@
 
 import { IBinder, IBindNodeInfo } from "../@types/binder";
-import { INewBinding, IContentBindings } from "../@types/binding";
+import { IBinding, IContentBindings } from "../@types/binding";
 import { parseTemplate } from "./parseTemplate";
 import { createBindings } from "./createBindings";
 
@@ -21,7 +21,7 @@ class Binder implements IBinder {
     this.#nodeInfos = parseTemplate(this.#template, useKeyed);
   }
 
-  createBindings(content: DocumentFragment, contentBindings: IContentBindings): INewBinding[] {
+  createBindings(content: DocumentFragment, contentBindings: IContentBindings): IBinding[] {
     return createBindings(content, contentBindings, this.#nodeInfos);
   }
 }

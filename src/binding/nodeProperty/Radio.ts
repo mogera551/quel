@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
-import { IMultiValue, INewBinding } from "../../@types/binding";
+import { IMultiValue, IBinding } from "../../@types/binding";
 import { MultiValue } from "./MultiValue";
 import { ElementBase } from "./ElementBase";
 import { FilterManager } from "../../filter/Manager";
@@ -29,7 +29,7 @@ export class Radio extends ElementBase {
     return this._filteredValue;
   }
   
-  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof HTMLInputElement)) utils.raise("Radio: not htmlInputElement");
     const element = node as HTMLInputElement;
     if (element.type !== "radio" && element.type !== "checkbox") utils.raise("Radio: not radio or checkbox");

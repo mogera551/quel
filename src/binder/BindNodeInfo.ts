@@ -8,7 +8,7 @@ import { getPropertyCreators } from './propertyCreators';
 import { createBinding } from './createBinding';
 import { computeNodeRoute } from './nodeRoute';
 import { initializeNode } from './initializeNode';
-import { INewBinding } from '../@types/binding';
+import { IBinding } from '../@types/binding';
 
 export class BindNodeInfo implements IBindNodeInfo {
   nodeType: NodeType;
@@ -17,7 +17,7 @@ export class BindNodeInfo implements IBindNodeInfo {
   bindTextInfos: BindTextInfo[];
   isInputable: boolean;
   defaultProperty: string;
-  initializeNode: (node:Node,bindings:INewBinding[])=>void;
+  initializeNode: (node:Node,bindings:IBinding[])=>void;
   constructor(
     nodeType: NodeType, 
     nodeRoute: NodeRoute, 
@@ -25,7 +25,7 @@ export class BindNodeInfo implements IBindNodeInfo {
     bindTextInfos: BindTextInfo[], 
     isInputable: boolean, 
     defaultProperty: string, 
-    initializeNode: (bindInfo:IBindNodeInfo)=>(node:Node,bindings:INewBinding[])=>void
+    initializeNode: (bindInfo:IBindNodeInfo)=>(node:Node,bindings:IBinding[])=>void
   ) {
     this.nodeType = nodeType;
     this.nodeRoute = nodeRoute;

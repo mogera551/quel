@@ -4,7 +4,7 @@ import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@symbols/state";
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
-import { INewBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../../@types/binding";
+import { IBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../../@types/binding";
 import { INewLoopContext } from "../../@types/loopContext";
 import { INewComponent } from "../../@types/component";
 
@@ -41,7 +41,7 @@ export class ComponentProperty extends ElementBase {
     return this.node as INewComponent;
   }
 
-  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (Reflect.get(node, IsComponentSymbol) !== true) utils.raise("ComponentProperty: not Quel Component");
     // todo: バインドするプロパティ名のチェック
     // 「*」を含まないようにする

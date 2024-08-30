@@ -2,7 +2,7 @@ import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { NodeProperty } from "./NodeProperty";
 import * as Template from "../../component/Template";
-import { INewBinding } from "../../@types/binding";
+import { IBinding } from "../../@types/binding";
 
 const PREFIX = "@@|";
 
@@ -31,7 +31,7 @@ export class TemplateProperty extends NodeProperty {
     return true;
   }
 
-  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     super(binding, node, name, filters);
   }

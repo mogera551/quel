@@ -4,7 +4,7 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, FilterType, IFilterManager } from "./filter";
 import { IGlobalDataProxy } from "../global/global";
 import { IState, Proxies, StateClass } from "./state"; // ToDo
-import { IContentBindings, INewBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "./binding";
+import { IContentBindings, IBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "./binding";
 import { IStateProxy, IStates } from "../newState/types";
 
 type NewComponentModuleConfig = {
@@ -155,7 +155,7 @@ interface INewUpdator {
   readonly processQueue: INewProcess[];
   readonly updatedStateProperties: INewPropertyAccess[];
   readonly expandedStateProperties: INewPropertyAccess[];
-  readonly updatedBindings: Set<INewBinding>;
+  readonly updatedBindings: Set<IBinding>;
   readonly states: IStates;
   readonly bindingSummary: INewBindingSummary;
 
@@ -171,7 +171,7 @@ interface INewUpdator {
   updateNode(expandedStatePropertyByKey: Map<string, INewPropertyAccess>): void;
   execCallback(callback: ()=>any): Promise<void>;
   exec(): Promise<void>;
-  applyNodeUpdatesByBinding(binding: INewBinding, callback:(updator: INewUpdator)=>any): void;
+  applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: INewUpdator)=>any): void;
 }
 
 interface INewProps {

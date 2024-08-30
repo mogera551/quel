@@ -1,9 +1,9 @@
-import { INewBinding, IContentBindings, INewNodeProperty, INewStateProperty } from "./binding";
+import { IBinding, IContentBindings, INewNodeProperty, INewStateProperty } from "./binding";
 import { IStateProxy } from "../newState/types";
 import { IFilterInfo } from "./filter";
 
-type NodePropertyCreator = (binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) => INewNodeProperty;
-type StatePropertyCreator = (binding:INewBinding, name:string, filters:IFilterInfo[]) => INewStateProperty;
+type NodePropertyCreator = (binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) => INewNodeProperty;
+type StatePropertyCreator = (binding:IBinding, name:string, filters:IFilterInfo[]) => INewStateProperty;
 
 type NodeType = "HTMLElement" | "SVGElement" | "Text" | "Template";
 
@@ -20,7 +20,7 @@ type PropertyCreators = {
 }
 
 type BindTextInfo = {
-  createBinding: (contentBindings:IContentBindings,node:Node)=>INewBinding;
+  createBinding: (contentBindings:IContentBindings,node:Node)=>IBinding;
 } & ParseBindTextInfo & PropertyCreators;
 
 type NodeRoute = number[];
@@ -34,9 +34,9 @@ interface IBindNodeInfo {
   bindTextInfos: BindTextInfo[];
   isInputable: boolean;
   defaultProperty: string;
-  initializeNode(node:Node, bindings:INewBinding[]):void;
+  initializeNode(node:Node, bindings:IBinding[]):void;
 }
 
 interface IBinder {
-  createBindings(content:DocumentFragment, contentBindings:IContentBindings):INewBinding[];
+  createBindings(content:DocumentFragment, contentBindings:IContentBindings):IBinding[];
 }

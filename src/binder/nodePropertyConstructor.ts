@@ -14,7 +14,7 @@ import { ElementStyle } from "../binding/nodeProperty/ElementStyle";
 import { ElementProperty } from "../binding/nodeProperty/ElementProperty";
 import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty";
 import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
-import { INewBinding, INewNodeProperty } from "../@types/binding";
+import { IBinding, INewNodeProperty } from "../@types/binding";
 
 type NodePropertyConstructorByName = {[key:string]:typeof NodeProperty};
 type NodePropertyConstructorByNameByIsComment = {[key:number]:NodePropertyConstructorByName};
@@ -34,7 +34,7 @@ type NodePropertyConstructorByFirstName = {[key:string]:typeof NodeProperty};
 
 const createNodeProperty = 
 (NodeProertyClass:typeof NodeProperty):NodePropertyCreator =>
-(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]):INewNodeProperty =>
+(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]):INewNodeProperty =>
 {
   return Reflect.construct(NodeProertyClass, [binding, node, name, filters]);
 };

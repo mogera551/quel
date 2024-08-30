@@ -1,25 +1,25 @@
 import { NodeType, IBindNodeInfo } from "../@types/binder";
 import { Checkbox } from "../binding/nodeProperty/Checkbox";
 import { Radio } from "../binding/nodeProperty/Radio";
-import { INewBinding } from "../@types/binding";
+import { IBinding } from "../@types/binding";
 
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
 
-const setDefaultEventHandlerByElement = (element:HTMLElement) => (binding:INewBinding) => 
+const setDefaultEventHandlerByElement = (element:HTMLElement) => (binding:IBinding) => 
   element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
 
-function initializeHTMLElement(node:Node, isInputable:boolean, bindings:INewBinding[], defaultName:string) {
+function initializeHTMLElement(node:Node, isInputable:boolean, bindings:IBinding[], defaultName:string) {
   const element = node as HTMLElement;
 
   // set event handler
   let hasDefaultEvent = false;
 
-  let defaultBinding:(INewBinding|null) = null;
+  let defaultBinding:(IBinding|null) = null;
 
-  let radioBinding:(INewBinding|null) = null;
+  let radioBinding:(IBinding|null) = null;
 
-  let checkboxBinding:(INewBinding|null) = null;
+  let checkboxBinding:(IBinding|null) = null;
 
   for(let i = 0; i < bindings.length; i++) {
     const binding = bindings[i];
@@ -50,7 +50,7 @@ function initializeHTMLElement(node:Node, isInputable:boolean, bindings:INewBind
 const thru = () => {};
 
 type InitializeNodeByNodeType = {
-  [key in NodeType]: (node:Node, isInputable:boolean, bindings:INewBinding[], defaultName:string)=>void;
+  [key in NodeType]: (node:Node, isInputable:boolean, bindings:IBinding[], defaultName:string)=>void;
 }
 
 const initializeNodeByNodeType:InitializeNodeByNodeType = {
@@ -60,4 +60,4 @@ const initializeNodeByNodeType:InitializeNodeByNodeType = {
   Template:    thru,
 };
 
-export const initializeNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:INewBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
+export const initializeNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:IBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);

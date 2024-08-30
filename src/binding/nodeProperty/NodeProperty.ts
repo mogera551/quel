@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { FilterFunc, IFilterInfo } from "../../@types/filter";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { INewBinding, INewNodeProperty, INewPropertyAccess } from "../../@types/binding";
+import { IBinding, INewNodeProperty, INewPropertyAccess } from "../../@types/binding";
 
 export class NodeProperty implements INewNodeProperty {
   #node:Node;
@@ -41,7 +41,7 @@ export class NodeProperty implements INewNodeProperty {
     return true;
   }
 
-  #binding:INewBinding;
+  #binding:IBinding;
   get binding() {
     return this.#binding;
   }
@@ -58,7 +58,7 @@ export class NodeProperty implements INewNodeProperty {
     return false;
   }
 
-  constructor(binding:INewBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;

@@ -1,4 +1,4 @@
-import { INewBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary, IComponentPartial } from "../@types/binding";
+import { IBinding, INewNodeProperty, INewStateProperty, IContentBindings, INewBindingSummary, IComponentPartial } from "../@types/binding";
 import { NodePropertyCreator, StatePropertyCreator } from "../@types/binder";
 import { IFilterInfo, IFilterManager } from "../@types/filter";
 import { utils } from "../utils";
@@ -6,7 +6,7 @@ import { INewUpdator } from "../@types/component";
 import { IStateProxy } from "../@types/state";
 
 let id = 1;
-class Binding implements INewBinding {
+class Binding implements IBinding {
   #id:number;
   #nodeProperty: INewNodeProperty;
   #stateProperty: INewStateProperty;
@@ -168,7 +168,7 @@ export function createBinding(
   statePropertyName: string, 
   statePropertyCreator: StatePropertyCreator,
   inputFilters: IFilterInfo[]
-): INewBinding {
+): IBinding {
   const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
   binding.initialize();
   return binding;

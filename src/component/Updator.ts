@@ -1,13 +1,13 @@
 import { UpdatedCallbackSymbol } from "../@symbols/state";
 import { config } from "../Config";
 import { INewComponent, INewProcess, INewUpdator } from "../@types/component";
-import { INewBinding, INewBindingSummary, INewPropertyAccess } from "../@types/binding";
+import { IBinding, INewBindingSummary, INewPropertyAccess } from "../@types/binding";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
 import { IStates } from "../@types/state";
 
 const getPropAccessKey = (prop: INewPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
-const compareExpandableBindings = (a: INewBinding, b: INewBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
+const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
 type IComponentForUpdator = Pick<INewComponent, "states" | "bindingSummary" | "contextRevision">;
 
@@ -16,7 +16,7 @@ class Updator implements INewUpdator {
   processQueue: INewProcess[] = [];
   updatedStateProperties: INewPropertyAccess[] = [];
   expandedStateProperties: INewPropertyAccess[] = [];
-  updatedBindings: Set<INewBinding> = new Set();
+  updatedBindings: Set<IBinding> = new Set();
 
   executing = false;
 
@@ -186,7 +186,7 @@ class Updator implements INewUpdator {
     });
   }
 
-  applyNodeUpdatesByBinding(binding:INewBinding, callback:(updator:INewUpdator)=>void):void {
+  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:INewUpdator)=>void):void {
     if (this.updatedBindings.has(binding)) return;
     try {
       callback(this);

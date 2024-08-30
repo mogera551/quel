@@ -2,13 +2,13 @@ import { createBinder } from "../binder/Binder";
 import { LoopContext } from "../loopContext/LoopContext";
 import { INewLoopContext } from "../@types/loopContext";
 import { utils } from "../utils";
-import { INewBinding, IContentBindings, IComponentPartial } from "../@types/binding";
+import { IBinding, IContentBindings, IComponentPartial } from "../@types/binding";
 
 class ContentBindings implements IContentBindings {
   #component?: IComponentPartial;
   template: HTMLTemplateElement;
-  #childrenBinding?: INewBinding[];
-  #parentBinding?: INewBinding;
+  #childrenBinding?: IBinding[];
+  #parentBinding?: IBinding;
   #loopContext?: INewLoopContext;
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
@@ -17,17 +17,17 @@ class ContentBindings implements IContentBindings {
     return this.#component;
   }
 
-  get childrenBinding(): INewBinding[] {
+  get childrenBinding(): IBinding[] {
     if (typeof this.#childrenBinding === "undefined") {
       utils.raise("childrenBinding is undefined");
     }
     return this.#childrenBinding;
   }
 
-  get parentBinding(): INewBinding | undefined {
+  get parentBinding(): IBinding | undefined {
     return this.#parentBinding;
   }
-  set parentBinding(value: INewBinding | undefined) {
+  set parentBinding(value: IBinding | undefined) {
     this.#parentBinding = value;
     this.#loopContext = (value?.loopable === true) ? new LoopContext(this) : undefined;
     this.#component = value?.component ?? this.#component;
@@ -69,7 +69,7 @@ class ContentBindings implements IContentBindings {
 
   constructor(
     template: HTMLTemplateElement,
-    parentBinding?: INewBinding,
+    parentBinding?: IBinding,
     component?: IComponentPartial,
   ) {
     if (typeof component === "undefined" && typeof parentBinding === "undefined") {
@@ -154,7 +154,7 @@ class ContentBindings implements IContentBindings {
 const cache = new Map<string, IContentBindings[]>;
 export function createContentBindings(
   template:HTMLTemplateElement, 
-  parentBinding?:INewBinding, 
+  parentBinding?:IBinding, 
   component?:IComponentPartial
 ):IContentBindings {
   const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");

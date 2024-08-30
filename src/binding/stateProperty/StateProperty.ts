@@ -1,4 +1,4 @@
-import { INewBinding, INewStateProperty } from "../../@types/binding";
+import { IBinding, INewStateProperty } from "../../@types/binding";
 import { IFilterInfo, FilterFunc } from "../../@types/filter";
 import { GetDirectSymbol, SetDirectSymbol } from "../../@symbols/dotNotation";
 import { MultiValue } from "../nodeProperty/MultiValue";
@@ -90,12 +90,12 @@ export class StateProperty implements INewStateProperty {
     return true;
   }
 
-  #binding:INewBinding;
+  #binding:IBinding;
   get binding() {
     return this.#binding;
   }
 
-  constructor(binding:INewBinding, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#name = name;
     this.#filters = Filters.create<"output">(filters, binding.outputFilterManager);
