@@ -5,7 +5,7 @@ import { IDotNotationHandler, IDotNotationProxy } from "./dotNotation";
 import { IGlobalDataProxy } from "./global";
 import { INewLoopContext } from "./loopContext";
 
-export interface IStateHandler {
+interface IStateHandler {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
   readonly element: HTMLElement;
@@ -16,11 +16,11 @@ export interface IStateHandler {
 //  addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
 }
 
-export interface IBaseState  {
+interface IBaseState  {
   readonly $dependentProps: Dependencies;
 }
 
-export interface IStateProxy extends IDotNotationProxy, IBaseState {
+interface IStateProxy extends IDotNotationProxy, IBaseState {
   readonly [AccessorPropertiesSymbol]: Set<string>;
   readonly [DependenciesSymbol]: IDependentProps;
   // API
@@ -35,23 +35,23 @@ export interface IStateProxy extends IDotNotationProxy, IBaseState {
   readonly $component: INewComponent; // todo:後でIUserComponentに変更する
 }
 
-export type Dependencies = {
+type Dependencies = {
   readonly [key:string]: string[]
 }
 
-export interface IDependentProps {
+interface IDependentProps {
   readonly propsByRefProp: Map<string,Set<string>>;
   hasDefaultProp(prop:string):boolean;
   addDefaultProp(prop:string):void;
   setDependentProps(props:Dependencies):void; //todo:後でprivateに変更する
 }
 
-export type StateInfo = {
+type StateInfo = {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
 }
 
-export interface IStates {
+interface IStates {
   readonly base: Object;
   readonly current: IStateProxy;
   writable(callback: () => Promise<void>): Promise<void>;

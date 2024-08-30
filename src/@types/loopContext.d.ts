@@ -1,6 +1,6 @@
 import { INewBinding, IContentBindings } from "./binding";
 
-export interface INewLoopContext {
+interface INewLoopContext {
   readonly parentLoopContext?: INewLoopContext;
   readonly index: number;
   readonly indexes: number[];

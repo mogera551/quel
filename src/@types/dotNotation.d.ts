@@ -1,17 +1,15 @@
-
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
-import "../nop";
 
 type PropType = "primitive" | "object" | "array";
 type ArrayIncompleteType = "none" | "parital" | "all";
 
-export interface IPatternInfo {
+interface IPatternInfo {
   readonly patternElements: string[];
   readonly patternPaths: string[];
   readonly wildcardPaths: string[];
 }
 
-export interface IPropInfo extends IPatternInfo {
+interface IPropInfo extends IPatternInfo {
   readonly name: string; // The original name
   readonly pattern: string; // The pattern 
   readonly elements: string[];
@@ -21,20 +19,20 @@ export interface IPropInfo extends IPatternInfo {
   readonly lastIncompleteWildcardIndex: number;
 }
 
-export type Indexes = (undefined|number)[];
-export type StackIndexes = Indexes[];
+type Indexes = (undefined|number)[];
+type StackIndexes = Indexes[];
 
-export interface IWildcardIndexes {
+interface IWildcardIndexes {
   indexes: Indexes;
   wildcardCount: number;
   pattern: string;
 }
 
-export type NamedWildcardIndexes = {
+type NamedWildcardIndexes = {
   [key:string]:IWildcardIndexes;
 }
 
-export interface IDotNotationHandler {
+interface IDotNotationHandler {
   _stackIndexes: StackIndexes;
   _stackNamedWildcardIndexes:NamedWildcardIndexes[];
   lastStackIndexes: Indexes | undefined;
@@ -61,7 +59,7 @@ export interface IDotNotationHandler {
   set(target:object, prop:PropertyKey, value:any, receiver:object):boolean;
 }
 
-export interface IDotNotationProxy {
+interface IDotNotationProxy {
   [GetDirectSymbol](prop:string, indexes:number[]): any;
   [SetDirectSymbol](prop:string, indexes:number[], value:any): boolean;
   readonly $1?: number;

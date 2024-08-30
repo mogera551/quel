@@ -1,15 +1,15 @@
-export {}
+import "../nop";
 
-export type CaseType = "kebab" | "snake" | "upperCamel" | "lowerCamel" | "dotted";
+type CaseType = "kebab" | "snake" | "upperCamel" | "lowerCamel" | "dotted";
 
-export type CaseTypeNames = {
+type CaseTypeNames = {
   [key in CaseType]:string;
 }
 
-export interface PrefixResult {
+interface PrefixResult {
   prefixName:string;
   subName:string;
   path:string;
 }
 
-export type Registrar = (name:string, module:any) => void;
+type Registrar = (name:string, module:any) => void;
