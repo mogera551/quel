@@ -2,7 +2,7 @@ import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, D
 import { IDependentProps } from "../newState/types";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IDotNotationHandler, IDotNotationProxy } from "../dotNotation/types";
-import { IGlobalDataProxy } from "../newGlobal/types";
+import { IGlobalDataProxy } from "../global/types";
 import { INewLoopContext } from "../newLoopContext/types";
 
 export interface IStateHandler {

@@ -1,7 +1,7 @@
 import { GetDirectSymbol, SetDirectSymbol } from "../@symbols/dotNotation";
 import { BoundByComponentSymbol } from "../@symbols/global";
-import { GlobalData } from "../newGlobal/Data";
-import { IGlobalDataProxy } from "../newGlobal/types";
+import { GlobalData } from "../global/Data";
+import { IGlobalDataProxy } from "../global/types";
 import { Handler } from "../dotNotation/Handler";
 import { INewComponent } from "./types";
 import { getPropInfo } from "../dotNotation/PropInfo";

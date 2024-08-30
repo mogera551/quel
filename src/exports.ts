@@ -6,7 +6,7 @@ export { generateComponentClass, registerComponentModules } from "./component/Co
 export { loadSingleFileComponent, registerSingleFileComponents } from "./component/SingleFile";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "./@types/filter";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "./filter/Manager";
-import { GlobalData } from "./newGlobal/Data";
+import { GlobalData } from "./global/Data";
 
 type FilterFuncWithOptions = {
   input:FilterFuncWithOption, output:FilterFuncWithOption, event:EventFilterFuncWithOption

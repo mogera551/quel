@@ -9,7 +9,7 @@ import { createGlobals } from "./Globals";
 import { INewComponent, INewCustomComponent, INewProps, INewUpdator, Constructor, INewComponentBase } from "./types";
 import { IStateProxy, IStates } from "../newState/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
-import { IGlobalDataProxy } from "../newGlobal/types";
+import { IGlobalDataProxy } from "../global/types";
 import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../newState/States";
