@@ -991,8 +991,8 @@ function getNamesFromComponent(component) {
     return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim$1).filter(excludeEmptyName) ?? [];
 }
 
-const _cachePropInfo = new Map();
-const _cachePatternInfo = new Map();
+const _cachePropInfo = {};
+const _cachePatternInfo = {};
 function _getPatternInfo(pattern) {
     const patternElements = pattern.split(".");
     const patternPaths = [];
@@ -1011,12 +1011,7 @@ function _getPatternInfo(pattern) {
     };
 }
 function getPatternInfo(pattern) {
-    if (_cachePatternInfo.has(pattern)) {
-        return _cachePatternInfo.get(pattern);
-    }
-    const patternInfo = _getPatternInfo(pattern);
-    _cachePatternInfo.set(pattern, patternInfo);
-    return patternInfo;
+    return _cachePatternInfo[pattern] ?? (_cachePatternInfo[pattern] = _getPatternInfo(pattern));
 }
 function _getPropInfo(name) {
     const elements = name.split(".");
@@ -1054,12 +1049,7 @@ function _getPropInfo(name) {
     }, getPatternInfo(pattern));
 }
 function getPropInfo(name) {
-    if (_cachePropInfo.has(name)) {
-        return _cachePropInfo.get(name);
-    }
-    const propInfo = _getPropInfo(name);
-    _cachePropInfo.set(name, propInfo);
-    return propInfo;
+    return _cachePropInfo[name] ?? (_cachePropInfo[name] = _getPropInfo(name));
 }
 
 class PropertyAccess {
@@ -2012,7 +2002,7 @@ const parseBindText = (text, defaultName) => {
         return { nodeProperty, stateProperty, inputFilters, outputFilters };
     });
 };
-const _cache$3 = {};
+const _cache$4 = {};
 /**
  * parse bind text and return BindTextInfo[], if hit cache return cache value
  */
@@ -2020,7 +2010,7 @@ function parse(text, defaultName) {
     if (text.trim() === "")
         return [];
     const key = text + "\t" + defaultName;
-    return _cache$3[key] ?? (_cache$3[key] = parseBindText(text, defaultName));
+    return _cache$4[key] ?? (_cache$4[key] = parseBindText(text, defaultName));
 }
 
 const DEFAULT_PROPERTY = "textContent";
@@ -2969,6 +2959,8 @@ class Binding {
         return removedContentBindings;
     }
     dispose() {
+        this.nodeProperty.dispose();
+        this.stateProperty.dispose();
         this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());
         this.childrenContentBindings = [];
     }
@@ -3152,7 +3144,7 @@ function createBindings(content, contentBindings, nodeInfos) {
 }
 
 const UUID_DATASET = "uuid";
-const _cache$2 = {};
+const _cache$3 = {};
 class Binder {
     #template;
     #nodeInfos;
@@ -3166,7 +3158,7 @@ class Binder {
 }
 function createBinder(template, useKeyed) {
     const uuid = template.dataset[UUID_DATASET] ?? "";
-    return _cache$2[uuid] ?? (_cache$2[uuid] = new Binder(template, useKeyed));
+    return _cache$3[uuid] ?? (_cache$3[uuid] = new Binder(template, useKeyed));
 }
 
 class LoopContext {
@@ -3363,13 +3355,13 @@ class ContentBindings {
         this.#component = undefined;
         this.removeChildNodes();
         const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-        cache.get(uuid)?.push(this) ?? cache.set(uuid, [this]);
+        _cache$2[uuid]?.push(this) ?? (_cache$2[uuid] = [this]);
     }
 }
-const cache = new Map;
+const _cache$2 = {};
 function createContentBindings(template, parentBinding, component) {
     const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-    const contentBindings = cache.get(uuid)?.pop();
+    const contentBindings = _cache$2[uuid]?.pop();
     if (typeof contentBindings !== "undefined") {
         contentBindings.parentBinding = parentBinding;
         return contentBindings;

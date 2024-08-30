@@ -154,6 +154,8 @@ class Binding implements IBinding {
   }
 
   dispose(): void {
+    this.nodeProperty.dispose();
+    this.stateProperty.dispose();
     this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());
     this.childrenContentBindings = [];
   }

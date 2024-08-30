@@ -7,7 +7,7 @@ type NodeTypeByNodeKey = {
   [nodeKey:string]:NodeType;
 };
 
-export const nodeTypeByNodeKey:NodeTypeByNodeKey = {};
+const nodeTypeByNodeKey:NodeTypeByNodeKey = {};
 
 const getNodeTypeByNode = (node:Node):NodeType =>
   (node instanceof Comment && node.textContent?.[2] === ":") ? "Text" : 

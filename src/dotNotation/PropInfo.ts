@@ -1,8 +1,8 @@
 
 import { IPatternInfo, IPropInfo } from '../@types/dotNotation';
 
-const _cachePropInfo = new Map<string, IPropInfo>();
-const _cachePatternInfo = new Map<string, IPatternInfo>();
+const _cachePropInfo: { [key: string]: IPropInfo } = {};
+const _cachePatternInfo: { [key: string]: IPatternInfo } = {};
 
 function _getPatternInfo(pattern:string):IPatternInfo {
   const patternElements = pattern.split(".");
@@ -23,12 +23,7 @@ function _getPatternInfo(pattern:string):IPatternInfo {
 }
 
 export function getPatternInfo(pattern:string):IPatternInfo {
-  if (_cachePatternInfo.has(pattern)) {
-    return _cachePatternInfo.get(pattern)!;
-  }
-  const patternInfo = _getPatternInfo(pattern);
-  _cachePatternInfo.set(pattern, patternInfo);
-  return patternInfo;
+  return _cachePatternInfo[pattern] ?? (_cachePatternInfo[pattern] = _getPatternInfo(pattern));
 }
 
 function _getPropInfo(name:string):IPropInfo {
@@ -67,10 +62,5 @@ function _getPropInfo(name:string):IPropInfo {
 }
 
 export function getPropInfo(name:string):IPropInfo {
-  if (_cachePropInfo.has(name)) {
-    return _cachePropInfo.get(name)!;
-  }
-  const propInfo = _getPropInfo(name);
-  _cachePropInfo.set(name, propInfo);
-  return propInfo;
+  return _cachePropInfo[name] ?? (_cachePropInfo[name] = _getPropInfo(name));
 }

@@ -49,6 +49,7 @@ interface IStateProperty {
   getChildValue(index:number):any;
   setChildValue(index:number, value:any):void;
   initialize(): void;
+  dispose(): void;
 }
 
 interface IBindingBase {
