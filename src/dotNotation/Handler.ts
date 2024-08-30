@@ -135,6 +135,11 @@ export class Handler implements IDotNotationHandler {
   }
 
   _getExpand(target:object, prop:string, receiver:object) {
+    // ex.
+    // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
+    // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+    // prop = "aaa.1.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+    // prop = "aaa.*.bbb.1.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
     const wildcardIndexes = propInfo.wildcardIndexes.map(
