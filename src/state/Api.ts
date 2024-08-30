@@ -4,7 +4,7 @@ import {
 } from "../@symbols/state";
 import { IDependentProps, IStateHandler, IStateProxy, SupportApiSymbols } from "./types";
 import { PropertyAccess } from "../binding/PropertyAccess";
-import { INewLoopContext } from "../loopContext/types";
+import { INewLoopContext } from "../@types/types";
 import { INewComponent } from "../@types/component";
 
 const CREATE_BUFFER_METHOD = "$createBuffer";

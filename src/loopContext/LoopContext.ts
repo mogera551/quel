@@ -2,7 +2,7 @@ import { IContentBindingsBase, ILoopable, INewBinding } from "../@types/binding"
 import { getPatternInfo } from "../dotNotation/PropInfo";
 import { IPatternInfo } from "../@types/dotNotation";
 import { utils } from "../utils";
-import { INewLoopContext } from "./types";
+import { INewLoopContext } from "../@types/types";
 
 export class LoopContext implements INewLoopContext{
   #revision?: number;

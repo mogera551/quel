@@ -5,7 +5,7 @@ import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
 import { INewBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../../@types/binding";
-import { INewLoopContext } from "../../loopContext/types";
+import { INewLoopContext } from "../../@types/types";
 import { INewComponent } from "../../@types/component";
 
 export class BindingPropertyAccess implements INewBindingPropertyAccess{

@@ -1,7 +1,7 @@
 import { AccessorPropertiesSymbol, DependenciesSymbol } from "../@symbols/state";
 import { INewComponent, INewUpdator } from "../@types/component";
 import { Handler as DotNotationHandler } from "../dotNotation/Handler";
-import { INewLoopContext } from "../loopContext/types";
+import { INewLoopContext } from "../@types/types";
 import { getApi } from "./Api";
 import { getCallback } from "./Callback";
 import { getSpecialProps } from "./SpecialProp";

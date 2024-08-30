@@ -1,6 +1,6 @@
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { Indexes, IPropInfo } from "../@types/dotNotation";
-import { INewLoopContext } from "../loopContext/types";
+import { INewLoopContext } from "../@types/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
 import { IStateProxy } from "./types";
