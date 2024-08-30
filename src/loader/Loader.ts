@@ -1,6 +1,6 @@
 import { Config } from "./Config";
 import { Prefix } from "./Prefix";
-import { Registrar } from "../@types/types";
+import { Registrar } from "../@types/loader";
 import { getPathInfo } from "./Path";
 import { toKebabCase } from "./KebabCase";
 import { utils } from "../utils";
