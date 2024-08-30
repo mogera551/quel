@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { NodePropertyCreator } from "../@types/types";
+import { NodePropertyCreator } from "../@types/binder";
 import { IFilterInfo } from "../@types/filter";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { Repeat } from "../binding/nodeProperty/Repeat";

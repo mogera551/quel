@@ -1,4 +1,4 @@
-import { IBindNodeInfo } from '../@types/types';
+import { IBindNodeInfo } from '../@types/binder';
 import { BindNodeInfo } from './BindNodeInfo';
 import { getBindText } from './bindText';
 import { getCommentNodes } from './commentNodes';

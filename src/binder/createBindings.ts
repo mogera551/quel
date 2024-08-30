@@ -1,4 +1,4 @@
-import { IBindNodeInfo } from "../@types/types";
+import { IBindNodeInfo } from "../@types/binder";
 import { findNodeByNodeRoute } from "./nodeRoute";
 import { IContentBindings, INewBinding } from "../binding/types";
 

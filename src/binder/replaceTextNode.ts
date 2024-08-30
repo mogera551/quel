@@ -1,4 +1,4 @@
-import { NodeType } from "../@types/types";
+import { NodeType } from "../@types/binder";
 
 const replaceTextNodeText = (node:Node):Node => {
   const textNode = document.createTextNode("");

@@ -1,4 +1,4 @@
-import { ParseBindTextInfo, PropertyCreators } from "../@types/types";
+import { ParseBindTextInfo, PropertyCreators } from "../@types/binder";
 import { createBinding as create } from "../binding/Binding";
 import { IContentBindings } from "../binding/types";
 

@@ -1,4 +1,4 @@
-import { NodeType, IBindNodeInfo } from "../@types/types";
+import { NodeType, IBindNodeInfo } from "../@types/binder";
 import { Checkbox } from "../binding/nodeProperty/Checkbox";
 import { Radio } from "../binding/nodeProperty/Radio";
 import { INewBinding } from "../binding/types";
