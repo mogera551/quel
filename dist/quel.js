@@ -1019,18 +1019,22 @@ function _getPropInfo(name) {
     const wildcardIndexes = [];
     const paths = [];
     let lastIncompleteWildcardIndex = -1;
+    let incompleteCount = 0;
+    let completeCount = 0;
     for (let i = 0; i < elements.length; i++) {
         const element = elements[i];
         if (element === "*") {
             wildcardIndexes.push(undefined);
             patternElements[i] = "*";
             lastIncompleteWildcardIndex = wildcardIndexes.length - 1;
+            incompleteCount++;
         }
         else {
             const number = Number(element);
             if (!Number.isNaN(number)) {
                 wildcardIndexes.push(number);
                 patternElements[i] = "*";
+                completeCount++;
             }
         }
         paths.push(elements.slice(0, i + 1).join("."));
@@ -1046,6 +1050,8 @@ function _getPropInfo(name) {
         wildcardCount,
         wildcardIndexes,
         lastIncompleteWildcardIndex,
+        allComplete: completeCount === wildcardCount,
+        allIncomplete: incompleteCount === wildcardCount,
     }, getPatternInfo(pattern));
 }
 function getPropInfo(name) {
@@ -1599,13 +1605,10 @@ let Handler$1 = class Handler {
             this._stackIndexes.pop();
         }
     }
-    _getPropertyValue(target, prop, receiver) {
-        return Reflect.get(target, prop, receiver);
-    }
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         const path = patternPaths[pathIndex];
         if (path in target) {
-            return this._getPropertyValue(target, path, receiver);
+            return Reflect.get(target, path, receiver);
         }
         if (pathIndex === 0)
             return undefined;
@@ -1623,7 +1626,9 @@ let Handler$1 = class Handler {
     _get(target, prop, receiver) {
         const propInfo = getPropInfo(prop);
         const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
-        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+        const wildcardIndexes = propInfo.allComplete ? propInfo.wildcardIndexes :
+            propInfo.allIncomplete ? lastStackIndexes :
+                propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
         return this.__get(target, propInfo, wildcardIndexes, receiver);
     }
     __set(target, propInfo, indexes, value, receiver) {
@@ -1646,7 +1651,9 @@ let Handler$1 = class Handler {
     _set(target, prop, value, receiver) {
         const propInfo = getPropInfo(prop);
         const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
-        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+        const wildcardIndexes = propInfo.allComplete ? propInfo.wildcardIndexes :
+            propInfo.allIncomplete ? lastStackIndexes :
+                propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
         return this.__set(target, propInfo, wildcardIndexes, value, receiver);
     }
     _getExpand(target, prop, receiver) {

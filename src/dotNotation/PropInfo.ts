@@ -1,4 +1,5 @@
 
+import { all } from '../../node_modules/axios/index';
 import { IPatternInfo, IPropInfo } from '../@types/dotNotation';
 
 const _cachePropInfo: { [key: string]: IPropInfo } = {};
@@ -32,17 +33,21 @@ function _getPropInfo(name:string):IPropInfo {
   const wildcardIndexes:(number|undefined)[] = [];
   const paths = [];
   let lastIncompleteWildcardIndex = -1;
+  let incompleteCount = 0;
+  let completeCount = 0;
   for(let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (element === "*") {
       wildcardIndexes.push(undefined);
       patternElements[i] = "*";
       lastIncompleteWildcardIndex = wildcardIndexes.length - 1;
+      incompleteCount++;
     } else {
       const number = Number(element);
       if (!Number.isNaN(number)) {
         wildcardIndexes.push(number);
         patternElements[i] = "*";
+        completeCount++;
       }
     }
     paths.push(elements.slice(0, i + 1).join("."));
@@ -58,6 +63,8 @@ function _getPropInfo(name:string):IPropInfo {
     wildcardCount,
     wildcardIndexes,
     lastIncompleteWildcardIndex,
+    allComplete: completeCount === wildcardCount,
+    allIncomplete: incompleteCount === wildcardCount,
   }, getPatternInfo(pattern));
 }
 

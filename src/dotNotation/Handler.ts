@@ -23,6 +23,8 @@ class WildcardIndexes implements IWildcardIndexes {
   }
 }
 
+const _cacheNamedWildcardIndexes: { [key: string]: NamedWildcardIndexes } = {};
+
 /**
  * ドット記法でプロパティを取得するためのハンドラ
  */
@@ -35,7 +37,7 @@ export class Handler implements IDotNotationHandler {
   getLastIndexes(pattern:string): Indexes | undefined {
     return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes;
   }
-  withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:()=>any):any {
+  withIndexes(patternInfo: IPatternInfo, indexes: Indexes, callback: () => any): any {
     const namedWildcardIndexes: NamedWildcardIndexes = {};
     for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
       const wildcardPath = patternInfo.wildcardPaths[i];
@@ -52,10 +54,6 @@ export class Handler implements IDotNotationHandler {
     }
   }
 
-  _getPropertyValue(target:object, prop:string, receiver:object):any {
-    return Reflect.get(target, prop, receiver);
-  }
-
   _getValue(
     target:object, 
     patternPaths:string[],
@@ -66,7 +64,7 @@ export class Handler implements IDotNotationHandler {
   ):any {
     const path = patternPaths[pathIndex];
     if (path in target) {
-      return this._getPropertyValue(target, path, receiver);
+      return Reflect.get(target, path, receiver);
     }
     if (pathIndex === 0) return undefined; 
     const element = patternElements[pathIndex];
@@ -99,7 +97,10 @@ export class Handler implements IDotNotationHandler {
   _get(target:object, prop:string, receiver:object) {
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
-    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    const wildcardIndexes = 
+      propInfo.allComplete ? propInfo.wildcardIndexes :
+      propInfo.allIncomplete ? lastStackIndexes :
+      propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
     return this.__get(target, propInfo, wildcardIndexes, receiver);
   }
 
@@ -130,7 +131,10 @@ export class Handler implements IDotNotationHandler {
   _set(target:object, prop:string, value:any, receiver:object):boolean {
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
-    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
+    const wildcardIndexes = 
+      propInfo.allComplete ? propInfo.wildcardIndexes :
+      propInfo.allIncomplete ? lastStackIndexes :
+      propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
     return this.__set(target, propInfo, wildcardIndexes, value, receiver);
   }
 

@@ -17,6 +17,8 @@ interface IPropInfo extends IPatternInfo {
   readonly wildcardIndexes: (number|undefined)[];
   readonly wildcardCount: number;
   readonly lastIncompleteWildcardIndex: number;
+  readonly allComplete: boolean;
+  readonly allIncomplete: boolean;
 }
 
 type Indexes = (undefined|number)[];
@@ -38,7 +40,6 @@ interface IDotNotationHandler {
   lastStackIndexes: Indexes | undefined;
   getLastIndexes(pattern: string): Indexes | undefined;
   withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:() => any): any;
-  _getPropertyValue(target:object, prop:string, receiver:object):any;
   _getValue(
     target:object, 
     patternPaths:string[],
