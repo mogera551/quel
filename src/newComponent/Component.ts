@@ -1,5 +1,4 @@
 import { utils } from "../utils";
-import { StateClass } from "../@types/state";
 import { FilterFuncWithOption, EventFilterFuncWithOption } from "../@types/filter";
 import { Module } from "./Module";
 import { config } from "../Config";
@@ -8,7 +7,6 @@ import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
 import { Constructor, INewComponentBase, INewModule, NewComponentModule, NewCustomElementInfo, NewFilterManagers } from "./types";
-import { IComponentBase } from "../@types/component";
 
 const moduleByConstructor:Map<Function,INewModule> = new Map;
 const customElementInfoByTagName:Map<string,NewCustomElementInfo> = new Map;

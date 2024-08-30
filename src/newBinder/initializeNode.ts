@@ -1,4 +1,3 @@
-import { IBinding } from "../@types/binding";
 import { NodeType, IBindNodeInfo } from "./types";
 import { Checkbox } from "../newBinding/nodeProperty/Checkbox";
 import { Radio } from "../newBinding/nodeProperty/Radio";

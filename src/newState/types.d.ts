@@ -1,8 +1,8 @@
 import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "../@symbols/state";
-import { IGlobalData } from "../@types/global";
-import { IDependentProps } from "../@types/state";
+import { IDependentProps } from "../newState/types";
 import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IDotNotationHandler, IDotNotationProxy } from "../newDotNotation/types";
+import { IGlobalDataProxy } from "../newGlobal/types";
 import { INewLoopContext } from "../newLoopContext/types";
 
 export interface IStateHandler {
@@ -31,7 +31,7 @@ export interface IStateProxy extends IDotNotationProxy, IBaseState {
   [CreateBufferApiSymbol](component:INewComponent): void;
   [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:INewComponent): boolean;
   // Special Property
-  readonly $globals: IGlobalData;
+  readonly $globals: IGlobalDataProxy;
   readonly $component: INewComponent; // todo:後でIUserComponentに変更する
 }
 

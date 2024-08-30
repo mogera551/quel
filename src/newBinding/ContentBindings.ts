@@ -1,7 +1,4 @@
-import { IComponent } from "../@types/component";
-import { ILoopContext } from "../@types/loopContext";
 import { createBinder } from "../newBinder/Binder";
-import { INewComponent } from "../newComponent/types";
 import { LoopContext } from "../newLoopContext/LoopContext";
 import { INewLoopContext } from "../newLoopContext/types";
 import { utils } from "../utils";

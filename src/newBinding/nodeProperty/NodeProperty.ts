@@ -1,6 +1,5 @@
 import { utils } from "../../utils";
-import { FilterFunc, IFilterInfo, IFilterManager } from "../../@types/filter";
-import { IPropertyAccess } from "../../@types/binding";
+import { FilterFunc, IFilterInfo } from "../../@types/filter";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { INewBinding, INewNodeProperty, INewPropertyAccess } from "../types";
 
