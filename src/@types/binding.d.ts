@@ -6,19 +6,19 @@ import { INewComponent, INewUpdator } from "../newComponent/types";
 import { IStateProxy } from "../newState/types";
 import { FilterFunc } from "./filter";
 
-export interface INewPropertyAccess {
+interface INewPropertyAccess {
   readonly pattern: string;
   readonly indexes: number[];
   readonly propInfo: IPropInfo;
 }
 
-export interface INewBindingPropertyAccess {
+interface INewBindingPropertyAccess {
   readonly name: string;
   readonly indexes: number[];
   readonly loopContext?: INewLoopContext;
 }
 
-export interface INewNodeProperty {
+interface INewNodeProperty {
   readonly node: Node;
   readonly name: string;
   readonly binding: INewBinding;
@@ -36,7 +36,7 @@ export interface INewNodeProperty {
   dispose(): void;
 }
 
-export interface INewStateProperty {
+interface INewStateProperty {
   readonly state: IStateProxy;
   readonly name: string;
   readonly binding: INewBinding;
@@ -51,16 +51,16 @@ export interface INewStateProperty {
   initialize(): void;
 }
 
-export interface INewBindingBase {
+interface INewBindingBase {
   readonly childrenContentBindings: IContentBindingsBase[];
   readonly parentContentBindings: IContentBindingsBase;
   readonly loopable: boolean;
   readonly statePropertyName: string;
 }
 
-export type IComponentPartial = Pick<INewComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
+type IComponentPartial = Pick<INewComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
 
-export interface INewBinding extends INewBindingBase {
+interface INewBinding extends INewBindingBase {
   readonly id: string;
   readonly nodeProperty: INewNodeProperty;
   readonly stateProperty: INewStateProperty;
@@ -87,14 +87,14 @@ export interface INewBinding extends INewBindingBase {
   dispose(): void;
 }
 
-export interface IContentBindingsBase {
+interface IContentBindingsBase {
   readonly childrenBinding: INewBindingBase[];
   parentBinding?: INewBindingBase;
   readonly loopContext?: INewLoopContext;
   readonly currentLoopContext?: INewLoopContext;
 }
 
-export interface IContentBindings extends IContentBindingsBase {
+interface IContentBindings extends IContentBindingsBase {
   readonly template: HTMLTemplateElement;
   readonly childrenBinding: INewBinding[];
   parentBinding?: INewBinding;
@@ -112,12 +112,12 @@ export interface IContentBindings extends IContentBindingsBase {
   dispose():void;
 }
 
-export interface IMultiValue {
+interface IMultiValue {
   value:any;
   enabled:boolean;
 }
 
-export interface INewBindingSummary {
+interface INewBindingSummary {
   updated: boolean;
   readonly updateRevision: number;
   readonly bindingsByKey: Map<string,INewBinding[]>;
@@ -131,6 +131,6 @@ export interface INewBindingSummary {
   update(callback:(summary: INewBindingSummary)=>any): void;
 }
 
-export interface ILoopable {
+interface ILoopable {
   readonly revision: number;
 }

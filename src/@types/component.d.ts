@@ -7,7 +7,7 @@ import { IState, Proxies, StateClass } from "./state"; // ToDo
 import { IContentBindings, INewBinding, INewBindingPropertyAccess, INewBindingSummary, INewPropertyAccess } from "./binding";
 import { IStateProxy, IStates } from "../newState/types";
 
-export type NewComponentModuleConfig = {
+type NewComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
   readonly debug?: boolean; // debug mode for the component, default is false
   readonly useShadowRoot?: boolean; // attach shadow root to the component, default is false
@@ -18,17 +18,17 @@ export type NewComponentModuleConfig = {
   readonly useOverscrollBehavior?: boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
 }
 
-export type NewComponentModuleOptions = {
+type NewComponentModuleOptions = {
   readonly extends?: string; // for customized built-in element, like extends="button"
 }
 
-export type NewComponentModuleFilters = {
+type NewComponentModuleFilters = {
   readonly input?: {[key: string]: FilterFuncWithOption};
   readonly output?: {[key: string]: FilterFuncWithOption};
   readonly event?: {[key: string]: EventFilterFuncWithOption};
 }
 
-export type NewComponentModule = {
+type NewComponentModule = {
   readonly html?: string;
   readonly css?: string;
   readonly State?:typeof Object;
@@ -39,7 +39,7 @@ export type NewComponentModule = {
   readonly moduleConfig?: NewComponentModuleConfig;
 }
 
-export interface INewModule {
+interface INewModule {
   readonly uuid: string;
   readonly html: string;
   readonly css?: string;
@@ -54,20 +54,20 @@ export interface INewModule {
   readonly componentModulesForRegister?: {[key: string]: INewModule};
 }
 
-export type NewCustomElementInfo = {
+type NewCustomElementInfo = {
   readonly lowerTagName: string; // lower case tag name
   readonly selectorName: string; // local selector name
   readonly isAutonomousCustomElement: boolean; // is autonomous custom element
   readonly isCostomizedBuiltInElement: boolean; // is customized built-in element
 }
 
-export type NewFilterManagers = {
+type NewFilterManagers = {
   readonly inputFilterManager: IFilterManager<"input">, 
   readonly outputFilterManager: IFilterManager<"output">, 
   readonly eventFilterManager: IFilterManager<"event">
 };
 
-export interface INewComponentBase {
+interface INewComponentBase {
   readonly module: INewModule;
   readonly isQuelComponent: boolean;
   readonly customElementInfo: NewCustomElementInfo;
@@ -97,7 +97,7 @@ export interface INewComponentBase {
   readonly thisClass: Function;
 }
 
-export interface INewCustomComponent {
+interface INewCustomComponent {
   readonly component: INewComponent & HTMLElement;
   readonly parentComponent?: INewComponent & HTMLElement;
   readonly initialPromises: PromiseWithResolvers<void>;
@@ -121,7 +121,7 @@ export interface INewCustomComponent {
   disconnectedCallback():Promise<void>;
 } 
 
-export interface INewDialogComponent {
+interface INewDialogComponent {
   dialogPromises: PromiseWithResolvers<any>|undefined;
   returnValue: string;
   readonly useBufferedBind: boolean;
@@ -132,7 +132,7 @@ export interface INewDialogComponent {
   close(result:any): void;
 }
 
-export interface INewPopoverComponent {
+interface INewPopoverComponent {
   canceled: boolean;
   popoverPromises: PromiseWithResolvers<any> | undefined;
   readonly popoverContextIndexesById: Map<string, number[]>;
@@ -140,17 +140,17 @@ export interface INewPopoverComponent {
   hidePopover(): void;
   cancelPopover(): void;
 }
-export type Constructor<T = {}> = new (...args: any[]) => T;
+type Constructor<T = {}> = new (...args: any[]) => T;
 
-export type INewComponent = INewComponentBase & INewCustomComponent & INewDialogComponent & INewPopoverComponent & HTMLElement;
+type INewComponent = INewComponentBase & INewCustomComponent & INewDialogComponent & INewPopoverComponent & HTMLElement;
 
-export interface INewProcess {
+interface INewProcess {
   readonly target:Function;
   readonly thisArgument:object;
   readonly argumentList:any[];
 }
 
-export interface INewUpdator {
+interface INewUpdator {
 //  component: INewComponent;
   readonly processQueue: INewProcess[];
   readonly updatedStateProperties: INewPropertyAccess[];
@@ -174,7 +174,7 @@ export interface INewUpdator {
   applyNodeUpdatesByBinding(binding: INewBinding, callback:(updator: INewUpdator)=>any): void;
 }
 
-export interface INewProps {
+interface INewProps {
   [BindPropertySymbol](prop: string, propAccess: INewBindingPropertyAccess): void;
   [SetBufferSymbol](buffer: {[key: string]: any}): void;
   [GetBufferSymbol](): {[key: string]: any};
