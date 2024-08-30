@@ -8,7 +8,7 @@ import { getPropertyCreators } from './propertyCreators';
 import { createBinding } from './createBinding';
 import { computeNodeRoute } from './nodeRoute';
 import { initializeNode } from './initializeNode';
-import { INewBinding } from '../@types/types';
+import { INewBinding } from '../@types/binding';
 
 export class BindNodeInfo implements IBindNodeInfo {
   nodeType: NodeType;

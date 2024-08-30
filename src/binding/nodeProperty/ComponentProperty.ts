@@ -4,7 +4,7 @@ import { BindPropertySymbol, IsComponentSymbol } from "../../@symbols/component.
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../@symbols/state";
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
-import { INewBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../../@types/types";
+import { INewBinding, INewBindingPropertyAccess, INewPropertyAccess, INewStateProperty } from "../../@types/binding";
 import { INewLoopContext } from "../../loopContext/types";
 import { INewComponent } from "../../component/types";
 

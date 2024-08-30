@@ -1,4 +1,4 @@
-import { INewPropertyAccess } from "../@types/types";
+import { INewPropertyAccess } from "../@types/binding";
 import { IPropInfo } from "../dotNotation/types";
 import { getPropInfo } from "../dotNotation/PropInfo";
 

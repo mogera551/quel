@@ -3,7 +3,7 @@ import { EventFilterFunc, IFilterInfo } from "../../@types/filter.js";
 import { DirectryCallApiSymbol } from "../../@symbols/state.js";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { ElementBase } from "./ElementBase";
-import { INewBinding } from "../../@types/types";
+import { INewBinding } from "../../@types/binding";
 
 const PREFIX = "on";
 

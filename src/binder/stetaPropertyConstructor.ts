@@ -1,6 +1,6 @@
 import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
-import { INewBinding, INewStateProperty } from "../@types/types";
+import { INewBinding, INewStateProperty } from "../@types/binding";
 import { IFilterInfo } from "../@types/filter";
 import { StatePropertyCreator } from "../@types/binder";
 

@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { IFilterInfo } from "../../@types/filter";
 import { ElementBase } from "./ElementBase";
-import { INewBinding } from "../../@types/types";
+import { INewBinding } from "../../@types/binding";
 
 const NAME = "class";
 

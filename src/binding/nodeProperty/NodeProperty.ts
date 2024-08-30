@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { FilterFunc, IFilterInfo } from "../../@types/filter";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { INewBinding, INewNodeProperty, INewPropertyAccess } from "../../@types/types";
+import { INewBinding, INewNodeProperty, INewPropertyAccess } from "../../@types/binding";
 
 export class NodeProperty implements INewNodeProperty {
   #node:Node;

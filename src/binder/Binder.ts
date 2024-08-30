@@ -1,6 +1,6 @@
 
 import { IBinder, IBindNodeInfo } from "../@types/binder";
-import { INewBinding, IContentBindings } from "../@types/types";
+import { INewBinding, IContentBindings } from "../@types/binding";
 import { parseTemplate } from "./parseTemplate";
 import { createBindings } from "./createBindings";
 

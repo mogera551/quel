@@ -1,7 +1,7 @@
 import { utils } from "../utils";
 import { config } from "../Config";
 import { ComponentProperty } from "./nodeProperty/ComponentProperty";
-import { INewBinding, INewBindingSummary } from "../@types/types";
+import { INewBinding, INewBindingSummary } from "../@types/binding";
 
 const pickKey = (binding:INewBinding):string => binding.stateProperty.key;
 const filterExpandableBindings = (binding:INewBinding):boolean => binding.nodeProperty.expandable;

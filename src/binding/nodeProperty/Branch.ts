@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { INewBinding } from "../../@types/types";
+import { INewBinding } from "../../@types/binding";
 import { IFilterInfo } from "../../@types/filter";
 import { TemplateProperty } from "./TemplateProperty";
 import { createContentBindings } from "../ContentBindings";

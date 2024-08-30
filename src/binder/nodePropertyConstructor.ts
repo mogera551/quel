@@ -14,7 +14,7 @@ import { ElementStyle } from "../binding/nodeProperty/ElementStyle";
 import { ElementProperty } from "../binding/nodeProperty/ElementProperty";
 import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty";
 import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
-import { INewBinding, INewNodeProperty } from "../@types/types";
+import { INewBinding, INewNodeProperty } from "../@types/binding";
 
 type NodePropertyConstructorByName = {[key:string]:typeof NodeProperty};
 type NodePropertyConstructorByNameByIsComment = {[key:number]:NodePropertyConstructorByName};
