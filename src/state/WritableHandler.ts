@@ -31,7 +31,7 @@ export class WritableHandler extends Handler {
   }
 
   getLastIndexes(pattern: string): Indexes | undefined {
-    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
+    return this._stackNamedWildcardIndexes[this._stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
   }
   
   __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:IStateProxy):boolean {

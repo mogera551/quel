@@ -20,11 +20,12 @@ export class LoopContext implements ILoopContext{
   }
 
   get patternName(): string {
-    return this.#patternInfo.wildcardPaths.at(-1) ?? utils.raise("patternName is undefined");
+    return this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
   }
   get parentLoopContext(): ILoopContext | undefined {
+    this.checkRevision();
     if (!this.#parentLoopCache) {
-      const parentPattern = this.#patternInfo.wildcardPaths.at(-2);
+      const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
       let curContentBindings:IContentBindingsBase | undefined = undefined;
       if (typeof parentPattern !== "undefined") {
         curContentBindings = this.#contentBindings.parentBinding?.parentContentBindings;        
@@ -45,23 +46,37 @@ export class LoopContext implements ILoopContext{
   }
 
   get index(): number {
-    const revision = (this.#contentBindings.parentBinding as IBinding)?.nodeProperty.revisionForLoop;
-    if (typeof this.#index === "undefined" || this.#revision !== revision) {
+    this.checkRevision();
+    if (typeof this.#index === "undefined") {
       this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ?? 
         utils.raise("parentBinding is undefined");
-      this.#parentLoopCache = false;
-      this.#revision = revision;
     }
     return this.#index;
   }
 
-  // ToDo:キャッシュが効くか検討する
+  #indexes?: number[];
   get indexes(): number[] {
-    if (typeof this.parentLoopContext === "undefined") {
-      return [this.index];
-    } else {
-      return [...this.parentLoopContext.indexes, this.index];
+    this.checkRevision();
+    if (typeof this.#indexes === "undefined") {
+      if (typeof this.parentLoopContext === "undefined") {
+        this.#indexes = [this.index];
+      } else {
+        this.#indexes = [...this.parentLoopContext.indexes, this.index];
+      }
     }
+    return this.#indexes;
+  }
+
+  checkRevision(): boolean {
+    const revision = (this.#contentBindings.parentBinding as IBinding)?.nodeProperty.revisionForLoop;
+    if (typeof this.#revision === "undefined" || this.#revision !== revision) {
+      this.#index = undefined;
+      this.#indexes = undefined;
+      this.#parentLoopCache = true;
+      this.#revision = revision;
+      return true;
+    }
+    return false;
   }
 
   find(patternName: string): ILoopContext | undefined {

@@ -114,10 +114,10 @@ class Updator implements IUpdator {
     const bindingSummary = this.bindingSummary;
     const setOfIndexByParentKey:Map<string,Set<number>> = new Map;
     for(const propertyAccess of expandedStateProperties) {
-      if (propertyAccess.propInfo.patternElements.at(-1) !== "*") continue;
-      const lastIndex = propertyAccess.indexes?.at(-1);
+      if (propertyAccess.propInfo.patternElements[propertyAccess.propInfo.patternElements.length - 1] !== "*") continue;
+      const lastIndex = propertyAccess.indexes?.[propertyAccess.indexes.length - 1];
       if (typeof lastIndex === "undefined") continue;
-      const parentKey = propertyAccess.propInfo.patternPaths.at(-2) + "\t" + propertyAccess.indexes.slice(0, -1);
+      const parentKey = propertyAccess.propInfo.patternPaths[propertyAccess.propInfo.patternPaths.length - 2] + "\t" + propertyAccess.indexes.slice(0, -1);
       setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
     }
     for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {

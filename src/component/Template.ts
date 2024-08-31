@@ -20,7 +20,7 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
       stack.push(expr);
       return `<template data-bind="${expr}">`;
     } else if (expr.startsWith("else:")){
-      const saveExpr = stack.at(-1);
+      const saveExpr = stack[stack.length - 1];
       if (typeof saveExpr === "undefined" || !saveExpr.startsWith("if:")) {
         utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
       }
@@ -47,7 +47,7 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
     }
   });
   if (stack.length > 0) {
-    utils.raise(`Template: loop: or if: is not matched with endloop: or endif:, but {{ ${stack.at(-1)} }} `);
+    utils.raise(`Template: loop: or if: is not matched with endloop: or endif:, but {{ ${stack[stack.length - 1]} }} `);
   }
   const root = document.createElement("template"); // 仮のルート
   root.innerHTML = replacedHtml;

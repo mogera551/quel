@@ -329,7 +329,7 @@ function replaceTag(html, componentUuid, customComponentNames) {
             return `<template data-bind="${expr}">`;
         }
         else if (expr.startsWith("else:")) {
-            const saveExpr = stack.at(-1);
+            const saveExpr = stack[stack.length - 1];
             if (typeof saveExpr === "undefined" || !saveExpr.startsWith("if:")) {
                 utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
             }
@@ -360,7 +360,7 @@ function replaceTag(html, componentUuid, customComponentNames) {
         }
     });
     if (stack.length > 0) {
-        utils.raise(`Template: loop: or if: is not matched with endloop: or endif:, but {{ ${stack.at(-1)} }} `);
+        utils.raise(`Template: loop: or if: is not matched with endloop: or endif:, but {{ ${stack[stack.length - 1]} }} `);
     }
     const root = document.createElement("template"); // 仮のルート
     root.innerHTML = replacedHtml;
@@ -1267,12 +1267,12 @@ class Updator {
         const bindingSummary = this.bindingSummary;
         const setOfIndexByParentKey = new Map;
         for (const propertyAccess of expandedStateProperties) {
-            if (propertyAccess.propInfo.patternElements.at(-1) !== "*")
+            if (propertyAccess.propInfo.patternElements[propertyAccess.propInfo.patternElements.length - 1] !== "*")
                 continue;
-            const lastIndex = propertyAccess.indexes?.at(-1);
+            const lastIndex = propertyAccess.indexes?.[propertyAccess.indexes.length - 1];
             if (typeof lastIndex === "undefined")
                 continue;
-            const parentKey = propertyAccess.propInfo.patternPaths.at(-2) + "\t" + propertyAccess.indexes.slice(0, -1);
+            const parentKey = propertyAccess.propInfo.patternPaths[propertyAccess.propInfo.patternPaths.length - 2] + "\t" + propertyAccess.indexes.slice(0, -1);
             setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
         }
         for (const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
@@ -1591,7 +1591,7 @@ let Handler$1 = class Handler {
         return this._stackIndexes[this._stackIndexes.length - 1];
     }
     getLastIndexes(pattern) {
-        return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes;
+        return this._stackNamedWildcardIndexes[this._stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes;
     }
     withIndexes(patternInfo, indexes, callback) {
         const namedWildcardIndexes = {};
@@ -1623,7 +1623,7 @@ let Handler$1 = class Handler {
     }
     _get(target, prop, receiver) {
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
+        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths[propInfo.wildcardPaths.length - 1] ?? "") ?? [];
         const wildcardIndexes = propInfo.allComplete ? propInfo.wildcardIndexes :
             propInfo.allIncomplete ? lastStackIndexes :
                 propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
@@ -1648,7 +1648,7 @@ let Handler$1 = class Handler {
     }
     _set(target, prop, value, receiver) {
         const propInfo = getPropInfo(prop);
-        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
+        const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths[propInfo.wildcardPaths.length - 1] ?? "") ?? [];
         const wildcardIndexes = propInfo.allComplete ? propInfo.wildcardIndexes :
             propInfo.allIncomplete ? lastStackIndexes :
                 propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
@@ -1680,9 +1680,9 @@ let Handler$1 = class Handler {
             }
         });
         const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
-        const wildcardPath = propInfo.wildcardPaths.at(lastIndex) ?? utils.raise(`wildcard path is undefined`);
+        const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
         const wildcardPathInfo = getPropInfo(wildcardPath);
-        const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
+        const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
         const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
         return this.withIndexes(propInfo, wildcardIndexes, () => {
             const parentValue = this._getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
@@ -1719,9 +1719,9 @@ let Handler$1 = class Handler {
             }
         });
         const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
-        const wildcardPath = propInfo.wildcardPaths.at(lastIndex) ?? utils.raise(`wildcard path is undefined`);
+        const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
         const wildcardPathInfo = getPropInfo(wildcardPath);
-        const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
+        const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
         const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
         this.withIndexes(propInfo, wildcardIndexes, () => {
             const parentValue = this._getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
@@ -3180,11 +3180,12 @@ class LoopContext {
         this.#patternInfo = getPatternInfo(this.#statePropertyName + ".*");
     }
     get patternName() {
-        return this.#patternInfo.wildcardPaths.at(-1) ?? utils.raise("patternName is undefined");
+        return this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
     }
     get parentLoopContext() {
+        this.checkRevision();
         if (!this.#parentLoopCache) {
-            const parentPattern = this.#patternInfo.wildcardPaths.at(-2);
+            const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
             let curContentBindings = undefined;
             if (typeof parentPattern !== "undefined") {
                 curContentBindings = this.#contentBindings.parentBinding?.parentContentBindings;
@@ -3204,23 +3205,36 @@ class LoopContext {
         return this.#parentLoopContext;
     }
     get index() {
-        const revision = this.#contentBindings.parentBinding?.nodeProperty.revisionForLoop;
-        if (typeof this.#index === "undefined" || this.#revision !== revision) {
+        this.checkRevision();
+        if (typeof this.#index === "undefined") {
             this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ??
                 utils.raise("parentBinding is undefined");
-            this.#parentLoopCache = false;
-            this.#revision = revision;
         }
         return this.#index;
     }
-    // ToDo:キャッシュが効くか検討する
+    #indexes;
     get indexes() {
-        if (typeof this.parentLoopContext === "undefined") {
-            return [this.index];
+        this.checkRevision();
+        if (typeof this.#indexes === "undefined") {
+            if (typeof this.parentLoopContext === "undefined") {
+                this.#indexes = [this.index];
+            }
+            else {
+                this.#indexes = [...this.parentLoopContext.indexes, this.index];
+            }
         }
-        else {
-            return [...this.parentLoopContext.indexes, this.index];
+        return this.#indexes;
+    }
+    checkRevision() {
+        const revision = this.#contentBindings.parentBinding?.nodeProperty.revisionForLoop;
+        if (typeof this.#revision === "undefined" || this.#revision !== revision) {
+            this.#index = undefined;
+            this.#indexes = undefined;
+            this.#parentLoopCache = true;
+            this.#revision = revision;
+            return true;
         }
+        return false;
     }
     find(patternName) {
         let curContentBindings = this.#contentBindings;
@@ -3731,23 +3745,25 @@ class Handler extends Handler$1 {
 }
 
 class ReadonlyHandler extends Handler {
-    #cache = {};
+    #cache = new Map();
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         const path = patternPaths[pathIndex];
         if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
             const indexesString = wildcardIndexes.slice(0, wildcardIndex + 1).toString();
             const key = `${path}:${indexesString}`;
-            return this.#cache[key] ??
+            let value = this.#cache.get(key);
+            return value ??
                 ((key in this.#cache) ?
-                    undefined :
-                    (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver)));
+                    value :
+                    (value = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver),
+                        this.#cache.set(key, value), value));
         }
         else {
             return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
         }
     }
     clearCache() {
-        this.#cache = {};
+        this.#cache.clear();
     }
     set(target, prop, value, receiver) {
         utils.raise("ReadonlyHandler: set is not allowed");
@@ -3781,7 +3797,7 @@ class WritableHandler extends Handler {
         });
     }
     getLastIndexes(pattern) {
-        return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
+        return this._stackNamedWildcardIndexes[this._stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
     }
     __set(target, propInfo, indexes, value, receiver) {
         try {

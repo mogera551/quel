@@ -9,10 +9,9 @@ export interface IStateHandler {
   readonly dependentProps: IDependentProps;
   readonly element: HTMLElement;
   readonly updator: IUpdator;
-//  addNotify(state:Object, prop:PropertyAccess, stateProxy:IStateProxy):void;
+
   clearCache():void;
   directlyCallback(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void>;
-//  addProcess(process:() => Promise<void>, stateProxy:IStateProxy, indexes:number[]):void;
 }
 
 export interface IBaseState  {

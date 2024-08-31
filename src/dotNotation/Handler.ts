@@ -23,8 +23,6 @@ class WildcardIndexes implements IWildcardIndexes {
   }
 }
 
-const _cacheNamedWildcardIndexes: { [key: string]: NamedWildcardIndexes } = {};
-
 /**
  * ドット記法でプロパティを取得するためのハンドラ
  */
@@ -35,7 +33,7 @@ export class Handler implements IDotNotationHandler {
     return this._stackIndexes[this._stackIndexes.length - 1];
   }
   getLastIndexes(pattern:string): Indexes | undefined {
-    return this._stackNamedWildcardIndexes.at(-1)?.[pattern]?.indexes;
+    return this._stackNamedWildcardIndexes[this._stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes;
   }
   withIndexes(patternInfo: IPatternInfo, indexes: Indexes, callback: () => any): any {
     const namedWildcardIndexes: NamedWildcardIndexes = {};
@@ -95,7 +93,7 @@ export class Handler implements IDotNotationHandler {
     
   _get(target:object, prop:string, receiver:object) {
     const propInfo = getPropInfo(prop);
-    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
+    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths[propInfo.wildcardPaths.length - 1] ?? "") ?? [];
     const wildcardIndexes = 
       propInfo.allComplete ? propInfo.wildcardIndexes :
       propInfo.allIncomplete ? lastStackIndexes :
@@ -129,7 +127,7 @@ export class Handler implements IDotNotationHandler {
 
   _set(target:object, prop:string, value:any, receiver:object):boolean {
     const propInfo = getPropInfo(prop);
-    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths.at(-1) ?? "") ?? [];
+    const lastStackIndexes = this.getLastIndexes(propInfo.wildcardPaths[propInfo.wildcardPaths.length - 1] ?? "") ?? [];
     const wildcardIndexes = 
       propInfo.allComplete ? propInfo.wildcardIndexes :
       propInfo.allIncomplete ? lastStackIndexes :
@@ -161,9 +159,9 @@ export class Handler implements IDotNotationHandler {
       }
     });
     const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
-    const wildcardPath = propInfo.wildcardPaths.at(lastIndex) ?? utils.raise(`wildcard path is undefined`);
+    const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
     const wildcardPathInfo = getPropInfo(wildcardPath);
-    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
+    const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
     return this.withIndexes(propInfo, wildcardIndexes, () => {
       const parentValue = this._getValue(
@@ -205,9 +203,9 @@ export class Handler implements IDotNotationHandler {
       }
     });
     const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
-    const wildcardPath = propInfo.wildcardPaths.at(lastIndex) ?? utils.raise(`wildcard path is undefined`);
+    const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
     const wildcardPathInfo = getPropInfo(wildcardPath);
-    const wildcardParentPath = wildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
+    const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
     this.withIndexes(propInfo, wildcardIndexes, () => {
       const parentValue = this._getValue(

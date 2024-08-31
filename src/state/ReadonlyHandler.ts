@@ -1,9 +1,8 @@
-import { IPropInfo } from "../dotNotation/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
 
 export class ReadonlyHandler extends Handler {
-  #cache: { [ key: string ]: any } = {};
+  #cache = new Map<string, any>();
   _getValue(
     target:object, 
     patternPaths:string[],
@@ -16,10 +15,12 @@ export class ReadonlyHandler extends Handler {
     if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
       const indexesString = wildcardIndexes.slice(0, wildcardIndex + 1).toString();
       const key = `${path}:${indexesString}`;
-      return this.#cache[key] ?? 
+      let value = this.#cache.get(key);
+      return value ?? 
         ((key in this.#cache) ? 
-         undefined : 
-         (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver))
+         value : 
+         (value = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver),
+          this.#cache.set(key, value), value)
         );
     } else {
       return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
@@ -27,7 +28,7 @@ export class ReadonlyHandler extends Handler {
   }
 
   clearCache():void {
-    this.#cache = {};
+    this.#cache.clear();
   }
 
   set(target:object, prop:string, value:any, receiver:object):boolean {
