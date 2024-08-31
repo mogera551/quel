@@ -991,8 +991,11 @@ function getNamesFromComponent(component) {
     return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim$1).filter(excludeEmptyName) ?? [];
 }
 
-const _cachePropInfo = {};
-const _cachePatternInfo = {};
+/**
+ * constructorが指定されると、破綻するのでObjectではなくMapを使う
+ */
+const _cachePropInfo = new Map();
+const _cachePatternInfo = new Map();
 function _getPatternInfo(pattern) {
     const patternElements = pattern.split(".");
     const patternPaths = [];
@@ -1011,7 +1014,8 @@ function _getPatternInfo(pattern) {
     };
 }
 function getPatternInfo(pattern) {
-    return _cachePatternInfo[pattern] ?? (_cachePatternInfo[pattern] = _getPatternInfo(pattern));
+    let info;
+    return _cachePatternInfo.get(pattern) ?? (info = _getPatternInfo(pattern), _cachePatternInfo.set(pattern, info), info);
 }
 function _getPropInfo(name) {
     const elements = name.split(".");
@@ -1055,7 +1059,8 @@ function _getPropInfo(name) {
     }, getPatternInfo(pattern));
 }
 function getPropInfo(name) {
-    return _cachePropInfo[name] ?? (_cachePropInfo[name] = _getPropInfo(name));
+    let info;
+    return _cachePropInfo.get(name) ?? (info = _getPropInfo(name), _cachePropInfo.set(name, info), info);
 }
 
 class PropertyAccess {
@@ -1606,17 +1611,10 @@ let Handler$1 = class Handler {
         }
     }
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
-        const path = patternPaths[pathIndex];
-        if (path in target) {
-            return Reflect.get(target, path, receiver);
-        }
-        if (pathIndex === 0)
-            return undefined;
-        const element = patternElements[pathIndex];
-        const isWildcard = element === "*";
-        const parentValue = this._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver);
-        const lastIndex = isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element;
-        return parentValue[lastIndex];
+        let value, element, isWildcard, path = patternPaths[pathIndex];
+        return (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
+            isWildcard = element === "*",
+            this._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver)[isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element]));
     }
     __get(target, propInfo, indexes, receiver) {
         return this.withIndexes(propInfo, indexes, () => {
@@ -2093,6 +2091,9 @@ class NodeProperty {
     get isSelectValue() {
         return false;
     }
+    get revisionForLoop() {
+        return utils.raise("not loopable");
+    }
     get loopable() {
         return false;
     }
@@ -2147,22 +2148,25 @@ class TemplateProperty extends NodeProperty {
     }
 }
 
-const applyToNodeFunc = (contentBindings) => contentBindings.applyToNode();
-class Repeat extends TemplateProperty {
-    #revision = 0;
-    get revision() {
-        return this.#revision;
+class Loop extends TemplateProperty {
+    _revisionForLoop = 0;
+    get revisionForLoop() {
+        return this._revisionForLoop;
     }
     get loopable() {
         return true;
     }
+}
+
+const applyToNodeFunc = (contentBindings) => contentBindings.applyToNode();
+class Repeat extends Loop {
     get value() {
         return this.binding.childrenContentBindings.length;
     }
     set value(value) {
         if (!Array.isArray(value))
             utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-        this.#revision++;
+        this._revisionForLoop++;
         if (this.value < value.length) {
             this.binding.childrenContentBindings.forEach(applyToNodeFunc);
             for (let newIndex = this.value; newIndex < value.length; newIndex++) {
@@ -2522,18 +2526,11 @@ const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 /**
  * Exclude from GC
  */
-class RepeatKeyed extends Repeat {
+class RepeatKeyed extends Loop {
     #fromIndexByValue = new Map; // 複数同じ値がある場合を考慮
     #lastIndexes = new Set;
     #setOfNewIndexes = new Set;
     #lastChildByNewIndex = new Map;
-    #revision = 0;
-    get revision() {
-        return this.#revision;
-    }
-    get loopable() {
-        return true;
-    }
     #lastValue = [];
     get value() {
         return this.#lastValue;
@@ -2541,7 +2538,7 @@ class RepeatKeyed extends Repeat {
     set value(values) {
         if (!Array.isArray(values))
             utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-        this.#revision++;
+        this._revisionForLoop++;
         this.#fromIndexByValue.clear();
         this.#lastIndexes.clear();
         this.#setOfNewIndexes.clear();
@@ -2602,7 +2599,7 @@ class RepeatKeyed extends Repeat {
         this.#lastValue = values.slice();
     }
     applyToChildNodes(setOfIndex) {
-        this.#revision++;
+        this._revisionForLoop++;
         const contentBindingsByValue = new Map;
         for (const index of setOfIndex) {
             const contentBindings = this.binding.childrenContentBindings[index];
@@ -3207,8 +3204,7 @@ class LoopContext {
         return this.#parentLoopContext;
     }
     get index() {
-        // todo: unknownをなんとかする
-        const revision = (this.#contentBindings.parentBinding?.nodeProperty).revision;
+        const revision = this.#contentBindings.parentBinding?.nodeProperty.revisionForLoop;
         if (typeof this.#index === "undefined" || this.#revision !== revision) {
             this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ??
                 utils.raise("parentBinding is undefined");
@@ -3735,27 +3731,23 @@ class Handler extends Handler$1 {
 }
 
 class ReadonlyHandler extends Handler {
-    #cache = new Map();
+    #cache = {};
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         const path = patternPaths[pathIndex];
         if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
             const indexesString = wildcardIndexes.slice(0, wildcardIndex + 1).toString();
             const key = `${path}:${indexesString}`;
-            let value = this.#cache.get(key);
-            if (typeof value !== "undefined")
-                return value;
-            if (this.#cache.has(key))
-                return undefined;
-            value = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
-            this.#cache.set(key, value);
-            return value;
+            return this.#cache[key] ??
+                ((key in this.#cache) ?
+                    undefined :
+                    (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver)));
         }
         else {
             return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
         }
     }
     clearCache() {
-        this.#cache.clear();
+        this.#cache = {};
     }
     set(target, prop, value, receiver) {
         utils.raise("ReadonlyHandler: set is not allowed");

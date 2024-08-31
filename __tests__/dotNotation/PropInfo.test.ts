@@ -1,5 +1,5 @@
 import 'jest';
-import { getPropInfo } from '../../src/newDotNotation/PropInfo';
+import { getPropInfo } from '../../src/dotNotation/PropInfo';
 
 describe('getPropInfo', () => {
   it('should return the correct prop info for a simple property', () => {

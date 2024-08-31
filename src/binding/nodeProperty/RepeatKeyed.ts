@@ -1,7 +1,8 @@
 import { utils } from "../../utils";
 import { Repeat } from "./Repeat";
-import { IContentBindings, ILoopable } from "../types";
+import { IContentBindings } from "../types";
 import { createContentBindings } from "../ContentBindings";
+import { Loop } from "./Loop";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
@@ -9,7 +10,7 @@ const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
  * Exclude from GC
  */
 
-export class RepeatKeyed extends Repeat implements ILoopable {
+export class RepeatKeyed extends Loop {
   #fromIndexByValue:Map<any,number> = new Map; // 複数同じ値がある場合を考慮
 
   #lastIndexes:Set<number> = new Set;
@@ -18,15 +19,6 @@ export class RepeatKeyed extends Repeat implements ILoopable {
 
   #lastChildByNewIndex:Map<number,IContentBindings> = new Map;
 
-  #revision = 0;
-  get revision(): number {
-    return this.#revision;
-  }
-
-  get loopable():boolean {
-    return true;
-  }
-
   #lastValue:any[] = [];
 
   get value():any[] {
@@ -34,7 +26,7 @@ export class RepeatKeyed extends Repeat implements ILoopable {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-    this.#revision++;
+    this._revisionForLoop++;
     this.#fromIndexByValue.clear();
     this.#lastIndexes.clear();
     this.#setOfNewIndexes.clear();
@@ -94,7 +86,7 @@ export class RepeatKeyed extends Repeat implements ILoopable {
   }
 
   applyToChildNodes(setOfIndex:Set<number>) {
-    this.#revision++;
+    this._revisionForLoop++;
     const contentBindingsByValue:Map<any,IContentBindings> = new Map;
     for(const index of setOfIndex) {
       const contentBindings = this.binding.childrenContentBindings[index];

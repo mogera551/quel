@@ -1,11 +1,11 @@
 import { GetDependentPropsApiSymbol } from "./symbols";
-import { INewPropertyAccess } from "../binding/types";
+import { IPropertyAccess } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/PropInfo";
 import { IStateProxy } from "./types";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { GetDirectSymbol } from "../dotNotation/symbols";
 
-export function makeNotifyForDependentProps(state:IStateProxy, propertyAccess:INewPropertyAccess, setOfSavePropertyAccessKeys:Set<string> = new Set([])):INewPropertyAccess[] {
+export function makeNotifyForDependentProps(state:IStateProxy, propertyAccess:IPropertyAccess, setOfSavePropertyAccessKeys:Set<string> = new Set([])):IPropertyAccess[] {
   const { propInfo, indexes } = propertyAccess;
   const propertyAccessKey = propInfo.pattern + "\t" + indexes.toString();
   if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
@@ -29,7 +29,7 @@ export function makeNotifyForDependentProps(state:IStateProxy, propertyAccess:IN
   return propertyAccesses;
 }
 
-function expandIndexes(state:IStateProxy, propertyAccess:INewPropertyAccess):number[][] {
+function expandIndexes(state:IStateProxy, propertyAccess:IPropertyAccess):number[][] {
   const { propInfo, pattern, indexes } = propertyAccess;
   if (propInfo.wildcardCount === indexes.length) {
     return [ indexes ];

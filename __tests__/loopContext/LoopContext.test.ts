@@ -1,6 +1,6 @@
 import 'jest';
-import { IContentBindingsBase, IBindingBase } from "../../src/newBinding/types";
-import { LoopContext } from "../../src/newLoopContext/LoopContext";
+import { IContentBindingsBase, IBindingBase, ILoopable } from "../../src/binding/types";
+import { LoopContext } from "../../src/loopContext/LoopContext";
 
 class ContentBindingsBase implements IContentBindingsBase {
   parentBinding: IBindingBase | undefined;
@@ -18,17 +18,32 @@ class ContentBindingsBase implements IContentBindingsBase {
   }
 }
 
+class NodeProperty implements ILoopable {
+  _revision: number = 0;
+  get revisionForLoop(): number {
+    return this._revision;
+  }
+  revisionUp() {
+    this._revision++;
+  }
+}
+
 class Binding implements IBindingBase {
   parentContentBindings: IContentBindingsBase;
   childrenContentBindings: IContentBindingsBase[];
   loopable: boolean;
   statePropertyName: string;
+  nodeProperty: ILoopable;
   constructor(parentContentBindings: IContentBindingsBase, name:string, loopable: boolean) {
     this.parentContentBindings = parentContentBindings;
     this.parentContentBindings.childrenBinding.push(this);
     this.childrenContentBindings = [];
     this.loopable = loopable;
     this.statePropertyName = name;
+    this.nodeProperty = new NodeProperty;
+  }
+  revisionUp() {
+    (this.nodeProperty as NodeProperty).revisionUp();
   }
 }
 
@@ -86,8 +101,8 @@ describe("LoopContext", () => {
     expect(contentBindings3.loopContext?.index).toBe(0);
     expect(contentBindings3.loopContext?.indexes).toEqual([0,0]);
 
-    contentBindings2.loopContext?.clearIndex();
-    contentBindings3.loopContext?.clearIndex();
+    binding.revisionUp();
+    binding2.revisionUp();
 
     expect(contentBindings2.loopContext?.index).toBe(0);
     expect(contentBindings2.loopContext?.indexes).toEqual([0]);

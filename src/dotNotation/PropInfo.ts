@@ -2,8 +2,11 @@
 import { all } from '../../node_modules/axios/index';
 import { IPatternInfo, IPropInfo } from './types';
 
-const _cachePropInfo: { [key: string]: IPropInfo } = {};
-const _cachePatternInfo: { [key: string]: IPatternInfo } = {};
+/**
+ * constructorが指定されると、破綻するのでObjectではなくMapを使う
+ */
+const _cachePropInfo = new Map<string, IPropInfo>();
+const _cachePatternInfo = new Map<string, IPatternInfo>();
 
 function _getPatternInfo(pattern:string):IPatternInfo {
   const patternElements = pattern.split(".");
@@ -24,7 +27,8 @@ function _getPatternInfo(pattern:string):IPatternInfo {
 }
 
 export function getPatternInfo(pattern:string):IPatternInfo {
-  return _cachePatternInfo[pattern] ?? (_cachePatternInfo[pattern] = _getPatternInfo(pattern));
+  let info;
+  return _cachePatternInfo.get(pattern) ?? (info = _getPatternInfo(pattern), _cachePatternInfo.set(pattern, info), info);
 }
 
 function _getPropInfo(name:string):IPropInfo {
@@ -69,5 +73,6 @@ function _getPropInfo(name:string):IPropInfo {
 }
 
 export function getPropInfo(name:string):IPropInfo {
-  return _cachePropInfo[name] ?? (_cachePropInfo[name] = _getPropInfo(name));
+  let info;
+  return _cachePropInfo.get(name) ?? (info = _getPropInfo(name), _cachePropInfo.set(name, info), info);
 }

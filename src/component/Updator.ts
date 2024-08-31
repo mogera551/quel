@@ -1,11 +1,11 @@
 import { UpdatedCallbackSymbol } from "../state/symbols";
 import { config } from "../Config";
 import { IComponent, INewProcess, IUpdator } from "./types";
-import { IBinding, IBindingSummary, INewPropertyAccess } from "../binding/types";
+import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
 import { IStates } from "../state/types";
 
-const getPropAccessKey = (prop: INewPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
+const getPropAccessKey = (prop: IPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
 const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
@@ -14,8 +14,8 @@ type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary" | "cont
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
   processQueue: INewProcess[] = [];
-  updatedStateProperties: INewPropertyAccess[] = [];
-  expandedStateProperties: INewPropertyAccess[] = [];
+  updatedStateProperties: IPropertyAccess[] = [];
+  expandedStateProperties: IPropertyAccess[] = [];
   updatedBindings: Set<IBinding> = new Set();
 
   executing = false;
@@ -46,7 +46,7 @@ class Updator implements IUpdator {
     return this.processQueue;
   }
 
-  addUpdatedStateProperty(prop:INewPropertyAccess):void {
+  addUpdatedStateProperty(prop:IPropertyAccess):void {
     this.updatedStateProperties.push(prop);
   }
 
@@ -55,9 +55,9 @@ class Updator implements IUpdator {
    * @param {{ component:Component, processQueue:Process[], updatedStateProperties:PropertyAccess[] }} param0 
    * @returns {Promise<PropertyAccess[]>}
    */
-  async process(): Promise<INewPropertyAccess[]> {
+  async process(): Promise<IPropertyAccess[]> {
 
-    const totalUpdatedStateProperties:INewPropertyAccess[] = [];
+    const totalUpdatedStateProperties:IPropertyAccess[] = [];
     // event callback, and update state
     while (this.processQueue.length > 0) {
       const processes = this.processQueue.slice(0);
@@ -80,7 +80,7 @@ class Updator implements IUpdator {
     return totalUpdatedStateProperties;
   }
 
-  expandStateProperties(updatedStateProperties:INewPropertyAccess[]):INewPropertyAccess[] {
+  expandStateProperties(updatedStateProperties:IPropertyAccess[]):IPropertyAccess[] {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
@@ -91,7 +91,7 @@ class Updator implements IUpdator {
     return expandedStateProperties;
   }
 
-  rebuildBinding(expandedStatePropertyByKey:Map<string,INewPropertyAccess>) {
+  rebuildBinding(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
     // bindingの再構築
     // 再構築するのは、更新したプロパティのみでいいかも→ダメだった。
     // expandedStatePropertyByKeyに、branch、repeatが含まれている場合、それらのbindingを再構築する
@@ -110,7 +110,7 @@ class Updator implements IUpdator {
     });
   }
 
-  updateChildNodes(expandedStateProperties:INewPropertyAccess[]) {
+  updateChildNodes(expandedStateProperties:IPropertyAccess[]) {
     const bindingSummary = this.bindingSummary;
     const setOfIndexByParentKey:Map<string,Set<number>> = new Map;
     for(const propertyAccess of expandedStateProperties) {
@@ -129,7 +129,7 @@ class Updator implements IUpdator {
     }
   }
 
-  updateNode(expandedStatePropertyByKey:Map<string,INewPropertyAccess>) {
+  updateNode(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
     const bindingSummary = this.bindingSummary;
     const selectBindings = [];
     for(const key of expandedStatePropertyByKey.keys()) {

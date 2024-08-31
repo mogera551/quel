@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { FilterFunc, IFilterInfo } from "../../filter/types";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { IBinding, INodeProperty, INewPropertyAccess } from "../types";
+import { IBinding, INodeProperty, IPropertyAccess } from "../types";
 
 export class NodeProperty implements INodeProperty {
   #node:Node;
@@ -54,7 +54,11 @@ export class NodeProperty implements INodeProperty {
     return false;
   }
 
-  get loopable():boolean {
+  get revisionForLoop(): number {
+    return utils.raise("not loopable");
+  }
+
+  get loopable(): boolean {
     return false;
   }
 
@@ -70,7 +74,7 @@ export class NodeProperty implements INodeProperty {
   initialize() {
   }
 
-  postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>) {
+  postUpdate(propertyAccessByStatePropertyKey:Map<string,IPropertyAccess>) {
   }
 
   equals(value:any):boolean {

@@ -3,7 +3,7 @@ import { utils } from "../utils";
 import { Handler } from "./Handler";
 
 export class ReadonlyHandler extends Handler {
-  #cache = new Map<string,any>();
+  #cache: { [ key: string ]: any } = {};
   _getValue(
     target:object, 
     patternPaths:string[],
@@ -16,19 +16,18 @@ export class ReadonlyHandler extends Handler {
     if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
       const indexesString = wildcardIndexes.slice(0, wildcardIndex + 1).toString();
       const key = `${path}:${indexesString}`;
-      let value = this.#cache.get(key);
-      if (typeof value !== "undefined") return value;
-      if (this.#cache.has(key)) return undefined;
-      value = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
-      this.#cache.set(key, value);
-      return value;
+      return this.#cache[key] ?? 
+        ((key in this.#cache) ? 
+         undefined : 
+         (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver))
+        );
     } else {
       return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
     }
   }
 
   clearCache():void {
-    this.#cache.clear();
+    this.#cache = {};
   }
 
   set(target:object, prop:string, value:any, receiver:object):boolean {

@@ -2,7 +2,7 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
 import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
-import { IContentBindings, IBinding, IBindingPropertyAccess, IBindingSummary, INewPropertyAccess } from "../binding/types";
+import { IContentBindings, IBinding, IBindingPropertyAccess, IBindingSummary, IPropertyAccess } from "../binding/types";
 
 export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -151,8 +151,8 @@ export interface INewProcess {
 export interface IUpdator {
 //  component: IComponent;
   readonly processQueue: INewProcess[];
-  readonly updatedStateProperties: INewPropertyAccess[];
-  readonly expandedStateProperties: INewPropertyAccess[];
+  readonly updatedStateProperties: IPropertyAccess[];
+  readonly expandedStateProperties: IPropertyAccess[];
   readonly updatedBindings: Set<IBinding>;
   readonly states: IStates;
   readonly bindingSummary: IBindingSummary;
@@ -161,12 +161,12 @@ export interface IUpdator {
 
   addProcess(target: Function, thisArgument: object, argumentList: any[]): void;
   getProcessQueue(): INewProcess[];
-  addUpdatedStateProperty(prop: INewPropertyAccess): void;
-  process():Promise<INewPropertyAccess[]>;
-  expandStateProperties(updatedStateProperties: INewPropertyAccess[]): INewPropertyAccess[];
-  rebuildBinding(expandedStatePropertyByKey: Map<string,INewPropertyAccess>): void;
-  updateChildNodes(expandedStateProperties: INewPropertyAccess[]): void;
-  updateNode(expandedStatePropertyByKey: Map<string, INewPropertyAccess>): void;
+  addUpdatedStateProperty(prop: IPropertyAccess): void;
+  process():Promise<IPropertyAccess[]>;
+  expandStateProperties(updatedStateProperties: IPropertyAccess[]): IPropertyAccess[];
+  rebuildBinding(expandedStatePropertyByKey: Map<string,IPropertyAccess>): void;
+  updateChildNodes(expandedStateProperties: IPropertyAccess[]): void;
+  updateNode(expandedStatePropertyByKey: Map<string, IPropertyAccess>): void;
   execCallback(callback: ()=>any): Promise<void>;
   exec(): Promise<void>;
   applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;

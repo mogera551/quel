@@ -5,7 +5,7 @@ import { IComponent, IUpdator } from "../component/types";
 import { IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";
 
-export interface INewPropertyAccess {
+export interface IPropertyAccess {
   readonly pattern: string;
   readonly indexes: number[];
   readonly propInfo: IPropInfo;
@@ -17,7 +17,11 @@ export interface IBindingPropertyAccess {
   readonly loopContext?: ILoopContext;
 }
 
-export interface INodeProperty {
+export interface ILoopable {
+  readonly revisionForLoop: number;
+}
+
+export interface INodeProperty extends ILoopable {
   readonly node: Node;
   readonly name: string;
   readonly binding: IBinding;
@@ -29,9 +33,9 @@ export interface INodeProperty {
   readonly filteredValue: any;
   
   initialize(): void;
-  postUpdate(propertyAccessByStatePropertyKey:Map<string,INewPropertyAccess>):void;
-  equals(value:any): boolean;
-  applyToChildNodes(setOfIndex:Set<number>): void;
+  postUpdate(propertyAccessByStatePropertyKey: Map<string,IPropertyAccess>):void;
+  equals(value: any): boolean;
+  applyToChildNodes(setOfIndex: Set<number>): void;
   dispose(): void;
 }
 
@@ -129,8 +133,4 @@ export interface IBindingSummary {
   exists(binding: IBinding): boolean;
   flush(): void;
   update(callback:(summary: IBindingSummary)=>any): void;
-}
-
-export interface ILoopable {
-  readonly revision: number;
 }

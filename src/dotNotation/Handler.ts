@@ -62,23 +62,22 @@ export class Handler implements IDotNotationHandler {
     pathIndex:number, wildcardIndex:number,
     receiver:object, 
   ):any {
-    const path = patternPaths[pathIndex];
-    if (path in target) {
-      return Reflect.get(target, path, receiver);
-    }
-    if (pathIndex === 0) return undefined; 
-    const element = patternElements[pathIndex];
-    const isWildcard = element === "*";
-    const parentValue = this._getValue(
-      target, 
-      patternPaths,
-      patternElements,
-      wildcardIndexes, 
-      pathIndex - 1, 
-      wildcardIndex - (isWildcard ? 1 : 0), 
-      receiver);
-    const lastIndex = isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element;
-    return parentValue[lastIndex];
+    let value, element, isWildcard, path = patternPaths[pathIndex];
+    return (value = Reflect.get(target, path, receiver)) ?? (
+      (path in target || pathIndex === 0) ? value : (
+        element = patternElements[pathIndex],
+        isWildcard = element === "*",
+        this._getValue(
+          target, 
+          patternPaths,
+          patternElements,
+          wildcardIndexes, 
+          pathIndex - 1, 
+          wildcardIndex - (isWildcard ? 1 : 0), 
+          receiver
+        )[isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element]
+      )
+    );
   }
 
   __get(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object) {

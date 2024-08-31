@@ -1,4 +1,4 @@
-import { IContentBindingsBase, ILoopable, IBinding } from "../binding/types";
+import { IContentBindingsBase, IBinding } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/PropInfo";
 import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
@@ -45,8 +45,7 @@ export class LoopContext implements ILoopContext{
   }
 
   get index(): number {
-    // todo: unknownをなんとかする
-    const revision = ((this.#contentBindings.parentBinding as IBinding)?.nodeProperty as unknown as ILoopable).revision;
+    const revision = (this.#contentBindings.parentBinding as IBinding)?.nodeProperty.revisionForLoop;
     if (typeof this.#index === "undefined" || this.#revision !== revision) {
       this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ?? 
         utils.raise("parentBinding is undefined");

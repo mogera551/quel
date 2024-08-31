@@ -1,7 +1,7 @@
 import 'jest';
-import { Handler } from "../../src/newDotNotation/Handler";
-import { GetDirectSymbol, SetDirectSymbol } from '../../src/@symbols/dotNotation';
-import { getPatternInfo } from '../../src/newDotNotation/PropInfo';
+import { Handler } from "../../src/dotNotation/Handler";
+import { GetDirectSymbol, SetDirectSymbol } from '../../src/dotNotation/symbols';
+import { getPatternInfo } from '../../src/dotNotation/PropInfo';
 
 describe("Handler", () => {
   let handler: Handler;

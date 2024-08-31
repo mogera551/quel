@@ -4,7 +4,7 @@ import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols.j
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";
-import { IBinding, IBindingPropertyAccess, INewPropertyAccess, IStateProperty } from "../types";
+import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../types";
 import { ILoopContext } from "../../loopContext/types";
 import { IComponent } from "../../component/types";
 
@@ -70,7 +70,7 @@ export class ComponentProperty extends ElementBase {
   /**
    * 更新後処理
    */
-  postUpdate(propertyAccessBystatePropertyKey:Map<string,INewPropertyAccess>):void {
+  postUpdate(propertyAccessBystatePropertyKey:Map<string,IPropertyAccess>):void {
     const statePropertyName = this.binding.stateProperty.name;
     for(const [key, propertyAccess] of propertyAccessBystatePropertyKey.entries()) {
       if (propertyAccess.pattern === statePropertyName || 
