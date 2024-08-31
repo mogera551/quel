@@ -3,6 +3,7 @@ import { Handler } from "./Handler";
 
 export class ReadonlyHandler extends Handler {
   #cache = new Map<string, any>();
+  
   _getValue(
     target:object, 
     patternPaths:string[],
@@ -13,8 +14,11 @@ export class ReadonlyHandler extends Handler {
   ):any {
     const path = patternPaths[pathIndex];
     if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
-      const indexesString = wildcardIndexes.slice(0, wildcardIndex + 1).toString();
-      const key = `${path}:${indexesString}`;
+      // sliceよりもループの方が速い
+      let key = path + ":";
+      for(let i = 0; i <= wildcardIndex; i++) {
+        key += `${wildcardIndexes[i]},`;
+      }
       let value = this.#cache.get(key);
       return value ?? 
         ((key in this.#cache) ? 

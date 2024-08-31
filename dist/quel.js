@@ -1001,11 +1001,14 @@ function _getPatternInfo(pattern) {
     const patternPaths = [];
     const wildcardPaths = [];
     for (let i = 0; i < patternElements.length; i++) {
-        const patternElement = patternElements[i];
-        if (patternElement === "*") {
-            wildcardPaths.push(patternElements.slice(0, i + 1).join("."));
+        let patternPath = "";
+        for (let j = 0; j <= i; j++) {
+            patternPath += patternElements[j] + (j < i ? "." : "");
         }
-        patternPaths.push(patternElements.slice(0, i + 1).join("."));
+        if (patternElements[i] === "*") {
+            wildcardPaths.push(patternPath);
+        }
+        patternPaths.push(patternPath);
     }
     return {
         patternElements,
@@ -1025,6 +1028,7 @@ function _getPropInfo(name) {
     let lastIncompleteWildcardIndex = -1;
     let incompleteCount = 0;
     let completeCount = 0;
+    let lastPath = "";
     for (let i = 0; i < elements.length; i++) {
         const element = elements[i];
         if (element === "*") {
@@ -1041,7 +1045,9 @@ function _getPropInfo(name) {
                 completeCount++;
             }
         }
-        paths.push(elements.slice(0, i + 1).join("."));
+        lastPath += element;
+        paths.push(lastPath);
+        lastPath += (i < elements.length - 1 ? "." : "");
     }
     const pattern = patternElements.join(".");
     const wildcardCount = wildcardIndexes.length;
@@ -3749,8 +3755,11 @@ class ReadonlyHandler extends Handler {
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         const path = patternPaths[pathIndex];
         if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
-            const indexesString = wildcardIndexes.slice(0, wildcardIndex + 1).toString();
-            const key = `${path}:${indexesString}`;
+            // sliceよりもループの方が速い
+            let key = path + ":";
+            for (let i = 0; i <= wildcardIndex; i++) {
+                key += `${wildcardIndexes[i]},`;
+            }
             let value = this.#cache.get(key);
             return value ??
                 ((key in this.#cache) ?
