@@ -3230,7 +3230,7 @@ class LoopContext {
         if (typeof this.#revision === "undefined" || this.#revision !== revision) {
             this.#index = undefined;
             this.#indexes = undefined;
-            this.#parentLoopCache = true;
+            this.#parentLoopCache = false;
             this.#revision = revision;
             return true;
         }
