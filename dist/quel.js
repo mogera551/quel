@@ -1231,7 +1231,7 @@ class Updator {
             if (this.updatedStateProperties.length > 0) {
                 // call updatedCallback, and add processQeueue
                 await this.states.writable(async () => {
-                    this.states.current[UpdatedCallbackSymbol](this.updatedStateProperties);
+                    this.states.current[UpdatedCallbackSymbol](this.updatedStateProperties.map(prop => ({ name: prop.pattern, indexes: prop.indexes })));
                     totalUpdatedStateProperties.push(...this.updatedStateProperties);
                     this.updatedStateProperties.length = 0;
                 });
@@ -2162,6 +2162,10 @@ class Loop extends TemplateProperty {
     get loopable() {
         return true;
     }
+    dispose() {
+        super.dispose();
+        this._revisionForLoop++;
+    }
 }
 
 const applyToNodeFunc = (contentBindings) => contentBindings.applyToNode();
@@ -2217,8 +2221,7 @@ class Branch extends TemplateProperty {
                 constentBindings.postCreate();
             }
             else {
-                const removedContentBindings = this.binding.removeAllChildrenContentBindings();
-                removedContentBindings.forEach(constentBindings => constentBindings.dispose());
+                this.binding.removeAllChildrenContentBindings();
             }
         }
         else {
@@ -2641,6 +2644,7 @@ class RepeatKeyed extends Loop {
         this.#lastValue = this.binding.stateProperty.value.slice();
     }
     initialize() {
+        super.initialize();
         this.#lastValue = [];
     }
     dispose() {
@@ -3564,14 +3568,16 @@ function getCallback(state, stateProxy, handler, prop) {
 }
 
 function existsProperty(baseClass, prop) {
-    if (typeof baseClass.prototype[prop] !== "undefined")
-        return true;
+    if (typeof baseClass.prototype === "undefined")
+        return false;
     if (baseClass.prototype === Object.prototype)
         return false;
+    if (typeof baseClass.prototype[prop] !== "undefined")
+        return true;
     return existsProperty(Object.getPrototypeOf(baseClass), prop);
 }
 const permittedProps = new Set([
-    "addProcess", "viewRootElement ", "queryRoot",
+    "element", "addProcess", "viewRootElement ", "queryRoot",
     "asyncShowModal", "asyncShow",
     "asyncShowPopover", "cancelPopover"
 ]);
@@ -4376,6 +4382,9 @@ const generateComponentClass = (componentModule) => {
             }
             get eventFilterManager() {
                 return this.filterManagers.eventFilterManager;
+            }
+            get element() {
+                return this;
             }
             constructor() {
                 super();

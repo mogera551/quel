@@ -1,5 +1,4 @@
 import { utils } from "../../utils";
-import { Repeat } from "./Repeat";
 import { IContentBindings } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
@@ -117,6 +116,7 @@ export class RepeatKeyed extends Loop {
   }
 
   initialize() {
+    super.initialize();
     this.#lastValue = [];
   }
 

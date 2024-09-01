@@ -2,13 +2,14 @@ import { utils } from "../utils";
 import { IComponent, IUserComponent } from "./types";
 
 function existsProperty(baseClass:Function, prop:PropertyKey):boolean {
-  if (typeof baseClass.prototype[prop] !== "undefined") return true;
+  if (typeof baseClass.prototype === "undefined") return false;
   if (baseClass.prototype === Object.prototype) return false;
+  if (typeof baseClass.prototype[prop] !== "undefined") return true;
   return existsProperty(Object.getPrototypeOf(baseClass), prop);
 }
 
 const permittedProps = new Set([
-  "addProcess", "viewRootElement ", "queryRoot",
+  "element", "addProcess", "viewRootElement ", "queryRoot",
   "asyncShowModal", "asyncShow",
   "asyncShowPopover", "cancelPopover"
 ]);

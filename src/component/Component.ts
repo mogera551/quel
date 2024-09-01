@@ -155,6 +155,10 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         return this.filterManagers.eventFilterManager;
       }
 
+      get element(): HTMLElement {
+        return this;
+      }
+
       constructor() {
         super();
         this.#setCustomElementInfo();

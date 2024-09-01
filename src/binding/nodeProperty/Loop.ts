@@ -8,4 +8,8 @@ export class Loop extends TemplateProperty {
   get loopable(): boolean {
     return true;
   }
+  dispose() {
+    super.dispose();
+    this._revisionForLoop++;
+  }
 }

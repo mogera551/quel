@@ -153,10 +153,10 @@ class ContentBindings implements IContentBindings {
 
 const _cache: {[ key: string ]: IContentBindings[]} = {};
 export function createContentBindings(
-  template:HTMLTemplateElement, 
-  parentBinding?:IBinding, 
-  component?:IComponentPartial
-):IContentBindings {
+  template: HTMLTemplateElement, 
+  parentBinding?: IBinding, 
+  component?: IComponentPartial
+): IContentBindings {
   const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
   const contentBindings = _cache[uuid]?.pop();
   if (typeof contentBindings !== "undefined") {

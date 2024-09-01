@@ -20,8 +20,7 @@ export class Branch extends TemplateProperty {
         this.binding.appendChildContentBindings(constentBindings);
         constentBindings.postCreate();
       } else {
-        const removedContentBindings = this.binding.removeAllChildrenContentBindings();
-        removedContentBindings.forEach(constentBindings => constentBindings.dispose());
+        this.binding.removeAllChildrenContentBindings();
       }
     } else {
       this.binding.childrenContentBindings.forEach(constentBindings => constentBindings.applyToNode());

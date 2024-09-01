@@ -68,7 +68,7 @@ class Updator implements IUpdator {
       if (this.updatedStateProperties.length > 0) {
         // call updatedCallback, and add processQeueue
         await this.states.writable(async () => {
-          this.states.current[UpdatedCallbackSymbol](this.updatedStateProperties);
+          this.states.current[UpdatedCallbackSymbol](this.updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.indexes })));
           totalUpdatedStateProperties.push(...this.updatedStateProperties);
           this.updatedStateProperties.length = 0;
         });

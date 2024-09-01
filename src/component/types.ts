@@ -92,6 +92,7 @@ export interface IComponentBase {
   readonly eventFilterManager: IFilterManager<"event">;
   readonly baseClass: Function;
   readonly thisClass: Function;
+  readonly element: HTMLElement;
 }
 
 export interface ICustomComponent {
@@ -189,6 +190,6 @@ export interface IProps {
 // ToDo: addProcessをどうするか検討
 export type IUserComponent = Pick<
   IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,
-  /* "addProcess" | */ "viewRootElement" | "queryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
+  /* "addProcess" | */ "element" | "viewRootElement" | "queryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
 >;
 
