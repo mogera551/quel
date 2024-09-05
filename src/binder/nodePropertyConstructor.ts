@@ -19,6 +19,8 @@ import { IBinding, INodeProperty } from "../binding/types";
 type NodePropertyConstructorByName = {[key:string]:typeof NodeProperty};
 type NodePropertyConstructorByNameByIsComment = {[key:number]:NodePropertyConstructorByName};
 
+type SomeNodePropertyConstructor = typeof NodeProperty | typeof Branch | typeof ElementClassName | typeof Checkbox | typeof Radio | typeof ElementEvent | typeof ElementClass | typeof ElementAttribute | typeof ElementStyle | typeof ElementProperty | typeof ComponentProperty | typeof RepeatKeyed | typeof Repeat;
+
 const nodePropertyConstructorByNameByIsComment:NodePropertyConstructorByNameByIsComment = {
   0: {
     "if": Branch,
@@ -33,8 +35,8 @@ const nodePropertyConstructorByNameByIsComment:NodePropertyConstructorByNameByIs
 type NodePropertyConstructorByFirstName = {[key:string]:typeof NodeProperty};
 
 const createNodeProperty = 
-(NodeProertyClass:typeof NodeProperty):NodePropertyCreator =>
-(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]):INodeProperty =>
+(NodeProertyClass:SomeNodePropertyConstructor): NodePropertyCreator =>
+(binding: IBinding, node: Node, name: string, filters: IFilterInfo[]): INodeProperty =>
 {
   return Reflect.construct(NodeProertyClass, [binding, node, name, filters]);
 };
@@ -46,10 +48,9 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
   "props": ComponentProperty,
 };
 
-export function getNodePropertyConstructor(node:Node, propertyName:string, useKeyed:boolean) {
-  let nodePropertyConstructor:typeof NodeProperty;
+function _getNodePropertyConstructor(isComment:boolean, isElement: boolean, propertyName: string, useKeyed: boolean): NodePropertyCreator {
+  let nodePropertyConstructor: SomeNodePropertyConstructor;
   do {
-    const isComment = node instanceof Comment;
     nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 0 : 1][propertyName];
     if (typeof nodePropertyConstructor !== "undefined") break;
     if (isComment && propertyName === "loop") {
@@ -60,7 +61,7 @@ export function getNodePropertyConstructor(node:Node, propertyName:string, useKe
     const nameElements = propertyName.split(".");
     nodePropertyConstructor = nodePropertyConstructorByFirstName[nameElements[0]];
     if (typeof nodePropertyConstructor !== "undefined") break;
-    if (node instanceof Element) {
+    if (isElement) {
       if (propertyName.startsWith("on")) {
         nodePropertyConstructor = ElementEvent;
       } else {
@@ -71,4 +72,13 @@ export function getNodePropertyConstructor(node:Node, propertyName:string, useKe
     }
   } while(false);
   return createNodeProperty(nodePropertyConstructor);
+}
+
+const _cache: {[key:string]:NodePropertyCreator} = {};
+
+export function getNodePropertyConstructor(node:Node, propertyName:string, useKeyed:boolean): NodePropertyCreator {
+  const isComment = node instanceof Comment;
+  const isElement = node instanceof Element;
+  const key = isComment + "\t" + isElement + "\t" + propertyName + "\t" + useKeyed;
+  return _cache[key] ?? (_cache[key] = _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed));
 }

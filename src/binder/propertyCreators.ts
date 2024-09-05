@@ -1,5 +1,5 @@
 import { getNodePropertyConstructor } from "./nodePropertyConstructor";
-import { getStatePropertyConstructor } from "./stetaPropertyConstructor";
+import { getStatePropertyConstructor } from "./statePropertyConstructor";
 import { PropertyCreators } from "./types";
 
 export function getPropertyCreators(node:Node, nodePropertyName:string, statePropertyName:string, useKeyed:boolean):PropertyCreators {

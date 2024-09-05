@@ -24,10 +24,10 @@ const getDefaultPropertyHTMLElement = (node:Node):string =>
   DEFAULT_PROPERTY;
 
 type DefaultPropertyByKey = {
-  [key:string]: (string|undefined);
+  [key:string]: string | undefined;
 }
 
-const defaultPropertyByKey:DefaultPropertyByKey = {};
+const _cache: DefaultPropertyByKey = {};
 
 const undefinedProperty = (node:Node):(string|undefined) => undefined;
 const textContentProperty = (node:Node):(string|undefined) => DEFAULT_PROPERTY;
@@ -48,6 +48,6 @@ const getDefaultPropertyByNodeType:GetDefaultPropertyByNodeType = {
  */
 export const getDefaultProperty = (node:Node, nodeType:NodeType):(string|undefined) => {
   const key = node.constructor.name + "\t" + ((node as HTMLInputElement).type ?? ""); // type attribute
-  return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyByNodeType[nodeType](node));
+  return _cache[key] ?? (_cache[key] = getDefaultPropertyByNodeType[nodeType](node));
 }
   

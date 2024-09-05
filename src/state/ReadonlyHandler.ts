@@ -2,7 +2,8 @@ import { utils } from "../utils";
 import { Handler } from "./Handler";
 
 export class ReadonlyHandler extends Handler {
-  #cache = new Map<string, any>();
+  // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
+  #cache: {[key: string]: any} = {};
   
   _getValue(
     target:object, 
@@ -19,12 +20,11 @@ export class ReadonlyHandler extends Handler {
       for(let i = 0; i <= wildcardIndex; i++) {
         key += `${wildcardIndexes[i]},`;
       }
-      let value = this.#cache.get(key);
+      let value = this.#cache[key];
       return value ?? 
         ((key in this.#cache) ? 
          value : 
-         (value = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver),
-          this.#cache.set(key, value), value)
+         (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver))
         );
     } else {
       return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
@@ -32,7 +32,7 @@ export class ReadonlyHandler extends Handler {
   }
 
   clearCache():void {
-    this.#cache.clear();
+    this.#cache = {};
   }
 
   set(target:object, prop:string, value:any, receiver:object):boolean {

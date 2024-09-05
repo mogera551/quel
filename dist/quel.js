@@ -1951,12 +1951,21 @@ const removeAttributeByNodeType = {
  */
 const removeAttribute = (node, nodeType) => removeAttributeByNodeType[nodeType](node);
 
+const excludeTypes = new Set([
+    "button",
+    "image",
+    "hidden",
+    "reset",
+    "submit",
+    "unknown",
+]);
 /**
  * ユーザー操作によりデフォルト値が変わるかどうか
  * getDefaultPropertyと似ているが、HTMLOptionElementを含まない
  */
 const isInputableHTMLElement = (node) => node instanceof HTMLElement &&
-    (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || (node instanceof HTMLInputElement && node.type !== "button"));
+    (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement ||
+        (node instanceof HTMLInputElement && !excludeTypes.has(node.type)));
 const alwaysFalse = (node) => false;
 const isInputableFn = {
     HTMLElement: isInputableHTMLElement,
@@ -2013,7 +2022,7 @@ const parseBindText = (text, defaultName) => {
         return { nodeProperty, stateProperty, inputFilters, outputFilters };
     });
 };
-const _cache$4 = {};
+const _cache$6 = {};
 /**
  * parse bind text and return BindTextInfo[], if hit cache return cache value
  */
@@ -2021,7 +2030,7 @@ function parse(text, defaultName) {
     if (text.trim() === "")
         return [];
     const key = text + "\t" + defaultName;
-    return _cache$4[key] ?? (_cache$4[key] = parseBindText(text, defaultName));
+    return _cache$6[key] ?? (_cache$6[key] = parseBindText(text, defaultName));
 }
 
 const DEFAULT_PROPERTY = "textContent";
@@ -2039,7 +2048,7 @@ const getDefaultPropertyHTMLElement = (node) => node instanceof HTMLSelectElemen
             node instanceof HTMLFormElement ? "onsubmit" :
                 node instanceof HTMLInputElement ? (defaultPropertyByElementType[node.type] ?? "value") :
                     DEFAULT_PROPERTY;
-const defaultPropertyByKey = {};
+const _cache$5 = {};
 const undefinedProperty = (node) => undefined;
 const textContentProperty = (node) => DEFAULT_PROPERTY;
 const getDefaultPropertyByNodeType = {
@@ -2053,7 +2062,7 @@ const getDefaultPropertyByNodeType = {
  */
 const getDefaultProperty = (node, nodeType) => {
     const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
-    return defaultPropertyByKey[key] ?? (defaultPropertyByKey[key] = getDefaultPropertyByNodeType[nodeType](node));
+    return _cache$5[key] ?? (_cache$5[key] = getDefaultPropertyByNodeType[nodeType](node));
 };
 
 class NodeProperty {
@@ -2672,10 +2681,9 @@ const nodePropertyConstructorByFirstName = {
     "style": ElementStyle,
     "props": ComponentProperty,
 };
-function getNodePropertyConstructor(node, propertyName, useKeyed) {
+function _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed) {
     let nodePropertyConstructor;
     do {
-        const isComment = node instanceof Comment;
         nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 0 : 1][propertyName];
         if (typeof nodePropertyConstructor !== "undefined")
             break;
@@ -2689,7 +2697,7 @@ function getNodePropertyConstructor(node, propertyName, useKeyed) {
         nodePropertyConstructor = nodePropertyConstructorByFirstName[nameElements[0]];
         if (typeof nodePropertyConstructor !== "undefined")
             break;
-        if (node instanceof Element) {
+        if (isElement) {
             if (propertyName.startsWith("on")) {
                 nodePropertyConstructor = ElementEvent;
             }
@@ -2702,6 +2710,13 @@ function getNodePropertyConstructor(node, propertyName, useKeyed) {
         }
     } while (false);
     return createNodeProperty(nodePropertyConstructor);
+}
+const _cache$4 = {};
+function getNodePropertyConstructor(node, propertyName, useKeyed) {
+    const isComment = node instanceof Comment;
+    const isElement = node instanceof Element;
+    const key = isComment + "\t" + isElement + "\t" + propertyName + "\t" + useKeyed;
+    return _cache$4[key] ?? (_cache$4[key] = _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed));
 }
 
 class StateProperty {
@@ -3757,7 +3772,8 @@ class Handler extends Handler$1 {
 }
 
 class ReadonlyHandler extends Handler {
-    #cache = new Map();
+    // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
+    #cache = {};
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         const path = patternPaths[pathIndex];
         if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
@@ -3766,19 +3782,18 @@ class ReadonlyHandler extends Handler {
             for (let i = 0; i <= wildcardIndex; i++) {
                 key += `${wildcardIndexes[i]},`;
             }
-            let value = this.#cache.get(key);
+            let value = this.#cache[key];
             return value ??
                 ((key in this.#cache) ?
                     value :
-                    (value = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver),
-                        this.#cache.set(key, value), value));
+                    (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver)));
         }
         else {
             return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
         }
     }
     clearCache() {
-        this.#cache.clear();
+        this.#cache = {};
     }
     set(target, prop, value, receiver) {
         utils.raise("ReadonlyHandler: set is not allowed");

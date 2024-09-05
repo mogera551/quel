@@ -1,4 +1,3 @@
-import { util } from "../../node_modules/webpack/types";
 import { GetDirectSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
 import { getPropInfo } from "./PropInfo";

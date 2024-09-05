@@ -39,10 +39,10 @@ export class BindNodeInfo implements IBindNodeInfo {
   static create(node:Node, nodeType:NodeType, bindText:string, useKeyed:boolean):IBindNodeInfo {
     node = replaceTextNode(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
     removeAttribute(node, nodeType);
-    const isInputable:boolean = getIsInputable(node, nodeType);
-    const defaultProperty:string = getDefaultProperty(node, nodeType) ?? "";
-    const parseBindTextInfos:ParseBindTextInfo[] = parse(bindText, defaultProperty);
-    const bindTextInfos:BindTextInfo[] = [];
+    const isInputable: boolean = getIsInputable(node, nodeType);
+    const defaultProperty: string = getDefaultProperty(node, nodeType) ?? "";
+    const parseBindTextInfos: ParseBindTextInfo[] = parse(bindText, defaultProperty);
+    const bindTextInfos: BindTextInfo[] = [];
     for(let j = 0; j < parseBindTextInfos.length; j++) {
       const parseBindTextInfo = parseBindTextInfos[j];
       const { nodeProperty, stateProperty } = parseBindTextInfo;
