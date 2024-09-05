@@ -1237,9 +1237,6 @@ class Updator {
                 });
             }
         }
-        // ToDo: 要検討
-        // cache clear
-        // this.states.current[ClearCacheApiSymbol]();
         return totalUpdatedStateProperties;
     }
     expandStateProperties(updatedStateProperties) {
