@@ -3,16 +3,17 @@ import { ConnectedCallbackSymbol } from "../state/symbols";
 import { isAttachable } from "./AttachShadow";
 import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
-import { createUpdator } from "./Updator";
+import { createUpdator } from "../updator/Updator";
 import { createProps } from "./Props";
 import { createGlobals } from "./Globals";
-import { IComponent, ICustomComponent, IProps, IUpdator, Constructor, IComponentBase } from "./types";
+import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
 import { IContentBindings, IBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../state/States";
+import { IUpdator } from "../updator/types";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 

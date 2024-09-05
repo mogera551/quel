@@ -1,19 +1,20 @@
 import { UpdatedCallbackSymbol } from "../state/symbols";
 import { config } from "../Config";
-import { IComponent, INewProcess, IUpdator } from "./types";
+import { IComponent, IProcess } from "../component/types";
 import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
 import { makeNotifyForDependentProps } from "../state/MakeNotify";
 import { IStates } from "../state/types";
+import { IUpdator } from "./types";
 
 const getPropAccessKey = (prop: IPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
-const executeProcess = (process: INewProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
+const executeProcess = (process: IProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
 const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
 type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary" | "contextRevision">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
-  processQueue: INewProcess[] = [];
+  processQueue: IProcess[] = [];
   updatedStateProperties: IPropertyAccess[] = [];
   expandedStateProperties: IPropertyAccess[] = [];
   updatedBindings: Set<IBinding> = new Set();
@@ -36,13 +37,13 @@ class Updator implements IUpdator {
     this.#component = component;
   }
 
-  addProcess(target:Function, thisArgument:object, argumentList:any[]):void {
+  addProcess(target: Function, thisArgument: object, argumentList: any[]): void {
     this.processQueue.push({ target, thisArgument, argumentList });
     if (this.executing) return;
     this.exec();
   }
 
-  getProcessQueue():INewProcess[] {
+  getProcessQueue(): IProcess[] {
     return this.processQueue;
   }
 
@@ -57,7 +58,7 @@ class Updator implements IUpdator {
    */
   async process(): Promise<IPropertyAccess[]> {
 
-    const totalUpdatedStateProperties:IPropertyAccess[] = [];
+    const totalUpdatedStateProperties: IPropertyAccess[] = [];
     // event callback, and update state
     while (this.processQueue.length > 0) {
       const processes = this.processQueue.slice(0);
@@ -74,9 +75,6 @@ class Updator implements IUpdator {
         });
       }
     }
-    // ToDo: 要検討
-    // cache clear
-    // this.states.current[ClearCacheApiSymbol]();
     return totalUpdatedStateProperties;
   }
 

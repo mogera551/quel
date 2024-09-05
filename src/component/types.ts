@@ -2,7 +2,8 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
 import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
-import { IContentBindings, IBinding, IBindingPropertyAccess, IBindingSummary, IPropertyAccess } from "../binding/types";
+import { IContentBindings, IBindingPropertyAccess, IBindingSummary } from "../binding/types";
+import { IUpdator } from "../updator/types";
 
 export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -143,34 +144,10 @@ export type Constructor<T = {}> = new (...args: any[]) => T;
 
 export type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
 
-export interface INewProcess {
+export interface IProcess {
   readonly target:Function;
   readonly thisArgument:object;
   readonly argumentList:any[];
-}
-
-export interface IUpdator {
-//  component: IComponent;
-  readonly processQueue: INewProcess[];
-  readonly updatedStateProperties: IPropertyAccess[];
-  readonly expandedStateProperties: IPropertyAccess[];
-  readonly updatedBindings: Set<IBinding>;
-  readonly states: IStates;
-  readonly bindingSummary: IBindingSummary;
-
-  executing: boolean;
-
-  addProcess(target: Function, thisArgument: object, argumentList: any[]): void;
-  getProcessQueue(): INewProcess[];
-  addUpdatedStateProperty(prop: IPropertyAccess): void;
-  process():Promise<IPropertyAccess[]>;
-  expandStateProperties(updatedStateProperties: IPropertyAccess[]): IPropertyAccess[];
-  rebuildBinding(expandedStatePropertyByKey: Map<string,IPropertyAccess>): void;
-  updateChildNodes(expandedStateProperties: IPropertyAccess[]): void;
-  updateNode(expandedStatePropertyByKey: Map<string, IPropertyAccess>): void;
-  execCallback(callback: ()=>any): Promise<void>;
-  exec(): Promise<void>;
-  applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;
 }
 
 export interface IProps {
