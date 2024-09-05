@@ -152,6 +152,7 @@ class ContentBindings implements IContentBindings {
 }
 
 const _cache: {[ key: string ]: IContentBindings[]} = {};
+
 export function createContentBindings(
   template: HTMLTemplateElement, 
   parentBinding?: IBinding, 

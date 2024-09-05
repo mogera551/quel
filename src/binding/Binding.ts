@@ -2,7 +2,7 @@ import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSumm
 import { NodePropertyCreator, StatePropertyCreator } from "../binder/types";
 import { IFilterInfo, IFilterManager } from "../filter/types";
 import { utils } from "../utils";
-import { IUpdator } from "../component/types";
+import { IUpdator } from "../updator/types";
 import { IStateProxy } from "../state/types";
 
 let id = 1;
