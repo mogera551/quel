@@ -2,7 +2,7 @@ import { UpdatedCallbackSymbol } from "../state/symbols";
 import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
 import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
-import { makeNotifyForDependentProps } from "../state/MakeNotify";
+import { expandStateProperty } from "./expandStateProperty";
 import { IStates } from "../state/types";
 import { IUpdator } from "./types";
 
@@ -82,7 +82,7 @@ class Updator implements IUpdator {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     for(let i = 0; i < updatedStateProperties.length; i++) {
-      expandedStateProperties.push(...makeNotifyForDependentProps(
+      expandedStateProperties.push(...expandStateProperty(
         this.states.current, updatedStateProperties[i]
       ));
     }

@@ -1,20 +1,21 @@
-import { GetDependentPropsApiSymbol } from "./symbols";
+import { GetDependentPropsApiSymbol } from "../state/symbols";
 import { IPropertyAccess } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/PropInfo";
-import { IStateProxy } from "./types";
+import { IStateProxy } from "../state/types";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { GetDirectSymbol } from "../dotNotation/symbols";
 
-export function makeNotifyForDependentProps(state:IStateProxy, propertyAccess:IPropertyAccess, setOfSavePropertyAccessKeys:Set<string> = new Set([])):IPropertyAccess[] {
+export function expandStateProperty(state:IStateProxy, propertyAccess:IPropertyAccess, expandedPropertyAccessKeys:Set<string> = new Set([])):IPropertyAccess[] {
   const { propInfo, indexes } = propertyAccess;
   const propertyAccessKey = propInfo.pattern + "\t" + indexes.toString();
-  if (setOfSavePropertyAccessKeys.has(propertyAccessKey)) return [];
-  setOfSavePropertyAccessKeys.add(propertyAccessKey);
+  if (expandedPropertyAccessKeys.has(propertyAccessKey)) return [];
+  expandedPropertyAccessKeys.add(propertyAccessKey);
+  
   const dependentProps = state[GetDependentPropsApiSymbol]();
-  const setOfProps = dependentProps.propsByRefProp[propInfo.pattern];
+  const props = dependentProps.propsByRefProp[propInfo.pattern];
+  if (typeof props === "undefined") return [];
   const propertyAccesses = [];
-  if (typeof setOfProps === "undefined") return [];
-  for(const prop of setOfProps) {
+  for(const prop of props) {
     const curPropertyNameInfo = getPatternInfo(prop);
     if (indexes.length < curPropertyNameInfo.wildcardPaths.length) {
       //if (curPropName.setOfParentPaths.has(propName.name)) continue;
@@ -24,7 +25,7 @@ export function makeNotifyForDependentProps(state:IStateProxy, propertyAccess:IP
       const notifyIndexes = indexes.slice(0, curPropertyNameInfo.wildcardPaths.length);
       propertyAccesses.push(new PropertyAccess(prop, notifyIndexes));
     }
-    propertyAccesses.push(...makeNotifyForDependentProps(state, new PropertyAccess(prop, indexes), setOfSavePropertyAccessKeys));
+    propertyAccesses.push(...expandStateProperty(state, new PropertyAccess(prop, indexes), expandedPropertyAccessKeys));
   }
   return propertyAccesses;
 }
@@ -37,25 +38,18 @@ function expandIndexes(state:IStateProxy, propertyAccess:IPropertyAccess):number
     return [ indexes.slice(0, propInfo.wildcardCount) ];
   } else {
     const getValuesFn = state[GetDirectSymbol];
-    /**
-     * 
-     * @param {string} parentName 
-     * @param {number} elementIndex 
-     * @param {number[]} loopIndexes 
-     * @returns {number[][]}
-     */
     const traverse = (parentName:string, elementIndex:number, loopIndexes:number[]):number[][] => {
       const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
       const element = propInfo.elements[elementIndex];
       const isTerminate = (propInfo.elements.length - 1) === elementIndex;
       if (isTerminate) {
         if (element === "*") {
-          const indexes = [];
+          const subIndexesArray = [];
           const len = getValuesFn(parentName, loopIndexes).length;
           for(let i = 0; i < len; i++) {
-            indexes.push(loopIndexes.concat(i));
+            subIndexesArray.push([...loopIndexes, i]);
           }
-          return indexes;
+          return subIndexesArray;
         } else {
           return [ loopIndexes ];
         }
@@ -68,7 +62,7 @@ function expandIndexes(state:IStateProxy, propertyAccess:IPropertyAccess):number
             const indexes = [];
             const len = getValuesFn(parentName, loopIndexes).length;
             for(let i = 0; i < len; i++) {
-              indexes.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
+              indexes.push(...traverse(currentName, elementIndex + 1, [...loopIndexes, i]));
             }
             return indexes;
           }
