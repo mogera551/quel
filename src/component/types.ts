@@ -108,8 +108,6 @@ export interface ICustomComponent {
   pseudoParentNode?: Node;
   pseudoNode?: Node;
   readonly shadowRootOrDocument: ShadowRoot|Document;
-  contextRevision: number;
-  useContextRevision(callback: (revision:number)=>void):void;
   readonly bindingSummary: IBindingSummary;
   readonly updator: IUpdator;
   readonly props: IProps;

@@ -125,18 +125,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       return document;
     }
 
-    #contextRevision:number = 0;
-    get contextRevision() {
-      return this.#contextRevision;
-    }
-    set contextRevision(value) {
-      this.#contextRevision = value;
-    }
-    useContextRevision(callback:(revision:number)=>void):void {
-      this.#contextRevision++;
-      callback(this.#contextRevision);
-    }
-
     #bindingSummary: IBindingSummary;
     get bindingSummary(): IBindingSummary {
       return this.#bindingSummary;

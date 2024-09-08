@@ -13,7 +13,7 @@ import { updateNodes } from "./updateNodes";
 const getPropAccessKey = (prop: IPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 const executeProcess = (process: IProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
 
-type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary" | "contextRevision">;
+type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
@@ -97,7 +97,6 @@ class Updator implements IUpdator {
     await this.execCallbackWithPerformance(async () => {
       while(this.processQueue.length > 0) {
         this.updatedBindings.clear();
-        this.component.contextRevision++;
 
         // 戻り値は更新されたStateのプロパティ情報
         const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
