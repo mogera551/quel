@@ -1,4 +1,4 @@
-import { IContentBindingsBase, IBinding } from "../binding/types";
+import { IContentBindingsBase, IBinding, IBindingBase } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/PropInfo";
 import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
@@ -12,15 +12,19 @@ export class LoopContext implements ILoopContext{
   #parentLoopCache = false;
   #statePropertyName: string;
   #patternInfo: IPatternInfo;
+  #patternName: string;
+  #parentBinding: IBindingBase;
   constructor(contentBindings: IContentBindingsBase) {
-    contentBindings.parentBinding?.loopable === true || utils.raise("parentBinding is not loopable");
-    this.#statePropertyName = contentBindings.parentBinding?.statePropertyName ?? utils.raise("statePropertyName is undefined");
+    this.#parentBinding = contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
+    (this.#parentBinding.loopable === true) || utils.raise("parentBinding is not loopable");
+    this.#statePropertyName = this.#parentBinding.statePropertyName ?? utils.raise("statePropertyName is undefined");
     this.#contentBindings = contentBindings;
     this.#patternInfo = getPatternInfo(this.#statePropertyName + ".*");
+    this.#patternName = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
   }
 
   get patternName(): string {
-    return this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
+    return this.#patternName;
   }
   get parentLoopContext(): ILoopContext | undefined {
     this.checkRevision();
@@ -28,7 +32,7 @@ export class LoopContext implements ILoopContext{
       const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
       let curContentBindings:IContentBindingsBase | undefined = undefined;
       if (typeof parentPattern !== "undefined") {
-        curContentBindings = this.#contentBindings.parentBinding?.parentContentBindings;        
+        curContentBindings = this.#parentBinding.parentContentBindings;        
         while (typeof curContentBindings !== "undefined") {
           if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === parentPattern) {
             break;
@@ -48,8 +52,7 @@ export class LoopContext implements ILoopContext{
   get index(): number {
     this.checkRevision();
     if (typeof this.#index === "undefined") {
-      this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ?? 
-        utils.raise("parentBinding is undefined");
+      this.#index = this.#parentBinding.childrenContentBindings.indexOf(this.#contentBindings);
     }
     return this.#index;
   }
