@@ -18,6 +18,11 @@ export class StateProperty implements IStateProperty {
     return this.#name;
   }
 
+  #childName: string;
+  get childName(): string {
+    return this.#childName;
+  }
+
   #propInfo:IPropInfo;
   get propInfo():IPropInfo {
     return this.#propInfo;
@@ -98,6 +103,7 @@ export class StateProperty implements IStateProperty {
   constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
     this.#binding = binding;
     this.#name = name;
+    this.#childName = name + ".*";
     this.#filters = Filters.create<"output">(filters, binding.outputFilterManager);
     this.#propInfo = getPropInfo(name);
     this.#level = this.#propInfo.wildcardCount;
@@ -111,11 +117,11 @@ export class StateProperty implements IStateProperty {
   }
 
   getChildValue(index:number) {
-    return this.state[GetDirectSymbol](`${this.name}.*` , this.indexes.concat(index));
+    return this.state[GetDirectSymbol](this.#childName , [...this.indexes, index]);
   }
 
   setChildValue(index:number, value:any) {
-    return this.state[SetDirectSymbol](`${this.name}.*` , this.indexes.concat(index), value);
+    return this.state[SetDirectSymbol](this.#childName , [...this.indexes, index], value);
   }
 
   dispose() {

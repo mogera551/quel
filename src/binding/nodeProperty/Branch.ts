@@ -16,14 +16,14 @@ export class Branch extends TemplateProperty {
     if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     if (this.value !== value) {
       if (value) {
-        const constentBindings = createContentBindings(this.template, this.binding);
-        this.binding.appendChildContentBindings(constentBindings);
-        constentBindings.postCreate();
+        const contentBindings = createContentBindings(this.template, this.binding);
+        this.binding.appendChildContentBindings(contentBindings);
+        contentBindings.postCreate();
       } else {
         this.binding.removeAllChildrenContentBindings();
       }
     } else {
-      this.binding.childrenContentBindings.forEach(constentBindings => constentBindings.applyToNode());
+      this.binding.childrenContentBindings.forEach(constentBindings => constentBindings.rebuild());
     }
   }
 

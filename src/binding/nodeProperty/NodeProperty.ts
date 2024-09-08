@@ -86,4 +86,8 @@ export class NodeProperty implements INodeProperty {
 
   dispose() {
   }
+
+  revisionUpForLoop(): number {
+    return 0;
+  }
 }

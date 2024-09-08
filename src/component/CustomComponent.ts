@@ -38,7 +38,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
   return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();
-      this.#states = createStates(this, Reflect.construct(this.State, [])); // create view model
+      this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
       this.#bindingSummary = createBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);

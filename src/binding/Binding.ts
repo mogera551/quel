@@ -159,6 +159,23 @@ class Binding implements IBinding {
     this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());
     this.childrenContentBindings = [];
   }
+
+  rebuild(): void {
+    if (this.expandable) {
+      this.applyToNode();
+    } else {
+      this.updator?.addBindingForUpdateNode(this);
+    }
+  }
+
+  updateNodeForNoRecursive(): void {
+    // rebuildで再帰的にupdateするnodeが決まるため
+    // 再帰的に呼び出す必要はない
+    if (!this.expandable) {
+      this.applyToNode();
+    }
+  }
+
 }
 
 export function createBinding(

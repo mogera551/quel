@@ -1,12 +1,40 @@
+import { IPropertyAccess } from "../binding/types";
 import { IProcess } from "../component/types";
+import { UpdatedCallbackSymbol } from "../state/symbols";
 import { IStates } from "../state/types";
+import { IUpdator } from "./types";
 
 const execProcess = async (process: IProcess): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
 
-export async function execProcesses(states: IStates, processes: IProcess[]): Promise<void> {
+async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<IPropertyAccess[]> {
+  for(let i = 0; i < processes.length; i++) {
+    // Stateのイベント処理を実行する
+    // Stateのプロパティに更新があった場合、
+    // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
+    await execProcess(processes[i]);
+  }
+  return updator.retrieveAllUpdatedStateProperties();
+}
+
+async function updatedCallback(updator:IUpdator, states: IStates, updatedStateProperties: IPropertyAccess[]): Promise<IPropertyAccess[]> {
+  // Stateの$updatedCallbackを呼び出す
+  // Stateのプロパティに更新があった場合、
+  // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
+  const updateInfos = updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.indexes }));
+  await states.current[UpdatedCallbackSymbol](updateInfos);
+  return updator.retrieveAllUpdatedStateProperties();
+}
+
+export async function execProcesses(updator:IUpdator, states:IStates): Promise<IPropertyAccess[]> {
+  const totalUpdatedStateProperties: IPropertyAccess[] = [];
   await states.writable(async () => {
-    for(let i = 0; i < processes.length; i++) {
-      await execProcess(processes[i]);
-    }
+    do {
+      const processes = updator.retrieveAllProcesses();
+      if (processes.length === 0) break;
+      const updateStateProperties = await _execProcesses(updator, processes);
+      totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties)
+      totalUpdatedStateProperties.push.apply(await updatedCallback(updator, states, updateStateProperties));
+    } while(true);
   });
+  return totalUpdatedStateProperties;
 }

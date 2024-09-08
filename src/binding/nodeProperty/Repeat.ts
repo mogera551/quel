@@ -4,28 +4,29 @@ import { IContentBindings, IBinding } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
 
-const applyToNodeFunc = (contentBindings:IContentBindings):void => contentBindings.applyToNode();
+const rebuildFunc = (contentBindings:IContentBindings):void => contentBindings.rebuild();
 
 export class Repeat extends Loop {
-  get value():number|(any[]) {
-    return this.binding.childrenContentBindings.length;
+  get value():any[] {
+    return this.binding.childrenContentBindings;
   }
   set value(value:any[]) {
     if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-    this._revisionForLoop++;
-    if (this.value as number < value.length) {
-      this.binding.childrenContentBindings.forEach(applyToNodeFunc);
-      for(let newIndex = this.value as number; newIndex < value.length; newIndex++) {
+    const lastValueLength = this.value.length;
+    this.revisionUpForLoop();
+    if (lastValueLength < value.length) {
+      this.binding.childrenContentBindings.forEach(rebuildFunc);
+      for(let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
         const contentBindings = createContentBindings(this.template, this.binding);
         this.binding.appendChildContentBindings(contentBindings);
         contentBindings.postCreate();
       }
-    } else if (this.value as number > value.length) {
+    } else if (lastValueLength > value.length) {
       const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);
-      this.binding.childrenContentBindings.forEach(applyToNodeFunc);
+      this.binding.childrenContentBindings.forEach(rebuildFunc);
       removeContentBindings.forEach(contentBindings => contentBindings.dispose());
     } else {
-      this.binding.childrenContentBindings.forEach(applyToNodeFunc);
+      this.binding.childrenContentBindings.forEach(rebuildFunc);
     }
   }
 

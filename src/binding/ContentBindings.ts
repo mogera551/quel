@@ -97,21 +97,21 @@ class ContentBindings implements IContentBindings {
   /**
    * apply value to node
    */
-  applyToNode() {
-    // apply value to node exluding select tag, and apply select tag value
-    const selectBindings = [];
-    for(let i = 0; i < this.childrenBinding.length; i++) {
-      const binding = this.childrenBinding[i];
-      if (binding.nodeProperty.isSelectValue) {
-        selectBindings.push(binding);
-      } else {
-        binding.applyToNode();
-      }
-    }
-    for(let i = 0; i < selectBindings.length; i++) {
-      selectBindings[i].applyToNode();
-    }
-  }
+//  applyToNode() {
+//    // apply value to node exluding select tag, and apply select tag value
+//    const selectBindings = [];
+//    for(let i = 0; i < this.childrenBinding.length; i++) {
+//      const binding = this.childrenBinding[i];
+//      if (binding.nodeProperty.isSelectValue) {
+//        selectBindings.push(binding);
+//      } else {
+//        binding.applyToNode();
+//      }
+//    }
+//    for(let i = 0; i < selectBindings.length; i++) {
+//      selectBindings[i].applyToNode();
+//    }
+//  }
 
   /**
    * apply value to State
@@ -126,15 +126,16 @@ class ContentBindings implements IContentBindings {
    * register bindings to summary
    */
   registerBindingsToSummary() {
+    const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
     for(let i = 0; i < this.childrenBinding.length; i++) {
-      const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
       bindingSummary.add(this.childrenBinding[i]);
     }
   }
 
   postCreate() {
     this.registerBindingsToSummary();
-    this.applyToNode();
+    this.rebuild();
+//    this.applyToNode();
   }
 
   dispose(): void {
@@ -149,6 +150,28 @@ class ContentBindings implements IContentBindings {
     const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
     _cache[uuid]?.push(this) ?? (_cache[uuid] = [this]);
   }
+
+  rebuild(): void {
+    for(let i = 0; i < this.childrenBinding.length; i++) {
+      this.childrenBinding[i].rebuild();
+    }
+  }
+/*
+  updateNode() {
+    const selectBindings = [];
+    for(let i = 0; i < this.childrenBinding.length; i++) {
+      const binding = this.childrenBinding[i];
+      if (binding.nodeProperty.isSelectValue) {
+        selectBindings.push(binding);
+      } else {
+        binding.updateNode();
+      }
+    }
+    for(let i = 0; i < selectBindings.length; i++) {
+      selectBindings[i].updateNode();
+    }
+  }
+*/
 }
 
 const _cache: {[ key: string ]: IContentBindings[]} = {};

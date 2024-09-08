@@ -15,3 +15,10 @@ rebuildBinding
 そのBindingのnodeプロパティを更新する
 updateNode
   applyToNode
+
+
+
+// rebuildBindingの処理
+
+
+

@@ -2,13 +2,16 @@ import { UpdatedCallbackSymbol } from "../state/symbols";
 import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
 import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
-import { expandStateProperty } from "./expandStateProperty";
 import { IStates } from "../state/types";
 import { IUpdator } from "./types";
+import { execProcesses } from "./execProcesses";
+import { expandStateProperties } from "./expandStateProperties";
+import { rebuildBindings } from "./rebuildBindings";
+import { updateChildNodes } from "./updateChildNodes";
+import { updateNodes } from "./updateNodes";
 
 const getPropAccessKey = (prop: IPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 const executeProcess = (process: IProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
-const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
 type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary" | "contextRevision">;
 
@@ -18,6 +21,7 @@ class Updator implements IUpdator {
   updatedStateProperties: IPropertyAccess[] = [];
   expandedStateProperties: IPropertyAccess[] = [];
   updatedBindings: Set<IBinding> = new Set();
+  bindingsForUpdateNode: IBinding[] = [];
 
   executing = false;
 
@@ -43,111 +47,35 @@ class Updator implements IUpdator {
     this.exec();
   }
 
-  getProcessQueue(): IProcess[] {
-    return this.processQueue;
+  // 取得後processQueueは空になる
+  retrieveAllProcesses(): IProcess[] {
+    const allProcesses = this.processQueue;
+    this.processQueue = [];
+    return allProcesses;
   }
 
   addUpdatedStateProperty(prop:IPropertyAccess):void {
     this.updatedStateProperties.push(prop);
   }
 
-  /**
-   * 
-   * @param {{ component:Component, processQueue:Process[], updatedStateProperties:PropertyAccess[] }} param0 
-   * @returns {Promise<PropertyAccess[]>}
-   */
-  async process(): Promise<IPropertyAccess[]> {
-
-    const totalUpdatedStateProperties: IPropertyAccess[] = [];
-    // event callback, and update state
-    while (this.processQueue.length > 0) {
-      const processes = this.processQueue.slice(0);
-      this.processQueue.length = 0;
-      for(let i = 0; i < processes.length; i++) {
-        await this.states.writable(executeProcess(processes[i]));
-      }
-      if (this.updatedStateProperties.length > 0) {
-        // call updatedCallback, and add processQeueue
-        await this.states.writable(async () => {
-          this.states.current[UpdatedCallbackSymbol](this.updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.indexes })));
-          totalUpdatedStateProperties.push(...this.updatedStateProperties);
-          this.updatedStateProperties.length = 0;
-        });
-      }
-    }
-    return totalUpdatedStateProperties;
+  // 取得後updateStatePropertiesは空になる
+  retrieveAllUpdatedStateProperties() {
+    const updatedStateProperties = this.updatedStateProperties;
+    this.updatedStateProperties = [];
+    return updatedStateProperties;
   }
 
-  expandStateProperties(updatedStateProperties:IPropertyAccess[]):IPropertyAccess[] {
-    // expand state properties
-    const expandedStateProperties = updatedStateProperties.slice(0);
-    for(let i = 0; i < updatedStateProperties.length; i++) {
-      expandedStateProperties.push(...expandStateProperty(
-        this.states.current, updatedStateProperties[i]
-      ));
-    }
-    return expandedStateProperties;
+  addBindingForUpdateNode(binding: IBinding): void {
+    this.bindingsForUpdateNode.push(binding);
+  }
+  // 取得後、bindingsForUpdateNodeは空になる
+  retrieveAllBindingsForUpdate(): IBinding[] {
+    const bindingsForUpdateNode = this.bindingsForUpdateNode;
+    this.bindingsForUpdateNode = [];
+    return bindingsForUpdateNode;
   }
 
-  rebuildBinding(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
-    // bindingの再構築
-    // 再構築するのは、更新したプロパティのみでいいかも→ダメだった。
-    // expandedStatePropertyByKeyに、branch、repeatが含まれている場合、それらのbindingを再構築する
-    // 再構築する際、branch、repeatの子ノードは更新する
-    // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
-    const bindingSummary = this.bindingSummary;
-    const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
-    bindingSummary.update((bindingSummary) => {
-      for(let i = 0; i < expandableBindings.length; i++) {
-        const binding = expandableBindings[i];
-        if (!bindingSummary.exists(binding)) continue;
-        if (expandedStatePropertyByKey.has(binding.stateProperty.key)) {
-          binding.applyToNode();
-        }
-      }
-    });
-  }
-
-  updateChildNodes(expandedStateProperties:IPropertyAccess[]) {
-    const bindingSummary = this.bindingSummary;
-    const setOfIndexByParentKey:Map<string,Set<number>> = new Map;
-    for(const propertyAccess of expandedStateProperties) {
-      if (propertyAccess.propInfo.patternElements[propertyAccess.propInfo.patternElements.length - 1] !== "*") continue;
-      const lastIndex = propertyAccess.indexes?.[propertyAccess.indexes.length - 1];
-      if (typeof lastIndex === "undefined") continue;
-      const parentKey = propertyAccess.propInfo.patternPaths[propertyAccess.propInfo.patternPaths.length - 2] + "\t" + propertyAccess.indexes.slice(0, -1);
-      setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
-    }
-    for(const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-      const bindings = bindingSummary.bindingsByKey.get(parentKey);
-      if (typeof bindings === "undefined") continue;
-      for(const binding of bindings) {
-        binding.applyToChildNodes(setOfIndex);
-      }
-    }
-  }
-
-  updateNode(expandedStatePropertyByKey:Map<string,IPropertyAccess>) {
-    const bindingSummary = this.bindingSummary;
-    const selectBindings = [];
-    for(const key of expandedStatePropertyByKey.keys()) {
-      const bindings = bindingSummary.bindingsByKey.get(key);
-      if (typeof bindings === "undefined") continue;
-      for(let i = 0; i < bindings.length; i++) {
-        const binding = bindings[i];
-        binding.nodeProperty.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
-      }
-    }
-    for(let i = 0; i < selectBindings.length; i++) {
-      selectBindings[i].applyToNode();
-    }
-    for(const binding of bindingSummary.componentBindings) {
-      //if (updatedBindings.has(binding)) continue;
-      binding.nodeProperty.postUpdate(expandedStatePropertyByKey);
-    }
-  }
-
-  async execCallback(callback:()=>any):Promise<void> {
+  async execCallbackWithPerformance(callback: () => any): Promise<void> {
     this.executing = true;
     config.debug && performance.mark('Updator.exec:start');
     try {
@@ -166,20 +94,28 @@ class Updator implements IUpdator {
   }
 
   async exec():Promise<void> {
-    await this.execCallback(async () => {
-      while(this.getProcessQueue().length > 0) {
+    await this.execCallbackWithPerformance(async () => {
+      while(this.processQueue.length > 0) {
         this.updatedBindings.clear();
         this.component.contextRevision++;
 
-        const updatedStateProperties = await this.process();
-        const expandedStateProperties = this.expandStateProperties(updatedStateProperties);
+        // 戻り値は更新されたStateのプロパティ情報
+        const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
+        // 戻り値は依存関係により更新されたStateのプロパティ情報
+        const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
 
-        const expandedStatePropertyByKey = 
-          new Map(expandedStateProperties.map(prop => [getPropAccessKey(prop), prop]));
+        const updatedStatePropertyAccessByKey = 
+          Object.fromEntries(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
 
-        this.rebuildBinding(expandedStatePropertyByKey);
-        this.updateChildNodes(expandedStateProperties);
-        this.updateNode(expandedStatePropertyByKey);
+        const bindingForUpdates = 
+          rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
+
+        bindingForUpdates.push.apply(
+          updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)
+        );
+
+        updateNodes(this.bindingSummary, bindingForUpdates, updatedStatePropertyAccessByKey);
+
       }
     });
   }

@@ -1,9 +1,10 @@
 
 import { ILoopContext } from "../loopContext/types";
 import { IPropInfo } from "../dotNotation/types";
-import { IComponent, IUpdator } from "../component/types";
+import { IComponent } from "../component/types";
 import { IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";
+import { IUpdator } from "../updator/types";
 
 export interface IPropertyAccess {
   readonly pattern: string;
@@ -19,6 +20,7 @@ export interface IBindingPropertyAccess {
 
 export interface ILoopable {
   readonly revisionForLoop: number;
+  revisionUpForLoop(): number;
 }
 
 export interface INodeProperty extends ILoopable {
@@ -89,6 +91,9 @@ export interface IBinding extends IBindingBase {
   replaceChildContentBindings(contentBindings: IContentBindings, index: number): void;
   removeAllChildrenContentBindings(): IContentBindings[];
   dispose(): void;
+
+  rebuild(): void;
+  updateNodeForNoRecursive(): void;
 }
 
 export interface IContentBindingsBase {
@@ -111,9 +116,12 @@ export interface IContentBindings extends IContentBindingsBase {
 
   initialize():void;
   postCreate():void;
-  applyToNode():void;
+//  applyToNode():void;
   removeChildNodes():void;
   dispose():void;
+
+  rebuild(): void;
+  //updateNode(): void;
 }
 
 export interface IMultiValue {

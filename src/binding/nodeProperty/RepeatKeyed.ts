@@ -25,7 +25,7 @@ export class RepeatKeyed extends Loop {
   }
   set value(values) {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-    this._revisionForLoop++;
+    this.revisionUpForLoop();
     this.#fromIndexByValue.clear();
     this.#lastIndexes.clear();
     this.#setOfNewIndexes.clear();
@@ -74,7 +74,7 @@ export class RepeatKeyed extends Loop {
         (newIndex < this.binding.childrenContentBindings.length) ? 
           (this.binding.childrenContentBindings[newIndex] = contentBindings) : 
           this.binding.childrenContentBindings.push(contentBindings);
-        contentBindings.applyToNode();
+        contentBindings.rebuild();
       }
       beforeContentBindings = contentBindings;
     }
@@ -85,7 +85,7 @@ export class RepeatKeyed extends Loop {
   }
 
   applyToChildNodes(setOfIndex:Set<number>) {
-    this._revisionForLoop++;
+    this.revisionUpForLoop();
     const contentBindingsByValue:Map<any,IContentBindings> = new Map;
     for(const index of setOfIndex) {
       const contentBindings = this.binding.childrenContentBindings[index];
@@ -109,7 +109,7 @@ export class RepeatKeyed extends Loop {
         contentBindings.postCreate();
       } else {
         this.binding.replaceChildContentBindings(contentBindings, index);
-        contentBindings.applyToNode();
+        contentBindings.rebuild();
       }
     }
     this.#lastValue = this.binding.stateProperty.value.slice();
