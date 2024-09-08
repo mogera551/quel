@@ -15,13 +15,13 @@ export class ReadonlyHandler extends Handler {
   ):any {
     const path = patternPaths[pathIndex];
     if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
-      // sliceよりもループの方が速い
+      // sliceよりもループで文字列を足していく方が速い
       let key = path + ":";
       for(let i = 0; i <= wildcardIndex; i++) {
-        key += `${wildcardIndexes[i]},`;
+        key += wildcardIndexes[i] + ",";
       }
-      let value = this.#cache[key];
-      return value ?? 
+      let value;
+      return (value = this.#cache[key]) ?? 
         ((key in this.#cache) ? 
          value : 
          (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver))
