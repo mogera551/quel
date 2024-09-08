@@ -3,9 +3,10 @@ import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
 export function updateNodes(
   bindingSummary: IBindingSummary,
   bindingsForUpdate: IBinding[], 
-  updateStatePropertyAccessByKey:{
+  updateStatePropertyAccessByKey: {
     [k: string]: IPropertyAccess;
-}) {
+  } = {}
+) {
   const allBindingsForUpdate = bindingsForUpdate.slice(0);
   for(let key in updateStatePropertyAccessByKey) {
     const bindings = bindingSummary.bindingsByKey.get(key);

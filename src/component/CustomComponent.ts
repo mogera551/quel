@@ -14,6 +14,7 @@ import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../state/States";
 import { IUpdator } from "../updator/types";
+import { updateNodes } from "../updator/updateNodes";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 
@@ -199,6 +200,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
         this.rootBindingManager = createContentBindings(this.template, undefined, this);
         this.rootBindingManager.postCreate();
+        const bindingsForUpdate = this.updator.retrieveAllBindingsForUpdate();
+        updateNodes(this.bindingSummary, bindingsForUpdate);
+        
       });
       if (this.useWebComponent) {
         // case of useWebComponent,
