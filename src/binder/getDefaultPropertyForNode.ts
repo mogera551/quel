@@ -46,7 +46,7 @@ const getDefaultPropertyByNodeType:GetDefaultPropertyByNodeType = {
 /**
  * get html element's default property
  */
-export const getDefaultProperty = (node:Node, nodeType:NodeType):(string|undefined) => {
+export const getDefaultPropertyForNode = (node:Node, nodeType:NodeType):(string|undefined) => {
   const key = node.constructor.name + "\t" + ((node as HTMLInputElement).type ?? ""); // type attribute
   return _cache[key] ?? (_cache[key] = getDefaultPropertyByNodeType[nodeType](node));
 }

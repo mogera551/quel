@@ -1,6 +1,6 @@
 import { utils } from "../utils";
 import { IFilterInfo } from "../filter/types";
-import { ParseBindTextInfo } from "./types";
+import { ParsedBindTextInfo } from "./types";
 
 const SAMENAME = "@";
 const DEFAULT = "$";
@@ -38,7 +38,7 @@ const parseProperty = (text:string):ReturnParseStateProperty => {
  * parse expressions
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  */
-const parseExpression = (expr:string, defaultName:string):ParseBindTextInfo => {
+const parseExpression = (expr:string, defaultName:string):ParsedBindTextInfo => {
   const [nodePropertyText, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
   const { property:nodeProperty, filters:inputFilters } = parseProperty(nodePropertyText);
   const { property:stateProperty, filters:outputFilters } = parseProperty(statePropertyText);
@@ -48,7 +48,7 @@ const parseExpression = (expr:string, defaultName:string):ParseBindTextInfo => {
 /**
  * parse bind text and return BindTextInfo[]
  */
-const parseBindText = (text:string, defaultName:string):ParseBindTextInfo[] => {
+const parseExpressions = (text:string, defaultName:string):ParsedBindTextInfo[] => {
   return text.split(";").map(trim).filter(has).map(s => { 
     let { nodeProperty, stateProperty, inputFilters, outputFilters } = parseExpression(s, DEFAULT);
     stateProperty = stateProperty === SAMENAME ? nodeProperty : stateProperty;
@@ -58,15 +58,15 @@ const parseBindText = (text:string, defaultName:string):ParseBindTextInfo[] => {
   });
 };
 
-type BindTextsByKey = {[key:string]:ParseBindTextInfo[]};
+type BindTextsByKey = {[key:string]:ParsedBindTextInfo[]};
 
 const _cache:BindTextsByKey = {};
 
 /**
  * parse bind text and return BindTextInfo[], if hit cache return cache value
  */
-export function parse(text:string, defaultName:string):ParseBindTextInfo[] {
+export function parseBindText(text: string, defaultName: string): ParsedBindTextInfo[] {
   if (text.trim() === "") return [];
   const key:string = text + "\t" + defaultName;
-  return _cache[key] ?? (_cache[key] = parseBindText(text, defaultName));
+  return _cache[key] ?? (_cache[key] = parseExpressions(text, defaultName));
 }

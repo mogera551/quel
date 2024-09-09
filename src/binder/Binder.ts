@@ -1,6 +1,6 @@
 import { IBinder, IBindNodeInfo } from "./types";
 import { IBinding, IContentBindings } from "../binding/types";
-import { parseTemplate } from "./parseTemplate";
+import { extractBindNodeInfosFromTemplate } from "./extractBindNodeInfosFromTemplate";
 import { createBindings } from "./createBindings";
 
 const UUID_DATASET = "uuid";
@@ -17,7 +17,7 @@ class Binder implements IBinder {
 
   constructor(template: HTMLTemplateElement, useKeyed: boolean) {
     this.#template = template;
-    this.#nodeInfos = parseTemplate(this.#template, useKeyed);
+    this.#nodeInfos = extractBindNodeInfosFromTemplate(this.#template, useKeyed);
   }
 
   createBindings(content: DocumentFragment, contentBindings: IContentBindings): IBinding[] {

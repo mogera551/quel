@@ -24,4 +24,4 @@ const removeAttributeByNodeType:RemoveAttributeByNodeType = {
 /**
  * remove data-bind attribute from node
  */
-export const removeAttribute = (node:Node, nodeType:NodeType):Node => removeAttributeByNodeType[nodeType](node);
+export const removeDataBindAttribute = (node:Node, nodeType:NodeType):Node => removeAttributeByNodeType[nodeType](node);

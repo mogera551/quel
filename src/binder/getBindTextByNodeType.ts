@@ -23,4 +23,4 @@ const bindTextByNodeType:BindTextByNodeType = {
   Template:    getBindTextFromTemplate,
 }
 
-export const getBindText = (node:Node, nodeType:NodeType):string => bindTextByNodeType[nodeType](node);
+export const getBindTextByNodeType = (node: Node, nodeType: NodeType): string => bindTextByNodeType[nodeType](node);

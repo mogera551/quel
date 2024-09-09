@@ -1,5 +1,5 @@
 import { IBindNodeInfo } from "./types";
-import { findNodeByNodeRoute } from "./nodeRoute";
+import { findNodeByNodeRoute } from "./findNodeByNodeRoute";
 import { IContentBindings, IBinding } from "../binding/types";
 
 export function createBindings(content: DocumentFragment, contentBindings: IContentBindings, nodeInfos: IBindNodeInfo[]): IBinding[] {
@@ -12,7 +12,7 @@ export function createBindings(content: DocumentFragment, contentBindings: ICont
       nodeBindings[nodeBindings.length] = 
         nodeInfo.bindTextInfos[j].createBinding(contentBindings, node); // push
     }
-    nodeInfo.initializeNode(node, nodeBindings);
+    nodeInfo.initializeForNode(node, nodeBindings);
     bindings.push(...nodeBindings);
   }
   return bindings;

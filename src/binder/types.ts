@@ -7,7 +7,7 @@ export type StatePropertyCreator = (binding:IBinding, name:string, filters:IFilt
 
 export type NodeType = "HTMLElement" | "SVGElement" | "Text" | "Template";
 
-export type ParseBindTextInfo = {
+export type ParsedBindTextInfo = {
   nodeProperty: string;
   stateProperty: string;
   inputFilters: IFilterInfo[];
@@ -21,7 +21,7 @@ export type PropertyCreators = {
 
 export type BindTextInfo = {
   createBinding: (contentBindings: IContentBindings, node: Node) => IBinding;
-} & ParseBindTextInfo & PropertyCreators;
+} & ParsedBindTextInfo & PropertyCreators;
 
 export type NodeRoute = number[];
 
@@ -32,9 +32,9 @@ export interface IBindNodeInfo {
   nodeRoute: NodeRoute;
   nodeRouteKey: NodeRouteKey;
   bindTextInfos: BindTextInfo[];
-  isInputable: boolean;
+  acceptInput: boolean;
   defaultProperty: string;
-  initializeNode(node:Node, bindings:IBinding[]):void;
+  initializeForNode(node:Node, bindings:IBinding[]):void;
 }
 
 export interface IBinder {

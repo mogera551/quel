@@ -10,8 +10,8 @@ const excludeTypes = new Set([
 ]);
 
 /**
- * ユーザー操作によりデフォルト値が変わるかどうか
- * getDefaultPropertyと似ているが、HTMLOptionElementを含まない
+ * ユーザー操作によりデフォルト値を変更するかどうか
+ * DOMノードが入力を受け付けるかどうか
  */
 const isInputableHTMLElement = (node:Node) => node instanceof HTMLElement && 
   (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || 
@@ -30,4 +30,4 @@ const isInputableFn:IsInputableFn = {
   Template:    alwaysFalse,
 }
 
-export const getIsInputable = (node:Node, nodeType:NodeType):boolean => isInputableFn[nodeType](node);
+export const canNodeAcceptInput = (node:Node, nodeType:NodeType):boolean => isInputableFn[nodeType](node);

@@ -1,9 +1,9 @@
-import { ParseBindTextInfo, PropertyCreators } from "./types";
+import { ParsedBindTextInfo, PropertyCreators } from "./types";
 import { createBinding } from "../binding/Binding";
 import { IContentBindings } from "../binding/types";
 
 export const createBindingWithBindInfo = 
-(bindTextInfo: ParseBindTextInfo, propertyCreators: PropertyCreators) => 
+(bindTextInfo: ParsedBindTextInfo, propertyCreators: PropertyCreators) => 
 (contentBindings: IContentBindings, node: Node) => 
   createBinding(
     contentBindings,

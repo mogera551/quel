@@ -9,7 +9,7 @@ const DEFAULT_EVENT_TYPE = "input";
 const setDefaultEventHandlerByElement = (element:HTMLElement) => (binding:IBinding) => 
   element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
 
-function initializeHTMLElement(node:Node, isInputable:boolean, bindings:IBinding[], defaultName:string) {
+function initializeHTMLElement(node:Node, acceptInput:boolean, bindings:IBinding[], defaultName:string): void {
   const element = node as HTMLElement;
 
   // set event handler
@@ -36,7 +36,7 @@ function initializeHTMLElement(node:Node, isInputable:boolean, bindings:IBinding
       setDefaultEventHandler(radioBinding);
     } else if (checkboxBinding) {
       setDefaultEventHandler(checkboxBinding);
-    } else if (defaultBinding && isInputable) {
+    } else if (defaultBinding && acceptInput) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
       // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
@@ -44,13 +44,12 @@ function initializeHTMLElement(node:Node, isInputable:boolean, bindings:IBinding
       setDefaultEventHandler(defaultBinding);
     }
   }
-  return undefined;
 }
 
 const thru = () => {};
 
 type InitializeNodeByNodeType = {
-  [key in NodeType]: (node:Node, isInputable:boolean, bindings:IBinding[], defaultName:string)=>void;
+  [key in NodeType]: (node:Node, acceptInput:boolean, bindings:IBinding[], defaultName:string)=>void;
 }
 
 const initializeNodeByNodeType:InitializeNodeByNodeType = {
@@ -60,4 +59,4 @@ const initializeNodeByNodeType:InitializeNodeByNodeType = {
   Template:    thru,
 };
 
-export const initializeNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:IBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
+export const initializeForNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:IBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);
