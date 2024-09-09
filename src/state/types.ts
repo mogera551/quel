@@ -43,7 +43,7 @@ export interface IDependentProps {
   setDefaultProp(prop:string):void;
 }
 
-export type StateInfo = {
+export type StatePropertyInfo = {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
 }

@@ -36,10 +36,10 @@ type AccessorPropertiesCache = Map<ObjectConstructor,string[]>;
 const _cache:AccessorPropertiesCache = new Map();
 
 export function getAccessorProperties(target:any):string[] {
-  let retValue:(string[]|undefined) = _cache.get(target.constructor);
-  if (typeof retValue === "undefined") {
-    retValue = _getAccessorProperties(target);
-    if ({}.constructor !== target.constructor) _cache.set(target.constructor, retValue);
+  let accessorProperties:(string[]|undefined) = _cache.get(target.constructor);
+  if (typeof accessorProperties === "undefined") {
+    accessorProperties = _getAccessorProperties(target);
+    if ({}.constructor !== target.constructor) _cache.set(target.constructor, accessorProperties);
   }
-  return retValue;
+  return accessorProperties;
 }

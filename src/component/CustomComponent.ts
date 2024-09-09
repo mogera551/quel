@@ -12,7 +12,7 @@ import { IContentBindings, IBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
-import { createStates } from "../state/States";
+import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
 import { updateNodes } from "../updator/updateNodes";
 

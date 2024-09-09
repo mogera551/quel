@@ -3,7 +3,7 @@ import {
   ConnectedEventSymbol, DisconnectedEventSymbol, UpdatedEventSymbol,
 } from "./symbols";
 import { IStateProxy, IStateHandler } from "./types";
-import { dispatchCustomEvent } from "./Event";
+import { dispatchCustomEvent } from "./dispatchCustomEvent";
 
 const CONNECTED_CALLBACK = "$connectedCallback";
 const DISCONNECTED_CALLBACK = "$disconnectedCallback";
@@ -37,7 +37,7 @@ async ():Promise<void> => {
   dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
 };
 
-export function getCallback(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol):(()=>any)|undefined {
+export function getCallbackMethod(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol):(()=>any)|undefined {
   return (allCallbacks.has(prop)) ? (
     (prop === ConnectedCallbackSymbol) ? 
       (...args:any) => applyCallback(state, stateProxy, handler, prop)(...args)() : 

@@ -2,10 +2,10 @@ import { AccessorPropertiesSymbol, DependenciesSymbol } from "./symbols";
 import { IComponent } from "../component/types";
 import { Handler as DotNotationHandler } from "../dotNotation/Handler";
 import { ILoopContext } from "../loopContext/types";
-import { getApi } from "./Api";
-import { getCallback } from "./Callback";
-import { getSpecialProps } from "./SpecialProp";
-import { getStateInfo } from "./StateInfo";
+import { getApiMethod } from "./getApiMethod";
+import { getCallbackMethod } from "./getCallbackMethod";
+import { getSpecialProps } from "./getSpecialProps";
+import { getStateInfo } from "./getStateInfo";
 import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "./types";
 import { IUpdator } from "../updator/types";
 
@@ -70,8 +70,8 @@ export class Handler extends DotNotationHandler implements IStateHandler {
 
   #getBySymbol(target: Object, prop: symbol, receiver: IStateProxy):any {
     return this.#objectBySymbol[prop] ?? 
-      getCallback(target as Object, receiver, this, prop) ?? 
-      getApi(target as Object, receiver, this, prop) ?? 
+      getCallbackMethod(target as Object, receiver, this, prop) ?? 
+      getApiMethod(target as Object, receiver, this, prop) ?? 
       undefined;
   }
   #getByString(target: Object, prop: string, receiver: IStateProxy):any {
