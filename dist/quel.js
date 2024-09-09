@@ -1001,13 +1001,10 @@ async function _execProcesses(updator, processes) {
     }
     return updator.retrieveAllUpdatedStateProperties();
 }
-async function updatedCallback(updator, states, updatedStateProperties) {
-    // Stateの$updatedCallbackを呼び出す
-    // Stateのプロパティに更新があった場合、
-    // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
+function enqueueUpdatedCallback(updator, states, updatedStateProperties) {
+    // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
     const updateInfos = updatedStateProperties.map(prop => ({ name: prop.pattern, indexes: prop.indexes }));
-    await states.current[UpdatedCallbackSymbol](updateInfos);
-    return updator.retrieveAllUpdatedStateProperties();
+    states.current[UpdatedCallbackSymbol](updateInfos);
 }
 async function execProcesses(updator, states) {
     const totalUpdatedStateProperties = [];
@@ -1017,9 +1014,9 @@ async function execProcesses(updator, states) {
             if (processes.length === 0)
                 break;
             const updateStateProperties = await _execProcesses(updator, processes);
-            totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties, updateStateProperties);
             if (updateStateProperties.length > 0) {
-                totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties, await updatedCallback(updator, states, updateStateProperties));
+                totalUpdatedStateProperties.push(...updateStateProperties);
+                enqueueUpdatedCallback(updator, states, updateStateProperties);
             }
         } while (true);
     });
@@ -1226,7 +1223,7 @@ function rebuildBindings(updator, bindingSummary, updateStatePropertyAccessByKey
             const binding = expandableBindings[i];
             if (!bindingSummary.exists(binding))
                 continue;
-            if (typeof updateStatePropertyAccessByKey[binding.stateProperty.key] === "undefined")
+            if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key))
                 continue;
             binding.rebuild();
         }
@@ -1259,9 +1256,9 @@ function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses)
     return updator.retrieveAllBindingsForUpdate();
 }
 
-function updateNodes(bindingSummary, bindingsForUpdate, updateStatePropertyAccessByKey = {}) {
+function updateNodes(bindingSummary, bindingsForUpdate, updateStatePropertyAccessByKey = new Map()) {
     const allBindingsForUpdate = bindingsForUpdate.slice(0);
-    for (let key in updateStatePropertyAccessByKey) {
+    for (let key of updateStatePropertyAccessByKey.keys()) {
         const bindings = bindingSummary.bindingsByKey.get(key);
         if (typeof bindings === "undefined")
             continue;
@@ -1360,7 +1357,7 @@ class Updator {
                 const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
-                const updatedStatePropertyAccessByKey = Object.fromEntries(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
+                const updatedStatePropertyAccessByKey = new Map(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
                 const bindingForUpdates = rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
                 bindingForUpdates.push.apply(bindingForUpdates, updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses));
                 updateNodes(this.bindingSummary, bindingForUpdates, updatedStatePropertyAccessByKey);

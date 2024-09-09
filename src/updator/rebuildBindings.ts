@@ -9,9 +9,7 @@ const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateP
 export function rebuildBindings(
   updator: IUpdator, 
   bindingSummary: IBindingSummary, 
-  updateStatePropertyAccessByKey: {
-    [k: string]: IPropertyAccess;
-  }
+  updateStatePropertyAccessByKey: Map<string, IPropertyAccess>
 ): IBinding[]
  {
   const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
@@ -19,7 +17,7 @@ export function rebuildBindings(
     for(let i = 0; i < expandableBindings.length; i++) {
       const binding = expandableBindings[i];
       if (!bindingSummary.exists(binding)) continue;
-      if (typeof updateStatePropertyAccessByKey[binding.stateProperty.key] === "undefined") continue;
+      if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key)) continue;
       binding.rebuild();
     }
   });

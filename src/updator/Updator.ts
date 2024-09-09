@@ -103,8 +103,8 @@ class Updator implements IUpdator {
         // 戻り値は依存関係により更新されたStateのプロパティ情報
         const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
 
-        const updatedStatePropertyAccessByKey = 
-          Object.fromEntries(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
+        const updatedStatePropertyAccessByKey: Map<string, IPropertyAccess> = 
+          new Map(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
 
         const bindingForUpdates = 
           rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);

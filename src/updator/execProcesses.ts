@@ -16,13 +16,10 @@ async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<
   return updator.retrieveAllUpdatedStateProperties();
 }
 
-async function updatedCallback(updator:IUpdator, states: IStates, updatedStateProperties: IPropertyAccess[]): Promise<IPropertyAccess[]> {
-  // Stateの$updatedCallbackを呼び出す
-  // Stateのプロパティに更新があった場合、
-  // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
+function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateProperties: IPropertyAccess[]): void {
+  // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
   const updateInfos = updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.indexes }));
-  await states.current[UpdatedCallbackSymbol](updateInfos);
-  return updator.retrieveAllUpdatedStateProperties();
+  states.current[UpdatedCallbackSymbol](updateInfos);
 }
 
 export async function execProcesses(updator:IUpdator, states:IStates): Promise<IPropertyAccess[]> {
@@ -32,12 +29,9 @@ export async function execProcesses(updator:IUpdator, states:IStates): Promise<I
       const processes = updator.retrieveAllProcesses();
       if (processes.length === 0) break;
       const updateStateProperties = await _execProcesses(updator, processes);
-      totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties, updateStateProperties);
       if (updateStateProperties.length > 0) {
-        totalUpdatedStateProperties.push.apply(
-          totalUpdatedStateProperties,
-          await updatedCallback(updator, states, updateStateProperties)
-        );
+        totalUpdatedStateProperties.push(...updateStateProperties);
+        enqueueUpdatedCallback(updator, states, updateStateProperties)
       }
     } while(true);
   });
