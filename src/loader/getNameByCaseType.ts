@@ -1,4 +1,4 @@
-import { toKebabCase } from "./KebabCase";
+import { toKebabCase } from "./toKebabCase";
 import { CaseType, CaseTypeNames } from "./types";
 
 export function getNameByCaseType(name:string):CaseTypeNames {

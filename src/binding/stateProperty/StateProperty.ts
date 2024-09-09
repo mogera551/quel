@@ -4,7 +4,7 @@ import { GetDirectSymbol, SetDirectSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { IPropInfo } from "../../dotNotation/types";
-import { getPropInfo } from "../../dotNotation/PropInfo";
+import { getPropInfo } from "../../dotNotation/getPropInfo";
 import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
 

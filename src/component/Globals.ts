@@ -4,7 +4,7 @@ import { GlobalData } from "../global/Data";
 import { IGlobalDataProxy } from "../global/types";
 import { Handler } from "../dotNotation/Handler";
 import { IComponent } from "./types";
-import { getPropInfo } from "../dotNotation/PropInfo";
+import { getPropInfo } from "../dotNotation/getPropInfo";
 
 type IComponentForGlobalData = Pick<IComponent, "states">;
 

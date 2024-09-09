@@ -1,38 +1,11 @@
 
-import { all } from '../../node_modules/axios/index';
-import { IPatternInfo, IPropInfo } from './types';
+import { IPropInfo } from './types';
+import { getPatternInfo } from './getPatternInfo';
 
 /**
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
-const _cachePropInfo = new Map<string, IPropInfo>();
-const _cachePatternInfo = new Map<string, IPatternInfo>();
-
-function _getPatternInfo(pattern:string):IPatternInfo {
-  const patternElements = pattern.split(".");
-  const patternPaths = [];
-  const wildcardPaths = [];
-  for(let i = 0; i < patternElements.length; i++) {
-    let patternPath = "";
-    for(let j = 0; j <= i; j++) {
-      patternPath += patternElements[j] + (j < i ? "." : "");
-    }
-    if (patternElements[i] === "*") {
-      wildcardPaths.push(patternPath);
-    }
-    patternPaths.push(patternPath);
-  }
-  return {
-    patternElements,
-    patternPaths,
-    wildcardPaths,
-  }
-}
-
-export function getPatternInfo(pattern:string):IPatternInfo {
-  let info;
-  return _cachePatternInfo.get(pattern) ?? (info = _getPatternInfo(pattern), _cachePatternInfo.set(pattern, info), info);
-}
+const _cache = new Map<string, IPropInfo>();
 
 function _getPropInfo(name:string):IPropInfo {
   const elements = name.split(".");
@@ -80,5 +53,5 @@ function _getPropInfo(name:string):IPropInfo {
 
 export function getPropInfo(name:string):IPropInfo {
   let info;
-  return _cachePropInfo.get(name) ?? (info = _getPropInfo(name), _cachePropInfo.set(name, info), info);
+  return _cache.get(name) ?? (info = _getPropInfo(name), _cache.set(name, info), info);
 }

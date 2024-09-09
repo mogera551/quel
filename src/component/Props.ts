@@ -1,10 +1,10 @@
-import { utils } from "../utils.js";
-import { GetDirectSymbol, SetDirectSymbol } from "../dotNotation/symbols.js";
-import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../state/symbols.js";
-import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols.js";
-import { IComponent, IProps } from "./types.js";
-import { IBindingPropertyAccess } from "../binding/types.js";
-import { getPatternInfo } from "../dotNotation/PropInfo.js";
+import { utils } from "../utils";
+import { GetDirectSymbol, SetDirectSymbol } from "../dotNotation/symbols";
+import { CreateBufferApiSymbol, FlushBufferApiSymbol, NotifyForDependentPropsApiSymbol } from "../state/symbols";
+import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
+import { IComponent, IProps } from "./types";
+import { IBindingPropertyAccess } from "../binding/types";
+import { getPatternInfo } from "../dotNotation/getPatternInfo";
 
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 

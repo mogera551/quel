@@ -1,6 +1,6 @@
 import { IPropertyAccess } from "./types";
 import { IPropInfo } from "../dotNotation/types";
-import { getPropInfo } from "../dotNotation/PropInfo";
+import { getPropInfo } from "../dotNotation/getPropInfo";
 
 export class PropertyAccess implements IPropertyAccess {
   #pattern: string;

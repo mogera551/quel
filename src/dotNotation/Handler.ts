@@ -1,6 +1,6 @@
 import { GetDirectSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
-import { getPropInfo } from "./PropInfo";
+import { getPropInfo } from "./getPropInfo";
 import { IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, StackIndexes } from "./types";
 
 class WildcardIndexes implements IWildcardIndexes {

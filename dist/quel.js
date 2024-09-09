@@ -1026,8 +1026,7 @@ async function execProcesses(updator, states) {
 /**
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
-const _cachePropInfo = new Map();
-const _cachePatternInfo = new Map();
+const _cache$8 = new Map();
 function _getPatternInfo(pattern) {
     const patternElements = pattern.split(".");
     const patternPaths = [];
@@ -1050,8 +1049,13 @@ function _getPatternInfo(pattern) {
 }
 function getPatternInfo(pattern) {
     let info;
-    return _cachePatternInfo.get(pattern) ?? (info = _getPatternInfo(pattern), _cachePatternInfo.set(pattern, info), info);
+    return _cache$8.get(pattern) ?? (info = _getPatternInfo(pattern), _cache$8.set(pattern, info), info);
 }
+
+/**
+ * constructorが指定されると、破綻するのでObjectではなくMapを使う
+ */
+const _cache$7 = new Map();
 function _getPropInfo(name) {
     const elements = name.split(".");
     const patternElements = elements.slice(0);
@@ -1098,7 +1102,7 @@ function _getPropInfo(name) {
 }
 function getPropInfo(name) {
     let info;
-    return _cachePropInfo.get(name) ?? (info = _getPropInfo(name), _cachePropInfo.set(name, info), info);
+    return _cache$7.get(name) ?? (info = _getPropInfo(name), _cache$7.set(name, info), info);
 }
 
 class PropertyAccess {
@@ -3616,7 +3620,7 @@ const callFuncBySymbol = {
     [CreateBufferApiSymbol]: ({ stateProxy }) => (component) => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
     [FlushBufferApiSymbol]: ({ stateProxy }) => (buffer, component) => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 };
-function getApi(state, stateProxy, handler, prop) {
+function getApiMethod(state, stateProxy, handler, prop) {
     return callFuncBySymbol[prop]?.({ state, stateProxy, handler });
 }
 
@@ -3666,7 +3670,7 @@ const applyCallback = (state, stateProxy, handler, prop) => (...args) => async (
     (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
     dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
 };
-function getCallback(state, stateProxy, handler, prop) {
+function getCallbackMethod(state, stateProxy, handler, prop) {
     return (allCallbacks.has(prop)) ? ((prop === ConnectedCallbackSymbol) ?
         (...args) => applyCallback(state, stateProxy, handler, prop)(...args)() :
         (...args) => handler.updator.addProcess(applyCallback(state, stateProxy, handler, prop)(...args), stateProxy, [])) : undefined;
@@ -3744,13 +3748,13 @@ function _getAccessorProperties(target) {
 }
 const _cache$1 = new Map();
 function getAccessorProperties(target) {
-    let retValue = _cache$1.get(target.constructor);
-    if (typeof retValue === "undefined") {
-        retValue = _getAccessorProperties(target);
+    let accessorProperties = _cache$1.get(target.constructor);
+    if (typeof accessorProperties === "undefined") {
+        accessorProperties = _getAccessorProperties(target);
         if ({}.constructor !== target.constructor)
-            _cache$1.set(target.constructor, retValue);
+            _cache$1.set(target.constructor, accessorProperties);
     }
-    return retValue;
+    return accessorProperties;
 }
 
 /**
@@ -3790,17 +3794,15 @@ const DEPENDENT_PROPS = "$dependentProps";
 const _cache = new Map;
 function getStateInfo(state) {
     // readonlyとwritableで同じものを使う
-    if (_cache.has(state)) {
-        return _cache.get(state);
-    }
-    else {
-        const stateInfo = {
+    let stateProeprtyInfo = _cache.get(state);
+    if (typeof stateProeprtyInfo === "undefined") {
+        stateProeprtyInfo = {
             accessorProperties: new Set(getAccessorProperties(state)),
             dependentProps: new DependentProps(state[DEPENDENT_PROPS] ?? {})
         };
-        _cache.set(state, stateInfo);
-        return stateInfo;
+        _cache.set(state, stateProeprtyInfo);
     }
+    return stateProeprtyInfo;
 }
 
 class Handler extends Handler$1 {
@@ -3844,8 +3846,8 @@ class Handler extends Handler$1 {
     }
     #getBySymbol(target, prop, receiver) {
         return this.#objectBySymbol[prop] ??
-            getCallback(target, receiver, this, prop) ??
-            getApi(target, receiver, this, prop) ??
+            getCallbackMethod(target, receiver, this, prop) ??
+            getApiMethod(target, receiver, this, prop) ??
             undefined;
     }
     #getByString(target, prop, receiver) {

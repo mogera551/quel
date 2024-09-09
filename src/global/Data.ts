@@ -4,7 +4,7 @@ import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { Handler } from "../dotNotation/Handler";
 import { IComponent } from "../component/types";
 import { IGlobalDataProxy } from "./types";
-import { getPropInfo } from "../dotNotation/PropInfo";
+import { getPropInfo } from "../dotNotation/getPropInfo";
 
 type IComponentForGlobalData = Pick<IComponent, "states">;
 

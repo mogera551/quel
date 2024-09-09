@@ -1,6 +1,6 @@
 import { GetDependentPropsApiSymbol } from "../state/symbols";
 import { IPropertyAccess } from "../binding/types";
-import { getPatternInfo } from "../dotNotation/PropInfo";
+import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { IStateProxy, IStates } from "../state/types";
 import { PropertyAccess } from "../binding/PropertyAccess";
 import { GetDirectSymbol } from "../dotNotation/symbols";

@@ -1,5 +1,5 @@
 import { IContentBindingsBase, IBinding, IBindingBase } from "../binding/types";
-import { getPatternInfo } from "../dotNotation/PropInfo";
+import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
 import { ILoopContext } from "./types";

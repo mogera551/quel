@@ -1,8 +1,8 @@
 import { Config } from "./Config";
 import { Prefix } from "./Prefix";
 import { Registrar } from "./types";
-import { getPathInfo } from "./Path";
-import { toKebabCase } from "./KebabCase";
+import { getPathInfo } from "./getPathInfo";
+import { toKebabCase } from "./toKebabCase";
 import { utils } from "../utils";
 
 export class Loader {
