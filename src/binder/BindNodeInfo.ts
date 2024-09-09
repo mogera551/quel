@@ -1,10 +1,10 @@
 import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParsedBindTextInfo } from './types';
-import { replaceTextNode } from './replaceTextNode';
+import { replaceTextNodeFromComment } from './replaceTextNodeFromComment';
 import { removeDataBindAttribute } from './removeDataBindAttribute';
 import { canNodeAcceptInput } from './canNodeAcceptInput';
 import { parseBindText } from './parseBindText';
 import { getDefaultPropertyForNode } from './getDefaultPropertyForNode';
-import { getPropertyCreators } from './propertyCreators';
+import { getPropertyCreators } from './getPropertyCreators';
 import { createBindingWithBindInfo } from './createBinding';
 import { computeNodeRoute } from './computeNodeRoute';
 import { initializeForNode } from './initializeForNode';
@@ -37,7 +37,7 @@ export class BindNodeInfo implements IBindNodeInfo {
   }
 
   static create(node:Node, nodeType:NodeType, bindText:string, useKeyed:boolean):IBindNodeInfo {
-    node = replaceTextNode(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
+    node = replaceTextNodeFromComment(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
     removeDataBindAttribute(node, nodeType);
     const acceptInput: boolean = canNodeAcceptInput(node, nodeType);
     const defaultProperty: string = getDefaultPropertyForNode(node, nodeType) ?? "";

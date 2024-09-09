@@ -15,5 +15,8 @@ const getNodeTypeByNode = (node:Node):NodeType =>
   (node instanceof Comment && node.textContent?.[2] === "|") ? "Template" : 
   (node instanceof SVGElement) ? "SVGElement" : utils.raise(`Unknown NodeType: ${node.nodeType}`);
 
+/**
+ * ノードのタイプを取得
+ */
 export const getNodeType = (node:Node, nodeKey = createNodeKey(node)) => 
   nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));

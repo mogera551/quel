@@ -22,6 +22,6 @@ const removeAttributeByNodeType:RemoveAttributeByNodeType = {
 }
 
 /**
- * remove data-bind attribute from node
+ * ノードからdata-bind属性を削除
  */
 export const removeDataBindAttribute = (node:Node, nodeType:NodeType):Node => removeAttributeByNodeType[nodeType](node);

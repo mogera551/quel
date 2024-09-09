@@ -7,6 +7,9 @@ import { getNodeType } from './getNodeType';
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
 
+/**
+ * HTMLテンプレートからバインドノード情報を抽出する
+ */
 export function extractBindNodeInfosFromTemplate(template: HTMLTemplateElement, useKeyed: boolean): IBindNodeInfo[] {
   const nodeInfos: IBindNodeInfo[] = [];
   const rootElement = template.content;

@@ -76,6 +76,9 @@ function _getNodePropertyConstructor(isComment:boolean, isElement: boolean, prop
 
 const _cache: {[key:string]:NodePropertyCreator} = {};
 
+/**
+ * バインドのノードプロパティのコンストラクタを取得する
+ */
 export function getNodePropertyConstructor(node:Node, propertyName:string, useKeyed:boolean): NodePropertyCreator {
   const isComment = node instanceof Comment;
   const isElement = node instanceof Element;

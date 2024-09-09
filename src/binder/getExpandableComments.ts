@@ -6,5 +6,6 @@ const isCommentNode = (node:Node):boolean => node instanceof Comment && ((node.t
 /**
  * ノードツリーからexpandableなコメントノードを取得する
  * expandableなコメントノードとは、"@@:"もしくは"@@|"で始まるコメントノードのこと
+ * {{ if: }}や{{ loop: }}を置き換えたもの指すためのコメントノード
  */
 export const getExpandableComments = (node:Node):Comment[] => Array.from(node.childNodes).flatMap(node => getExpandableComments(node).concat(isCommentNode(node as Node) ? node as Comment : []));

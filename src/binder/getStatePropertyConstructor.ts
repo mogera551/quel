@@ -13,6 +13,11 @@ const createStateProperty =
   return Reflect.construct(StatePropertyConstructor, [binding, name, filters]);
 }
 
+/**
+ * バインドのステートプロパティのコンストラクタを取得する
+ * @param propertyName 
+ * @returns 
+ */
 export function getStatePropertyConstructor(propertyName:string) {
   const statePropertyConstructor = regexp.test(propertyName) ? ContextIndex : StateProperty;
   return createStateProperty(statePropertyConstructor);

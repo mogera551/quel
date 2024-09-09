@@ -20,6 +20,6 @@ const replaceTextNodeFn:ReplaceTextNodeFn = {
 }
 
 /**
- * replace comment node to text node
+ * コメントノードをテキストノードに置き換える
  */
-export const replaceTextNode = (node:Node, nodeType:NodeType):Node => replaceTextNodeFn[nodeType](node);
+export const replaceTextNodeFromComment = (node:Node, nodeType:NodeType):Node => replaceTextNodeFn[nodeType](node);

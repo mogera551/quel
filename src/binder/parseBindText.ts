@@ -63,7 +63,7 @@ type BindTextsByKey = {[key:string]:ParsedBindTextInfo[]};
 const _cache:BindTextsByKey = {};
 
 /**
- * parse bind text and return BindTextInfo[], if hit cache return cache value
+ * 取得したバインドテキスト(getBindTextByNodeType)を解析して、バインド情報を取得する
  */
 export function parseBindText(text: string, defaultName: string): ParsedBindTextInfo[] {
   if (text.trim() === "") return [];

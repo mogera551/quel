@@ -1951,9 +1951,9 @@ const replaceTextNodeFn = {
     Template: itsSelf,
 };
 /**
- * replace comment node to text node
+ * コメントノードをテキストノードに置き換える
  */
-const replaceTextNode = (node, nodeType) => replaceTextNodeFn[nodeType](node);
+const replaceTextNodeFromComment = (node, nodeType) => replaceTextNodeFn[nodeType](node);
 
 const DATASET_BIND_PROPERTY = 'data-bind';
 const removeAttributeFromElement = (node) => {
@@ -1969,9 +1969,9 @@ const removeAttributeByNodeType = {
     Template: thru$1,
 };
 /**
- * remove data-bind attribute from node
+ * ノードからdata-bind属性を削除
  */
-const removeAttribute = (node, nodeType) => removeAttributeByNodeType[nodeType](node);
+const removeDataBindAttribute = (node, nodeType) => removeAttributeByNodeType[nodeType](node);
 
 const excludeTypes = new Set([
     "button",
@@ -1982,8 +1982,8 @@ const excludeTypes = new Set([
     "unknown",
 ]);
 /**
- * ユーザー操作によりデフォルト値が変わるかどうか
- * getDefaultPropertyと似ているが、HTMLOptionElementを含まない
+ * ユーザー操作によりデフォルト値を変更するかどうか
+ * DOMノードが入力を受け付けるかどうか
  */
 const isInputableHTMLElement = (node) => node instanceof HTMLElement &&
     (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement ||
@@ -1995,7 +1995,7 @@ const isInputableFn = {
     Text: alwaysFalse,
     Template: alwaysFalse,
 };
-const getIsInputable = (node, nodeType) => isInputableFn[nodeType](node);
+const canNodeAcceptInput = (node, nodeType) => isInputableFn[nodeType](node);
 
 const SAMENAME = "@";
 const DEFAULT = "$";
@@ -2035,7 +2035,7 @@ const parseExpression = (expr, defaultName) => {
 /**
  * parse bind text and return BindTextInfo[]
  */
-const parseBindText = (text, defaultName) => {
+const parseExpressions = (text, defaultName) => {
     return text.split(";").map(trim).filter(has).map(s => {
         let { nodeProperty, stateProperty, inputFilters, outputFilters } = parseExpression(s, DEFAULT);
         stateProperty = stateProperty === SAMENAME ? nodeProperty : stateProperty;
@@ -2046,13 +2046,13 @@ const parseBindText = (text, defaultName) => {
 };
 const _cache$6 = {};
 /**
- * parse bind text and return BindTextInfo[], if hit cache return cache value
+ * 取得したバインドテキスト(getBindTextByNodeType)を解析して、バインド情報を取得する
  */
-function parse(text, defaultName) {
+function parseBindText(text, defaultName) {
     if (text.trim() === "")
         return [];
     const key = text + "\t" + defaultName;
-    return _cache$6[key] ?? (_cache$6[key] = parseBindText(text, defaultName));
+    return _cache$6[key] ?? (_cache$6[key] = parseExpressions(text, defaultName));
 }
 
 const DEFAULT_PROPERTY = "textContent";
@@ -2080,9 +2080,9 @@ const getDefaultPropertyByNodeType = {
     Template: undefinedProperty,
 };
 /**
- * get html element's default property
+ * バインド情報でノードプロパティを省略された場合のデフォルトのプロパティ名を取得
  */
-const getDefaultProperty = (node, nodeType) => {
+const getDefaultPropertyForNode = (node, nodeType) => {
     const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
     return _cache$5[key] ?? (_cache$5[key] = getDefaultPropertyByNodeType[nodeType](node));
 };
@@ -2741,6 +2741,9 @@ function _getNodePropertyConstructor(isComment, isElement, propertyName, useKeye
     return createNodeProperty(nodePropertyConstructor);
 }
 const _cache$4 = {};
+/**
+ * バインドのノードプロパティのコンストラクタを取得する
+ */
 function getNodePropertyConstructor(node, propertyName, useKeyed) {
     const isComment = node instanceof Comment;
     const isElement = node instanceof Element;
@@ -2877,11 +2880,19 @@ const regexp = RegExp(/^\$[0-9]+$/);
 const createStateProperty = (StatePropertyConstructor) => (binding, name, filters) => {
     return Reflect.construct(StatePropertyConstructor, [binding, name, filters]);
 };
+/**
+ * バインドのステートプロパティのコンストラクタを取得する
+ * @param propertyName
+ * @returns
+ */
 function getStatePropertyConstructor(propertyName) {
     const statePropertyConstructor = regexp.test(propertyName) ? ContextIndex : StateProperty;
     return createStateProperty(statePropertyConstructor);
 }
 
+/**
+ * バインドのノードプロパティとステートプロパティのコンストラクタを取得する
+ */
 function getPropertyCreators(node, nodePropertyName, statePropertyName, useKeyed) {
     return {
         nodePropertyCreator: getNodePropertyConstructor(node, nodePropertyName, useKeyed),
@@ -3049,10 +3060,13 @@ function createBinding(contentBindings, node, nodePropertyName, nodePropertyCrea
     return binding;
 }
 
+/**
+ * バインディング情報を元にバインディングを作成する関数を返す
+ */
 const createBindingWithBindInfo = (bindTextInfo, propertyCreators) => (contentBindings, node) => createBinding(contentBindings, node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyCreator, bindTextInfo.inputFilters, bindTextInfo.stateProperty, propertyCreators.statePropertyCreator, bindTextInfo.outputFilters);
 
 /**
- * get indexes of childNodes from root node to the node
+ * 最上位ノードからのルート（道順）インデックスの配列を計算する
  * ex.
  * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
  * => [1,3,7,2]
@@ -3065,19 +3079,11 @@ const computeNodeRoute = (node) => {
     }
     return routeIndexes;
 };
-/**
- * find node by node route
- */
-const findNodeByNodeRoute = (node, nodeRoute) => {
-    for (let i = 0; i < nodeRoute.length; node = node.childNodes[nodeRoute[i++]])
-        ;
-    return node;
-};
 
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
 const setDefaultEventHandlerByElement = (element) => (binding) => element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
-function initializeHTMLElement(node, isInputable, bindings, defaultName) {
+function initializeHTMLElement(node, acceptInput, bindings, defaultName) {
     const element = node;
     // set event handler
     let hasDefaultEvent = false;
@@ -3099,7 +3105,7 @@ function initializeHTMLElement(node, isInputable, bindings, defaultName) {
         else if (checkboxBinding) {
             setDefaultEventHandler(checkboxBinding);
         }
-        else if (defaultBinding && isInputable) {
+        else if (defaultBinding && acceptInput) {
             // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
             // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
             // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
@@ -3107,7 +3113,6 @@ function initializeHTMLElement(node, isInputable, bindings, defaultName) {
             setDefaultEventHandler(defaultBinding);
         }
     }
-    return undefined;
 }
 const thru = () => { };
 const initializeNodeByNodeType = {
@@ -3116,31 +3121,35 @@ const initializeNodeByNodeType = {
     Text: thru,
     Template: thru,
 };
-const initializeNode = (nodeInfo) => (node, bindings) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.isInputable, bindings, nodeInfo.defaultProperty);
+/**
+ * ノードの初期化処理
+ * 入力可のノードの場合、デフォルトイベントハンドラを設定する
+ */
+const initializeForNode = (nodeInfo) => (node, bindings) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);
 
 class BindNodeInfo {
     nodeType;
     nodeRoute;
     nodeRouteKey;
     bindTextInfos;
-    isInputable;
+    acceptInput;
     defaultProperty;
-    initializeNode;
-    constructor(nodeType, nodeRoute, nodeRouteKey, bindTextInfos, isInputable, defaultProperty, initializeNode) {
+    initializeForNode;
+    constructor(nodeType, nodeRoute, nodeRouteKey, bindTextInfos, acceptInput, defaultProperty, initializeForNode) {
         this.nodeType = nodeType;
         this.nodeRoute = nodeRoute;
         this.nodeRouteKey = nodeRouteKey;
         this.bindTextInfos = bindTextInfos;
-        this.isInputable = isInputable;
+        this.acceptInput = acceptInput;
         this.defaultProperty = defaultProperty;
-        this.initializeNode = initializeNode(this);
+        this.initializeForNode = initializeForNode(this);
     }
     static create(node, nodeType, bindText, useKeyed) {
-        node = replaceTextNode(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
-        removeAttribute(node, nodeType);
-        const isInputable = getIsInputable(node, nodeType);
-        const defaultProperty = getDefaultProperty(node, nodeType) ?? "";
-        const parseBindTextInfos = parse(bindText, defaultProperty);
+        node = replaceTextNodeFromComment(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
+        removeDataBindAttribute(node, nodeType);
+        const acceptInput = canNodeAcceptInput(node, nodeType);
+        const defaultProperty = getDefaultPropertyForNode(node, nodeType) ?? "";
+        const parseBindTextInfos = parseBindText(bindText, defaultProperty);
         const bindTextInfos = [];
         for (let j = 0; j < parseBindTextInfos.length; j++) {
             const parseBindTextInfo = parseBindTextInfos[j];
@@ -3150,7 +3159,7 @@ class BindNodeInfo {
         }
         const nodeRoute = computeNodeRoute(node);
         const nodeRouteKey = nodeRoute.join(",");
-        return new BindNodeInfo(nodeType, nodeRoute, nodeRouteKey, bindTextInfos, isInputable, defaultProperty, initializeNode);
+        return new BindNodeInfo(nodeType, nodeRoute, nodeRouteKey, bindTextInfos, acceptInput, defaultProperty, initializeForNode);
     }
 }
 
@@ -3169,16 +3178,22 @@ const bindTextByNodeType = {
     Text: getBindTextFromText,
     Template: getBindTextFromTemplate,
 };
-const getBindText = (node, nodeType) => bindTextByNodeType[nodeType](node);
+/**
+ * バインドテキストをノードから取得
+ * HTML要素の場合はdata-bind属性から、テキストノードの場合はtextContentから取得
+ */
+const getBindTextByNodeType = (node, nodeType) => bindTextByNodeType[nodeType](node);
 
 /**
- * is the node a comment node for template or text ?
+ * "@@:"もしくは"@@|"で始まるコメントノードを取得する
  */
 const isCommentNode = (node) => node instanceof Comment && ((node.textContent?.startsWith("@@:") ?? false) || (node.textContent?.startsWith("@@|") ?? false));
 /**
- * get comment nodes for template or text
+ * ノードツリーからexpandableなコメントノードを取得する
+ * expandableなコメントノードとは、"@@:"もしくは"@@|"で始まるコメントノードのこと
+ * {{ if: }}や{{ loop: }}を置き換えたもの指すためのコメントノード
  */
-const getCommentNodes = (node) => Array.from(node.childNodes).flatMap(node => getCommentNodes(node).concat(isCommentNode(node) ? node : []));
+const getExpandableComments = (node) => Array.from(node.childNodes).flatMap(node => getExpandableComments(node).concat(isCommentNode(node) ? node : []));
 
 const createNodeKey = (node) => node.constructor.name + "\t" + ((node instanceof Comment) ? (node.textContent?.[2] ?? "") : "");
 const nodeTypeByNodeKey = {};
@@ -3186,18 +3201,24 @@ const getNodeTypeByNode = (node) => (node instanceof Comment && node.textContent
     (node instanceof HTMLElement) ? "HTMLElement" :
         (node instanceof Comment && node.textContent?.[2] === "|") ? "Template" :
             (node instanceof SVGElement) ? "SVGElement" : utils.raise(`Unknown NodeType: ${node.nodeType}`);
+/**
+ * ノードのタイプを取得
+ */
 const getNodeType = (node, nodeKey = createNodeKey(node)) => nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));
 
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
-function parseTemplate(template, useKeyed) {
+/**
+ * HTMLテンプレートからバインドノード情報を抽出する
+ */
+function extractBindNodeInfosFromTemplate(template, useKeyed) {
     const nodeInfos = [];
     const rootElement = template.content;
-    const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getCommentNodes(rootElement));
+    const nodes = Array.from(rootElement.querySelectorAll(SELECTOR)).concat(getExpandableComments(rootElement));
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const nodeType = getNodeType(node);
-        const bindText = getBindText(node, nodeType);
+        const bindText = getBindTextByNodeType(node, nodeType);
         if (bindText.trim() === "")
             continue;
         nodeInfos[nodeInfos.length] = BindNodeInfo.create(nodes[i], nodeType, bindText, useKeyed);
@@ -3205,6 +3226,18 @@ function parseTemplate(template, useKeyed) {
     return nodeInfos;
 }
 
+/**
+ * ノードのルート（道順）インデックスの配列からノードを探す
+ */
+const findNodeByNodeRoute = (node, nodeRoute) => {
+    for (let i = 0; i < nodeRoute.length; node = node.childNodes[nodeRoute[i++]])
+        ;
+    return node;
+};
+
+/**
+ * HTMLテンプレートのコンテントからバインディング配列を作成する
+ */
 function createBindings(content, contentBindings, nodeInfos) {
     const bindings = [];
     for (let i = 0; i < nodeInfos.length; i++) {
@@ -3215,7 +3248,7 @@ function createBindings(content, contentBindings, nodeInfos) {
             nodeBindings[nodeBindings.length] =
                 nodeInfo.bindTextInfos[j].createBinding(contentBindings, node); // push
         }
-        nodeInfo.initializeNode(node, nodeBindings);
+        nodeInfo.initializeForNode(node, nodeBindings);
         bindings.push(...nodeBindings);
     }
     return bindings;
@@ -3228,7 +3261,7 @@ class Binder {
     #nodeInfos;
     constructor(template, useKeyed) {
         this.#template = template;
-        this.#nodeInfos = parseTemplate(this.#template, useKeyed);
+        this.#nodeInfos = extractBindNodeInfosFromTemplate(this.#template, useKeyed);
     }
     createBindings(content, contentBindings) {
         return createBindings(content, contentBindings, this.#nodeInfos);
