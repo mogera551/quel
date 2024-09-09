@@ -79,7 +79,7 @@ export function expandStateProperties(states:IStates, updatedStateProperties:IPr
   // expand state properties
   const expandedStateProperties = updatedStateProperties.slice(0);
   for(let i = 0; i < updatedStateProperties.length; i++) {
-    expandedStateProperties.push.apply(expandStateProperty(
+    expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(
       states.current, updatedStateProperties[i]
     ));
   }

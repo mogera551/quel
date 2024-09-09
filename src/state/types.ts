@@ -1,8 +1,9 @@
 import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "./symbols";
-import { IComponent, IUpdator } from "../component/types";
+import { IComponent } from "../component/types";
 import { IDotNotationProxy } from "../dotNotation/types";
 import { IGlobalDataProxy } from "../global/types";
 import { ILoopContext } from "../loopContext/types";
+import { IUpdator } from "../updator/types";
 
 export interface IStateHandler {
   readonly accessorProperties: Set<string>;

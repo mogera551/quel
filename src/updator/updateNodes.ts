@@ -11,7 +11,7 @@ export function updateNodes(
   for(let key in updateStatePropertyAccessByKey) {
     const bindings = bindingSummary.bindingsByKey.get(key);
     if (typeof bindings === "undefined") continue;
-    allBindingsForUpdate.push.apply(bindings);
+    allBindingsForUpdate.push.apply(allBindingsForUpdate, bindings);
   }
   const uniqueAllBindingsForUpdate = Array.from(new Set(allBindingsForUpdate));
   const selectBindings = [];

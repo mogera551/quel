@@ -110,7 +110,7 @@ class Updator implements IUpdator {
           rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
 
         bindingForUpdates.push.apply(
-          updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)
+          bindingForUpdates, updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)
         );
 
         updateNodes(this.bindingSummary, bindingForUpdates, updatedStatePropertyAccessByKey);

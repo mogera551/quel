@@ -991,6 +991,41 @@ function getNamesFromComponent(component) {
     return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim$1).filter(excludeEmptyName) ?? [];
 }
 
+const execProcess = async (process) => Reflect.apply(process.target, process.thisArgument, process.argumentList);
+async function _execProcesses(updator, processes) {
+    for (let i = 0; i < processes.length; i++) {
+        // Stateのイベント処理を実行する
+        // Stateのプロパティに更新があった場合、
+        // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
+        await execProcess(processes[i]);
+    }
+    return updator.retrieveAllUpdatedStateProperties();
+}
+async function updatedCallback(updator, states, updatedStateProperties) {
+    // Stateの$updatedCallbackを呼び出す
+    // Stateのプロパティに更新があった場合、
+    // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
+    const updateInfos = updatedStateProperties.map(prop => ({ name: prop.pattern, indexes: prop.indexes }));
+    await states.current[UpdatedCallbackSymbol](updateInfos);
+    return updator.retrieveAllUpdatedStateProperties();
+}
+async function execProcesses(updator, states) {
+    const totalUpdatedStateProperties = [];
+    await states.writable(async () => {
+        do {
+            const processes = updator.retrieveAllProcesses();
+            if (processes.length === 0)
+                break;
+            const updateStateProperties = await _execProcesses(updator, processes);
+            totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties, updateStateProperties);
+            if (updateStateProperties.length > 0) {
+                totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties, await updatedCallback(updator, states, updateStateProperties));
+            }
+        } while (true);
+    });
+    return totalUpdatedStateProperties;
+}
+
 /**
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
@@ -1095,18 +1130,18 @@ const name$1 = "do-notation";
 const GetDirectSymbol = Symbol.for(`${name$1}.getDirect`);
 const SetDirectSymbol = Symbol.for(`${name$1}.setDirect`);
 
-function makeNotifyForDependentProps(state, propertyAccess, setOfSavePropertyAccessKeys = new Set([])) {
+function expandStateProperty(state, propertyAccess, expandedPropertyAccessKeys = new Set([])) {
     const { propInfo, indexes } = propertyAccess;
     const propertyAccessKey = propInfo.pattern + "\t" + indexes.toString();
-    if (setOfSavePropertyAccessKeys.has(propertyAccessKey))
+    if (expandedPropertyAccessKeys.has(propertyAccessKey))
         return [];
-    setOfSavePropertyAccessKeys.add(propertyAccessKey);
+    expandedPropertyAccessKeys.add(propertyAccessKey);
     const dependentProps = state[GetDependentPropsApiSymbol]();
-    const setOfProps = dependentProps.propsByRefProp[propInfo.pattern];
-    const propertyAccesses = [];
-    if (typeof setOfProps === "undefined")
+    const props = dependentProps.propsByRefProp[propInfo.pattern];
+    if (typeof props === "undefined")
         return [];
-    for (const prop of setOfProps) {
+    const propertyAccesses = [];
+    for (const prop of props) {
         const curPropertyNameInfo = getPatternInfo(prop);
         if (indexes.length < curPropertyNameInfo.wildcardPaths.length) {
             //if (curPropName.setOfParentPaths.has(propName.name)) continue;
@@ -1117,7 +1152,7 @@ function makeNotifyForDependentProps(state, propertyAccess, setOfSavePropertyAcc
             const notifyIndexes = indexes.slice(0, curPropertyNameInfo.wildcardPaths.length);
             propertyAccesses.push(new PropertyAccess(prop, notifyIndexes));
         }
-        propertyAccesses.push(...makeNotifyForDependentProps(state, new PropertyAccess(prop, indexes), setOfSavePropertyAccessKeys));
+        propertyAccesses.push(...expandStateProperty(state, new PropertyAccess(prop, indexes), expandedPropertyAccessKeys));
     }
     return propertyAccesses;
 }
@@ -1131,25 +1166,18 @@ function expandIndexes(state, propertyAccess) {
     }
     else {
         const getValuesFn = state[GetDirectSymbol];
-        /**
-         *
-         * @param {string} parentName
-         * @param {number} elementIndex
-         * @param {number[]} loopIndexes
-         * @returns {number[][]}
-         */
         const traverse = (parentName, elementIndex, loopIndexes) => {
             const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
             const element = propInfo.elements[elementIndex];
             const isTerminate = (propInfo.elements.length - 1) === elementIndex;
             if (isTerminate) {
                 if (element === "*") {
-                    const indexes = [];
+                    const indexesArray = [];
                     const len = getValuesFn(parentName, loopIndexes).length;
                     for (let i = 0; i < len; i++) {
-                        indexes.push(loopIndexes.concat(i));
+                        indexesArray.push([...loopIndexes, i]);
                     }
-                    return indexes;
+                    return indexesArray;
                 }
                 else {
                     return [loopIndexes];
@@ -1162,12 +1190,12 @@ function expandIndexes(state, propertyAccess) {
                         return traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
                     }
                     else {
-                        const indexes = [];
+                        const indexesArray = [];
                         const len = getValuesFn(parentName, loopIndexes).length;
                         for (let i = 0; i < len; i++) {
-                            indexes.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
+                            indexesArray.push(...traverse(currentName, elementIndex + 1, [...loopIndexes, i]));
                         }
-                        return indexes;
+                        return indexesArray;
                     }
                 }
                 else {
@@ -1175,20 +1203,94 @@ function expandIndexes(state, propertyAccess) {
                 }
             }
         };
-        const listOfIndexes = traverse("", 0, []);
-        return listOfIndexes;
+        return traverse("", 0, []);
+    }
+}
+function expandStateProperties(states, updatedStateProperties) {
+    // expand state properties
+    const expandedStateProperties = updatedStateProperties.slice(0);
+    for (let i = 0; i < updatedStateProperties.length; i++) {
+        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(states.current, updatedStateProperties[i]));
+    }
+    return expandedStateProperties;
+}
+
+// ソートのための比較関数
+// BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
+const compareExpandableBindings = (a, b) => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
+// 
+function rebuildBindings(updator, bindingSummary, updateStatePropertyAccessByKey) {
+    const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
+    bindingSummary.update((bindingSummary) => {
+        for (let i = 0; i < expandableBindings.length; i++) {
+            const binding = expandableBindings[i];
+            if (!bindingSummary.exists(binding))
+                continue;
+            if (typeof updateStatePropertyAccessByKey[binding.stateProperty.key] === "undefined")
+                continue;
+            binding.rebuild();
+        }
+    });
+    return updator.retrieveAllBindingsForUpdate();
+}
+
+function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses) {
+    const indexesByParentKey = {};
+    for (const propertyAccess of updatedStatePropertyAccesses) {
+        const patternElements = propertyAccess.propInfo.patternElements;
+        if (patternElements[patternElements.length - 1] !== "*")
+            continue;
+        const indexes = propertyAccess.indexes;
+        const lastIndex = indexes?.[indexes.length - 1];
+        if (typeof lastIndex === "undefined")
+            continue;
+        const patternPaths = propertyAccess.propInfo.patternPaths;
+        const parentKey = patternPaths[patternPaths.length - 2] + "\t" + indexes.slice(0, -1);
+        indexesByParentKey[parentKey]?.add(lastIndex) ?? (indexesByParentKey[parentKey] = new Set([lastIndex]));
+    }
+    for (const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
+        const bindings = bindingSummary.bindingsByKey.get(parentKey);
+        if (typeof bindings === "undefined")
+            continue;
+        for (const binding of bindings) {
+            binding.applyToChildNodes(indexes);
+        }
+    }
+    return updator.retrieveAllBindingsForUpdate();
+}
+
+function updateNodes(bindingSummary, bindingsForUpdate, updateStatePropertyAccessByKey = {}) {
+    const allBindingsForUpdate = bindingsForUpdate.slice(0);
+    for (let key in updateStatePropertyAccessByKey) {
+        const bindings = bindingSummary.bindingsByKey.get(key);
+        if (typeof bindings === "undefined")
+            continue;
+        allBindingsForUpdate.push.apply(allBindingsForUpdate, bindings);
+    }
+    const uniqueAllBindingsForUpdate = Array.from(new Set(allBindingsForUpdate));
+    const selectBindings = [];
+    for (let ui = 0; ui < uniqueAllBindingsForUpdate.length; ui++) {
+        const binding = uniqueAllBindingsForUpdate[ui];
+        if (binding.nodeProperty.isSelectValue) {
+            selectBindings.push(binding);
+        }
+        else {
+            binding.updateNodeForNoRecursive();
+        }
+    }
+    for (let si = 0; si < selectBindings.length; si++) {
+        selectBindings[si].updateNodeForNoRecursive();
     }
 }
 
 const getPropAccessKey = (prop) => prop.pattern + "\t" + prop.indexes.toString();
-const executeProcess = (process) => async () => Reflect.apply(process.target, process.thisArgument, process.argumentList);
-const compareExpandableBindings = (a, b) => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 class Updator {
     #component;
     processQueue = [];
     updatedStateProperties = [];
     expandedStateProperties = [];
     updatedBindings = new Set();
+    bindingsForUpdateNode = [];
     executing = false;
     get states() {
         return this.#component.states;
@@ -1208,106 +1310,31 @@ class Updator {
             return;
         this.exec();
     }
-    getProcessQueue() {
-        return this.processQueue;
+    // 取得後processQueueは空になる
+    retrieveAllProcesses() {
+        const allProcesses = this.processQueue;
+        this.processQueue = [];
+        return allProcesses;
     }
     addUpdatedStateProperty(prop) {
         this.updatedStateProperties.push(prop);
     }
-    /**
-     *
-     * @param {{ component:Component, processQueue:Process[], updatedStateProperties:PropertyAccess[] }} param0
-     * @returns {Promise<PropertyAccess[]>}
-     */
-    async process() {
-        const totalUpdatedStateProperties = [];
-        // event callback, and update state
-        while (this.processQueue.length > 0) {
-            const processes = this.processQueue.slice(0);
-            this.processQueue.length = 0;
-            for (let i = 0; i < processes.length; i++) {
-                await this.states.writable(executeProcess(processes[i]));
-            }
-            if (this.updatedStateProperties.length > 0) {
-                // call updatedCallback, and add processQeueue
-                await this.states.writable(async () => {
-                    this.states.current[UpdatedCallbackSymbol](this.updatedStateProperties.map(prop => ({ name: prop.pattern, indexes: prop.indexes })));
-                    totalUpdatedStateProperties.push(...this.updatedStateProperties);
-                    this.updatedStateProperties.length = 0;
-                });
-            }
-        }
-        return totalUpdatedStateProperties;
+    // 取得後updateStatePropertiesは空になる
+    retrieveAllUpdatedStateProperties() {
+        const updatedStateProperties = this.updatedStateProperties;
+        this.updatedStateProperties = [];
+        return updatedStateProperties;
     }
-    expandStateProperties(updatedStateProperties) {
-        // expand state properties
-        const expandedStateProperties = updatedStateProperties.slice(0);
-        for (let i = 0; i < updatedStateProperties.length; i++) {
-            expandedStateProperties.push(...makeNotifyForDependentProps(this.states.current, updatedStateProperties[i]));
-        }
-        return expandedStateProperties;
+    addBindingForUpdateNode(binding) {
+        this.bindingsForUpdateNode.push(binding);
     }
-    rebuildBinding(expandedStatePropertyByKey) {
-        // bindingの再構築
-        // 再構築するのは、更新したプロパティのみでいいかも→ダメだった。
-        // expandedStatePropertyByKeyに、branch、repeatが含まれている場合、それらのbindingを再構築する
-        // 再構築する際、branch、repeatの子ノードは更新する
-        // 構築しなおす順番は、プロパティのパスの浅いものから行う(ソートをする)
-        const bindingSummary = this.bindingSummary;
-        const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
-        bindingSummary.update((bindingSummary) => {
-            for (let i = 0; i < expandableBindings.length; i++) {
-                const binding = expandableBindings[i];
-                if (!bindingSummary.exists(binding))
-                    continue;
-                if (expandedStatePropertyByKey.has(binding.stateProperty.key)) {
-                    binding.applyToNode();
-                }
-            }
-        });
+    // 取得後、bindingsForUpdateNodeは空になる
+    retrieveAllBindingsForUpdate() {
+        const bindingsForUpdateNode = this.bindingsForUpdateNode;
+        this.bindingsForUpdateNode = [];
+        return bindingsForUpdateNode;
     }
-    updateChildNodes(expandedStateProperties) {
-        const bindingSummary = this.bindingSummary;
-        const setOfIndexByParentKey = new Map;
-        for (const propertyAccess of expandedStateProperties) {
-            if (propertyAccess.propInfo.patternElements[propertyAccess.propInfo.patternElements.length - 1] !== "*")
-                continue;
-            const lastIndex = propertyAccess.indexes?.[propertyAccess.indexes.length - 1];
-            if (typeof lastIndex === "undefined")
-                continue;
-            const parentKey = propertyAccess.propInfo.patternPaths[propertyAccess.propInfo.patternPaths.length - 2] + "\t" + propertyAccess.indexes.slice(0, -1);
-            setOfIndexByParentKey.get(parentKey)?.add(lastIndex) ?? setOfIndexByParentKey.set(parentKey, new Set([lastIndex]));
-        }
-        for (const [parentKey, setOfIndex] of setOfIndexByParentKey.entries()) {
-            const bindings = bindingSummary.bindingsByKey.get(parentKey);
-            if (typeof bindings === "undefined")
-                continue;
-            for (const binding of bindings) {
-                binding.applyToChildNodes(setOfIndex);
-            }
-        }
-    }
-    updateNode(expandedStatePropertyByKey) {
-        const bindingSummary = this.bindingSummary;
-        const selectBindings = [];
-        for (const key of expandedStatePropertyByKey.keys()) {
-            const bindings = bindingSummary.bindingsByKey.get(key);
-            if (typeof bindings === "undefined")
-                continue;
-            for (let i = 0; i < bindings.length; i++) {
-                const binding = bindings[i];
-                binding.nodeProperty.isSelectValue ? selectBindings.push(binding) : binding.applyToNode();
-            }
-        }
-        for (let i = 0; i < selectBindings.length; i++) {
-            selectBindings[i].applyToNode();
-        }
-        for (const binding of bindingSummary.componentBindings) {
-            //if (updatedBindings.has(binding)) continue;
-            binding.nodeProperty.postUpdate(expandedStatePropertyByKey);
-        }
-    }
-    async execCallback(callback) {
+    async execCallbackWithPerformance(callback) {
         this.executing = true;
         config.debug && performance.mark('Updator.exec:start');
         try {
@@ -1326,16 +1353,17 @@ class Updator {
         }
     }
     async exec() {
-        await this.execCallback(async () => {
-            while (this.getProcessQueue().length > 0) {
+        await this.execCallbackWithPerformance(async () => {
+            while (this.processQueue.length > 0) {
                 this.updatedBindings.clear();
-                this.component.contextRevision++;
-                const updatedStateProperties = await this.process();
-                const expandedStateProperties = this.expandStateProperties(updatedStateProperties);
-                const expandedStatePropertyByKey = new Map(expandedStateProperties.map(prop => [getPropAccessKey(prop), prop]));
-                this.rebuildBinding(expandedStatePropertyByKey);
-                this.updateChildNodes(expandedStateProperties);
-                this.updateNode(expandedStatePropertyByKey);
+                // 戻り値は更新されたStateのプロパティ情報
+                const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
+                // 戻り値は依存関係により更新されたStateのプロパティ情報
+                const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
+                const updatedStatePropertyAccessByKey = Object.fromEntries(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
+                const bindingForUpdates = rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
+                bindingForUpdates.push.apply(bindingForUpdates, updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses));
+                updateNodes(this.bindingSummary, bindingForUpdates, updatedStatePropertyAccessByKey);
             }
         });
     }
@@ -2129,6 +2157,9 @@ class NodeProperty {
     }
     dispose() {
     }
+    revisionUpForLoop() {
+        return 0;
+    }
 }
 
 const PREFIX$3 = "@@|";
@@ -2161,43 +2192,47 @@ class TemplateProperty extends NodeProperty {
 }
 
 class Loop extends TemplateProperty {
-    _revisionForLoop = 0;
+    #revisionForLoop = 0;
     get revisionForLoop() {
-        return this._revisionForLoop;
+        return this.#revisionForLoop;
     }
     get loopable() {
         return true;
     }
     dispose() {
         super.dispose();
-        this._revisionForLoop++;
+        this.#revisionForLoop++;
+    }
+    revisionUpForLoop() {
+        return ++this.#revisionForLoop;
     }
 }
 
-const applyToNodeFunc = (contentBindings) => contentBindings.applyToNode();
+const rebuildFunc = (contentBindings) => contentBindings.rebuild();
 class Repeat extends Loop {
     get value() {
-        return this.binding.childrenContentBindings.length;
+        return this.binding.childrenContentBindings;
     }
     set value(value) {
         if (!Array.isArray(value))
             utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-        this._revisionForLoop++;
-        if (this.value < value.length) {
-            this.binding.childrenContentBindings.forEach(applyToNodeFunc);
-            for (let newIndex = this.value; newIndex < value.length; newIndex++) {
+        const lastValueLength = this.value.length;
+        this.revisionUpForLoop();
+        if (lastValueLength < value.length) {
+            this.binding.childrenContentBindings.forEach(rebuildFunc);
+            for (let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
                 const contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.appendChildContentBindings(contentBindings);
                 contentBindings.postCreate();
             }
         }
-        else if (this.value > value.length) {
+        else if (lastValueLength > value.length) {
             const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);
-            this.binding.childrenContentBindings.forEach(applyToNodeFunc);
+            this.binding.childrenContentBindings.forEach(rebuildFunc);
             removeContentBindings.forEach(contentBindings => contentBindings.dispose());
         }
         else {
-            this.binding.childrenContentBindings.forEach(applyToNodeFunc);
+            this.binding.childrenContentBindings.forEach(rebuildFunc);
         }
     }
     constructor(binding, node, name, filters) {
@@ -2222,16 +2257,16 @@ class Branch extends TemplateProperty {
             utils.raise(`Branch: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`);
         if (this.value !== value) {
             if (value) {
-                const constentBindings = createContentBindings(this.template, this.binding);
-                this.binding.appendChildContentBindings(constentBindings);
-                constentBindings.postCreate();
+                const contentBindings = createContentBindings(this.template, this.binding);
+                this.binding.appendChildContentBindings(contentBindings);
+                contentBindings.postCreate();
             }
             else {
                 this.binding.removeAllChildrenContentBindings();
             }
         }
         else {
-            this.binding.childrenContentBindings.forEach(constentBindings => constentBindings.applyToNode());
+            this.binding.childrenContentBindings.forEach(constentBindings => constentBindings.rebuild());
         }
     }
     constructor(binding, node, name, filters) {
@@ -2553,7 +2588,7 @@ class RepeatKeyed extends Loop {
     set value(values) {
         if (!Array.isArray(values))
             utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-        this._revisionForLoop++;
+        this.revisionUpForLoop();
         this.#fromIndexByValue.clear();
         this.#lastIndexes.clear();
         this.#setOfNewIndexes.clear();
@@ -2604,7 +2639,7 @@ class RepeatKeyed extends Loop {
                 (newIndex < this.binding.childrenContentBindings.length) ?
                     (this.binding.childrenContentBindings[newIndex] = contentBindings) :
                     this.binding.childrenContentBindings.push(contentBindings);
-                contentBindings.applyToNode();
+                contentBindings.rebuild();
             }
             beforeContentBindings = contentBindings;
         }
@@ -2614,7 +2649,7 @@ class RepeatKeyed extends Loop {
         this.#lastValue = values.slice();
     }
     applyToChildNodes(setOfIndex) {
-        this._revisionForLoop++;
+        this.revisionUpForLoop();
         const contentBindingsByValue = new Map;
         for (const index of setOfIndex) {
             const contentBindings = this.binding.childrenContentBindings[index];
@@ -2644,7 +2679,7 @@ class RepeatKeyed extends Loop {
             }
             else {
                 this.binding.replaceChildContentBindings(contentBindings, index);
-                contentBindings.applyToNode();
+                contentBindings.rebuild();
             }
         }
         this.#lastValue = this.binding.stateProperty.value.slice();
@@ -2724,6 +2759,10 @@ class StateProperty {
     get name() {
         return this.#name;
     }
+    #childName;
+    get childName() {
+        return this.#childName;
+    }
     #propInfo;
     get propInfo() {
         return this.#propInfo;
@@ -2793,6 +2832,7 @@ class StateProperty {
     constructor(binding, name, filters) {
         this.#binding = binding;
         this.#name = name;
+        this.#childName = name + ".*";
         this.#filters = Filters.create(filters, binding.outputFilterManager);
         this.#propInfo = getPropInfo(name);
         this.#level = this.#propInfo.wildcardCount;
@@ -2804,10 +2844,10 @@ class StateProperty {
     initialize() {
     }
     getChildValue(index) {
-        return this.state[GetDirectSymbol](`${this.name}.*`, this.indexes.concat(index));
+        return this.state[GetDirectSymbol](this.#childName, [...this.indexes, index]);
     }
     setChildValue(index, value) {
-        return this.state[SetDirectSymbol](`${this.name}.*`, this.indexes.concat(index), value);
+        return this.state[SetDirectSymbol](this.#childName, [...this.indexes, index], value);
     }
     dispose() {
     }
@@ -2989,6 +3029,21 @@ class Binding {
         this.stateProperty.dispose();
         this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());
         this.childrenContentBindings = [];
+    }
+    rebuild() {
+        if (this.expandable) {
+            this.applyToNode();
+        }
+        else {
+            this.updator?.addBindingForUpdateNode(this);
+        }
+    }
+    updateNodeForNoRecursive() {
+        // rebuildで再帰的にupdateするnodeが決まるため
+        // 再帰的に呼び出す必要はない
+        if (!this.expandable) {
+            this.applyToNode();
+        }
     }
 }
 function createBinding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters) {
@@ -3195,14 +3250,18 @@ class LoopContext {
     #parentLoopCache = false;
     #statePropertyName;
     #patternInfo;
+    #patternName;
+    #parentBinding;
     constructor(contentBindings) {
-        contentBindings.parentBinding?.loopable === true || utils.raise("parentBinding is not loopable");
-        this.#statePropertyName = contentBindings.parentBinding?.statePropertyName ?? utils.raise("statePropertyName is undefined");
+        this.#parentBinding = contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
+        (this.#parentBinding.loopable === true) || utils.raise("parentBinding is not loopable");
+        this.#statePropertyName = this.#parentBinding.statePropertyName ?? utils.raise("statePropertyName is undefined");
         this.#contentBindings = contentBindings;
         this.#patternInfo = getPatternInfo(this.#statePropertyName + ".*");
+        this.#patternName = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
     }
     get patternName() {
-        return this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
+        return this.#patternName;
     }
     get parentLoopContext() {
         this.checkRevision();
@@ -3210,7 +3269,7 @@ class LoopContext {
             const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
             let curContentBindings = undefined;
             if (typeof parentPattern !== "undefined") {
-                curContentBindings = this.#contentBindings.parentBinding?.parentContentBindings;
+                curContentBindings = this.#parentBinding.parentContentBindings;
                 while (typeof curContentBindings !== "undefined") {
                     if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === parentPattern) {
                         break;
@@ -3229,8 +3288,7 @@ class LoopContext {
     get index() {
         this.checkRevision();
         if (typeof this.#index === "undefined") {
-            this.#index = this.#contentBindings.parentBinding?.childrenContentBindings.indexOf(this.#contentBindings) ??
-                utils.raise("parentBinding is undefined");
+            this.#index = this.#parentBinding.childrenContentBindings.indexOf(this.#contentBindings);
         }
         return this.#index;
     }
@@ -3347,22 +3405,21 @@ class ContentBindings {
     /**
      * apply value to node
      */
-    applyToNode() {
-        // apply value to node exluding select tag, and apply select tag value
-        const selectBindings = [];
-        for (let i = 0; i < this.childrenBinding.length; i++) {
-            const binding = this.childrenBinding[i];
-            if (binding.nodeProperty.isSelectValue) {
-                selectBindings.push(binding);
-            }
-            else {
-                binding.applyToNode();
-            }
-        }
-        for (let i = 0; i < selectBindings.length; i++) {
-            selectBindings[i].applyToNode();
-        }
-    }
+    //  applyToNode() {
+    //    // apply value to node exluding select tag, and apply select tag value
+    //    const selectBindings = [];
+    //    for(let i = 0; i < this.childrenBinding.length; i++) {
+    //      const binding = this.childrenBinding[i];
+    //      if (binding.nodeProperty.isSelectValue) {
+    //        selectBindings.push(binding);
+    //      } else {
+    //        binding.applyToNode();
+    //      }
+    //    }
+    //    for(let i = 0; i < selectBindings.length; i++) {
+    //      selectBindings[i].applyToNode();
+    //    }
+    //  }
     /**
      * apply value to State
      */
@@ -3375,14 +3432,15 @@ class ContentBindings {
      * register bindings to summary
      */
     registerBindingsToSummary() {
+        const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
         for (let i = 0; i < this.childrenBinding.length; i++) {
-            const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
             bindingSummary.add(this.childrenBinding[i]);
         }
     }
     postCreate() {
         this.registerBindingsToSummary();
-        this.applyToNode();
+        this.rebuild();
+        //    this.applyToNode();
     }
     dispose() {
         // childrenBindingsの構造はそのまま保持しておく
@@ -3395,6 +3453,11 @@ class ContentBindings {
         this.removeChildNodes();
         const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
         _cache$2[uuid]?.push(this) ?? (_cache$2[uuid] = [this]);
+    }
+    rebuild() {
+        for (let i = 0; i < this.childrenBinding.length; i++) {
+            this.childrenBinding[i].rebuild();
+        }
     }
 }
 const _cache$2 = {};
@@ -3774,13 +3837,13 @@ class ReadonlyHandler extends Handler {
     _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
         const path = patternPaths[pathIndex];
         if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
-            // sliceよりもループの方が速い
+            // sliceよりもループで文字列を足していく方が速い
             let key = path + ":";
             for (let i = 0; i <= wildcardIndex; i++) {
-                key += `${wildcardIndexes[i]},`;
+                key += wildcardIndexes[i] + ",";
             }
-            let value = this.#cache[key];
-            return value ??
+            let value;
+            return (value = this.#cache[key]) ??
                 ((key in this.#cache) ?
                     value :
                     (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver)));
@@ -3899,7 +3962,7 @@ function CustomComponent(Base) {
     return class extends Base {
         constructor(...args) {
             super();
-            this.#states = createStates(this, Reflect.construct(this.State, [])); // create view model
+            this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
             this.#bindingSummary = createBindingSummary();
             this.#initialPromises = Promise.withResolvers(); // promises for initialize
             this.#updator = createUpdator(this);
@@ -3974,17 +4037,6 @@ function CustomComponent(Base) {
             }
             return document;
         }
-        #contextRevision = 0;
-        get contextRevision() {
-            return this.#contextRevision;
-        }
-        set contextRevision(value) {
-            this.#contextRevision = value;
-        }
-        useContextRevision(callback) {
-            this.#contextRevision++;
-            callback(this.#contextRevision);
-        }
         #bindingSummary;
         get bindingSummary() {
             return this.#bindingSummary;
@@ -4044,6 +4096,8 @@ function CustomComponent(Base) {
                 this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
                 this.rootBindingManager = createContentBindings(this.template, undefined, this);
                 this.rootBindingManager.postCreate();
+                const bindingsForUpdate = this.updator.retrieveAllBindingsForUpdate();
+                updateNodes(this.bindingSummary, bindingsForUpdate);
             });
             if (this.useWebComponent) {
                 // case of useWebComponent,

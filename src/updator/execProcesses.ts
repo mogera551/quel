@@ -32,8 +32,13 @@ export async function execProcesses(updator:IUpdator, states:IStates): Promise<I
       const processes = updator.retrieveAllProcesses();
       if (processes.length === 0) break;
       const updateStateProperties = await _execProcesses(updator, processes);
-      totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties)
-      totalUpdatedStateProperties.push.apply(await updatedCallback(updator, states, updateStateProperties));
+      totalUpdatedStateProperties.push.apply(totalUpdatedStateProperties, updateStateProperties);
+      if (updateStateProperties.length > 0) {
+        totalUpdatedStateProperties.push.apply(
+          totalUpdatedStateProperties,
+          await updatedCallback(updator, states, updateStateProperties)
+        );
+      }
     } while(true);
   });
   return totalUpdatedStateProperties;
