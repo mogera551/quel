@@ -2423,7 +2423,7 @@ class ElementEvent extends ElementBase {
     }
     async directlyCall(event) {
         // 再構築などでバインドが削除されている場合は処理しない
-        if (!(this.binding.bindingSummary?.exists(this.binding)) ?? false)
+        if (!(this.binding.bindingSummary?.exists(this.binding) ?? false))
             return;
         return this.binding.stateProperty.state[DirectryCallApiSymbol](this.binding.stateProperty.name, this.binding.parentContentBindings.currentLoopContext, event);
     }

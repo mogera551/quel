@@ -48,7 +48,7 @@ export class ElementEvent extends ElementBase {
 
   async directlyCall(event:Event) {
     // 再構築などでバインドが削除されている場合は処理しない
-    if (!(this.binding.bindingSummary?.exists(this.binding)) ?? false) return;
+    if (!(this.binding.bindingSummary?.exists(this.binding) ?? false)) return;
     return this.binding.stateProperty.state[DirectryCallApiSymbol](
       this.binding.stateProperty.name, 
       this.binding.parentContentBindings.currentLoopContext, 

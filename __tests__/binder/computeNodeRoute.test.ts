@@ -1,5 +1,5 @@
 import "jest";
-import { computeNodeRoute, findNodeByNodeRoute } from "../../src/binder/nodeRoute";
+import { computeNodeRoute } from "../../src/binder/computeNodeRoute";
 
 describe("nodeRoute", () => {
   it("computeNodeRoute", () => {
@@ -21,14 +21,5 @@ describe("nodeRoute", () => {
     div2.appendChild(p);
     expect(computeNodeRoute(span)).toEqual([0,0]);
     expect(computeNodeRoute(p)).toEqual([0,1]);
-  });
-  it("findNodeByNodeRoute", () => {
-    const div = document.createElement("div");
-    const span = document.createElement("span");
-    const p = document.createElement("p");
-    div.appendChild(span);
-    div.appendChild(p);
-    expect(findNodeByNodeRoute(div, [0])).toBe(span);
-    expect(findNodeByNodeRoute(div, [1])).toBe(p);
   });
 });

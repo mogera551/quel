@@ -23,8 +23,8 @@ class NodeProperty implements ILoopable {
   get revisionForLoop(): number {
     return this._revision;
   }
-  revisionUp() {
-    this._revision++;
+  revisionUpForLoop(): number {
+    return ++this._revision;
   }
 }
 
@@ -43,7 +43,7 @@ class Binding implements IBindingBase {
     this.nodeProperty = new NodeProperty;
   }
   revisionUp() {
-    (this.nodeProperty as NodeProperty).revisionUp();
+    (this.nodeProperty as NodeProperty).revisionUpForLoop();
   }
 }
 

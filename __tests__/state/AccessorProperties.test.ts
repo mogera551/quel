@@ -1,6 +1,6 @@
 
 import "jest";
-import { getAccessorProperties } from "../../src/state/AccessorProperties";
+import { getAccessorProperties } from "../../src/state/getAccessorProperties";
 
 describe("AccessorProperties", () => {
   it("should return the accessor properties of the target", () => {

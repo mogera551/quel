@@ -1,5 +1,5 @@
 import "jest";
-import { getNodeType } from "../../src/binder/nodeType";
+import { getNodeType } from "../../src/binder/getNodeType";
 
 describe("nodeType", () => {
   it("Text", () => {
