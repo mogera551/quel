@@ -13,9 +13,6 @@ export interface IUpdator {
   addUpdatedStateProperty(prop: IPropertyAccess): void;
   retrieveAllUpdatedStateProperties(): IPropertyAccess[];
 
-  addBindingForUpdateNode(binding: IBinding): void;
-  retrieveAllBindingsForUpdate(): IBinding[];
-
   exec(): Promise<void>;
   applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;
 }

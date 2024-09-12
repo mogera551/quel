@@ -5,7 +5,7 @@ export function updateChildNodes(
   updator: IUpdator,
   bindingSummary: IBindingSummary, 
   updatedStatePropertyAccesses: IPropertyAccess[]
-) {
+): void {
   const indexesByParentKey: {[k: string]: Set<number>} = {};
   for(const propertyAccess of updatedStatePropertyAccesses) {
     const patternElements = propertyAccess.propInfo.patternElements;
@@ -28,5 +28,4 @@ export function updateChildNodes(
       binding.applyToChildNodes(indexes);
     }
   }
-  return updator.retrieveAllBindingsForUpdate();
 }

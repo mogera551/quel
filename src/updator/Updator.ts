@@ -65,16 +65,6 @@ class Updator implements IUpdator {
     return updatedStateProperties;
   }
 
-  addBindingForUpdateNode(binding: IBinding): void {
-    this.bindingsForUpdateNode.push(binding);
-  }
-  // 取得後、bindingsForUpdateNodeは空になる
-  retrieveAllBindingsForUpdate(): IBinding[] {
-    const bindingsForUpdateNode = this.bindingsForUpdateNode;
-    this.bindingsForUpdateNode = [];
-    return bindingsForUpdateNode;
-  }
-
   async execCallbackWithPerformance(callback: () => any): Promise<void> {
     this.executing = true;
     config.debug && performance.mark('Updator.exec:start');
@@ -106,14 +96,11 @@ class Updator implements IUpdator {
         const updatedStatePropertyAccessByKey: Map<string, IPropertyAccess> = 
           new Map(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
 
-        const bindingForUpdates = 
-          rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
+        rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
 
-        bindingForUpdates.push.apply(
-          bindingForUpdates, updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)
-        );
+        updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)
 
-        updateNodes(this.bindingSummary, bindingForUpdates, updatedStatePropertyAccessByKey);
+        updateNodes(this.bindingSummary, updatedStatePropertyAccessByKey);
 
       }
     });

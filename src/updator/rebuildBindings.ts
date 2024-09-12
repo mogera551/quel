@@ -10,7 +10,7 @@ export function rebuildBindings(
   updator: IUpdator, 
   bindingSummary: IBindingSummary, 
   updateStatePropertyAccessByKey: Map<string, IPropertyAccess>
-): IBinding[]
+): void
  {
   const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
   bindingSummary.update((bindingSummary) => {
@@ -21,7 +21,5 @@ export function rebuildBindings(
       binding.rebuild();
     }
   });
-  return updator.retrieveAllBindingsForUpdate();
-
 }
 

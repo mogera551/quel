@@ -1256,7 +1256,6 @@ function rebuildBindings(updator, bindingSummary, updateStatePropertyAccessByKey
             binding.rebuild();
         }
     });
-    return updator.retrieveAllBindingsForUpdate();
 }
 
 function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses) {
@@ -1281,11 +1280,10 @@ function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses)
             binding.applyToChildNodes(indexes);
         }
     }
-    return updator.retrieveAllBindingsForUpdate();
 }
 
-function updateNodes(bindingSummary, bindingsForUpdate, updateStatePropertyAccessByKey = new Map()) {
-    const allBindingsForUpdate = bindingsForUpdate.slice(0);
+function updateNodes(bindingSummary, updateStatePropertyAccessByKey = new Map()) {
+    const allBindingsForUpdate = [];
     for (let key of updateStatePropertyAccessByKey.keys()) {
         const bindings = bindingSummary.bindingsByKey.get(key);
         if (typeof bindings === "undefined")
@@ -1350,15 +1348,6 @@ class Updator {
         this.updatedStateProperties = [];
         return updatedStateProperties;
     }
-    addBindingForUpdateNode(binding) {
-        this.bindingsForUpdateNode.push(binding);
-    }
-    // 取得後、bindingsForUpdateNodeは空になる
-    retrieveAllBindingsForUpdate() {
-        const bindingsForUpdateNode = this.bindingsForUpdateNode;
-        this.bindingsForUpdateNode = [];
-        return bindingsForUpdateNode;
-    }
     async execCallbackWithPerformance(callback) {
         this.executing = true;
         config.debug && performance.mark('Updator.exec:start');
@@ -1386,9 +1375,9 @@ class Updator {
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
                 const updatedStatePropertyAccessByKey = new Map(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
-                const bindingForUpdates = rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
-                bindingForUpdates.push.apply(bindingForUpdates, updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses));
-                updateNodes(this.bindingSummary, bindingForUpdates, updatedStatePropertyAccessByKey);
+                rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
+                updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses);
+                updateNodes(this.bindingSummary, updatedStatePropertyAccessByKey);
             }
         });
     }
@@ -4134,8 +4123,6 @@ function CustomComponent(Base) {
                 this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
                 this.rootBindingManager = createContentBindings(this.template, undefined, this);
                 this.rootBindingManager.rebuild();
-                const bindingsForUpdate = this.updator.retrieveAllBindingsForUpdate();
-                updateNodes(this.bindingSummary, bindingsForUpdate);
             });
             if (this.useWebComponent) {
                 // case of useWebComponent,

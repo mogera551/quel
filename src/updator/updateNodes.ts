@@ -2,10 +2,9 @@ import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
 
 export function updateNodes(
   bindingSummary: IBindingSummary,
-  bindingsForUpdate: IBinding[], 
   updateStatePropertyAccessByKey: Map<string,IPropertyAccess> = new Map()
 ) {
-  const allBindingsForUpdate = bindingsForUpdate.slice(0);
+  const allBindingsForUpdate: IBinding[] = [];
   for(let key of updateStatePropertyAccessByKey.keys()) {
     const bindings = bindingSummary.bindingsByKey.get(key);
     if (typeof bindings === "undefined") continue;

@@ -188,9 +188,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
         this.rootBindingManager = createContentBindings(this.template, undefined, this);
         this.rootBindingManager.rebuild();
-        const bindingsForUpdate = this.updator.retrieveAllBindingsForUpdate();
-        updateNodes(this.bindingSummary, bindingsForUpdate);
-        
       });
       if (this.useWebComponent) {
         // case of useWebComponent,
