@@ -9,8 +9,8 @@ import { PopoverComponent } from "./PopoverComponent";
 import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers } from "./types";
 
 const moduleByConstructor:Map<Function,IModule> = new Map;
-const customElementInfoByTagName:Map<string,CustomElementInfo> = new Map;
-const filterManagersByTagName:Map<string,FilterManagers> = new Map;
+const customElementInfoByConstructor:Map<Function,CustomElementInfo> = new Map;
+const filterManagersByConstructor:Map<Function,FilterManagers> = new Map;
 
 /**
  * generate unique component class
@@ -32,19 +32,19 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       #customElementInfo?: CustomElementInfo;
       get customElementInfo(): CustomElementInfo {
         if (typeof this.#customElementInfo === "undefined") {
-          this.#customElementInfo = customElementInfoByTagName.get(this.tagName) ?? utils.raise(`customElementInfo is not found for ${this.tagName}`);
+          this.#customElementInfo = customElementInfoByConstructor.get(this.thisClass) ?? utils.raise(`customElementInfo is not found `);
         }
         return this.#customElementInfo;
       }
       #setCustomElementInfo() {
-        const customeElementInfo = customElementInfoByTagName.get(this.tagName);
+        const customeElementInfo = customElementInfoByConstructor.get(this.thisClass);
         if (typeof customeElementInfo === "undefined") {
           const lowerTagName =  this.tagName.toLowerCase();
           const isAutonomousCustomElement = lowerTagName.includes("-");
           const customName = this.getAttribute("is");
           const isCostomizedBuiltInElement = customName ? true : false;
           const selectorName = isAutonomousCustomElement ? lowerTagName : `${lowerTagName}[is="${customName}"]`;
-          customElementInfoByTagName.set(this.tagName, 
+          customElementInfoByConstructor.set(this.thisClass, 
             { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement });
         }
       }
@@ -118,12 +118,12 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       #filterManagers?: FilterManagers;
       get filterManagers(): FilterManagers {
         if (typeof this.#filterManagers === "undefined") {
-          this.#filterManagers = filterManagersByTagName.get(this.tagName) ?? utils.raise(`filterManagers is not found for ${this.tagName}`);
+          this.#filterManagers = filterManagersByConstructor.get(this.thisClass) ?? utils.raise(`filterManagers is not found for ${this.tagName}`);
         }
         return this.#filterManagers;
       }
       #setFilterManagers() {
-        const filterManagers = filterManagersByTagName.get(this.tagName);
+        const filterManagers = filterManagersByConstructor.get(this.thisClass);
         if (typeof filterManagers === "undefined") {
           const filterManagers = {
             inputFilterManager: new InputFilterManager,
@@ -139,7 +139,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
           for(const [name, filterFunc] of Object.entries(this.eventFilters)) {
             filterManagers.eventFilterManager.registerFilter(name, filterFunc);
           }
-          filterManagersByTagName.set(this.tagName, filterManagers);
+          filterManagersByConstructor.set(this.thisClass, filterManagers);
         }
       }
 
