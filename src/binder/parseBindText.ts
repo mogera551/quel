@@ -1,6 +1,6 @@
 import { utils } from "../utils";
 import { IFilterText } from "../filter/types";
-import { ParsedBindTextInfo } from "./types";
+import { ParsedBindText } from "./types";
 
 const SAMENAME = "@";
 const DEFAULT = "$";
@@ -38,7 +38,7 @@ const parseProperty = (text:string):ReturnParseStateProperty => {
  * parse expressions
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  */
-const parseExpression = (expr:string, defaultName:string):ParsedBindTextInfo => {
+const parseExpression = (expr:string, defaultName:string):ParsedBindText => {
   const [nodePropertyText, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
   const { property:nodeProperty, filters:inputFilters } = parseProperty(nodePropertyText);
   const { property:stateProperty, filters:outputFilters } = parseProperty(statePropertyText);
@@ -46,9 +46,9 @@ const parseExpression = (expr:string, defaultName:string):ParsedBindTextInfo => 
 };
 
 /**
- * parse bind text and return BindTextInfo[]
+ * parse bind text and return BindText[]
  */
-const parseExpressions = (text:string, defaultName:string):ParsedBindTextInfo[] => {
+const parseExpressions = (text:string, defaultName:string):ParsedBindText[] => {
   return text.split(";").map(trim).filter(has).map(s => { 
     let { nodeProperty, stateProperty, inputFilters, outputFilters } = parseExpression(s, DEFAULT);
     stateProperty = stateProperty === SAMENAME ? nodeProperty : stateProperty;
@@ -58,14 +58,14 @@ const parseExpressions = (text:string, defaultName:string):ParsedBindTextInfo[] 
   });
 };
 
-type BindTextsByKey = {[key:string]:ParsedBindTextInfo[]};
+type BindTextsByKey = {[key:string]:ParsedBindText[]};
 
 const _cache:BindTextsByKey = {};
 
 /**
  * 取得したバインドテキスト(getBindTextByNodeType)を解析して、バインド情報を取得する
  */
-export function parseBindText(text: string, defaultName: string): ParsedBindTextInfo[] {
+export function parseBindText(text: string, defaultName: string): ParsedBindText[] {
   if (text.trim() === "") return [];
   const key:string = text + "\t" + defaultName;
   return _cache[key] ?? (_cache[key] = parseExpressions(text, defaultName));

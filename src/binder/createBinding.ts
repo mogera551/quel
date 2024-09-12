@@ -1,4 +1,4 @@
-import { ParsedBindTextInfo, PropertyCreators } from "./types";
+import { ParsedBindText, PropertyCreators } from "./types";
 import { createBinding } from "../binding/Binding";
 import { IBinding, IContentBindings } from "../binding/types";
 
@@ -6,7 +6,7 @@ import { IBinding, IContentBindings } from "../binding/types";
  * バインディング情報を元にバインディングを作成する関数を返す
  */
 export const createBindingWithBindInfo = 
-(bindTextInfo: ParsedBindTextInfo, propertyCreators: PropertyCreators) => 
+(bindTextInfo: ParsedBindText, propertyCreators: PropertyCreators) => 
 (contentBindings: IContentBindings, node: Node): IBinding => 
   createBinding(
     contentBindings,

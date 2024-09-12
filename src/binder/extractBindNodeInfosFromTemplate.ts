@@ -1,5 +1,5 @@
-import { IBindNodeInfo } from './types';
-import { BindNodeInfo } from './BindNodeInfo';
+import { IBindingNode } from './types';
+import { BindingNode } from './BindingNode';
 import { getBindTextByNodeType } from './getBindTextByNodeType';
 import { getExpandableComments } from './getExpandableComments';
 import { getNodeType } from './getNodeType';
@@ -10,8 +10,8 @@ const SELECTOR = `[data-${BIND_DATASET}]`;
 /**
  * HTMLテンプレートからバインドノード情報を抽出する
  */
-export function extractBindNodeInfosFromTemplate(template: HTMLTemplateElement, useKeyed: boolean): IBindNodeInfo[] {
-  const nodeInfos: IBindNodeInfo[] = [];
+export function extractBindNodeInfosFromTemplate(template: HTMLTemplateElement, useKeyed: boolean): IBindingNode[] {
+  const nodeInfos: IBindingNode[] = [];
   const rootElement = template.content;
   const nodes = (Array.from(rootElement.querySelectorAll(SELECTOR)) as Node[]).concat(getExpandableComments(rootElement));
   for(let i = 0; i < nodes.length; i++) {
@@ -19,7 +19,7 @@ export function extractBindNodeInfosFromTemplate(template: HTMLTemplateElement, 
     const nodeType = getNodeType(node);
     const bindText = getBindTextByNodeType(node, nodeType);
     if (bindText.trim() === "") continue;
-    nodeInfos[nodeInfos.length] = BindNodeInfo.create(nodes[i], nodeType, bindText, useKeyed);
+    nodeInfos[nodeInfos.length] = BindingNode.create(nodes[i], nodeType, bindText, useKeyed);
   }
   return nodeInfos;
 }

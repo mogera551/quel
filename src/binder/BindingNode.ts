@@ -1,4 +1,4 @@
-import { IBindNodeInfo, BindTextInfo, NodeType, NodeRoute, NodeRouteKey, ParsedBindTextInfo } from './types';
+import { IBindingNode, BindText, NodeType, NodeRoute, NodeRouteKey, ParsedBindText } from './types';
 import { replaceTextNodeFromComment } from './replaceTextNodeFromComment';
 import { removeDataBindAttribute } from './removeDataBindAttribute';
 import { canNodeAcceptInput } from './canNodeAcceptInput';
@@ -10,11 +10,11 @@ import { computeNodeRoute } from './computeNodeRoute';
 import { initializeForNode } from './initializeForNode';
 import { IBinding } from '../binding/types';
 
-export class BindNodeInfo implements IBindNodeInfo {
+export class BindingNode implements IBindingNode {
   nodeType: NodeType;
   nodeRoute: NodeRoute;
   nodeRouteKey: NodeRouteKey;
-  bindTextInfos: BindTextInfo[];
+  bindTexts: BindText[];
   acceptInput: boolean;
   defaultProperty: string;
   initializeForNode: (node:Node,bindings:IBinding[])=>void;
@@ -22,40 +22,40 @@ export class BindNodeInfo implements IBindNodeInfo {
     nodeType: NodeType, 
     nodeRoute: NodeRoute, 
     nodeRouteKey: NodeRouteKey, 
-    bindTextInfos: BindTextInfo[], 
+    bindTexts: BindText[], 
     acceptInput: boolean, 
     defaultProperty: string, 
-    initializeForNode: (bindInfo:IBindNodeInfo)=>(node:Node,bindings:IBinding[])=>void
+    initializeForNode: (bindInfo:IBindingNode)=>(node:Node,bindings:IBinding[])=>void
   ) {
     this.nodeType = nodeType;
     this.nodeRoute = nodeRoute;
     this.nodeRouteKey = nodeRouteKey;
-    this.bindTextInfos = bindTextInfos;
+    this.bindTexts = bindTexts;
     this.acceptInput = acceptInput;
     this.defaultProperty = defaultProperty
     this.initializeForNode = initializeForNode(this);
   }
 
-  static create(node:Node, nodeType:NodeType, bindText:string, useKeyed:boolean):IBindNodeInfo {
+  static create(node:Node, nodeType:NodeType, bindText:string, useKeyed:boolean):IBindingNode {
     node = replaceTextNodeFromComment(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
     removeDataBindAttribute(node, nodeType);
     const acceptInput: boolean = canNodeAcceptInput(node, nodeType);
     const defaultProperty: string = getDefaultPropertyForNode(node, nodeType) ?? "";
-    const parseBindTextInfos: ParsedBindTextInfo[] = parseBindText(bindText, defaultProperty);
-    const bindTextInfos: BindTextInfo[] = [];
+    const parseBindTextInfos: ParsedBindText[] = parseBindText(bindText, defaultProperty);
+    const bindTexts: BindText[] = [];
     for(let j = 0; j < parseBindTextInfos.length; j++) {
       const parseBindTextInfo = parseBindTextInfos[j];
       const { nodeProperty, stateProperty } = parseBindTextInfo;
       const propertyCreators = getPropertyCreators(node, nodeProperty, stateProperty, useKeyed);
-      bindTextInfos.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
+      bindTexts.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
     }
     const nodeRoute = computeNodeRoute(node);
     const nodeRouteKey = nodeRoute.join(",");
-    return new BindNodeInfo(
+    return new BindingNode(
       nodeType, 
       nodeRoute, 
       nodeRouteKey, 
-      bindTextInfos, 
+      bindTexts, 
       acceptInput, 
       defaultProperty, 
       initializeForNode

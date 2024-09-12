@@ -1,4 +1,4 @@
-import { NodeType, IBindNodeInfo } from "./types";
+import { NodeType, IBindingNode } from "./types";
 import { Checkbox } from "../binding/nodeProperty/Checkbox";
 import { Radio } from "../binding/nodeProperty/Radio";
 import { IBinding } from "../binding/types";
@@ -63,4 +63,4 @@ const initializeNodeByNodeType:InitializeNodeByNodeType = {
  * ノードの初期化処理
  * 入力可のノードの場合、デフォルトイベントハンドラを設定する
  */
-export const initializeForNode = (nodeInfo:IBindNodeInfo) => (node:Node, bindings:IBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);
+export const initializeForNode = (nodeInfo:IBindingNode) => (node:Node, bindings:IBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);

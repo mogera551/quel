@@ -1,4 +1,4 @@
-import { IBinder, IBindNodeInfo } from "./types";
+import { IBinder, IBindingNode } from "./types";
 import { IBinding, IContentBindings } from "../binding/types";
 import { extractBindNodeInfosFromTemplate } from "./extractBindNodeInfosFromTemplate";
 import { createBindings } from "./createBindings";
@@ -13,7 +13,7 @@ const _cache: BinderByUUID = {};
 
 class Binder implements IBinder {
   #template: HTMLTemplateElement;
-  #nodeInfos: IBindNodeInfo[];
+  #nodeInfos: IBindingNode[];
 
   constructor(template: HTMLTemplateElement, useKeyed: boolean) {
     this.#template = template;

@@ -2050,7 +2050,7 @@ const parseExpression = (expr, defaultName) => {
     return { nodeProperty, stateProperty, inputFilters, outputFilters };
 };
 /**
- * parse bind text and return BindTextInfo[]
+ * parse bind text and return BindText[]
  */
 const parseExpressions = (text, defaultName) => {
     return text.split(";").map(trim).filter(has).map(s => {
@@ -3139,19 +3139,19 @@ const initializeNodeByNodeType = {
  */
 const initializeForNode = (nodeInfo) => (node, bindings) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);
 
-class BindNodeInfo {
+class BindingNode {
     nodeType;
     nodeRoute;
     nodeRouteKey;
-    bindTextInfos;
+    bindTexts;
     acceptInput;
     defaultProperty;
     initializeForNode;
-    constructor(nodeType, nodeRoute, nodeRouteKey, bindTextInfos, acceptInput, defaultProperty, initializeForNode) {
+    constructor(nodeType, nodeRoute, nodeRouteKey, bindTexts, acceptInput, defaultProperty, initializeForNode) {
         this.nodeType = nodeType;
         this.nodeRoute = nodeRoute;
         this.nodeRouteKey = nodeRouteKey;
-        this.bindTextInfos = bindTextInfos;
+        this.bindTexts = bindTexts;
         this.acceptInput = acceptInput;
         this.defaultProperty = defaultProperty;
         this.initializeForNode = initializeForNode(this);
@@ -3162,16 +3162,16 @@ class BindNodeInfo {
         const acceptInput = canNodeAcceptInput(node, nodeType);
         const defaultProperty = getDefaultPropertyForNode(node, nodeType) ?? "";
         const parseBindTextInfos = parseBindText(bindText, defaultProperty);
-        const bindTextInfos = [];
+        const bindTexts = [];
         for (let j = 0; j < parseBindTextInfos.length; j++) {
             const parseBindTextInfo = parseBindTextInfos[j];
             const { nodeProperty, stateProperty } = parseBindTextInfo;
             const propertyCreators = getPropertyCreators(node, nodeProperty, stateProperty, useKeyed);
-            bindTextInfos.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
+            bindTexts.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
         }
         const nodeRoute = computeNodeRoute(node);
         const nodeRouteKey = nodeRoute.join(",");
-        return new BindNodeInfo(nodeType, nodeRoute, nodeRouteKey, bindTextInfos, acceptInput, defaultProperty, initializeForNode);
+        return new BindingNode(nodeType, nodeRoute, nodeRouteKey, bindTexts, acceptInput, defaultProperty, initializeForNode);
     }
 }
 
@@ -3233,7 +3233,7 @@ function extractBindNodeInfosFromTemplate(template, useKeyed) {
         const bindText = getBindTextByNodeType(node, nodeType);
         if (bindText.trim() === "")
             continue;
-        nodeInfos[nodeInfos.length] = BindNodeInfo.create(nodes[i], nodeType, bindText, useKeyed);
+        nodeInfos[nodeInfos.length] = BindingNode.create(nodes[i], nodeType, bindText, useKeyed);
     }
     return nodeInfos;
 }
@@ -3256,9 +3256,9 @@ function createBindings(content, contentBindings, nodeInfos) {
         const nodeInfo = nodeInfos[i];
         const node = findNodeByNodeRoute(content, nodeInfo.nodeRoute);
         const nodeBindings = [];
-        for (let j = 0; j < nodeInfo.bindTextInfos.length; j++) {
+        for (let j = 0; j < nodeInfo.bindTexts.length; j++) {
             nodeBindings[nodeBindings.length] =
-                nodeInfo.bindTextInfos[j].createBinding(contentBindings, node); // push
+                nodeInfo.bindTexts[j].createBinding(contentBindings, node); // push
         }
         nodeInfo.initializeForNode(node, nodeBindings);
         bindings.push(...nodeBindings);
