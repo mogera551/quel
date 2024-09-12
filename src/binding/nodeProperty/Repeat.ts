@@ -19,7 +19,7 @@ export class Repeat extends Loop {
       for(let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
         const contentBindings = createContentBindings(this.template, this.binding);
         this.binding.appendChildContentBindings(contentBindings);
-        contentBindings.postCreate();
+        contentBindings.rebuild();
       }
     } else if (lastValueLength > value.length) {
       const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);

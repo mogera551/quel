@@ -2224,7 +2224,7 @@ class Repeat extends Loop {
             for (let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
                 const contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.appendChildContentBindings(contentBindings);
-                contentBindings.postCreate();
+                contentBindings.rebuild();
             }
         }
         else if (lastValueLength > value.length) {
@@ -2260,7 +2260,7 @@ class Branch extends TemplateProperty {
             if (value) {
                 const contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.appendChildContentBindings(contentBindings);
-                contentBindings.postCreate();
+                contentBindings.rebuild();
             }
             else {
                 this.binding.removeAllChildrenContentBindings();
@@ -2594,6 +2594,7 @@ class RepeatKeyed extends Loop {
         this.#lastIndexes.clear();
         this.#setOfNewIndexes.clear();
         this.#lastChildByNewIndex.clear();
+        const children = this.binding.childrenContentBindings;
         for (let newIndex = 0; newIndex < values.length; newIndex++) {
             // values[newIndex]では、get "values.*"()を正しく取得できない
             const value = this.binding.stateProperty.getChildValue(newIndex);
@@ -2606,15 +2607,14 @@ class RepeatKeyed extends Loop {
                 // 元のインデックスがある場合（既存）
                 this.#fromIndexByValue.set(value, lastIndex + 1); // 
                 this.#lastIndexes.add(lastIndex);
-                this.#lastChildByNewIndex.set(newIndex, this.binding.childrenContentBindings[lastIndex]);
+                this.#lastChildByNewIndex.set(newIndex, children[lastIndex]);
             }
         }
-        for (let i = 0; i < this.binding.childrenContentBindings.length; i++) {
+        for (let i = 0; i < children.length; i++) {
             if (this.#lastIndexes.has(i))
                 continue;
-            this.binding.childrenContentBindings[i].dispose();
+            children[i].dispose();
         }
-        this.binding.childrenContentBindings.slice(0);
         let beforeContentBindings;
         const parentNode = this.node.parentNode ?? utils.raise("parentNode is null");
         for (let i = 0; i < values.length; i++) {
@@ -2624,11 +2624,11 @@ class RepeatKeyed extends Loop {
             if (this.#setOfNewIndexes.has(newIndex)) {
                 // 元のインデックスにない場合（新規）
                 contentBindings = createContentBindings(this.template, this.binding);
-                (newIndex < this.binding.childrenContentBindings.length) ?
-                    (this.binding.childrenContentBindings[newIndex] = contentBindings) :
-                    this.binding.childrenContentBindings.push(contentBindings);
+                (newIndex < children.length) ?
+                    (children[newIndex] = contentBindings) :
+                    children.push(contentBindings);
                 parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
-                contentBindings.postCreate();
+                contentBindings.rebuild();
             }
             else {
                 // 元のインデックスがある場合（既存）
@@ -2637,15 +2637,15 @@ class RepeatKeyed extends Loop {
                     contentBindings.removeChildNodes();
                     parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
                 }
-                (newIndex < this.binding.childrenContentBindings.length) ?
-                    (this.binding.childrenContentBindings[newIndex] = contentBindings) :
-                    this.binding.childrenContentBindings.push(contentBindings);
+                (newIndex < children.length) ?
+                    (children[newIndex] = contentBindings) :
+                    children.push(contentBindings);
                 contentBindings.rebuild();
             }
             beforeContentBindings = contentBindings;
         }
-        if (values.length < this.binding.childrenContentBindings.length) {
-            this.binding.childrenContentBindings.length = values.length;
+        if (values.length < children.length) {
+            children.length = values.length;
         }
         this.#lastValue = values.slice();
     }
@@ -2676,7 +2676,7 @@ class RepeatKeyed extends Loop {
             if (typeof contentBindings === "undefined") {
                 contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.replaceChildContentBindings(contentBindings, index);
-                contentBindings.postCreate();
+                contentBindings.rebuild();
             }
             else {
                 this.binding.replaceChildContentBindings(contentBindings, index);
@@ -3472,7 +3472,7 @@ class ContentBindings {
         }
     }
     postCreate() {
-        this.registerBindingsToSummary();
+        //    this.registerBindingsToSummary();
         this.rebuild();
         //    this.applyToNode();
     }
@@ -3497,16 +3497,16 @@ class ContentBindings {
 const _cache$2 = {};
 function createContentBindings(template, parentBinding, component) {
     const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-    const contentBindings = _cache$2[uuid]?.pop();
+    let contentBindings = _cache$2[uuid]?.pop();
     if (typeof contentBindings !== "undefined") {
         contentBindings.parentBinding = parentBinding;
-        return contentBindings;
     }
     else {
-        const contentBindings = new ContentBindings(template, parentBinding, component);
+        contentBindings = new ContentBindings(template, parentBinding, component);
         contentBindings.initialize();
-        return contentBindings;
     }
+    contentBindings.registerBindingsToSummary();
+    return contentBindings;
 }
 
 const pickKey = (binding) => binding.stateProperty.key;
@@ -4127,7 +4127,7 @@ function CustomComponent(Base) {
             this.bindingSummary.update((summary) => {
                 this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
                 this.rootBindingManager = createContentBindings(this.template, undefined, this);
-                this.rootBindingManager.postCreate();
+                this.rootBindingManager.rebuild();
                 const bindingsForUpdate = this.updator.retrieveAllBindingsForUpdate();
                 updateNodes(this.bindingSummary, bindingsForUpdate);
             });

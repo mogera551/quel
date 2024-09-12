@@ -18,7 +18,7 @@ export class Branch extends TemplateProperty {
       if (value) {
         const contentBindings = createContentBindings(this.template, this.binding);
         this.binding.appendChildContentBindings(contentBindings);
-        contentBindings.postCreate();
+        contentBindings.rebuild();
       } else {
         this.binding.removeAllChildrenContentBindings();
       }

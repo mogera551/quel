@@ -30,6 +30,8 @@ export class RepeatKeyed extends Loop {
     this.#lastIndexes.clear();
     this.#setOfNewIndexes.clear();
     this.#lastChildByNewIndex.clear();
+
+    const children = this.binding.childrenContentBindings;
     for(let newIndex = 0; newIndex < values.length; newIndex++) {
       // values[newIndex]では、get "values.*"()を正しく取得できない
       const value = this.binding.stateProperty.getChildValue(newIndex);
@@ -41,15 +43,14 @@ export class RepeatKeyed extends Loop {
         // 元のインデックスがある場合（既存）
         this.#fromIndexByValue.set(value, lastIndex + 1); // 
         this.#lastIndexes.add(lastIndex);
-        this.#lastChildByNewIndex.set(newIndex, this.binding.childrenContentBindings[lastIndex]);
+        this.#lastChildByNewIndex.set(newIndex, children[lastIndex]);
       }
     }
-    for(let i = 0; i < this.binding.childrenContentBindings.length; i++) {
+    for(let i = 0; i < children.length; i++) {
       if (this.#lastIndexes.has(i)) continue;
-      this.binding.childrenContentBindings[i].dispose();
+      children[i].dispose();
     }
 
-    const oldChildren:IContentBindings[] = this.binding.childrenContentBindings.slice(0);
     let beforeContentBindings:IContentBindings|undefined;
     const parentNode:Node = this.node.parentNode ?? utils.raise("parentNode is null");
     for(let i = 0; i < values.length; i++) {
@@ -59,11 +60,11 @@ export class RepeatKeyed extends Loop {
       if (this.#setOfNewIndexes.has(newIndex)) {
         // 元のインデックスにない場合（新規）
         contentBindings = createContentBindings(this.template, this.binding);
-        (newIndex < this.binding.childrenContentBindings.length) ? 
-          (this.binding.childrenContentBindings[newIndex] = contentBindings) : 
-          this.binding.childrenContentBindings.push(contentBindings);
+        (newIndex < children.length) ? 
+          (children[newIndex] = contentBindings) : 
+          children.push(contentBindings);
         parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
-        contentBindings.postCreate();
+        contentBindings.rebuild();
       } else {
         // 元のインデックスがある場合（既存）
         contentBindings = this.#lastChildByNewIndex.get(newIndex) ?? utils.raise("contentBindings is undefined");
@@ -71,15 +72,15 @@ export class RepeatKeyed extends Loop {
           contentBindings.removeChildNodes();
           parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
         }
-        (newIndex < this.binding.childrenContentBindings.length) ? 
-          (this.binding.childrenContentBindings[newIndex] = contentBindings) : 
-          this.binding.childrenContentBindings.push(contentBindings);
+        (newIndex < children.length) ? 
+          (children[newIndex] = contentBindings) : 
+          children.push(contentBindings);
         contentBindings.rebuild();
       }
       beforeContentBindings = contentBindings;
     }
-    if (values.length < this.binding.childrenContentBindings.length) {
-      this.binding.childrenContentBindings.length = values.length;
+    if (values.length < children.length) {
+      children.length = values.length;
     }
     this.#lastValue = values.slice();
   }
@@ -106,7 +107,7 @@ export class RepeatKeyed extends Loop {
       if (typeof contentBindings === "undefined") {
         contentBindings = createContentBindings(this.template, this.binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
-        contentBindings.postCreate();
+        contentBindings.rebuild();
       } else {
         this.binding.replaceChildContentBindings(contentBindings, index);
         contentBindings.rebuild();

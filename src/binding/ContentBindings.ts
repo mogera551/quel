@@ -132,12 +132,6 @@ class ContentBindings implements IContentBindings {
     }
   }
 
-  postCreate() {
-    this.registerBindingsToSummary();
-    this.rebuild();
-//    this.applyToNode();
-  }
-
   dispose(): void {
     // childrenBindingsの構造はそのまま保持しておく
     // 構造を保持しておくことで、再利用時に再構築する必要がなくなる
@@ -182,13 +176,13 @@ export function createContentBindings(
   component?: IComponentPartial
 ): IContentBindings {
   const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-  const contentBindings = _cache[uuid]?.pop();
+  let contentBindings = _cache[uuid]?.pop();
   if (typeof contentBindings !== "undefined") {
     contentBindings.parentBinding = parentBinding;
-    return contentBindings;
   } else {
-    const contentBindings = new ContentBindings(template, parentBinding, component);
+    contentBindings = new ContentBindings(template, parentBinding, component);
     contentBindings.initialize();
-    return contentBindings;
   }
+  contentBindings.registerBindingsToSummary();
+  return contentBindings;
 }
