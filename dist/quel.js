@@ -1131,34 +1131,55 @@ const name$1 = "do-notation";
 const GetDirectSymbol = Symbol.for(`${name$1}.getDirect`);
 const SetDirectSymbol = Symbol.for(`${name$1}.setDirect`);
 
-function expandStateProperty(state, propertyAccess, expandedPropertyAccessKeys = new Set([])) {
+function expandStateProperty(state, propertyAccess, updatedStatePropertiesSet, expandedPropertyAccessKeys = new Set([])) {
     const { propInfo, indexes } = propertyAccess;
     const propertyAccessKey = propInfo.pattern + "\t" + indexes.toString();
+    // すでに展開済みの場合は何もしない
     if (expandedPropertyAccessKeys.has(propertyAccessKey))
         return [];
+    // 展開済みとしてマーク
     expandedPropertyAccessKeys.add(propertyAccessKey);
+    // 依存関係を記述したプロパティ（$dependentProps）を取得
     const dependentProps = state[GetDependentPropsApiSymbol]();
     const props = dependentProps.propsByRefProp[propInfo.pattern];
     if (typeof props === "undefined")
         return [];
     const propertyAccesses = [];
+    const indexesKey = [];
+    const curIndexes = [];
+    for (let i = 0; i < indexes.length; i++) {
+        curIndexes.push(indexes[i]);
+        indexesKey.push(curIndexes.toString());
+    }
     for (const prop of props) {
         const curPropertyNameInfo = getPatternInfo(prop);
+        // 親の配列が更新されている場合は、子の展開は不要
+        const updatedParentArray = curPropertyNameInfo.wildcardPaths.some((wildcardPath, index) => {
+            const propInfo = getPatternInfo(wildcardPath);
+            const parentPath = propInfo.patternPaths[propInfo.patternPaths.length - 2];
+            const key = parentPath + "\t" + (indexesKey[index - 1] ?? "");
+            return updatedStatePropertiesSet.has(key);
+        });
+        if (updatedParentArray) {
+            continue;
+        }
         if (indexes.length < curPropertyNameInfo.wildcardPaths.length) {
-            //if (curPropName.setOfParentPaths.has(propName.name)) continue;
+            // ワイルドカードのインデックスを展開する
             const listOfIndexes = expandIndexes(state, new PropertyAccess(prop, indexes));
             propertyAccesses.push(...listOfIndexes.map(indexes => new PropertyAccess(prop, indexes)));
         }
         else {
+            // ワイルドカードのインデックスを展開する必要がない場合
             const notifyIndexes = indexes.slice(0, curPropertyNameInfo.wildcardPaths.length);
             propertyAccesses.push(new PropertyAccess(prop, notifyIndexes));
         }
-        propertyAccesses.push(...expandStateProperty(state, new PropertyAccess(prop, indexes), expandedPropertyAccessKeys));
+        // 再帰的に展開
+        propertyAccesses.push(...expandStateProperty(state, new PropertyAccess(prop, indexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
     }
     return propertyAccesses;
 }
 function expandIndexes(state, propertyAccess) {
-    const { propInfo, pattern, indexes } = propertyAccess;
+    const { propInfo, indexes } = propertyAccess;
     if (propInfo.wildcardCount === indexes.length) {
         return [indexes];
     }
@@ -1166,15 +1187,16 @@ function expandIndexes(state, propertyAccess) {
         return [indexes.slice(0, propInfo.wildcardCount)];
     }
     else {
-        const getValuesFn = state[GetDirectSymbol];
+        const getValuesLength = (name, indexes) => state[GetDirectSymbol](name, indexes).length;
         const traverse = (parentName, elementIndex, loopIndexes) => {
             const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
             const element = propInfo.elements[elementIndex];
             const isTerminate = (propInfo.elements.length - 1) === elementIndex;
             if (isTerminate) {
+                // 終端の場合
                 if (element === "*") {
                     const indexesArray = [];
-                    const len = getValuesFn(parentName, loopIndexes).length;
+                    const len = getValuesLength(parentName, loopIndexes);
                     for (let i = 0; i < len; i++) {
                         indexesArray.push([...loopIndexes, i]);
                     }
@@ -1185,6 +1207,7 @@ function expandIndexes(state, propertyAccess) {
                 }
             }
             else {
+                // 終端でない場合
                 const currentName = parentNameDot + element;
                 if (element === "*") {
                     if (loopIndexes.length < indexes.length) {
@@ -1192,7 +1215,7 @@ function expandIndexes(state, propertyAccess) {
                     }
                     else {
                         const indexesArray = [];
-                        const len = getValuesFn(parentName, loopIndexes).length;
+                        const len = getValuesLength(parentName, loopIndexes);
                         for (let i = 0; i < len; i++) {
                             indexesArray.push(...traverse(currentName, elementIndex + 1, [...loopIndexes, i]));
                         }
@@ -1210,8 +1233,9 @@ function expandIndexes(state, propertyAccess) {
 function expandStateProperties(states, updatedStateProperties) {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
+    const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.propInfo.pattern + "\t" + prop.indexes.toString()));
     for (let i = 0; i < updatedStateProperties.length; i++) {
-        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(states.current, updatedStateProperties[i]));
+        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(states.current, updatedStateProperties[i], updatedStatePropertiesSet));
     }
     return expandedStateProperties;
 }
@@ -3470,11 +3494,6 @@ class ContentBindings {
         for (let i = 0; i < this.childrenBinding.length; i++) {
             bindingSummary.add(this.childrenBinding[i]);
         }
-    }
-    postCreate() {
-        //    this.registerBindingsToSummary();
-        this.rebuild();
-        //    this.applyToNode();
     }
     dispose() {
         // childrenBindingsの構造はそのまま保持しておく
