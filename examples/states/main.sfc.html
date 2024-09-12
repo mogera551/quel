@@ -3,12 +3,13 @@ import { allStates } from "states";
 
 const summaryPopulation = (sum, population) => sum + population;
 
+/** @type {string[]} list of region */
 const regions = ["Northeast", "Midwest", "South", "West"];
 
-export class State {
-  /** @type {Map<string,StateInfo[]>} list of States by region name */
-  statesByRegionName = Map.groupBy(allStates, state => state.region);
+/** @type {Map<string,StateInfo[]>} list of States by region name */
+const statesByRegionName = Map.groupBy(allStates, state => state.region);
 
+export class State {
   /** @type {string[]} list of region */
   regions = regions;
 
@@ -33,7 +34,7 @@ export class State {
 
   /** @type {StateInfo[]} list of States in the regions */
   get "regions.*.states"() {
-    return this.statesByRegionName.get(this["regions.*"]);
+    return statesByRegionName.get(this["regions.*"]);
   }
 
   /** @type {number} the States' population share of the regional population */
@@ -48,12 +49,14 @@ export class State {
 
   /** @type {{prop:string,refProps:string[]}[]} describe dependency for property */
   $dependentProps = {
-    "regions.*.states": ["statesByRegionName", "regions"],
-    "regions.*.states.*.shareOfPopulation": ["regions.*.states.*.population", "population"],
-    "regions.*.states.*.shareOfRegionPopulation": ["regions.*.states.*.population", "regions.*.population"],
-    "regions.*.population": ["regions.*.states.*.population"],
-    "regions.*.shareOfPopulation": ["regions.*.population", "population"],
-    "totalPopulation": ["regions.*.population"],
+    "totalPopulation": [ "regions.*.population" ],
+
+    "regions.*.states":            [ "regions.*" ],
+    "regions.*.population":        [ "regions.*.states.*.population" ],
+    "regions.*.shareOfPopulation": [ "regions.*.population", "population" ],
+
+    "regions.*.states.*.shareOfPopulation":       [ "regions.*.states.*.population", "population" ],
+    "regions.*.states.*.shareOfRegionPopulation": [ "regions.*.states.*.population", "regions.*.population" ],
   }
 }
 
