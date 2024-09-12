@@ -12,19 +12,11 @@ export class State {
   /** @type {string[]} list of region */
   regions = regions;
 
-  /** @type {StateInfo[]} list of States in the regions */
-  get "regions.*.states"() {
-    return this.statesByRegionName.get(this["regions.*"]);
-  }
-
-  /** @type {number} the States' population share of the regional population */
-  get "regions.*.states.*.shareOfRegionPopulation"() {
-    return this["regions.*.states.*.population"] / this["regions.*.population"];
-  }
-
-  /** @type {number} the States' population share of total population */
-  get "regions.*.states.*.shareOfPopulation"() {
-    return this["regions.*.states.*.population"] / this.totalPopulation;
+  /** @type {number} total population, population of all States */
+  get totalPopulation() {
+    // "@regions.*.population" means array of the population of all regions
+    // example: [56983517, 68909283, 129446318, 78896805] for ["Northeast", "Midwest", "South", "West"]
+    return this["@regions.*.population"].reduce(summaryPopulation, 0)
   }
 
   /** @type {number} the regional population */
@@ -39,11 +31,19 @@ export class State {
     return this["regions.*.population"] / this.totalPopulation;
   }
 
-  /** @type {number} total population, population of all States */
-  get totalPopulation() {
-    // "@regions.*.population" means array of the population of all regions
-    // example: [56983517, 68909283, 129446318, 78896805] for ["Northeast", "Midwest", "South", "West"]
-    return this["@regions.*.population"].reduce(summaryPopulation, 0)
+  /** @type {StateInfo[]} list of States in the regions */
+  get "regions.*.states"() {
+    return this.statesByRegionName.get(this["regions.*"]);
+  }
+
+  /** @type {number} the States' population share of the regional population */
+  get "regions.*.states.*.shareOfRegionPopulation"() {
+    return this["regions.*.states.*.population"] / this["regions.*.population"];
+  }
+
+  /** @type {number} the States' population share of total population */
+  get "regions.*.states.*.shareOfPopulation"() {
+    return this["regions.*.states.*.population"] / this.totalPopulation;
   }
 
   /** @type {{prop:string,refProps:string[]}[]} describe dependency for property */
@@ -121,3 +121,18 @@ export const filters = {
     </table>
   </div>
 </div>
+
+<style>
+.over {
+  color: red;
+}
+
+.under {
+  color: blue;
+}
+
+tr.summary td {
+  background-color: white;
+  font-weight: bold;
+}
+</style>
