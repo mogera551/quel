@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../filter/types";
+import { IFilterText } from "../../filter/types";
 import { StateProperty } from "./StateProperty";
 import { IBinding } from "../types";
 
@@ -23,7 +23,7 @@ export class ContextIndex extends StateProperty {
     return "";
   }
 
-  constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, name:string, filters:IFilterText[]) {
     if (!regexp.test(name)) utils.raise(`ContextIndex: invalid name ${name}`);
     super(binding, name, filters);
     this.#index = Number(name.slice(1)) - 1;

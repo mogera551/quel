@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { IFilterInfo } from "../filter/types";
+import { IFilterText } from "../filter/types";
 import { ParsedBindTextInfo } from "./types";
 
 const SAMENAME = "@";
@@ -19,12 +19,12 @@ const decode = (s:string):string => {
  * parse filter part
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
  */
-const parseFilter = (text:string):IFilterInfo => {
+const parseFilter = (text:string):IFilterText => {
   const [name, ...options] = text.split(",").map(trim);
   return {name, options:options.map(decode)};
 };
 
-type ReturnParseStateProperty = {property:string,filters:IFilterInfo[]};
+type ReturnParseStateProperty = {property:string,filters:IFilterText[]};
 /**
  * parse expression
  * "value|eq,100|falsey" ---> ["value", Filter[]]

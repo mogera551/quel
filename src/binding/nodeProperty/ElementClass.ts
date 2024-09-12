@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../filter/types";
+import { IFilterText } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
 
@@ -18,7 +18,7 @@ export class ElementClass extends ElementBase {
     value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementClass: invalid property name ${name}`);
     super(binding, node, name, filters);
   }

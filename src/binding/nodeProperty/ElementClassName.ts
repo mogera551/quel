@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../filter/types";
+import { IFilterText } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
 
@@ -14,7 +14,7 @@ export class ElementClassName extends ElementBase {
     this.element.className = value.join(" ");
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (name !== NAME) utils.raise(`ElementClassName: invalid property name ${name}`);
     super(binding, node, name, filters);
   }

@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../filter/types";
+import { IFilterText } from "../../filter/types";
 import { NodeProperty } from "./NodeProperty";
 import * as Template from "../../component/Template";
 import { IBinding } from "../types";
@@ -31,7 +31,7 @@ export class TemplateProperty extends NodeProperty {
     return true;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (!(node instanceof Comment)) utils.raise("TemplateProperty: not Comment");
     super(binding, node, name, filters);
   }

@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../filter/types";
+import { IFilterText } from "../../filter/types";
 import { IContentBindings, IBinding } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
@@ -30,7 +30,7 @@ export class Repeat extends Loop {
     }
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (name !== "loop") utils.raise(`Repeat: invalid property name '${name}'`);
     super(binding, node, name, filters);
   }

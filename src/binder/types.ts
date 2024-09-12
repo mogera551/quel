@@ -1,16 +1,16 @@
 import { IBinding, IContentBindings, INodeProperty, IStateProperty } from "../binding/types";
-import { IFilterInfo } from "../filter/types";
+import { IFilterText } from "../filter/types";
 
-export type NodePropertyCreator = (binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) => INodeProperty;
-export type StatePropertyCreator = (binding:IBinding, name:string, filters:IFilterInfo[]) => IStateProperty;
+export type NodePropertyCreator = (binding:IBinding, node:Node, name:string, filters:IFilterText[]) => INodeProperty;
+export type StatePropertyCreator = (binding:IBinding, name:string, filters:IFilterText[]) => IStateProperty;
 
 export type NodeType = "HTMLElement" | "SVGElement" | "Text" | "Template";
 
 export type ParsedBindTextInfo = {
   nodeProperty: string;
   stateProperty: string;
-  inputFilters: IFilterInfo[];
-  outputFilters: IFilterInfo[];
+  inputFilters: IFilterText[];
+  outputFilters: IFilterText[];
 }
 
 export type PropertyCreators = {

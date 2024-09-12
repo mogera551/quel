@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { EventFilterFunc, IFilterInfo } from "../../filter/types.js";
+import { EventFilterFunc, IFilterText } from "../../filter/types.js";
 import { DirectryCallApiSymbol } from "../../state/symbols.js";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { ElementBase } from "./ElementBase";
@@ -32,7 +32,7 @@ export class ElementEvent extends ElementBase {
     return this.#eventFilters;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
     super(binding, node, name, filters);
     this.#eventFilters = Filters.create<"event">(filters, binding.eventFilterManager);

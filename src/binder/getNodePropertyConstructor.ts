@@ -1,6 +1,6 @@
 import { utils } from "../utils";
 import { NodePropertyCreator } from "./types";
-import { IFilterInfo } from "../filter/types";
+import { IFilterText } from "../filter/types";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { Repeat } from "../binding/nodeProperty/Repeat";
 import { Branch } from "../binding/nodeProperty/Branch";
@@ -36,7 +36,7 @@ type NodePropertyConstructorByFirstName = {[key:string]:typeof NodeProperty};
 
 const createNodeProperty = 
 (NodeProertyClass:SomeNodePropertyConstructor): NodePropertyCreator =>
-(binding: IBinding, node: Node, name: string, filters: IFilterInfo[]): INodeProperty =>
+(binding: IBinding, node: Node, name: string, filters: IFilterText[]): INodeProperty =>
 {
   return Reflect.construct(NodeProertyClass, [binding, node, name, filters]);
 };

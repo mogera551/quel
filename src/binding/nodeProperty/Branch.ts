@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
 import { IBinding } from "../types";
-import { IFilterInfo } from "../../filter/types";
+import { IFilterText } from "../../filter/types";
 import { TemplateProperty } from "./TemplateProperty";
 import { createContentBindings } from "../ContentBindings";
 
@@ -27,7 +27,7 @@ export class Branch extends TemplateProperty {
     }
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (name !== "if") utils.raise(`Branch: invalid property name ${name}`);
     super(binding, node, name, filters);
   }

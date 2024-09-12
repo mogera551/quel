@@ -1,6 +1,6 @@
 import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial } from "./types";
 import { NodePropertyCreator, StatePropertyCreator } from "../binder/types";
-import { IFilterInfo, IFilterManager } from "../filter/types";
+import { IFilterText, IFilterManager } from "../filter/types";
 import { utils } from "../utils";
 import { IUpdator } from "../updator/types";
 import { IStateProxy } from "../state/types";
@@ -69,10 +69,10 @@ class Binding implements IBinding {
     node: Node, 
     nodePropertyName: string, 
     nodePropertyCreator: NodePropertyCreator, 
-    outputFilters: IFilterInfo[],
+    outputFilters: IFilterText[],
     statePropertyName: string, 
     statePropertyCreator: StatePropertyCreator,
-    inputFilters: IFilterInfo[]
+    inputFilters: IFilterText[]
   ) {
     this.#id = ++id;
     this.#parentContentBindings = contentBindings;
@@ -179,10 +179,10 @@ export function createBinding(
   node: Node, 
   nodePropertyName: string, 
   nodePropertyCreator: NodePropertyCreator, 
-  outputFilters: IFilterInfo[],
+  outputFilters: IFilterText[],
   statePropertyName: string, 
   statePropertyCreator: StatePropertyCreator,
-  inputFilters: IFilterInfo[]
+  inputFilters: IFilterText[]
 ): IBinding {
   const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
   binding.initialize();

@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../filter/types";
+import { IFilterText } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
 
@@ -19,7 +19,7 @@ export class ElementStyle extends ElementBase {
     this.htmlElement.style.setProperty(this.styleName, value);
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (!(node instanceof HTMLElement)) utils.raise("ElementStyle: not htmlElement");
     super(binding, node, name, filters);
   }

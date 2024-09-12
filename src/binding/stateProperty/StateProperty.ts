@@ -1,5 +1,5 @@
 import { IBinding, IStateProperty } from "../types";
-import { IFilterInfo, FilterFunc } from "../../filter/types";
+import { IFilterText, FilterFunc } from "../../filter/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
@@ -100,7 +100,7 @@ export class StateProperty implements IStateProperty {
     return this.#binding;
   }
 
-  constructor(binding:IBinding, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, name:string, filters:IFilterText[]) {
     this.#binding = binding;
     this.#name = name;
     this.#childName = name + ".*";

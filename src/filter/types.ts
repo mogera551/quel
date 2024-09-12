@@ -1,4 +1,4 @@
-export interface IFilterInfo {
+export interface IFilterText {
   name: string;
   options: string[];
 }

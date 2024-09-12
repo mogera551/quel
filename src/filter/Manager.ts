@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { IFilterInfo, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption, IFilterManager, FilterFuncType, FilterType, FilterFuncWithOptionType } from "./types";
+import { IFilterText, FilterFunc, FilterFuncWithOption, EventFilterFunc, EventFilterFuncWithOption, IFilterManager, FilterFuncType, FilterType, FilterFuncWithOptionType } from "./types";
 
 /**
  * ambigous name:
@@ -237,7 +237,7 @@ const thru = ((options:any[]) => (value:any):any => value);
 
 export class Filters {
 
-  static create<T = FilterType>(filters:IFilterInfo[], manager:FilterManager<T>):FilterFuncType<T>[] {
+  static create<T = FilterType>(filters:IFilterText[], manager:FilterManager<T>):FilterFuncType<T>[] {
     const filterFuncs:FilterFuncType<T>[] = [];
     for(let i = 0; i < filters.length; i++) {
       const filter = filters[i];

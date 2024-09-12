@@ -1,5 +1,5 @@
 import { utils } from "../../utils";
-import { IFilterInfo } from "../../filter/types.js";
+import { IFilterText } from "../../filter/types.js";
 import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols.js";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
@@ -41,7 +41,7 @@ export class ComponentProperty extends ElementBase {
     return this.node as IComponent;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterInfo[]) {
+  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
     if (Reflect.get(node, IsComponentSymbol) !== true) utils.raise("ComponentProperty: not Quel Component");
     // todo: バインドするプロパティ名のチェック
     // 「*」を含まないようにする
