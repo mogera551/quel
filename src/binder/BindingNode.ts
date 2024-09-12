@@ -4,8 +4,8 @@ import { removeDataBindAttribute } from './removeDataBindAttribute';
 import { canNodeAcceptInput } from './canNodeAcceptInput';
 import { parseBindText } from './parseBindText';
 import { getDefaultPropertyForNode } from './getDefaultPropertyForNode';
-import { getPropertyCreators } from './getPropertyCreators';
-import { createBindingWithBindInfo } from './createBinding';
+import { getPropertyConstructors } from './getPropertyConstructors';
+import { getCreateBinding } from './getCreateBinding';
 import { computeNodeRoute } from './computeNodeRoute';
 import { initializeForNode } from './initializeForNode';
 import { IBinding } from '../binding/types';
@@ -37,17 +37,20 @@ export class BindingNode implements IBindingNode {
   }
 
   static create(node:Node, nodeType:NodeType, bindText:string, useKeyed:boolean):IBindingNode {
-    node = replaceTextNodeFromComment(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
+    // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
+    node = replaceTextNodeFromComment(node, nodeType);
+    // data-bind属性を削除する
     removeDataBindAttribute(node, nodeType);
+
     const acceptInput: boolean = canNodeAcceptInput(node, nodeType);
     const defaultProperty: string = getDefaultPropertyForNode(node, nodeType) ?? "";
-    const parseBindTextInfos: ParsedBindText[] = parseBindText(bindText, defaultProperty);
+    const parsedBindTexts: ParsedBindText[] = parseBindText(bindText, defaultProperty);
     const bindTexts: BindText[] = [];
-    for(let j = 0; j < parseBindTextInfos.length; j++) {
-      const parseBindTextInfo = parseBindTextInfos[j];
-      const { nodeProperty, stateProperty } = parseBindTextInfo;
-      const propertyCreators = getPropertyCreators(node, nodeProperty, stateProperty, useKeyed);
-      bindTexts.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
+    for(let j = 0; j < parsedBindTexts.length; j++) {
+      const parsedBindText = parsedBindTexts[j];
+      const { nodeProperty, stateProperty } = parsedBindText;
+      const propertyConstructors = getPropertyConstructors(node, nodeProperty, stateProperty, useKeyed);
+      bindTexts.push({ ...parsedBindText, ...propertyConstructors, createBinding: getCreateBinding(parsedBindText, propertyConstructors) });
     }
     const nodeRoute = computeNodeRoute(node);
     const nodeRouteKey = nodeRoute.join(",");

@@ -2910,10 +2910,10 @@ function getStatePropertyConstructor(propertyName) {
 /**
  * バインドのノードプロパティとステートプロパティのコンストラクタを取得する
  */
-function getPropertyCreators(node, nodePropertyName, statePropertyName, useKeyed) {
+function getPropertyConstructors(node, nodePropertyName, statePropertyName, useKeyed) {
     return {
-        nodePropertyCreator: getNodePropertyConstructor(node, nodePropertyName, useKeyed),
-        statePropertyCreator: getStatePropertyConstructor(statePropertyName),
+        nodePropertyConstructor: getNodePropertyConstructor(node, nodePropertyName, useKeyed),
+        statePropertyConstructor: getStatePropertyConstructor(statePropertyName),
     };
 }
 
@@ -2973,11 +2973,11 @@ class Binding {
     get outputFilterManager() {
         return this.component?.outputFilterManager ?? utils.raise("Binding.outputFilterManager: undefined");
     }
-    constructor(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters) {
+    constructor(contentBindings, node, nodePropertyName, nodePropertyConstructor, outputFilters, statePropertyName, statePropertyConstructor, inputFilters) {
         this.#id = ++id;
         this.#parentContentBindings = contentBindings;
-        this.#nodeProperty = nodePropertyCreator(this, node, nodePropertyName, outputFilters);
-        this.#stateProperty = statePropertyCreator(this, statePropertyName, inputFilters);
+        this.#nodeProperty = nodePropertyConstructor(this, node, nodePropertyName, outputFilters);
+        this.#stateProperty = statePropertyConstructor(this, statePropertyName, inputFilters);
     }
     applyToNode() {
         const { updator, nodeProperty, stateProperty } = this;
@@ -3066,8 +3066,8 @@ class Binding {
         }
     }
 }
-function createBinding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters) {
-    const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
+function createBinding(contentBindings, node, nodePropertyName, nodePropertyConstructor, outputFilters, statePropertyName, statePropertyConstructor, inputFilters) {
+    const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyConstructor, outputFilters, statePropertyName, statePropertyConstructor, inputFilters);
     binding.initialize();
     return binding;
 }
@@ -3075,7 +3075,7 @@ function createBinding(contentBindings, node, nodePropertyName, nodePropertyCrea
 /**
  * バインディング情報を元にバインディングを作成する関数を返す
  */
-const createBindingWithBindInfo = (bindTextInfo, propertyCreators) => (contentBindings, node) => createBinding(contentBindings, node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyCreator, bindTextInfo.inputFilters, bindTextInfo.stateProperty, propertyCreators.statePropertyCreator, bindTextInfo.outputFilters);
+const getCreateBinding = (bindTextInfo, propertyCreators) => (contentBindings, node) => createBinding(contentBindings, node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyConstructor, bindTextInfo.inputFilters, bindTextInfo.stateProperty, propertyCreators.statePropertyConstructor, bindTextInfo.outputFilters);
 
 /**
  * 最上位ノードからのルート（道順）インデックスの配列を計算する
@@ -3157,17 +3157,19 @@ class BindingNode {
         this.initializeForNode = initializeForNode(this);
     }
     static create(node, nodeType, bindText, useKeyed) {
-        node = replaceTextNodeFromComment(node, nodeType); // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
+        // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
+        node = replaceTextNodeFromComment(node, nodeType);
+        // data-bind属性を削除する
         removeDataBindAttribute(node, nodeType);
         const acceptInput = canNodeAcceptInput(node, nodeType);
         const defaultProperty = getDefaultPropertyForNode(node, nodeType) ?? "";
-        const parseBindTextInfos = parseBindText(bindText, defaultProperty);
+        const parsedBindTexts = parseBindText(bindText, defaultProperty);
         const bindTexts = [];
-        for (let j = 0; j < parseBindTextInfos.length; j++) {
-            const parseBindTextInfo = parseBindTextInfos[j];
-            const { nodeProperty, stateProperty } = parseBindTextInfo;
-            const propertyCreators = getPropertyCreators(node, nodeProperty, stateProperty, useKeyed);
-            bindTexts.push({ ...parseBindTextInfo, ...propertyCreators, createBinding: createBindingWithBindInfo(parseBindTextInfo, propertyCreators) });
+        for (let j = 0; j < parsedBindTexts.length; j++) {
+            const parsedBindText = parsedBindTexts[j];
+            const { nodeProperty, stateProperty } = parsedBindText;
+            const propertyConstructors = getPropertyConstructors(node, nodeProperty, stateProperty, useKeyed);
+            bindTexts.push({ ...parsedBindText, ...propertyConstructors, createBinding: getCreateBinding(parsedBindText, propertyConstructors) });
         }
         const nodeRoute = computeNodeRoute(node);
         const nodeRouteKey = nodeRoute.join(",");
@@ -3250,18 +3252,18 @@ const findNodeByNodeRoute = (node, nodeRoute) => {
 /**
  * HTMLテンプレートのコンテントからバインディング配列を作成する
  */
-function createBindings(content, contentBindings, nodeInfos) {
+function createBindings(content, contentBindings, bindingNodes) {
     const bindings = [];
-    for (let i = 0; i < nodeInfos.length; i++) {
-        const nodeInfo = nodeInfos[i];
-        const node = findNodeByNodeRoute(content, nodeInfo.nodeRoute);
-        const nodeBindings = [];
-        for (let j = 0; j < nodeInfo.bindTexts.length; j++) {
-            nodeBindings[nodeBindings.length] =
-                nodeInfo.bindTexts[j].createBinding(contentBindings, node); // push
+    for (let i = 0; i < bindingNodes.length; i++) {
+        const bindingNode = bindingNodes[i];
+        const node = findNodeByNodeRoute(content, bindingNode.nodeRoute);
+        const tempBindings = [];
+        for (let j = 0; j < bindingNode.bindTexts.length; j++) {
+            tempBindings[tempBindings.length] =
+                bindingNode.bindTexts[j].createBinding(contentBindings, node); // push
         }
-        nodeInfo.initializeForNode(node, nodeBindings);
-        bindings.push(...nodeBindings);
+        bindingNode.initializeForNode(node, tempBindings);
+        bindings.push(...tempBindings);
     }
     return bindings;
 }

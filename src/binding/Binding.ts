@@ -1,5 +1,5 @@
 import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial } from "./types";
-import { NodePropertyCreator, StatePropertyCreator } from "../binder/types";
+import { NodePropertyConstructor, StatePropertyConstructor } from "../binder/types";
 import { IFilterText, IFilterManager } from "../filter/types";
 import { utils } from "../utils";
 import { IUpdator } from "../updator/types";
@@ -68,16 +68,16 @@ class Binding implements IBinding {
     contentBindings: IContentBindings,
     node: Node, 
     nodePropertyName: string, 
-    nodePropertyCreator: NodePropertyCreator, 
+    nodePropertyConstructor: NodePropertyConstructor, 
     outputFilters: IFilterText[],
     statePropertyName: string, 
-    statePropertyCreator: StatePropertyCreator,
+    statePropertyConstructor: StatePropertyConstructor,
     inputFilters: IFilterText[]
   ) {
     this.#id = ++id;
     this.#parentContentBindings = contentBindings;
-    this.#nodeProperty = nodePropertyCreator(this, node, nodePropertyName, outputFilters);
-    this.#stateProperty = statePropertyCreator(this, statePropertyName, inputFilters);
+    this.#nodeProperty = nodePropertyConstructor(this, node, nodePropertyName, outputFilters);
+    this.#stateProperty = statePropertyConstructor(this, statePropertyName, inputFilters);
   }
 
   applyToNode() {
@@ -178,13 +178,13 @@ export function createBinding(
   contentBindings: IContentBindings,
   node: Node, 
   nodePropertyName: string, 
-  nodePropertyCreator: NodePropertyCreator, 
+  nodePropertyConstructor: NodePropertyConstructor, 
   outputFilters: IFilterText[],
   statePropertyName: string, 
-  statePropertyCreator: StatePropertyCreator,
+  statePropertyConstructor: StatePropertyConstructor,
   inputFilters: IFilterText[]
 ): IBinding {
-  const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyCreator, outputFilters, statePropertyName, statePropertyCreator, inputFilters);
+  const binding = new Binding(contentBindings, node, nodePropertyName, nodePropertyConstructor, outputFilters, statePropertyName, statePropertyConstructor, inputFilters);
   binding.initialize();
   return binding;
 }

@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { NodePropertyCreator } from "./types";
+import { NodePropertyConstructor } from "./types";
 import { IFilterText } from "../filter/types";
 import { NodeProperty } from "../binding/nodeProperty/NodeProperty";
 import { Repeat } from "../binding/nodeProperty/Repeat";
@@ -35,7 +35,7 @@ const nodePropertyConstructorByNameByIsComment:NodePropertyConstructorByNameByIs
 type NodePropertyConstructorByFirstName = {[key:string]:typeof NodeProperty};
 
 const createNodeProperty = 
-(NodeProertyClass:SomeNodePropertyConstructor): NodePropertyCreator =>
+(NodeProertyClass:SomeNodePropertyConstructor): NodePropertyConstructor =>
 (binding: IBinding, node: Node, name: string, filters: IFilterText[]): INodeProperty =>
 {
   return Reflect.construct(NodeProertyClass, [binding, node, name, filters]);
@@ -48,7 +48,7 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
   "props": ComponentProperty,
 };
 
-function _getNodePropertyConstructor(isComment:boolean, isElement: boolean, propertyName: string, useKeyed: boolean): NodePropertyCreator {
+function _getNodePropertyConstructor(isComment:boolean, isElement: boolean, propertyName: string, useKeyed: boolean): NodePropertyConstructor {
   let nodePropertyConstructor: SomeNodePropertyConstructor;
   do {
     nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 0 : 1][propertyName];
@@ -74,12 +74,12 @@ function _getNodePropertyConstructor(isComment:boolean, isElement: boolean, prop
   return createNodeProperty(nodePropertyConstructor);
 }
 
-const _cache: {[key:string]:NodePropertyCreator} = {};
+const _cache: {[key:string]:NodePropertyConstructor} = {};
 
 /**
  * バインドのノードプロパティのコンストラクタを取得する
  */
-export function getNodePropertyConstructor(node:Node, propertyName:string, useKeyed:boolean): NodePropertyCreator {
+export function getNodePropertyConstructor(node:Node, propertyName:string, useKeyed:boolean): NodePropertyConstructor {
   const isComment = node instanceof Comment;
   const isElement = node instanceof Element;
   const key = isComment + "\t" + isElement + "\t" + propertyName + "\t" + useKeyed;

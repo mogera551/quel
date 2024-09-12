@@ -2,12 +2,12 @@ import { ContextIndex } from "../binding/stateProperty/ContextIndex";
 import { StateProperty } from "../binding/stateProperty/StateProperty";
 import { IBinding, IStateProperty } from "../binding/types";
 import { IFilterText } from "../filter/types";
-import { StatePropertyCreator } from "./types";
+import { StatePropertyConstructor } from "./types";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
 const createStateProperty = 
-(StatePropertyConstructor:typeof StateProperty):StatePropertyCreator =>
+(StatePropertyConstructor:typeof StateProperty):StatePropertyConstructor =>
 (binding:IBinding, name:string, filters:IFilterText[]):IStateProperty => 
 {
   return Reflect.construct(StatePropertyConstructor, [binding, name, filters]);

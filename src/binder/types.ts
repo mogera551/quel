@@ -11,19 +11,19 @@ export type ParsedBindText = {
 }
 
 // ノードプロパティ生成関数
-export type NodePropertyCreator = (binding:IBinding, node:Node, name:string, filters:IFilterText[]) => INodeProperty;
+export type NodePropertyConstructor = (binding:IBinding, node:Node, name:string, filters:IFilterText[]) => INodeProperty;
 // ステートプロパティ生成関数
-export type StatePropertyCreator = (binding:IBinding, name:string, filters:IFilterText[]) => IStateProperty;
+export type StatePropertyConstructor = (binding:IBinding, name:string, filters:IFilterText[]) => IStateProperty;
 
-export type PropertyCreators = {
-  nodePropertyCreator: NodePropertyCreator;
-  statePropertyCreator: StatePropertyCreator;
+export type PropertyConstructors = {
+  nodePropertyConstructor: NodePropertyConstructor;
+  statePropertyConstructor: StatePropertyConstructor;
 }
 
 // BINDテキストの解析結果
 export type BindText = {
   createBinding: (contentBindings: IContentBindings, node: Node) => IBinding;
-} & ParsedBindText & PropertyCreators;
+} & ParsedBindText & PropertyConstructors;
 
 export type NodeRoute = number[];
 
