@@ -95,25 +95,6 @@ class ContentBindings implements IContentBindings {
   }
 
   /**
-   * apply value to node
-   */
-//  applyToNode() {
-//    // apply value to node exluding select tag, and apply select tag value
-//    const selectBindings = [];
-//    for(let i = 0; i < this.childrenBinding.length; i++) {
-//      const binding = this.childrenBinding[i];
-//      if (binding.nodeProperty.isSelectValue) {
-//        selectBindings.push(binding);
-//      } else {
-//        binding.applyToNode();
-//      }
-//    }
-//    for(let i = 0; i < selectBindings.length; i++) {
-//      selectBindings[i].applyToNode();
-//    }
-//  }
-
-  /**
    * apply value to State
    */
   applyToState() {
@@ -146,8 +127,17 @@ class ContentBindings implements IContentBindings {
   }
 
   rebuild(): void {
+    const selectValues = [];
     for(let i = 0; i < this.childrenBinding.length; i++) {
-      this.childrenBinding[i].rebuild();
+      const binding = this.childrenBinding[i];
+      if (binding.nodeProperty.isSelectValue) {
+        selectValues.push(binding);
+      } else {
+        binding.rebuild();
+      }
+    }
+    for(let i = 0; i < selectValues.length; i++) {
+      selectValues[i].rebuild();
     }
   }
 /*

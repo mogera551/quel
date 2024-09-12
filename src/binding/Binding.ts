@@ -161,11 +161,7 @@ class Binding implements IBinding {
   }
 
   rebuild(): void {
-    if (this.expandable) {
-      this.applyToNode();
-    } else {
-      this.updator?.addBindingForUpdateNode(this);
-    }
+    this.applyToNode();
   }
 
   updateNodeForNoRecursive(): void {
