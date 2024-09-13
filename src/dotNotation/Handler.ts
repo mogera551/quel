@@ -2,6 +2,7 @@ import { GetDirectSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, StackIndexes } from "./types";
+import { getPatternInfo } from "./getPatternInfo";
 
 class WildcardIndexes implements IWildcardIndexes {
   #baseIndexes: Indexes;
@@ -228,8 +229,8 @@ export class Handler implements IDotNotationHandler {
   _getDirect = (target:object, prop:string, indexes:number[], receiver:object) => {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
     const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-    const propInfo = getPropInfo(pattern);
-    return this.withIndexes(propInfo, indexes, () => {
+    const patternInfo = getPatternInfo(pattern);
+    return this.withIndexes(patternInfo, indexes, () => {
       return this.get(target, prop, receiver);
     });
   }
@@ -237,8 +238,8 @@ export class Handler implements IDotNotationHandler {
   _setDirect = (target:object, prop:string, indexes:number[], value:any, receiver:object):boolean => {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
     const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-    const propInfo = getPropInfo(pattern);
-    return this.withIndexes(propInfo, indexes, () => {
+    const patternInfo = getPatternInfo(pattern);
+    return this.withIndexes(patternInfo, indexes, () => {
       return this.set(target, prop, value, receiver);
     });
   }

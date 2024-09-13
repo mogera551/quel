@@ -1784,8 +1784,8 @@ let Handler$1 = class Handler {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
         const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-        const propInfo = getPropInfo(pattern);
-        return this.withIndexes(propInfo, indexes, () => {
+        const patternInfo = getPatternInfo(pattern);
+        return this.withIndexes(patternInfo, indexes, () => {
             return this.get(target, prop, receiver);
         });
     };
@@ -1793,8 +1793,8 @@ let Handler$1 = class Handler {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
         const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-        const propInfo = getPropInfo(pattern);
-        return this.withIndexes(propInfo, indexes, () => {
+        const patternInfo = getPatternInfo(pattern);
+        return this.withIndexes(patternInfo, indexes, () => {
             return this.set(target, prop, value, receiver);
         });
     };
