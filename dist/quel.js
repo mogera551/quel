@@ -2637,24 +2637,18 @@ class RepeatKeyed extends Loop {
             if (this.#setOfNewIndexes.has(newIndex)) {
                 // 元のインデックスにない場合（新規）
                 contentBindings = createContentBindings(this.template, this.binding);
-                (newIndex < children.length) ?
-                    (children[newIndex] = contentBindings) :
-                    children.push(contentBindings);
-                parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
-                contentBindings.rebuild();
+                parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
             }
             else {
                 // 元のインデックスがある場合（既存）
                 contentBindings = this.#lastChildByNewIndex.get(newIndex) ?? utils.raise("contentBindings is undefined");
                 if (contentBindings.childNodes[0]?.previousSibling !== beforeNode) {
                     contentBindings.removeChildNodes();
-                    parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling ?? null);
+                    parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
                 }
-                (newIndex < children.length) ?
-                    (children[newIndex] = contentBindings) :
-                    children.push(contentBindings);
-                contentBindings.rebuild();
             }
+            children[newIndex] = contentBindings;
+            contentBindings.rebuild();
             beforeContentBindings = contentBindings;
         }
         if (values.length < children.length) {
