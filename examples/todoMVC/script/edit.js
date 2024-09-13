@@ -1,6 +1,6 @@
 export const html = ``;
 
-export class ViewModel {
+export class State {
   /**
    * called when the component is connected to the DOM
    */

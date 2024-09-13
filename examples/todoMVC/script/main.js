@@ -71,7 +71,7 @@ const filterFuncByFilterType = {
   [FilterType.completed]: item => item.completed,
 };
 
-export class ViewModel {
+export class State {
   /** @type {TodoItem[]} all todo list */
   allList = [];
 
