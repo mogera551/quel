@@ -140,22 +140,6 @@ class ContentBindings implements IContentBindings {
       selectValues[i].rebuild();
     }
   }
-/*
-  updateNode() {
-    const selectBindings = [];
-    for(let i = 0; i < this.childrenBinding.length; i++) {
-      const binding = this.childrenBinding[i];
-      if (binding.nodeProperty.isSelectValue) {
-        selectBindings.push(binding);
-      } else {
-        binding.updateNode();
-      }
-    }
-    for(let i = 0; i < selectBindings.length; i++) {
-      selectBindings[i].updateNode();
-    }
-  }
-*/
 }
 
 const _cache: {[ key: string ]: IContentBindings[]} = {};
