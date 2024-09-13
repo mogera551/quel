@@ -5,7 +5,11 @@ import { IContentBindings, IBinding } from "../binding/types";
 /**
  * HTMLテンプレートのコンテントからバインディング配列を作成する
  */
-export function createBindings(content: DocumentFragment, contentBindings: IContentBindings, bindingNodes: IBindingNode[]): IBinding[] {
+export function createBindings(
+  content: DocumentFragment, 
+  contentBindings: IContentBindings, 
+  bindingNodes: Pick<IBindingNode, "nodeRoute" | "bindTexts" | "initializeForNode">[]
+): IBinding[] {
   const bindings: IBinding[] = [];
   for(let i = 0; i < bindingNodes.length; i++) {
     const bindingNode = bindingNodes[i];

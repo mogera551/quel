@@ -30,4 +30,9 @@ const isInputableFn:IsInputableFn = {
   Template:    alwaysFalse,
 }
 
-export const canNodeAcceptInput = (node:Node, nodeType:NodeType):boolean => isInputableFn[nodeType](node);
+export function canNodeAcceptInput(
+  node: Node, 
+  nodeType: NodeType
+): boolean {
+  return isInputableFn[nodeType](node);
+}

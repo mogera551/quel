@@ -2012,7 +2012,9 @@ const isInputableFn = {
     Text: alwaysFalse,
     Template: alwaysFalse,
 };
-const canNodeAcceptInput = (node, nodeType) => isInputableFn[nodeType](node);
+function canNodeAcceptInput(node, nodeType) {
+    return isInputableFn[nodeType](node);
+}
 
 const SAMENAME = "@";
 const DEFAULT = "$";
@@ -3077,14 +3079,14 @@ const getCreateBinding = (bindTextInfo, propertyCreators) => (contentBindings, n
  * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
  * => [1,3,7,2]
  */
-const computeNodeRoute = (node) => {
+function computeNodeRoute(node) {
     let routeIndexes = [];
     while (node.parentNode !== null) {
         routeIndexes = [Array.from(node.parentNode.childNodes).indexOf(node), ...routeIndexes];
         node = node.parentNode;
     }
     return routeIndexes;
-};
+}
 
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
