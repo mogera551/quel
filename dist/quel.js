@@ -1783,18 +1783,20 @@ let Handler$1 = class Handler {
     _getDirect = (target, prop, indexes, receiver) => {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
-        const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-        const patternInfo = getPatternInfo(pattern);
-        return this.withIndexes(patternInfo, indexes, () => {
+        const propName = prop[0] === "@" ? prop.slice(1) : prop;
+        // パターンではないものも来る可能性がある
+        const propInfo = getPropInfo(propName);
+        return this.withIndexes(propInfo, indexes, () => {
             return this.get(target, prop, receiver);
         });
     };
     _setDirect = (target, prop, indexes, value, receiver) => {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
-        const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-        const patternInfo = getPatternInfo(pattern);
-        return this.withIndexes(patternInfo, indexes, () => {
+        const propName = prop[0] === "@" ? prop.slice(1) : prop;
+        // パターンではないものも来る可能性がある
+        const propInfo = getPropInfo(propName);
+        return this.withIndexes(propInfo, indexes, () => {
             return this.set(target, prop, value, receiver);
         });
     };
@@ -3192,7 +3194,9 @@ const bindTextByNodeType = {
  * バインドテキストをノードから取得
  * HTML要素の場合はdata-bind属性から、テキストノードの場合はtextContentから取得
  */
-const getBindTextByNodeType = (node, nodeType) => bindTextByNodeType[nodeType](node);
+function getBindTextByNodeType(node, nodeType) {
+    return bindTextByNodeType[nodeType](node);
+}
 
 /**
  * "@@:"もしくは"@@|"で始まるコメントノードを取得する
@@ -3239,11 +3243,11 @@ function extractBindNodeInfosFromTemplate(template, useKeyed) {
 /**
  * ノードのルート（道順）インデックスの配列からノードを探す
  */
-const findNodeByNodeRoute = (node, nodeRoute) => {
-    for (let i = 0; i < nodeRoute.length; node = node.childNodes[nodeRoute[i++]])
+function findNodeByNodeRoute(node, nodeRoute) {
+    for (let i = 0; (typeof node !== "undefined") && (i < nodeRoute.length); node = node.childNodes[nodeRoute[i++]])
         ;
     return node;
-};
+}
 
 /**
  * HTMLテンプレートのコンテントからバインディング配列を作成する
@@ -3252,7 +3256,7 @@ function createBindings(content, contentBindings, bindingNodes) {
     const bindings = [];
     for (let i = 0; i < bindingNodes.length; i++) {
         const bindingNode = bindingNodes[i];
-        const node = findNodeByNodeRoute(content, bindingNode.nodeRoute);
+        const node = findNodeByNodeRoute(content, bindingNode.nodeRoute) ?? utils.raise(`Node not found: ${bindingNode.nodeRoute}`);
         const tempBindings = [];
         for (let j = 0; j < bindingNode.bindTexts.length; j++) {
             tempBindings[tempBindings.length] =

@@ -57,16 +57,16 @@ export interface IStateProperty {
   dispose(): void;
 }
 
-export interface IBindingBase {
-  readonly childrenContentBindings: IContentBindingsBase[];
-  readonly parentContentBindings: IContentBindingsBase;
+export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
+
+export interface IBindingTreeNode {
+  readonly childrenContentBindings: IContentBindingsTreeNode[];
+  readonly parentContentBindings: IContentBindingsTreeNode;
   readonly loopable: boolean;
   readonly statePropertyName: string;
 }
 
-export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
-
-export interface IBinding extends IBindingBase {
+export interface IBinding extends IBindingTreeNode {
   readonly id: string;
   readonly nodeProperty: INodeProperty;
   readonly stateProperty: IStateProperty;
@@ -96,14 +96,14 @@ export interface IBinding extends IBindingBase {
   updateNodeForNoRecursive(): void;
 }
 
-export interface IContentBindingsBase {
-  readonly childrenBinding: IBindingBase[];
-  parentBinding?: IBindingBase;
+export interface IContentBindingsTreeNode {
+  readonly childrenBinding: IBindingTreeNode[];
+  parentBinding?: IBindingTreeNode;
   readonly loopContext?: ILoopContext;
   readonly currentLoopContext?: ILoopContext;
 }
 
-export interface IContentBindings extends IContentBindingsBase {
+export interface IContentBindings extends IContentBindingsTreeNode {
   readonly template: HTMLTemplateElement;
   readonly childrenBinding: IBinding[];
   parentBinding?: IBinding;
@@ -123,6 +123,8 @@ export interface IContentBindings extends IContentBindingsBase {
   registerBindingsToSummary(): void;
   //updateNode(): void;
 }
+
+export type IContentBindingTreeNode = Pick<IContentBindings, "childrenBinding" | "parentBinding" | "loopContext" | "currentLoopContext">
 
 export interface IMultiValue {
   value:any;

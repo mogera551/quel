@@ -228,18 +228,20 @@ export class Handler implements IDotNotationHandler {
 
   _getDirect = (target:object, prop:string, indexes:number[], receiver:object) => {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
-    const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-    const patternInfo = getPatternInfo(pattern);
-    return this.withIndexes(patternInfo, indexes, () => {
+    const propName = prop[0] === "@" ? prop.slice(1) : prop;
+    // パターンではないものも来る可能性がある
+    const propInfo = getPropInfo(propName);
+    return this.withIndexes(propInfo, indexes, () => {
       return this.get(target, prop, receiver);
     });
   }
 
   _setDirect = (target:object, prop:string, indexes:number[], value:any, receiver:object):boolean => {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
-    const pattern = prop[0] === "@" ? prop.slice(1) : prop;
-    const patternInfo = getPatternInfo(pattern);
-    return this.withIndexes(patternInfo, indexes, () => {
+    const propName = prop[0] === "@" ? prop.slice(1) : prop;
+    // パターンではないものも来る可能性がある
+    const propInfo = getPropInfo(propName);
+    return this.withIndexes(propInfo, indexes, () => {
       return this.set(target, prop, value, receiver);
     });
   }

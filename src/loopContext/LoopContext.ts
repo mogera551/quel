@@ -1,4 +1,4 @@
-import { IContentBindingsBase, IBinding, IBindingBase } from "../binding/types";
+import { IBinding, IBindingTreeNode, IContentBindingsTreeNode } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
@@ -6,15 +6,17 @@ import { ILoopContext } from "./types";
 
 export class LoopContext implements ILoopContext{
   #revision?: number;
-  #contentBindings: IContentBindingsBase;
+  #contentBindings: IContentBindingsTreeNode;
   #index?: number;
   #parentLoopContext?: ILoopContext;
   #parentLoopCache = false;
   #statePropertyName: string;
   #patternInfo: IPatternInfo;
   #patternName: string;
-  #parentBinding: IBindingBase;
-  constructor(contentBindings: IContentBindingsBase) {
+  #parentBinding: IBindingTreeNode;
+  constructor(
+    contentBindings: IContentBindingsTreeNode
+  ) {
     this.#parentBinding = contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
     (this.#parentBinding.loopable === true) || utils.raise("parentBinding is not loopable");
     this.#statePropertyName = this.#parentBinding.statePropertyName ?? utils.raise("statePropertyName is undefined");
@@ -30,7 +32,7 @@ export class LoopContext implements ILoopContext{
     this.checkRevision();
     if (!this.#parentLoopCache) {
       const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
-      let curContentBindings:IContentBindingsBase | undefined = undefined;
+      let curContentBindings:IContentBindingsTreeNode | undefined = undefined;
       if (typeof parentPattern !== "undefined") {
         curContentBindings = this.#parentBinding.parentContentBindings;        
         while (typeof curContentBindings !== "undefined") {
@@ -83,7 +85,7 @@ export class LoopContext implements ILoopContext{
   }
 
   find(patternName: string): ILoopContext | undefined {
-    let curContentBindings:IContentBindingsBase | undefined = this.#contentBindings;
+    let curContentBindings:IContentBindingsTreeNode | undefined = this.#contentBindings;
     while (typeof curContentBindings !== "undefined") {
       if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === patternName) {
         break;

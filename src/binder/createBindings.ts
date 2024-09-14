@@ -1,6 +1,8 @@
 import { IBindingNode } from "./types";
 import { findNodeByNodeRoute } from "./findNodeByNodeRoute";
 import { IContentBindings, IBinding } from "../binding/types";
+import { utils } from "../utils";
+import { DeepPick } from "../types";
 
 /**
  * HTMLテンプレートのコンテントからバインディング配列を作成する
@@ -13,7 +15,7 @@ export function createBindings(
   const bindings: IBinding[] = [];
   for(let i = 0; i < bindingNodes.length; i++) {
     const bindingNode = bindingNodes[i];
-    const node = findNodeByNodeRoute(content, bindingNode.nodeRoute);
+    const node = findNodeByNodeRoute(content, bindingNode.nodeRoute) ?? utils.raise(`Node not found: ${bindingNode.nodeRoute}`);
     const tempBindings = [];
     for(let j = 0; j < bindingNode.bindTexts.length; j++) {
       tempBindings[tempBindings.length] = 

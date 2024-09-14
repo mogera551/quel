@@ -10,5 +10,6 @@ describe("nodeRoute", () => {
     div.appendChild(p);
     expect(findNodeByNodeRoute(div, [0])).toBe(span);
     expect(findNodeByNodeRoute(div, [1])).toBe(p);
+    expect(findNodeByNodeRoute(div, [2])).toBeUndefined();
   });
 });

@@ -1,12 +1,12 @@
 import 'jest';
-import { IContentBindingsBase, IBindingBase, ILoopable } from "../../src/binding/types";
+import { ILoopable, IBindingTreeNode, IContentBindingsTreeNode } from "../../src/binding/types";
 import { LoopContext } from "../../src/loopContext/LoopContext";
 
-class ContentBindingsBase implements IContentBindingsBase {
-  parentBinding: IBindingBase | undefined;
-  childrenBinding: IBindingBase[];
+class ContentBindingsBase implements IContentBindingsTreeNode {
+  parentBinding: IBindingTreeNode | undefined;
+  childrenBinding: IBindingTreeNode[];
   loopContext: LoopContext | undefined;
-  constructor(parentBinding?: IBindingBase) {
+  constructor(parentBinding?: IBindingTreeNode) {
     this.childrenBinding = [];
     if (typeof parentBinding !== "undefined") {
       this.parentBinding = parentBinding;
@@ -28,13 +28,13 @@ class NodeProperty implements ILoopable {
   }
 }
 
-class Binding implements IBindingBase {
-  parentContentBindings: IContentBindingsBase;
-  childrenContentBindings: IContentBindingsBase[];
+class Binding implements IBindingTreeNode {
+  parentContentBindings: IContentBindingsTreeNode;
+  childrenContentBindings: IContentBindingsTreeNode[];
   loopable: boolean;
   statePropertyName: string;
   nodeProperty: ILoopable;
-  constructor(parentContentBindings: IContentBindingsBase, name:string, loopable: boolean) {
+  constructor(parentContentBindings: IContentBindingsTreeNode, name:string, loopable: boolean) {
     this.parentContentBindings = parentContentBindings;
     this.parentContentBindings.childrenBinding.push(this);
     this.childrenContentBindings = [];

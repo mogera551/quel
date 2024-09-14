@@ -10,7 +10,10 @@ const SELECTOR = `[data-${BIND_DATASET}]`;
 /**
  * HTMLテンプレートからバインドノード情報を抽出する
  */
-export function extractBindNodeInfosFromTemplate(template: HTMLTemplateElement, useKeyed: boolean): IBindingNode[] {
+export function extractBindNodeInfosFromTemplate(
+  template: HTMLTemplateElement, 
+  useKeyed: boolean
+): IBindingNode[] {
   const nodeInfos: IBindingNode[] = [];
   const rootElement = template.content;
   const nodes = (Array.from(rootElement.querySelectorAll(SELECTOR)) as Node[]).concat(getExpandableComments(rootElement));
