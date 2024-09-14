@@ -46,7 +46,10 @@ const getDefaultPropertyByNodeType:GetDefaultPropertyByNodeType = {
 /**
  * バインド情報でノードプロパティを省略された場合のデフォルトのプロパティ名を取得
  */
-export const getDefaultPropertyForNode = (node:Node, nodeType:NodeType):(string|undefined) => {
+export function getDefaultPropertyForNode(
+  node:Node, 
+  nodeType:NodeType
+): string | undefined {
   const key = node.constructor.name + "\t" + ((node as HTMLInputElement).type ?? ""); // type attribute
   return _cache[key] ?? (_cache[key] = getDefaultPropertyByNodeType[nodeType](node));
 }

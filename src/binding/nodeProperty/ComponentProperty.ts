@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
-import { IFilterText } from "../../filter/types.js";
-import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols.js";
+import { IFilterText } from "../../filter/types";
+import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
 import { PropertyAccess } from "../PropertyAccess";

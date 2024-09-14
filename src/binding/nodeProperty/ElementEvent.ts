@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
-import { EventFilterFunc, IFilterText } from "../../filter/types.js";
-import { DirectryCallApiSymbol } from "../../state/symbols.js";
+import { EventFilterFunc, IFilterText } from "../../filter/types";
+import { DirectryCallApiSymbol } from "../../state/symbols";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";

@@ -23,13 +23,13 @@ type SomeNodePropertyConstructor = typeof NodeProperty | typeof Branch | typeof 
 
 const nodePropertyConstructorByNameByIsComment:NodePropertyConstructorByNameByIsComment = {
   0: {
-    "if": Branch,
-  },
-  1: {
     "class": ElementClassName,
     "checkbox": Checkbox,
     "radio": Radio,
-  }
+  },
+  1: {
+    "if": Branch,
+  },
 };
 
 type NodePropertyConstructorByFirstName = {[key:string]:typeof NodeProperty};
@@ -51,7 +51,7 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
 function _getNodePropertyConstructor(isComment:boolean, isElement: boolean, propertyName: string, useKeyed: boolean): NodePropertyConstructor {
   let nodePropertyConstructor: SomeNodePropertyConstructor;
   do {
-    nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 0 : 1][propertyName];
+    nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 1 : 0][propertyName];
     if (typeof nodePropertyConstructor !== "undefined") break;
     if (isComment && propertyName === "loop") {
       nodePropertyConstructor = useKeyed ? RepeatKeyed : Repeat;
@@ -79,7 +79,11 @@ const _cache: {[key:string]:NodePropertyConstructor} = {};
 /**
  * バインドのノードプロパティのコンストラクタを取得する
  */
-export function getNodePropertyConstructor(node:Node, propertyName:string, useKeyed:boolean): NodePropertyConstructor {
+export function getNodePropertyConstructor(
+  node:Node, 
+  propertyName:string, 
+  useKeyed:boolean
+): NodePropertyConstructor {
   const isComment = node instanceof Comment;
   const isElement = node instanceof Element;
   const key = isComment + "\t" + isElement + "\t" + propertyName + "\t" + useKeyed;

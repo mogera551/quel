@@ -18,7 +18,9 @@ const createStateProperty =
  * @param propertyName 
  * @returns 
  */
-export function getStatePropertyConstructor(propertyName:string) {
+export function getStatePropertyConstructor(
+  propertyName: string
+): StatePropertyConstructor {
   const statePropertyConstructor = regexp.test(propertyName) ? ContextIndex : StateProperty;
   return createStateProperty(statePropertyConstructor);
 }

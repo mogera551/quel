@@ -6,20 +6,27 @@ import { IBinding } from "../binding/types";
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
 
-const setDefaultEventHandlerByElement = (element:HTMLElement) => (binding:IBinding) => 
-  element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
+const setDefaultEventHandlerByElement = 
+(element:HTMLElement) => 
+  (binding:Pick<IBinding, "defaultEventHandler">) => 
+    element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
 
-function initializeHTMLElement(node:Node, acceptInput:boolean, bindings:IBinding[], defaultName:string): void {
+function initializeHTMLElement(
+  node: Node, 
+  acceptInput: boolean, 
+  bindings: Pick<IBinding, "defaultEventHandler"|"nodeProperty">[], 
+  defaultName: string
+): void {
   const element = node as HTMLElement;
 
   // set event handler
   let hasDefaultEvent = false;
 
-  let defaultBinding:(IBinding|null) = null;
+  let defaultBinding:(Pick<IBinding, "defaultEventHandler">|null) = null;
 
-  let radioBinding:(IBinding|null) = null;
+  let radioBinding:(Pick<IBinding, "defaultEventHandler">|null) = null;
 
-  let checkboxBinding:(IBinding|null) = null;
+  let checkboxBinding:(Pick<IBinding, "defaultEventHandler">|null) = null;
 
   for(let i = 0; i < bindings.length; i++) {
     const binding = bindings[i];
@@ -49,7 +56,12 @@ function initializeHTMLElement(node:Node, acceptInput:boolean, bindings:IBinding
 const thru = () => {};
 
 type InitializeNodeByNodeType = {
-  [key in NodeType]: (node:Node, acceptInput:boolean, bindings:IBinding[], defaultName:string)=>void;
+  [key in NodeType]: (
+    node: Node, 
+    acceptInput: boolean, 
+    bindings: Pick<IBinding, "defaultEventHandler"|"nodeProperty">[], 
+    defaultName:string
+  ) => void;
 }
 
 const initializeNodeByNodeType:InitializeNodeByNodeType = {
@@ -63,4 +75,11 @@ const initializeNodeByNodeType:InitializeNodeByNodeType = {
  * ノードの初期化処理
  * 入力可のノードの場合、デフォルトイベントハンドラを設定する
  */
-export const initializeForNode = (nodeInfo:IBindingNode) => (node:Node, bindings:IBinding[]) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);
+export const initializeForNode = 
+(
+  nodeInfo: Pick<IBindingNode, "nodeType"|"acceptInput"|"defaultProperty">,
+) => 
+  (
+    node: Node, 
+    bindings: Pick<IBinding, "defaultEventHandler"|"nodeProperty">[]
+  ) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);

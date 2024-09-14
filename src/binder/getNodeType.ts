@@ -18,5 +18,9 @@ const getNodeTypeByNode = (node:Node):NodeType =>
 /**
  * ノードのタイプを取得
  */
-export const getNodeType = (node:Node, nodeKey = createNodeKey(node)) => 
-  nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));
+export function getNodeType(
+  node: Node, 
+  nodeKey: string = createNodeKey(node)
+): NodeType {
+  return nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));
+}

@@ -8,4 +8,8 @@ const isCommentNode = (node:Node):boolean => node instanceof Comment && ((node.t
  * expandableなコメントノードとは、"@@:"もしくは"@@|"で始まるコメントノードのこと
  * {{ if: }}や{{ loop: }}を置き換えたもの指すためのコメントノード
  */
-export const getExpandableComments = (node:Node):Comment[] => Array.from(node.childNodes).flatMap(node => getExpandableComments(node).concat(isCommentNode(node as Node) ? node as Comment : []));
+export function getExpandableComments(
+  node:Node
+):Comment[] {
+  return Array.from(node.childNodes).flatMap(node => getExpandableComments(node).concat(isCommentNode(node as Node) ? node as Comment : []));
+}

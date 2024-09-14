@@ -2103,10 +2103,10 @@ const getDefaultPropertyByNodeType = {
 /**
  * バインド情報でノードプロパティを省略された場合のデフォルトのプロパティ名を取得
  */
-const getDefaultPropertyForNode = (node, nodeType) => {
+function getDefaultPropertyForNode(node, nodeType) {
     const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
     return _cache$5[key] ?? (_cache$5[key] = getDefaultPropertyByNodeType[nodeType](node));
-};
+}
 
 class NodeProperty {
     #node;
@@ -3207,7 +3207,9 @@ const isCommentNode = (node) => node instanceof Comment && ((node.textContent?.s
  * expandableなコメントノードとは、"@@:"もしくは"@@|"で始まるコメントノードのこと
  * {{ if: }}や{{ loop: }}を置き換えたもの指すためのコメントノード
  */
-const getExpandableComments = (node) => Array.from(node.childNodes).flatMap(node => getExpandableComments(node).concat(isCommentNode(node) ? node : []));
+function getExpandableComments(node) {
+    return Array.from(node.childNodes).flatMap(node => getExpandableComments(node).concat(isCommentNode(node) ? node : []));
+}
 
 const createNodeKey = (node) => node.constructor.name + "\t" + ((node instanceof Comment) ? (node.textContent?.[2] ?? "") : "");
 const nodeTypeByNodeKey = {};
