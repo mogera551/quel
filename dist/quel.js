@@ -1972,7 +1972,9 @@ const replaceTextNodeFn = {
 /**
  * コメントノードをテキストノードに置き換える
  */
-const replaceTextNodeFromComment = (node, nodeType) => replaceTextNodeFn[nodeType](node);
+function replaceTextNodeFromComment(node, nodeType) {
+    return replaceTextNodeFn[nodeType](node);
+}
 
 const DATASET_BIND_PROPERTY = 'data-bind';
 const removeAttributeFromElement = (node) => {
@@ -1990,7 +1992,9 @@ const removeAttributeByNodeType = {
 /**
  * ノードからdata-bind属性を削除
  */
-const removeDataBindAttribute = (node, nodeType) => removeAttributeByNodeType[nodeType](node);
+function removeDataBindAttribute(node, nodeType) {
+    return removeAttributeByNodeType[nodeType](node);
+}
 
 const excludeTypes = new Set([
     "button",
@@ -2061,7 +2065,6 @@ const parseExpressions = (text, defaultName) => {
         let { nodeProperty, stateProperty, inputFilters, outputFilters } = parseExpression(s, DEFAULT);
         stateProperty = stateProperty === SAMENAME ? nodeProperty : stateProperty;
         nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
-        typeof nodeProperty === "undefined" && utils.raise("parseBindText: default property undefined");
         return { nodeProperty, stateProperty, inputFilters, outputFilters };
     });
 };
@@ -2708,13 +2711,13 @@ class RepeatKeyed extends Loop {
 
 const nodePropertyConstructorByNameByIsComment = {
     0: {
-        "if": Branch,
-    },
-    1: {
         "class": ElementClassName,
         "checkbox": Checkbox,
         "radio": Radio,
-    }
+    },
+    1: {
+        "if": Branch,
+    },
 };
 const createNodeProperty = (NodeProertyClass) => (binding, node, name, filters) => {
     return Reflect.construct(NodeProertyClass, [binding, node, name, filters]);
@@ -2728,7 +2731,7 @@ const nodePropertyConstructorByFirstName = {
 function _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed) {
     let nodePropertyConstructor;
     do {
-        nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 0 : 1][propertyName];
+        nodePropertyConstructor = nodePropertyConstructorByNameByIsComment[isComment ? 1 : 0][propertyName];
         if (typeof nodePropertyConstructor !== "undefined")
             break;
         if (isComment && propertyName === "loop") {
@@ -3145,7 +3148,7 @@ class BindingNode {
     acceptInput;
     defaultProperty;
     initializeForNode;
-    constructor(nodeType, nodeRoute, nodeRouteKey, bindTexts, acceptInput, defaultProperty, initializeForNode) {
+    constructor(nodeType, nodeRoute, nodeRouteKey, bindTexts, acceptInput, defaultProperty) {
         this.nodeType = nodeType;
         this.nodeRoute = nodeRoute;
         this.nodeRouteKey = nodeRouteKey;
@@ -3154,25 +3157,25 @@ class BindingNode {
         this.defaultProperty = defaultProperty;
         this.initializeForNode = initializeForNode(this);
     }
-    static create(node, nodeType, bindText, useKeyed) {
-        // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
-        node = replaceTextNodeFromComment(node, nodeType);
-        // data-bind属性を削除する
-        removeDataBindAttribute(node, nodeType);
-        const acceptInput = canNodeAcceptInput(node, nodeType);
-        const defaultProperty = getDefaultPropertyForNode(node, nodeType) ?? "";
-        const parsedBindTexts = parseBindText(bindText, defaultProperty);
-        const bindTexts = [];
-        for (let j = 0; j < parsedBindTexts.length; j++) {
-            const parsedBindText = parsedBindTexts[j];
-            const { nodeProperty, stateProperty } = parsedBindText;
-            const propertyConstructors = getPropertyConstructors(node, nodeProperty, stateProperty, useKeyed);
-            bindTexts.push({ ...parsedBindText, ...propertyConstructors, createBinding: getCreateBinding(parsedBindText, propertyConstructors) });
-        }
-        const nodeRoute = computeNodeRoute(node);
-        const nodeRouteKey = nodeRoute.join(",");
-        return new BindingNode(nodeType, nodeRoute, nodeRouteKey, bindTexts, acceptInput, defaultProperty, initializeForNode);
+}
+function createBindingNode(node, nodeType, bindText, useKeyed) {
+    // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
+    node = replaceTextNodeFromComment(node, nodeType);
+    // data-bind属性を削除する
+    removeDataBindAttribute(node, nodeType);
+    const acceptInput = canNodeAcceptInput(node, nodeType);
+    const defaultProperty = getDefaultPropertyForNode(node, nodeType) ?? "";
+    const parsedBindTexts = parseBindText(bindText, defaultProperty);
+    const bindTexts = [];
+    for (let j = 0; j < parsedBindTexts.length; j++) {
+        const parsedBindText = parsedBindTexts[j];
+        const { nodeProperty, stateProperty } = parsedBindText;
+        const propertyConstructors = getPropertyConstructors(node, nodeProperty, stateProperty, useKeyed);
+        bindTexts.push({ ...parsedBindText, ...propertyConstructors, createBinding: getCreateBinding(parsedBindText, propertyConstructors) });
     }
+    const nodeRoute = computeNodeRoute(node);
+    const nodeRouteKey = nodeRoute.join(",");
+    return new BindingNode(nodeType, nodeRoute, nodeRouteKey, bindTexts, acceptInput, defaultProperty);
 }
 
 const BIND_DATASET$1 = "bind";
@@ -3220,7 +3223,9 @@ const getNodeTypeByNode = (node) => (node instanceof Comment && node.textContent
 /**
  * ノードのタイプを取得
  */
-const getNodeType = (node, nodeKey = createNodeKey(node)) => nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));
+function getNodeType(node, nodeKey = createNodeKey(node)) {
+    return nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));
+}
 
 const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
@@ -3237,7 +3242,7 @@ function extractBindNodeInfosFromTemplate(template, useKeyed) {
         const bindText = getBindTextByNodeType(node, nodeType);
         if (bindText.trim() === "")
             continue;
-        nodeInfos[nodeInfos.length] = BindingNode.create(nodes[i], nodeType, bindText, useKeyed);
+        nodeInfos[nodeInfos.length] = createBindingNode(nodes[i], nodeType, bindText, useKeyed);
     }
     return nodeInfos;
 }

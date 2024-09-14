@@ -2,6 +2,7 @@ import { IBinder, IBindingNode } from "./types";
 import { IBinding, IContentBindings } from "../binding/types";
 import { extractBindNodeInfosFromTemplate } from "./extractBindNodeInfosFromTemplate";
 import { createBindings } from "./createBindings";
+import { utils } from "../utils";
 
 const UUID_DATASET = "uuid";
 
@@ -25,8 +26,11 @@ class Binder implements IBinder {
   }
 }
 
-export function createBinder(template: HTMLTemplateElement, useKeyed: boolean): IBinder {
-  const uuid = template.dataset[UUID_DATASET] ?? "";
+export function createBinder(
+  template: HTMLTemplateElement, 
+  useKeyed: boolean
+): IBinder {
+  const uuid = template.dataset[UUID_DATASET] ?? utils.raise("uuid not found");
   return _cache[uuid] ?? (_cache[uuid] = new Binder(template, useKeyed));
 }
 

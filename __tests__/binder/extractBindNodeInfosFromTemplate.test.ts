@@ -1,7 +1,7 @@
 import "jest";
 import { extractBindNodeInfosFromTemplate } from '../../src/binder/extractBindNodeInfosFromTemplate';
 import { IBindingNode } from '../../src/binder/types';
-import { BindingNode } from '../../src/binder/BindingNode';
+import { createBindingNode } from '../../src/binder/createBindingNode';
 import { getByUUID } from "../../src/component/Template";
 
 jest.mock("../../src/component/Template");
@@ -26,8 +26,8 @@ describe('extractBindNodeInfosFromTemplate', () => {
     `;
     const result = extractBindNodeInfosFromTemplate(template, false);
     expect(result.length).toBe(2);
-    expect(result[0]).toBeInstanceOf(BindingNode);
-    expect(result[1]).toBeInstanceOf(BindingNode);
+    expect(result[0].constructor.name).toBe("BindingNode");
+    expect(result[1].constructor.name).toBe("BindingNode");
   });
 
   it('should ignore nodes with empty bind text', () => {
@@ -37,7 +37,7 @@ describe('extractBindNodeInfosFromTemplate', () => {
     `;
     const result = extractBindNodeInfosFromTemplate(template, false);
     expect(result.length).toBe(1);
-    expect(result[0]).toBeInstanceOf(BindingNode);
+    expect(result[0].constructor.name).toBe("BindingNode");
   });
 
   it('should handle expandable comments', () => {
@@ -51,8 +51,8 @@ describe('extractBindNodeInfosFromTemplate', () => {
 
     const result = extractBindNodeInfosFromTemplate(template, false);
     expect(result.length).toBe(2);
-    expect(result[0]).toBeInstanceOf(BindingNode);
-    expect(result[1]).toBeInstanceOf(BindingNode);
+    expect(result[0].constructor.name).toBe("BindingNode");
+    expect(result[1].constructor.name).toBe("BindingNode");
   });
 
   it('should use keyed binding if useKeyed is true', () => {
@@ -61,6 +61,6 @@ describe('extractBindNodeInfosFromTemplate', () => {
     `;
     const result = extractBindNodeInfosFromTemplate(template, true);
     expect(result.length).toBe(1);
-    expect(result[0]).toBeInstanceOf(BindingNode);
+    expect(result[0].constructor.name).toBe("BindingNode");
   });
 });

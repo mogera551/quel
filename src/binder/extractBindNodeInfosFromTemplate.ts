@@ -1,5 +1,5 @@
 import { IBindingNode } from './types';
-import { BindingNode } from './BindingNode';
+import { createBindingNode } from './createBindingNode';
 import { getBindTextByNodeType } from './getBindTextByNodeType';
 import { getExpandableComments } from './getExpandableComments';
 import { getNodeType } from './getNodeType';
@@ -22,7 +22,7 @@ export function extractBindNodeInfosFromTemplate(
     const nodeType = getNodeType(node);
     const bindText = getBindTextByNodeType(node, nodeType);
     if (bindText.trim() === "") continue;
-    nodeInfos[nodeInfos.length] = BindingNode.create(nodes[i], nodeType, bindText, useKeyed);
+    nodeInfos[nodeInfos.length] = createBindingNode(nodes[i], nodeType, bindText, useKeyed);
   }
   return nodeInfos;
 }

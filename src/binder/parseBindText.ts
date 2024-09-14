@@ -53,7 +53,6 @@ const parseExpressions = (text:string, defaultName:string):ParsedBindText[] => {
     let { nodeProperty, stateProperty, inputFilters, outputFilters } = parseExpression(s, DEFAULT);
     stateProperty = stateProperty === SAMENAME ? nodeProperty : stateProperty;
     nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
-    typeof nodeProperty === "undefined" && utils.raise("parseBindText: default property undefined");
     return { nodeProperty, stateProperty, inputFilters, outputFilters };
   });
 };
@@ -65,7 +64,10 @@ const _cache:BindTextsByKey = {};
 /**
  * 取得したバインドテキスト(getBindTextByNodeType)を解析して、バインド情報を取得する
  */
-export function parseBindText(text: string, defaultName: string): ParsedBindText[] {
+export function parseBindText(
+  text: string, 
+  defaultName: string
+): ParsedBindText[] {
   if (text.trim() === "") return [];
   const key:string = text + "\t" + defaultName;
   return _cache[key] ?? (_cache[key] = parseExpressions(text, defaultName));

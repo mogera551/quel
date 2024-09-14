@@ -1,4 +1,4 @@
-import { createBinder } from "../binder/Binder";
+import { createBinder } from "../binder/createBinder";
 import { LoopContext } from "../loopContext/LoopContext";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
