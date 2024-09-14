@@ -3289,7 +3289,7 @@ class Binder {
     }
 }
 function createBinder(template, useKeyed) {
-    const uuid = template.dataset[UUID_DATASET] ?? "";
+    const uuid = template.dataset[UUID_DATASET] ?? utils.raise("uuid not found");
     return _cache$3[uuid] ?? (_cache$3[uuid] = new Binder(template, useKeyed));
 }
 
