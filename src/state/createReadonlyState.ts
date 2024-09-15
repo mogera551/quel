@@ -21,6 +21,16 @@ export class ReadonlyHandler extends Handler {
       for(let i = 0; i <= wildcardIndex; i++) {
         key += wildcardIndexes[i] + ",";
       }
+      /**
+       * 
+       * if ((value = this.#cache[key]) == null) {
+       *   if (!(key in this.#cache)) {
+       *     value = this.#cache[key] = 
+       *       super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
+       *   }
+       * }
+       * return value;
+       */
       let value;
       return (value = this.#cache[key]) ?? 
         ((key in this.#cache) ? 
