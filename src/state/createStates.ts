@@ -1,20 +1,25 @@
 import { ClearCacheApiSymbol } from "./symbols";
 import { IComponent } from "../component/types";
-import { ReadonlyHandler } from "./ReadonlyHandler";
-import { IStates, IStateProxy } from "./types";
-import { WritableHandler } from "./WritableHandler";
+import { createReadonlyState, ReadonlyHandler } from "./createReadonlyState";
+import { IStates, IStateProxy, IComponentForHandler } from "./types";
+import { createWritableState, WritableHandler } from "./createWritableState";
+import { utils } from "../utils";
 
-type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTMLElement;
 
 class States implements IStates {
   #base: Object;
   #readonlyState: IStateProxy;
   #writableState: IStateProxy;
   #_writable = false;
-  constructor(component: IComponentForHandler, base: Object) {
+  constructor(
+    component: IComponentForHandler, 
+    base: Object,
+    readOnlyState: IStateProxy,
+    writableState: IStateProxy
+  ) {
     this.#base = base;
-    this.#readonlyState = new Proxy(base, new ReadonlyHandler(component, base)) as IStateProxy;
-    this.#writableState = new Proxy(base, new WritableHandler(component, base)) as IStateProxy;
+    this.#readonlyState = readOnlyState;
+    this.#writableState = writableState;
   }
 
   get base():Object {
@@ -36,6 +41,7 @@ class States implements IStates {
   }
 
   async writable(callback: () => Promise<void>): Promise<void> {
+    if (this.#writable) utils.raise("States: already writable");
     this.#writable = true;
     try {
       return await callback();
@@ -45,6 +51,11 @@ class States implements IStates {
   }
 }
 
-export function createStates(component:IComponentForHandler, base: Object):IStates {
-  return new States(component, base);
+export function createStates(
+  component:IComponentForHandler, 
+  base: Object,
+  readOnlyState: IStateProxy = createReadonlyState(component, base),
+  writableState: IStateProxy = createWritableState(component, base)
+): IStates {
+  return new States(component, base, readOnlyState, writableState);
 }

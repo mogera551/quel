@@ -1,5 +1,6 @@
 import { utils } from "../utils";
 import { Handler } from "./Handler";
+import { IComponentForHandler, IStateProxy } from "./types";
 
 export class ReadonlyHandler extends Handler {
   // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
@@ -38,5 +39,11 @@ export class ReadonlyHandler extends Handler {
   set(target:object, prop:string, value:any, receiver:object):boolean {
     utils.raise("ReadonlyHandler: set is not allowed");
   }
+}
 
+export function createReadonlyState(
+  component: IComponentForHandler, 
+  base: object
+): IStateProxy {
+  return new Proxy(base, new ReadonlyHandler(component, base)) as IStateProxy;
 }

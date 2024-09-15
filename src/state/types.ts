@@ -53,3 +53,5 @@ export interface IStates {
   readonly current: IStateProxy;
   writable(callback: () => Promise<void>): Promise<void>;
 }
+
+export type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTMLElement;

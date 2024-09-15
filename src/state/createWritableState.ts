@@ -3,7 +3,7 @@ import { Indexes, IPropInfo } from "../dotNotation/types";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
-import { IStateProxy } from "./types";
+import { IComponentForHandler, IStateProxy } from "./types";
 
 export class WritableHandler extends Handler {
   #loopContext?: ILoopContext;
@@ -41,4 +41,11 @@ export class WritableHandler extends Handler {
       this.updator.addUpdatedStateProperty(new PropertyAccess(propInfo.pattern, indexes as number[]));
     }
   }
+}
+
+export function createWritableState(
+  component: IComponentForHandler, 
+  base: object
+): IStateProxy {
+  return new Proxy(base, new WritableHandler(component, base)) as IStateProxy;
 }

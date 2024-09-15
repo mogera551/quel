@@ -3895,6 +3895,9 @@ class ReadonlyHandler extends Handler {
         utils.raise("ReadonlyHandler: set is not allowed");
     }
 }
+function createReadonlyState(component, base) {
+    return new Proxy(base, new ReadonlyHandler(component, base));
+}
 
 class WritableHandler extends Handler {
     #loopContext;
@@ -3934,16 +3937,19 @@ class WritableHandler extends Handler {
         }
     }
 }
+function createWritableState(component, base) {
+    return new Proxy(base, new WritableHandler(component, base));
+}
 
 class States {
     #base;
     #readonlyState;
     #writableState;
     #_writable = false;
-    constructor(component, base) {
+    constructor(component, base, readOnlyState, writableState) {
         this.#base = base;
-        this.#readonlyState = new Proxy(base, new ReadonlyHandler(component, base));
-        this.#writableState = new Proxy(base, new WritableHandler(component, base));
+        this.#readonlyState = readOnlyState;
+        this.#writableState = writableState;
     }
     get base() {
         return this.#base;
@@ -3961,6 +3967,8 @@ class States {
         return this.#writable ? this.#writableState : this.#readonlyState;
     }
     async writable(callback) {
+        if (this.#writable)
+            utils.raise("States: already writable");
         this.#writable = true;
         try {
             return await callback();
@@ -3970,8 +3978,8 @@ class States {
         }
     }
 }
-function createStates(component, base) {
-    return new States(component, base);
+function createStates(component, base, readOnlyState = createReadonlyState(component, base), writableState = createWritableState(component, base)) {
+    return new States(component, base, readOnlyState, writableState);
 }
 
 const pseudoComponentByNode = new Map;
