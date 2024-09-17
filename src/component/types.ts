@@ -143,9 +143,9 @@ export type Constructor<T = {}> = new (...args: any[]) => T;
 export type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
 
 export interface IProcess {
-  readonly target:Function;
-  readonly thisArgument:object;
-  readonly argumentList:any[];
+  readonly target: Function;
+  readonly thisArgument: object | undefined;
+  readonly argumentList: any[];
 }
 
 export interface IProps {

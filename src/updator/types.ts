@@ -7,7 +7,7 @@ import { IStates } from "../state/types";
 export interface IUpdator {
   executing: boolean;
 
-  addProcess(target: Function, thisArgument: object, argumentList: any[]): void;
+  addProcess(target: Function, thisArgument: object | undefined, argumentList: any[]): void;
   retrieveAllProcesses(): IProcess[];
 
   addUpdatedStateProperty(prop: IPropertyAccess): void;

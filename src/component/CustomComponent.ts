@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { ConnectedCallbackSymbol } from "../state/symbols";
+import { ConnectedCallbackSymbol, DisconnectedCallbackSymbol } from "../state/symbols";
 import { isAttachable } from "./AttachShadow";
 import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
 import { localizeStyleSheet } from "./StyleSheet";
@@ -229,6 +229,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
   
     }
     async disconnectedCallback() {
+      this.updator.addProcess(async () => {
+        await this.states.current[DisconnectedCallbackSymbol]();
+      }, undefined, []);
     }
   };
 }

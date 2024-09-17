@@ -1004,7 +1004,9 @@ async function _execProcesses(updator, processes) {
 function enqueueUpdatedCallback(updator, states, updatedStateProperties) {
     // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
     const updateInfos = updatedStateProperties.map(prop => ({ name: prop.pattern, indexes: prop.indexes }));
-    states.current[UpdatedCallbackSymbol](updateInfos);
+    updator.addProcess(async () => {
+        await states.current[UpdatedCallbackSymbol](updateInfos);
+    }, undefined, []);
 }
 async function execProcesses(updator, states) {
     const totalUpdatedStateProperties = [];
@@ -3675,9 +3677,9 @@ const applyCallback = (state, stateProxy, handler, prop) => (...args) => async (
     dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
 };
 function getCallbackMethod(state, stateProxy, handler, prop) {
-    return (allCallbacks.has(prop)) ? ((prop === ConnectedCallbackSymbol) ?
+    return (allCallbacks.has(prop)) ?
         (...args) => applyCallback(state, stateProxy, handler, prop)(...args)() :
-        (...args) => handler.updator.addProcess(applyCallback(state, stateProxy, handler, prop)(...args), stateProxy, [])) : undefined;
+        undefined;
 }
 
 function existsProperty(baseClass, prop) {
@@ -4188,6 +4190,9 @@ function CustomComponent(Base) {
             }
         }
         async disconnectedCallback() {
+            this.updator.addProcess(async () => {
+                await this.states.current[DisconnectedCallbackSymbol]();
+            }, undefined, []);
         }
     };
 }

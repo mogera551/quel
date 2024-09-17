@@ -1,4 +1,3 @@
-import { UpdatedCallbackSymbol } from "../state/symbols";
 import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
 import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
@@ -11,7 +10,6 @@ import { updateChildNodes } from "./updateChildNodes";
 import { updateNodes } from "./updateNodes";
 
 const getPropAccessKey = (prop: IPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
-const executeProcess = (process: IProcess) => async (): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
 
 type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary">;
 
@@ -41,7 +39,11 @@ class Updator implements IUpdator {
     this.#component = component;
   }
 
-  addProcess(target: Function, thisArgument: object, argumentList: any[]): void {
+  addProcess(
+    target: Function, 
+    thisArgument: object | undefined, 
+    argumentList: any[]
+  ): void {
     this.processQueue.push({ target, thisArgument, argumentList });
     if (this.executing) return;
     this.exec();

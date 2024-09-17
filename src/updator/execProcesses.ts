@@ -19,10 +19,15 @@ async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<
 function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateProperties: IPropertyAccess[]): void {
   // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
   const updateInfos = updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.indexes }));
-  states.current[UpdatedCallbackSymbol](updateInfos);
+  updator.addProcess(async () => {
+    await states.current[UpdatedCallbackSymbol](updateInfos);
+  }, undefined, []);
 }
 
-export async function execProcesses(updator:IUpdator, states:IStates): Promise<IPropertyAccess[]> {
+export async function execProcesses(
+  updator:IUpdator, 
+  states:IStates
+): Promise<IPropertyAccess[]> {
   const totalUpdatedStateProperties: IPropertyAccess[] = [];
   await states.writable(async () => {
     do {
