@@ -62,7 +62,10 @@ function expandStateProperty(
   return propertyAccesses;
 }
 
-function expandIndexes(state:IStateProxy, propertyAccess:IPropertyAccess):number[][] {
+function expandIndexes(
+  state:IStateProxy, 
+  propertyAccess:IPropertyAccess
+):number[][] {
   const { propInfo, indexes } = propertyAccess;
   if (propInfo.wildcardCount === indexes.length) {
     return [ indexes ];
@@ -109,7 +112,10 @@ function expandIndexes(state:IStateProxy, propertyAccess:IPropertyAccess):number
   }
 }
 
-export function expandStateProperties(states:IStates, updatedStateProperties:IPropertyAccess[]):IPropertyAccess[] {
+export function expandStateProperties(
+  states: IStates, 
+  updatedStateProperties: IPropertyAccess[]
+): IPropertyAccess[] {
   // expand state properties
   const expandedStateProperties = updatedStateProperties.slice(0);
   const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.propInfo.pattern + "\t" + prop.indexes.toString()));

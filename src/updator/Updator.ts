@@ -108,7 +108,10 @@ class Updator implements IUpdator {
     });
   }
 
-  applyNodeUpdatesByBinding(binding:IBinding, callback:(updator:IUpdator)=>void):void {
+  applyNodeUpdatesByBinding(
+    binding: IBinding, 
+    callback: (updator:IUpdator) => void
+  ): void {
     if (this.updatedBindings.has(binding)) return;
     try {
       callback(this);

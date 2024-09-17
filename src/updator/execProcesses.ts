@@ -25,8 +25,8 @@ function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateP
 }
 
 export async function execProcesses(
-  updator:IUpdator, 
-  states:IStates
+  updator: IUpdator, 
+  states: IStates
 ): Promise<IPropertyAccess[]> {
   const totalUpdatedStateProperties: IPropertyAccess[] = [];
   await states.writable(async () => {
