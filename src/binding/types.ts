@@ -136,6 +136,5 @@ export interface IBindingSummary {
   add(binding: IBinding): void;
   delete(binding: IBinding): void;
   exists(binding: IBinding): boolean;
-  flush(): void;
   update(callback:(summary: IBindingSummary)=>any): void;
 }

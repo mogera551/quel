@@ -69,7 +69,7 @@ class BindingSummary implements IBindingSummary {
     return this.#allBindings.has(binding);
   }
 
-  flush() {
+  #flush() {
     config.debug && performance.mark('BindingSummary.flush:start');
     try {
       this.rebuild(this.#allBindings);
@@ -93,7 +93,7 @@ class BindingSummary implements IBindingSummary {
     try {
       callback(this);
     } finally {
-      if (this.#updated) this.flush();
+      if (this.#updated) this.#flush();
       this.#updating = false;
     }
   }

@@ -3570,7 +3570,7 @@ class BindingSummary {
     exists(binding) {
         return this.#allBindings.has(binding);
     }
-    flush() {
+    #flush() {
         config.debug && performance.mark('BindingSummary.flush:start');
         try {
             this.rebuild(this.#allBindings);
@@ -3595,7 +3595,7 @@ class BindingSummary {
         }
         finally {
             if (this.#updated)
-                this.flush();
+                this.#flush();
             this.#updating = false;
         }
     }
