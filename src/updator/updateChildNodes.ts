@@ -1,3 +1,4 @@
+import { setValueToChildNodes } from "../binding/setValueToChildNodes";
 import { IBindingSummary, IPropertyAccess } from "../binding/types";
 import { IUpdator } from "./types";
 
@@ -25,7 +26,7 @@ export function updateChildNodes(
     const bindings = bindingSummary.bindingsByKey.get(parentKey);
     if (typeof bindings === "undefined") continue;
     for(const binding of bindings) {
-      binding.applyToChildNodes(indexes);
+      setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
     }
   }
 }

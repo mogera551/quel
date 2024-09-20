@@ -4,6 +4,8 @@ import { IFilterText, IFilterManager } from "../filter/types";
 import { utils } from "../utils";
 import { IUpdator } from "../updator/types";
 import { IStateProxy } from "../state/types";
+import { setValueToState } from "./setValueToState";
+import { setValueToNode } from "./setValueToNode";
 
 let id = 1;
 class Binding implements IBinding {
@@ -80,35 +82,13 @@ class Binding implements IBinding {
     this.#stateProperty = statePropertyConstructor(this, statePropertyName, inputFilters);
   }
 
-  applyToNode() {
-    const { updator, nodeProperty, stateProperty } = this
-    updator?.applyNodeUpdatesByBinding(this, () => {
-      if (!nodeProperty.applicable) return;
-      const filteredStateValue = stateProperty.filteredValue ?? "";
-      if (nodeProperty.equals(filteredStateValue)) return;
-      nodeProperty.value = filteredStateValue;
-    });
-  }
-
-  applyToChildNodes(setOfIndex:Set<number>) {
-    const { updator } = this;
-    updator?.applyNodeUpdatesByBinding(this, () => {
-      this.nodeProperty.applyToChildNodes(setOfIndex);
-    });
-  }
-
-  applyToState() {
-    const { stateProperty, nodeProperty } = this;
-    if (!stateProperty.applicable) return;
-    stateProperty.value = nodeProperty.filteredValue;
-  }
-
   /**
    */
   execDefaultEventHandler(event:Event) {
     if (!(this.bindingSummary?.exists(this) ?? false)) return;
     event.stopPropagation();
-    this.updator?.addProcess(this.applyToState, this, []);
+    const { nodeProperty, stateProperty } = this;
+    this.updator?.addProcess(setValueToState, undefined, [ nodeProperty, stateProperty ]);
   }
 
   #defaultEventHandler:(((event:Event)=>void)|undefined) = undefined;
@@ -161,14 +141,16 @@ class Binding implements IBinding {
   }
 
   rebuild(): void {
-    this.applyToNode();
+    const { updator, nodeProperty, stateProperty } = this;
+    setValueToNode(this, updator, nodeProperty, stateProperty);
   }
 
   updateNodeForNoRecursive(): void {
     // rebuildで再帰的にupdateするnodeが決まるため
     // 再帰的に呼び出す必要はない
     if (!this.expandable) {
-      this.applyToNode();
+      const { updator, nodeProperty, stateProperty } = this;
+      setValueToNode(this, updator, nodeProperty, stateProperty);
     }
   }
 

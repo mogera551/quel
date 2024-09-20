@@ -1,8 +1,7 @@
 import { ClearCacheApiSymbol } from "./symbols";
-import { IComponent } from "../component/types";
-import { createReadonlyState, ReadonlyHandler } from "./createReadonlyState";
+import { createReadonlyState } from "./createReadonlyState";
 import { IStates, IStateProxy, IComponentForHandler } from "./types";
-import { createWritableState, WritableHandler } from "./createWritableState";
+import { createWritableState } from "./createWritableState";
 import { utils } from "../utils";
 
 
@@ -12,7 +11,6 @@ class States implements IStates {
   #writableState: IStateProxy;
   #_writable = false;
   constructor(
-    component: IComponentForHandler, 
     base: Object,
     readOnlyState: IStateProxy,
     writableState: IStateProxy
@@ -57,5 +55,5 @@ export function createStates(
   readOnlyState: IStateProxy = createReadonlyState(component, base),
   writableState: IStateProxy = createWritableState(component, base)
 ): IStates {
-  return new States(component, base, readOnlyState, writableState);
+  return new States(base, readOnlyState, writableState);
 }

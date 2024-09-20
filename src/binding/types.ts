@@ -81,9 +81,6 @@ export interface IBinding extends IBindingTreeNode {
   readonly eventFilterManager: IFilterManager<"event">;
   readonly inputFilterManager: IFilterManager<"input">;
   readonly outputFilterManager: IFilterManager<"output">;
-  applyToNode(): void;
-  applyToChildNodes(setOfIndex:Set<number>) :void;
-  applyToState(): void;
   defaultEventHandler: (event:Event)=>void;
   execDefaultEventHandler(event:Event): void;
   initialize(): void;
@@ -115,13 +112,11 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   readonly lastChildNode?: Node;
 
   initialize():void;
-//  applyToNode():void;
   removeChildNodes():void;
   dispose():void;
 
   rebuild(): void;
   registerBindingsToSummary(): void;
-  //updateNode(): void;
 }
 
 export type IContentBindingTreeNode = Pick<IContentBindings, "childrenBinding" | "parentBinding" | "loopContext" | "currentLoopContext">

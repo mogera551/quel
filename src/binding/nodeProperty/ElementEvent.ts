@@ -13,7 +13,7 @@ export class ElementEvent extends ElementBase {
     return this.name.slice(PREFIX.length); // on～
   }
 
-  // applyToNode()の対象かどうか
+  // setValueToNode()の対象かどうか
   get applicable(): boolean {
     return false;
   }

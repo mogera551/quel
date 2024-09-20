@@ -90,7 +90,7 @@ export class StateProperty implements IStateProperty {
     return this.filters.length === 0 ? this.value : FilterManager.applyFilter<"output">(this.value, this.filters);
   }
 
-  // applyToState()の対象かどうか
+  // setValueToState()の対象かどうか
   get applicable():boolean {
     return true;
   }

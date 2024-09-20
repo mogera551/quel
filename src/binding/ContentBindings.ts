@@ -95,15 +95,6 @@ class ContentBindings implements IContentBindings {
   }
 
   /**
-   * apply value to State
-   */
-  applyToState() {
-    for(let i = 0; i < this.childrenBinding.length; i++) {
-      this.childrenBinding[i].applyToState();
-    }
-  }
-
-  /**
    * register bindings to summary
    */
   registerBindingsToSummary() {

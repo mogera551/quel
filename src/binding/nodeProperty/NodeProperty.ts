@@ -36,7 +36,7 @@ export class NodeProperty implements INodeProperty {
     return this.filters.length === 0 ? this.value : FilterManager.applyFilter<"input">(this.value, this.filters);
   }
 
-  // applyToNode()の対象かどうか
+  // setValueToNode()の対象かどうか
   get applicable():boolean {
     return true;
   }

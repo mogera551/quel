@@ -1260,6 +1260,12 @@ function rebuildBindings(updator, bindingSummary, updateStatePropertyAccessByKey
     });
 }
 
+function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex) {
+    updator?.applyNodeUpdatesByBinding(binding, () => {
+        nodeProperty.applyToChildNodes(setOfIndex);
+    });
+}
+
 function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses) {
     const indexesByParentKey = {};
     for (const propertyAccess of updatedStatePropertyAccesses) {
@@ -1279,7 +1285,7 @@ function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses)
         if (typeof bindings === "undefined")
             continue;
         for (const binding of bindings) {
-            binding.applyToChildNodes(indexes);
+            setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
         }
     }
 }
@@ -2140,7 +2146,7 @@ class NodeProperty {
     get filteredValue() {
         return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
     }
-    // applyToNode()の対象かどうか
+    // setValueToNode()の対象かどうか
     get applicable() {
         return true;
     }
@@ -2414,7 +2420,7 @@ class ElementEvent extends ElementBase {
     get eventType() {
         return this.name.slice(PREFIX$2.length); // on～
     }
-    // applyToNode()の対象かどうか
+    // setValueToNode()の対象かどうか
     get applicable() {
         return false;
     }
@@ -2841,7 +2847,7 @@ class StateProperty {
     get filteredValue() {
         return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
     }
-    // applyToState()の対象かどうか
+    // setValueToState()の対象かどうか
     get applicable() {
         return true;
     }
@@ -2920,6 +2926,23 @@ function getPropertyConstructors(node, nodePropertyName, statePropertyName, useK
     };
 }
 
+function setValueToState(nodeProperty, stateProperty) {
+    if (!stateProperty.applicable)
+        return;
+    stateProperty.value = nodeProperty.filteredValue;
+}
+
+function setValueToNode(binding, updator, nodeProperty, stateProperty) {
+    updator?.applyNodeUpdatesByBinding(binding, () => {
+        if (!nodeProperty.applicable)
+            return;
+        const filteredStateValue = stateProperty.filteredValue ?? "";
+        if (nodeProperty.equals(filteredStateValue))
+            return;
+        nodeProperty.value = filteredStateValue;
+    });
+}
+
 let id = 1;
 class Binding {
     #id;
@@ -2982,36 +3005,14 @@ class Binding {
         this.#nodeProperty = nodePropertyConstructor(this, node, nodePropertyName, outputFilters);
         this.#stateProperty = statePropertyConstructor(this, statePropertyName, inputFilters);
     }
-    applyToNode() {
-        const { updator, nodeProperty, stateProperty } = this;
-        updator?.applyNodeUpdatesByBinding(this, () => {
-            if (!nodeProperty.applicable)
-                return;
-            const filteredStateValue = stateProperty.filteredValue ?? "";
-            if (nodeProperty.equals(filteredStateValue))
-                return;
-            nodeProperty.value = filteredStateValue;
-        });
-    }
-    applyToChildNodes(setOfIndex) {
-        const { updator } = this;
-        updator?.applyNodeUpdatesByBinding(this, () => {
-            this.nodeProperty.applyToChildNodes(setOfIndex);
-        });
-    }
-    applyToState() {
-        const { stateProperty, nodeProperty } = this;
-        if (!stateProperty.applicable)
-            return;
-        stateProperty.value = nodeProperty.filteredValue;
-    }
     /**
      */
     execDefaultEventHandler(event) {
         if (!(this.bindingSummary?.exists(this) ?? false))
             return;
         event.stopPropagation();
-        this.updator?.addProcess(this.applyToState, this, []);
+        const { nodeProperty, stateProperty } = this;
+        this.updator?.addProcess(setValueToState, undefined, [nodeProperty, stateProperty]);
     }
     #defaultEventHandler = undefined;
     get defaultEventHandler() {
@@ -3059,13 +3060,15 @@ class Binding {
         this.childrenContentBindings = [];
     }
     rebuild() {
-        this.applyToNode();
+        const { updator, nodeProperty, stateProperty } = this;
+        setValueToNode(this, updator, nodeProperty, stateProperty);
     }
     updateNodeForNoRecursive() {
         // rebuildで再帰的にupdateするnodeが決まるため
         // 再帰的に呼び出す必要はない
         if (!this.expandable) {
-            this.applyToNode();
+            const { updator, nodeProperty, stateProperty } = this;
+            setValueToNode(this, updator, nodeProperty, stateProperty);
         }
     }
 }
@@ -3454,14 +3457,6 @@ class ContentBindings {
     }
     removeChildNodes() {
         this.fragment.append(...this.childNodes);
-    }
-    /**
-     * apply value to State
-     */
-    applyToState() {
-        for (let i = 0; i < this.childrenBinding.length; i++) {
-            this.childrenBinding[i].applyToState();
-        }
     }
     /**
      * register bindings to summary
@@ -3958,7 +3953,7 @@ class States {
     #readonlyState;
     #writableState;
     #_writable = false;
-    constructor(component, base, readOnlyState, writableState) {
+    constructor(base, readOnlyState, writableState) {
         this.#base = base;
         this.#readonlyState = readOnlyState;
         this.#writableState = writableState;
@@ -3991,7 +3986,7 @@ class States {
     }
 }
 function createStates(component, base, readOnlyState = createReadonlyState(component, base), writableState = createWritableState(component, base)) {
-    return new States(component, base, readOnlyState, writableState);
+    return new States(base, readOnlyState, writableState);
 }
 
 const pseudoComponentByNode = new Map;
