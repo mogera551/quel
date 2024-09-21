@@ -16,7 +16,7 @@ export interface IStateHandler {
 }
 
 export interface IBaseState  {
-  readonly $dependentProps: Dependencies;
+  readonly $dependentProps?: Dependencies;
 }
 
 export interface IStateProxy extends IDotNotationProxy, IBaseState {

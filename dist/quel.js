@@ -3628,8 +3628,8 @@ function getApiMethod(state, stateProxy, handler, prop) {
 const CONNECTED_EVENT = "connected";
 const DISCONNECTED_EVENT = "disconnected";
 const UPDATED_EVENT = "updated";
-const createConnectedDetail = (...args) => { };
-const createDisconnectedDetail = (...args) => { };
+const createConnectedDetail = (...args) => ({});
+const createDisconnectedDetail = (...args) => ({});
 const createUpdatedDetail = (...args) => ({ props: args });
 const createDetailFn = {
     [ConnectedEventSymbol]: createConnectedDetail,
@@ -3667,13 +3667,14 @@ const callbackToEvent = {
     [DisconnectedCallbackSymbol]: DisconnectedEventSymbol,
     [UpdatedCallbackSymbol]: UpdatedEventSymbol,
 };
-const applyCallback = (state, stateProxy, handler, prop) => (...args) => async () => {
-    (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
+const applyCallback = (state, stateProxy, handler, prop) => async (...args) => {
+    const returnValue = (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
     dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
+    return returnValue;
 };
 function getCallbackMethod(state, stateProxy, handler, prop) {
     return (allCallbacks.has(prop)) ?
-        (...args) => applyCallback(state, stateProxy, handler, prop)(...args)() :
+        (...args) => applyCallback(state, stateProxy, handler, prop)(...args) :
         undefined;
 }
 
@@ -3790,6 +3791,9 @@ class DependentProps {
         }
     }
 }
+function createDependentProps(props) {
+    return new DependentProps(props);
+}
 
 const DEPENDENT_PROPS = "$dependentProps";
 const _cache = new Map;
@@ -3799,7 +3803,7 @@ function getStateInfo(state) {
     if (typeof stateProeprtyInfo === "undefined") {
         stateProeprtyInfo = {
             accessorProperties: new Set(getAccessorProperties(state)),
-            dependentProps: new DependentProps(state[DEPENDENT_PROPS] ?? {})
+            dependentProps: createDependentProps(state[DEPENDENT_PROPS] ?? {})
         };
         _cache.set(state, stateProeprtyInfo);
     }
