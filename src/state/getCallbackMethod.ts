@@ -27,23 +27,29 @@ const callbackToEvent: { [key:symbol]: symbol } = {
   [UpdatedCallbackSymbol]: UpdatedEventSymbol,
 }
 
-type State = {[key:string]:any};
+type State = { [key:string]: any };
 
 const applyCallback = 
-(state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol) => 
-(...args:any) => 
-async ():Promise<void> => {
-  (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
+(
+  state: State, 
+  stateProxy: IStateProxy, 
+  handler: IStateHandler, 
+  prop: symbol
+) => 
+async (...args: any[]): Promise<void> => 
+{
+  const returnValue = (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
   dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
+  return returnValue;
 };
 
 export function getCallbackMethod(
-  state:State, 
-  stateProxy:IStateProxy, 
-  handler:IStateHandler, 
-  prop:symbol
-): (()=>any) | undefined {
+  state: State, 
+  stateProxy: IStateProxy, 
+  handler: IStateHandler, 
+  prop: symbol
+): ((...args: any[]) => Promise<void>) | undefined {
   return (allCallbacks.has(prop)) ? 
-    (...args:any) => applyCallback(state, stateProxy, handler, prop)(...args)() : 
+    (...args: any[]) => applyCallback(state, stateProxy, handler, prop)(...args) : 
     undefined;
 }

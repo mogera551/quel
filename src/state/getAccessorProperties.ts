@@ -8,7 +8,7 @@ type PropertyDescriptors = {
   [x: string]: PropertyDescriptor;
 };
 
-function getDescByNames(target:any):PropertyDescriptors {
+function getDescByNames(target: any): PropertyDescriptors {
   const descByNames:PropertyDescriptors = {};
   let object = target;
   while(object !== Object.prototype) {
@@ -22,7 +22,7 @@ function getDescByNames(target:any):PropertyDescriptors {
   return descByNames;
 }
 
-function _getAccessorProperties(target:any):string[] {
+function _getAccessorProperties(target: any): string[] {
   const descByNames = getDescByNames(target);
   const accessorProperties:string[] = [];
   for(const [name, desc] of Object.entries(descByNames)) {
@@ -35,7 +35,7 @@ type AccessorPropertiesCache = Map<ObjectConstructor,string[]>;
 
 const _cache:AccessorPropertiesCache = new Map();
 
-export function getAccessorProperties(target:any):string[] {
+export function getAccessorProperties(target:any): string[] {
   let accessorProperties:(string[]|undefined) = _cache.get(target.constructor);
   if (typeof accessorProperties === "undefined") {
     accessorProperties = _getAccessorProperties(target);

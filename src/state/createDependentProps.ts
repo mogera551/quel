@@ -4,11 +4,11 @@ import { getPatternInfo } from "../dotNotation/getPatternInfo";
 /**
  * $dependentPropsを表現
  */
-export class DependentProps implements IDependentProps {
+class DependentProps implements IDependentProps {
   #defaultProps: Set<string> = new Set;
   #propsByRefProp: {[ key: string ]: Set<string>} = {};
 
-  constructor(props:Dependencies) {
+  constructor(props: Dependencies) {
     this.#setDependentProps(props);
   }
 
@@ -35,5 +35,8 @@ export class DependentProps implements IDependentProps {
       }
     }
   }
+}
 
+export function createDependentProps(props: Dependencies): IDependentProps {
+  return new DependentProps(props);
 }

@@ -2,18 +2,19 @@ import { utils } from "../utils";
 import { Handler } from "./Handler";
 import { IComponentForHandler, IStateProxy } from "./types";
 
-export class ReadonlyHandler extends Handler {
+class ReadonlyHandler extends Handler {
   // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
   #cache: {[key: string]: any} = {};
   
   _getValue(
-    target:object, 
-    patternPaths:string[],
-    patternElements:string[],
-    wildcardIndexes:(number|undefined)[], 
-    pathIndex:number, wildcardIndex:number,
-    receiver:object, 
-  ):any {
+    target: object, 
+    patternPaths: string[],
+    patternElements: string[],
+    wildcardIndexes: (number|undefined)[], 
+    pathIndex: number, 
+    wildcardIndex: number,
+    receiver: object, 
+  ): any {
     const path = patternPaths[pathIndex];
     if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
       // sliceよりもループで文字列を足していく方が速い
@@ -46,7 +47,12 @@ export class ReadonlyHandler extends Handler {
     this.#cache = {};
   }
 
-  set(target:object, prop:string, value:any, receiver:object):boolean {
+  set(
+    target: object, 
+    prop: string, 
+    value: any, 
+    receiver: object
+  ): boolean {
     utils.raise("ReadonlyHandler: set is not allowed");
   }
 }

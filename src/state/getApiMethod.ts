@@ -10,7 +10,7 @@ import { IComponent } from "../component/types";
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 
-const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
+const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
   [DirectryCallApiSymbol]:({state, stateProxy, handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
     async (prop:string, loopContext:ILoopContext, event:Event):Promise<void> => 
       handler.directlyCallback(loopContext, async () => 
@@ -26,6 +26,11 @@ const callFuncBySymbol:{[key:symbol]:(...args:any[])=>any} = {
   [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (buffer:{[key:string]:any}, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
-export function getApiMethod(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:symbol):(()=>void|undefined) {
+export function getApiMethod(
+  state: Object, 
+  stateProxy: IStateProxy, 
+  handler: IStateHandler, 
+  prop: symbol
+): ((...args: any[]) => any) | undefined {
   return callFuncBySymbol[prop]?.({state, stateProxy, handler});
 }

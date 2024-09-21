@@ -14,7 +14,9 @@ export const properties = new Set([
   ADD_PROCESS_PROPERTY,
 ]);
 
-type FuncArgs = {state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:string};
+type State = { [key:string]: any };
+
+type FuncArgs = {state:State, stateProxy:IStateProxy, handler:IStateHandler, prop:string};
 
 type FuncInterface = (args:FuncArgs) => any;
 
@@ -25,12 +27,17 @@ type FuncByName = {
 
 const funcByName:FuncByName = {
   [GLOBALS_PROPERTY]: ({handler}:FuncArgs) => (handler.element as IComponent).globals, // component.globals,
-  [DEPENDENT_PROPS_PROPERTY]: ({state}:FuncArgs) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
+  [DEPENDENT_PROPS_PROPERTY]: ({state}:FuncArgs) => state[DEPENDENT_PROPS_PROPERTY],
   [COMPONENT_PROPERTY]: ({handler}:FuncArgs) => createUserComponent((handler.element as IComponent)),
   [ADD_PROCESS_PROPERTY]: ({handler, stateProxy}:FuncArgs) => (func:Function) => handler.updator.addProcess(func, stateProxy, [])
 }
 
-export function getSpecialProps(state:Object, stateProxy:IStateProxy, handler:IStateHandler, prop:string):any {
+export function getSpecialProps(
+  state: State, 
+  stateProxy: IStateProxy, 
+  handler: IStateHandler, 
+  prop: string
+): any {
   return funcByName[prop]?.({state, stateProxy, handler, prop});
 }
 

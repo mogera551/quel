@@ -3393,7 +3393,7 @@ class ContentBindings {
     #childNodes;
     #fragment;
     get component() {
-        return this.#component;
+        return this.#component ?? utils.raise("component is undefined");
     }
     get childrenBinding() {
         if (typeof this.#childrenBinding === "undefined") {
@@ -3406,8 +3406,8 @@ class ContentBindings {
     }
     set parentBinding(value) {
         this.#parentBinding = value;
-        this.#loopContext = (value?.loopable === true) ? new LoopContext(this) : undefined;
         this.#component = value?.component ?? this.#component;
+        this.#loopContext = (value?.loopable === true) ? new LoopContext(this) : undefined;
     }
     get loopContext() {
         return this.#loopContext;
@@ -3445,7 +3445,7 @@ class ContentBindings {
         if (typeof component !== "undefined" && typeof parentBinding !== "undefined") {
             utils.raise("component and parentBinding are both defined");
         }
-        this.#component = parentBinding?.component ?? component ?? utils.raise("component is undefined");
+        this.#component = parentBinding?.component ?? component;
         this.parentBinding = parentBinding;
         this.template = template;
     }
@@ -3462,7 +3462,7 @@ class ContentBindings {
      * register bindings to summary
      */
     registerBindingsToSummary() {
-        const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
+        const bindingSummary = this.component.bindingSummary;
         for (let i = 0; i < this.childrenBinding.length; i++) {
             bindingSummary.add(this.childrenBinding[i]);
         }
@@ -3716,7 +3716,7 @@ const COMPONENT_PROPERTY = "$component";
 const ADD_PROCESS_PROPERTY = "$addProcess";
 const funcByName = {
     [GLOBALS_PROPERTY]: ({ handler }) => handler.element.globals, // component.globals,
-    [DEPENDENT_PROPS_PROPERTY]: ({ state }) => Reflect.get(state, DEPENDENT_PROPS_PROPERTY),
+    [DEPENDENT_PROPS_PROPERTY]: ({ state }) => state[DEPENDENT_PROPS_PROPERTY],
     [COMPONENT_PROPERTY]: ({ handler }) => createUserComponent(handler.element),
     [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updator.addProcess(func, stateProxy, [])
 };
@@ -3909,7 +3909,8 @@ function createReadonlyState(component, base) {
 class WritableHandler extends Handler {
     #loopContext;
     #setLoopContext = false;
-    async withLoopContext(loopContext, callback) {
+    async withLoopContext(loopContext, // 省略ではなくundefinedを指定する、callbackを省略させないため
+    callback) {
         if (this.#setLoopContext)
             utils.raise("Writable: already set loopContext");
         this.#setLoopContext = true;

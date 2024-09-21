@@ -59,7 +59,8 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     patternPaths: string[],
     patternElements: string[],
     wildcardIndexes: (number|undefined)[], 
-    pathIndex: number, wildcardIndex: number,
+    pathIndex: number, 
+    wildcardIndex: number,
     receiver: object, 
   ):any {
     if (patternPaths.length > 1) {
@@ -68,25 +69,41 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
   }
 
-  #getBySymbol(target: Object, prop: symbol, receiver: IStateProxy):any {
+  #getBySymbol(
+    target: Object, 
+    prop: symbol, 
+    receiver: IStateProxy
+  ): any {
     return this.#objectBySymbol[prop] ?? 
-      getCallbackMethod(target as Object, receiver, this, prop) ?? 
-      getApiMethod(target as Object, receiver, this, prop) ?? 
+      getCallbackMethod(target, receiver, this, prop) ?? 
+      getApiMethod(target, receiver, this, prop) ?? 
       undefined;
   }
-  #getByString(target: Object, prop: string, receiver: IStateProxy):any {
+
+  #getByString(
+    target: Object, 
+    prop: string, 
+    receiver: IStateProxy
+  ): any {
     return getSpecialProps(target, receiver, this, prop) ?? undefined;
   }
 
   #getterByType:{[key: string]: (...args: any) => any} = {};
 
-  get(target: Object, prop: PropertyKey, receiver: IStateProxy): any {
+  get(
+    target: Object, 
+    prop: PropertyKey, 
+    receiver: IStateProxy
+  ): any {
     return this.#getterByType[typeof prop]?.(target, prop, receiver) ?? super.get(target, prop, receiver);
   }
 
   clearCache(): void {
   }
 
-  async directlyCallback(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void> {
+  async directlyCallback(
+    loopContext: ILoopContext | undefined, 
+    callback: () => Promise<void>
+  ): Promise<void> {
   }
 }

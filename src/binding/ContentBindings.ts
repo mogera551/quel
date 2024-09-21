@@ -78,6 +78,7 @@ class ContentBindings implements IContentBindings {
     if (typeof component !== "undefined" && typeof parentBinding !== "undefined") {
       utils.raise("component and parentBinding are both defined");
     }
+    this.#component = parentBinding?.component ?? component;
     this.parentBinding = parentBinding;
     this.template = template;
   }
