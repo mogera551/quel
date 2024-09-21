@@ -13,8 +13,8 @@ class ContentBindings implements IContentBindings {
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
 
-  get component(): IComponentPartial | undefined {
-    return this.#component;
+  get component(): IComponentPartial {
+    return this.#component ?? utils.raise("component is undefined");
   }
 
   get childrenBinding(): IBinding[] {
@@ -29,8 +29,8 @@ class ContentBindings implements IContentBindings {
   }
   set parentBinding(value: IBinding | undefined) {
     this.#parentBinding = value;
-    this.#loopContext = (value?.loopable === true) ? new LoopContext(this) : undefined;
     this.#component = value?.component ?? this.#component;
+    this.#loopContext = (value?.loopable === true) ? new LoopContext(this) : undefined;
   }
 
   get loopContext(): ILoopContext | undefined {
@@ -78,7 +78,6 @@ class ContentBindings implements IContentBindings {
     if (typeof component !== "undefined" && typeof parentBinding !== "undefined") {
       utils.raise("component and parentBinding are both defined");
     }
-    this.#component = parentBinding?.component ?? component ?? utils.raise("component is undefined");
     this.parentBinding = parentBinding;
     this.template = template;
   }
@@ -98,7 +97,7 @@ class ContentBindings implements IContentBindings {
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
+    const bindingSummary = this.component.bindingSummary;
     for(let i = 0; i < this.childrenBinding.length; i++) {
       bindingSummary.add(this.childrenBinding[i]);
     }
