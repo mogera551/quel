@@ -10,24 +10,29 @@ import { IComponent } from "../component/types";
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 
+type State = { [key:string]: any };
+
+type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler}
+
 const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
-  [DirectryCallApiSymbol]:({state, stateProxy, handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
+  [DirectryCallApiSymbol]:
+  ({state, stateProxy, handler}:CallbackParam) => 
     async (prop:string, loopContext:ILoopContext, event:Event):Promise<void> => 
-      handler.directlyCallback(loopContext, async () => 
-        Reflect.apply(Reflect.get(state, prop), stateProxy, [event, ...(loopContext?.indexes ?? [])]) as void
+      await handler.directlyCallback(loopContext, async (): Promise<void> => 
+        await (state[prop] as Function).apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])
       ),
   [NotifyForDependentPropsApiSymbol]:
-    ({handler}:{state:Object, stateProxy:IStateProxy, handler:IStateHandler}) => 
+    ({handler}:CallbackParam) => 
       (prop:string, indexes:number[]):void => 
         handler.updator.addUpdatedStateProperty(new PropertyAccess(prop, indexes)),
-  [GetDependentPropsApiSymbol]:({handler}:{handler:IStateHandler}) => ():IDependentProps => handler.dependentProps,
-  [ClearCacheApiSymbol]:({handler}:{handler:IStateHandler}) => ():void => handler.clearCache(),
-  [CreateBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (component:IComponent):void => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
-  [FlushBufferApiSymbol]:({stateProxy}:{stateProxy:IStateProxy}) => (buffer:{[key:string]:any}, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
+  [GetDependentPropsApiSymbol]:({handler}:CallbackParam) => ():IDependentProps => handler.dependentProps,
+  [ClearCacheApiSymbol]:({handler}:CallbackParam) => ():void => handler.clearCache(),
+  [CreateBufferApiSymbol]:({stateProxy}:CallbackParam) => (component:IComponent):void => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
+  [FlushBufferApiSymbol]:({stateProxy}:CallbackParam) => (buffer:{[key:string]:any}, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
 export function getApiMethod(
-  state: Object, 
+  state: State, 
   stateProxy: IStateProxy, 
   handler: IStateHandler, 
   prop: symbol

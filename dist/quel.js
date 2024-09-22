@@ -3614,7 +3614,7 @@ function createBindingSummary() {
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 const callFuncBySymbol = {
-    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, loopContext, event) => handler.directlyCallback(loopContext, async () => Reflect.apply(Reflect.get(state, prop), stateProxy, [event, ...(loopContext?.indexes ?? [])])),
+    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, loopContext, event) => handler.directlyCallback(loopContext, async () => await state[prop].apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])),
     [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, indexes) => handler.updator.addUpdatedStateProperty(new PropertyAccess(prop, indexes)),
     [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
     [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),

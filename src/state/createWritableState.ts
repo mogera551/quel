@@ -27,7 +27,7 @@ class WritableHandler extends Handler {
     loopContext: ILoopContext | undefined, 
     callback: () => Promise<void>
   ): Promise<void> {
-    return this.withLoopContext(loopContext, async () => {
+    return await this.withLoopContext(loopContext, async () => {
       // directlyCallの場合、引数で$1,$2,...を渡す
       // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
       // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
