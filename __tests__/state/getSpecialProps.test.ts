@@ -1,10 +1,10 @@
 import "jest";
 import { getSpecialProps, properties } from "../../src/state/getSpecialProps";
-import { createUserComponent } from "../../src/component/UserProxy";
+import { createUserComponent } from "../../src/component/createUserComponent";
 import { IStateHandler, IStateProxy } from "../../src/state/types";
 import { IComponent } from "../../src/component/types";
 
-jest.mock("../../src/component/UserProxy");
+jest.mock("../../src/component/createUserComponent");
 
 describe("getSpecialProps", () => {
   let state: { [key: string]: any };

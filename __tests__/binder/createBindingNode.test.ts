@@ -2,7 +2,7 @@ import "jest";
 import { createBindingNode } from '../../src/binder/createBindingNode';
 import { NodeType } from '../../src/binder/types';
 import { JSDOM } from 'jsdom';
-import { getByUUID } from "../../src/component/Template";
+import { getTemplateByUUID } from "../../src/component/Template";
 
 jest.mock("../../src/component/Template");
 
@@ -72,7 +72,7 @@ describe('createBindingNode', () => {
   it('should handle Template nodes', () => {
     const template = document.createElement('template') as HTMLTemplateElement;
     template.dataset.bind = 'if:someProperty';
-    (getByUUID as jest.Mock).mockReturnValue(template);
+    (getTemplateByUUID as jest.Mock).mockReturnValue(template);
     const node = document.createComment('@@:sample comment');
     parentNode.appendChild(node);
     const nodeType = "Template";

@@ -13,8 +13,8 @@ class ContentBindings implements IContentBindings {
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
 
-  get component(): IComponentPartial {
-    return this.#component ?? utils.raise("component is undefined");
+  get component(): IComponentPartial | undefined {
+    return this.#component;
   }
 
   get childrenBinding(): IBinding[] {
@@ -98,7 +98,7 @@ class ContentBindings implements IContentBindings {
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    const bindingSummary = this.component.bindingSummary;
+    const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
     for(let i = 0; i < this.childrenBinding.length; i++) {
       bindingSummary.add(this.childrenBinding[i]);
     }

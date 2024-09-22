@@ -1,0 +1,36 @@
+import "jest";
+import { createStyleSheet } from '../../src/component/createStyleSheet';
+
+describe('createStyleSheet', () => {
+  beforeEach(() => {
+    // Clear the Map before each test to ensure no state leakage between tests
+    //(global as any).styleSheetByUUID = new Map<string, CSSStyleSheet>();
+  });
+
+  it('should create a new style sheet if uuid is not found', () => {
+    const cssText = 'body { background-color: red; }';
+    const uuid = '1234';
+    const styleSheet = createStyleSheet(cssText, uuid);
+
+    expect(styleSheet).toBeInstanceOf(CSSStyleSheet);
+    expect(styleSheet.cssRules[0].cssText).toBe('body { background-color: red; }');
+
+    const styleSheet2 = createStyleSheet(cssText, uuid);
+    expect(styleSheet2).toBeInstanceOf(CSSStyleSheet);
+    expect(styleSheet2.cssRules[0].cssText).toBe('body { background-color: red; }');
+  });
+
+  it('should return an existing style sheet if uuid is found', () => {
+    const cssText = 'body { background-color: blue; }';
+    const uuid = '5678';
+    const firstStyleSheet = createStyleSheet(cssText, uuid);
+
+    // Attempt to create another style sheet with the same UUID
+    const secondStyleSheet = createStyleSheet('body { background-color: green; }', uuid);
+
+    // The second call should return the first style sheet
+    expect(secondStyleSheet).toBe(firstStyleSheet);
+    expect(secondStyleSheet.cssRules[0].cssText).toBe('body { background-color: blue; }');
+  });
+
+});

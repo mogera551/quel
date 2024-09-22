@@ -1,6 +1,6 @@
 import "jest";
 import { getBindTextByNodeType } from '../../src/binder/getBindTextByNodeType';
-import { getByUUID } from "../../src/component/Template";
+import { getTemplateByUUID } from "../../src/component/Template";
 
 jest.mock("../../src/component/Template");
 
@@ -43,13 +43,13 @@ describe('getBindTextByNodeType', () => {
   test('should return correct text for node type "Template"', () => {
     const template = document.createElement('template') as HTMLTemplateElement;
     template.dataset.bind = 'sample template';
-    (getByUUID as jest.Mock).mockReturnValue(template);
+    (getTemplateByUUID as jest.Mock).mockReturnValue(template);
     const node = document.createComment('@@:sample comment');
     const result = getBindTextByNodeType(node, 'Template');
     expect(result).toBe('sample template');
   });
   test('should return empty text for node type "Template"', () => {
-    (getByUUID as jest.Mock).mockReturnValue(undefined);
+    (getTemplateByUUID as jest.Mock).mockReturnValue(undefined);
     const node = document.createComment('@@:sample comment');
     const result = getBindTextByNodeType(node, 'Template');
     expect(result).toBe('');

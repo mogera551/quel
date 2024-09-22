@@ -806,7 +806,7 @@ function createComponentTemplate(html, componentUuid, customComponentNames) {
     return template;
 }
 
-const styleSheetByUuid = new Map;
+const styleSheetByUUID = new Map;
 // create style sheet by css text
 function _createStyleSheet(cssText) {
     const styleSheet = new CSSStyleSheet();
@@ -815,11 +815,11 @@ function _createStyleSheet(cssText) {
 }
 // get style sheet by uuid, if not found, create style sheet
 function createStyleSheet$1(cssText, uuid) {
-    const styleSheetFromMap = styleSheetByUuid.get(uuid);
+    const styleSheetFromMap = styleSheetByUUID.get(uuid);
     if (styleSheetFromMap)
         return styleSheetFromMap;
     const styleSheet = _createStyleSheet(cssText);
-    styleSheetByUuid.set(uuid, styleSheet);
+    styleSheetByUUID.set(uuid, styleSheet);
     return styleSheet;
 }
 
@@ -909,7 +909,7 @@ const isCustomTag = (tagName) => tagName.indexOf("-") !== -1;
 /**
  * タグ名がshadow rootを持つことが可能か
  */
-function isAttachable(tagName) {
+function isAttachableShadowRoot(tagName) {
     return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
 }
 
@@ -3384,7 +3384,7 @@ class ContentBindings {
     #childNodes;
     #fragment;
     get component() {
-        return this.#component ?? utils.raise("component is undefined");
+        return this.#component;
     }
     get childrenBinding() {
         if (typeof this.#childrenBinding === "undefined") {
@@ -3453,7 +3453,7 @@ class ContentBindings {
      * register bindings to summary
      */
     registerBindingsToSummary() {
-        const bindingSummary = this.component.bindingSummary;
+        const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
         for (let i = 0; i < this.childrenBinding.length; i++) {
             bindingSummary.add(this.childrenBinding[i]);
         }
@@ -4118,7 +4118,7 @@ function CustomComponent(Base) {
             return this.#globals;
         }
         async build() {
-            if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
+            if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
                 const shadowRoot = this.attachShadow({ mode: 'open' });
                 const names = getAdoptedCssNamesFromStyleValue(this);
                 const styleSheets = getStyleSheetListByNames(names);
@@ -4406,11 +4406,11 @@ const filterManagersByConstructor = new Map;
 const generateComponentClass = (componentModule) => {
     const getBaseClass = function (module, baseConstructor) {
         const baseClass = class extends baseConstructor {
-            #module;
+            #module = module;
             get module() {
-                if (typeof this.#module === "undefined") {
-                    this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
-                }
+                //        if (typeof this.#module === "undefined") {
+                //          this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
+                //        }
                 return this.#module;
             }
             get isQuelComponent() {

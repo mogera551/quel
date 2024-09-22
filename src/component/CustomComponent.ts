@@ -1,6 +1,6 @@
 import { utils } from "../utils";
 import { ConnectedCallbackSymbol, DisconnectedCallbackSymbol } from "../state/symbols";
-import { isAttachable } from "./isAttachable";
+import { isAttachableShadowRoot } from "./isAttachableShadowRoot";
 import { getStyleSheetListByNames } from "./getStyleSheetListByNames";
 import { localizeStyleSheet } from "./localizeStyleSheet";
 import { createUpdator } from "../updator/Updator";
@@ -146,7 +146,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     }
   
     async build() {
-      if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
+      if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
         const shadowRoot = this.attachShadow({mode: 'open'});
         const names = getAdoptedCssNamesFromStyleValue(this);
         const styleSheets = getStyleSheetListByNames(names);

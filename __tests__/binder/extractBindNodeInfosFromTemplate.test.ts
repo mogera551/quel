@@ -2,7 +2,7 @@ import "jest";
 import { extractBindNodeInfosFromTemplate } from '../../src/binder/extractBindNodeInfosFromTemplate';
 import { IBindingNode } from '../../src/binder/types';
 import { createBindingNode } from '../../src/binder/createBindingNode';
-import { getByUUID } from "../../src/component/Template";
+import { getTemplateByUUID } from "../../src/component/Template";
 
 jest.mock("../../src/component/Template");
 
@@ -47,7 +47,7 @@ describe('extractBindNodeInfosFromTemplate', () => {
     `;
     const templateIf = document.createElement('template') as HTMLTemplateElement;
     templateIf.dataset.bind = 'name';
-    (getByUUID as jest.Mock).mockReturnValue(templateIf);
+    (getTemplateByUUID as jest.Mock).mockReturnValue(templateIf);
 
     const result = extractBindNodeInfosFromTemplate(template, false);
     expect(result.length).toBe(2);

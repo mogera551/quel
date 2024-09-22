@@ -19,11 +19,11 @@ const filterManagersByConstructor:Map<Function,FilterManagers> = new Map;
 export const generateComponentClass = (componentModule:ComponentModule):typeof HTMLElement => {
   const getBaseClass = function (module:IModule, baseConstructor:typeof HTMLElement):Constructor<HTMLElement & IComponentBase>  {
     const baseClass = class extends baseConstructor implements IComponentBase {
-      #module?:IModule;
+      #module:IModule = module;
       get module():IModule {
-        if (typeof this.#module === "undefined") {
-          this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
-        }
+//        if (typeof this.#module === "undefined") {
+//          this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
+//        }
         return this.#module;
       }
 

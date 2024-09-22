@@ -31,6 +31,6 @@ const isCustomTag = (tagName:string):boolean => tagName.indexOf("-") !== -1;
 /**
  * タグ名がshadow rootを持つことが可能か
  */
-export function isAttachable(tagName:string):boolean {
+export function isAttachableShadowRoot(tagName: string): boolean {
   return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
 }
