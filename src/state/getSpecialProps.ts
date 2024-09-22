@@ -1,4 +1,4 @@
-import { createUserComponent } from "../component/UserProxy";
+import { createUserComponent } from "../component/createUserComponent";
 import { IStateHandler, IStateProxy } from "./types";
 import { IComponent } from "../component/types";
 
