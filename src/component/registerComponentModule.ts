@@ -7,8 +7,8 @@ import { ComponentModule } from "./types";
  * generate component class from componentModule
  */
 export function registerComponentModule(
-  customElementName:string, 
-  componentModule:ComponentModule
+  customElementName: string, 
+  componentModule: ComponentModule
 ): void {
   const customElementKebabName = utils.toKebabCase(customElementName);
   const componentClass = generateComponentClass(componentModule);

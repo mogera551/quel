@@ -1,6 +1,6 @@
 import { utils } from "../utils";
 import { FilterFuncWithOption, EventFilterFuncWithOption } from "../filter/types";
-import { Module } from "./Module";
+import { createModule, Module } from "./createModule";
 import { config } from "../Config";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { CustomComponent } from "./CustomComponent";
@@ -179,7 +179,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
     return baseClass;
   };
 
-  const module:IModule = Object.assign(new Module, componentModule);
+  const module:IModule = createModule(componentModule);
   module.filters = Object.assign({}, componentModule.filters);
   module.config = Object.assign({}, componentModule.moduleConfig);
   module.options = Object.assign({}, componentModule.options);

@@ -2,7 +2,7 @@ import { utils } from "../utils";
 import { config } from "../Config";
 import { createComponentTemplate } from "./Template";
 import { createStyleSheet } from "./createStyleSheet";
-import { IModule, ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions } from "./types";
+import { IModule, ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions, ComponentModule } from "./types";
 
 export class Module implements IModule {
   #uuid:string = utils.createUUID();
@@ -49,5 +49,8 @@ export class Module implements IModule {
     }
     return this.componentModules;
   }
-  
+}
+
+export function createModule(componentModule: ComponentModule): IModule {
+  return Object.assign(new Module, componentModule);
 }

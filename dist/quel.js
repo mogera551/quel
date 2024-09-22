@@ -859,6 +859,9 @@ class Module {
         return this.componentModules;
     }
 }
+function createModule(componentModule) {
+    return Object.assign(new Module, componentModule);
+}
 
 const name$2 = "state";
 const AccessorPropertiesSymbol = Symbol.for(`${name$2}.accessorProperties`);
@@ -4538,7 +4541,7 @@ const generateComponentClass = (componentModule) => {
         moduleByConstructor.set(baseClass, module);
         return baseClass;
     };
-    const module = Object.assign(new Module, componentModule);
+    const module = createModule(componentModule);
     module.filters = Object.assign({}, componentModule.filters);
     module.config = Object.assign({}, componentModule.moduleConfig);
     module.options = Object.assign({}, componentModule.options);
