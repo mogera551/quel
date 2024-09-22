@@ -3614,7 +3614,7 @@ function createBindingSummary() {
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 const callFuncBySymbol = {
-    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, loopContext, event) => handler.directlyCallback(loopContext, async () => await state[prop].apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])),
+    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, loopContext, event) => await handler.directlyCallback(loopContext, async () => await state[prop].apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])),
     [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, indexes) => handler.updator.addUpdatedStateProperty(new PropertyAccess(prop, indexes)),
     [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
     [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
@@ -3928,7 +3928,7 @@ class WritableHandler extends Handler {
         }
     }
     async directlyCallback(loopContext, callback) {
-        return this.withLoopContext(loopContext, async () => {
+        return await this.withLoopContext(loopContext, async () => {
             // directlyCallの場合、引数で$1,$2,...を渡す
             // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
             // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
