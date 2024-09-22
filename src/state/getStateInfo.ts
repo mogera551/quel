@@ -1,7 +1,6 @@
 import { getAccessorProperties } from "./getAccessorProperties";
 import { createDependentProps } from "./createDependentProps";
 import { IBaseState, StatePropertyInfo } from "./types";
-import { create } from "../component/Template";
 
 const DEPENDENT_PROPS = "$dependentProps";
 

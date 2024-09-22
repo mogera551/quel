@@ -7,6 +7,7 @@ import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
 import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers } from "./types";
+import { registerComponentModules } from "./registerComponentModules";
 
 const moduleByConstructor:Map<Function,IModule> = new Map;
 const customElementInfoByConstructor:Map<Function,CustomElementInfo> = new Map;
@@ -197,23 +198,3 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
   return extendedComponentClass;
 }
 
-/**
- * register component class with tag name, call customElements.define
- * generate component class from componentModule
- */
-export function registerComponentModule(customElementName:string, componentModule:ComponentModule) {
-  const customElementKebabName = utils.toKebabCase(customElementName);
-  const componentClass = generateComponentClass(componentModule);
-  const extendsTag = componentModule.moduleConfig?.extends ?? componentModule.options?.extends;
-  if (typeof extendsTag === "undefined") {
-    customElements.define(customElementKebabName, componentClass);
-  } else {
-    customElements.define(customElementKebabName, componentClass, { extends:extendsTag });
-  }
-}
-
-export function registerComponentModules(componentModules:{[key:string]:ComponentModule}) {
-  for(const [customElementName, userComponentModule] of Object.entries(componentModules)) {
-    registerComponentModule(customElementName, userComponentModule);
-  }
-}

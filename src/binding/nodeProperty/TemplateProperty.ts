@@ -1,7 +1,7 @@
 import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
 import { NodeProperty } from "./NodeProperty";
-import * as Template from "../../component/Template";
+import { getTemplateByUUID } from "../../component/Template";
 import { IBinding } from "../types";
 
 const PREFIX = "@@|";
@@ -14,7 +14,7 @@ export class TemplateProperty extends NodeProperty {
   #template?: HTMLTemplateElement;
   get template(): HTMLTemplateElement {
     if (typeof this.#template === "undefined") {
-      this.#template = Template.getByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
+      this.#template = getTemplateByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
     }
     return this.#template;
   }

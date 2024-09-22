@@ -1,7 +1,7 @@
 import { utils } from "../utils";
 import { config } from "../Config";
-import * as Template from "./Template";
-import * as StyleSheet from "./StyleSheet";
+import { createComponentTemplate } from "./Template";
+import { createStyleSheet } from "./createStyleSheet";
 import { IModule, ComponentModuleConfig, ComponentModuleFilters, ComponentModuleOptions } from "./types";
 
 export class Module implements IModule {
@@ -16,11 +16,11 @@ export class Module implements IModule {
 
   get template(): HTMLTemplateElement {
     const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
-    return Template.create(this.html, this.uuid, customComponentNames);
+    return createComponentTemplate(this.html, this.uuid, customComponentNames);
   }
 
   get styleSheet():CSSStyleSheet | undefined {
-    return this.css ? StyleSheet.create(this.css, this.uuid) : undefined;
+    return this.css ? createStyleSheet(this.css, this.uuid) : undefined;
   }
 
   State:typeof Object = class {} as typeof Object;

@@ -1,11 +1,11 @@
 import { utils } from "../utils";
 import { ConnectedCallbackSymbol, DisconnectedCallbackSymbol } from "../state/symbols";
-import { isAttachable } from "./AttachShadow";
-import { getStyleSheetList, getNamesFromComponent } from "./AdoptedCss";
-import { localizeStyleSheet } from "./StyleSheet";
+import { isAttachable } from "./isAttachable";
+import { getStyleSheetListByNames } from "./getStyleSheetListByNames";
+import { localizeStyleSheet } from "./localizeStyleSheet";
 import { createUpdator } from "../updator/Updator";
-import { createProps } from "./Props";
-import { createGlobals } from "./Globals";
+import { createProps } from "./createProps";
+import { createGlobals } from "./createGlobals";
 import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
 import { IContentBindings, IBindingSummary } from "../binding/types";
@@ -14,7 +14,7 @@ import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
-import { updateNodes } from "../updator/updateNodes";
+import { getAdoptedCssNamesFromStyleValue } from "./getAdoptedCssNamesFromStyleValue";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 
@@ -148,8 +148,8 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     async build() {
       if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
         const shadowRoot = this.attachShadow({mode: 'open'});
-        const names = getNamesFromComponent(this);
-        const styleSheets = getStyleSheetList(names);
+        const names = getAdoptedCssNamesFromStyleValue(this);
+        const styleSheets = getStyleSheetListByNames(names);
         if (typeof this.styleSheet !== "undefined" ) {
           styleSheets.push(this.styleSheet);
         }

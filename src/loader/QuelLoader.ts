@@ -1,9 +1,9 @@
 import { ComponentModule } from "../component/types";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "../filter/types";
 import { Loader } from "./Loader.js";
-import { registerComponentModule } from "../component/Component";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { Registrar } from "./types";
+import { registerComponentModule } from "../component/registerComponentModule";
 
 const PREFIX = "*filter-";
 

@@ -310,208 +310,6 @@ class Loader {
     }
 }
 
-const DATASET_BIND_PROPERTY$1 = "data-bind";
-const DATASET_UUID_PROPERTY = "data-uuid";
-const templateByUUID = {};
-/**
- * HTMLの変換
- * {{loop:}}{{if:}}{{else:}}を<template>へ置換
- * {{end:}}を</template>へ置換
- * {{...}}を<!--@@:...-->へ置換
- * <template>を<!--@@|...-->へ置換
- */
-function replaceTag(html, componentUuid, customComponentNames) {
-    const stack = [];
-    const replacedHtml = html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
-        expr = expr.trim();
-        if (expr.startsWith("loop:") || expr.startsWith("if:")) {
-            stack.push(expr);
-            return `<template data-bind="${expr}">`;
-        }
-        else if (expr.startsWith("else:")) {
-            const saveExpr = stack[stack.length - 1];
-            if (typeof saveExpr === "undefined" || !saveExpr.startsWith("if:")) {
-                utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
-            }
-            return `</template><template data-bind="${saveExpr}|not">`;
-        }
-        else if (expr.startsWith("end:")) {
-            if (typeof stack.pop() === "undefined") {
-                utils.raise(`Template: end: is not matched with loop: or if:, but {{ ${expr} }} `);
-            }
-            return `</template>`;
-        }
-        else if (expr.startsWith("endif:")) {
-            const expr = stack.pop();
-            if (typeof expr === "undefined" || !expr.startsWith("if:")) {
-                utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
-            }
-            return `</template>`;
-        }
-        else if (expr.startsWith("endloop:")) {
-            const expr = stack.pop();
-            if (typeof expr === "undefined" || !expr.startsWith("loop:")) {
-                utils.raise(`Template: endloop: is not matched with loop:, but {{ ${expr} }} `);
-            }
-            return `</template>`;
-        }
-        else {
-            return `<!--@@:${expr}-->`;
-        }
-    });
-    if (stack.length > 0) {
-        utils.raise(`Template: loop: or if: is not matched with endloop: or endif:, but {{ ${stack[stack.length - 1]} }} `);
-    }
-    const root = document.createElement("template"); // 仮のルート
-    root.innerHTML = replacedHtml;
-    // カスタムコンポーネントの名前を変更する
-    const customComponentKebabNames = customComponentNames.map(customComponentName => utils.toKebabCase(customComponentName));
-    const changeCustomElementName = (element) => {
-        for (const customComponentKebabName of customComponentKebabNames) {
-            const replaceElements = Array.from(element.querySelectorAll(customComponentKebabName));
-            for (const oldElement of replaceElements) {
-                const newElement = document.createElement(`${customComponentKebabName}-${componentUuid}`);
-                for (let i = 0; i < oldElement.attributes.length; i++) {
-                    const attr = oldElement.attributes[i];
-                    newElement.setAttribute(attr.name, attr.value);
-                }
-                newElement.setAttribute("data-orig-tag-name", customComponentKebabName);
-                oldElement.parentNode?.replaceChild(newElement, oldElement);
-            }
-            const changeIsElements = Array.from(element.querySelectorAll(`[is="${customComponentKebabName}"]`));
-            for (const oldElement of changeIsElements) {
-                const newElement = document.createElement(oldElement.tagName, { is: `${customComponentKebabName}-${componentUuid}` });
-                for (let i = 0; i < oldElement.attributes.length; i++) {
-                    const attr = oldElement.attributes[i];
-                    if (attr.name === "is")
-                        continue;
-                    newElement.setAttribute(attr.name, attr.value);
-                }
-                newElement.setAttribute("data-orig-is", customComponentKebabName);
-                oldElement.parentNode?.replaceChild(newElement, oldElement);
-            }
-        }
-        const templates = Array.from(element.querySelectorAll("template"));
-        for (const template of templates) {
-            changeCustomElementName(template.content);
-        }
-    };
-    if (customComponentKebabNames.length > 0) {
-        changeCustomElementName(root.content);
-    }
-    // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
-    const replaceTemplate = (element) => {
-        let template;
-        while (template = element.querySelector("template")) {
-            const uuid = utils.createUUID();
-            const comment = document.createComment(`@@|${uuid}`);
-            template.parentNode?.replaceChild(comment, template);
-            if (template.constructor !== HTMLTemplateElement) {
-                // SVGタグ内のtemplateタグを想定
-                const newTemplate = document.createElement("template");
-                for (let childNode of Array.from(template.childNodes)) {
-                    newTemplate.content.appendChild(childNode);
-                }
-                const bindText = template.getAttribute(DATASET_BIND_PROPERTY$1);
-                if (bindText) {
-                    newTemplate.setAttribute(DATASET_BIND_PROPERTY$1, bindText);
-                }
-                template = newTemplate;
-            }
-            template.setAttribute(DATASET_UUID_PROPERTY, uuid);
-            replaceTemplate(template.content);
-            templateByUUID[uuid] = template;
-        }
-    };
-    replaceTemplate(root.content);
-    return root.innerHTML;
-}
-/**
- * UUIDからHTMLTemplateElementオブジェクトを取得(ループや分岐条件のブロック)
- */
-function getByUUID(uuid) {
-    return templateByUUID[uuid];
-}
-/**
- * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
- */
-function create$1(html, componentUuid, customComponentNames) {
-    const template = document.createElement("template");
-    template.innerHTML = replaceTag(html, componentUuid, customComponentNames);
-    template.setAttribute(DATASET_UUID_PROPERTY, componentUuid);
-    templateByUUID[componentUuid] = template;
-    return template;
-}
-
-const styleSheetByUuid = new Map;
-// create style sheet by css text
-function createStyleSheet$1(cssText) {
-    const styleSheet = new CSSStyleSheet();
-    styleSheet.replaceSync(cssText);
-    return styleSheet;
-}
-// get style sheet by uuid, if not found, create style sheet
-function create(cssText, uuid) {
-    const styleSheetFromMap = styleSheetByUuid.get(uuid);
-    if (styleSheetFromMap)
-        return styleSheetFromMap;
-    const styleSheet = createStyleSheet$1(cssText);
-    styleSheetByUuid.set(uuid, styleSheet);
-    return styleSheet;
-}
-function localizeStyleSheet(styleSheet, localSelector) {
-    for (let i = 0; i < styleSheet.cssRules.length; i++) {
-        const rule = styleSheet.cssRules[i];
-        if (rule instanceof CSSStyleRule) {
-            const newSelectorText = rule.selectorText.split(",").map(selector => {
-                if (selector.trim().startsWith(":host")) {
-                    return selector.replace(":host", localSelector);
-                }
-                return `${localSelector} ${selector}`;
-            }).join(",");
-            rule.selectorText = newSelectorText;
-        }
-    }
-    return styleSheet;
-}
-
-class Module {
-    #uuid = utils.createUUID();
-    get uuid() {
-        return this.#uuid;
-    }
-    html = "";
-    css;
-    get template() {
-        const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
-        return create$1(this.html, this.uuid, customComponentNames);
-    }
-    get styleSheet() {
-        return this.css ? create(this.css, this.uuid) : undefined;
-    }
-    State = class {
-    };
-    config = {};
-    moduleConfig = {};
-    options = {};
-    filters = {};
-    componentModules;
-    get componentModulesForRegister() {
-        if (this.config.useLocalTagName ?? config.useLocalTagName) {
-            // case of useLocalName with true,
-            // subcompnents tag name convert to the name with uuid
-            if (typeof this.componentModules !== "undefined") {
-                const componentModules = {};
-                for (const [customElementName, componentModule] of Object.entries(this.componentModules)) {
-                    componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
-                }
-                return componentModules;
-            }
-        }
-        return this.componentModules;
-    }
-}
-
 const objectFilterGroup = {
     objectClass: Object,
     prefix: "object",
@@ -875,6 +673,193 @@ class EventFilterManager extends FilterManager {
     }
 }
 
+const DATASET_BIND_PROPERTY$1 = "data-bind";
+const DATASET_UUID_PROPERTY = "data-uuid";
+const templateByUUID = {};
+/**
+ * HTMLの変換
+ * {{loop:}}{{if:}}{{else:}}を<template>へ置換
+ * {{end:}}を</template>へ置換
+ * {{...}}を<!--@@:...-->へ置換
+ * <template>を<!--@@|...-->へ置換
+ */
+function replaceTag(html, componentUuid, customComponentNames) {
+    const stack = [];
+    const replacedHtml = html.replaceAll(/\{\{([^\}]+)\}\}/g, (match, expr) => {
+        expr = expr.trim();
+        if (expr.startsWith("loop:") || expr.startsWith("if:")) {
+            stack.push(expr);
+            return `<template data-bind="${expr}">`;
+        }
+        else if (expr.startsWith("else:")) {
+            const saveExpr = stack[stack.length - 1];
+            if (typeof saveExpr === "undefined" || !saveExpr.startsWith("if:")) {
+                utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
+            }
+            return `</template><template data-bind="${saveExpr}|not">`;
+        }
+        else if (expr.startsWith("end:")) {
+            if (typeof stack.pop() === "undefined") {
+                utils.raise(`Template: end: is not matched with loop: or if:, but {{ ${expr} }} `);
+            }
+            return `</template>`;
+        }
+        else if (expr.startsWith("endif:")) {
+            const expr = stack.pop();
+            if (typeof expr === "undefined" || !expr.startsWith("if:")) {
+                utils.raise(`Template: endif: is not matched with if:, but {{ ${expr} }} `);
+            }
+            return `</template>`;
+        }
+        else if (expr.startsWith("endloop:")) {
+            const expr = stack.pop();
+            if (typeof expr === "undefined" || !expr.startsWith("loop:")) {
+                utils.raise(`Template: endloop: is not matched with loop:, but {{ ${expr} }} `);
+            }
+            return `</template>`;
+        }
+        else {
+            return `<!--@@:${expr}-->`;
+        }
+    });
+    if (stack.length > 0) {
+        utils.raise(`Template: loop: or if: is not matched with endloop: or endif:, but {{ ${stack[stack.length - 1]} }} `);
+    }
+    const root = document.createElement("template"); // 仮のルート
+    root.innerHTML = replacedHtml;
+    // カスタムコンポーネントの名前を変更する
+    const customComponentKebabNames = customComponentNames.map(customComponentName => utils.toKebabCase(customComponentName));
+    const changeCustomElementName = (element) => {
+        for (const customComponentKebabName of customComponentKebabNames) {
+            const replaceElements = Array.from(element.querySelectorAll(customComponentKebabName));
+            for (const oldElement of replaceElements) {
+                const newElement = document.createElement(`${customComponentKebabName}-${componentUuid}`);
+                for (let i = 0; i < oldElement.attributes.length; i++) {
+                    const attr = oldElement.attributes[i];
+                    newElement.setAttribute(attr.name, attr.value);
+                }
+                newElement.setAttribute("data-orig-tag-name", customComponentKebabName);
+                oldElement.parentNode?.replaceChild(newElement, oldElement);
+            }
+            const changeIsElements = Array.from(element.querySelectorAll(`[is="${customComponentKebabName}"]`));
+            for (const oldElement of changeIsElements) {
+                const newElement = document.createElement(oldElement.tagName, { is: `${customComponentKebabName}-${componentUuid}` });
+                for (let i = 0; i < oldElement.attributes.length; i++) {
+                    const attr = oldElement.attributes[i];
+                    if (attr.name === "is")
+                        continue;
+                    newElement.setAttribute(attr.name, attr.value);
+                }
+                newElement.setAttribute("data-orig-is", customComponentKebabName);
+                oldElement.parentNode?.replaceChild(newElement, oldElement);
+            }
+        }
+        const templates = Array.from(element.querySelectorAll("template"));
+        for (const template of templates) {
+            changeCustomElementName(template.content);
+        }
+    };
+    if (customComponentKebabNames.length > 0) {
+        changeCustomElementName(root.content);
+    }
+    // templateタグを一元管理(コメント<!--@@|...-->へ差し替える)
+    const replaceTemplate = (element) => {
+        let template;
+        while (template = element.querySelector("template")) {
+            const uuid = utils.createUUID();
+            const comment = document.createComment(`@@|${uuid}`);
+            template.parentNode?.replaceChild(comment, template);
+            if (template.constructor !== HTMLTemplateElement) {
+                // SVGタグ内のtemplateタグを想定
+                const newTemplate = document.createElement("template");
+                for (let childNode of Array.from(template.childNodes)) {
+                    newTemplate.content.appendChild(childNode);
+                }
+                const bindText = template.getAttribute(DATASET_BIND_PROPERTY$1);
+                if (bindText) {
+                    newTemplate.setAttribute(DATASET_BIND_PROPERTY$1, bindText);
+                }
+                template = newTemplate;
+            }
+            template.setAttribute(DATASET_UUID_PROPERTY, uuid);
+            replaceTemplate(template.content);
+            templateByUUID[uuid] = template;
+        }
+    };
+    replaceTemplate(root.content);
+    return root.innerHTML;
+}
+/**
+ * UUIDからHTMLTemplateElementオブジェクトを取得(ループや分岐条件のブロック)
+ */
+function getTemplateByUUID(uuid) {
+    return templateByUUID[uuid];
+}
+/**
+ * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
+ */
+function createComponentTemplate(html, componentUuid, customComponentNames) {
+    const template = document.createElement("template");
+    template.innerHTML = replaceTag(html, componentUuid, customComponentNames);
+    template.setAttribute(DATASET_UUID_PROPERTY, componentUuid);
+    templateByUUID[componentUuid] = template;
+    return template;
+}
+
+const styleSheetByUuid = new Map;
+// create style sheet by css text
+function _createStyleSheet(cssText) {
+    const styleSheet = new CSSStyleSheet();
+    styleSheet.replaceSync(cssText);
+    return styleSheet;
+}
+// get style sheet by uuid, if not found, create style sheet
+function createStyleSheet$1(cssText, uuid) {
+    const styleSheetFromMap = styleSheetByUuid.get(uuid);
+    if (styleSheetFromMap)
+        return styleSheetFromMap;
+    const styleSheet = _createStyleSheet(cssText);
+    styleSheetByUuid.set(uuid, styleSheet);
+    return styleSheet;
+}
+
+class Module {
+    #uuid = utils.createUUID();
+    get uuid() {
+        return this.#uuid;
+    }
+    html = "";
+    css;
+    get template() {
+        const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
+        return createComponentTemplate(this.html, this.uuid, customComponentNames);
+    }
+    get styleSheet() {
+        return this.css ? createStyleSheet$1(this.css, this.uuid) : undefined;
+    }
+    State = class {
+    };
+    config = {};
+    moduleConfig = {};
+    options = {};
+    filters = {};
+    componentModules;
+    get componentModulesForRegister() {
+        if (this.config.useLocalTagName ?? config.useLocalTagName) {
+            // case of useLocalName with true,
+            // subcompnents tag name convert to the name with uuid
+            if (typeof this.componentModules !== "undefined") {
+                const componentModules = {};
+                for (const [customElementName, componentModule] of Object.entries(this.componentModules)) {
+                    componentModules[`${utils.toKebabCase(customElementName)}-${this.uuid}`] = componentModule;
+                }
+                return componentModules;
+            }
+        }
+        return this.componentModules;
+    }
+}
+
 const name$2 = "state";
 const AccessorPropertiesSymbol = Symbol.for(`${name$2}.accessorProperties`);
 const DependenciesSymbol = Symbol.for(`${name$2}.dependencies`);
@@ -925,7 +910,6 @@ function isAttachable(tagName) {
     return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
 }
 
-const ADOPTED_VAR_NAME = '--adopted-css';
 const styleSheetByName = new Map;
 /**
  * copy style rules to adopted style sheet
@@ -961,11 +945,6 @@ function createStyleSheet(name) {
     styleSheetByName.set(name, styleSheet);
     return styleSheet;
 }
-const trim$1 = (name) => name.trim();
-/**
- * exclude empty name
- */
-const excludeEmptyName = (name) => name.length > 0;
 /**
  *
  * @param {string} name
@@ -979,16 +958,25 @@ const excludeEmptySheet = (styleSheet) => typeof styleSheet !== "undefined";
 /**
  * get adopted css list by names
  */
-function getStyleSheetList(names) {
+function getStyleSheetListByNames(names) {
     // find adopted style sheet from map, if not found, create adopted style sheet
     return names.map(getStyleSheet).filter(excludeEmptySheet);
 }
-/**
- * get name list from component style variable '--adopted-css'
- */
-function getNamesFromComponent(component) {
-    // get adopted css names from component style variable '--adopted-css'
-    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim$1).filter(excludeEmptyName) ?? [];
+
+function localizeStyleSheet(styleSheet, localSelector) {
+    for (let i = 0; i < styleSheet.cssRules.length; i++) {
+        const rule = styleSheet.cssRules[i];
+        if (rule instanceof CSSStyleRule) {
+            const newSelectorText = rule.selectorText.split(",").map(selector => {
+                if (selector.trim().startsWith(":host")) {
+                    return selector.replace(":host", localSelector);
+                }
+                return `${localSelector} ${selector}`;
+            }).join(",");
+            rule.selectorText = newSelectorText;
+        }
+    }
+    return styleSheet;
 }
 
 const execProcess = async (process) => Reflect.apply(process.target, process.thisArgument, process.argumentList);
@@ -2032,7 +2020,7 @@ function canNodeAcceptInput(node, nodeType) {
 
 const SAMENAME = "@";
 const DEFAULT = "$";
-const trim = (s) => s.trim();
+const trim$1 = (s) => s.trim();
 const has = (s) => s.length > 0; // check length
 const re = new RegExp(/^#(.*)#$/);
 const decode = (s) => {
@@ -2044,7 +2032,7 @@ const decode = (s) => {
  * "eq,100|falsey" ---> [Filter(eq, [100]), Filter(falsey)]
  */
 const parseFilter = (text) => {
-    const [name, ...options] = text.split(",").map(trim);
+    const [name, ...options] = text.split(",").map(trim$1);
     return { name, options: options.map(decode) };
 };
 /**
@@ -2052,7 +2040,7 @@ const parseFilter = (text) => {
  * "value|eq,100|falsey" ---> ["value", Filter[]]
  */
 const parseProperty = (text) => {
-    const [property, ...filterTexts] = text.split("|").map(trim);
+    const [property, ...filterTexts] = text.split("|").map(trim$1);
     return { property, filters: filterTexts.map(parseFilter) };
 };
 /**
@@ -2060,7 +2048,7 @@ const parseProperty = (text) => {
  * "textContent:value|eq,100|falsey" ---> ["textContent", "value", Filter[eq, falsey]]
  */
 const parseExpression = (expr, defaultName) => {
-    const [nodePropertyText, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim)).splice(-2);
+    const [nodePropertyText, statePropertyText] = [defaultName].concat(...expr.split(":").map(trim$1)).splice(-2);
     const { property: nodeProperty, filters: inputFilters } = parseProperty(nodePropertyText);
     const { property: stateProperty, filters: outputFilters } = parseProperty(statePropertyText);
     return { nodeProperty, stateProperty, inputFilters, outputFilters };
@@ -2069,7 +2057,7 @@ const parseExpression = (expr, defaultName) => {
  * parse bind text and return BindText[]
  */
 const parseExpressions = (text, defaultName) => {
-    return text.split(";").map(trim).filter(has).map(s => {
+    return text.split(";").map(trim$1).filter(has).map(s => {
         let { nodeProperty, stateProperty, inputFilters, outputFilters } = parseExpression(s, DEFAULT);
         stateProperty = stateProperty === SAMENAME ? nodeProperty : stateProperty;
         nodeProperty = nodeProperty === DEFAULT ? defaultName : nodeProperty;
@@ -2199,7 +2187,7 @@ class TemplateProperty extends NodeProperty {
     #template;
     get template() {
         if (typeof this.#template === "undefined") {
-            this.#template = getByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
+            this.#template = getTemplateByUUID(this.uuid) ?? utils.raise(`TemplateProperty: invalid uuid ${this.uuid}`);
         }
         return this.#template;
     }
@@ -3191,7 +3179,7 @@ const getBindTextFromSVGElement = (node) => node.dataset[BIND_DATASET$1] ?? "";
 /** get text to bind from textContent property */
 const getBindTextFromText = (node) => node.textContent?.slice(3) ?? "";
 /** get text to bind from template's data-bind attribute, looking up by textContent property */
-const getBindTextFromTemplate = (node) => getByUUID(node.textContent?.slice(3) ?? "")?.dataset[BIND_DATASET$1] ?? "";
+const getBindTextFromTemplate = (node) => getTemplateByUUID(node.textContent?.slice(3) ?? "")?.dataset[BIND_DATASET$1] ?? "";
 const bindTextByNodeType = {
     HTMLElement: getBindTextFromHTMLElement,
     SVGElement: getBindTextFromSVGElement,
@@ -3994,6 +3982,23 @@ function createStates(component, base, readOnlyState = createReadonlyState(compo
     return new States(base, readOnlyState, writableState);
 }
 
+const ADOPTED_VAR_NAME = '--adopted-css';
+/**
+ * trim
+ */
+const trim = (name) => name.trim();
+/**
+ * exclude empty name
+ */
+const excludeEmptyName = (name) => name.length > 0;
+/**
+ * get name list from component style variable '--adopted-css'
+ */
+function getAdoptedCssNamesFromStyleValue(component) {
+    // get adopted css names from component style variable '--adopted-css'
+    return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
+}
+
 const pseudoComponentByNode = new Map;
 const getParentComponent = (_node) => {
     let node = _node;
@@ -4112,8 +4117,8 @@ function CustomComponent(Base) {
         async build() {
             if (isAttachable(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
                 const shadowRoot = this.attachShadow({ mode: 'open' });
-                const names = getNamesFromComponent(this);
-                const styleSheets = getStyleSheetList(names);
+                const names = getAdoptedCssNamesFromStyleValue(this);
+                const styleSheets = getStyleSheetListByNames(names);
                 if (typeof this.styleSheet !== "undefined") {
                     styleSheets.push(this.styleSheet);
                 }
@@ -4383,6 +4388,12 @@ function PopoverComponent(Base) {
     };
 }
 
+function registerComponentModules(componentModules) {
+    for (const [customElementName, userComponentModule] of Object.entries(componentModules)) {
+        registerComponentModule(customElementName, userComponentModule);
+    }
+}
+
 const moduleByConstructor = new Map;
 const customElementInfoByConstructor = new Map;
 const filterManagersByConstructor = new Map;
@@ -4541,6 +4552,7 @@ const generateComponentClass = (componentModule) => {
     registerComponentModules(module.componentModulesForRegister ?? {});
     return extendedComponentClass;
 };
+
 /**
  * register component class with tag name, call customElements.define
  * generate component class from componentModule
@@ -4554,11 +4566,6 @@ function registerComponentModule(customElementName, componentModule) {
     }
     else {
         customElements.define(customElementKebabName, componentClass, { extends: extendsTag });
-    }
-}
-function registerComponentModules(componentModules) {
-    for (const [customElementName, userComponentModule] of Object.entries(componentModules)) {
-        registerComponentModule(customElementName, userComponentModule);
     }
 }
 
@@ -4644,14 +4651,21 @@ async function loadSingleFileComponent(path) {
     const htmlModule = { html: fromComment(template.innerHTML).trim() };
     return Object.assign({}, scriptModule, htmlModule, cssModule);
 }
+
 async function registerSingleFileComponent(customElementName, pathToSingleFileComponent) {
     const componentModule = await loadSingleFileComponent(pathToSingleFileComponent);
     registerComponentModule(customElementName, componentModule);
 }
+
 async function registerSingleFileComponents(pathToSingleFileComponentByCustomElementName) {
     for (const [customElementName, pathToSingleFileComponent] of Object.entries(pathToSingleFileComponentByCustomElementName ?? {})) {
         registerSingleFileComponent(customElementName, pathToSingleFileComponent);
     }
+}
+
+async function generateSingleFileComponentClass(pathToSingleFileComponent) {
+    const componentModule = await loadSingleFileComponent(pathToSingleFileComponent);
+    return generateComponentClass(componentModule);
 }
 
 if (typeof Map.groupBy === 'undefined') {
@@ -4716,4 +4730,4 @@ function registerGlobal(data) {
     Object.assign(GlobalData.data, data);
 }
 
-export { bootFromImportMeta, config, generateComponentClass, getCustomTagFromImportMeta, importCssFromImportMeta, importHtmlFromImportMeta, loadSingleFileComponent, loader, registerComponentModules, registerFilters, registerGlobal, registerSingleFileComponents };
+export { bootFromImportMeta, config, generateComponentClass, generateSingleFileComponentClass, getCustomTagFromImportMeta, importCssFromImportMeta, importHtmlFromImportMeta, loadSingleFileComponent, loader, registerComponentModules, registerFilters, registerGlobal, registerSingleFileComponents };

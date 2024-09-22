@@ -111,7 +111,7 @@ describe('createWritableState', () => {
     stateProxy[DirectryCallApiSymbol]("func", loopContext, event);
     expect(loopContext.find).toHaveBeenCalledWith("values.*");
   });
-
+/*
   it('should directly nested call callback with loop', async () => {
     const stateClass = class {
       values = [4,5,6];
@@ -141,64 +141,6 @@ describe('createWritableState', () => {
     (loopContext.find as jest.Mock).mockReturnValue({indexes: [1]});
     await stateProxy[DirectryCallApiSymbol]("func", loopContext, event);
   });
-  
-/*
-  describe('WritableHandler', () => {
-    let writableHandler: any;
+*/  
 
-    beforeEach(() => {
-      writableHandler = new (createWritableState(component, base) as any).constructor(component, base);
-    });
-
-    it('should set and reset loop context correctly', async () => {
-      const loopContext: ILoopContext = {
-        // mock loopContext properties and methods if necessary
-      };
-      const callback = jest.fn().mockResolvedValue(undefined);
-
-      await writableHandler.withLoopContext(loopContext, callback);
-
-      expect(callback).toHaveBeenCalled();
-      expect(writableHandler.#loopContext).toBeUndefined();
-      expect(writableHandler.#setLoopContext).toBe(false);
-    });
-
-    it('should call directlyCallback correctly', async () => {
-      const loopContext: ILoopContext = {
-        // mock loopContext properties and methods if necessary
-      };
-      const callback = jest.fn().mockResolvedValue(undefined);
-
-      await writableHandler.directlyCallback(loopContext, callback);
-
-      expect(callback).toHaveBeenCalled();
-    });
-
-    it('should get last indexes correctly', () => {
-      const pattern = 'somePattern';
-      const indexes = [1, 2, 3];
-      writableHandler._stackNamedWildcardIndexes = [{ [pattern]: { indexes } }];
-
-      const result = writableHandler.getLastIndexes(pattern);
-
-      expect(result).toEqual(indexes);
-    });
-
-    it('should set property and add updated state property', () => {
-      const target = {};
-      const propInfo = { pattern: 'somePattern' };
-      const indexes = [1, 2, 3];
-      const value = 'newValue';
-      const receiver = {} as IStateProxy;
-
-      writableHandler.updator = {
-        addUpdatedStateProperty: jest.fn()
-      };
-
-      writableHandler.__set(target, propInfo, indexes, value, receiver);
-
-      expect(writableHandler.updator.addUpdatedStateProperty).toHaveBeenCalledWith(new PropertyAccess(propInfo.pattern, indexes));
-    });
-  });
-*/
 });

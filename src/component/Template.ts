@@ -118,14 +118,18 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
 /**
  * UUIDからHTMLTemplateElementオブジェクトを取得(ループや分岐条件のブロック)
  */
-export function getByUUID(uuid:string):(HTMLTemplateElement|undefined) {
+export function getTemplateByUUID(uuid:string):(HTMLTemplateElement|undefined) {
   return templateByUUID[uuid];
 }
 
 /**
  * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
  */
-export function create(html:string, componentUuid:string, customComponentNames:string[]):HTMLTemplateElement {
+export function createComponentTemplate(
+  html: string, 
+  componentUuid: string, 
+  customComponentNames: string[]
+): HTMLTemplateElement {
   const template = document.createElement("template");
   template.innerHTML = replaceTag(html, componentUuid, customComponentNames);
   template.setAttribute(DATASET_UUID_PROPERTY, componentUuid);

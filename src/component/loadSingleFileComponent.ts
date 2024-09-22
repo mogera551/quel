@@ -1,6 +1,7 @@
-import { generateComponentClass, registerComponentModule } from "./Component";
+import { generateComponentClass } from "./generateComponentClass";
 import { ImportMeta_ } from "../@types/importMeta";
 import { ComponentModule } from "./types";
+import { registerComponentModule } from "./registerComponentModule";
 
 function importMetaResolve(importMeta:ImportMeta_, path:string):string {
   return importMeta.resolve(path);
@@ -44,20 +45,4 @@ export async function loadSingleFileComponent(path: string): Promise<ComponentMo
   const htmlModule = { html: fromComment(template.innerHTML).trim() };
 
   return Object.assign({}, scriptModule, htmlModule, cssModule);
-}
-
-export async function registerSingleFileComponent(customElementName:string, pathToSingleFileComponent:string) {
-  const componentModule = await loadSingleFileComponent(pathToSingleFileComponent);
-  registerComponentModule(customElementName, componentModule);
-}
-
-export async function registerSingleFileComponents(pathToSingleFileComponentByCustomElementName:{[key:string]:string}) {
-  for(const [customElementName, pathToSingleFileComponent] of Object.entries(pathToSingleFileComponentByCustomElementName ?? {})) {
-    registerSingleFileComponent(customElementName, pathToSingleFileComponent);
-  }
-}
-
-export async function generateSingleFileComponentClass(pathToSingleFileComponent:string) {
-  const componentModule = await loadSingleFileComponent(pathToSingleFileComponent);
-  return generateComponentClass(componentModule);
 }

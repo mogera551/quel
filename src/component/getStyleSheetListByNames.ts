@@ -1,4 +1,3 @@
-const ADOPTED_VAR_NAME = '--adopted-css';
 const styleSheetByName:Map<string,CSSStyleSheet> = new Map;
 
 /**
@@ -35,12 +34,7 @@ function createStyleSheet(name:string):CSSStyleSheet|undefined {
   return styleSheet;
 }
 
-const trim = (name:string):string => name.trim();
-
-/**
- * exclude empty name
- */
-const excludeEmptyName = (name:string):boolean => name.length > 0;
+const trim = (name: string): string => name.trim();
 
 /**
  * 
@@ -57,15 +51,8 @@ const excludeEmptySheet = (styleSheet:CSSStyleSheet|undefined) => typeof styleSh
 /**
  * get adopted css list by names
  */
-export function getStyleSheetList(names:string[]):CSSStyleSheet[] {
+export function getStyleSheetListByNames(names: string[]): CSSStyleSheet[] {
     // find adopted style sheet from map, if not found, create adopted style sheet
     return names.map(getStyleSheet).filter(excludeEmptySheet);
 }
 
-/**
- * get name list from component style variable '--adopted-css'
- */
-export function getNamesFromComponent(component:Element):string[] {
-  // get adopted css names from component style variable '--adopted-css'
-  return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
-}

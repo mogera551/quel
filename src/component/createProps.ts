@@ -212,6 +212,6 @@ class Handler implements ProxyHandler<IProps> {
   }
 }
 
-export function createProps(component:IComponentForProps):IProps {
+export function createProps(component: IComponentForProps): IProps {
   return new Proxy<Object>({}, new Handler(component)) as IProps;
 }
