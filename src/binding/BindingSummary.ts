@@ -33,6 +33,8 @@ class BindingSummary implements IBindingSummary {
     return this.#bindingsByKey;
   }
 
+  #keyByBinding:Map<IBinding, string> = new Map;
+
   // if/loopを持つbinding
   #expandableBindings:Set<IBinding> = new Set;
   get expandableBindings():Set<IBinding> {
@@ -101,9 +103,24 @@ class BindingSummary implements IBindingSummary {
   rebuild(bindings:Set<IBinding>):void {
     this.#allBindings = bindings;
     const arrayBindings = Array.from(bindings);
-    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
+    this.#keyByBinding = new Map(arrayBindings.map(binding => [binding, pickKey(binding)]));
+    this.#bindingsByKey = Map.groupBy(arrayBindings, binding => this.#keyByBinding.get(binding)) as Map<string,IBinding[]>;
+//    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
     this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
     this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
+  }
+
+  partialUpdate(bindings:IBinding[]):void {
+    for(let i = 0; i < bindings.length; i++) {
+      const binding = bindings[i];
+      const key = this.#keyByBinding.get(binding) ?? utils.raise("BindingSummary.partialUpdate: key is undefined");
+      const bindingsByKey = this.#bindingsByKey.get(key) ?? utils.raise("BindingSummary.partialUpdate: bindings is undefined");
+      const index = bindingsByKey.indexOf(binding);
+      bindingsByKey.splice(index, 1);
+      const newKey = pickKey(binding);
+      this.#keyByBinding.set(binding, newKey);
+      this.#bindingsByKey.get(newKey)?.push(binding) ?? this.#bindingsByKey.set(newKey, [binding]);
+    }
   }
 }
 

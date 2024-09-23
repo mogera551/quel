@@ -25,8 +25,10 @@ export function updateChildNodes(
   for(const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
     const bindings = bindingSummary.bindingsByKey.get(parentKey);
     if (typeof bindings === "undefined") continue;
-    for(const binding of bindings) {
-      setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
-    }
+//    bindingSummary.update((bindingSummary) => {
+      for(const binding of bindings) {
+        setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
+      }
+//    });
   }
 }

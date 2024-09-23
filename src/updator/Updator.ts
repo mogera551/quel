@@ -8,6 +8,7 @@ import { expandStateProperties } from "./expandStateProperties";
 import { rebuildBindings } from "./rebuildBindings";
 import { updateChildNodes } from "./updateChildNodes";
 import { updateNodes } from "./updateNodes";
+import { utils } from "../utils";
 
 const getPropAccessKey = (prop: IPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
 
@@ -92,14 +93,14 @@ class Updator implements IUpdator {
 
         // 戻り値は更新されたStateのプロパティ情報
         const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
+        const updatedKeys = _updatedStatePropertyAccesses.map(getPropAccessKey);
         // 戻り値は依存関係により更新されたStateのプロパティ情報
         const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
 
         const updatedStatePropertyAccessByKey: Map<string, IPropertyAccess> = 
           new Map(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
 
-        rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey);
-
+        rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
         updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)
 
         updateNodes(this.bindingSummary, updatedStatePropertyAccessByKey);
@@ -117,6 +118,23 @@ class Updator implements IUpdator {
       callback(this);
     } finally {
       this.updatedBindings.add(binding);
+    }
+  }
+
+  #isFullRebuild?: boolean;
+  get isFullRebuild(): boolean {
+    if (typeof this.#isFullRebuild === "undefined") utils.raise("fullRebuild is not set");
+    return this.#isFullRebuild;
+  }
+  setFullRebuild(
+    isFullRebuild:boolean, 
+    callback: () => {}
+  ): void {
+    this.#isFullRebuild = isFullRebuild;
+    try {
+      callback();
+    } finally {
+      this.#isFullRebuild = undefined;
     }
   }
 }

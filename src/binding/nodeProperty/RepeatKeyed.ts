@@ -32,7 +32,9 @@ export class RepeatKeyed extends Loop {
     this.#lastChildByNewIndex.clear();
 
     const children = this.binding.childrenContentBindings;
-    for(let newIndex = 0; newIndex < values.length; newIndex++) {
+    const valuesLength = values.length;
+    let appendOnly = true;
+    for(let newIndex = 0; newIndex < valuesLength; newIndex++) {
       // values[newIndex]では、get "values.*"()を正しく取得できない
       const value = this.binding.stateProperty.getChildValue(newIndex);
       const lastIndex = this.#lastValue.indexOf(value, this.#fromIndexByValue.get(value) ?? 0);
@@ -44,6 +46,7 @@ export class RepeatKeyed extends Loop {
         this.#fromIndexByValue.set(value, lastIndex + 1); // 
         this.#lastIndexes.add(lastIndex);
         this.#lastChildByNewIndex.set(newIndex, children[lastIndex]);
+        appendOnly = false;
       }
     }
     for(let i = 0; i < children.length; i++) {
@@ -51,30 +54,51 @@ export class RepeatKeyed extends Loop {
       children[i].dispose();
     }
 
-    let beforeContentBindings:IContentBindings|undefined;
-    const parentNode:Node = this.node.parentNode ?? utils.raise("parentNode is null");
-    for(let i = 0; i < values.length; i++) {
-      const newIndex = i;
-      let contentBindings:IContentBindings;
-      const beforeNode = beforeContentBindings?.lastChildNode ?? this.node;
-      if (this.#setOfNewIndexes.has(newIndex)) {
-        // 元のインデックスにない場合（新規）
-        contentBindings = createContentBindings(this.template, this.binding);
-        parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
-      } else {
-        // 元のインデックスがある場合（既存）
-        contentBindings = this.#lastChildByNewIndex.get(newIndex) ?? utils.raise("contentBindings is undefined");
-        if (contentBindings.childNodes[0]?.previousSibling !== beforeNode) {
-          contentBindings.removeChildNodes();
-          parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
-        }
+    if (appendOnly) {
+      const fragment = document.createDocumentFragment();
+      for(let vi = 0; vi < valuesLength; vi++) {
+        const contentBindings = createContentBindings(this.template, this.binding);
+        children[vi] = contentBindings;
+        contentBindings.rebuild();
+        fragment.append(...contentBindings.childNodes);
       }
-      children[newIndex] = contentBindings;
-      contentBindings.rebuild();
-      beforeContentBindings = contentBindings;
+      this.node.parentNode?.insertBefore(fragment, this.node.nextSibling);
+    } else {
+      let beforeContentBindings:IContentBindings|undefined;
+      const parentNode:Node = this.node.parentNode ?? utils.raise("parentNode is null");
+      for(let i = 0; i < valuesLength; i++) {
+        const newIndex = i;
+        let contentBindings:IContentBindings;
+        const beforeNode = beforeContentBindings?.lastChildNode ?? this.node;
+        if (this.#setOfNewIndexes.has(newIndex)) {
+          // 元のインデックスにない場合（新規）
+          contentBindings = createContentBindings(this.template, this.binding);
+          children[newIndex] = contentBindings;
+          contentBindings.rebuild();
+          parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
+        } else {
+          // 元のインデックスがある場合（既存）
+          contentBindings = this.#lastChildByNewIndex.get(newIndex) ?? utils.raise("contentBindings is undefined");
+          if (contentBindings.childNodes[0]?.previousSibling !== beforeNode) {
+            contentBindings.removeChildNodes();
+            children[newIndex] = contentBindings;
+            if (this.binding.updator?.isFullRebuild) {
+              contentBindings.rebuild();
+            }
+            parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
+          } else {
+            children[newIndex] = contentBindings;
+            if (this.binding.updator?.isFullRebuild) {
+              contentBindings.rebuild();
+            }
+          }
+        }
+        beforeContentBindings = contentBindings;
+      }
     }
-    if (values.length < children.length) {
-      children.length = values.length;
+
+    if (valuesLength < children.length) {
+      children.length = valuesLength;
     }
     this.#lastValue = values.slice();
   }
@@ -92,6 +116,7 @@ export class RepeatKeyed extends Loop {
       contentBindings.removeChildNodes();
       contentBindingsByValue.set(oldValue, contentBindings);
     }
+    const updatedBindings = [];
     for(const index of Array.from(setOfIndex).sort()) {
       const newValue = this.binding.stateProperty.getChildValue(index);
       const typeofNewValue = typeof newValue;
@@ -102,12 +127,18 @@ export class RepeatKeyed extends Loop {
         contentBindings = createContentBindings(this.template, this.binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
         contentBindings.rebuild();
+        updatedBindings.push(...contentBindings.allChildBindings);
       } else {
         this.binding.replaceChildContentBindings(contentBindings, index);
         contentBindings.rebuild();
+        updatedBindings.push(...contentBindings.allChildBindings);
       }
     }
     this.#lastValue = this.binding.stateProperty.value.slice();
+    const bindingSummary = this.binding.bindingSummary;
+    if (typeof bindingSummary !== "undefined") {
+      bindingSummary.partialUpdate(updatedBindings);
+    }
   }
 
   initialize() {

@@ -94,7 +94,7 @@ export interface IBinding extends IBindingTreeNode {
 }
 
 export interface IContentBindingsTreeNode {
-  readonly childrenBinding: IBindingTreeNode[];
+  readonly childBindings: IBindingTreeNode[];
   parentBinding?: IBindingTreeNode;
   readonly loopContext?: ILoopContext;
   readonly currentLoopContext?: ILoopContext;
@@ -102,7 +102,7 @@ export interface IContentBindingsTreeNode {
 
 export interface IContentBindings extends IContentBindingsTreeNode {
   readonly template: HTMLTemplateElement;
-  readonly childrenBinding: IBinding[];
+  readonly childBindings: IBinding[];
   parentBinding?: IBinding;
   readonly component?: IComponentPartial;
   readonly parentContentBindings?: IContentBindings;
@@ -110,6 +110,7 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   readonly fragment: DocumentFragment;
   readonly childNodes: Node[];
   readonly lastChildNode?: Node;
+  readonly allChildBindings: IBinding[];
 
   initialize():void;
   removeChildNodes():void;
@@ -119,7 +120,7 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   registerBindingsToSummary(): void;
 }
 
-export type IContentBindingTreeNode = Pick<IContentBindings, "childrenBinding" | "parentBinding" | "loopContext" | "currentLoopContext">
+export type IContentBindingTreeNode = Pick<IContentBindings, "childBindings" | "parentBinding" | "loopContext" | "currentLoopContext">
 
 export interface IMultiValue {
   value:any;
@@ -137,4 +138,5 @@ export interface IBindingSummary {
   delete(binding: IBinding): void;
   exists(binding: IBinding): boolean;
   update(callback:(summary: IBindingSummary)=>any): void;
+  partialUpdate(bindings: IBinding[]): void;
 }

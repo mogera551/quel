@@ -7,7 +7,7 @@ import { IBinding, IContentBindings, IComponentPartial } from "./types";
 class ContentBindings implements IContentBindings {
   #component?: IComponentPartial;
   template: HTMLTemplateElement;
-  #childrenBinding?: IBinding[];
+  #childBindings?: IBinding[];
   #parentBinding?: IBinding;
   #loopContext?: ILoopContext;
   #childNodes?: Node[];
@@ -17,11 +17,11 @@ class ContentBindings implements IContentBindings {
     return this.#component;
   }
 
-  get childrenBinding(): IBinding[] {
-    if (typeof this.#childrenBinding === "undefined") {
-      utils.raise("childrenBinding is undefined");
+  get childBindings(): IBinding[] {
+    if (typeof this.#childBindings === "undefined") {
+      utils.raise("childBindings is undefined");
     }
-    return this.#childrenBinding;
+    return this.#childBindings;
   }
 
   get parentBinding(): IBinding | undefined {
@@ -67,6 +67,17 @@ class ContentBindings implements IContentBindings {
     return this.#fragment;
   }
 
+  get allChildBindings(): IBinding[] {
+    const allChildBindings:IBinding[] = [];
+    for(let i = 0; i < this.childBindings.length; i++) {
+      allChildBindings.push(this.childBindings[i]);
+      for(let j = 0; j < this.childBindings[i].childrenContentBindings.length; j++) {
+        allChildBindings.push(...this.childBindings[i].childrenContentBindings[j].allChildBindings);
+      }
+    }
+    return allChildBindings;
+  }
+
   constructor(
     template: HTMLTemplateElement,
     parentBinding?: IBinding,
@@ -86,12 +97,12 @@ class ContentBindings implements IContentBindings {
   initialize() {
     const binder = createBinder(this.template, this.component?.useKeyed ?? utils.raise("useKeyed is undefined"));
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
-    this.#childrenBinding = binder.createBindings(this.#fragment, this);
+    this.#childBindings = binder.createBindings(this.#fragment, this);
     this.#childNodes = Array.from(this.#fragment.childNodes);
   }
 
   removeChildNodes():void {
-    this.fragment.append(...this.childNodes);
+    this.fragment.append.apply(this.fragment, this.childNodes);
   }
 
   /**
@@ -99,8 +110,8 @@ class ContentBindings implements IContentBindings {
    */
   registerBindingsToSummary() {
     const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
-    for(let i = 0; i < this.childrenBinding.length; i++) {
-      bindingSummary.add(this.childrenBinding[i]);
+    for(let i = 0; i < this.childBindings.length; i++) {
+      bindingSummary.add(this.childBindings[i]);
     }
   }
 
@@ -108,7 +119,7 @@ class ContentBindings implements IContentBindings {
     // childrenBindingsの構造はそのまま保持しておく
     // 構造を保持しておくことで、再利用時に再構築する必要がなくなる
     // 構造は変化しない、変化するのは、bindingのchildrenContentBindings
-    this.childrenBinding.forEach(binding => binding.dispose());
+    this.childBindings.forEach(binding => binding.dispose());
     this.#parentBinding = undefined;
     this.#loopContext = undefined;
     this.#component = undefined;
@@ -119,8 +130,8 @@ class ContentBindings implements IContentBindings {
 
   rebuild(): void {
     const selectValues = [];
-    for(let i = 0; i < this.childrenBinding.length; i++) {
-      const binding = this.childrenBinding[i];
+    for(let i = 0; i < this.childBindings.length; i++) {
+      const binding = this.childBindings[i];
       if (binding.nodeProperty.isSelectValue) {
         selectValues.push(binding);
       } else {

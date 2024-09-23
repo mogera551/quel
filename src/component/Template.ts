@@ -107,12 +107,24 @@ function replaceTag(html:string, componentUuid:string, customComponentNames:stri
       }
       template.setAttribute(DATASET_UUID_PROPERTY, uuid);
       replaceTemplate(template.content);
+      removeTopLevelBlankNodes(template.content);
       templateByUUID[uuid] = template;
     }
   };
   replaceTemplate(root.content);
 
   return root.innerHTML;
+}
+
+function removeTopLevelBlankNodes(fragment:DocumentFragment):void {
+  const childNodes = Array.from(fragment.childNodes);
+  for(let i = 0; i < childNodes.length; i++) {
+    const childNode = childNodes[i];
+    if (childNode.nodeType !== Node.TEXT_NODE) continue;
+    if ((childNode as Text).textContent?.match(/^\s*$/)) {
+      childNode.parentNode?.removeChild(childNode);
+    }
+  }
 }
 
 /**
@@ -133,6 +145,7 @@ export function createComponentTemplate(
   const template = document.createElement("template");
   template.innerHTML = replaceTag(html, componentUuid, customComponentNames);
   template.setAttribute(DATASET_UUID_PROPERTY, componentUuid);
+  removeTopLevelBlankNodes(template.content);
   templateByUUID[componentUuid] = template;
   return template;
 }

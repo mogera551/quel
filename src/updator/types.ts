@@ -15,6 +15,9 @@ export interface IUpdator {
 
   exec(): Promise<void>;
   applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;
+
+  readonly isFullRebuild: boolean;
+  setFullRebuild(isFullRebuild:boolean, callback:()=>any): void;
 }
 
 export type UpdateInfo = { name:string, indexes:number[] }
