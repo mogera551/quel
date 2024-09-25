@@ -2,10 +2,11 @@ import { IPropertyAccess } from "./types";
 import { IPropInfo } from "../dotNotation/types";
 import { getPropInfo } from "../dotNotation/getPropInfo";
 
-export class PropertyAccess implements IPropertyAccess {
+class PropertyAccess implements IPropertyAccess {
   #pattern: string;
   #indexes: number[];
   #propInfo?: IPropInfo;
+  #key?: string;
 
   get pattern(): string {
     return this.#pattern;
@@ -22,8 +23,24 @@ export class PropertyAccess implements IPropertyAccess {
     return this.#propInfo;
   }
 
-  constructor(pattern: string, indexes: number[] = []) {
-    this.#pattern = pattern;
-    this.#indexes = indexes;
+  get key(): string {
+    if (typeof this.#key === "undefined") {
+      this.#key = this.pattern + "\t" + this.indexes.toString();
+    }
+    return this.#key;
   }
+
+  constructor(pattern: string, indexes: number[]) {
+    this.#pattern = pattern;
+    this.#indexes = indexes.slice();
+  }
+}
+
+const _cache: {[key: string]: IPropertyAccess} = {};
+
+export function createPropertyAccess(
+  pattern: string, 
+  indexes: number[]
+) {
+  return new PropertyAccess(pattern, indexes);
 }

@@ -10,6 +10,7 @@ export interface IPropertyAccess {
   readonly pattern: string;
   readonly indexes: number[];
   readonly propInfo: IPropInfo;
+  readonly key: string;
 }
 
 export interface IBindingPropertyAccess {

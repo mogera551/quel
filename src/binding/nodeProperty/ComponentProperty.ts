@@ -3,7 +3,7 @@ import { IFilterText } from "../../filter/types";
 import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
-import { PropertyAccess } from "../PropertyAccess";
+import { createPropertyAccess } from "../createPropertyAccess";
 import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../types";
 import { ILoopContext } from "../../loopContext/types";
 import { IComponent } from "../../component/types";
@@ -53,7 +53,6 @@ export class ComponentProperty extends ElementBase {
   }
   set value(value) {
     try {
-      // this.thisComponent.currentState[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
       this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, []);
     } catch(e) {
       console.log(e);
@@ -76,8 +75,7 @@ export class ComponentProperty extends ElementBase {
       if (propertyAccess.pattern === statePropertyName || 
         propertyAccess.propInfo.patternPaths.includes(statePropertyName)) {
         const remain = propertyAccess.pattern.slice(statePropertyName.length);
-//        console.log(`componentProperty:postUpdate(${propName}${remain})`);
-        this.thisComponent.states.current[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
+        this.thisComponent.states.current[UpdatedCallbackSymbol]([createPropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
         this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
       }
     }

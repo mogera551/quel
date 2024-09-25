@@ -1115,6 +1115,7 @@ class PropertyAccess {
     #pattern;
     #indexes;
     #propInfo;
+    #key;
     get pattern() {
         return this.#pattern;
     }
@@ -1127,10 +1128,19 @@ class PropertyAccess {
         }
         return this.#propInfo;
     }
-    constructor(pattern, indexes = []) {
-        this.#pattern = pattern;
-        this.#indexes = indexes;
+    get key() {
+        if (typeof this.#key === "undefined") {
+            this.#key = this.pattern + "\t" + this.indexes.toString();
+        }
+        return this.#key;
     }
+    constructor(pattern, indexes) {
+        this.#pattern = pattern;
+        this.#indexes = indexes.slice();
+    }
+}
+function createPropertyAccess(pattern, indexes) {
+    return new PropertyAccess(pattern, indexes);
 }
 
 const name$1 = "do-notation";
@@ -1171,16 +1181,16 @@ function expandStateProperty(state, propertyAccess, updatedStatePropertiesSet, e
         }
         if (indexes.length < curPropertyNameInfo.wildcardPaths.length) {
             // ワイルドカードのインデックスを展開する
-            const listOfIndexes = expandIndexes(state, new PropertyAccess(prop, indexes));
-            propertyAccesses.push(...listOfIndexes.map(indexes => new PropertyAccess(prop, indexes)));
+            const listOfIndexes = expandIndexes(state, createPropertyAccess(prop, indexes));
+            propertyAccesses.push(...listOfIndexes.map(indexes => createPropertyAccess(prop, indexes)));
         }
         else {
             // ワイルドカードのインデックスを展開する必要がない場合
             const notifyIndexes = indexes.slice(0, curPropertyNameInfo.wildcardPaths.length);
-            propertyAccesses.push(new PropertyAccess(prop, notifyIndexes));
+            propertyAccesses.push(createPropertyAccess(prop, notifyIndexes));
         }
         // 再帰的に展開
-        propertyAccesses.push(...expandStateProperty(state, new PropertyAccess(prop, indexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
+        propertyAccesses.push(...expandStateProperty(state, createPropertyAccess(prop, indexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
     }
     return propertyAccesses;
 }
@@ -1323,7 +1333,6 @@ function updateNodes(bindingSummary, updateStatePropertyAccessByKey = new Map())
     }
 }
 
-const getPropAccessKey = (prop) => prop.pattern + "\t" + prop.indexes.toString();
 class Updator {
     #component;
     processQueue = [];
@@ -1389,10 +1398,10 @@ class Updator {
                 this.updatedBindings.clear();
                 // 戻り値は更新されたStateのプロパティ情報
                 const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
-                const updatedKeys = _updatedStatePropertyAccesses.map(getPropAccessKey);
+                const updatedKeys = _updatedStatePropertyAccesses.map(propertyAccess => propertyAccess.key);
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
-                const updatedStatePropertyAccessByKey = new Map(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
+                const updatedStatePropertyAccessByKey = new Map(updatedStatePropertyAccesses.map(propertyAccess => [propertyAccess.key, propertyAccess]));
                 rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
                 updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses);
                 updateNodes(this.bindingSummary, updatedStatePropertyAccessByKey);
@@ -2597,7 +2606,6 @@ class ComponentProperty extends ElementBase {
     }
     set value(value) {
         try {
-            // this.thisComponent.currentState[UpdatedCallbackSymbol]([ new PropertyAccess(`${this.propertyName}`, [])]); 
             this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, []);
         }
         catch (e) {
@@ -2620,8 +2628,7 @@ class ComponentProperty extends ElementBase {
             if (propertyAccess.pattern === statePropertyName ||
                 propertyAccess.propInfo.patternPaths.includes(statePropertyName)) {
                 const remain = propertyAccess.pattern.slice(statePropertyName.length);
-                //        console.log(`componentProperty:postUpdate(${propName}${remain})`);
-                this.thisComponent.states.current[UpdatedCallbackSymbol]([new PropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
+                this.thisComponent.states.current[UpdatedCallbackSymbol]([createPropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
                 this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
             }
         }
@@ -3703,7 +3710,7 @@ const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 const callFuncBySymbol = {
     [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, loopContext, event) => await handler.directlyCallback(loopContext, async () => await state[prop].apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])),
-    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, indexes) => handler.updator.addUpdatedStateProperty(new PropertyAccess(prop, indexes)),
+    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, indexes) => handler.updator.addUpdatedStateProperty(createPropertyAccess(prop, indexes)),
     [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
     [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
     [CreateBufferApiSymbol]: ({ stateProxy }) => (component) => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
@@ -4033,7 +4040,7 @@ class WritableHandler extends Handler {
             return super.__set(target, propInfo, indexes, value, receiver);
         }
         finally {
-            this.updator.addUpdatedStateProperty(new PropertyAccess(propInfo.pattern, indexes));
+            this.updator.addUpdatedStateProperty(createPropertyAccess(propInfo.pattern, indexes));
         }
     }
 }

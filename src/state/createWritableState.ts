@@ -1,4 +1,4 @@
-import { PropertyAccess } from "../binding/PropertyAccess";
+import { createPropertyAccess } from "../binding/createPropertyAccess";
 import { Indexes, IPropInfo } from "../dotNotation/types";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
@@ -50,7 +50,7 @@ class WritableHandler extends Handler {
     try {
       return super.__set(target, propInfo, indexes, value, receiver);
     } finally {
-      this.updator.addUpdatedStateProperty(new PropertyAccess(propInfo.pattern, indexes as number[]));
+      this.updator.addUpdatedStateProperty(createPropertyAccess(propInfo.pattern, indexes as number[]));
     }
   }
 }

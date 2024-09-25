@@ -10,8 +10,6 @@ import { updateChildNodes } from "./updateChildNodes";
 import { updateNodes } from "./updateNodes";
 import { utils } from "../utils";
 
-const getPropAccessKey = (prop: IPropertyAccess):string => prop.pattern + "\t" + prop.indexes.toString();
-
 type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary">;
 
 class Updator implements IUpdator {
@@ -93,12 +91,12 @@ class Updator implements IUpdator {
 
         // 戻り値は更新されたStateのプロパティ情報
         const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
-        const updatedKeys = _updatedStatePropertyAccesses.map(getPropAccessKey);
+        const updatedKeys = _updatedStatePropertyAccesses.map(propertyAccess => propertyAccess.key);
         // 戻り値は依存関係により更新されたStateのプロパティ情報
         const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
 
         const updatedStatePropertyAccessByKey: Map<string, IPropertyAccess> = 
-          new Map(updatedStatePropertyAccesses.map(prop => [getPropAccessKey(prop), prop]));
+          new Map(updatedStatePropertyAccesses.map(propertyAccess => [propertyAccess.key, propertyAccess]));
 
         rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
         updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)

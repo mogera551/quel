@@ -2,7 +2,7 @@ import { GetDependentPropsApiSymbol } from "../state/symbols";
 import { IPropertyAccess } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { IStateProxy, IStates } from "../state/types";
-import { PropertyAccess } from "../binding/PropertyAccess";
+import { createPropertyAccess } from "../binding/createPropertyAccess";
 import { GetDirectSymbol } from "../dotNotation/symbols";
 
 function expandStateProperty(
@@ -48,16 +48,16 @@ function expandStateProperty(
 
     if (indexes.length < curPropertyNameInfo.wildcardPaths.length) {
       // ワイルドカードのインデックスを展開する
-      const listOfIndexes = expandIndexes(state, new PropertyAccess(prop, indexes));
-      propertyAccesses.push(...listOfIndexes.map(indexes => new PropertyAccess(prop, indexes)));
+      const listOfIndexes = expandIndexes(state, createPropertyAccess(prop, indexes));
+      propertyAccesses.push(...listOfIndexes.map(indexes => createPropertyAccess(prop, indexes)));
     } else {
       // ワイルドカードのインデックスを展開する必要がない場合
       const notifyIndexes = indexes.slice(0, curPropertyNameInfo.wildcardPaths.length);
-      propertyAccesses.push(new PropertyAccess(prop, notifyIndexes));
+      propertyAccesses.push(createPropertyAccess(prop, notifyIndexes));
     }
 
     // 再帰的に展開
-    propertyAccesses.push(...expandStateProperty(state, new PropertyAccess(prop, indexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
+    propertyAccesses.push(...expandStateProperty(state, createPropertyAccess(prop, indexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
   }
   return propertyAccesses;
 }

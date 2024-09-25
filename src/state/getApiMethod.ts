@@ -3,7 +3,7 @@ import {
   ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
 } from "./symbols";
 import { IDependentProps, IStateHandler, IStateProxy } from "./types";
-import { PropertyAccess } from "../binding/PropertyAccess";
+import { createPropertyAccess } from "../binding/createPropertyAccess";
 import { ILoopContext } from "../loopContext/types";
 import { IComponent } from "../component/types";
 
@@ -24,7 +24,7 @@ const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
   [NotifyForDependentPropsApiSymbol]:
     ({handler}:CallbackParam) => 
       (prop:string, indexes:number[]):void => 
-        handler.updator.addUpdatedStateProperty(new PropertyAccess(prop, indexes)),
+        handler.updator.addUpdatedStateProperty(createPropertyAccess(prop, indexes)),
   [GetDependentPropsApiSymbol]:({handler}:CallbackParam) => ():IDependentProps => handler.dependentProps,
   [ClearCacheApiSymbol]:({handler}:CallbackParam) => ():void => handler.clearCache(),
   [CreateBufferApiSymbol]:({stateProxy}:CallbackParam) => (component:IComponent):void => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
