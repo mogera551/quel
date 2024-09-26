@@ -117,11 +117,11 @@ export class StateProperty implements IStateProperty {
   }
 
   getChildValue(index:number) {
-    return this.state[GetDirectSymbol](this.#childName , [...this.indexes, index]);
+    return this.state[GetDirectSymbol](this.#childName , this.indexes.concat(index));
   }
 
   setChildValue(index:number, value:any) {
-    return this.state[SetDirectSymbol](this.#childName , [...this.indexes, index], value);
+    return this.state[SetDirectSymbol](this.#childName , this.indexes.concat(index), value);
   }
 
   dispose() {

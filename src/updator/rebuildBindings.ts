@@ -19,7 +19,8 @@ export function rebuildBindings(
       const binding = expandableBindings[i];
       if (!bindingSummary.exists(binding)) continue;
       if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key)) continue;
-      const isFullBuild = updatedKeys.some(key => key.startsWith(binding.stateProperty.key + "."));
+      const compareKey = binding.stateProperty.key + ".";
+      const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
       updator.setFullRebuild(isFullBuild, () => {
         binding.rebuild();
       });

@@ -10,7 +10,8 @@ export function setValueToNode(
   updator?.applyNodeUpdatesByBinding(binding, () => {
     if (!nodeProperty.applicable) return;
     const filteredStateValue = stateProperty.filteredValue ?? "";
-    if (nodeProperty.equals(filteredStateValue)) return;
+    // 値が同じかどうかの判定をするよりも、常に値をセットするようにしたほうが速い
+    //if (nodeProperty.equals(filteredStateValue)) return;
     nodeProperty.value = filteredStateValue;
   });
 }

@@ -55,14 +55,16 @@ export class RepeatKeyed extends Loop {
     }
 
     if (appendOnly) {
-      const fragment = document.createDocumentFragment();
+      const nextNode = this.node.nextSibling;
+      const parentNode = this.node.parentNode ?? utils.raise("parentNode is null");
+      const binding = this.binding;
+      const template = this.template;
       for(let vi = 0; vi < valuesLength; vi++) {
-        const contentBindings = createContentBindings(this.template, this.binding);
+        const contentBindings = createContentBindings(template, binding);
         children[vi] = contentBindings;
         contentBindings.rebuild();
-        fragment.append(...contentBindings.childNodes);
+        parentNode.insertBefore(contentBindings.fragment, nextNode);
       }
-      this.node.parentNode?.insertBefore(fragment, this.node.nextSibling);
     } else {
       let beforeContentBindings:IContentBindings|undefined;
       const parentNode:Node = this.node.parentNode ?? utils.raise("parentNode is null");

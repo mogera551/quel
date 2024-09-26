@@ -232,22 +232,41 @@ export class Handler implements IDotNotationHandler {
 
   _getDirect = (target:object, prop:string, indexes:number[], receiver:object) => {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
-    const propName = prop[0] === "@" ? prop.slice(1) : prop;
+    const isIndex = prop[0] === "$";
+    const isExpand = prop[0] === "@";
+    const propName = isExpand ? prop.slice(1) : prop;
     // パターンではないものも来る可能性がある
     const propInfo = getPropInfo(propName);
     return this.withIndexes(propInfo, indexes, () => {
-      return this.get(target, prop, receiver);
+      if (isIndex || isExpand) {
+        return this.get(target, prop, receiver);
+      } else {
+        return this._getValue(
+          target, 
+          propInfo.patternPaths,
+          propInfo.patternElements, 
+          indexes, 
+          propInfo.paths.length - 1, 
+          propInfo.wildcardCount - 1, 
+          receiver);
+      }
     });
   }
 
   _setDirect = (target:object, prop:string, indexes:number[], value:any, receiver:object):boolean => {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
-    const propName = prop[0] === "@" ? prop.slice(1) : prop;
+    const isIndex = prop[0] === "$";
+    const isExpand = prop[0] === "@";
+    const propName = isExpand ? prop.slice(1) : prop;
     // パターンではないものも来る可能性がある
     const propInfo = getPropInfo(propName);
-    return this.withIndexes(propInfo, indexes, () => {
-      return this.set(target, prop, value, receiver);
-    });
+    if (isIndex || isExpand) {
+      return this.withIndexes(propInfo, indexes, () => {
+        return this.set(target, prop, value, receiver);
+      });
+    } else {
+      return this.__set(target, propInfo, indexes, value, receiver);
+    }
   }
 
   get(target:object, prop:PropertyKey, receiver:object):any {

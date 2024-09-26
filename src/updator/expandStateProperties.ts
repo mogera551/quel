@@ -80,10 +80,10 @@ function expandIndexes(
       if (isTerminate) {
         // 終端の場合
         if (element === "*") {
-          const indexesArray = [];
+          const indexesArray: number[][] = [];
           const len = getValuesLength(parentName, loopIndexes);
           for(let i = 0; i < len; i++) {
-            indexesArray.push([...loopIndexes, i]);
+            indexesArray.push(loopIndexes.concat(i));
           }
           return indexesArray;
         } else {
@@ -99,7 +99,7 @@ function expandIndexes(
             const indexesArray = [];
             const len = getValuesLength(parentName, loopIndexes);
             for(let i = 0; i < len; i++) {
-                indexesArray.push(...traverse(currentName, elementIndex + 1, [...loopIndexes, i]));
+                indexesArray.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
             }
             return indexesArray;
           }

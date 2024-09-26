@@ -1214,7 +1214,7 @@ function expandIndexes(state, propertyAccess) {
                     const indexesArray = [];
                     const len = getValuesLength(parentName, loopIndexes);
                     for (let i = 0; i < len; i++) {
-                        indexesArray.push([...loopIndexes, i]);
+                        indexesArray.push(loopIndexes.concat(i));
                     }
                     return indexesArray;
                 }
@@ -1233,7 +1233,7 @@ function expandIndexes(state, propertyAccess) {
                         const indexesArray = [];
                         const len = getValuesLength(parentName, loopIndexes);
                         for (let i = 0; i < len; i++) {
-                            indexesArray.push(...traverse(currentName, elementIndex + 1, [...loopIndexes, i]));
+                            indexesArray.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
                         }
                         return indexesArray;
                     }
@@ -1269,7 +1269,8 @@ function rebuildBindings(updator, bindingSummary, updateStatePropertyAccessByKey
                 continue;
             if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key))
                 continue;
-            const isFullBuild = updatedKeys.some(key => key.startsWith(binding.stateProperty.key + "."));
+            const compareKey = binding.stateProperty.key + ".";
+            const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
             updator.setFullRebuild(isFullBuild, () => {
                 binding.rebuild();
             });
@@ -1830,22 +1831,36 @@ let Handler$1 = class Handler {
     _getDirect = (target, prop, indexes, receiver) => {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
-        const propName = prop[0] === "@" ? prop.slice(1) : prop;
+        const isIndex = prop[0] === "$";
+        const isExpand = prop[0] === "@";
+        const propName = isExpand ? prop.slice(1) : prop;
         // パターンではないものも来る可能性がある
         const propInfo = getPropInfo(propName);
         return this.withIndexes(propInfo, indexes, () => {
-            return this.get(target, prop, receiver);
+            if (isIndex || isExpand) {
+                return this.get(target, prop, receiver);
+            }
+            else {
+                return this._getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+            }
         });
     };
     _setDirect = (target, prop, indexes, value, receiver) => {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
-        const propName = prop[0] === "@" ? prop.slice(1) : prop;
+        const isIndex = prop[0] === "$";
+        const isExpand = prop[0] === "@";
+        const propName = isExpand ? prop.slice(1) : prop;
         // パターンではないものも来る可能性がある
         const propInfo = getPropInfo(propName);
-        return this.withIndexes(propInfo, indexes, () => {
-            return this.set(target, prop, value, receiver);
-        });
+        if (isIndex || isExpand) {
+            return this.withIndexes(propInfo, indexes, () => {
+                return this.set(target, prop, value, receiver);
+            });
+        }
+        else {
+            return this.__set(target, propInfo, indexes, value, receiver);
+        }
     };
     get(target, prop, receiver) {
         const isPropString = typeof prop === "string";
@@ -2684,14 +2699,16 @@ class RepeatKeyed extends Loop {
             children[i].dispose();
         }
         if (appendOnly) {
-            const fragment = document.createDocumentFragment();
+            const nextNode = this.node.nextSibling;
+            const parentNode = this.node.parentNode ?? utils.raise("parentNode is null");
+            const binding = this.binding;
+            const template = this.template;
             for (let vi = 0; vi < valuesLength; vi++) {
-                const contentBindings = createContentBindings(this.template, this.binding);
+                const contentBindings = createContentBindings(template, binding);
                 children[vi] = contentBindings;
                 contentBindings.rebuild();
-                fragment.append(...contentBindings.childNodes);
+                parentNode.insertBefore(contentBindings.fragment, nextNode);
             }
-            this.node.parentNode?.insertBefore(fragment, this.node.nextSibling);
         }
         else {
             let beforeContentBindings;
@@ -2939,10 +2956,10 @@ class StateProperty {
     initialize() {
     }
     getChildValue(index) {
-        return this.state[GetDirectSymbol](this.#childName, [...this.indexes, index]);
+        return this.state[GetDirectSymbol](this.#childName, this.indexes.concat(index));
     }
     setChildValue(index, value) {
-        return this.state[SetDirectSymbol](this.#childName, [...this.indexes, index], value);
+        return this.state[SetDirectSymbol](this.#childName, this.indexes.concat(index), value);
     }
     dispose() {
     }
@@ -3006,8 +3023,8 @@ function setValueToNode(binding, updator, nodeProperty, stateProperty) {
         if (!nodeProperty.applicable)
             return;
         const filteredStateValue = stateProperty.filteredValue ?? "";
-        if (nodeProperty.equals(filteredStateValue))
-            return;
+        // 値が同じかどうかの判定をするよりも、常に値をセットするようにしたほうが速い
+        //if (nodeProperty.equals(filteredStateValue)) return;
         nodeProperty.value = filteredStateValue;
     });
 }
@@ -3426,7 +3443,7 @@ class LoopContext {
                 this.#indexes = [this.index];
             }
             else {
-                this.#indexes = [...this.parentLoopContext.indexes, this.index];
+                this.#indexes = this.parentLoopContext.indexes.concat(this.index);
             }
         }
         return this.#indexes;
@@ -4245,9 +4262,9 @@ function CustomComponent(Base) {
                         }
                     }
                     const shadowRootOrDocument = this.shadowRootOrDocument;
-                    const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
+                    const adoptedStyleSheets = shadowRootOrDocument.adoptedStyleSheets;
                     if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
-                        shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
+                        shadowRootOrDocument.adoptedStyleSheets = adoptedStyleSheets.concat(adoptedStyleSheet);
                     }
                 }
             }

@@ -66,7 +66,7 @@ export class LoopContext implements ILoopContext{
       if (typeof this.parentLoopContext === "undefined") {
         this.#indexes = [this.index];
       } else {
-        this.#indexes = [...this.parentLoopContext.indexes, this.index];
+        this.#indexes = this.parentLoopContext.indexes.concat(this.index);
       }
     }
     return this.#indexes;

@@ -167,9 +167,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
             }
           }
           const shadowRootOrDocument = this.shadowRootOrDocument;
-          const adoptedStyleSheets = Array.from(shadowRootOrDocument.adoptedStyleSheets);
+          const adoptedStyleSheets = shadowRootOrDocument.adoptedStyleSheets;
           if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
-            shadowRootOrDocument.adoptedStyleSheets = [...adoptedStyleSheets, adoptedStyleSheet];
+            shadowRootOrDocument.adoptedStyleSheets = adoptedStyleSheets.concat(adoptedStyleSheet);
           }
         }
       }
