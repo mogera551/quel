@@ -91,6 +91,7 @@ describe('Binder', () => {
         exists: jest.fn(),
         flush: jest.fn(),
         update: jest.fn(),
+        partialUpdate: jest.fn()
       } as IBindingSummary,
       updator: {} as IUpdator,
     };

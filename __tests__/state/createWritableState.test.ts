@@ -2,7 +2,7 @@ import "jest";
 import { createWritableState } from '../../src/state/createWritableState';
 import { IComponentForHandler, IStateProxy } from '../../src/state/types';
 import { ILoopContext } from '../../src/loopContext/types';
-import { PropertyAccess } from '../../src/binding/PropertyAccess';
+import { createPropertyAccess } from '../../src/binding/createPropertyAccess';
 import { DirectryCallApiSymbol } from "../../src/state/symbols";
 
 describe('createWritableState', () => {
@@ -25,7 +25,7 @@ describe('createWritableState', () => {
     const stateProxy = createWritableState(component, state);
     stateProxy.prop1 = 'newValue';
     expect(state.prop1).toBe('newValue');
-    expect(component.updator.addUpdatedStateProperty).toHaveBeenCalledWith(new PropertyAccess('prop1', []));
+    expect(component.updator.addUpdatedStateProperty).toHaveBeenCalledWith(createPropertyAccess('prop1', []));
   });
 
   it('should set nested value', () => {
@@ -39,7 +39,7 @@ describe('createWritableState', () => {
     stateProxy['prop2.prop3'] = 'newValue';
     expect(stateProxy["prop2.prop3"]).toBe('newValue');
     expect(state.prop2.prop3).toBe('newValue');
-    expect(component.updator.addUpdatedStateProperty).toHaveBeenCalledWith(new PropertyAccess('prop2.prop3', []));
+    expect(component.updator.addUpdatedStateProperty).toHaveBeenCalledWith(createPropertyAccess('prop2.prop3', []));
   });
 
   it('should set array value', () => {
@@ -50,7 +50,7 @@ describe('createWritableState', () => {
     stateProxy['prop1.2'] = 5;
     expect(stateProxy["prop1.2"]).toBe(5);
     expect(state.prop1[2]).toBe(5);
-    expect(component.updator.addUpdatedStateProperty).toHaveBeenCalledWith(new PropertyAccess('prop1.*', [2]));
+    expect(component.updator.addUpdatedStateProperty).toHaveBeenCalledWith(createPropertyAccess('prop1.*', [2]));
   });
 
   it('should directly call callback', async () => {

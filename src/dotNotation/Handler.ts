@@ -241,14 +241,18 @@ export class Handler implements IDotNotationHandler {
       if (isIndex || isExpand) {
         return this.get(target, prop, receiver);
       } else {
-        return this._getValue(
-          target, 
-          propInfo.patternPaths,
-          propInfo.patternElements, 
-          indexes, 
-          propInfo.paths.length - 1, 
-          propInfo.wildcardCount - 1, 
-          receiver);
+        if (propInfo.allIncomplete) {
+          return this._getValue(
+            target, 
+            propInfo.patternPaths,
+            propInfo.patternElements, 
+            indexes, 
+            propInfo.paths.length - 1, 
+            propInfo.wildcardCount - 1, 
+            receiver);
+        } else {
+          return this._get(target, prop, receiver);
+        }
       }
     });
   }

@@ -1,5 +1,5 @@
 import "jest";
-import { PropertyAccess } from "../../src/binding/PropertyAccess";
+import { createPropertyAccess } from "../../src/binding/createPropertyAccess";
 import { getPropInfo } from "../../src/dotNotation/getPropInfo";
 import { IPropInfo } from "../../src/dotNotation/types";
 
@@ -15,19 +15,19 @@ describe("PropertyAccess", () => {
   });
 
   it("should initialize with pattern and indexes", () => {
-    const propertyAccess = new PropertyAccess(mockPattern, mockIndexes);
+    const propertyAccess = createPropertyAccess(mockPattern, mockIndexes);
     expect(propertyAccess.pattern).toBe(mockPattern);
     expect(propertyAccess.indexes).toEqual(mockIndexes);
   });
 
   it("should initialize with pattern and default indexes", () => {
-    const propertyAccess = new PropertyAccess(mockPattern);
+    const propertyAccess = createPropertyAccess(mockPattern, []);
     expect(propertyAccess.pattern).toBe(mockPattern);
     expect(propertyAccess.indexes).toEqual([]);
   });
 
   it("should lazily load propInfo", () => {
-    const propertyAccess = new PropertyAccess(mockPattern);
+    const propertyAccess = createPropertyAccess(mockPattern, []);
     expect(propertyAccess.propInfo).toBe(mockPropInfo);
   });
 

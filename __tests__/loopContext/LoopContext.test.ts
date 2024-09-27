@@ -4,10 +4,10 @@ import { LoopContext } from "../../src/loopContext/LoopContext";
 
 class ContentBindingsBase implements IContentBindingsTreeNode {
   parentBinding: IBindingTreeNode | undefined;
-  childrenBinding: IBindingTreeNode[];
+  childBindings: IBindingTreeNode[];
   loopContext: LoopContext | undefined;
   constructor(parentBinding?: IBindingTreeNode) {
-    this.childrenBinding = [];
+    this.childBindings = [];
     if (typeof parentBinding !== "undefined") {
       this.parentBinding = parentBinding;
       this.parentBinding?.childrenContentBindings.push(this);
@@ -36,7 +36,7 @@ class Binding implements IBindingTreeNode {
   nodeProperty: ILoopable;
   constructor(parentContentBindings: IContentBindingsTreeNode, name:string, loopable: boolean) {
     this.parentContentBindings = parentContentBindings;
-    this.parentContentBindings.childrenBinding.push(this);
+    this.parentContentBindings.childBindings.push(this);
     this.childrenContentBindings = [];
     this.loopable = loopable;
     this.statePropertyName = name;
