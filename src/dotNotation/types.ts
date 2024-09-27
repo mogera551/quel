@@ -44,15 +44,10 @@ export interface IDotNotationHandler {
   getValueWithoutIndexes: GetValueWithoutIndexesFn;
   setValueWithIndexes: SetValueWithIndexesFn;
   setValueWithoutIndexes: SetValueWithoutIndexesFn;
-  withIndexes: WithIndexesFn;
-//  _get(target:object, prop:string, receiver:object):any;
-//  _set(target:object, prop:string, value:any, receiver:object):boolean;
-//  __get(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object):any;
-//  __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object):boolean;
-  _getExpand(target:object, prop:string, receiver:object):any[];
-  _setExpand(target:object, prop:string, value:any, receiver:object):any;
-  _getDirect(target:object, prop:string, indexes:number[], receiver:object):any;
-  _setDirect(target:object, prop:string, indexes:number[], value:any, receiver:object):boolean;
+  getExpandValues: GetExpandValuesFn;
+  setExpandValues: SetExpandValuesFn;
+  getValueDirect: getValueDirectFn;
+  setValueDirect: setValueDirectFn;
   get(target:object, prop:PropertyKey, receiver:object):any;
   set(target:object, prop:PropertyKey, value:any, receiver:object):boolean;
 }
@@ -90,13 +85,12 @@ export type GetValueFn = (
 ) => any;
 
 export type GetLastIndexesFn = (pattern:string) =>  Indexes | undefined ;
-
 export type GetValueWithIndexesFn = (target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object) => any;
-
 export type GetValueWithoutIndexesFn = (target:object, prop:string, receiver:object) => any;
-
 export type WithIndexesFn = (patternInfo: IPatternInfo, indexes:Indexes, callback:() => any) => any; 
-
 export type SetValueWithIndexesFn = (target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object) => boolean;
-
 export type SetValueWithoutIndexesFn = (target:object, prop:string, value:any, receiver:object) => boolean;
+export type GetExpandValuesFn = (target:object, prop:string, receiver:object) => any[];
+export type SetExpandValuesFn = (target:object, prop:string, value:any, receiver:object) => any;
+export type getValueDirectFn = (target:object, prop:string, indexes:number[], receiver:object) => any;
+export type setValueDirectFn = (target:object, prop:string, indexes:number[], value:any, receiver:object) => boolean;

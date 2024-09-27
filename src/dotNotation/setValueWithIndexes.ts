@@ -1,9 +1,10 @@
-import { IDotNotationHandler, IPropInfo } from "./types";
+import { IDotNotationHandler, IPropInfo, SetValueWithIndexesFn } from "./types";
 import { utils } from "../utils";
+import { withIndexes as _withIndexes } from "./withIndexes";
 
-type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes"|"getValue"|"withIndexes">;
+type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes"|"getValue">;
 
-export const setValueWithIndexes = (handler: IHandlerPartial) => {
+export const setValueWithIndexes = (handler: IHandlerPartial): SetValueWithIndexesFn => {
   return function (
     target: object, 
     propInfo: IPropInfo, 
@@ -11,10 +12,11 @@ export const setValueWithIndexes = (handler: IHandlerPartial) => {
     value: any, 
     receiver: object
   ): boolean {
+    const withIndexes = _withIndexes(handler);
     if (propInfo.paths.length === 1) {
       return Reflect.set(target, propInfo.name, value, receiver);
     }
-    handler.withIndexes(
+    withIndexes(
       propInfo, indexes, () => {
       if (propInfo.name in target) {
         Reflect.set(target, propInfo.name, value, receiver)

@@ -1,9 +1,9 @@
 import { getPropInfo } from "./getPropInfo";
-import { IDotNotationHandler } from "./types";
+import { IDotNotationHandler, SetValueWithoutIndexesFn } from "./types";
 
 type IHandlerPartial = Pick<IDotNotationHandler, "getLastIndexes"|"setValueWithIndexes"|"stackNamedWildcardIndexes"|"stackIndexes"|"getValue">;
 
-export const setValueWithoutIndexes = (handler: IHandlerPartial) => {
+export const setValueWithoutIndexes = (handler: IHandlerPartial): SetValueWithoutIndexesFn => {
   return function (
     target: object, 
     prop: string, 

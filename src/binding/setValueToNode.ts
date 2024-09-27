@@ -7,8 +7,8 @@ export function setValueToNode(
   nodeProperty: INodeProperty,
   stateProperty: IStateProperty
 ): void {
+  if (!nodeProperty.applicable) return;
   updator?.applyNodeUpdatesByBinding(binding, () => {
-    if (!nodeProperty.applicable) return;
     // 値が同じかどうかの判定をするよりも、常に値をセットするようにしたほうが速い
     nodeProperty.value = stateProperty.filteredValue ?? "";
   });

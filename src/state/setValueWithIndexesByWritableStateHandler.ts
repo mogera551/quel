@@ -1,11 +1,11 @@
 import { createPropertyAccess } from "../binding/createPropertyAccess";
 import { setValueWithIndexes as _setValueWithIndexes } from "../dotNotation/setValueWithIndexes";
-import { IPropInfo } from "../dotNotation/types";
+import { IPropInfo, SetValueWithIndexesFn } from "../dotNotation/types";
 import { Handler } from "./Handler";
 
-type IHandlerPartial = Pick<Handler, "withIndexes"|"stackNamedWildcardIndexes"|"stackIndexes"|"getValue"|"updator">;
+type IHandlerPartial = Pick<Handler, "stackNamedWildcardIndexes"|"stackIndexes"|"getValue"|"updator">;
 
-export const setValueWithIndexesByWritableStateHandler = (handler: IHandlerPartial) => {
+export const setValueWithIndexesByWritableStateHandler = (handler: IHandlerPartial): SetValueWithIndexesFn => {
   return function(
     target: object, 
     propInfo: IPropInfo, 

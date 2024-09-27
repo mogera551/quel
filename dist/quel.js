@@ -1656,6 +1656,13 @@ const getLastIndexes = (handler) => function (pattern) {
     return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes;
 };
 
+const getValue = (handler) => function (target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
+    let value, element, isWildcard, path = patternPaths[pathIndex];
+    return (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
+        isWildcard = element === "*",
+        handler.getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver)[isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element]));
+};
+
 class WildcardIndexes {
     #baseIndexes;
     #indexes;
@@ -1702,16 +1709,10 @@ const withIndexes = (handler) => {
     };
 };
 
-const getValue = (handler) => function (target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver) {
-    let value, element, isWildcard, path = patternPaths[pathIndex];
-    return (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
-        isWildcard = element === "*",
-        handler.getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver)[isWildcard ? (wildcardIndexes[wildcardIndex] ?? utils.raise(`wildcard is undefined`)) : element]));
-};
-
 const getValueWithIndexes = (handler) => {
     return function (target, propInfo, indexes, receiver) {
-        return handler.withIndexes(propInfo, indexes, () => {
+        const withIndexes$1 = withIndexes(handler);
+        return withIndexes$1(propInfo, indexes, () => {
             return handler.getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
         });
     };
@@ -1730,10 +1731,11 @@ const getValueWithoutIndexes = (handler) => {
 
 const setValueWithIndexes = (handler) => {
     return function (target, propInfo, indexes, value, receiver) {
+        const withIndexes$1 = withIndexes(handler);
         if (propInfo.paths.length === 1) {
             return Reflect.set(target, propInfo.name, value, receiver);
         }
-        handler.withIndexes(propInfo, indexes, () => {
+        withIndexes$1(propInfo, indexes, () => {
             if (propInfo.name in target) {
                 Reflect.set(target, propInfo.name, value, receiver);
             }
@@ -1764,6 +1766,142 @@ const setValueWithoutIndexes = (handler) => {
     };
 };
 
+const getExpandValues = (handler) => {
+    return function (target, prop, receiver) {
+        const withIndexes$1 = withIndexes(handler);
+        // ex.
+        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
+        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        // prop = "aaa.1.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        // prop = "aaa.*.bbb.1.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        const propInfo = getPropInfo(prop);
+        let lastIndexes = undefined;
+        for (let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {
+            const wildcardPath = propInfo.wildcardPaths[i];
+            lastIndexes = handler.getLastIndexes(wildcardPath);
+            if (typeof lastIndexes !== "undefined")
+                break;
+        }
+        lastIndexes = lastIndexes ?? [];
+        let _lastIndex = undefined;
+        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => {
+            if (typeof i === "undefined") {
+                _lastIndex = index;
+                return lastIndexes[index];
+            }
+            else {
+                return i;
+            }
+        });
+        const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
+        const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
+        const wildcardPathInfo = getPropInfo(wildcardPath);
+        const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
+        const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
+        return withIndexes$1(propInfo, wildcardIndexes, () => {
+            const parentValue = handler.getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
+            if (!Array.isArray(parentValue))
+                utils.raise(`parent value is not array`);
+            const values = [];
+            for (let i = 0; i < parentValue.length; i++) {
+                wildcardIndexes[lastIndex] = i;
+                values.push(withIndexes$1(propInfo, wildcardIndexes, () => {
+                    return handler.getValueWithoutIndexes(target, propInfo.pattern, receiver);
+                }));
+            }
+            return values;
+        });
+    };
+};
+
+const setExpandValues = (handler) => {
+    return function (target, prop, value, receiver) {
+        const withIndexes$1 = withIndexes(handler);
+        const propInfo = getPropInfo(prop);
+        let lastIndexes = undefined;
+        for (let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {
+            const wildcardPath = propInfo.wildcardPaths[i];
+            lastIndexes = handler.getLastIndexes(wildcardPath);
+            if (typeof lastIndexes !== "undefined")
+                break;
+        }
+        lastIndexes = lastIndexes ?? [];
+        let _lastIndex = undefined;
+        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => {
+            if (typeof i === "undefined") {
+                _lastIndex = index;
+                return lastIndexes[index];
+            }
+            else {
+                return i;
+            }
+        });
+        const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
+        const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
+        const wildcardPathInfo = getPropInfo(wildcardPath);
+        const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
+        const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
+        withIndexes$1(propInfo, wildcardIndexes, () => {
+            const parentValue = handler.getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
+            if (!Array.isArray(parentValue))
+                utils.raise(`parent value is not array`);
+            for (let i = 0; i < parentValue.length; i++) {
+                wildcardIndexes[lastIndex] = i;
+                withIndexes$1(propInfo, wildcardIndexes, Array.isArray(value) ?
+                    () => handler.setValueWithoutIndexes(target, propInfo.pattern, value[i], receiver) :
+                    () => handler.setValueWithoutIndexes(target, propInfo.pattern, value, receiver));
+            }
+        });
+    };
+};
+
+const getValueDirect = (handler) => {
+    return function (target, prop, indexes, receiver) {
+        const withIndexes$1 = withIndexes(handler);
+        if (typeof prop !== "string")
+            utils.raise(`prop is not string`);
+        const isIndex = prop[0] === "$";
+        const isExpand = prop[0] === "@";
+        const propName = isExpand ? prop.slice(1) : prop;
+        // パターンではないものも来る可能性がある
+        const propInfo = getPropInfo(propName);
+        return withIndexes$1(propInfo, indexes, () => {
+            if (isIndex || isExpand) {
+                return handler.get(target, prop, receiver);
+            }
+            else {
+                if (propInfo.allIncomplete) {
+                    return handler.getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+                }
+                else {
+                    return handler.getValueWithoutIndexes(target, prop, receiver);
+                }
+            }
+        });
+    };
+};
+
+const setValueDirect = (handler) => {
+    return function (target, prop, indexes, value, receiver) {
+        if (typeof prop !== "string")
+            utils.raise(`prop is not string`);
+        const withIndexes$1 = withIndexes(handler);
+        const isIndex = prop[0] === "$";
+        const isExpand = prop[0] === "@";
+        const propName = isExpand ? prop.slice(1) : prop;
+        // パターンではないものも来る可能性がある
+        const propInfo = getPropInfo(propName);
+        if (isIndex || isExpand) {
+            return withIndexes$1(propInfo, indexes, () => {
+                return handler.set(target, prop, value, receiver);
+            });
+        }
+        else {
+            return handler.setValueWithIndexes(target, propInfo, indexes, value, receiver);
+        }
+    };
+};
+
 /**
  * ドット記法でプロパティを取得するためのハンドラ
  */
@@ -1777,139 +1915,22 @@ let Handler$1 = class Handler {
     getValue = getValue(this);
     getValueWithIndexes = getValueWithIndexes(this);
     getValueWithoutIndexes = getValueWithoutIndexes(this);
-    withIndexes = withIndexes(this);
     setValueWithIndexes = setValueWithIndexes(this);
     setValueWithoutIndexes = setValueWithoutIndexes(this);
-    _getExpand(target, prop, receiver) {
-        // ex.
-        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
-        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
-        // prop = "aaa.1.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
-        // prop = "aaa.*.bbb.1.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
-        const propInfo = getPropInfo(prop);
-        let lastIndexes = undefined;
-        for (let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {
-            const wildcardPath = propInfo.wildcardPaths[i];
-            lastIndexes = this.getLastIndexes(wildcardPath);
-            if (typeof lastIndexes !== "undefined")
-                break;
-        }
-        lastIndexes = lastIndexes ?? [];
-        let _lastIndex = undefined;
-        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => {
-            if (typeof i === "undefined") {
-                _lastIndex = index;
-                return lastIndexes[index];
-            }
-            else {
-                return i;
-            }
-        });
-        const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
-        const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
-        const wildcardPathInfo = getPropInfo(wildcardPath);
-        const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
-        const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-        return this.withIndexes(propInfo, wildcardIndexes, () => {
-            const parentValue = this.getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
-            if (!Array.isArray(parentValue))
-                utils.raise(`parent value is not array`);
-            const values = [];
-            for (let i = 0; i < parentValue.length; i++) {
-                wildcardIndexes[lastIndex] = i;
-                values.push(this.withIndexes(propInfo, wildcardIndexes, () => {
-                    return this.getValueWithoutIndexes(target, propInfo.pattern, receiver);
-                }));
-            }
-            return values;
-        });
-    }
-    _setExpand(target, prop, value, receiver) {
-        const propInfo = getPropInfo(prop);
-        let lastIndexes = undefined;
-        for (let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {
-            const wildcardPath = propInfo.wildcardPaths[i];
-            lastIndexes = this.getLastIndexes(wildcardPath);
-            if (typeof lastIndexes !== "undefined")
-                break;
-        }
-        lastIndexes = lastIndexes ?? [];
-        let _lastIndex = undefined;
-        const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => {
-            if (typeof i === "undefined") {
-                _lastIndex = index;
-                return lastIndexes[index];
-            }
-            else {
-                return i;
-            }
-        });
-        const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
-        const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
-        const wildcardPathInfo = getPropInfo(wildcardPath);
-        const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
-        const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-        this.withIndexes(propInfo, wildcardIndexes, () => {
-            const parentValue = this.getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
-            if (!Array.isArray(parentValue))
-                utils.raise(`parent value is not array`);
-            for (let i = 0; i < parentValue.length; i++) {
-                wildcardIndexes[lastIndex] = i;
-                this.withIndexes(propInfo, wildcardIndexes, Array.isArray(value) ?
-                    () => this.setValueWithoutIndexes(target, propInfo.pattern, value[i], receiver) :
-                    () => this.setValueWithoutIndexes(target, propInfo.pattern, value, receiver));
-            }
-        });
-    }
-    _getDirect = (target, prop, indexes, receiver) => {
-        if (typeof prop !== "string")
-            utils.raise(`prop is not string`);
-        const isIndex = prop[0] === "$";
-        const isExpand = prop[0] === "@";
-        const propName = isExpand ? prop.slice(1) : prop;
-        // パターンではないものも来る可能性がある
-        const propInfo = getPropInfo(propName);
-        return this.withIndexes(propInfo, indexes, () => {
-            if (isIndex || isExpand) {
-                return this.get(target, prop, receiver);
-            }
-            else {
-                if (propInfo.allIncomplete) {
-                    return this.getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
-                }
-                else {
-                    return this.getValueWithoutIndexes(target, prop, receiver);
-                }
-            }
-        });
-    };
-    _setDirect = (target, prop, indexes, value, receiver) => {
-        if (typeof prop !== "string")
-            utils.raise(`prop is not string`);
-        const isIndex = prop[0] === "$";
-        const isExpand = prop[0] === "@";
-        const propName = isExpand ? prop.slice(1) : prop;
-        // パターンではないものも来る可能性がある
-        const propInfo = getPropInfo(propName);
-        if (isIndex || isExpand) {
-            return this.withIndexes(propInfo, indexes, () => {
-                return this.set(target, prop, value, receiver);
-            });
-        }
-        else {
-            return this.setValueWithIndexes(target, propInfo, indexes, value, receiver);
-        }
-    };
+    getExpandValues = getExpandValues(this);
+    setExpandValues = setExpandValues(this);
+    getValueDirect = getValueDirect(this);
+    setValueDirect = setValueDirect(this);
     get(target, prop, receiver) {
         const isPropString = typeof prop === "string";
         do {
             if (isPropString && (prop.startsWith("@@__") || prop === "constructor"))
                 break;
             if (prop === GetDirectSymbol) {
-                return (prop, indexes) => this._getDirect.apply(this, [target, prop, indexes, receiver]);
+                return (prop, indexes) => this.getValueDirect.apply(this, [target, prop, indexes, receiver]);
             }
             if (prop === SetDirectSymbol) {
-                return (prop, indexes, value) => this._setDirect.apply(this, [target, prop, indexes, value, receiver]);
+                return (prop, indexes, value) => this.setValueDirect.apply(this, [target, prop, indexes, value, receiver]);
             }
             if (!isPropString)
                 break;
@@ -1921,7 +1942,7 @@ let Handler$1 = class Handler {
             }
             else if (prop[0] === "@") {
                 const propertyName = prop.slice(1);
-                return this._getExpand(target, propertyName, receiver);
+                return this.getExpandValues(target, propertyName, receiver);
             }
             return this.getValueWithoutIndexes(target, prop, receiver);
         } while (false);
@@ -1942,7 +1963,7 @@ let Handler$1 = class Handler {
             }
             else if (prop[0] === "@") {
                 const propertyName = prop.slice(1);
-                this._setExpand(target, propertyName, value, receiver);
+                this.setExpandValues(target, propertyName, value, receiver);
                 return true;
             }
             return this.setValueWithoutIndexes(target, prop, value, receiver);
@@ -3057,9 +3078,9 @@ function setValueToState(nodeProperty, stateProperty) {
 }
 
 function setValueToNode(binding, updator, nodeProperty, stateProperty) {
+    if (!nodeProperty.applicable)
+        return;
     updator?.applyNodeUpdatesByBinding(binding, () => {
-        if (!nodeProperty.applicable)
-            return;
         // 値が同じかどうかの判定をするよりも、常に値をセットするようにしたほうが速い
         nodeProperty.value = stateProperty.filteredValue ?? "";
     });
