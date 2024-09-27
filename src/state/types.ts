@@ -15,6 +15,14 @@ export interface IStateHandler {
   directlyCallback(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void>;
 }
 
+export type IWritableStateHandler = {
+  readonly loopContext?: ILoopContext;
+}
+
+export type IReadonlyStateHandler = {
+  readonly cache: {[key: string]: any};
+}
+
 export interface IBaseState  {
   readonly $dependentProps?: Dependencies;
 }

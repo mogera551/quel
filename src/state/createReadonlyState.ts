@@ -1,47 +1,17 @@
+import { GetValueFn } from "../dotNotation/types";
 import { utils } from "../utils";
+import { getValueByReadonlyStateHandler } from "./getValueByReadonlyStateHandler";
 import { Handler } from "./Handler";
-import { IComponentForHandler, IStateProxy } from "./types";
+import { IComponentForHandler, IReadonlyStateHandler, IStateProxy } from "./types";
 
-class ReadonlyHandler extends Handler {
+class ReadonlyHandler extends Handler implements IReadonlyStateHandler {
   // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
   #cache: {[key: string]: any} = {};
-  
-  _getValue(
-    target: object, 
-    patternPaths: string[],
-    patternElements: string[],
-    wildcardIndexes: (number|undefined)[], 
-    pathIndex: number, 
-    wildcardIndex: number,
-    receiver: object, 
-  ): any {
-    const path = patternPaths[pathIndex];
-    if (patternPaths.length > 1 || this.accessorProperties.has(path)) {
-      // sliceよりもループで文字列を足していく方が速い
-      let key = path + ":";
-      for(let i = 0; i <= wildcardIndex; i++) {
-        key += wildcardIndexes[i] + ",";
-      }
-      /**
-       * 
-       * if ((value = this.#cache[key]) == null) {
-       *   if (!(key in this.#cache)) {
-       *     value = this.#cache[key] = 
-       *       super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
-       *   }
-       * }
-       * return value;
-       */
-      let value;
-      return (value = this.#cache[key]) ?? 
-        ((key in this.#cache) ? 
-         value : 
-         (this.#cache[key] = super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver))
-        );
-    } else {
-      return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
-    }
+  get cache(): {[key: string]: any} {
+    return this.#cache;
   }
+  
+  getValue: GetValueFn = getValueByReadonlyStateHandler(this);
 
   clearCache():void {
     this.#cache = {};

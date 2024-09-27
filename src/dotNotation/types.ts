@@ -35,23 +35,20 @@ export type NamedWildcardIndexes = {
 }
 
 export interface IDotNotationHandler {
-  _stackIndexes: StackIndexes;
-  _stackNamedWildcardIndexes:NamedWildcardIndexes[];
+  stackIndexes: StackIndexes;
+  stackNamedWildcardIndexes:NamedWildcardIndexes[];
   lastStackIndexes: Indexes | undefined;
-  getLastIndexes(pattern: string): Indexes | undefined;
-  withIndexes(patternInfo:IPatternInfo, indexes:Indexes, callback:() => any): any;
-  _getValue(
-    target:object, 
-    patternPaths:string[],
-    patternElements:string[],
-    wildcardIndexes:(number|undefined)[], 
-    pathIndex:number, wildcardIndex:number,
-    receiver:object, 
-  ):any;
-  _get(target:object, prop:string, receiver:object):any;
-  _set(target:object, prop:string, value:any, receiver:object):boolean;
-  __get(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object):any;
-  __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object):boolean;
+  getLastIndexes: GetLastIndexesFn;
+  getValue: GetValueFn;
+  getValueWithIndexes: GetValueWithIndexesFn;
+  getValueWithoutIndexes: GetValueWithoutIndexesFn;
+  setValueWithIndexes: SetValueWithIndexesFn;
+  setValueWithoutIndexes: SetValueWithoutIndexesFn;
+  withIndexes: WithIndexesFn;
+//  _get(target:object, prop:string, receiver:object):any;
+//  _set(target:object, prop:string, value:any, receiver:object):boolean;
+//  __get(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object):any;
+//  __set(target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object):boolean;
   _getExpand(target:object, prop:string, receiver:object):any[];
   _setExpand(target:object, prop:string, value:any, receiver:object):any;
   _getDirect(target:object, prop:string, indexes:number[], receiver:object):any;
@@ -81,3 +78,25 @@ export interface IDotNotationProxy {
   readonly $16?: number;
   [key:PropertyKey]:any;
 }
+
+export type GetValueFn = (
+  target:object, 
+  patternPaths:string[],
+  patternElements:string[],
+  wildcardIndexes:(number|undefined)[], 
+  pathIndex:number, 
+  wildcardIndex:number,
+  receiver:object
+) => any;
+
+export type GetLastIndexesFn = (pattern:string) =>  Indexes | undefined ;
+
+export type GetValueWithIndexesFn = (target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object) => any;
+
+export type GetValueWithoutIndexesFn = (target:object, prop:string, receiver:object) => any;
+
+export type WithIndexesFn = (patternInfo: IPatternInfo, indexes:Indexes, callback:() => any) => any; 
+
+export type SetValueWithIndexesFn = (target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object) => boolean;
+
+export type SetValueWithoutIndexesFn = (target:object, prop:string, value:any, receiver:object) => boolean;

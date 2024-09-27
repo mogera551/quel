@@ -1,13 +1,19 @@
 import { createPropertyAccess } from "../binding/createPropertyAccess";
-import { Indexes, IPropInfo } from "../dotNotation/types";
+import { Indexes, IPropInfo, SetValueWithIndexesFn } from "../dotNotation/types";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
+import { getLastIndexesByWritableStateHandler } from "./getLastIndexesByWritableStateHandler";
 import { Handler } from "./Handler";
-import { IComponentForHandler, IStateProxy } from "./types";
+import { setValueWithIndexesByWritableStateHandler } from "./setValueWithIndexesByWritableStateHandler";
+import { IComponentForHandler, IStateProxy, IWritableStateHandler } from "./types";
 
-class WritableHandler extends Handler {
+class WritableHandler extends Handler implements IWritableStateHandler {
   #loopContext?: ILoopContext;
   #setLoopContext: boolean = false;
+  get loopContext(): ILoopContext | undefined {
+    return this.#loopContext;
+  }
+
   async withLoopContext(
     loopContext: ILoopContext | undefined, // 省略ではなくundefinedを指定する、callbackを省略させないため
     callback: ()=> Promise<void>
@@ -36,23 +42,9 @@ class WritableHandler extends Handler {
     });
   }
 
-  getLastIndexes(pattern: string): Indexes | undefined {
-    return this._stackNamedWildcardIndexes[this._stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ?? this.#loopContext?.find(pattern)?.indexes;
-  }
+  getLastIndexes = getLastIndexesByWritableStateHandler(this);
   
-  __set(
-    target: object, 
-    propInfo: IPropInfo, 
-    indexes: (number|undefined)[], 
-    value: any, 
-    receiver: IStateProxy
-  ): boolean {
-    try {
-      return super.__set(target, propInfo, indexes, value, receiver);
-    } finally {
-      this.updator.addUpdatedStateProperty(createPropertyAccess(propInfo.pattern, indexes as number[]));
-    }
-  }
+  setValueWithIndexes: SetValueWithIndexesFn = setValueWithIndexesByWritableStateHandler(this);
 }
 
 export function createWritableState(

@@ -8,6 +8,8 @@ import { getSpecialProps } from "./getSpecialProps";
 import { getStateInfo } from "./getStateInfo";
 import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "./types";
 import { IUpdator } from "../updator/types";
+import { GetValueFn } from "../dotNotation/types";
+import { getValueByStateHandler } from "./getValueByStateHandler";
 
 /**
  * ステートを扱うためのベースハンドラ
@@ -54,20 +56,7 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     this.#getterByType["string"] = (target: Object, prop: string, receiver: IStateProxy):any => this.#getByString.apply(this, [target, prop, receiver]);
   }
 
-  _getValue(
-    target: object, 
-    patternPaths: string[],
-    patternElements: string[],
-    wildcardIndexes: (number|undefined)[], 
-    pathIndex: number, 
-    wildcardIndex: number,
-    receiver: object, 
-  ):any {
-    if (patternPaths.length > 1) {
-      this.dependentProps.setDefaultProp(patternPaths[pathIndex]);
-    }
-    return super._getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
-  }
+  getValue: GetValueFn = getValueByStateHandler(this);
 
   #getBySymbol(
     target: Object, 
