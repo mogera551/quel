@@ -2,13 +2,15 @@ import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { SetExpandValuesFn } from "./types";
-import { withIndexes as _withIndexes } from "./withIndexes";
-import { getValue as _getValue } from "./getValue";
-import { setValueWithoutIndexes as _setValueWithoutIndexes } from "./setValueWithoutIndexes";
+import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
+import { getValue as _getValue, IHandlerPartialForGetValue } from "./getValue";
+import { setValueWithoutIndexes as _setValueWithoutIndexes, IHandlerPartialForSetValueWithoutIndexes } from "./setValueWithoutIndexes";
 
-type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"cache"|"findPropertyCallback"|"getLastIndexes">;
+type IHandlerPartial = Pick<Handler, "getLastIndexes">;
 
-export const setExpandValues = (handler: IHandlerPartial): SetExpandValuesFn => {
+export type IHandlerPartialForSetExpandValues = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue & IHandlerPartialForSetValueWithoutIndexes;
+
+export const setExpandValues = (handler: IHandlerPartialForSetExpandValues): SetExpandValuesFn => {
   const withIndexes = _withIndexes(handler);
   const getValue = _getValue(handler);
   const setValueWithoutIndexes = _setValueWithoutIndexes(handler);

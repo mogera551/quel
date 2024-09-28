@@ -4,7 +4,9 @@ import { FindPropertyCallbackFn, GetValueFn, StateCache } from "./types";
 
 type IHandlerPartial = Pick<Handler, "cache"|"findPropertyCallback">;
 
-export const getValue = (handler: IHandlerPartial): GetValueFn => {
+export type IHandlerPartialForGetValue = IHandlerPartial;
+
+export const getValue = (handler: IHandlerPartialForGetValue): GetValueFn => {
   return function _getValue(
     target: object, 
     patternPaths: string[],

@@ -1,11 +1,13 @@
 import { IDotNotationHandler, IPropInfo, SetValueWithIndexesFn } from "./types";
 import { utils } from "../utils";
-import { withIndexes as _withIndexes } from "./withIndexes";
-import { getValue as _getValue } from "./getValue";
+import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
+import { getValue as _getValue, IHandlerPartialForGetValue } from "./getValue";
 
-type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes"|"cache"|"findPropertyCallback"|"notifyCallback">;
+type IHandlerPartial = Pick<IDotNotationHandler, "notifyCallback">;
 
-export const setValueWithIndexes = (handler: IHandlerPartial): SetValueWithIndexesFn => {
+export type IHandlerPartialForSetValueWithIndexes = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue;
+
+export const setValueWithIndexes = (handler: IHandlerPartialForSetValueWithIndexes): SetValueWithIndexesFn => {
   const withIndexes = _withIndexes(handler);
   const getValue = _getValue(handler);
   return function (

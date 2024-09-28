@@ -2,11 +2,14 @@ import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { setValueDirectFn } from "./types";
-import { withIndexes as _withIndexes } from "./withIndexes";
-import { setValueWithIndexes as _setValueWithIndexes } from "./setValueWithIndexes";
-type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"set"|"getLastIndexes">;
+import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
+import { setValueWithIndexes as _setValueWithIndexes, IHandlerPartialForSetValueWithIndexes } from "./setValueWithIndexes";
 
-export const setValueDirect = (handler: IHandlerPartial): setValueDirectFn => {
+type IHandlerPartial = Pick<Handler, "set">;
+
+export type IHandlerPartialForSetValueDirect = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForSetValueWithIndexes;
+
+export const setValueDirect = (handler: IHandlerPartialForSetValueDirect): setValueDirectFn => {
   const withIndexes = _withIndexes(handler);
   const setValueWithIndexes = _setValueWithIndexes(handler);
   return function (

@@ -3,7 +3,9 @@ import { IDotNotationHandler, Indexes, IPatternInfo, WithIndexesFn } from "./typ
 
 type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes">;
 
-export const withIndexes = (handler: IHandlerPartial): WithIndexesFn => {
+export type IHandlerPartialForWithIndexes = IHandlerPartial;
+
+export const withIndexes = (handler: IHandlerPartialForWithIndexes): WithIndexesFn => {
   return function (
     patternInfo: IPatternInfo, 
     indexes: Indexes, 

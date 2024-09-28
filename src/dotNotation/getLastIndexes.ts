@@ -1,6 +1,10 @@
 import { GetLastIndexesFn, IDotNotationHandler, Indexes } from "./types";
 
-export const getLastIndexes = (handler: Pick<IDotNotationHandler, "stackNamedWildcardIndexes">): GetLastIndexesFn =>
+type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes">;
+
+export type IHandlerPartialForGetLastIndexes = IHandlerPartial;
+
+export const getLastIndexes = (handler: IHandlerPartialForGetLastIndexes): GetLastIndexesFn =>
 function(
   pattern:string
 ): Indexes | undefined {

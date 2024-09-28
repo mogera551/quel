@@ -1,9 +1,10 @@
-import { GetValueWithIndexesFn, IDotNotationHandler, IPropInfo } from "./types";
-import { withIndexes as _withIndexes } from "./withIndexes";
-import { getValue as _getValue } from "./getValue";
+import { GetValueWithIndexesFn, IPropInfo } from "./types";
+import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
+import { getValue as _getValue, IHandlerPartialForGetValue } from "./getValue";
 
-type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes"|"cache"|"findPropertyCallback">;
-export const getValueWithIndexes = (handler: IHandlerPartial): GetValueWithIndexesFn => {
+export type IHandlerPartialForGetValueWithIndexes = IHandlerPartialForGetValue & IHandlerPartialForWithIndexes;
+
+export const getValueWithIndexes = (handler: IHandlerPartialForGetValueWithIndexes): GetValueWithIndexesFn => {
   const withIndexes = _withIndexes(handler);
   const getValue = _getValue(handler);
   return function(
