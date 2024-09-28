@@ -3,7 +3,7 @@ import { utils } from "../utils";
 import { withIndexes as _withIndexes } from "./withIndexes";
 import { getValue as _getValue } from "./getValue";
 
-type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes"|"getValue"|"notifyCallback">;
+type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes"|"cache"|"findPropertyCallback"|"notifyCallback">;
 
 export const setValueWithIndexes = (handler: IHandlerPartial): SetValueWithIndexesFn => {
   const withIndexes = _withIndexes(handler);

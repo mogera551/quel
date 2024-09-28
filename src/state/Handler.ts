@@ -9,7 +9,6 @@ import { getStateInfo } from "./getStateInfo";
 import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "./types";
 import { IUpdator } from "../updator/types";
 import { FindPropertyCallbackFn, GetValueFn } from "../dotNotation/types";
-import { getValueByStateHandler } from "./getValueByStateHandler";
 import { findPropertyCallback } from "./findPropertyCallback";
 
 /**
@@ -57,7 +56,6 @@ export class Handler extends DotNotationHandler implements IStateHandler {
     this.#getterByType["string"] = (target: Object, prop: string, receiver: IStateProxy):any => this.#getByString.apply(this, [target, prop, receiver]);
   }
 
-//  getValue: GetValueFn = getValueByStateHandler(this);
   findPropertyCallback: FindPropertyCallbackFn = findPropertyCallback(this);
 
   #getBySymbol(

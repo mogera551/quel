@@ -1,9 +1,11 @@
 import { getPropInfo } from "./getPropInfo";
 import { IDotNotationHandler, SetValueWithoutIndexesFn } from "./types";
+import { setValueWithIndexes as _setValueWithIndexes } from "./setValueWithIndexes";
 
-type IHandlerPartial = Pick<IDotNotationHandler, "getLastIndexes"|"setValueWithIndexes"|"stackNamedWildcardIndexes"|"stackIndexes"|"getValue">;
+type IHandlerPartial = Pick<IDotNotationHandler, "getLastIndexes"|"stackNamedWildcardIndexes"|"stackIndexes">;
 
 export const setValueWithoutIndexes = (handler: IHandlerPartial): SetValueWithoutIndexesFn => {
+  const setValueWithIndexes = _setValueWithIndexes(handler);
   return function (
     target: object, 
     prop: string, 
@@ -16,6 +18,6 @@ export const setValueWithoutIndexes = (handler: IHandlerPartial): SetValueWithou
       propInfo.allComplete ? propInfo.wildcardIndexes :
       propInfo.allIncomplete ? lastStackIndexes :
       propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-    return handler.setValueWithIndexes(target, propInfo, wildcardIndexes, value, receiver);
+    return setValueWithIndexes(target, propInfo, wildcardIndexes, value, receiver);
   }
 }

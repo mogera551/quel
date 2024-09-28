@@ -1,9 +1,11 @@
 import { getPropInfo } from "./getPropInfo";
 import { GetValueWithoutIndexesFn, IDotNotationHandler } from "./types";
+import { getValueWithIndexes as _getValueWithIndexes } from "./getValueWithIndexes";
 
-type IHandlerPartial = Pick<IDotNotationHandler, "getValueWithIndexes"|"getLastIndexes"|"stackNamedWildcardIndexes"|"stackIndexes"|"getValue">;
+type IHandlerPartial = Pick<IDotNotationHandler, "getLastIndexes"|"stackNamedWildcardIndexes"|"stackIndexes"|"cache"|"findPropertyCallback">;
 
 export const getValueWithoutIndexes = (handler: IHandlerPartial): GetValueWithoutIndexesFn => {
+  const getValueWithIndexes = _getValueWithIndexes(handler);
   return function (target:object, prop:string, receiver:object) {
     const propInfo = getPropInfo(prop);
     const lastStackIndexes = handler.getLastIndexes(propInfo.wildcardPaths[propInfo.wildcardPaths.length - 1] ?? "") ?? [];
@@ -11,7 +13,7 @@ export const getValueWithoutIndexes = (handler: IHandlerPartial): GetValueWithou
       propInfo.allComplete ? propInfo.wildcardIndexes :
       propInfo.allIncomplete ? lastStackIndexes :
       propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-    return handler.getValueWithIndexes(target, propInfo, wildcardIndexes, receiver);
+    return getValueWithIndexes(target, propInfo, wildcardIndexes, receiver);
   };
 
 }

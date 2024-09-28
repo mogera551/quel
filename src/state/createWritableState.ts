@@ -1,11 +1,9 @@
-import { createPropertyAccess } from "../binding/createPropertyAccess";
-import { Indexes, IPropInfo, NotifyCallbackFn, SetValueWithIndexesFn } from "../dotNotation/types";
+import { NotifyCallbackFn } from "../dotNotation/types";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { getLastIndexesByWritableStateHandler } from "./getLastIndexesByWritableStateHandler";
 import { Handler } from "./Handler";
 import { notifyCallback } from "./notifyCallback";
-import { setValueWithIndexesByWritableStateHandler } from "./setValueWithIndexesByWritableStateHandler";
 import { IComponentForHandler, IStateProxy, IWritableStateHandler } from "./types";
 
 class WritableHandler extends Handler implements IWritableStateHandler {
@@ -45,7 +43,6 @@ class WritableHandler extends Handler implements IWritableStateHandler {
 
   getLastIndexes = getLastIndexesByWritableStateHandler(this);
   
-//  setValueWithIndexes: SetValueWithIndexesFn = setValueWithIndexesByWritableStateHandler(this);
   notifyCallback: NotifyCallbackFn = notifyCallback(this);
 }
 

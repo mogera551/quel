@@ -3,11 +3,12 @@ import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { setValueDirectFn } from "./types";
 import { withIndexes as _withIndexes } from "./withIndexes";
-
-type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"getValue"|"set"| "setValueWithIndexes" | "setValueWithoutIndexes" | "getLastIndexes">;
+import { setValueWithIndexes as _setValueWithIndexes } from "./setValueWithIndexes";
+type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"set"|"getLastIndexes">;
 
 export const setValueDirect = (handler: IHandlerPartial): setValueDirectFn => {
   const withIndexes = _withIndexes(handler);
+  const setValueWithIndexes = _setValueWithIndexes(handler);
   return function (
     target: object, 
     prop: string, 
@@ -27,7 +28,7 @@ export const setValueDirect = (handler: IHandlerPartial): setValueDirectFn => {
         return handler.set(target, prop, value, receiver);
       });
     } else {
-      return handler.setValueWithIndexes(target, propInfo, indexes, value, receiver);
+      return setValueWithIndexes(target, propInfo, indexes, value, receiver);
     }
   }
 }

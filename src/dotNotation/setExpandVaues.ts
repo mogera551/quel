@@ -3,11 +3,15 @@ import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { SetExpandValuesFn } from "./types";
 import { withIndexes as _withIndexes } from "./withIndexes";
+import { getValue as _getValue } from "./getValue";
+import { setValueWithoutIndexes as _setValueWithoutIndexes } from "./setValueWithoutIndexes";
 
-type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"getValue" | "getValueWithoutIndexes" | "setValueWithoutIndexes" | "getLastIndexes">;
+type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"cache"|"findPropertyCallback"|"getLastIndexes">;
 
 export const setExpandValues = (handler: IHandlerPartial): SetExpandValuesFn => {
   const withIndexes = _withIndexes(handler);
+  const getValue = _getValue(handler);
+  const setValueWithoutIndexes = _setValueWithoutIndexes(handler);
   return function (
     target: object, 
     prop: string, 
@@ -38,7 +42,7 @@ export const setExpandValues = (handler: IHandlerPartial): SetExpandValuesFn => 
     const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
     withIndexes(
       propInfo, wildcardIndexes, () => {
-      const parentValue = handler.getValue(
+      const parentValue = getValue(
         target, 
         wildcardParentPathInfo.patternPaths, 
         wildcardParentPathInfo.patternElements,
@@ -51,8 +55,8 @@ export const setExpandValues = (handler: IHandlerPartial): SetExpandValuesFn => 
         wildcardIndexes[lastIndex] = i;
         withIndexes(
           propInfo, wildcardIndexes, Array.isArray(value) ? 
-          () => handler.setValueWithoutIndexes(target, propInfo.pattern, value[i], receiver) :
-          () => handler.setValueWithoutIndexes(target, propInfo.pattern, value, receiver));
+          () => setValueWithoutIndexes(target, propInfo.pattern, value[i], receiver) :
+          () => setValueWithoutIndexes(target, propInfo.pattern, value, receiver));
       }
     });
   }
