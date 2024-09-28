@@ -2,6 +2,7 @@ import 'jest';
 import { Handler } from "../../src/dotNotation/Handler";
 import { GetDirectSymbol, SetDirectSymbol } from '../../src/dotNotation/symbols';
 import { getPatternInfo } from '../../src/dotNotation/getPatternInfo';
+import { withIndexes } from '../../src/dotNotation/withIndexes';
 
 describe("Handler", () => {
   let handler: Handler;
@@ -28,7 +29,7 @@ describe("Handler", () => {
       expect(Array.from(handler.stackNamedWildcardIndexes[0]["aaa.*.*.*"].indexes)).toEqual([1, 2, 3]);
     }
     const pattern = getPatternInfo("aaa.*.*.*");
-    handler.withIndexes(pattern, [1, 2, 3], callback);
+    withIndexes(handler)(pattern, [1, 2, 3], callback);
     //expect(callback).toHaveBeenCalled();
   });
 
@@ -119,7 +120,7 @@ describe("Handler", () => {
     const target = { aaa:[ 11, 22, 33, 44 ] };
     const receiver = target;
     const pattern = getPatternInfo("aaa.*");
-    handler.withIndexes(pattern, [0], () => {
+    withIndexes(handler)(pattern, [0], () => {
       expect(handler.getValueWithoutIndexes(target, "aaa.*", receiver)).toBe(11);
     });
   });
@@ -128,7 +129,7 @@ describe("Handler", () => {
     const target = { aaa:[ 11, 22, 33, 44 ] };
     const receiver = target;
     const pattern = getPatternInfo("aaa.*");
-    handler.withIndexes(pattern, [0], () => {
+    withIndexes(handler)(pattern, [0], () => {
       expect(handler.setValueWithoutIndexes(target, "aaa.*", 111, receiver)).toBe(true);
     });
     expect(handler.getValueWithoutIndexes(target, "aaa.0", receiver)).toBe(111);
@@ -156,13 +157,13 @@ describe("Handler", () => {
     expect(handler.getExpandValues(target, "aaa.*.1", receiver)).toEqual([22, 222, 2222]);
     expect(handler.getExpandValues(target, "aaa.*.2", receiver)).toEqual([33, 333, 3333]);
     const pattern = getPatternInfo("aaa.*.*");
-    handler.withIndexes(pattern, [0], () => {
+    withIndexes(handler)(pattern, [0], () => {
       expect(handler.getExpandValues(target, "aaa.*.*", receiver)).toEqual([11, 22, 33]);
     });
-    handler.withIndexes(pattern, [1], () => {
+    withIndexes(handler)(pattern, [1], () => {
       expect(handler.getExpandValues(target, "aaa.*.*", receiver)).toEqual([111, 222, 333]);
     });
-    handler.withIndexes(pattern, [2], () => {
+    withIndexes(handler)(pattern, [2], () => {
       expect(handler.getExpandValues(target, "aaa.*.*", receiver)).toEqual([1111, 2222, 3333]);
     });
   });

@@ -20,10 +20,14 @@ export class NodeProperty implements INodeProperty {
   }
 
   get value():(any|undefined) {
-    return Reflect.get(this.node, this.name);
+    // @ts-ignore
+    return this.node[this.name];
+//    return Reflect.get(this.node, this.name);
   }
   set value(value:any) {
-    Reflect.set(this.node, this.name, value);
+    // @ts-ignore
+    this.node[this.name] = value;
+//    Reflect.set(this.node, this.name, value);
   }
 
   #filters:FilterFunc[];

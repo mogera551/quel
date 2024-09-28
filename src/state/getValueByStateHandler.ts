@@ -5,6 +5,7 @@ import { Handler } from "./Handler";
 type IHandlerPartial = Pick<Handler, "dependentProps"|"getValue">;
 
 export const getValueByStateHandler = (handler:IHandlerPartial): GetValueFn => {
+  const getValue = _getValue(handler);
   return function _getValueByStateHandler(
     target: object, 
     patternPaths: string[],
@@ -15,9 +16,9 @@ export const getValueByStateHandler = (handler:IHandlerPartial): GetValueFn => {
     receiver: object, 
   ):any {
     const dependentProps = handler.dependentProps;
-    const getValue = _getValue(handler)
-    if (patternPaths.length > 1) {
-      dependentProps.setDefaultProp(patternPaths[pathIndex]);
+    const path = patternPaths[pathIndex];
+    if (patternPaths.length > 1 && !dependentProps.defaultProps.has(path)) {
+      dependentProps.setDefaultProp(path);
     }
     return getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver);
   }

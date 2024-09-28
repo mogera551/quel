@@ -1,20 +1,22 @@
 import { GetValueWithIndexesFn, IDotNotationHandler, IPropInfo } from "./types";
 import { withIndexes as _withIndexes } from "./withIndexes";
+import { getValue as _getValue } from "./getValue";
 
 type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes"|"getValue">;
 export const getValueWithIndexes = (handler: IHandlerPartial): GetValueWithIndexesFn => {
+  const withIndexes = _withIndexes(handler);
+  const getValue = _getValue(handler);
   return function(
     target:object, 
     propInfo:IPropInfo, 
     indexes:(number|undefined)[], 
     receiver:object
   ): any {
-    const withIndexes = _withIndexes(handler);
     return withIndexes(
       propInfo, 
       indexes, 
       () => {
-        return handler.getValue(
+        return getValue(
           target, 
           propInfo.patternPaths,
           propInfo.patternElements, 

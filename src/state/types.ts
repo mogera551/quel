@@ -11,7 +11,6 @@ export interface IStateHandler {
   readonly element: HTMLElement;
   readonly updator: IUpdator;
 
-  clearCache():void;
   directlyCallback(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void>;
 }
 
@@ -20,7 +19,6 @@ export type IWritableStateHandler = {
 }
 
 export type IReadonlyStateHandler = {
-  readonly cache: {[key: string]: any};
 }
 
 export interface IBaseState  {
@@ -47,6 +45,7 @@ export type Dependencies = {
 }
 
 export interface IDependentProps {
+  readonly defaultProps: Set<string>;
   readonly propsByRefProp: {[ key: string ]: Set<string>};
   setDefaultProp(prop:string):void;
 }

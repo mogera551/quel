@@ -4,11 +4,12 @@ import { IStateHandler, IStateProxy } from "../../src/state/types";
 import { ILoopContext } from "../../src/loopContext/types";
 import { IComponent } from "../../src/component/types";
 import { ClearCacheApiSymbol, CreateBufferApiSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "../../src/state/symbols";
+import { IDotNotationHandler } from "../../src/dotNotation/types";
 
 describe('getApiMethod', () => {
 let state:  { [key: string]: any };
 let stateProxy: IStateProxy;
-let handler: IStateHandler;
+let handler: IStateHandler & Pick<IDotNotationHandler, "clearCache">;
 
 beforeEach(() => {
   state = {};
@@ -20,7 +21,7 @@ beforeEach(() => {
     },
     dependentProps: {},
     clearCache: jest.fn()
-  } as unknown as IStateHandler;
+  } as unknown as (IStateHandler & Pick<IDotNotationHandler, "clearCache">);
   
 });
 

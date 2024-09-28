@@ -23,6 +23,7 @@ describe("getStateInfo", () => {
 
   const mockAccessorProperties = ["prop1", "prop2"];
   const mockDependentProps = {
+    defaultProps: new Set() as Set<string>,
     setDefaultProp: jest.fn(),
     propsByRefProp:{ value1: new Set(["prop1"]), value2: new Set(["prop2"]) }
   };
@@ -59,11 +60,13 @@ describe("getStateInfo", () => {
     const expectedStatePropertyInfo: StatePropertyInfo = {
       accessorProperties: new Set(mockAccessorProperties),
       dependentProps: {
+        defaultProps: new Set() as Set<string>,
         propsByRefProp: {},
         setDefaultProp: expect.any(Function)
       }
     };
     (createDependentProps as jest.Mock).mockReturnValue({
+      defaultProps: new Set() as Set<string>,
       propsByRefProp: {},
       setDefaultProp: expect.any(Function)
     });

@@ -1,9 +1,9 @@
-import { Handler } from "../dotNotation/Handler";
-import { GetValueFn } from "../dotNotation/types"
+import { GetValueFn, IDotNotationHandler } from "../dotNotation/types"
+import { utils } from "../utils";
 import { getValueByStateHandler as _getValueByStateHandler } from "./getValueByStateHandler";
 import { IReadonlyStateHandler, IStateHandler } from "./types";
 
-type IHandlerPartial = Pick<Handler & IStateHandler & IReadonlyStateHandler, "accessorProperties"|"dependentProps"|"cache"|"getValue">;
+type IHandlerPartial = Pick<IDotNotationHandler & IStateHandler & IReadonlyStateHandler, "cache"|"accessorProperties"|"dependentProps"|"cache"|"getValue">;
 
 export const getValueByReadonlyStateHandler = (handler: IHandlerPartial): GetValueFn => {
   const getValueByStateHandler = _getValueByStateHandler(handler);
@@ -35,6 +35,7 @@ export const getValueByReadonlyStateHandler = (handler: IHandlerPartial): GetVal
        * return value;
        */
       let value;
+      if (typeof cache === "undefined") utils.raise(`cache is undefined`);
       return (value = cache[key]) ?? 
         ((key in cache) ? 
          value : 

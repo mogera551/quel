@@ -1,7 +1,7 @@
 import { GetDirectSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
-import { GetExpandValuesFn, GetLastIndexesFn, getValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, SetExpandValuesFn, setValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, WithIndexesFn } from "./types";
+import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, getValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, setValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
 import { getPatternInfo } from "./getPatternInfo";
 import { createWildCardIndexes } from "./createWildCardIndexes";
 import { getLastIndexes } from "./getLastIndexes";
@@ -21,6 +21,7 @@ import { setValueDirect } from "./setValueDirect";
  * ドット記法でプロパティを取得するためのハンドラ
  */
 export class Handler implements IDotNotationHandler {
+  cache?: StateCache = undefined;
   stackIndexes: StackIndexes = [];
   stackNamedWildcardIndexes: NamedWildcardIndexes[] = [];
   get lastStackIndexes(): Indexes | undefined {
@@ -40,6 +41,15 @@ export class Handler implements IDotNotationHandler {
 
   getValueDirect: getValueDirectFn = getValueDirect(this);
   setValueDirect: setValueDirectFn = setValueDirect(this);
+
+  clearCache() {
+    if (typeof this.cache !== "undefined") {
+      this.cache = {};
+    }
+  }
+
+  findPropertyCallback?: FindPropertyCallbackFn;
+  notifyCallback?: NotifyCallbackFn;
 
   get(target:object, prop:PropertyKey, receiver:object):any {
     const isPropString = typeof prop === "string";

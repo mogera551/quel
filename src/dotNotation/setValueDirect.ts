@@ -7,6 +7,7 @@ import { withIndexes as _withIndexes } from "./withIndexes";
 type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"getValue"|"set"| "setValueWithIndexes" | "setValueWithoutIndexes" | "getLastIndexes">;
 
 export const setValueDirect = (handler: IHandlerPartial): setValueDirectFn => {
+  const withIndexes = _withIndexes(handler);
   return function (
     target: object, 
     prop: string, 
@@ -15,7 +16,6 @@ export const setValueDirect = (handler: IHandlerPartial): setValueDirectFn => {
     receiver: object
   ): boolean {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
-    const withIndexes = _withIndexes(handler);
     const isIndex = prop[0] === "$";
     const isExpand = prop[0] === "@";
     const propName = isExpand ? prop.slice(1) : prop;

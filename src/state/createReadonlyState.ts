@@ -1,4 +1,4 @@
-import { GetValueFn } from "../dotNotation/types";
+import { GetValueFn, StateCache } from "../dotNotation/types";
 import { utils } from "../utils";
 import { getValueByReadonlyStateHandler } from "./getValueByReadonlyStateHandler";
 import { Handler } from "./Handler";
@@ -6,16 +6,9 @@ import { IComponentForHandler, IReadonlyStateHandler, IStateProxy } from "./type
 
 class ReadonlyHandler extends Handler implements IReadonlyStateHandler {
   // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
-  #cache: {[key: string]: any} = {};
-  get cache(): {[key: string]: any} {
-    return this.#cache;
-  }
+  cache: StateCache = {};
   
-  getValue: GetValueFn = getValueByReadonlyStateHandler(this);
-
-  clearCache():void {
-    this.#cache = {};
-  }
+//  getValue: GetValueFn = getValueByReadonlyStateHandler(this);
 
   set(
     target: object, 

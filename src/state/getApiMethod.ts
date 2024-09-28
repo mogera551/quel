@@ -6,13 +6,14 @@ import { IDependentProps, IStateHandler, IStateProxy } from "./types";
 import { createPropertyAccess } from "../binding/createPropertyAccess";
 import { ILoopContext } from "../loopContext/types";
 import { IComponent } from "../component/types";
+import { IDotNotationHandler } from "../dotNotation/types";
 
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 
 type State = { [key:string]: any };
 
-type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler}
+type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler & IDotNotationHandler}
 
 const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
   [DirectryCallApiSymbol]:

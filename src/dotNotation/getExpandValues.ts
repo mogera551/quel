@@ -7,12 +7,12 @@ import { withIndexes as _withIndexes } from "./withIndexes";
 type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"getValue" | "getValueWithoutIndexes" | "getLastIndexes">;
 
 export const getExpandValues = (handler: IHandlerPartial): GetExpandValuesFn => {
+  const withIndexes = _withIndexes(handler);
   return function (
     target: object, 
     prop: string, 
     receiver: object
   ): any[] {
-    const withIndexes = _withIndexes(handler);
     // ex.
     // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
     // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }

@@ -7,13 +7,13 @@ import { withIndexes as _withIndexes } from "./withIndexes";
 type IHandlerPartial = Pick<Handler, "stackIndexes"|"stackNamedWildcardIndexes"|"getValue" | "getValueWithoutIndexes" | "setValueWithoutIndexes" | "getLastIndexes">;
 
 export const setExpandValues = (handler: IHandlerPartial): SetExpandValuesFn => {
+  const withIndexes = _withIndexes(handler);
   return function (
     target: object, 
     prop: string, 
     value: any, 
     receiver: object
   ) {
-    const withIndexes = _withIndexes(handler);
     const propInfo = getPropInfo(prop);
     let lastIndexes = undefined;
     for(let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {

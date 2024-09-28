@@ -3,17 +3,21 @@ import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { getValueDirectFn } from "./types";
 import { withIndexes as _withIndexes } from "./withIndexes";
+import { getValue as _getValue } from "./getValue";
 
 type IHandlerPartial = Pick<Handler, "get"|"stackIndexes"|"stackNamedWildcardIndexes"|"getValue" | "getValueWithoutIndexes" | "getLastIndexes">;
 
+
+
 export const getValueDirect = (handler: IHandlerPartial): getValueDirectFn => {
+  const withIndexes = _withIndexes(handler);
+  const getValue = _getValue(handler);
   return function (
     target: object, 
     prop: string, 
     indexes: number[], 
     receiver: object
   ) {
-    const withIndexes = _withIndexes(handler);
     if (typeof prop !== "string") utils.raise(`prop is not string`);
     const isIndex = prop[0] === "$";
     const isExpand = prop[0] === "@";
@@ -26,7 +30,7 @@ export const getValueDirect = (handler: IHandlerPartial): getValueDirectFn => {
         return handler.get(target, prop, receiver);
       } else {
         if (propInfo.allIncomplete) {
-          return handler.getValue(
+          return getValue(
             target, 
             propInfo.patternPaths,
             propInfo.patternElements, 
