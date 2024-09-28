@@ -4,7 +4,7 @@ type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes">;
 
 export type IHandlerPartialForGetLastIndexes = IHandlerPartial;
 
-export const getLastIndexes = (handler: IHandlerPartialForGetLastIndexes): GetLastIndexesFn =>
+export const getLastIndexesFn = (handler: IHandlerPartialForGetLastIndexes): GetLastIndexesFn =>
 function(
   pattern:string
 ): Indexes | undefined {

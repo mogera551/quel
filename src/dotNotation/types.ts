@@ -48,8 +48,8 @@ export interface IDotNotationHandler {
   setValueWithoutIndexes: SetValueWithoutIndexesFn;
   getExpandValues: GetExpandValuesFn;
   setExpandValues: SetExpandValuesFn;
-  getValueDirect: getValueDirectFn;
-  setValueDirect: setValueDirectFn;
+  getValueDirect: GetValueDirectFn;
+  setValueDirect: SetValueDirectFn;
   get(target:object, prop:PropertyKey, receiver:object):any;
   set(target:object, prop:PropertyKey, value:any, receiver:object):boolean;
   clearCache():void;
@@ -97,8 +97,8 @@ export type SetValueWithIndexesFn = (target:object, propInfo:IPropInfo, indexes:
 export type SetValueWithoutIndexesFn = (target:object, prop:string, value:any, receiver:object) => boolean;
 export type GetExpandValuesFn = (target:object, prop:string, receiver:object) => any[];
 export type SetExpandValuesFn = (target:object, prop:string, value:any, receiver:object) => any;
-export type getValueDirectFn = (target:object, prop:string, indexes:number[], receiver:object) => any;
-export type setValueDirectFn = (target:object, prop:string, indexes:number[], value:any, receiver:object) => boolean;
+export type GetValueDirectFn = (target:object, prop:string, indexes:number[], receiver:object) => any;
+export type SetValueDirectFn = (target:object, prop:string, indexes:number[], value:any, receiver:object) => boolean;
 export type FindPropertyCallbackFn = (prop: string) => void;
 export type NotifyCallbackFn = (pattern:string, indexes:CleanIndexes) => void;
 

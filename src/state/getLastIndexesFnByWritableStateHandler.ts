@@ -4,7 +4,7 @@ import { IStateHandler, IWritableStateHandler } from "./types";
 
 type IHandlerPartial = Pick<IWritableStateHandler & Handler, "stackNamedWildcardIndexes"|"loopContext">;
 
-export const getLastIndexesByWritableStateHandler = (handler: IHandlerPartial): GetLastIndexesFn => {
+export const getLastIndexesFnByWritableStateHandler = (handler: IHandlerPartial): GetLastIndexesFn => {
   return function (pattern: string): Indexes | undefined {
     const { stackNamedWildcardIndexes, loopContext } = handler;
     return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ?? loopContext?.find(pattern)?.indexes;

@@ -4,7 +4,7 @@ import { IStateHandler, IWritableStateHandler } from "./types";
 
 type IHandlerPartial = Pick<IStateHandler, "updator">
 
-export const notifyCallback = (handler: IHandlerPartial): NotifyCallbackFn => {
+export const notifyCallbackFn = (handler: IHandlerPartial): NotifyCallbackFn => {
   return function(
     pattern: string,
     indexes: CleanIndexes

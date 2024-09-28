@@ -1,21 +1,16 @@
 import { GetDirectSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
-import { getPropInfo } from "./getPropInfo";
-import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, getValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, IPatternInfo, IPropInfo, IWildcardIndexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, setValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
-import { getPatternInfo } from "./getPatternInfo";
-import { createWildCardIndexes } from "./createWildCardIndexes";
-import { getLastIndexes } from "./getLastIndexes";
-import { createNamedWildcardIndexes } from "./createNamedWildcardIndexes";
-import { withIndexes } from "./withIndexes";
-import { getValue } from "./getValue";
-import { getValueWithIndexes } from "./getValueWithIndexes";
-import { getValueWithoutIndexes } from "./getValueWithoutIndexes";
-import { setValueWithIndexes } from "./setValueWithIndexes";
-import { setValueWithoutIndexes } from "./setValueWithoutIndexes";
-import { getExpandValues } from "./getExpandValues";
-import { setExpandValues } from "./setExpandVaues";
-import { getValueDirect } from "./getValueDirect";
-import { setValueDirect } from "./setValueDirect";
+import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
+import { getLastIndexesFn } from "./getLastIndexesFn";
+import { getValueFn } from "./getValueFn";
+import { getValueWithIndexesFn } from "./getValueWithIndexesFn";
+import { getValueWithoutIndexesFn } from "./getValueWithoutIndexesFn";
+import { setValueWithIndexesFn } from "./setValueWithIndexesFn";
+import { setValueWithoutIndexesFn } from "./setValueWithoutIndexesFn";
+import { getExpandValuesFn } from "./getExpandValuesFn";
+import { setExpandValuesFn } from "./setExpandVauesFn";
+import { getValueDirectFn } from "./getValueDirectFn";
+import { setValueDirectFn } from "./setValueDirectFn";
 
 /**
  * ドット記法でプロパティを取得するためのハンドラ
@@ -27,20 +22,20 @@ export class Handler implements IDotNotationHandler {
   get lastStackIndexes(): Indexes | undefined {
     return this.stackIndexes[this.stackIndexes.length - 1];
   }
-  getLastIndexes: GetLastIndexesFn = getLastIndexes(this);
-  getValue: GetValueFn = getValue(this);
+  getLastIndexes: GetLastIndexesFn = getLastIndexesFn(this);
+  getValue: GetValueFn = getValueFn(this);
 
-  getValueWithIndexes: GetValueWithIndexesFn = getValueWithIndexes(this);
-  getValueWithoutIndexes: GetValueWithoutIndexesFn = getValueWithoutIndexes(this);
+  getValueWithIndexes: GetValueWithIndexesFn = getValueWithIndexesFn(this);
+  getValueWithoutIndexes: GetValueWithoutIndexesFn = getValueWithoutIndexesFn(this);
 
-  setValueWithIndexes: SetValueWithIndexesFn = setValueWithIndexes(this);
-  setValueWithoutIndexes: SetValueWithoutIndexesFn = setValueWithoutIndexes(this);
+  setValueWithIndexes: SetValueWithIndexesFn = setValueWithIndexesFn(this);
+  setValueWithoutIndexes: SetValueWithoutIndexesFn = setValueWithoutIndexesFn(this);
   
-  getExpandValues: GetExpandValuesFn = getExpandValues(this);
-  setExpandValues: SetExpandValuesFn = setExpandValues(this);
+  getExpandValues: GetExpandValuesFn = getExpandValuesFn(this);
+  setExpandValues: SetExpandValuesFn = setExpandValuesFn(this);
 
-  getValueDirect: getValueDirectFn = getValueDirect(this);
-  setValueDirect: setValueDirectFn = setValueDirect(this);
+  getValueDirect: GetValueDirectFn = getValueDirectFn(this);
+  setValueDirect: SetValueDirectFn = setValueDirectFn(this);
 
   clearCache() {
     if (typeof this.cache !== "undefined") {

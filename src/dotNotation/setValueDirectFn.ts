@@ -1,17 +1,17 @@
 import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
-import { setValueDirectFn } from "./types";
-import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
-import { setValueWithIndexes as _setValueWithIndexes, IHandlerPartialForSetValueWithIndexes } from "./setValueWithIndexes";
+import { SetValueDirectFn } from "./types";
+import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
+import { setValueWithIndexesFn, IHandlerPartialForSetValueWithIndexes } from "./setValueWithIndexesFn";
 
 type IHandlerPartial = Pick<Handler, "set">;
 
 export type IHandlerPartialForSetValueDirect = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForSetValueWithIndexes;
 
-export const setValueDirect = (handler: IHandlerPartialForSetValueDirect): setValueDirectFn => {
-  const withIndexes = _withIndexes(handler);
-  const setValueWithIndexes = _setValueWithIndexes(handler);
+export const setValueDirectFn = (handler: IHandlerPartialForSetValueDirect): SetValueDirectFn => {
+  const withIndexes = withIndexesFn(handler);
+  const setValueWithIndexes = setValueWithIndexesFn(handler);
   return function (
     target: object, 
     prop: string, 

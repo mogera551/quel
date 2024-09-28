@@ -1651,12 +1651,12 @@ function createProps(component) {
 
 const BoundByComponentSymbol = Symbol.for(`globalData.boundByComponent`);
 
-const getLastIndexes = (handler) => function (pattern) {
+const getLastIndexesFn = (handler) => function (pattern) {
     const stackNamedWildcardIndexes = handler.stackNamedWildcardIndexes;
     return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes;
 };
 
-const getValue = (handler) => {
+const getValueFn = (handler) => {
     return function _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver, cache = handler.cache, findPropertyCallback = handler.findPropertyCallback, cachable = typeof handler.cache !== "undefined", callable = patternPaths.length > 1 && typeof handler.findPropertyCallback === "function", cacheKeys = undefined) {
         let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
         if (typeof cacheKeys === "undefined") {
@@ -1722,7 +1722,7 @@ function createNamedWildcardIndexes(patternInfo, indexes) {
     return namedWildcardIndexes;
 }
 
-const withIndexes = (handler) => {
+const withIndexesFn = (handler) => {
     return function (patternInfo, indexes, callback) {
         const { stackNamedWildcardIndexes, stackIndexes } = handler;
         stackNamedWildcardIndexes.push(createNamedWildcardIndexes(patternInfo, indexes));
@@ -1737,31 +1737,31 @@ const withIndexes = (handler) => {
     };
 };
 
-const getValueWithIndexes = (handler) => {
-    const withIndexes$1 = withIndexes(handler);
-    const getValue$1 = getValue(handler);
+const getValueWithIndexesFn = (handler) => {
+    const withIndexes = withIndexesFn(handler);
+    const getValue = getValueFn(handler);
     return function (target, propInfo, indexes, receiver) {
-        return withIndexes$1(propInfo, indexes, () => {
-            return getValue$1(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+        return withIndexes(propInfo, indexes, () => {
+            return getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
         });
     };
 };
 
-const getValueWithoutIndexes = (handler) => {
-    const getValueWithIndexes$1 = getValueWithIndexes(handler);
+const getValueWithoutIndexesFn = (handler) => {
+    const getValueWithIndexes = getValueWithIndexesFn(handler);
     return function (target, prop, receiver) {
         const propInfo = getPropInfo(prop);
         const lastStackIndexes = handler.getLastIndexes(propInfo.wildcardPaths[propInfo.wildcardPaths.length - 1] ?? "") ?? [];
         const wildcardIndexes = propInfo.allComplete ? propInfo.wildcardIndexes :
             propInfo.allIncomplete ? lastStackIndexes :
                 propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-        return getValueWithIndexes$1(target, propInfo, wildcardIndexes, receiver);
+        return getValueWithIndexes(target, propInfo, wildcardIndexes, receiver);
     };
 };
 
-const setValueWithIndexes = (handler) => {
-    const withIndexes$1 = withIndexes(handler);
-    const getValue$1 = getValue(handler);
+const setValueWithIndexesFn = (handler) => {
+    const withIndexes = withIndexesFn(handler);
+    const getValue = getValueFn(handler);
     return function (target, propInfo, indexes, value, receiver) {
         const notifyCallback = handler.notifyCallback;
         const callable = (typeof notifyCallback === "function");
@@ -1769,7 +1769,7 @@ const setValueWithIndexes = (handler) => {
             if (propInfo.paths.length === 1) {
                 return Reflect.set(target, propInfo.name, value, receiver);
             }
-            withIndexes$1(propInfo, indexes, () => {
+            withIndexes(propInfo, indexes, () => {
                 if (propInfo.pattern in target) {
                     Reflect.set(target, propInfo.pattern, value, receiver);
                 }
@@ -1777,7 +1777,7 @@ const setValueWithIndexes = (handler) => {
                     const lastPatternElement = propInfo.patternElements[propInfo.patternElements.length - 1];
                     const lastElement = propInfo.elements[propInfo.elements.length - 1];
                     const isWildcard = lastPatternElement === "*";
-                    const parentValue = getValue$1(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 2, propInfo.wildcardCount - (isWildcard ? 1 : 0) - 1, receiver);
+                    const parentValue = getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 2, propInfo.wildcardCount - (isWildcard ? 1 : 0) - 1, receiver);
                     Reflect.set(parentValue, isWildcard ? indexes[indexes.length - 1] ?? utils.raise("wildcard is undefined") : lastElement, value);
                     /*
                                 if (isWildcard) {
@@ -1798,22 +1798,22 @@ const setValueWithIndexes = (handler) => {
     };
 };
 
-const setValueWithoutIndexes = (handler) => {
-    const setValueWithIndexes$1 = setValueWithIndexes(handler);
+const setValueWithoutIndexesFn = (handler) => {
+    const setValueWithIndexes = setValueWithIndexesFn(handler);
     return function (target, prop, value, receiver) {
         const propInfo = getPropInfo(prop);
         const lastStackIndexes = handler.getLastIndexes(propInfo.wildcardPaths[propInfo.wildcardPaths.length - 1] ?? "") ?? [];
         const wildcardIndexes = propInfo.allComplete ? propInfo.wildcardIndexes :
             propInfo.allIncomplete ? lastStackIndexes :
                 propInfo.wildcardIndexes.map((i, index) => i ?? lastStackIndexes[index]);
-        return setValueWithIndexes$1(target, propInfo, wildcardIndexes, value, receiver);
+        return setValueWithIndexes(target, propInfo, wildcardIndexes, value, receiver);
     };
 };
 
-const getExpandValues = (handler) => {
-    const withIndexes$1 = withIndexes(handler);
-    const getValue$1 = getValue(handler);
-    const getValueWithoutIndexes$1 = getValueWithoutIndexes(handler);
+const getExpandValuesFn = (handler) => {
+    const withIndexes = withIndexesFn(handler);
+    const getValue = getValueFn(handler);
+    const getValueWithoutIndexes = getValueWithoutIndexesFn(handler);
     return function (target, prop, receiver) {
         // ex.
         // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
@@ -1844,15 +1844,15 @@ const getExpandValues = (handler) => {
         const wildcardPathInfo = getPropInfo(wildcardPath);
         const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
         const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-        return withIndexes$1(propInfo, wildcardIndexes, () => {
-            const parentValue = getValue$1(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
+        return withIndexes(propInfo, wildcardIndexes, () => {
+            const parentValue = getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
             if (!Array.isArray(parentValue))
                 utils.raise(`parent value is not array`);
             const values = [];
             for (let i = 0; i < parentValue.length; i++) {
                 wildcardIndexes[lastIndex] = i;
-                values.push(withIndexes$1(propInfo, wildcardIndexes, () => {
-                    return getValueWithoutIndexes$1(target, propInfo.pattern, receiver);
+                values.push(withIndexes(propInfo, wildcardIndexes, () => {
+                    return getValueWithoutIndexes(target, propInfo.pattern, receiver);
                 }));
             }
             return values;
@@ -1860,10 +1860,10 @@ const getExpandValues = (handler) => {
     };
 };
 
-const setExpandValues = (handler) => {
-    const withIndexes$1 = withIndexes(handler);
-    const getValue$1 = getValue(handler);
-    const setValueWithoutIndexes$1 = setValueWithoutIndexes(handler);
+const setExpandValuesFn = (handler) => {
+    const withIndexes = withIndexesFn(handler);
+    const getValue = getValueFn(handler);
+    const setValueWithoutIndexes = setValueWithoutIndexesFn(handler);
     return function (target, prop, value, receiver) {
         const propInfo = getPropInfo(prop);
         let lastIndexes = undefined;
@@ -1889,24 +1889,24 @@ const setExpandValues = (handler) => {
         const wildcardPathInfo = getPropInfo(wildcardPath);
         const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
         const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-        withIndexes$1(propInfo, wildcardIndexes, () => {
-            const parentValue = getValue$1(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
+        withIndexes(propInfo, wildcardIndexes, () => {
+            const parentValue = getValue(target, wildcardParentPathInfo.patternPaths, wildcardParentPathInfo.patternElements, wildcardIndexes, wildcardParentPathInfo.paths.length - 1, wildcardParentPathInfo.wildcardCount - 1, receiver);
             if (!Array.isArray(parentValue))
                 utils.raise(`parent value is not array`);
             for (let i = 0; i < parentValue.length; i++) {
                 wildcardIndexes[lastIndex] = i;
-                withIndexes$1(propInfo, wildcardIndexes, Array.isArray(value) ?
-                    () => setValueWithoutIndexes$1(target, propInfo.pattern, value[i], receiver) :
-                    () => setValueWithoutIndexes$1(target, propInfo.pattern, value, receiver));
+                withIndexes(propInfo, wildcardIndexes, Array.isArray(value) ?
+                    () => setValueWithoutIndexes(target, propInfo.pattern, value[i], receiver) :
+                    () => setValueWithoutIndexes(target, propInfo.pattern, value, receiver));
             }
         });
     };
 };
 
-const getValueDirect = (handler) => {
-    const withIndexes$1 = withIndexes(handler);
-    const getValue$1 = getValue(handler);
-    const getValueWithoutIndexes$1 = getValueWithoutIndexes(handler);
+const getValueDirectFn = (handler) => {
+    const withIndexes = withIndexesFn(handler);
+    const getValue = getValueFn(handler);
+    const getValueWithoutIndexes = getValueWithoutIndexesFn(handler);
     return function (target, prop, indexes, receiver) {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
@@ -1915,25 +1915,25 @@ const getValueDirect = (handler) => {
         const propName = isExpand ? prop.slice(1) : prop;
         // パターンではないものも来る可能性がある
         const propInfo = getPropInfo(propName);
-        return withIndexes$1(propInfo, indexes, () => {
+        return withIndexes(propInfo, indexes, () => {
             if (isIndex || isExpand) {
                 return handler.get(target, prop, receiver);
             }
             else {
                 if (propInfo.allIncomplete) {
-                    return getValue$1(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+                    return getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
                 }
                 else {
-                    return getValueWithoutIndexes$1(target, prop, receiver);
+                    return getValueWithoutIndexes(target, prop, receiver);
                 }
             }
         });
     };
 };
 
-const setValueDirect = (handler) => {
-    const withIndexes$1 = withIndexes(handler);
-    const setValueWithIndexes$1 = setValueWithIndexes(handler);
+const setValueDirectFn = (handler) => {
+    const withIndexes = withIndexesFn(handler);
+    const setValueWithIndexes = setValueWithIndexesFn(handler);
     return function (target, prop, indexes, value, receiver) {
         if (typeof prop !== "string")
             utils.raise(`prop is not string`);
@@ -1943,12 +1943,12 @@ const setValueDirect = (handler) => {
         // パターンではないものも来る可能性がある
         const propInfo = getPropInfo(propName);
         if (isIndex || isExpand) {
-            return withIndexes$1(propInfo, indexes, () => {
+            return withIndexes(propInfo, indexes, () => {
                 return handler.set(target, prop, value, receiver);
             });
         }
         else {
-            return setValueWithIndexes$1(target, propInfo, indexes, value, receiver);
+            return setValueWithIndexes(target, propInfo, indexes, value, receiver);
         }
     };
 };
@@ -1963,16 +1963,16 @@ let Handler$1 = class Handler {
     get lastStackIndexes() {
         return this.stackIndexes[this.stackIndexes.length - 1];
     }
-    getLastIndexes = getLastIndexes(this);
-    getValue = getValue(this);
-    getValueWithIndexes = getValueWithIndexes(this);
-    getValueWithoutIndexes = getValueWithoutIndexes(this);
-    setValueWithIndexes = setValueWithIndexes(this);
-    setValueWithoutIndexes = setValueWithoutIndexes(this);
-    getExpandValues = getExpandValues(this);
-    setExpandValues = setExpandValues(this);
-    getValueDirect = getValueDirect(this);
-    setValueDirect = setValueDirect(this);
+    getLastIndexes = getLastIndexesFn(this);
+    getValue = getValueFn(this);
+    getValueWithIndexes = getValueWithIndexesFn(this);
+    getValueWithoutIndexes = getValueWithoutIndexesFn(this);
+    setValueWithIndexes = setValueWithIndexesFn(this);
+    setValueWithoutIndexes = setValueWithoutIndexesFn(this);
+    getExpandValues = getExpandValuesFn(this);
+    setExpandValues = setExpandValuesFn(this);
+    getValueDirect = getValueDirectFn(this);
+    setValueDirect = setValueDirectFn(this);
     clearCache() {
         if (typeof this.cache !== "undefined") {
             this.cache = {};
@@ -4039,7 +4039,7 @@ function getStateInfo(state) {
     return stateProeprtyInfo;
 }
 
-const findPropertyCallback = (handler) => {
+const findPropertyCallbackFn = (handler) => {
     return function (prop) {
         const dependentProps = handler.dependentProps;
         if (!dependentProps.defaultProps.has(prop)) {
@@ -4081,7 +4081,7 @@ class Handler extends Handler$1 {
         this.#getterByType["symbol"] = (target, prop, receiver) => this.#getBySymbol.apply(this, [target, prop, receiver]);
         this.#getterByType["string"] = (target, prop, receiver) => this.#getByString.apply(this, [target, prop, receiver]);
     }
-    findPropertyCallback = findPropertyCallback(this);
+    findPropertyCallback = findPropertyCallbackFn(this);
     #getBySymbol(target, prop, receiver) {
         return this.#objectBySymbol[prop] ??
             getCallbackMethod(target, receiver, this, prop) ??
@@ -4110,14 +4110,14 @@ function createReadonlyState(component, base) {
     return new Proxy(base, new ReadonlyHandler(component, base));
 }
 
-const getLastIndexesByWritableStateHandler = (handler) => {
+const getLastIndexesFnByWritableStateHandler = (handler) => {
     return function (pattern) {
         const { stackNamedWildcardIndexes, loopContext } = handler;
         return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ?? loopContext?.find(pattern)?.indexes;
     };
 };
 
-const notifyCallback = (handler) => {
+const notifyCallbackFn = (handler) => {
     return function (pattern, indexes) {
         handler.updator.addUpdatedStateProperty(createPropertyAccess(pattern, indexes));
     };
@@ -4153,8 +4153,8 @@ class WritableHandler extends Handler {
             return await callback();
         });
     }
-    getLastIndexes = getLastIndexesByWritableStateHandler(this);
-    notifyCallback = notifyCallback(this);
+    getLastIndexes = getLastIndexesFnByWritableStateHandler(this);
+    notifyCallback = notifyCallbackFn(this);
 }
 function createWritableState(component, base) {
     return new Proxy(base, new WritableHandler(component, base));

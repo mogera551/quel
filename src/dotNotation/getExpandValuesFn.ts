@@ -2,18 +2,18 @@ import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { GetExpandValuesFn } from "./types";
-import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
-import { getValue as _getValue, IHandlerPartialForGetValue } from "./getValue";
-import { getValueWithoutIndexes as _getValueWithoutIndexes, IHandlerPartialForGetValueWithoutIndexes } from "./getValueWithoutIndexes";
+import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
+import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
+import { getValueWithoutIndexesFn, IHandlerPartialForGetValueWithoutIndexes } from "./getValueWithoutIndexesFn";
 
 type IHandlerPartial = Pick<Handler, "getLastIndexes">;
 
 export type IHandlerPartialForGetExpandValues = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue & IHandlerPartialForGetValueWithoutIndexes;
 
-export const getExpandValues = (handler: IHandlerPartialForGetExpandValues): GetExpandValuesFn => {
-  const withIndexes = _withIndexes(handler);
-  const getValue = _getValue(handler);
-  const getValueWithoutIndexes = _getValueWithoutIndexes(handler);
+export const getExpandValuesFn = (handler: IHandlerPartialForGetExpandValues): GetExpandValuesFn => {
+  const withIndexes = withIndexesFn(handler);
+  const getValue = getValueFn(handler);
+  const getValueWithoutIndexes = getValueWithoutIndexesFn(handler);
   return function (
     target: object, 
     prop: string, 

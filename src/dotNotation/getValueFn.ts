@@ -6,7 +6,7 @@ type IHandlerPartial = Pick<Handler, "cache"|"findPropertyCallback">;
 
 export type IHandlerPartialForGetValue = IHandlerPartial;
 
-export const getValue = (handler: IHandlerPartialForGetValue): GetValueFn => {
+export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
   return function _getValue(
     target: object, 
     patternPaths: string[],

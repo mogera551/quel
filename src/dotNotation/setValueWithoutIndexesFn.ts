@@ -1,13 +1,13 @@
 import { getPropInfo } from "./getPropInfo";
 import { IDotNotationHandler, SetValueWithoutIndexesFn } from "./types";
-import { setValueWithIndexes as _setValueWithIndexes, IHandlerPartialForSetValueWithIndexes } from "./setValueWithIndexes";
+import { setValueWithIndexesFn, IHandlerPartialForSetValueWithIndexes } from "./setValueWithIndexesFn";
 
 type IHandlerPartial = Pick<IDotNotationHandler, "getLastIndexes">;
 
 export type IHandlerPartialForSetValueWithoutIndexes = IHandlerPartial & IHandlerPartialForSetValueWithIndexes;
 
-export const setValueWithoutIndexes = (handler: IHandlerPartialForSetValueWithoutIndexes): SetValueWithoutIndexesFn => {
-  const setValueWithIndexes = _setValueWithIndexes(handler);
+export const setValueWithoutIndexesFn = (handler: IHandlerPartialForSetValueWithoutIndexes): SetValueWithoutIndexesFn => {
+  const setValueWithIndexes = setValueWithIndexesFn(handler);
   return function (
     target: object, 
     prop: string, 

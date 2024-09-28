@@ -1,15 +1,15 @@
 import { IDotNotationHandler, IPropInfo, SetValueWithIndexesFn } from "./types";
 import { utils } from "../utils";
-import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
-import { getValue as _getValue, IHandlerPartialForGetValue } from "./getValue";
+import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
+import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
 
 type IHandlerPartial = Pick<IDotNotationHandler, "notifyCallback">;
 
 export type IHandlerPartialForSetValueWithIndexes = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue;
 
-export const setValueWithIndexes = (handler: IHandlerPartialForSetValueWithIndexes): SetValueWithIndexesFn => {
-  const withIndexes = _withIndexes(handler);
-  const getValue = _getValue(handler);
+export const setValueWithIndexesFn = (handler: IHandlerPartialForSetValueWithIndexes): SetValueWithIndexesFn => {
+  const withIndexes = withIndexesFn(handler);
+  const getValue = getValueFn(handler);
   return function (
     target: object, 
     propInfo: IPropInfo, 

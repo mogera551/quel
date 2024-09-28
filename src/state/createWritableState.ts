@@ -1,9 +1,9 @@
 import { NotifyCallbackFn } from "../dotNotation/types";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
-import { getLastIndexesByWritableStateHandler } from "./getLastIndexesByWritableStateHandler";
+import { getLastIndexesFnByWritableStateHandler } from "./getLastIndexesFnByWritableStateHandler";
 import { Handler } from "./Handler";
-import { notifyCallback } from "./notifyCallback";
+import { notifyCallbackFn } from "./notifyCallbackFn";
 import { IComponentForHandler, IStateProxy, IWritableStateHandler } from "./types";
 
 class WritableHandler extends Handler implements IWritableStateHandler {
@@ -41,9 +41,9 @@ class WritableHandler extends Handler implements IWritableStateHandler {
     });
   }
 
-  getLastIndexes = getLastIndexesByWritableStateHandler(this);
+  getLastIndexes = getLastIndexesFnByWritableStateHandler(this);
   
-  notifyCallback: NotifyCallbackFn = notifyCallback(this);
+  notifyCallback: NotifyCallbackFn = notifyCallbackFn(this);
 }
 
 export function createWritableState(

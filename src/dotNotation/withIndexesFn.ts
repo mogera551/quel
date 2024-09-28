@@ -5,7 +5,7 @@ type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"st
 
 export type IHandlerPartialForWithIndexes = IHandlerPartial;
 
-export const withIndexes = (handler: IHandlerPartialForWithIndexes): WithIndexesFn => {
+export const withIndexesFn = (handler: IHandlerPartialForWithIndexes): WithIndexesFn => {
   return function (
     patternInfo: IPatternInfo, 
     indexes: Indexes, 

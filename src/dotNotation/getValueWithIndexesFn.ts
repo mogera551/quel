@@ -1,12 +1,12 @@
 import { GetValueWithIndexesFn, IPropInfo } from "./types";
-import { withIndexes as _withIndexes, IHandlerPartialForWithIndexes } from "./withIndexes";
-import { getValue as _getValue, IHandlerPartialForGetValue } from "./getValue";
+import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
+import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
 
 export type IHandlerPartialForGetValueWithIndexes = IHandlerPartialForGetValue & IHandlerPartialForWithIndexes;
 
-export const getValueWithIndexes = (handler: IHandlerPartialForGetValueWithIndexes): GetValueWithIndexesFn => {
-  const withIndexes = _withIndexes(handler);
-  const getValue = _getValue(handler);
+export const getValueWithIndexesFn = (handler: IHandlerPartialForGetValueWithIndexes): GetValueWithIndexesFn => {
+  const withIndexes = withIndexesFn(handler);
+  const getValue = getValueFn(handler);
   return function(
     target:object, 
     propInfo:IPropInfo, 
