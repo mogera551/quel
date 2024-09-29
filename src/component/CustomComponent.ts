@@ -8,13 +8,14 @@ import { createProps } from "./createProps";
 import { createGlobals } from "./createGlobals";
 import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
-import { IContentBindings, IBindingSummary } from "../binding/types";
+import { IContentBindings, IBindingSummary, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
 import { getAdoptedCssNamesFromStyleValue } from "./getAdoptedCssNamesFromStyleValue";
+import { createNewBindingSummary } from "../binding/createNewBindingSummary";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 
@@ -41,6 +42,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       super();
       this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
       this.#bindingSummary = createBindingSummary();
+      this.#newBindingSummary = createNewBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);
       this.#props = createProps(this);
@@ -130,6 +132,11 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       return this.#bindingSummary;
     }
 
+    #newBindingSummary: INewBindingSummary;
+    get newBindingSummary(): INewBindingSummary {
+      return this.#newBindingSummary;
+    }
+
     #updator: IUpdator;
     get updator(): IUpdator {
       return this.#updator;
@@ -184,11 +191,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       });
 
       // build binding tree and dom 
-      this.bindingSummary.update((summary) => {
-        const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-        this.rootBindingManager = createContentBindings(this.template, undefined, this);
-        this.rootBindingManager.rebuild();
-      });
+      const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+      this.rootBindingManager = createContentBindings(this.template, undefined, this);
+      this.rootBindingManager.rebuild([]);
       if (this.useWebComponent) {
         // case of useWebComponent,
         // then append fragment block to viewRootElement

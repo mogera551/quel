@@ -18,18 +18,25 @@ export class LoopContext implements ILoopContext{
     contentBindings: IContentBindingsTreeNode
   ) {
     this.#parentBinding = contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
-    (this.#parentBinding.loopable === true) || utils.raise("parentBinding is not loopable");
+    (this.#parentBinding.loopable === false) && utils.raise("parentBinding is not loopable");
     this.#statePropertyName = this.#parentBinding.statePropertyName ?? utils.raise("statePropertyName is undefined");
     this.#contentBindings = contentBindings;
     this.#patternInfo = getPatternInfo(this.#statePropertyName + ".*");
     this.#patternName = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
   }
 
+  get parentBinding(): IBindingTreeNode {
+    return this.#parentBinding;
+  }
+  get contentBindings(): IContentBindingsTreeNode {
+    return this.#contentBindings;
+  }
+
   get patternName(): string {
     return this.#patternName;
   }
   get parentLoopContext(): ILoopContext | undefined {
-    this.checkRevision();
+    // インデックスは変わるが親子関係は変わらないので、checkRevisionは不要
     if (!this.#parentLoopCache) {
       const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
       let curContentBindings:IContentBindingsTreeNode | undefined = undefined;
@@ -93,5 +100,8 @@ export class LoopContext implements ILoopContext{
       curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
     }
     return curContentBindings?.loopContext;
+  }
+
+  dispose(): void {
   }
 }

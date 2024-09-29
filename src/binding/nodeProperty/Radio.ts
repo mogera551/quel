@@ -4,6 +4,7 @@ import { IMultiValue, IBinding } from "../types";
 import { MultiValue } from "./MultiValue";
 import { ElementBase } from "./ElementBase";
 import { FilterManager } from "../../filter/Manager";
+import { CleanIndexes } from "../../dotNotation/types";
 
 export class Radio extends ElementBase {
   get inputElement():HTMLInputElement {
@@ -11,19 +12,19 @@ export class Radio extends ElementBase {
   }
 
   _value:IMultiValue = new MultiValue(undefined, false);
-  get value():IMultiValue {
+  getValue(indexes?:CleanIndexes):IMultiValue {
     this._value.value = this.inputElement.value;
     this._value.enabled = this.inputElement.checked;
     return this._value;
   }
-  set value(value:any) {
+  setValue(value:any, indexes?:CleanIndexes) {
     const multiValue:IMultiValue = this.filteredValue;
     this.inputElement.checked = (value === multiValue.value) ? true : false;
   }
 
   _filteredValue:IMultiValue = new MultiValue(undefined, false);
   get filteredValue():IMultiValue {
-    const multiValue:IMultiValue = this.value;
+    const multiValue:IMultiValue = this.getValue();
     this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter<"input">(multiValue.value, this.filters) : multiValue.value;
     this._filteredValue.enabled = multiValue.enabled;
     return this._filteredValue;

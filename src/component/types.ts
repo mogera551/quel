@@ -2,7 +2,7 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
 import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
-import { IContentBindings, IBindingPropertyAccess, IBindingSummary } from "../binding/types";
+import { IContentBindings, IBindingPropertyAccess, IBindingSummary, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
 
 export type ComponentModuleConfig = {
@@ -109,6 +109,7 @@ export interface ICustomComponent {
   pseudoNode?: Node;
   readonly shadowRootOrDocument: ShadowRoot|Document;
   readonly bindingSummary: IBindingSummary;
+  readonly newBindingSummary: INewBindingSummary;
   readonly updator: IUpdator;
   readonly props: IProps;
   readonly globals: IGlobalDataProxy;

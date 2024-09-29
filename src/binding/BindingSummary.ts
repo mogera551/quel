@@ -102,15 +102,18 @@ class BindingSummary implements IBindingSummary {
 
   rebuild(bindings:Set<IBinding>):void {
     this.#allBindings = bindings;
+/*
     const arrayBindings = Array.from(bindings);
     this.#keyByBinding = new Map(arrayBindings.map(binding => [binding, pickKey(binding)]));
     this.#bindingsByKey = Map.groupBy(arrayBindings, binding => this.#keyByBinding.get(binding)) as Map<string,IBinding[]>;
 //    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
     this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
     this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
+*/
   }
 
   partialUpdate(bindings:IBinding[]):void {
+    /*
     for(let i = 0; i < bindings.length; i++) {
       const binding = bindings[i];
       const key = this.#keyByBinding.get(binding) ?? utils.raise("BindingSummary.partialUpdate: key is undefined");
@@ -121,6 +124,7 @@ class BindingSummary implements IBindingSummary {
       this.#keyByBinding.set(binding, newKey);
       this.#bindingsByKey.get(newKey)?.push(binding) ?? this.#bindingsByKey.set(newKey, [binding]);
     }
+    */
   }
 }
 

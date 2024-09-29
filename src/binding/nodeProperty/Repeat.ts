@@ -3,23 +3,24 @@ import { IFilterText } from "../../filter/types";
 import { IContentBindings, IBinding } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
+import { CleanIndexes } from "../../dotNotation/types";
 
 const rebuildFunc = (contentBindings:IContentBindings):void => contentBindings.rebuild();
 
 export class Repeat extends Loop {
-  get value():any[] {
+  getValue(indexes?:CleanIndexes):any[] {
     return this.binding.childrenContentBindings;
   }
-  set value(value:any[]) {
+  setValue(value:any[], indexes?: CleanIndexes):void {
     if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-    const lastValueLength = this.value.length;
+    const lastValueLength = this.getValue().length;
     this.revisionUpForLoop();
     if (lastValueLength < value.length) {
       this.binding.childrenContentBindings.forEach(rebuildFunc);
       for(let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
         const contentBindings = createContentBindings(this.template, this.binding);
         this.binding.appendChildContentBindings(contentBindings);
-        contentBindings.rebuild();
+        contentBindings.rebuild(indexes?.concat(newIndex));
       }
     } else if (lastValueLength > value.length) {
       const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);

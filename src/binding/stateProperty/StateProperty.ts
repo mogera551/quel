@@ -3,7 +3,7 @@ import { IFilterText, FilterFunc } from "../../filter/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { IPropInfo } from "../../dotNotation/types";
+import { CleanIndexes, IPropInfo } from "../../dotNotation/types";
 import { getPropInfo } from "../../dotNotation/getPropInfo";
 import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
@@ -60,15 +60,17 @@ export class StateProperty implements IStateProperty {
     return this.key;
   }
 
-  get value():any {
-    return this.state[GetDirectSymbol](this.name, this.indexes);
+  getValue(indexes?: CleanIndexes):any {
+    if (typeof indexes === "undefined") indexes = this.indexes;
+    return this.state[GetDirectSymbol](this.name, indexes);
   }
-  set value(value:any) {
+  setValue(value:any, indexes?: CleanIndexes) {
+    if (typeof indexes === "undefined") indexes = this.indexes;
     const setValue = (value:any) => {
-      this.state[SetDirectSymbol](this.name, this.indexes, value);
+      this.state[SetDirectSymbol](this.name, indexes, value);
     };
     if (value instanceof MultiValue) {
-      const thisValue = this.value;
+      const thisValue = this.getValue();
       if (Array.isArray(thisValue)) {
         const setOfThisValue = new Set(thisValue);
         value.enabled ? setOfThisValue.add(value.value) : setOfThisValue.delete(value.value);
@@ -86,8 +88,9 @@ export class StateProperty implements IStateProperty {
     return this.#filters;
   }
 
-  get filteredValue():any {
-    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<"output">(this.value, this.filters);
+  getFilteredValue(indexes?: CleanIndexes):any {
+    const value = this.getValue(indexes);
+    return this.filters.length === 0 ? value : FilterManager.applyFilter<"output">(value, this.filters);
   }
 
   // setValueToState()の対象かどうか
@@ -116,12 +119,14 @@ export class StateProperty implements IStateProperty {
   initialize() {
   }
 
-  getChildValue(index:number) {
-    return this.state[GetDirectSymbol](this.#childName , this.indexes.concat(index));
+  getChildValue(index:number, indexes: number[] | undefined) {
+    if (typeof indexes === "undefined") indexes = this.indexes;
+    return this.state[GetDirectSymbol](this.#childName , indexes.concat(index));
   }
 
-  setChildValue(index:number, value:any) {
-    return this.state[SetDirectSymbol](this.#childName , this.indexes.concat(index), value);
+  setChildValue(index:number, value:any, indexes: number[] | undefined) {
+    if (typeof indexes === "undefined") indexes = this.indexes;
+    return this.state[SetDirectSymbol](this.#childName , indexes.concat(index), value);
   }
 
   dispose() {

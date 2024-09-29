@@ -1258,33 +1258,45 @@ function expandStateProperties(states, updatedStateProperties) {
 
 // ソートのための比較関数
 // BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
-const compareExpandableBindings = (a, b) => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 // 
-function rebuildBindings(updator, bindingSummary, updateStatePropertyAccessByKey, updatedKeys) {
-    const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
-    bindingSummary.update((bindingSummary) => {
-        for (let i = 0; i < expandableBindings.length; i++) {
-            const binding = expandableBindings[i];
-            if (!bindingSummary.exists(binding))
-                continue;
-            if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key))
-                continue;
-            const compareKey = binding.stateProperty.key + ".";
+function rebuildBindings(updator, newBindingSummary, updateStatePropertyAccessByKey, updatedKeys) {
+    const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
+    for (let i = 0; i < propertyAccesses.length; i++) {
+        newBindingSummary.gatherBindings(propertyAccesses[i].pattern, propertyAccesses[i].indexes).forEach(binding => {
+            if (!binding.expandable)
+                return;
+            const compareKey = binding.stateProperty.name + ".";
             const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
             updator.setFullRebuild(isFullBuild, () => {
-                binding.rebuild();
+                binding.rebuild(propertyAccesses[i].indexes);
             });
+        });
+    }
+    /*
+      const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
+      bindingSummary.update((bindingSummary) => {
+        for(let i = 0; i < expandableBindings.length; i++) {
+          const binding = expandableBindings[i];
+          if (!bindingSummary.exists(binding)) continue;
+          if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key)) continue;
+          const compareKey = binding.stateProperty.key + ".";
+          const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
+          updator.setFullRebuild(isFullBuild, () => {
+            binding.rebuild();
+          });
         }
-    });
+      });
+    */
 }
 
-function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex) {
+function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex, indexes) {
     updator?.applyNodeUpdatesByBinding(binding, () => {
-        nodeProperty.applyToChildNodes(setOfIndex);
+        nodeProperty.applyToChildNodes(setOfIndex, indexes);
     });
 }
 
-function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses) {
+function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccesses) {
+    const propertyAccessByKey = {};
     const indexesByParentKey = {};
     for (const propertyAccess of updatedStatePropertyAccesses) {
         const patternElements = propertyAccess.propInfo.patternElements;
@@ -1297,41 +1309,82 @@ function updateChildNodes(updator, bindingSummary, updatedStatePropertyAccesses)
         const patternPaths = propertyAccess.propInfo.patternPaths;
         const parentKey = patternPaths[patternPaths.length - 2] + "\t" + indexes.slice(0, -1);
         indexesByParentKey[parentKey]?.add(lastIndex) ?? (indexesByParentKey[parentKey] = new Set([lastIndex]));
+        propertyAccessByKey[parentKey] = propertyAccess;
     }
     for (const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
-        const bindings = bindingSummary.bindingsByKey.get(parentKey);
-        if (typeof bindings === "undefined")
-            continue;
-        //    bindingSummary.update((bindingSummary) => {
-        for (const binding of bindings) {
+        const propertyAccess = propertyAccessByKey[parentKey];
+        newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes).forEach(binding => {
             setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
-        }
-        //    });
+        });
     }
+    /*
+      const indexesByParentKey: {[k: string]: Set<number>} = {};
+      for(const propertyAccess of updatedStatePropertyAccesses) {
+        const patternElements = propertyAccess.propInfo.patternElements;
+        if (patternElements[patternElements.length - 1] !== "*") continue;
+    
+        const indexes = propertyAccess.indexes;
+        const lastIndex = indexes?.[indexes.length - 1];
+        if (typeof lastIndex === "undefined") continue;
+    
+        const patternPaths = propertyAccess.propInfo.patternPaths;
+        const parentKey = patternPaths[patternPaths.length - 2] + "\t" + indexes.slice(0, -1);
+    
+        indexesByParentKey[parentKey]?.add(lastIndex) ?? (indexesByParentKey[parentKey] = new Set([lastIndex]));
+      }
+    
+      for(const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
+        const bindings = bindingSummary.bindingsByKey.get(parentKey);
+        if (typeof bindings === "undefined") continue;
+    //    bindingSummary.update((bindingSummary) => {
+          for(const binding of bindings) {
+            setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
+          }
+    //    });
+      }
+    */
 }
 
-function updateNodes(bindingSummary, updateStatePropertyAccessByKey = new Map()) {
-    const allBindingsForUpdate = [];
-    for (let key of updateStatePropertyAccessByKey.keys()) {
-        const bindings = bindingSummary.bindingsByKey.get(key);
-        if (typeof bindings === "undefined")
-            continue;
-        allBindingsForUpdate.push.apply(allBindingsForUpdate, bindings);
-    }
-    const uniqueAllBindingsForUpdate = Array.from(new Set(allBindingsForUpdate));
+function updateNodes(newBindingSummary, updateStatePropertyAccessByKey = new Map()) {
+    const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
     const selectBindings = [];
-    for (let ui = 0; ui < uniqueAllBindingsForUpdate.length; ui++) {
-        const binding = uniqueAllBindingsForUpdate[ui];
-        if (binding.nodeProperty.isSelectValue) {
-            selectBindings.push(binding);
-        }
-        else {
-            binding.updateNodeForNoRecursive();
-        }
+    for (let i = 0; i < propertyAccesses.length; i++) {
+        newBindingSummary.gatherBindings(propertyAccesses[i].pattern, propertyAccesses[i].indexes).forEach(binding => {
+            if (binding.expandable)
+                return;
+            if (binding.nodeProperty.isSelectValue) {
+                selectBindings.push({ binding, indexes: propertyAccesses[i].indexes });
+            }
+            else {
+                binding.updateNodeForNoRecursive(propertyAccesses[i].indexes);
+            }
+        });
     }
     for (let si = 0; si < selectBindings.length; si++) {
-        selectBindings[si].updateNodeForNoRecursive();
+        const info = selectBindings[si];
+        info.binding.updateNodeForNoRecursive(info.indexes);
     }
+    /*
+      const allBindingsForUpdate: IBinding[] = [];
+      for(let key of updateStatePropertyAccessByKey.keys()) {
+        const bindings = bindingSummary.bindingsByKey.get(key);
+        if (typeof bindings === "undefined") continue;
+        allBindingsForUpdate.push.apply(allBindingsForUpdate, bindings);
+      }
+      const uniqueAllBindingsForUpdate = Array.from(new Set(allBindingsForUpdate));
+      const selectBindings = [];
+      for(let ui = 0; ui < uniqueAllBindingsForUpdate.length; ui++) {
+        const binding = uniqueAllBindingsForUpdate[ui];
+        if (binding.nodeProperty.isSelectValue) {
+          selectBindings.push(binding);
+        } else {
+          binding.updateNodeForNoRecursive();
+        }
+      }
+      for(let si = 0; si < selectBindings.length; si++) {
+        selectBindings[si].updateNodeForNoRecursive();
+      }
+    */
 }
 
 class Updator {
@@ -1345,8 +1398,8 @@ class Updator {
     get states() {
         return this.#component.states;
     }
-    get bindingSummary() {
-        return this.#component.bindingSummary;
+    get newBindingSummary() {
+        return this.#component.newBindingSummary;
     }
     get component() {
         return this.#component;
@@ -1403,9 +1456,10 @@ class Updator {
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
                 const updatedStatePropertyAccessByKey = new Map(updatedStatePropertyAccesses.map(propertyAccess => [propertyAccess.key, propertyAccess]));
-                rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
-                updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses);
-                updateNodes(this.bindingSummary, updatedStatePropertyAccessByKey);
+                rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
+                updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+                updateNodes(this.newBindingSummary, updatedStatePropertyAccessByKey);
+                //        gatherBindings("data.*.id", [10]);
             }
         });
     }
@@ -2304,12 +2358,12 @@ class NodeProperty {
     get nameElements() {
         return this.#nameElements;
     }
-    get value() {
+    getValue(indexes) {
         // @ts-ignore
         return this.node[this.name];
         //    return Reflect.get(this.node, this.name);
     }
-    set value(value) {
+    setValue(value, indexes) {
         // @ts-ignore
         this.node[this.name] = value;
         //    Reflect.set(this.node, this.name, value);
@@ -2319,8 +2373,9 @@ class NodeProperty {
         return this.#filters;
     }
     /** @type {any} */
-    get filteredValue() {
-        return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
+    getFilteredValue(indexes) {
+        const value = this.getValue(indexes);
+        return this.filters.length === 0 ? value : FilterManager.applyFilter(value, this.filters);
     }
     // setValueToNode()の対象かどうか
     get applicable() {
@@ -2356,7 +2411,7 @@ class NodeProperty {
     postUpdate(propertyAccessByStatePropertyKey) {
     }
     equals(value) {
-        return this.value === value;
+        return this.getValue() === value;
     }
     applyToChildNodes(setOfIndex) {
     }
@@ -2415,20 +2470,20 @@ class Loop extends TemplateProperty {
 
 const rebuildFunc = (contentBindings) => contentBindings.rebuild();
 class Repeat extends Loop {
-    get value() {
+    getValue(indexes) {
         return this.binding.childrenContentBindings;
     }
-    set value(value) {
+    setValue(value, indexes) {
         if (!Array.isArray(value))
             utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-        const lastValueLength = this.value.length;
+        const lastValueLength = this.getValue().length;
         this.revisionUpForLoop();
         if (lastValueLength < value.length) {
             this.binding.childrenContentBindings.forEach(rebuildFunc);
             for (let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
                 const contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.appendChildContentBindings(contentBindings);
-                contentBindings.rebuild();
+                contentBindings.rebuild(indexes?.concat(newIndex));
             }
         }
         else if (lastValueLength > value.length) {
@@ -2451,27 +2506,28 @@ class Repeat extends Loop {
 }
 
 class Branch extends TemplateProperty {
-    get value() {
+    getValue(indexes) {
         return this.binding.childrenContentBindings.length > 0;
     }
     /**
      * Set value to bind/unbind child bindingManager
      */
-    set value(value) {
+    setValue(value, indexes) {
         if (typeof value !== "boolean")
             utils.raise(`Branch: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`);
-        if (this.value !== value) {
+        const lastValue = this.getValue();
+        if (lastValue !== value) {
             if (value) {
                 const contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.appendChildContentBindings(contentBindings);
-                contentBindings.rebuild();
+                contentBindings.rebuild(indexes);
             }
             else {
                 this.binding.removeAllChildrenContentBindings();
             }
         }
         else {
-            this.binding.childrenContentBindings.forEach(constentBindings => constentBindings.rebuild());
+            this.binding.childrenContentBindings.forEach(contentBindings => contentBindings.rebuild(indexes));
         }
     }
     constructor(binding, node, name, filters) {
@@ -2497,10 +2553,10 @@ class ElementBase extends NodeProperty {
 
 const NAME = "class";
 class ElementClassName extends ElementBase {
-    get value() {
+    getValue(indexes) {
         return this.element.className.length > 0 ? this.element.className.split(" ") : [];
     }
-    set value(value) {
+    setValue(value, indexes) {
         if (!Array.isArray(value))
             utils.raise(`ElementClassName: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         this.element.className = value.join(" ");
@@ -2526,12 +2582,12 @@ class Checkbox extends ElementBase {
         return this.node;
     }
     _value = new MultiValue(undefined, false);
-    get value() {
+    getValue(indexes) {
         this._value.value = this.inputElement.value;
         this._value.enabled = this.inputElement.checked;
         return this._value;
     }
-    set value(value) {
+    setValue(value, indexes) {
         if (!Array.isArray(value))
             utils.raise(`Checkbox: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         const multiValue = this.filteredValue;
@@ -2539,7 +2595,7 @@ class Checkbox extends ElementBase {
     }
     _filteredValue = new MultiValue(undefined, false);
     get filteredValue() {
-        const multiValue = this.value;
+        const multiValue = this.getValue();
         this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;
         this._filteredValue.enabled = multiValue.enabled;
         return this._filteredValue;
@@ -2561,18 +2617,18 @@ class Radio extends ElementBase {
         return this.element;
     }
     _value = new MultiValue(undefined, false);
-    get value() {
+    getValue(indexes) {
         this._value.value = this.inputElement.value;
         this._value.enabled = this.inputElement.checked;
         return this._value;
     }
-    set value(value) {
+    setValue(value, indexes) {
         const multiValue = this.filteredValue;
         this.inputElement.checked = (value === multiValue.value) ? true : false;
     }
     _filteredValue = new MultiValue(undefined, false);
     get filteredValue() {
-        const multiValue = this.value;
+        const multiValue = this.getValue();
         this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter(multiValue.value, this.filters) : multiValue.value;
         this._filteredValue.enabled = multiValue.enabled;
         return this._filteredValue;
@@ -2627,13 +2683,13 @@ class ElementEvent extends ElementBase {
     }
     async directlyCall(event) {
         // 再構築などでバインドが削除されている場合は処理しない
-        if (!(this.binding.bindingSummary?.exists(this.binding) ?? false))
+        if (!(this.binding.newBindingSummary?.exists(this.binding) ?? false))
             return;
         return this.binding.stateProperty.state[DirectryCallApiSymbol](this.binding.stateProperty.name, this.binding.parentContentBindings.currentLoopContext, event);
     }
     eventHandler(event) {
         // 再構築などでバインドが削除されている場合は処理しない
-        if (!(this.binding.bindingSummary?.exists(this.binding) ?? false))
+        if (!(this.binding.newBindingSummary?.exists(this.binding) ?? false))
             return;
         // event filter
         event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
@@ -2649,10 +2705,10 @@ class ElementClass extends ElementBase {
     get className() {
         return this.nameElements[1];
     }
-    get value() {
+    getValue(indexes) {
         return this.element.classList.contains(this.className);
     }
-    set value(value) {
+    setValue(value, indexes) {
         if (typeof value !== "boolean")
             utils.raise(`ElementClass: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`);
         value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
@@ -2668,10 +2724,10 @@ class ElementAttribute extends ElementBase {
     get attributeName() {
         return this.nameElements[1];
     }
-    get value() {
+    getValue(indexes) {
         return this.element.getAttribute(this.attributeName);
     }
-    set value(value) {
+    setValue(value, indexes) {
         this.element.setAttribute(this.attributeName, value);
     }
 }
@@ -2683,10 +2739,10 @@ class ElementStyle extends ElementBase {
     get styleName() {
         return this.nameElements[1];
     }
-    get value() {
+    getValue(indexes) {
         return this.htmlElement.style.getPropertyValue(this.styleName);
     }
-    set value(value) {
+    setValue(value, indexes) {
         this.htmlElement.style.setProperty(this.styleName, value);
     }
     constructor(binding, node, name, filters) {
@@ -2738,10 +2794,10 @@ class ComponentProperty extends ElementBase {
         // 「*」を含まないようにする
         super(binding, node, name, filters);
     }
-    get value() {
-        return super.value;
+    getValue(indexes) {
+        return super.getValue();
     }
-    set value(value) {
+    setValue(value, indexes) {
         try {
             this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, []);
         }
@@ -2785,10 +2841,10 @@ class RepeatKeyed extends Loop {
     #setOfNewIndexes = new Set;
     #lastChildByNewIndex = new Map;
     #lastValue = [];
-    get value() {
+    getValue(indexes) {
         return this.#lastValue;
     }
-    set value(values) {
+    setValue(values, indexes) {
         if (!Array.isArray(values))
             utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         this.revisionUpForLoop();
@@ -2801,7 +2857,7 @@ class RepeatKeyed extends Loop {
         let appendOnly = true;
         for (let newIndex = 0; newIndex < valuesLength; newIndex++) {
             // values[newIndex]では、get "values.*"()を正しく取得できない
-            const value = this.binding.stateProperty.getChildValue(newIndex);
+            const value = this.binding.stateProperty.getChildValue(newIndex, indexes);
             const lastIndex = this.#lastValue.indexOf(value, this.#fromIndexByValue.get(value) ?? 0);
             if (lastIndex === -1) {
                 // 元のインデックスにない場合（新規）
@@ -2828,7 +2884,7 @@ class RepeatKeyed extends Loop {
             for (let vi = 0; vi < valuesLength; vi++) {
                 const contentBindings = createContentBindings(template, binding);
                 children[vi] = contentBindings;
-                contentBindings.rebuild();
+                contentBindings.rebuild(indexes?.concat(vi));
                 parentNode.insertBefore(contentBindings.fragment, nextNode);
             }
         }
@@ -2843,7 +2899,7 @@ class RepeatKeyed extends Loop {
                     // 元のインデックスにない場合（新規）
                     contentBindings = createContentBindings(this.template, this.binding);
                     children[newIndex] = contentBindings;
-                    contentBindings.rebuild();
+                    contentBindings.rebuild(indexes?.concat(newIndex));
                     parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
                 }
                 else {
@@ -2853,14 +2909,14 @@ class RepeatKeyed extends Loop {
                         contentBindings.removeChildNodes();
                         children[newIndex] = contentBindings;
                         if (this.binding.updator?.isFullRebuild) {
-                            contentBindings.rebuild();
+                            contentBindings.rebuild(indexes?.concat(newIndex));
                         }
                         parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
                     }
                     else {
                         children[newIndex] = contentBindings;
                         if (this.binding.updator?.isFullRebuild) {
-                            contentBindings.rebuild();
+                            contentBindings.rebuild(indexes?.concat(newIndex));
                         }
                     }
                 }
@@ -2872,7 +2928,7 @@ class RepeatKeyed extends Loop {
         }
         this.#lastValue = values.slice();
     }
-    applyToChildNodes(setOfIndex) {
+    applyToChildNodes(setOfIndex, indexes) {
         this.revisionUpForLoop();
         const contentBindingsByValue = new Map;
         for (const index of setOfIndex) {
@@ -2890,7 +2946,7 @@ class RepeatKeyed extends Loop {
         }
         const updatedBindings = [];
         for (const index of Array.from(setOfIndex).sort()) {
-            const newValue = this.binding.stateProperty.getChildValue(index);
+            const newValue = this.binding.stateProperty.getChildValue(index, indexes);
             const typeofNewValue = typeof newValue;
             if (typeofNewValue === "undefined")
                 continue;
@@ -2900,20 +2956,16 @@ class RepeatKeyed extends Loop {
             if (typeof contentBindings === "undefined") {
                 contentBindings = createContentBindings(this.template, this.binding);
                 this.binding.replaceChildContentBindings(contentBindings, index);
-                contentBindings.rebuild();
+                contentBindings.rebuild(indexes?.concat(index));
                 updatedBindings.push(...contentBindings.allChildBindings);
             }
             else {
                 this.binding.replaceChildContentBindings(contentBindings, index);
-                contentBindings.rebuild();
+                contentBindings.rebuild(indexes?.concat(index));
                 updatedBindings.push(...contentBindings.allChildBindings);
             }
         }
-        this.#lastValue = this.binding.stateProperty.value.slice();
-        const bindingSummary = this.binding.bindingSummary;
-        if (typeof bindingSummary !== "undefined") {
-            bindingSummary.partialUpdate(updatedBindings);
-        }
+        this.#lastValue = this.binding.stateProperty.getValue(indexes).slice();
     }
     initialize() {
         super.initialize();
@@ -3026,15 +3078,19 @@ class StateProperty {
         this.#oldKey = this.key;
         return this.key;
     }
-    get value() {
-        return this.state[GetDirectSymbol](this.name, this.indexes);
+    getValue(indexes) {
+        if (typeof indexes === "undefined")
+            indexes = this.indexes;
+        return this.state[GetDirectSymbol](this.name, indexes);
     }
-    set value(value) {
+    setValue(value, indexes) {
+        if (typeof indexes === "undefined")
+            indexes = this.indexes;
         const setValue = (value) => {
-            this.state[SetDirectSymbol](this.name, this.indexes, value);
+            this.state[SetDirectSymbol](this.name, indexes, value);
         };
         if (value instanceof MultiValue) {
-            const thisValue = this.value;
+            const thisValue = this.getValue();
             if (Array.isArray(thisValue)) {
                 const setOfThisValue = new Set(thisValue);
                 value.enabled ? setOfThisValue.add(value.value) : setOfThisValue.delete(value.value);
@@ -3052,8 +3108,9 @@ class StateProperty {
     get filters() {
         return this.#filters;
     }
-    get filteredValue() {
-        return this.filters.length === 0 ? this.value : FilterManager.applyFilter(this.value, this.filters);
+    getFilteredValue(indexes) {
+        const value = this.getValue(indexes);
+        return this.filters.length === 0 ? value : FilterManager.applyFilter(value, this.filters);
     }
     // setValueToState()の対象かどうか
     get applicable() {
@@ -3077,11 +3134,15 @@ class StateProperty {
      */
     initialize() {
     }
-    getChildValue(index) {
-        return this.state[GetDirectSymbol](this.#childName, this.indexes.concat(index));
+    getChildValue(index, indexes) {
+        if (typeof indexes === "undefined")
+            indexes = this.indexes;
+        return this.state[GetDirectSymbol](this.#childName, indexes.concat(index));
     }
-    setChildValue(index, value) {
-        return this.state[SetDirectSymbol](this.#childName, this.indexes.concat(index), value);
+    setChildValue(index, value, indexes) {
+        if (typeof indexes === "undefined")
+            indexes = this.indexes;
+        return this.state[SetDirectSymbol](this.#childName, indexes.concat(index), value);
     }
     dispose() {
     }
@@ -3093,7 +3154,7 @@ class ContextIndex extends StateProperty {
     get index() {
         return this.#index;
     }
-    get value() {
+    getValue() {
         return this.binding.parentContentBindings?.currentLoopContext?.indexes[this.index] ?? utils.raise(`ContextIndex: invalid index ${this.name}`);
     }
     get indexes() {
@@ -3134,18 +3195,18 @@ function getPropertyConstructors(node, nodePropertyName, statePropertyName, useK
     };
 }
 
-function setValueToState(nodeProperty, stateProperty) {
+function setValueToState(nodeProperty, stateProperty, indexes) {
     if (!stateProperty.applicable)
         return;
-    stateProperty.value = nodeProperty.filteredValue;
+    stateProperty.setValue(nodeProperty.getFilteredValue(indexes), indexes);
 }
 
-function setValueToNode(binding, updator, nodeProperty, stateProperty) {
+function setValueToNode(binding, updator, nodeProperty, stateProperty, indexes) {
     if (!nodeProperty.applicable)
         return;
     updator?.applyNodeUpdatesByBinding(binding, () => {
         // 値が同じかどうかの判定をするよりも、常に値をセットするようにしたほうが速い
-        nodeProperty.value = stateProperty.filteredValue ?? "";
+        nodeProperty.setValue(stateProperty.getFilteredValue(indexes) ?? "", indexes);
     });
 }
 
@@ -3187,8 +3248,8 @@ class Binding {
     get updator() {
         return this.component?.updator;
     }
-    get bindingSummary() {
-        return this.component?.bindingSummary;
+    get newBindingSummary() {
+        return this.component?.newBindingSummary;
     }
     get state() {
         return this.component?.states.current;
@@ -3214,7 +3275,7 @@ class Binding {
     /**
      */
     execDefaultEventHandler(event) {
-        if (!(this.bindingSummary?.exists(this) ?? false))
+        if (!(this.newBindingSummary?.exists(this) ?? false))
             return;
         event.stopPropagation();
         const { nodeProperty, stateProperty } = this;
@@ -3260,22 +3321,22 @@ class Binding {
         return removedContentBindings;
     }
     dispose() {
-        this.bindingSummary?.delete(this);
+        this.newBindingSummary?.delete(this);
         this.nodeProperty.dispose();
         this.stateProperty.dispose();
         this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());
         this.childrenContentBindings = [];
     }
-    rebuild() {
+    rebuild(indexes) {
         const { updator, nodeProperty, stateProperty } = this;
-        setValueToNode(this, updator, nodeProperty, stateProperty);
+        setValueToNode(this, updator, nodeProperty, stateProperty, indexes);
     }
-    updateNodeForNoRecursive() {
+    updateNodeForNoRecursive(indexes) {
         // rebuildで再帰的にupdateするnodeが決まるため
         // 再帰的に呼び出す必要はない
         if (!this.expandable) {
             const { updator, nodeProperty, stateProperty } = this;
-            setValueToNode(this, updator, nodeProperty, stateProperty);
+            setValueToNode(this, updator, nodeProperty, stateProperty, indexes);
         }
     }
 }
@@ -3517,17 +3578,23 @@ class LoopContext {
     #parentBinding;
     constructor(contentBindings) {
         this.#parentBinding = contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
-        (this.#parentBinding.loopable === true) || utils.raise("parentBinding is not loopable");
+        (this.#parentBinding.loopable === false) && utils.raise("parentBinding is not loopable");
         this.#statePropertyName = this.#parentBinding.statePropertyName ?? utils.raise("statePropertyName is undefined");
         this.#contentBindings = contentBindings;
         this.#patternInfo = getPatternInfo(this.#statePropertyName + ".*");
         this.#patternName = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
     }
+    get parentBinding() {
+        return this.#parentBinding;
+    }
+    get contentBindings() {
+        return this.#contentBindings;
+    }
     get patternName() {
         return this.#patternName;
     }
     get parentLoopContext() {
-        this.checkRevision();
+        // インデックスは変わるが親子関係は変わらないので、checkRevisionは不要
         if (!this.#parentLoopCache) {
             const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
             let curContentBindings = undefined;
@@ -3588,6 +3655,8 @@ class LoopContext {
             curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
         }
         return curContentBindings?.loopContext;
+    }
+    dispose() {
     }
 }
 
@@ -3679,9 +3748,9 @@ class ContentBindings {
      * register bindings to summary
      */
     registerBindingsToSummary() {
-        const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
+        const newBindingSummary = this.component?.newBindingSummary ?? utils.raise("bindingSummary is undefined");
         for (let i = 0; i < this.childBindings.length; i++) {
-            bindingSummary.add(this.childBindings[i]);
+            newBindingSummary.register(this.childBindings[i]);
         }
     }
     dispose() {
@@ -3696,7 +3765,7 @@ class ContentBindings {
         const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
         _cache$2[uuid]?.push(this) ?? (_cache$2[uuid] = [this]);
     }
-    rebuild() {
+    rebuild(indexes) {
         const selectValues = [];
         for (let i = 0; i < this.childBindings.length; i++) {
             const binding = this.childBindings[i];
@@ -3704,11 +3773,11 @@ class ContentBindings {
                 selectValues.push(binding);
             }
             else {
-                binding.rebuild();
+                binding.rebuild(indexes);
             }
         }
         for (let i = 0; i < selectValues.length; i++) {
-            selectValues[i].rebuild();
+            selectValues[i].rebuild(indexes);
         }
     }
 }
@@ -3727,9 +3796,6 @@ function createContentBindings(template, parentBinding, component) {
     return contentBindings;
 }
 
-const pickKey = (binding) => binding.stateProperty.key;
-const filterExpandableBindings = (binding) => binding.nodeProperty.expandable;
-const filerComponentBindings = (binding) => binding.nodeProperty.constructor === ComponentProperty;
 /**
  * BindingSummary
  */
@@ -3819,24 +3885,28 @@ class BindingSummary {
     }
     rebuild(bindings) {
         this.#allBindings = bindings;
-        const arrayBindings = Array.from(bindings);
-        this.#keyByBinding = new Map(arrayBindings.map(binding => [binding, pickKey(binding)]));
-        this.#bindingsByKey = Map.groupBy(arrayBindings, binding => this.#keyByBinding.get(binding));
+        /*
+            const arrayBindings = Array.from(bindings);
+            this.#keyByBinding = new Map(arrayBindings.map(binding => [binding, pickKey(binding)]));
+            this.#bindingsByKey = Map.groupBy(arrayBindings, binding => this.#keyByBinding.get(binding)) as Map<string,IBinding[]>;
         //    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
-        this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
-        this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
+            this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
+            this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
+        */
     }
     partialUpdate(bindings) {
-        for (let i = 0; i < bindings.length; i++) {
-            const binding = bindings[i];
-            const key = this.#keyByBinding.get(binding) ?? utils.raise("BindingSummary.partialUpdate: key is undefined");
-            const bindingsByKey = this.#bindingsByKey.get(key) ?? utils.raise("BindingSummary.partialUpdate: bindings is undefined");
-            const index = bindingsByKey.indexOf(binding);
-            bindingsByKey.splice(index, 1);
-            const newKey = pickKey(binding);
-            this.#keyByBinding.set(binding, newKey);
-            this.#bindingsByKey.get(newKey)?.push(binding) ?? this.#bindingsByKey.set(newKey, [binding]);
+        /*
+        for(let i = 0; i < bindings.length; i++) {
+          const binding = bindings[i];
+          const key = this.#keyByBinding.get(binding) ?? utils.raise("BindingSummary.partialUpdate: key is undefined");
+          const bindingsByKey = this.#bindingsByKey.get(key) ?? utils.raise("BindingSummary.partialUpdate: bindings is undefined");
+          const index = bindingsByKey.indexOf(binding);
+          bindingsByKey.splice(index, 1);
+          const newKey = pickKey(binding);
+          this.#keyByBinding.set(binding, newKey);
+          this.#bindingsByKey.get(newKey)?.push(binding) ?? this.#bindingsByKey.set(newKey, [binding]);
         }
+        */
     }
 }
 function createBindingSummary() {
@@ -4218,6 +4288,172 @@ function getAdoptedCssNamesFromStyleValue(component) {
     return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
 }
 
+class NewBindingSummary {
+    allBindings = new Set();
+    /**
+     * ループコンテキストに紐づくバインディングを登録する
+     */
+    loopBindings = new Map();
+    /**
+     * ループコンテキストに紐づくループ可能なバインディングを登録する
+     */
+    loopLinks = new Map();
+    /**
+     * ループコンテキストに紐づかないバインディングを登録する
+     */
+    noloopBindings = new Map();
+    registerLoopBinding(binding, loopContext) {
+        const pattern = binding.statePropertyName;
+        let store = this.loopBindings.get(loopContext);
+        if (!store) {
+            store = new Map();
+            this.loopBindings.set(loopContext, store);
+        }
+        let bindings = store.get(pattern);
+        if (!bindings) {
+            bindings = new Set();
+            store.set(pattern, bindings);
+        }
+        bindings.add(binding);
+    }
+    deleteLoopBinding(binding, loopContext) {
+        const pattern = binding.statePropertyName;
+        const store = this.loopBindings.get(loopContext);
+        if (store) {
+            const bindings = store.get(pattern);
+            if (bindings) {
+                bindings.delete(binding);
+            }
+        }
+    }
+    registerLoopLink(binding) {
+        const loopContext = binding.parentContentBindings?.currentLoopContext;
+        let store = this.loopLinks.get(loopContext);
+        if (typeof store === "undefined") {
+            this.loopLinks.set(loopContext, store = new Map());
+        }
+        const pattern = binding.statePropertyName;
+        let bindings = store.get(pattern);
+        if (typeof bindings === "undefined") {
+            store.set(pattern, bindings = new Set());
+        }
+        bindings.add(binding);
+    }
+    deleteLoopLink(binding) {
+        const loopContext = binding.parentContentBindings?.currentLoopContext;
+        const pattern = binding.statePropertyName;
+        const store = this.loopLinks.get(loopContext);
+        if (store) {
+            const bindings = store.get(pattern);
+            if (bindings) {
+                bindings.delete(binding);
+            }
+        }
+    }
+    regsiterNoloopBinding(binding) {
+        const pattern = binding.statePropertyName;
+        let bindings = this.noloopBindings.get(pattern);
+        if (typeof bindings === "undefined") {
+            this.noloopBindings.set(pattern, bindings = new Set());
+        }
+        bindings.add(binding);
+    }
+    deleteNoloopBinding(binding) {
+        const pattern = binding.statePropertyName;
+        const bindings = this.noloopBindings.get(pattern);
+        if (bindings) {
+            bindings.delete(binding);
+        }
+    }
+    register(binding) {
+        this.allBindings.add(binding);
+        if (binding.loopable) {
+            this.registerLoopLink(binding);
+        }
+        const loopContext = binding.parentContentBindings?.currentLoopContext;
+        if (typeof loopContext === "undefined") {
+            this.regsiterNoloopBinding(binding);
+        }
+        else {
+            this.registerLoopBinding(binding, loopContext);
+        }
+    }
+    delete(binding) {
+        this.allBindings.delete(binding);
+        if (binding.loopable) {
+            this.deleteLoopLink(binding);
+        }
+        const loopContext = binding.parentContentBindings?.currentLoopContext;
+        if (typeof loopContext === "undefined") {
+            this.deleteNoloopBinding(binding);
+        }
+        else {
+            this.deleteLoopBinding(binding, loopContext);
+        }
+    }
+    getLoopBindings(loopContext, pattern) {
+        const store = this.loopBindings.get(loopContext);
+        if (store) {
+            const bindings = store.get(pattern);
+            if (bindings) {
+                return Array.from(bindings);
+            }
+        }
+        return [];
+    }
+    exists(binding) {
+        return this.allBindings.has(binding);
+    }
+    getLoopLink(loopContext, pattern) {
+        const store = this.loopLinks.get(loopContext);
+        if (store) {
+            const bindings = store.get(pattern);
+            if (bindings) {
+                return Array.from(bindings);
+            }
+        }
+        return [];
+    }
+    getNoloopBindings(pattern) {
+        const bindings = this.noloopBindings.get(pattern);
+        if (bindings) {
+            return Array.from(bindings);
+        }
+        return [];
+    }
+    _search(loopContext, searchPath, indexes, wildcardPaths, index, resultBindings) {
+        if (index < wildcardPaths.length) {
+            const wildcardPath = wildcardPaths[index];
+            const wildcardPathInfo = getPatternInfo(wildcardPath);
+            const wildcardIndex = indexes[index];
+            const loopBindings = this.getLoopLink(loopContext, wildcardPathInfo.patternPaths.at(-2) ?? "");
+            for (let i = 0; i < loopBindings.length; i++) {
+                // リストが削除されている場合があるのでチェック
+                if (typeof loopBindings[i].childrenContentBindings[wildcardIndex] === "undefined")
+                    continue;
+                this._search(loopBindings[i].childrenContentBindings[wildcardIndex].loopContext, searchPath, indexes, wildcardPaths, index + 1, resultBindings);
+            }
+        }
+        else {
+            (typeof loopContext !== "undefined") ? resultBindings.push(...this.getLoopBindings(loopContext, searchPath)) : [];
+        }
+    }
+    gatherBindings(pattern, indexes) {
+        let bindings = [];
+        if (indexes.length === 0) {
+            bindings = this.getNoloopBindings(pattern);
+        }
+        else {
+            const patternInfo = getPatternInfo(pattern);
+            this._search(undefined, pattern, indexes, patternInfo.wildcardPaths, 0, bindings);
+        }
+        return bindings;
+    }
+}
+function createNewBindingSummary() {
+    return new NewBindingSummary();
+}
+
 const pseudoComponentByNode = new Map;
 const getParentComponent = (_node) => {
     let node = _node;
@@ -4244,6 +4480,7 @@ function CustomComponent(Base) {
             super();
             this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
             this.#bindingSummary = createBindingSummary();
+            this.#newBindingSummary = createNewBindingSummary();
             this.#initialPromises = Promise.withResolvers(); // promises for initialize
             this.#updator = createUpdator(this);
             this.#props = createProps(this);
@@ -4321,6 +4558,10 @@ function CustomComponent(Base) {
         get bindingSummary() {
             return this.#bindingSummary;
         }
+        #newBindingSummary;
+        get newBindingSummary() {
+            return this.#newBindingSummary;
+        }
         #updator;
         get updator() {
             return this.#updator;
@@ -4372,11 +4613,9 @@ function CustomComponent(Base) {
                 await this.states.current[ConnectedCallbackSymbol]();
             });
             // build binding tree and dom 
-            this.bindingSummary.update((summary) => {
-                this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-                this.rootBindingManager = createContentBindings(this.template, undefined, this);
-                this.rootBindingManager.rebuild();
-            });
+            this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+            this.rootBindingManager = createContentBindings(this.template, undefined, this);
+            this.rootBindingManager.rebuild([]);
             if (this.useWebComponent) {
                 // case of useWebComponent,
                 // then append fragment block to viewRootElement

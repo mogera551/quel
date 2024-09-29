@@ -2,6 +2,7 @@ import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
+import { CleanIndexes } from "../../dotNotation/types";
 
 export class ElementStyle extends ElementBase {
   get htmlElement():HTMLElement {
@@ -12,10 +13,10 @@ export class ElementStyle extends ElementBase {
     return this.nameElements[1];
   }
 
-  get value():any {
+  getValue(indexes?:CleanIndexes):any {
     return this.htmlElement.style.getPropertyValue(this.styleName);
   }
-  set value(value:any) {
+  setValue(value:any, indexes?:CleanIndexes) {
     this.htmlElement.style.setProperty(this.styleName, value);
   }
 

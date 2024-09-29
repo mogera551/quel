@@ -1,3 +1,4 @@
+import { CleanIndexes } from "../../dotNotation/types";
 import { ElementBase } from "./ElementBase";
 
 export class ElementAttribute extends ElementBase {
@@ -5,10 +6,10 @@ export class ElementAttribute extends ElementBase {
     return this.nameElements[1];
   }
 
-  get value():any {
+  getValue(indexes?:CleanIndexes):any {
     return this.element.getAttribute(this.attributeName);
   }
-  set value(value:any) {
+  setValue(value:any, indexes?:CleanIndexes) {
     this.element.setAttribute(this.attributeName, value);
   }
 }

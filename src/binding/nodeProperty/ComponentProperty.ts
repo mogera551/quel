@@ -7,6 +7,7 @@ import { createPropertyAccess } from "../createPropertyAccess";
 import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../types";
 import { ILoopContext } from "../../loopContext/types";
 import { IComponent } from "../../component/types";
+import { CleanIndexes } from "../../dotNotation/types";
 
 export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;
@@ -48,10 +49,10 @@ export class ComponentProperty extends ElementBase {
     super(binding, node, name, filters);
   }
 
-  get value():any {
-    return super.value;
+  getValue(indexes?:CleanIndexes):any {
+    return super.getValue();
   }
-  set value(value) {
+  setValue(value:any, indexes?:CleanIndexes) {
     try {
       this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, []);
     } catch(e) {

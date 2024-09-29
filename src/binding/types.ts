@@ -1,6 +1,6 @@
 
 import { ILoopContext } from "../loopContext/types";
-import { IPropInfo } from "../dotNotation/types";
+import { CleanIndexes, Indexes, IPropInfo } from "../dotNotation/types";
 import { IComponent } from "../component/types";
 import { IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";
@@ -32,33 +32,35 @@ export interface INodeProperty extends ILoopable {
   readonly expandable: boolean;
   readonly isSelectValue: boolean;
   readonly loopable: boolean;
-  value: any;
-  readonly filteredValue: any;
-  
   initialize(): void;
   postUpdate(propertyAccessByStatePropertyKey: Map<string,IPropertyAccess>):void;
   equals(value: any): boolean;
-  applyToChildNodes(setOfIndex: Set<number>): void;
+  applyToChildNodes(setOfIndex: Set<number>, indexes?: CleanIndexes): void;
   dispose(): void;
+  getValue(indexes?: CleanIndexes): any;
+  getFilteredValue(indexes?: CleanIndexes): any;
+  setValue(value: any, indexes?: CleanIndexes): void;
 }
 
 export interface IStateProperty {
   readonly state: IStateProxy;
   readonly name: string;
   readonly binding: IBinding;
-  value: any;
-  readonly filteredValue: any;
   readonly indexes: number[];
   readonly applicable: boolean;
   readonly key: string;
   readonly propInfo: IPropInfo;
-  getChildValue(index:number):any;
-  setChildValue(index:number, value:any):void;
+  readonly level: number;
+  getChildValue(index:number, indexes: number[] | undefined):any;
+  setChildValue(index:number, value:any, indexes: number[] | undefined):void;
   initialize(): void;
   dispose(): void;
+  getValue(indexes?: CleanIndexes): any;
+  getFilteredValue(indexes?: CleanIndexes): any;
+  setValue(value: any, indexes?: CleanIndexes): void;
 }
 
-export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "bindingSummary" | "updator">;
+export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "newBindingSummary" | "updator">;
 
 export interface IBindingTreeNode {
   readonly childrenContentBindings: IContentBindingsTreeNode[];
@@ -77,11 +79,11 @@ export interface IBinding extends IBindingTreeNode {
   readonly expandable: boolean;
   readonly state?: IStateProxy
   readonly updator?: IUpdator;
-  readonly bindingSummary?: IBindingSummary;
   readonly selectorName?: string;
   readonly eventFilterManager: IFilterManager<"event">;
   readonly inputFilterManager: IFilterManager<"input">;
   readonly outputFilterManager: IFilterManager<"output">;
+  readonly newBindingSummary?: INewBindingSummary;
   defaultEventHandler: (event:Event)=>void;
   execDefaultEventHandler(event:Event): void;
   initialize(): void;
@@ -90,8 +92,8 @@ export interface IBinding extends IBindingTreeNode {
   removeAllChildrenContentBindings(): IContentBindings[];
   dispose(): void;
 
-  rebuild(): void;
-  updateNodeForNoRecursive(): void;
+  rebuild(indexes?: CleanIndexes | undefined): void;
+  updateNodeForNoRecursive(indexes?: CleanIndexes): void;
 }
 
 export interface IContentBindingsTreeNode {
@@ -117,7 +119,7 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   removeChildNodes():void;
   dispose():void;
 
-  rebuild(): void;
+  rebuild(indexes?: CleanIndexes | undefined): void;
   registerBindingsToSummary(): void;
 }
 
@@ -140,4 +142,14 @@ export interface IBindingSummary {
   exists(binding: IBinding): boolean;
   update(callback:(summary: IBindingSummary)=>any): void;
   partialUpdate(bindings: IBinding[]): void;
+}
+
+export interface INewBindingSummary {
+  register(binding: IBinding): void;
+  delete(binding: IBinding): void;
+  getLoopBindings(loopContext: ILoopContext, pattern: string): IBinding[];
+  getLoopLink(loopContext: ILoopContext|undefined, pattern:string): IBinding[];
+  getNoloopBindings(pattern: string): IBinding[];
+  gatherBindings(pattern: string, indexes: number[]): IBinding[];
+  exists(binding: IBinding): boolean;
 }

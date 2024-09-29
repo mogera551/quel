@@ -1,4 +1,4 @@
-import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial } from "./types";
+import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial, INewBindingSummary } from "./types";
 import { NodePropertyConstructor, StatePropertyConstructor } from "../binder/types";
 import { IFilterText, IFilterManager } from "../filter/types";
 import { utils } from "../utils";
@@ -6,6 +6,7 @@ import { IUpdator } from "../updator/types";
 import { IStateProxy } from "../state/types";
 import { setValueToState } from "./setValueToState";
 import { setValueToNode } from "./setValueToNode";
+import { CleanIndexes, Indexes } from "../dotNotation/types";
 
 let id = 1;
 class Binding implements IBinding {
@@ -47,8 +48,8 @@ class Binding implements IBinding {
   get updator(): IUpdator | undefined {
     return this.component?.updator;
   }
-  get bindingSummary(): IBindingSummary | undefined {
-    return this.component?.bindingSummary;
+  get newBindingSummary(): INewBindingSummary | undefined {
+    return this.component?.newBindingSummary;
   }
   get state(): IStateProxy | undefined {
     return this.component?.states.current;
@@ -85,7 +86,7 @@ class Binding implements IBinding {
   /**
    */
   execDefaultEventHandler(event:Event) {
-    if (!(this.bindingSummary?.exists(this) ?? false)) return;
+    if (!(this.newBindingSummary?.exists(this) ?? false)) return;
     event.stopPropagation();
     const { nodeProperty, stateProperty } = this;
     this.updator?.addProcess(setValueToState, undefined, [ nodeProperty, stateProperty ]);
@@ -134,24 +135,24 @@ class Binding implements IBinding {
   }
 
   dispose(): void {
-    this.bindingSummary?.delete(this);
+    this.newBindingSummary?.delete(this);
     this.nodeProperty.dispose();
     this.stateProperty.dispose();
     this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());
     this.childrenContentBindings = [];
   }
 
-  rebuild(): void {
+  rebuild(indexes?: CleanIndexes): void {
     const { updator, nodeProperty, stateProperty } = this;
-    setValueToNode(this, updator, nodeProperty, stateProperty);
+    setValueToNode(this, updator, nodeProperty, stateProperty, indexes);
   }
 
-  updateNodeForNoRecursive(): void {
+  updateNodeForNoRecursive(indexes?: CleanIndexes): void {
     // rebuildで再帰的にupdateするnodeが決まるため
     // 再帰的に呼び出す必要はない
     if (!this.expandable) {
       const { updator, nodeProperty, stateProperty } = this;
-      setValueToNode(this, updator, nodeProperty, stateProperty);
+      setValueToNode(this, updator, nodeProperty, stateProperty, indexes);
     }
   }
 

@@ -1,6 +1,6 @@
 import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
-import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
+import { IBinding, IBindingSummary, INewBindingSummary, IPropertyAccess } from "../binding/types";
 import { IStates } from "../state/types";
 import { IUpdator } from "./types";
 import { execProcesses } from "./execProcesses";
@@ -10,7 +10,7 @@ import { updateChildNodes } from "./updateChildNodes";
 import { updateNodes } from "./updateNodes";
 import { utils } from "../utils";
 
-type IComponentForUpdator = Pick<IComponent, "states" | "bindingSummary">;
+type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
@@ -26,8 +26,8 @@ class Updator implements IUpdator {
     return this.#component.states;
   }
 
-  get bindingSummary(): IBindingSummary {
-    return this.#component.bindingSummary;
+  get newBindingSummary(): INewBindingSummary {
+    return this.#component.newBindingSummary;
   }
 
   get component(): IComponentForUpdator {
@@ -98,10 +98,11 @@ class Updator implements IUpdator {
         const updatedStatePropertyAccessByKey: Map<string, IPropertyAccess> = 
           new Map(updatedStatePropertyAccesses.map(propertyAccess => [propertyAccess.key, propertyAccess]));
 
-        rebuildBindings(this, this.bindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
-        updateChildNodes(this, this.bindingSummary, updatedStatePropertyAccesses)
+        rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
+        updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses)
 
-        updateNodes(this.bindingSummary, updatedStatePropertyAccessByKey);
+        updateNodes(this.newBindingSummary, updatedStatePropertyAccessByKey);
+//        gatherBindings("data.*.id", [10]);
 
       }
     });

@@ -2,14 +2,15 @@ import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
+import { CleanIndexes } from "../../dotNotation/types";
 
 const NAME = "class";
 
 export class ElementClassName extends ElementBase {
-  get value():any {
+  getValue(indexes?:CleanIndexes):any {
     return this.element.className.length > 0 ? this.element.className.split(" ") : [];
   }
-  set value(value:any[]) {
+  setValue(value:any[], indexes?:CleanIndexes) {
     if (!Array.isArray(value)) utils.raise(`ElementClassName: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`, );
     this.element.className = value.join(" ");
   }

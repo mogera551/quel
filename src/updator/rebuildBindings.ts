@@ -1,4 +1,4 @@
-import { IBinding, IBindingSummary, IPropertyAccess } from "../binding/types";
+import { IBinding, INewBindingSummary, IPropertyAccess } from "../binding/types";
 import { IUpdator } from "./types";
 
 // ソートのための比較関数
@@ -8,11 +8,22 @@ const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateP
 // 
 export function rebuildBindings(
   updator: IUpdator, 
-  bindingSummary: IBindingSummary, 
+  newBindingSummary: INewBindingSummary, 
   updateStatePropertyAccessByKey: Map<string, IPropertyAccess>,
   updatedKeys: string[]
-): void
- {
+): void {
+  const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
+  for(let i = 0; i < propertyAccesses.length; i++) {
+    newBindingSummary.gatherBindings(propertyAccesses[i].pattern, propertyAccesses[i].indexes).forEach(binding => {
+      if (!binding.expandable) return;
+      const compareKey = binding.stateProperty.name + ".";
+      const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
+      updator.setFullRebuild(isFullBuild, () => {
+        binding.rebuild(propertyAccesses[i].indexes);
+      });
+    });
+  }
+/*
   const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
   bindingSummary.update((bindingSummary) => {
     for(let i = 0; i < expandableBindings.length; i++) {
@@ -26,6 +37,6 @@ export function rebuildBindings(
       });
     }
   });
-
+*/
 }
 

@@ -2,6 +2,7 @@ import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
+import { CleanIndexes } from "../../dotNotation/types";
 
 const PREFIX = "class.";
 
@@ -10,10 +11,10 @@ export class ElementClass extends ElementBase {
     return this.nameElements[1];
   }
 
-  get value():any {
+  getValue(indexes?:CleanIndexes):any {
     return this.element.classList.contains(this.className);
   }
-  set value(value:any) {
+  setValue(value:any, indexes?:CleanIndexes) {
     if (typeof value !== "boolean") utils.raise(`ElementClass: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
   }

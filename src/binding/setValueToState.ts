@@ -1,9 +1,11 @@
+import { CleanIndexes } from "../dotNotation/types";
 import { INodeProperty, IStateProperty } from "./types";
 
 export function setValueToState(
   nodeProperty: INodeProperty,
-  stateProperty: IStateProperty
+  stateProperty: IStateProperty,
+  indexes?: CleanIndexes
 ) {
   if (!stateProperty.applicable) return;
-  stateProperty.value = nodeProperty.filteredValue;
+  stateProperty.setValue(nodeProperty.getFilteredValue(indexes), indexes);
 }

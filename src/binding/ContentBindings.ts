@@ -1,4 +1,5 @@
 import { createBinder } from "../binder/createBinder";
+import { CleanIndexes, Indexes } from "../dotNotation/types";
 import { LoopContext } from "../loopContext/LoopContext";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
@@ -109,9 +110,9 @@ class ContentBindings implements IContentBindings {
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    const bindingSummary = this.component?.bindingSummary ?? utils.raise("bindingSummary is undefined");
+    const newBindingSummary = this.component?.newBindingSummary ?? utils.raise("bindingSummary is undefined");
     for(let i = 0; i < this.childBindings.length; i++) {
-      bindingSummary.add(this.childBindings[i]);
+      newBindingSummary.register(this.childBindings[i]);
     }
   }
 
@@ -128,18 +129,18 @@ class ContentBindings implements IContentBindings {
     _cache[uuid]?.push(this) ?? (_cache[uuid] = [this]);
   }
 
-  rebuild(): void {
+  rebuild(indexes?: CleanIndexes): void {
     const selectValues = [];
     for(let i = 0; i < this.childBindings.length; i++) {
       const binding = this.childBindings[i];
       if (binding.nodeProperty.isSelectValue) {
         selectValues.push(binding);
       } else {
-        binding.rebuild();
+        binding.rebuild(indexes);
       }
     }
     for(let i = 0; i < selectValues.length; i++) {
-      selectValues[i].rebuild();
+      selectValues[i].rebuild(indexes);
     }
   }
 }

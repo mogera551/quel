@@ -2,6 +2,7 @@ import { utils } from "../../utils";
 import { FilterFunc, IFilterText } from "../../filter/types";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { IBinding, INodeProperty, IPropertyAccess } from "../types";
+import { CleanIndexes } from "../../dotNotation/types";
 
 export class NodeProperty implements INodeProperty {
   #node:Node;
@@ -19,12 +20,12 @@ export class NodeProperty implements INodeProperty {
     return this.#nameElements;
   }
 
-  get value():(any|undefined) {
+  getValue(indexes?: CleanIndexes):(any|undefined) {
     // @ts-ignore
     return this.node[this.name];
 //    return Reflect.get(this.node, this.name);
   }
-  set value(value:any) {
+  setValue(value:any, indexes?: CleanIndexes) {
     // @ts-ignore
     this.node[this.name] = value;
 //    Reflect.set(this.node, this.name, value);
@@ -36,8 +37,9 @@ export class NodeProperty implements INodeProperty {
   }
 
   /** @type {any} */
-  get filteredValue() {
-    return this.filters.length === 0 ? this.value : FilterManager.applyFilter<"input">(this.value, this.filters);
+  getFilteredValue(indexes?: CleanIndexes): any {
+    const value = this.getValue(indexes);
+    return this.filters.length === 0 ? value : FilterManager.applyFilter<"input">(value, this.filters);
   }
 
   // setValueToNode()の対象かどうか
@@ -82,7 +84,7 @@ export class NodeProperty implements INodeProperty {
   }
 
   equals(value:any):boolean {
-    return this.value === value;
+    return this.getValue() === value;
   }
 
   applyToChildNodes(setOfIndex:Set<number>) {

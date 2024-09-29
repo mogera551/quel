@@ -2,6 +2,7 @@ import { utils } from "../../utils";
 import { IContentBindings } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
+import { CleanIndexes } from "../../dotNotation/types";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
@@ -20,10 +21,10 @@ export class RepeatKeyed extends Loop {
 
   #lastValue:any[] = [];
 
-  get value():any[] {
+  getValue(indexes?:CleanIndexes):any[] {
     return this.#lastValue;
   }
-  set value(values) {
+  setValue(values:any, indexes?:CleanIndexes):void {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
     this.revisionUpForLoop();
     this.#fromIndexByValue.clear();
@@ -36,7 +37,7 @@ export class RepeatKeyed extends Loop {
     let appendOnly = true;
     for(let newIndex = 0; newIndex < valuesLength; newIndex++) {
       // values[newIndex]では、get "values.*"()を正しく取得できない
-      const value = this.binding.stateProperty.getChildValue(newIndex);
+      const value = this.binding.stateProperty.getChildValue(newIndex, indexes);
       const lastIndex = this.#lastValue.indexOf(value, this.#fromIndexByValue.get(value) ?? 0);
       if (lastIndex === -1) {
         // 元のインデックスにない場合（新規）
@@ -62,7 +63,7 @@ export class RepeatKeyed extends Loop {
       for(let vi = 0; vi < valuesLength; vi++) {
         const contentBindings = createContentBindings(template, binding);
         children[vi] = contentBindings;
-        contentBindings.rebuild();
+        contentBindings.rebuild(indexes?.concat(vi));
         parentNode.insertBefore(contentBindings.fragment, nextNode);
       }
     } else {
@@ -76,7 +77,7 @@ export class RepeatKeyed extends Loop {
           // 元のインデックスにない場合（新規）
           contentBindings = createContentBindings(this.template, this.binding);
           children[newIndex] = contentBindings;
-          contentBindings.rebuild();
+          contentBindings.rebuild(indexes?.concat(newIndex));
           parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
         } else {
           // 元のインデックスがある場合（既存）
@@ -85,13 +86,13 @@ export class RepeatKeyed extends Loop {
             contentBindings.removeChildNodes();
             children[newIndex] = contentBindings;
             if (this.binding.updator?.isFullRebuild) {
-              contentBindings.rebuild();
+              contentBindings.rebuild(indexes?.concat(newIndex));
             }
             parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
           } else {
             children[newIndex] = contentBindings;
             if (this.binding.updator?.isFullRebuild) {
-              contentBindings.rebuild();
+              contentBindings.rebuild(indexes?.concat(newIndex));
             }
           }
         }
@@ -105,7 +106,7 @@ export class RepeatKeyed extends Loop {
     this.#lastValue = values.slice();
   }
 
-  applyToChildNodes(setOfIndex:Set<number>) {
+  applyToChildNodes(setOfIndex:Set<number>, indexes?:CleanIndexes):void {
     this.revisionUpForLoop();
     const contentBindingsByValue:Map<any,IContentBindings> = new Map;
     for(const index of setOfIndex) {
@@ -120,7 +121,7 @@ export class RepeatKeyed extends Loop {
     }
     const updatedBindings = [];
     for(const index of Array.from(setOfIndex).sort()) {
-      const newValue = this.binding.stateProperty.getChildValue(index);
+      const newValue = this.binding.stateProperty.getChildValue(index, indexes);
       const typeofNewValue = typeof newValue;
       if (typeofNewValue === "undefined") continue;
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
@@ -128,19 +129,15 @@ export class RepeatKeyed extends Loop {
       if (typeof contentBindings === "undefined") {
         contentBindings = createContentBindings(this.template, this.binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
-        contentBindings.rebuild();
+        contentBindings.rebuild(indexes?.concat(index));
         updatedBindings.push(...contentBindings.allChildBindings);
       } else {
         this.binding.replaceChildContentBindings(contentBindings, index);
-        contentBindings.rebuild();
+        contentBindings.rebuild(indexes?.concat(index));
         updatedBindings.push(...contentBindings.allChildBindings);
       }
     }
-    this.#lastValue = this.binding.stateProperty.value.slice();
-    const bindingSummary = this.binding.bindingSummary;
-    if (typeof bindingSummary !== "undefined") {
-      bindingSummary.partialUpdate(updatedBindings);
-    }
+    this.#lastValue = this.binding.stateProperty.getValue(indexes).slice();
   }
 
   initialize() {
