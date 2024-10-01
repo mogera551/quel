@@ -7,6 +7,7 @@ import { CleanIndexes, IPropInfo } from "../../dotNotation/types";
 import { getPropInfo } from "../../dotNotation/getPropInfo";
 import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
+import { IUpdator } from "../../updator/types";
 
 export class StateProperty implements IStateProperty {
   get state(): IStateProxy {
@@ -60,17 +61,19 @@ export class StateProperty implements IStateProperty {
     return this.key;
   }
 
-  getValue(indexes?: CleanIndexes):any {
+  getValue(updator:IUpdator):any {
+    let indexes = updator.namedLoopIndexes[this.name];
     if (typeof indexes === "undefined") indexes = this.indexes;
     return this.state[GetDirectSymbol](this.name, indexes);
   }
-  setValue(value:any, indexes?: CleanIndexes) {
+  setValue(updator:IUpdator, value:any) {
+    let indexes = updator.namedLoopIndexes[this.name];
     if (typeof indexes === "undefined") indexes = this.indexes;
     const setValue = (value:any) => {
       this.state[SetDirectSymbol](this.name, indexes, value);
     };
     if (value instanceof MultiValue) {
-      const thisValue = this.getValue();
+      const thisValue = this.getValue(updator);
       if (Array.isArray(thisValue)) {
         const setOfThisValue = new Set(thisValue);
         value.enabled ? setOfThisValue.add(value.value) : setOfThisValue.delete(value.value);
@@ -88,8 +91,8 @@ export class StateProperty implements IStateProperty {
     return this.#filters;
   }
 
-  getFilteredValue(indexes?: CleanIndexes):any {
-    const value = this.getValue(indexes);
+  getFilteredValue(updator:IUpdator):any {
+    const value = this.getValue(updator);
     return this.filters.length === 0 ? value : FilterManager.applyFilter<"output">(value, this.filters);
   }
 

@@ -10,6 +10,7 @@ export interface IStateHandler {
   readonly dependentProps: IDependentProps;
   readonly element: HTMLElement;
   readonly updator: IUpdator;
+  readonly loopContext?: ILoopContext;
 
   directlyCallback(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void>;
 }

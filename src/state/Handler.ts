@@ -42,6 +42,9 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   get updator(): IUpdator {
     return this.component.updator;
   }
+  get loopContext(): ILoopContext | undefined {
+    return undefined;
+  }
   constructor(component: IComponentForHandler, base: Object) {
     super();
     this.#component = component;

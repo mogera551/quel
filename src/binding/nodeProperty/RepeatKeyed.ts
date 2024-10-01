@@ -3,6 +3,7 @@ import { IContentBindings } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
 import { CleanIndexes } from "../../dotNotation/types";
+import { IUpdator } from "../../updator/types";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
@@ -21,11 +22,12 @@ export class RepeatKeyed extends Loop {
 
   #lastValue:any[] = [];
 
-  getValue(indexes?:CleanIndexes):any[] {
+  getValue(updator:IUpdator):any[] {
     return this.#lastValue;
   }
-  setValue(values:any, indexes?:CleanIndexes):void {
+  setValue(updator:IUpdator, values:any):void {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
+    const indexes = updator.namedLoopIndexes[this.binding.statePropertyName] ?? utils.raise("indexes is undefined");
     this.revisionUpForLoop();
     this.#fromIndexByValue.clear();
     this.#lastIndexes.clear();
@@ -63,7 +65,9 @@ export class RepeatKeyed extends Loop {
       for(let vi = 0; vi < valuesLength; vi++) {
         const contentBindings = createContentBindings(template, binding);
         children[vi] = contentBindings;
-        contentBindings.rebuild(indexes?.concat(vi));
+        updator.setLoopIndexes(binding.statePropertyName + ".*", indexes.concat(vi), () => {
+          contentBindings.rebuild(indexes?.concat(vi));
+        }
         parentNode.insertBefore(contentBindings.fragment, nextNode);
       }
     } else {

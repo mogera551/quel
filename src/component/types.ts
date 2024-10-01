@@ -4,6 +4,8 @@ import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
 import { IContentBindings, IBindingPropertyAccess, IBindingSummary, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
+import { LoopContext } from "../loopContext/LoopContext";
+import { ILoopContext } from "../loopContext/types";
 
 export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -147,6 +149,7 @@ export interface IProcess {
   readonly target: Function;
   readonly thisArgument: object | undefined;
   readonly argumentList: any[];
+  readonly loopContext: ILoopContext | undefined;
 }
 
 export interface IProps {

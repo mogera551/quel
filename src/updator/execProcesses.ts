@@ -4,14 +4,19 @@ import { UpdatedCallbackSymbol } from "../state/symbols";
 import { IStates } from "../state/types";
 import { IUpdator } from "./types";
 
-const execProcess = async (process: IProcess): Promise<void> => Reflect.apply(process.target, process.thisArgument, process.argumentList);
+async function execProcess (updator: IUpdator, process: IProcess): Promise<void> {
+  updator.setLoopContext(process.loopContext, async (): Promise<void> => {
+    return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+  });
+
+}
 
 async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<IPropertyAccess[]> {
   for(let i = 0; i < processes.length; i++) {
     // Stateのイベント処理を実行する
     // Stateのプロパティに更新があった場合、
     // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
-    await execProcess(processes[i]);
+    await execProcess(updator, processes[i]);
   }
   return updator.retrieveAllUpdatedStateProperties();
 }
@@ -21,7 +26,7 @@ function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateP
   const updateInfos = updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.indexes }));
   updator.addProcess(async () => {
     await states.current[UpdatedCallbackSymbol](updateInfos);
-  }, undefined, []);
+  }, undefined, [], undefined);
 }
 
 export async function execProcesses(

@@ -89,7 +89,7 @@ class Binding implements IBinding {
     if (!(this.newBindingSummary?.exists(this) ?? false)) return;
     event.stopPropagation();
     const { nodeProperty, stateProperty } = this;
-    this.updator?.addProcess(setValueToState, undefined, [ nodeProperty, stateProperty ]);
+    this.updator?.addProcess(setValueToState, undefined, [ nodeProperty, stateProperty ], this.parentContentBindings?.currentLoopContext);
   }
 
   #defaultEventHandler:(((event:Event)=>void)|undefined) = undefined;

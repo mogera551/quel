@@ -1,25 +1,34 @@
 import { IBinding, IBindingSummary, INewBindingSummary, IPropertyAccess } from "../binding/types";
 import { Indexes } from "../dotNotation/types";
+import { IUpdator } from "./types";
 
-export function updateNodes(
+export async function updateNodes(
+  updator: IUpdator,
   newBindingSummary: INewBindingSummary,
   updateStatePropertyAccessByKey: Map<string,IPropertyAccess> = new Map()
 ) {
   const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
-  const selectBindings: {binding:IBinding, indexes:number[]}[] = [];
+  const selectBindings: {binding:IBinding, propertyAccess:IPropertyAccess}[] = [];
   for(let i = 0; i < propertyAccesses.length; i++) {
-    newBindingSummary.gatherBindings(propertyAccesses[i].pattern, propertyAccesses[i].indexes).forEach(binding => {
+    const propertyAccess = propertyAccesses[i];
+    newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes).forEach(async binding => {
       if (binding.expandable) return;
       if (binding.nodeProperty.isSelectValue) {
-        selectBindings.push({binding, indexes:propertyAccesses[i].indexes});
+        selectBindings.push({binding, propertyAccess});
       } else {
-        binding.updateNodeForNoRecursive(propertyAccesses[i].indexes);
+        await updator.setLoopIndexes(propertyAccess.pattern, propertyAccess.indexes, async () => {
+          binding.updateNodeForNoRecursive(propertyAccess.indexes);
+        });
+
       }
     });
   }
   for(let si = 0; si < selectBindings.length; si++) {
     const info = selectBindings[si];
-    info.binding.updateNodeForNoRecursive(info.indexes);
+    const propertyAccess = info.propertyAccess;
+    await updator.setLoopIndexes(propertyAccess.pattern, propertyAccess.indexes, async () => {
+      info.binding.updateNodeForNoRecursive(propertyAccess.indexes);
+    });
   }
 /*  
   const allBindingsForUpdate: IBinding[] = [];

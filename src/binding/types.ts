@@ -55,9 +55,9 @@ export interface IStateProperty {
   setChildValue(index:number, value:any, indexes: number[] | undefined):void;
   initialize(): void;
   dispose(): void;
-  getValue(indexes?: CleanIndexes): any;
-  getFilteredValue(indexes?: CleanIndexes): any;
-  setValue(value: any, indexes?: CleanIndexes): void;
+  getValue(updator: IUpdator): any;
+  getFilteredValue(updator: IUpdator): any;
+  setValue(updator: IUpdator, value: any): void;
 }
 
 export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "newBindingSummary" | "updator">;

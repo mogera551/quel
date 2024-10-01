@@ -236,7 +236,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     async disconnectedCallback() {
       this.updator.addProcess(async () => {
         await this.states.current[DisconnectedCallbackSymbol]();
-      }, undefined, []);
+      }, undefined, [], undefined);
     }
   };
 }

@@ -9,6 +9,7 @@ import { rebuildBindings } from "./rebuildBindings";
 import { updateChildNodes } from "./updateChildNodes";
 import { updateNodes } from "./updateNodes";
 import { utils } from "../utils";
+import { ILoopContext } from "../loopContext/types";
 
 type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary">;
 
@@ -19,6 +20,31 @@ class Updator implements IUpdator {
   expandedStateProperties: IPropertyAccess[] = [];
   updatedBindings: Set<IBinding> = new Set();
   bindingsForUpdateNode: IBinding[] = [];
+  namedLoopIndexes: { [key: string]: number[]; } = {};
+  loopContext: ILoopContext | undefined;
+  async setLoopContext(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void> {
+    this.loopContext = loopContext;
+    const namedLoopIndexes: {[key: string]: number[]} = {};
+    while(typeof loopContext !== "undefined") {
+      namedLoopIndexes[loopContext.patternName] = loopContext.indexes;
+      loopContext = loopContext.parentLoopContext;
+    }
+    this.namedLoopIndexes = namedLoopIndexes;
+    try {
+      return await callback();
+    } finally {
+      this.namedLoopIndexes = {};
+      this.loopContext = undefined;
+    }
+  }
+  async setLoopIndexes(name: string, indexes: number[], callback: () => Promise<void>): Promise<void> {
+    this.namedLoopIndexes[name] = indexes;
+    try {
+      return await callback();
+    } finally {
+      delete this.namedLoopIndexes[name];
+    }
+  }
 
   executing = false;
 
@@ -41,9 +67,10 @@ class Updator implements IUpdator {
   addProcess(
     target: Function, 
     thisArgument: object | undefined, 
-    argumentList: any[]
+    argumentList: any[],
+    loopContext?: ILoopContext
   ): void {
-    this.processQueue.push({ target, thisArgument, argumentList });
+    this.processQueue.push({ target, thisArgument, argumentList, loopContext });
     if (this.executing) return;
     this.exec();
   }
@@ -101,8 +128,7 @@ class Updator implements IUpdator {
         rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
         updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses)
 
-        updateNodes(this.newBindingSummary, updatedStatePropertyAccessByKey);
-//        gatherBindings("data.*.id", [10]);
+        await updateNodes(this, this.newBindingSummary, updatedStatePropertyAccessByKey);
 
       }
     });
