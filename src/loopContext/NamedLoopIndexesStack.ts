@@ -53,12 +53,12 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     }
   }
 
-  getLoopIndexes(name: string): ILoopIndexes {
+  getLoopIndexes(name: string): ILoopIndexes | undefined {
     const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
-    return currentNamedLoopIndexes[name] ?? utils.raise(`NamedLoopIndexesStack.getIndexes: name "${name}" is not found.`);
+    return currentNamedLoopIndexes?.[name];
   }
 
-  getNamedLoopIndexes(): INamedLoopIndexes {
+  getNamedLoopIndexes(): INamedLoopIndexes | undefined {
     return this.stack[this.stack.length - 1];
   }
   

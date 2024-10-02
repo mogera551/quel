@@ -28,10 +28,10 @@ class LoopIndexes implements ILoopIndexes {
     if (typeof value === "undefined" && typeof values === "undefined") {
       utils.raise(`LoopIndexes.constructor: value or values must be set.`);
     }
-    if (typeof parentLoopIndexes !== "undefined" && typeof value !== "undefined") {
+    if (typeof parentLoopIndexes !== "undefined" && typeof value === "undefined") {
       utils.raise(`LoopIndexes.constructor: value cannot be set with parentLoopIndexes.`);
     }
-    if (typeof parentLoopIndexes === "undefined" && typeof values !== "undefined") {
+    if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
       utils.raise(`LoopIndexes.constructor: values cannot be set without parentLoopIndexes.`);
     }
     this.parentLoopIndexes = parentLoopIndexes;

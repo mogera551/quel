@@ -29,14 +29,18 @@ export class StateProperty implements IStateProperty {
     return this.#propInfo;
   }
 
+  #lastWildCard:string;
+  get lastWildCard():string {
+    return this.#lastWildCard;
+  }
+
   #level:number;
   get level():number {
     return this.#level;
   }
 
   get indexes():number[] {
-    const indexes = this.binding.parentContentBindings?.currentLoopContext?.indexes ?? [];
-    return indexes.length === this.level ? indexes : indexes.slice(0 , this.level);
+    return this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard)?.values ?? [];
   }
 
   get indexesString():string {
@@ -62,13 +66,11 @@ export class StateProperty implements IStateProperty {
   }
 
   getValue():any {
-    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
-    return this.state[GetDirectSymbol](this.name, indexes);
+    return this.state[GetDirectSymbol](this.name, this.indexes);
   }
   setValue(value:any) {
-    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
     const setValue = (value:any) => {
-      this.state[SetDirectSymbol](this.name, indexes, value);
+      this.state[SetDirectSymbol](this.name, this.indexes, value);
     };
     if (value instanceof MultiValue) {
       const thisValue = this.getValue();
@@ -111,6 +113,7 @@ export class StateProperty implements IStateProperty {
     this.#filters = Filters.create<"output">(filters, binding.outputFilterManager);
     this.#propInfo = getPropInfo(name);
     this.#level = this.#propInfo.wildcardCount;
+    this.#lastWildCard = this.#propInfo.wildcardPaths[this.#propInfo.wildcardPaths.length - 1];
   }
 
   /**
@@ -121,13 +124,11 @@ export class StateProperty implements IStateProperty {
   }
 
   getChildValue(index:number) {
-    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
-    return this.state[GetDirectSymbol](this.#childName , indexes.concat(index));
+    return this.state[GetDirectSymbol](this.#childName , this.indexes.concat(index));
   }
 
   setChildValue(index:number, value:any) {
-    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
-    return this.state[SetDirectSymbol](this.#childName , indexes.concat(index), value);
+    return this.state[SetDirectSymbol](this.#childName , this.indexes.concat(index), value);
   }
 
   dispose() {

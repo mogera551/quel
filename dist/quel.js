@@ -1372,10 +1372,12 @@ async function updateNodes(updator, newBindingSummary, updateStatePropertyAccess
                 selectBindings.push({ binding, propertyAccess });
             }
             else {
+                const patternInfo = getPatternInfo(propertyAccess.propInfo.pattern);
+                const lastWildCardPath = patternInfo.wildcardPaths[patternInfo.wildcardPaths.length - 1];
                 const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
-                    { [propertyAccess.pattern]: propertyAccess.indexes } :
+                    { [lastWildCardPath]: propertyAccess.indexes } :
                     {};
-                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                     binding.updateNodeForNoRecursive();
                 });
             }
@@ -1384,10 +1386,12 @@ async function updateNodes(updator, newBindingSummary, updateStatePropertyAccess
     for (let si = 0; si < selectBindings.length; si++) {
         const info = selectBindings[si];
         const propertyAccess = info.propertyAccess;
+        const patternInfo = getPatternInfo(propertyAccess.propInfo.pattern);
+        const lastWildCardPath = patternInfo.wildcardPaths[patternInfo.wildcardPaths.length - 1];
         const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
-            { [propertyAccess.pattern]: propertyAccess.indexes } :
+            { [lastWildCardPath]: propertyAccess.indexes } :
             {};
-        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
             info.binding.updateNodeForNoRecursive();
         });
     }
@@ -1466,10 +1470,10 @@ class LoopIndexes {
         if (typeof value === "undefined" && typeof values === "undefined") {
             utils.raise(`LoopIndexes.constructor: value or values must be set.`);
         }
-        if (typeof parentLoopIndexes !== "undefined" && typeof value !== "undefined") {
+        if (typeof parentLoopIndexes !== "undefined" && typeof value === "undefined") {
             utils.raise(`LoopIndexes.constructor: value cannot be set with parentLoopIndexes.`);
         }
-        if (typeof parentLoopIndexes === "undefined" && typeof values !== "undefined") {
+        if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
             utils.raise(`LoopIndexes.constructor: values cannot be set without parentLoopIndexes.`);
         }
         this.parentLoopIndexes = parentLoopIndexes;
@@ -1525,7 +1529,7 @@ class NamedLoopIndexesStack {
     }
     getLoopIndexes(name) {
         const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
-        return currentNamedLoopIndexes[name] ?? utils.raise(`NamedLoopIndexesStack.getIndexes: name "${name}" is not found.`);
+        return currentNamedLoopIndexes?.[name];
     }
     getNamedLoopIndexes() {
         return this.stack[this.stack.length - 1];
@@ -3223,13 +3227,16 @@ class StateProperty {
     get propInfo() {
         return this.#propInfo;
     }
+    #lastWildCard;
+    get lastWildCard() {
+        return this.#lastWildCard;
+    }
     #level;
     get level() {
         return this.#level;
     }
     get indexes() {
-        const indexes = this.binding.parentContentBindings?.currentLoopContext?.indexes ?? [];
-        return indexes.length === this.level ? indexes : indexes.slice(0, this.level);
+        return this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard)?.values ?? [];
     }
     get indexesString() {
         return this.indexes.toString();
@@ -3249,13 +3256,11 @@ class StateProperty {
         return this.key;
     }
     getValue() {
-        const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
-        return this.state[GetDirectSymbol](this.name, indexes);
+        return this.state[GetDirectSymbol](this.name, this.indexes);
     }
     setValue(value) {
-        const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
         const setValue = (value) => {
-            this.state[SetDirectSymbol](this.name, indexes, value);
+            this.state[SetDirectSymbol](this.name, this.indexes, value);
         };
         if (value instanceof MultiValue) {
             const thisValue = this.getValue();
@@ -3295,6 +3300,7 @@ class StateProperty {
         this.#filters = Filters.create(filters, binding.outputFilterManager);
         this.#propInfo = getPropInfo(name);
         this.#level = this.#propInfo.wildcardCount;
+        this.#lastWildCard = this.#propInfo.wildcardPaths[this.#propInfo.wildcardPaths.length - 1];
     }
     /**
      * 初期化処理
@@ -3303,12 +3309,10 @@ class StateProperty {
     initialize() {
     }
     getChildValue(index) {
-        const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
-        return this.state[GetDirectSymbol](this.#childName, indexes.concat(index));
+        return this.state[GetDirectSymbol](this.#childName, this.indexes.concat(index));
     }
     setChildValue(index, value) {
-        const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
-        return this.state[SetDirectSymbol](this.#childName, indexes.concat(index), value);
+        return this.state[SetDirectSymbol](this.#childName, this.indexes.concat(index), value);
     }
     dispose() {
     }

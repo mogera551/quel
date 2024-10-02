@@ -32,6 +32,6 @@ export interface INamedLoopIndexesStack {
   asyncSetNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => Promise<void>): Promise<void>;
   setNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => void): void;
   setSubIndex(parentName: string | undefined, name: string, index: number, callback: () => void): void;
-  getLoopIndexes(name: string): ILoopIndexes;
-  getNamedLoopIndexes(): INamedLoopIndexes;
+  getLoopIndexes(name: string): ILoopIndexes | undefined;
+  getNamedLoopIndexes(): INamedLoopIndexes | undefined;
 }
