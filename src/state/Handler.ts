@@ -89,10 +89,4 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   ): any {
     return this.#getterByType[typeof prop]?.(target, prop, receiver) ?? super.get(target, prop, receiver);
   }
-
-  async directlyCallback(
-    loopContext: ILoopContext | undefined, 
-    callback: () => Promise<void>
-  ): Promise<void> {
-  }
 }

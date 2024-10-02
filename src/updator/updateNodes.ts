@@ -16,33 +16,26 @@ export async function updateNodes(
       if (binding.nodeProperty.isSelectValue) {
         selectBindings.push({binding, propertyAccess});
       } else {
-        if (propertyAccess.indexes.length > 0) {
-          const namedLoopIndexes = { [propertyAccess.pattern]: propertyAccess.indexes };
-          await updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
-            binding.updateNodeForNoRecursive();
-          });
-        } else {
-          await updator.namedLoopIndexesStack.setNamedLoopIndexes({}, async () => {
-            binding.updateNodeForNoRecursive();
-          });
-        }
-
+        const namedLoopIndexes = 
+          (propertyAccess.indexes.length > 0) ? 
+          { [propertyAccess.pattern]: propertyAccess.indexes } : 
+          {};
+        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+          binding.updateNodeForNoRecursive();
+        });
       }
     });
   }
   for(let si = 0; si < selectBindings.length; si++) {
     const info = selectBindings[si];
     const propertyAccess = info.propertyAccess;
-    if (propertyAccess.indexes.length > 0) {
-      const namedLoopIndexes = { [propertyAccess.pattern]: propertyAccess.indexes };
-      await updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
-        info.binding.updateNodeForNoRecursive();
-      });
-    } else {
-      await updator.namedLoopIndexesStack.setNamedLoopIndexes({}, async () => {
-        info.binding.updateNodeForNoRecursive();
-      });
-    }
+    const namedLoopIndexes = 
+      (propertyAccess.indexes.length > 0) ? 
+      { [propertyAccess.pattern]: propertyAccess.indexes } : 
+      {};
+    updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+      info.binding.updateNodeForNoRecursive();
+    });
   }
 /*  
   const allBindingsForUpdate: IBinding[] = [];

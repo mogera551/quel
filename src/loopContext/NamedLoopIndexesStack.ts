@@ -4,8 +4,8 @@ import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "./types
 
 class NamedLoopIndexesStack implements INamedLoopIndexesStack {
   stack: INamedLoopIndexes[] = [];
-  
-  async setNamedLoopIndexes(
+
+  async asyncSetNamedLoopIndexes(
     namedLoopIndexes: {[key:string]:number[]}, 
     callback: () => Promise<void>
   ): Promise<void> {
@@ -15,6 +15,21 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     this.stack.push(tempNamedLoopIndexes);
     try {
       await callback();
+    } finally {
+      this.stack.pop();
+    }
+  }
+  
+  setNamedLoopIndexes(
+    namedLoopIndexes: {[key:string]:number[]}, 
+    callback: () => void
+  ): void {
+    const tempNamedLoopIndexes = Object.fromEntries(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
+      return [name, createLoopIndexes(indexes)]
+    }));
+    this.stack.push(tempNamedLoopIndexes);
+    try {
+      callback();
     } finally {
       this.stack.pop();
     }
@@ -41,6 +56,10 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
   getLoopIndexes(name: string): ILoopIndexes {
     const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
     return currentNamedLoopIndexes[name] ?? utils.raise(`NamedLoopIndexesStack.getIndexes: name "${name}" is not found.`);
+  }
+
+  getNamedLoopIndexes(): INamedLoopIndexes {
+    return this.stack[this.stack.length - 1];
   }
   
 }

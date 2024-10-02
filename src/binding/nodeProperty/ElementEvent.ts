@@ -51,8 +51,9 @@ export class ElementEvent extends ElementBase {
     if (!(this.binding.newBindingSummary?.exists(this.binding) ?? false)) return;
     return this.binding.stateProperty.state[DirectryCallApiSymbol](
       this.binding.stateProperty.name, 
-      this.binding.parentContentBindings.currentLoopContext, 
-      event);
+      event,
+      this.binding.parentContentBindings.currentLoopContext 
+    );
   }
 
   eventHandler(event:Event) {

@@ -23,7 +23,7 @@ class LoopContextStack {
     }
     this.stack = loopContext;
     try {
-      await namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+      await namedLoopIndexesStack.asyncSetNamedLoopIndexes(namedLoopIndexes, async () => {
         await callback();
       });
     } finally {

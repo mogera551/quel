@@ -29,7 +29,9 @@ export type INamedLoopIndexes = {
 
 export interface INamedLoopIndexesStack {
   stack: INamedLoopIndexes[];
-  setNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => Promise<void>): Promise<void>;
+  asyncSetNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => Promise<void>): Promise<void>;
+  setNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => void): void;
   setSubIndex(parentName: string | undefined, name: string, index: number, callback: () => void): void;
   getLoopIndexes(name: string): ILoopIndexes;
+  getNamedLoopIndexes(): INamedLoopIndexes;
 }

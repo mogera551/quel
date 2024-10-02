@@ -11,8 +11,6 @@ export interface IStateHandler {
   readonly element: HTMLElement;
   readonly updator: IUpdator;
   readonly loopContext?: ILoopContext;
-
-  directlyCallback(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void>;
 }
 
 export type IWritableStateHandler = {
@@ -30,7 +28,7 @@ export interface IStateProxy extends IDotNotationProxy, IBaseState {
   readonly [AccessorPropertiesSymbol]: Set<string>;
   readonly [DependenciesSymbol]: IDependentProps;
   // API
-  [DirectryCallApiSymbol](prop: string, loopContext: ILoopContext | undefined, event: Event): Promise<void>;
+  [DirectryCallApiSymbol](prop: string, event: Event, loopContext: ILoopContext | undefined): Promise<void>;
   [NotifyForDependentPropsApiSymbol](prop:string, indexes:number[]): void;
   [GetDependentPropsApiSymbol](): IDependentProps;
   [ClearCacheApiSymbol](): void;

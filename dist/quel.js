@@ -1372,34 +1372,24 @@ async function updateNodes(updator, newBindingSummary, updateStatePropertyAccess
                 selectBindings.push({ binding, propertyAccess });
             }
             else {
-                if (propertyAccess.indexes.length > 0) {
-                    const namedLoopIndexes = { [propertyAccess.pattern]: propertyAccess.indexes };
-                    await updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
-                        binding.updateNodeForNoRecursive();
-                    });
-                }
-                else {
-                    await updator.namedLoopIndexesStack.setNamedLoopIndexes({}, async () => {
-                        binding.updateNodeForNoRecursive();
-                    });
-                }
+                const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
+                    { [propertyAccess.pattern]: propertyAccess.indexes } :
+                    {};
+                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+                    binding.updateNodeForNoRecursive();
+                });
             }
         });
     }
     for (let si = 0; si < selectBindings.length; si++) {
         const info = selectBindings[si];
         const propertyAccess = info.propertyAccess;
-        if (propertyAccess.indexes.length > 0) {
-            const namedLoopIndexes = { [propertyAccess.pattern]: propertyAccess.indexes };
-            await updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
-                info.binding.updateNodeForNoRecursive();
-            });
-        }
-        else {
-            await updator.namedLoopIndexesStack.setNamedLoopIndexes({}, async () => {
-                info.binding.updateNodeForNoRecursive();
-            });
-        }
+        const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
+            { [propertyAccess.pattern]: propertyAccess.indexes } :
+            {};
+        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+            info.binding.updateNodeForNoRecursive();
+        });
     }
     /*
       const allBindingsForUpdate: IBinding[] = [];
@@ -1440,7 +1430,7 @@ class LoopContextStack {
         }
         this.stack = loopContext;
         try {
-            await namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+            await namedLoopIndexesStack.asyncSetNamedLoopIndexes(namedLoopIndexes, async () => {
                 await callback();
             });
         }
@@ -1496,13 +1486,25 @@ function createLoopIndexes(indexes) {
 
 class NamedLoopIndexesStack {
     stack = [];
-    async setNamedLoopIndexes(namedLoopIndexes, callback) {
+    async asyncSetNamedLoopIndexes(namedLoopIndexes, callback) {
         const tempNamedLoopIndexes = Object.fromEntries(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
             return [name, createLoopIndexes(indexes)];
         }));
         this.stack.push(tempNamedLoopIndexes);
         try {
             await callback();
+        }
+        finally {
+            this.stack.pop();
+        }
+    }
+    setNamedLoopIndexes(namedLoopIndexes, callback) {
+        const tempNamedLoopIndexes = Object.fromEntries(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
+            return [name, createLoopIndexes(indexes)];
+        }));
+        this.stack.push(tempNamedLoopIndexes);
+        try {
+            callback();
         }
         finally {
             this.stack.pop();
@@ -1524,6 +1526,9 @@ class NamedLoopIndexesStack {
     getLoopIndexes(name) {
         const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
         return currentNamedLoopIndexes[name] ?? utils.raise(`NamedLoopIndexesStack.getIndexes: name "${name}" is not found.`);
+    }
+    getNamedLoopIndexes() {
+        return this.stack[this.stack.length - 1];
     }
 }
 function createNamedLoopIndexesStack() {
@@ -2834,7 +2839,7 @@ class ElementEvent extends ElementBase {
         // 再構築などでバインドが削除されている場合は処理しない
         if (!(this.binding.newBindingSummary?.exists(this.binding) ?? false))
             return;
-        return this.binding.stateProperty.state[DirectryCallApiSymbol](this.binding.stateProperty.name, this.binding.parentContentBindings.currentLoopContext, event);
+        return this.binding.stateProperty.state[DirectryCallApiSymbol](this.binding.stateProperty.name, event, this.binding.parentContentBindings.currentLoopContext);
     }
     eventHandler(event) {
         // 再構築などでバインドが削除されている場合は処理しない
@@ -4077,7 +4082,7 @@ function createBindingSummary() {
 const CREATE_BUFFER_METHOD = "$createBuffer";
 const FLUSH_BUFFER_METHOD = "$flushBuffer";
 const callFuncBySymbol = {
-    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, loopContext, event) => await handler.directlyCallback(loopContext, async () => await state[prop].apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])),
+    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, event, loopContext) => state[prop].apply(stateProxy, [event, ...(loopContext?.indexes ?? [])]),
     [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, indexes) => handler.updator.addUpdatedStateProperty(createPropertyAccess(prop, indexes)),
     [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
     [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
@@ -4329,8 +4334,6 @@ class Handler extends Handler$1 {
     get(target, prop, receiver) {
         return this.#getterByType[typeof prop]?.(target, prop, receiver) ?? super.get(target, prop, receiver);
     }
-    async directlyCallback(loopContext, callback) {
-    }
 }
 
 class ReadonlyHandler extends Handler {
@@ -4346,8 +4349,9 @@ function createReadonlyState(component, base) {
 
 const getLastIndexesFnByWritableStateHandler = (handler) => {
     return function (pattern) {
-        const { stackNamedWildcardIndexes, loopContext } = handler;
-        return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ?? loopContext?.find(pattern)?.indexes;
+        const { updator, stackNamedWildcardIndexes } = handler;
+        return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ??
+            updator.namedLoopIndexesStack?.getLoopIndexes(pattern)?.values;
     };
 };
 
@@ -4358,35 +4362,6 @@ const notifyCallbackFn = (handler) => {
 };
 
 class WritableHandler extends Handler {
-    #loopContext;
-    #setLoopContext = false;
-    get loopContext() {
-        return this.#loopContext;
-    }
-    async withLoopContext(loopContext, // 省略ではなくundefinedを指定する、callbackを省略させないため
-    callback) {
-        if (this.#setLoopContext)
-            utils.raise("Writable: already set loopContext");
-        this.#setLoopContext = true;
-        this.#loopContext = loopContext;
-        try {
-            return await callback();
-        }
-        finally {
-            this.#setLoopContext = false;
-            this.#loopContext = undefined;
-        }
-    }
-    async directlyCallback(loopContext, callback) {
-        return await this.withLoopContext(loopContext, async () => {
-            // directlyCallの場合、引数で$1,$2,...を渡す
-            // 呼び出すメソッド内でthis.$1,this.$2,...みたいなアクセスはさせない
-            // 呼び出すメソッド内でワイルドカードを含むドット記法でアクセスがあった場合、contextからindexesを復元する
-            if (typeof this.lastStackIndexes !== "undefined")
-                utils.raise("Writable: already set stackIndexes");
-            return await callback();
-        });
-    }
     getLastIndexes = getLastIndexesFnByWritableStateHandler(this);
     notifyCallback = notifyCallbackFn(this);
 }

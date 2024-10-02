@@ -18,10 +18,9 @@ type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler
 const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
   [DirectryCallApiSymbol]:
   ({state, stateProxy, handler}:CallbackParam) => 
-    async (prop:string, loopContext:ILoopContext, event:Event):Promise<void> => 
-      await handler.directlyCallback(loopContext, async (): Promise<void> => 
-        await (state[prop] as Function).apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])
-      ),
+    async (prop:string, event:Event, loopContext:ILoopContext):Promise<void> => 
+      (state[prop] as Function).apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])
+      ,
   [NotifyForDependentPropsApiSymbol]:
     ({handler}:CallbackParam) => 
       (prop:string, indexes:number[]):void => 
