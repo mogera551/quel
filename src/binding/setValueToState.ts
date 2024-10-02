@@ -3,9 +3,8 @@ import { INodeProperty, IStateProperty } from "./types";
 
 export function setValueToState(
   nodeProperty: INodeProperty,
-  stateProperty: IStateProperty,
-  indexes?: CleanIndexes
+  stateProperty: IStateProperty
 ) {
   if (!stateProperty.applicable) return;
-  stateProperty.setValue(nodeProperty.getFilteredValue(indexes), indexes);
+  stateProperty.setValue(nodeProperty.getFilteredValue());
 }

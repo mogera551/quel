@@ -12,12 +12,12 @@ export class Radio extends ElementBase {
   }
 
   _value:IMultiValue = new MultiValue(undefined, false);
-  getValue(indexes?:CleanIndexes):IMultiValue {
+  getValue():IMultiValue {
     this._value.value = this.inputElement.value;
     this._value.enabled = this.inputElement.checked;
     return this._value;
   }
-  setValue(value:any, indexes?:CleanIndexes) {
+  setValue(value:any) {
     const multiValue:IMultiValue = this.filteredValue;
     this.inputElement.checked = (value === multiValue.value) ? true : false;
   }

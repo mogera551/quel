@@ -6,26 +6,26 @@ import { createContentBindings } from "../ContentBindings";
 import { CleanIndexes } from "../../dotNotation/types";
 
 export class Branch extends TemplateProperty {
-  getValue(indexes?:CleanIndexes):boolean {
+  getValue():boolean {
     return this.binding.childrenContentBindings.length > 0;
   }
 
   /** 
    * Set value to bind/unbind child bindingManager
    */
-  setValue(value:any, indexes?:CleanIndexes):void {
+  setValue(value:any):void {
     if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     const lastValue = this.getValue();
     if (lastValue !== value) {
       if (value) {
         const contentBindings = createContentBindings(this.template, this.binding);
         this.binding.appendChildContentBindings(contentBindings);
-        contentBindings.rebuild(indexes);
+        contentBindings.rebuild();
       } else {
         this.binding.removeAllChildrenContentBindings();
       }
     } else {
-      this.binding.childrenContentBindings.forEach(contentBindings => contentBindings.rebuild(indexes));
+      this.binding.childrenContentBindings.forEach(contentBindings => contentBindings.rebuild());
     }
   }
 

@@ -5,10 +5,13 @@ import { IStates } from "../state/types";
 import { IUpdator } from "./types";
 
 async function execProcess (updator: IUpdator, process: IProcess): Promise<void> {
-  updator.setLoopContext(process.loopContext, async (): Promise<void> => {
+  if (typeof process.loopContext === "undefined") {
     return Reflect.apply(process.target, process.thisArgument, process.argumentList);
-  });
-
+  } else {
+    updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async (): Promise<void> => {
+      return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+    });
+  }
 }
 
 async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<IPropertyAccess[]> {

@@ -6,10 +6,10 @@ export class ElementAttribute extends ElementBase {
     return this.nameElements[1];
   }
 
-  getValue(indexes?:CleanIndexes):any {
+  getValue():any {
     return this.element.getAttribute(this.attributeName);
   }
-  setValue(value:any, indexes?:CleanIndexes) {
+  setValue(value:any) {
     this.element.setAttribute(this.attributeName, value);
   }
 }

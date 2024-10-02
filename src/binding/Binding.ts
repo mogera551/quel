@@ -142,17 +142,17 @@ class Binding implements IBinding {
     this.childrenContentBindings = [];
   }
 
-  rebuild(indexes?: CleanIndexes): void {
+  rebuild(): void {
     const { updator, nodeProperty, stateProperty } = this;
-    setValueToNode(this, updator, nodeProperty, stateProperty, indexes);
+    setValueToNode(this, updator, nodeProperty, stateProperty);
   }
 
-  updateNodeForNoRecursive(indexes?: CleanIndexes): void {
+  updateNodeForNoRecursive(): void {
     // rebuildで再帰的にupdateするnodeが決まるため
     // 再帰的に呼び出す必要はない
     if (!this.expandable) {
       const { updator, nodeProperty, stateProperty } = this;
-      setValueToNode(this, updator, nodeProperty, stateProperty, indexes);
+      setValueToNode(this, updator, nodeProperty, stateProperty);
     }
   }
 

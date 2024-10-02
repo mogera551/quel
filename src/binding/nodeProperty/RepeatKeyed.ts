@@ -22,12 +22,14 @@ export class RepeatKeyed extends Loop {
 
   #lastValue:any[] = [];
 
-  getValue(updator:IUpdator):any[] {
+  getValue():any[] {
     return this.#lastValue;
   }
-  setValue(updator:IUpdator, values:any):void {
+  setValue(values:any):void {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
-    const indexes = updator.namedLoopIndexes[this.binding.statePropertyName] ?? utils.raise("indexes is undefined");
+    const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
+    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+    const wildCardName = this.binding.statePropertyName + ".*";
     this.revisionUpForLoop();
     this.#fromIndexByValue.clear();
     this.#lastIndexes.clear();
@@ -39,7 +41,7 @@ export class RepeatKeyed extends Loop {
     let appendOnly = true;
     for(let newIndex = 0; newIndex < valuesLength; newIndex++) {
       // values[newIndex]では、get "values.*"()を正しく取得できない
-      const value = this.binding.stateProperty.getChildValue(newIndex, indexes);
+      const value = this.binding.stateProperty.getChildValue(newIndex);
       const lastIndex = this.#lastValue.indexOf(value, this.#fromIndexByValue.get(value) ?? 0);
       if (lastIndex === -1) {
         // 元のインデックスにない場合（新規）
@@ -65,9 +67,9 @@ export class RepeatKeyed extends Loop {
       for(let vi = 0; vi < valuesLength; vi++) {
         const contentBindings = createContentBindings(template, binding);
         children[vi] = contentBindings;
-        updator.setLoopIndexes(binding.statePropertyName + ".*", indexes.concat(vi), () => {
-          contentBindings.rebuild(indexes?.concat(vi));
-        }
+        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, vi, () => {
+          contentBindings.rebuild();
+        });
         parentNode.insertBefore(contentBindings.fragment, nextNode);
       }
     } else {
@@ -81,7 +83,9 @@ export class RepeatKeyed extends Loop {
           // 元のインデックスにない場合（新規）
           contentBindings = createContentBindings(this.template, this.binding);
           children[newIndex] = contentBindings;
-          contentBindings.rebuild(indexes?.concat(newIndex));
+          this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+            contentBindings.rebuild();
+          });
           parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
         } else {
           // 元のインデックスがある場合（既存）
@@ -89,14 +93,16 @@ export class RepeatKeyed extends Loop {
           if (contentBindings.childNodes[0]?.previousSibling !== beforeNode) {
             contentBindings.removeChildNodes();
             children[newIndex] = contentBindings;
-            if (this.binding.updator?.isFullRebuild) {
-              contentBindings.rebuild(indexes?.concat(newIndex));
-            }
+            this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+              contentBindings.rebuild();
+            });
             parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
           } else {
             children[newIndex] = contentBindings;
             if (this.binding.updator?.isFullRebuild) {
-              contentBindings.rebuild(indexes?.concat(newIndex));
+              this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+                contentBindings.rebuild();
+              });
             }
           }
         }
@@ -112,6 +118,9 @@ export class RepeatKeyed extends Loop {
 
   applyToChildNodes(setOfIndex:Set<number>, indexes?:CleanIndexes):void {
     this.revisionUpForLoop();
+    const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
+    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+    const wildCardName = this.binding.statePropertyName + ".*";
     const contentBindingsByValue:Map<any,IContentBindings> = new Map;
     for(const index of setOfIndex) {
       const contentBindings = this.binding.childrenContentBindings[index];
@@ -125,7 +134,7 @@ export class RepeatKeyed extends Loop {
     }
     const updatedBindings = [];
     for(const index of Array.from(setOfIndex).sort()) {
-      const newValue = this.binding.stateProperty.getChildValue(index, indexes);
+      const newValue = this.binding.stateProperty.getChildValue(index);
       const typeofNewValue = typeof newValue;
       if (typeofNewValue === "undefined") continue;
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
@@ -133,15 +142,19 @@ export class RepeatKeyed extends Loop {
       if (typeof contentBindings === "undefined") {
         contentBindings = createContentBindings(this.template, this.binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
-        contentBindings.rebuild(indexes?.concat(index));
+        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+          contentBindings?.rebuild();
+        });
         updatedBindings.push(...contentBindings.allChildBindings);
       } else {
         this.binding.replaceChildContentBindings(contentBindings, index);
-        contentBindings.rebuild(indexes?.concat(index));
+        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+          contentBindings?.rebuild();
+        });
         updatedBindings.push(...contentBindings.allChildBindings);
       }
     }
-    this.#lastValue = this.binding.stateProperty.getValue(indexes).slice();
+    this.#lastValue = this.binding.stateProperty.getValue().slice();
   }
 
   initialize() {

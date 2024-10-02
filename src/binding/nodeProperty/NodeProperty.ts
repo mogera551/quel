@@ -20,12 +20,12 @@ export class NodeProperty implements INodeProperty {
     return this.#nameElements;
   }
 
-  getValue(indexes?: CleanIndexes):(any|undefined) {
+  getValue():(any|undefined) {
     // @ts-ignore
     return this.node[this.name];
 //    return Reflect.get(this.node, this.name);
   }
-  setValue(value:any, indexes?: CleanIndexes) {
+  setValue(value:any) {
     // @ts-ignore
     this.node[this.name] = value;
 //    Reflect.set(this.node, this.name, value);
@@ -37,8 +37,8 @@ export class NodeProperty implements INodeProperty {
   }
 
   /** @type {any} */
-  getFilteredValue(indexes?: CleanIndexes): any {
-    const value = this.getValue(indexes);
+  getFilteredValue(): any {
+    const value = this.getValue();
     return this.filters.length === 0 ? value : FilterManager.applyFilter<"input">(value, this.filters);
   }
 

@@ -61,19 +61,17 @@ export class StateProperty implements IStateProperty {
     return this.key;
   }
 
-  getValue(updator:IUpdator):any {
-    let indexes = updator.namedLoopIndexes[this.name];
-    if (typeof indexes === "undefined") indexes = this.indexes;
+  getValue():any {
+    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
     return this.state[GetDirectSymbol](this.name, indexes);
   }
-  setValue(updator:IUpdator, value:any) {
-    let indexes = updator.namedLoopIndexes[this.name];
-    if (typeof indexes === "undefined") indexes = this.indexes;
+  setValue(value:any) {
+    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
     const setValue = (value:any) => {
       this.state[SetDirectSymbol](this.name, indexes, value);
     };
     if (value instanceof MultiValue) {
-      const thisValue = this.getValue(updator);
+      const thisValue = this.getValue();
       if (Array.isArray(thisValue)) {
         const setOfThisValue = new Set(thisValue);
         value.enabled ? setOfThisValue.add(value.value) : setOfThisValue.delete(value.value);
@@ -91,8 +89,8 @@ export class StateProperty implements IStateProperty {
     return this.#filters;
   }
 
-  getFilteredValue(updator:IUpdator):any {
-    const value = this.getValue(updator);
+  getFilteredValue():any {
+    const value = this.getValue();
     return this.filters.length === 0 ? value : FilterManager.applyFilter<"output">(value, this.filters);
   }
 
@@ -122,13 +120,13 @@ export class StateProperty implements IStateProperty {
   initialize() {
   }
 
-  getChildValue(index:number, indexes: number[] | undefined) {
-    if (typeof indexes === "undefined") indexes = this.indexes;
+  getChildValue(index:number) {
+    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
     return this.state[GetDirectSymbol](this.#childName , indexes.concat(index));
   }
 
-  setChildValue(index:number, value:any, indexes: number[] | undefined) {
-    if (typeof indexes === "undefined") indexes = this.indexes;
+  setChildValue(index:number, value:any) {
+    const indexes = this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.name)?.values ?? this.indexes;
     return this.state[SetDirectSymbol](this.#childName , indexes.concat(index), value);
   }
 

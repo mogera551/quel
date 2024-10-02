@@ -8,19 +8,24 @@ import { CleanIndexes } from "../../dotNotation/types";
 const rebuildFunc = (contentBindings:IContentBindings):void => contentBindings.rebuild();
 
 export class Repeat extends Loop {
-  getValue(indexes?:CleanIndexes):any[] {
+  getValue():any[] {
     return this.binding.childrenContentBindings;
   }
-  setValue(value:any[], indexes?: CleanIndexes):void {
+  setValue(value:any[]):void {
     if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
     const lastValueLength = this.getValue().length;
+    const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
+    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+    const stateName = this.binding.stateProperty.name;
     this.revisionUpForLoop();
     if (lastValueLength < value.length) {
       this.binding.childrenContentBindings.forEach(rebuildFunc);
       for(let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
         const contentBindings = createContentBindings(this.template, this.binding);
         this.binding.appendChildContentBindings(contentBindings);
-        contentBindings.rebuild(indexes?.concat(newIndex));
+        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, stateName, newIndex, () => {
+          contentBindings.rebuild();
+        })
       }
     } else if (lastValueLength > value.length) {
       const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);

@@ -49,10 +49,10 @@ export class ComponentProperty extends ElementBase {
     super(binding, node, name, filters);
   }
 
-  getValue(indexes?:CleanIndexes):any {
+  getValue():any {
     return super.getValue();
   }
-  setValue(value:any, indexes?:CleanIndexes) {
+  setValue(value:any) {
     try {
       this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, []);
     } catch(e) {

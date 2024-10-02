@@ -9,7 +9,9 @@ import { rebuildBindings } from "./rebuildBindings";
 import { updateChildNodes } from "./updateChildNodes";
 import { updateNodes } from "./updateNodes";
 import { utils } from "../utils";
-import { ILoopContext } from "../loopContext/types";
+import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loopContext/types";
+import { createLoopContextStack } from "../loopContext/LoopContextStack";
+import { createNamedLoopIndexesStack } from "../loopContext/NamedLoopIndexesStack";
 
 type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary">;
 
@@ -20,31 +22,9 @@ class Updator implements IUpdator {
   expandedStateProperties: IPropertyAccess[] = [];
   updatedBindings: Set<IBinding> = new Set();
   bindingsForUpdateNode: IBinding[] = [];
-  namedLoopIndexes: { [key: string]: number[]; } = {};
-  loopContext: ILoopContext | undefined;
-  async setLoopContext(loopContext: ILoopContext | undefined, callback: () => Promise<void>): Promise<void> {
-    this.loopContext = loopContext;
-    const namedLoopIndexes: {[key: string]: number[]} = {};
-    while(typeof loopContext !== "undefined") {
-      namedLoopIndexes[loopContext.patternName] = loopContext.indexes;
-      loopContext = loopContext.parentLoopContext;
-    }
-    this.namedLoopIndexes = namedLoopIndexes;
-    try {
-      return await callback();
-    } finally {
-      this.namedLoopIndexes = {};
-      this.loopContext = undefined;
-    }
-  }
-  async setLoopIndexes(name: string, indexes: number[], callback: () => Promise<void>): Promise<void> {
-    this.namedLoopIndexes[name] = indexes;
-    try {
-      return await callback();
-    } finally {
-      delete this.namedLoopIndexes[name];
-    }
-  }
+
+  loopContextStack: ILoopContextStack = createLoopContextStack();
+  namedLoopIndexesStack: INamedLoopIndexesStack = createNamedLoopIndexesStack();
 
   executing = false;
 
@@ -125,7 +105,7 @@ class Updator implements IUpdator {
         const updatedStatePropertyAccessByKey: Map<string, IPropertyAccess> = 
           new Map(updatedStatePropertyAccesses.map(propertyAccess => [propertyAccess.key, propertyAccess]));
 
-        rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
+        await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
         updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses)
 
         await updateNodes(this, this.newBindingSummary, updatedStatePropertyAccessByKey);

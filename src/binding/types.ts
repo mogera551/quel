@@ -37,9 +37,9 @@ export interface INodeProperty extends ILoopable {
   equals(value: any): boolean;
   applyToChildNodes(setOfIndex: Set<number>, indexes?: CleanIndexes): void;
   dispose(): void;
-  getValue(indexes?: CleanIndexes): any;
-  getFilteredValue(indexes?: CleanIndexes): any;
-  setValue(value: any, indexes?: CleanIndexes): void;
+  getValue(): any;
+  getFilteredValue(): any;
+  setValue(value: any): void;
 }
 
 export interface IStateProperty {
@@ -51,13 +51,13 @@ export interface IStateProperty {
   readonly key: string;
   readonly propInfo: IPropInfo;
   readonly level: number;
-  getChildValue(index:number, indexes: number[] | undefined):any;
-  setChildValue(index:number, value:any, indexes: number[] | undefined):void;
+  getChildValue(index:number):any;
+  setChildValue(index:number, value:any):void;
   initialize(): void;
   dispose(): void;
-  getValue(updator: IUpdator): any;
-  getFilteredValue(updator: IUpdator): any;
-  setValue(updator: IUpdator, value: any): void;
+  getValue(): any;
+  getFilteredValue(): any;
+  setValue(value: any): void;
 }
 
 export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "newBindingSummary" | "updator">;
@@ -92,8 +92,8 @@ export interface IBinding extends IBindingTreeNode {
   removeAllChildrenContentBindings(): IContentBindings[];
   dispose(): void;
 
-  rebuild(indexes?: CleanIndexes | undefined): void;
-  updateNodeForNoRecursive(indexes?: CleanIndexes): void;
+  rebuild(): void;
+  updateNodeForNoRecursive(): void;
 }
 
 export interface IContentBindingsTreeNode {

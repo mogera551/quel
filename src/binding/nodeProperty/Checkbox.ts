@@ -12,20 +12,20 @@ export class Checkbox extends ElementBase {
   }
 
   _value:IMultiValue = new MultiValue(undefined, false);
-  getValue(indexes?:CleanIndexes):IMultiValue {
+  getValue():IMultiValue {
     this._value.value = this.inputElement.value;
     this._value.enabled = this.inputElement.checked;
     return this._value;
   }
 
-  setValue(value:any[], indexes?:CleanIndexes) {
+  setValue(value:any[]) {
     if (!Array.isArray(value)) utils.raise(`Checkbox: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`, );
-    const multiValue = this.filteredValue;
+    const multiValue = this.getFilteredValue();
     this.inputElement.checked = value.some(v => v === multiValue.value);
   }
 
   _filteredValue:IMultiValue = new MultiValue(undefined, false);
-  get filteredValue() {
+  getFilteredValue() {
     const multiValue:IMultiValue = this.getValue();
     this._filteredValue.value = this.filters.length > 0 ? FilterManager.applyFilter<"input">(multiValue.value, this.filters) : multiValue.value;
     this._filteredValue.enabled = multiValue.enabled;

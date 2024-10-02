@@ -13,10 +13,10 @@ export class ElementStyle extends ElementBase {
     return this.nameElements[1];
   }
 
-  getValue(indexes?:CleanIndexes):any {
+  getValue():any {
     return this.htmlElement.style.getPropertyValue(this.styleName);
   }
-  setValue(value:any, indexes?:CleanIndexes) {
+  setValue(value:any) {
     this.htmlElement.style.setProperty(this.styleName, value);
   }
 

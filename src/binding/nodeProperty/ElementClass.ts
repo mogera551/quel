@@ -11,10 +11,10 @@ export class ElementClass extends ElementBase {
     return this.nameElements[1];
   }
 
-  getValue(indexes?:CleanIndexes):any {
+  getValue():any {
     return this.element.classList.contains(this.className);
   }
-  setValue(value:any, indexes?:CleanIndexes) {
+  setValue(value:any) {
     if (typeof value !== "boolean") utils.raise(`ElementClass: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     value ? this.element.classList.add(this.className) : this.element.classList.remove(this.className);
   }

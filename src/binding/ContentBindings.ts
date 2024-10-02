@@ -136,11 +136,11 @@ class ContentBindings implements IContentBindings {
       if (binding.nodeProperty.isSelectValue) {
         selectValues.push(binding);
       } else {
-        binding.rebuild(indexes);
+        binding.rebuild();
       }
     }
     for(let i = 0; i < selectValues.length; i++) {
-      selectValues[i].rebuild(indexes);
+      selectValues[i].rebuild();
     }
   }
 }
