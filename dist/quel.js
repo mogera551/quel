@@ -1268,10 +1268,9 @@ function expandStateProperties(states, updatedStateProperties) {
 // ソートのための比較関数
 // BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
 // 
-async function rebuildBindings(updator, newBindingSummary, updateStatePropertyAccessByKey, updatedKeys) {
-    const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
-    for (let i = 0; i < propertyAccesses.length; i++) {
-        const propertyAccess = propertyAccesses[i];
+async function rebuildBindings(updator, newBindingSummary, updatedStatePropertyAccesses, updatedKeys) {
+    for (let i = 0; i < updatedStatePropertyAccesses.length; i++) {
+        const propertyAccess = updatedStatePropertyAccesses[i];
         const gatheredBindings = newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes);
         for (let gi = 0; gi < gatheredBindings.length; gi++) {
             const binding = gatheredBindings[gi];
@@ -1279,9 +1278,12 @@ async function rebuildBindings(updator, newBindingSummary, updateStatePropertyAc
                 continue;
             const compareKey = binding.stateProperty.name + ".";
             const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-            const namedLoopIndexes = { [propertyAccess.pattern]: propertyAccess.indexes };
-            updator.setFullRebuild(isFullBuild, async () => {
-                await updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+            const lastWildCardPath = binding.stateProperty.propInfo.wildcardPaths[binding.stateProperty.propInfo.wildcardPaths.length - 1];
+            const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
+                { [lastWildCardPath]: propertyAccess.indexes } :
+                {};
+            updator.setFullRebuild(isFullBuild, () => {
+                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
                     binding.rebuild();
                 });
             });
@@ -1360,11 +1362,10 @@ function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccess
     */
 }
 
-async function updateNodes(updator, newBindingSummary, updateStatePropertyAccessByKey = new Map()) {
-    const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
+async function updateNodes(updator, newBindingSummary, updatedStatePropertyAccesses) {
     const selectBindings = [];
-    for (let i = 0; i < propertyAccesses.length; i++) {
-        const propertyAccess = propertyAccesses[i];
+    for (let i = 0; i < updatedStatePropertyAccesses.length; i++) {
+        const propertyAccess = updatedStatePropertyAccesses[i];
         newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes).forEach(async (binding) => {
             if (binding.expandable)
                 return;
@@ -1372,8 +1373,7 @@ async function updateNodes(updator, newBindingSummary, updateStatePropertyAccess
                 selectBindings.push({ binding, propertyAccess });
             }
             else {
-                const patternInfo = getPatternInfo(propertyAccess.propInfo.pattern);
-                const lastWildCardPath = patternInfo.wildcardPaths[patternInfo.wildcardPaths.length - 1];
+                const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
                 const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
                     { [lastWildCardPath]: propertyAccess.indexes } :
                     {};
@@ -1386,8 +1386,7 @@ async function updateNodes(updator, newBindingSummary, updateStatePropertyAccess
     for (let si = 0; si < selectBindings.length; si++) {
         const info = selectBindings[si];
         const propertyAccess = info.propertyAccess;
-        const patternInfo = getPatternInfo(propertyAccess.propInfo.pattern);
-        const lastWildCardPath = patternInfo.wildcardPaths[patternInfo.wildcardPaths.length - 1];
+        const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
         const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
             { [lastWildCardPath]: propertyAccess.indexes } :
             {};
@@ -1609,10 +1608,9 @@ class Updator {
                 const updatedKeys = _updatedStatePropertyAccesses.map(propertyAccess => propertyAccess.key);
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
-                const updatedStatePropertyAccessByKey = new Map(updatedStatePropertyAccesses.map(propertyAccess => [propertyAccess.key, propertyAccess]));
-                await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccessByKey, updatedKeys);
+                await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
                 updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
-                await updateNodes(this, this.newBindingSummary, updatedStatePropertyAccessByKey);
+                await updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
             }
         });
     }
@@ -2631,7 +2629,7 @@ class Repeat extends Loop {
             utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         const lastValueLength = this.getValue().length;
         const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
-        const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+        const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
         const stateName = this.binding.stateProperty.name;
         this.revisionUpForLoop();
         if (lastValueLength < value.length) {
@@ -3006,7 +3004,7 @@ class RepeatKeyed extends Loop {
         if (!Array.isArray(values))
             utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
         const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
-        const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+        const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
         const wildCardName = this.binding.statePropertyName + ".*";
         this.revisionUpForLoop();
         this.#fromIndexByValue.clear();
@@ -3098,7 +3096,7 @@ class RepeatKeyed extends Loop {
     applyToChildNodes(setOfIndex, indexes) {
         this.revisionUpForLoop();
         const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
-        const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+        const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
         const wildCardName = this.binding.statePropertyName + ".*";
         const contentBindingsByValue = new Map;
         for (const index of setOfIndex) {
@@ -4758,7 +4756,9 @@ function CustomComponent(Base) {
             // build binding tree and dom 
             this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
             this.rootBindingManager = createContentBindings(this.template, undefined, this);
-            this.rootBindingManager.rebuild([]);
+            this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
+                this.rootBindingManager.rebuild([]);
+            });
             if (this.useWebComponent) {
                 // case of useWebComponent,
                 // then append fragment block to viewRootElement

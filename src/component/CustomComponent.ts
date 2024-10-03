@@ -193,7 +193,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       // build binding tree and dom 
       const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
       this.rootBindingManager = createContentBindings(this.template, undefined, this);
-      this.rootBindingManager.rebuild([]);
+      this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
+        this.rootBindingManager.rebuild([]);
+      });
       if (this.useWebComponent) {
         // case of useWebComponent,
         // then append fragment block to viewRootElement

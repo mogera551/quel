@@ -15,7 +15,7 @@ export class Repeat extends Loop {
     if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
     const lastValueLength = this.getValue().length;
     const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
-    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
     const stateName = this.binding.stateProperty.name;
     this.revisionUpForLoop();
     if (lastValueLength < value.length) {

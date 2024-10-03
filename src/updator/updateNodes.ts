@@ -6,19 +6,17 @@ import { IUpdator } from "./types";
 export async function updateNodes(
   updator: IUpdator,
   newBindingSummary: INewBindingSummary,
-  updateStatePropertyAccessByKey: Map<string,IPropertyAccess> = new Map()
+  updatedStatePropertyAccesses: IPropertyAccess[]
 ) {
-  const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
   const selectBindings: {binding:IBinding, propertyAccess:IPropertyAccess}[] = [];
-  for(let i = 0; i < propertyAccesses.length; i++) {
-    const propertyAccess = propertyAccesses[i];
+  for(let i = 0; i < updatedStatePropertyAccesses.length; i++) {
+    const propertyAccess = updatedStatePropertyAccesses[i];
     newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes).forEach(async binding => {
       if (binding.expandable) return;
       if (binding.nodeProperty.isSelectValue) {
         selectBindings.push({binding, propertyAccess});
       } else {
-        const patternInfo = getPatternInfo(propertyAccess.propInfo.pattern);
-        const lastWildCardPath = patternInfo.wildcardPaths[patternInfo.wildcardPaths.length - 1];
+        const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
         const namedLoopIndexes = 
           (propertyAccess.indexes.length > 0) ? 
           { [lastWildCardPath]: propertyAccess.indexes } : 
@@ -32,8 +30,7 @@ export async function updateNodes(
   for(let si = 0; si < selectBindings.length; si++) {
     const info = selectBindings[si];
     const propertyAccess = info.propertyAccess;
-    const patternInfo = getPatternInfo(propertyAccess.propInfo.pattern);
-    const lastWildCardPath = patternInfo.wildcardPaths[patternInfo.wildcardPaths.length - 1];
+    const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
     const namedLoopIndexes = 
       (propertyAccess.indexes.length > 0) ? 
       { [lastWildCardPath]: propertyAccess.indexes } : 

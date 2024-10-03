@@ -9,21 +9,24 @@ const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateP
 export async function rebuildBindings(
   updator: IUpdator, 
   newBindingSummary: INewBindingSummary, 
-  updateStatePropertyAccessByKey: Map<string, IPropertyAccess>,
+  updatedStatePropertyAccesses: IPropertyAccess[],
   updatedKeys: string[]
 ): Promise<void> {
-  const propertyAccesses = Array.from(updateStatePropertyAccessByKey.values());
-  for(let i = 0; i < propertyAccesses.length; i++) {
-    const propertyAccess = propertyAccesses[i];
+  for(let i = 0; i < updatedStatePropertyAccesses.length; i++) {
+    const propertyAccess = updatedStatePropertyAccesses[i];
     const gatheredBindings = newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes);
     for(let gi = 0; gi < gatheredBindings.length; gi++) {
       const binding = gatheredBindings[gi];
       if (!binding.expandable) continue;
       const compareKey = binding.stateProperty.name + ".";
       const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-      const namedLoopIndexes = { [propertyAccess.pattern]: propertyAccess.indexes };
-      updator.setFullRebuild(isFullBuild, async () => {
-        await updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+      const lastWildCardPath = binding.stateProperty.propInfo.wildcardPaths[binding.stateProperty.propInfo.wildcardPaths.length - 1];
+      const namedLoopIndexes = 
+        (propertyAccess.indexes.length > 0) ? 
+        { [lastWildCardPath]: propertyAccess.indexes } : 
+        {};
+      updator.setFullRebuild(isFullBuild, () => {
+        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.rebuild();
         });
       });

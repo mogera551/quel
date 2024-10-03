@@ -28,7 +28,7 @@ export class RepeatKeyed extends Loop {
   setValue(values:any):void {
     if (!Array.isArray(values)) utils.raise(`RepeatKeyed: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
     const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
-    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
     const wildCardName = this.binding.statePropertyName + ".*";
     this.revisionUpForLoop();
     this.#fromIndexByValue.clear();
@@ -119,7 +119,7 @@ export class RepeatKeyed extends Loop {
   applyToChildNodes(setOfIndex:Set<number>, indexes?:CleanIndexes):void {
     this.revisionUpForLoop();
     const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
-    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 2];
+    const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
     const wildCardName = this.binding.statePropertyName + ".*";
     const contentBindingsByValue:Map<any,IContentBindings> = new Map;
     for(const index of setOfIndex) {
