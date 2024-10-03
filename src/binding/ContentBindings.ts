@@ -1,6 +1,6 @@
 import { createBinder } from "../binder/createBinder";
-import { CleanIndexes, Indexes } from "../dotNotation/types";
-import { LoopContext } from "../loopContext/LoopContext";
+import { CleanIndexes } from "../dotNotation/types";
+import { createLoopContext } from "../loopContext/createLoopContext";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { IBinding, IContentBindings, IComponentPartial } from "./types";
@@ -31,7 +31,7 @@ class ContentBindings implements IContentBindings {
   set parentBinding(value: IBinding | undefined) {
     this.#parentBinding = value;
     this.#component = value?.component ?? this.#component;
-    this.#loopContext = (value?.loopable === true) ? new LoopContext(this) : undefined;
+    this.#loopContext = (value?.loopable === true) ? createLoopContext(this) : undefined;
   }
 
   get loopContext(): ILoopContext | undefined {

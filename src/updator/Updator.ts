@@ -10,8 +10,8 @@ import { updateChildNodes } from "./updateChildNodes";
 import { updateNodes } from "./updateNodes";
 import { utils } from "../utils";
 import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loopContext/types";
-import { createLoopContextStack } from "../loopContext/LoopContextStack";
-import { createNamedLoopIndexesStack } from "../loopContext/NamedLoopIndexesStack";
+import { createLoopContextStack } from "../loopContext/createLoopContextStack";
+import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
 type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary">;
 

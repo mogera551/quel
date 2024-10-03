@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { createLoopIndexes } from "./LoopIndexes";
+import { createLoopIndexes } from "./createLoopIndexes";
 import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "./types";
 
 class NamedLoopIndexesStack implements INamedLoopIndexesStack {

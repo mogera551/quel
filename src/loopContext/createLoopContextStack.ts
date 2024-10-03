@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { createNamedLoopIndexesStack } from "./NamedLoopIndexesStack";
+import { createNamedLoopIndexesStack } from "./createNamedLoopIndexesStack";
 import { ILoopContext, ILoopContextStack, INamedLoopIndexes, INamedLoopIndexesStack } from "./types";
 
 class LoopContextStack {

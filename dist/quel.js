@@ -1283,7 +1283,7 @@ async function rebuildBindings(updator, newBindingSummary, updatedStatePropertyA
                 { [lastWildCardPath]: propertyAccess.indexes } :
                 {};
             updator.setFullRebuild(isFullBuild, () => {
-                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, async () => {
+                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                     binding.rebuild();
                 });
             });
@@ -3827,6 +3827,9 @@ class LoopContext {
     dispose() {
     }
 }
+function createLoopContext(contentBindings) {
+    return new LoopContext(contentBindings);
+}
 
 class ContentBindings {
     #component;
@@ -3851,7 +3854,7 @@ class ContentBindings {
     set parentBinding(value) {
         this.#parentBinding = value;
         this.#component = value?.component ?? this.#component;
-        this.#loopContext = (value?.loopable === true) ? new LoopContext(this) : undefined;
+        this.#loopContext = (value?.loopable === true) ? createLoopContext(this) : undefined;
     }
     get loopContext() {
         return this.#loopContext;

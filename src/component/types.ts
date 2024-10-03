@@ -4,7 +4,6 @@ import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
 import { IContentBindings, IBindingPropertyAccess, IBindingSummary, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
-import { LoopContext } from "../loopContext/LoopContext";
 import { ILoopContext } from "../loopContext/types";
 
 export type ComponentModuleConfig = {

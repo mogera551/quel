@@ -4,7 +4,7 @@ import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
 import { ILoopContext } from "./types";
 
-export class LoopContext implements ILoopContext{
+class LoopContext implements ILoopContext{
   #revision?: number;
   #contentBindings: IContentBindingsTreeNode;
   #index?: number;
@@ -104,4 +104,8 @@ export class LoopContext implements ILoopContext{
 
   dispose(): void {
   }
+}
+
+export function createLoopContext(contentBindings: IContentBindingsTreeNode): ILoopContext {
+  return new LoopContext(contentBindings);
 }
