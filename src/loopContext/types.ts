@@ -8,6 +8,7 @@ export interface ILoopContext {
   readonly parentBinding:IBindingTreeNode;
   readonly contentBindings: IContentBindingsTreeNode;
   find(patternName:string):ILoopContext | undefined;
+  dispose():void;
 }
 
 export interface ILoopContextStack {

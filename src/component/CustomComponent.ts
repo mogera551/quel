@@ -10,7 +10,7 @@ import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } fro
 import { IStates } from "../state/types";
 import { IContentBindings, IBindingSummary, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
-import { createContentBindings } from "../binding/ContentBindings";
+import { createRootContentBindings } from "../binding/ContentBindings";
 import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
@@ -192,7 +192,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
 
       // build binding tree and dom 
       const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-      this.rootBindingManager = createContentBindings(this.template, undefined, this);
+      this.rootBindingManager = createRootContentBindings(this, this.template);
       this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
         this.rootBindingManager.rebuild([]);
       });

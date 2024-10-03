@@ -13,6 +13,7 @@ class ContentBindings implements IContentBindings {
   #loopContext?: ILoopContext;
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
+  #loopable = false;
 
   get component(): IComponentPartial | undefined {
     return this.#component;
@@ -29,9 +30,11 @@ class ContentBindings implements IContentBindings {
     return this.#parentBinding;
   }
   set parentBinding(value: IBinding | undefined) {
+    if (typeof value !== "undefined") {
+      (this.#component !== value.component) && utils.raise("component is different");
+      (this.#loopable !== value.loopable) && utils.raise("loopable is different");
+    }
     this.#parentBinding = value;
-    this.#component = value?.component ?? this.#component;
-    this.#loopContext = (value?.loopable === true) ? createLoopContext(this) : undefined;
   }
 
   get loopContext(): ILoopContext | undefined {
@@ -80,22 +83,16 @@ class ContentBindings implements IContentBindings {
   }
 
   constructor(
+    component: IComponentPartial,
     template: HTMLTemplateElement,
-    parentBinding?: IBinding,
-    component?: IComponentPartial,
+    loopable: boolean = false,
   ) {
-    if (typeof component === "undefined" && typeof parentBinding === "undefined") {
-      utils.raise("component and parentBinding are undefined");
-    }
-    if (typeof component !== "undefined" && typeof parentBinding !== "undefined") {
-      utils.raise("component and parentBinding are both defined");
-    }
-    this.#component = parentBinding?.component ?? component;
-    this.parentBinding = parentBinding;
+    this.#component = component;
     this.template = template;
-  }
-
-  initialize() {
+    this.#loopable = loopable;
+    if (loopable) {
+      this.#loopContext = createLoopContext(this);
+    }
     const binder = createBinder(this.template, this.component?.useKeyed ?? utils.raise("useKeyed is undefined"));
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#childBindings = binder.createBindings(this.#fragment, this);
@@ -121,15 +118,14 @@ class ContentBindings implements IContentBindings {
     // 構造を保持しておくことで、再利用時に再構築する必要がなくなる
     // 構造は変化しない、変化するのは、bindingのchildrenContentBindings
     this.childBindings.forEach(binding => binding.dispose());
+    this.loopContext?.dispose();
     this.#parentBinding = undefined;
-    this.#loopContext = undefined;
-    this.#component = undefined;
     this.removeChildNodes();
     const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
     _cache[uuid]?.push(this) ?? (_cache[uuid] = [this]);
   }
 
-  rebuild(indexes?: CleanIndexes): void {
+  rebuild(): void {
     const selectValues = [];
     for(let i = 0; i < this.childBindings.length; i++) {
       const binding = this.childBindings[i];
@@ -149,17 +145,24 @@ const _cache: {[ key: string ]: IContentBindings[]} = {};
 
 export function createContentBindings(
   template: HTMLTemplateElement, 
-  parentBinding?: IBinding, 
-  component?: IComponentPartial
+  parentBinding: IBinding, 
 ): IContentBindings {
   const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+  const component = parentBinding.component ?? utils.raise("component is undefined");
   let contentBindings = _cache[uuid]?.pop();
-  if (typeof contentBindings !== "undefined") {
-    contentBindings.parentBinding = parentBinding;
-  } else {
-    contentBindings = new ContentBindings(template, parentBinding, component);
-    contentBindings.initialize();
+  if (typeof contentBindings === "undefined") {
+    contentBindings = new ContentBindings(component, template, parentBinding.loopable);
   }
+  contentBindings.parentBinding = parentBinding;
+  contentBindings.registerBindingsToSummary();
+  return contentBindings;
+}
+
+export function createRootContentBindings(
+  component: IComponentPartial,
+  template: HTMLTemplateElement 
+): IContentBindings {
+  const contentBindings = new ContentBindings(component, template);
   contentBindings.registerBindingsToSummary();
   return contentBindings;
 }

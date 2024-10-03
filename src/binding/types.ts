@@ -115,7 +115,7 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   readonly lastChildNode?: Node;
   readonly allChildBindings: IBinding[];
 
-  initialize():void;
+//  initialize():void;
   removeChildNodes():void;
   dispose():void;
 

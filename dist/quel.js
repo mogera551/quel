@@ -3740,34 +3740,48 @@ class LoopContext {
     #index;
     #parentLoopContext;
     #parentLoopCache = false;
+    #parentBinding;
     #statePropertyName;
     #patternInfo;
     #patternName;
-    #parentBinding;
     constructor(contentBindings) {
-        this.#parentBinding = contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
-        (this.#parentBinding.loopable === false) && utils.raise("parentBinding is not loopable");
-        this.#statePropertyName = this.#parentBinding.statePropertyName ?? utils.raise("statePropertyName is undefined");
         this.#contentBindings = contentBindings;
-        this.#patternInfo = getPatternInfo(this.#statePropertyName + ".*");
-        this.#patternName = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 1] ?? utils.raise("patternName is undefined");
-    }
-    get parentBinding() {
-        return this.#parentBinding;
     }
     get contentBindings() {
         return this.#contentBindings;
     }
+    get parentBinding() {
+        if (typeof this.#parentBinding === "undefined") {
+            this.#parentBinding = this.contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
+            (this.#parentBinding.loopable === false) && utils.raise("parentBinding is not loopable");
+        }
+        return this.#parentBinding;
+    }
+    get statePropertyName() {
+        if (typeof this.#statePropertyName === "undefined") {
+            this.#statePropertyName = this.parentBinding.statePropertyName;
+        }
+        return this.#statePropertyName;
+    }
+    get patternInfo() {
+        if (typeof this.#patternInfo === "undefined") {
+            this.#patternInfo = getPatternInfo(this.statePropertyName + ".*");
+        }
+        return this.#patternInfo;
+    }
     get patternName() {
+        if (typeof this.#patternName === "undefined") {
+            this.#patternName = this.patternInfo.wildcardPaths.at(-1) ?? utils.raise("patternName is undefined");
+        }
         return this.#patternName;
     }
     get parentLoopContext() {
         // インデックスは変わるが親子関係は変わらないので、checkRevisionは不要
         if (!this.#parentLoopCache) {
-            const parentPattern = this.#patternInfo.wildcardPaths[this.#patternInfo.wildcardPaths.length - 2];
+            const parentPattern = this.patternInfo.wildcardPaths.at(-2);
             let curContentBindings = undefined;
             if (typeof parentPattern !== "undefined") {
-                curContentBindings = this.#parentBinding.parentContentBindings;
+                curContentBindings = this.parentBinding.parentContentBindings;
                 while (typeof curContentBindings !== "undefined") {
                     if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === parentPattern) {
                         break;
@@ -3786,7 +3800,7 @@ class LoopContext {
     get index() {
         this.checkRevision();
         if (typeof this.#index === "undefined") {
-            this.#index = this.#parentBinding.childrenContentBindings.indexOf(this.#contentBindings);
+            this.#index = this.parentBinding.childrenContentBindings.indexOf(this.contentBindings);
         }
         return this.#index;
     }
@@ -3804,7 +3818,7 @@ class LoopContext {
         return this.#indexes;
     }
     checkRevision() {
-        const revision = this.#contentBindings.parentBinding?.nodeProperty.revisionForLoop;
+        const revision = this.contentBindings.parentBinding?.nodeProperty.revisionForLoop;
         if (typeof this.#revision === "undefined" || this.#revision !== revision) {
             this.#index = undefined;
             this.#indexes = undefined;
@@ -3815,7 +3829,7 @@ class LoopContext {
         return false;
     }
     find(patternName) {
-        let curContentBindings = this.#contentBindings;
+        let curContentBindings = this.contentBindings;
         while (typeof curContentBindings !== "undefined") {
             if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === patternName) {
                 break;
@@ -3825,6 +3839,10 @@ class LoopContext {
         return curContentBindings?.loopContext;
     }
     dispose() {
+        this.#parentBinding = undefined;
+        this.#statePropertyName = undefined;
+        this.#patternInfo = undefined;
+        this.#patternName = undefined;
     }
 }
 function createLoopContext(contentBindings) {
@@ -3839,6 +3857,7 @@ class ContentBindings {
     #loopContext;
     #childNodes;
     #fragment;
+    #loopable = false;
     get component() {
         return this.#component;
     }
@@ -3852,9 +3871,11 @@ class ContentBindings {
         return this.#parentBinding;
     }
     set parentBinding(value) {
+        if (typeof value !== "undefined") {
+            (this.#component !== value.component) && utils.raise("component is different");
+            (this.#loopable !== value.loopable) && utils.raise("loopable is different");
+        }
         this.#parentBinding = value;
-        this.#component = value?.component ?? this.#component;
-        this.#loopContext = (value?.loopable === true) ? createLoopContext(this) : undefined;
     }
     get loopContext() {
         return this.#loopContext;
@@ -3895,18 +3916,13 @@ class ContentBindings {
         }
         return allChildBindings;
     }
-    constructor(template, parentBinding, component) {
-        if (typeof component === "undefined" && typeof parentBinding === "undefined") {
-            utils.raise("component and parentBinding are undefined");
-        }
-        if (typeof component !== "undefined" && typeof parentBinding !== "undefined") {
-            utils.raise("component and parentBinding are both defined");
-        }
-        this.#component = parentBinding?.component ?? component;
-        this.parentBinding = parentBinding;
+    constructor(component, template, loopable = false) {
+        this.#component = component;
         this.template = template;
-    }
-    initialize() {
+        this.#loopable = loopable;
+        if (loopable) {
+            this.#loopContext = createLoopContext(this);
+        }
         const binder = createBinder(this.template, this.component?.useKeyed ?? utils.raise("useKeyed is undefined"));
         this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
         this.#childBindings = binder.createBindings(this.#fragment, this);
@@ -3929,14 +3945,13 @@ class ContentBindings {
         // 構造を保持しておくことで、再利用時に再構築する必要がなくなる
         // 構造は変化しない、変化するのは、bindingのchildrenContentBindings
         this.childBindings.forEach(binding => binding.dispose());
+        this.loopContext?.dispose();
         this.#parentBinding = undefined;
-        this.#loopContext = undefined;
-        this.#component = undefined;
         this.removeChildNodes();
         const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
         _cache$2[uuid]?.push(this) ?? (_cache$2[uuid] = [this]);
     }
-    rebuild(indexes) {
+    rebuild() {
         const selectValues = [];
         for (let i = 0; i < this.childBindings.length; i++) {
             const binding = this.childBindings[i];
@@ -3953,16 +3968,19 @@ class ContentBindings {
     }
 }
 const _cache$2 = {};
-function createContentBindings(template, parentBinding, component) {
+function createContentBindings(template, parentBinding) {
     const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+    const component = parentBinding.component ?? utils.raise("component is undefined");
     let contentBindings = _cache$2[uuid]?.pop();
-    if (typeof contentBindings !== "undefined") {
-        contentBindings.parentBinding = parentBinding;
+    if (typeof contentBindings === "undefined") {
+        contentBindings = new ContentBindings(component, template, parentBinding.loopable);
     }
-    else {
-        contentBindings = new ContentBindings(template, parentBinding, component);
-        contentBindings.initialize();
-    }
+    contentBindings.parentBinding = parentBinding;
+    contentBindings.registerBindingsToSummary();
+    return contentBindings;
+}
+function createRootContentBindings(component, template) {
+    const contentBindings = new ContentBindings(component, template);
     contentBindings.registerBindingsToSummary();
     return contentBindings;
 }
@@ -4758,7 +4776,7 @@ function CustomComponent(Base) {
             });
             // build binding tree and dom 
             this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-            this.rootBindingManager = createContentBindings(this.template, undefined, this);
+            this.rootBindingManager = createRootContentBindings(this, this.template);
             this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
                 this.rootBindingManager.rebuild([]);
             });
