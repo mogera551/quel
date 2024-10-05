@@ -2,7 +2,7 @@ import { IBinding, IBindingTreeNode, IContentBindingsTreeNode } from "../binding
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
-import { ILoopContext } from "./types";
+import { ILoopContext, INamedLoopContexts } from "./types";
 
 class LoopContext implements ILoopContext{
   #revision?: number;
@@ -14,6 +14,9 @@ class LoopContext implements ILoopContext{
   #statePropertyName?: string;
   #patternInfo?: IPatternInfo;
   #patternName?: string;
+  #namedLoopContexts?: INamedLoopContexts;
+  #loopTreeNodeByName = new Map<string, IBinding>();
+  #loopTreeLoopableNodeByName = new Map<string, IBinding>();
   constructor(
     contentBindings: IContentBindingsTreeNode
   ) {
@@ -97,6 +100,22 @@ class LoopContext implements ILoopContext{
     return this.#indexes;
   }
 
+  get namedLoopContexts(): INamedLoopContexts {
+    if (typeof this.#namedLoopContexts === "undefined") {
+      this.#namedLoopContexts = 
+        Object.assign(this.parentLoopContext?.namedLoopContexts ?? {}, {[this.patternName]: this});
+    }
+    return this.#namedLoopContexts;
+  }
+
+  get loopTreeNodeByName(): Map<string, IBinding> {
+    return this.#loopTreeNodeByName;
+  }
+
+  get loopTreeLoopableNodeByName(): Map<string, IBinding> {
+    return this.#loopTreeLoopableNodeByName;
+  }
+  
   checkRevision(): boolean {
     const revision = (this.contentBindings.parentBinding as IBinding)?.nodeProperty.revisionForLoop;
     if (typeof this.#revision === "undefined" || this.#revision !== revision) {
@@ -121,6 +140,7 @@ class LoopContext implements ILoopContext{
   }
 
   dispose(): void {
+    this.#namedLoopContexts = undefined;
     this.#parentBinding = undefined;
     this.#statePropertyName = undefined;
     this.#patternInfo = undefined;

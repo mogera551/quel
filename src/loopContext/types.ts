@@ -1,4 +1,8 @@
-import { IBindingTreeNode, IContentBindingsTreeNode } from "../binding/types";
+import { IBinding, IBindingTreeNode, IContentBindingsTreeNode } from "../binding/types";
+
+export type INamedLoopContexts = {
+  [key: string]: ILoopContext;
+}
 
 export interface ILoopContext {
   readonly parentLoopContext?: ILoopContext;
@@ -7,6 +11,11 @@ export interface ILoopContext {
   readonly patternName:string;
   readonly parentBinding:IBindingTreeNode;
   readonly contentBindings: IContentBindingsTreeNode;
+  readonly namedLoopContexts: INamedLoopContexts;
+
+  readonly loopTreeNodeByName: Map<string, IBinding>;
+  readonly loopTreeLoopableNodeByName: Map<string, IBinding>;
+  
   find(patternName:string):ILoopContext | undefined;
   dispose():void;
 }

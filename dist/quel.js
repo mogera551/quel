@@ -3762,6 +3762,9 @@ class LoopContext {
     #statePropertyName;
     #patternInfo;
     #patternName;
+    #namedLoopContexts;
+    #loopTreeNodeByName = new Map();
+    #loopTreeLoopableNodeByName = new Map();
     constructor(contentBindings) {
         this.#contentBindings = contentBindings;
     }
@@ -3835,6 +3838,19 @@ class LoopContext {
         }
         return this.#indexes;
     }
+    get namedLoopContexts() {
+        if (typeof this.#namedLoopContexts === "undefined") {
+            this.#namedLoopContexts =
+                Object.assign(this.parentLoopContext?.namedLoopContexts ?? {}, { [this.patternName]: this });
+        }
+        return this.#namedLoopContexts;
+    }
+    get loopTreeNodeByName() {
+        return this.#loopTreeNodeByName;
+    }
+    get loopTreeLoopableNodeByName() {
+        return this.#loopTreeLoopableNodeByName;
+    }
     checkRevision() {
         const revision = this.contentBindings.parentBinding?.nodeProperty.revisionForLoop;
         if (typeof this.#revision === "undefined" || this.#revision !== revision) {
@@ -3857,6 +3873,7 @@ class LoopContext {
         return curContentBindings?.loopContext;
     }
     dispose() {
+        this.#namedLoopContexts = undefined;
         this.#parentBinding = undefined;
         this.#statePropertyName = undefined;
         this.#patternInfo = undefined;
@@ -3878,6 +3895,7 @@ class ContentBindings {
     #fragment;
     #loopable = false;
     #useKeyed;
+    #patternName;
     get component() {
         return this.#component;
     }
@@ -3953,14 +3971,18 @@ class ContentBindings {
     get useKeyed() {
         return this.#useKeyed;
     }
-    constructor(uuid, useKeyed = false, loopable = false) {
+    get patternName() {
+        return this.#patternName;
+    }
+    constructor(uuid, useKeyed = false, loopable = false, patternName = "") {
         this.#uuid = uuid;
         this.#useKeyed = useKeyed;
         this.#loopable = loopable;
+        this.#patternName = patternName;
         if (loopable) {
             this.#loopContext = createLoopContext(this);
         }
-        const binder = createBinder(this.template, this.useKeyed ?? utils.raise("useKeyed is undefined"));
+        const binder = createBinder(this.template, this.useKeyed);
         this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
         this.#childBindings = binder.createBindings(this.#fragment, this);
         this.#childNodes = Array.from(this.#fragment.childNodes);
@@ -4007,10 +4029,12 @@ class ContentBindings {
 const _cache$2 = {};
 function createContentBindings(uuid, parentBinding) {
     const component = parentBinding.component ?? utils.raise("component is undefined");
-    const key = `${uuid}\t${component.useKeyed}\t${parentBinding.loopable}`;
+    const loopable = parentBinding.loopable;
+    const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
+    const key = `${uuid}\t${component.useKeyed}\t${loopable}\t${patterName}`;
     let contentBindings = _cache$2[key]?.pop();
     if (typeof contentBindings === "undefined") {
-        contentBindings = new ContentBindings(uuid, component.useKeyed, parentBinding.loopable);
+        contentBindings = new ContentBindings(uuid, component.useKeyed, loopable, patterName);
     }
     contentBindings.component = component;
     contentBindings.parentBinding = parentBinding;

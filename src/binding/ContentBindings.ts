@@ -17,6 +17,7 @@ class ContentBindings implements IContentBindings {
   #fragment?: DocumentFragment;
   #loopable = false;
   #useKeyed: boolean;
+  #patternName: string;
 
   get component(): IComponentPartial | undefined {
     return this.#component;
@@ -104,18 +105,24 @@ class ContentBindings implements IContentBindings {
     return this.#useKeyed;
   }
 
+  get patternName(): string {
+    return this.#patternName;
+  }
+
   constructor(
     uuid: string,
     useKeyed: boolean = false,
     loopable: boolean = false,
+    patternName: string = "", // loopable === trueの場合のみ有効
   ) {
     this.#uuid = uuid;
     this.#useKeyed = useKeyed;
     this.#loopable = loopable;
+    this.#patternName = patternName;
     if (loopable) {
       this.#loopContext = createLoopContext(this);
     }
-    const binder = createBinder(this.template, this.useKeyed ?? utils.raise("useKeyed is undefined"));
+    const binder = createBinder(this.template, this.useKeyed);
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#childBindings = binder.createBindings(this.#fragment, this);
     this.#childNodes = Array.from(this.#fragment.childNodes);
@@ -170,10 +177,12 @@ export function createContentBindings(
   parentBinding: IBinding, 
 ): IContentBindings {
   const component = parentBinding.component ?? utils.raise("component is undefined");
-  const key = `${uuid}\t${component.useKeyed}\t${parentBinding.loopable}`;
+  const loopable = parentBinding.loopable;
+  const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
+  const key = `${uuid}\t${component.useKeyed}\t${loopable}\t${patterName}`;
   let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(uuid, component.useKeyed, parentBinding.loopable);
+    contentBindings = new ContentBindings(uuid, component.useKeyed, loopable, patterName);
   }
   contentBindings.component = component;
   contentBindings.parentBinding = parentBinding;
