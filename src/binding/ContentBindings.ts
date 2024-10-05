@@ -18,6 +18,7 @@ class ContentBindings implements IContentBindings {
   #loopable = false;
   #useKeyed: boolean;
   #patternName: string;
+  #localTreeNodes: Set<IBinding> = new Set();
 
   get component(): IComponentPartial | undefined {
     return this.#component;
@@ -109,6 +110,10 @@ class ContentBindings implements IContentBindings {
     return this.#patternName;
   }
 
+  get localTreeNodes(): Set<IBinding> {
+    return this.#localTreeNodes;
+  }
+
   constructor(
     uuid: string,
     useKeyed: boolean = false,
@@ -119,13 +124,20 @@ class ContentBindings implements IContentBindings {
     this.#useKeyed = useKeyed;
     this.#loopable = loopable;
     this.#patternName = patternName;
-    if (loopable) {
-      this.#loopContext = createLoopContext(this);
-    }
     const binder = createBinder(this.template, this.useKeyed);
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#childBindings = binder.createBindings(this.#fragment, this);
     this.#childNodes = Array.from(this.#fragment.childNodes);
+    if (loopable) {
+      this.#loopContext = createLoopContext(this);
+      for(let i = 0; i < this.childBindings.length; i++) {
+        const binding = this.childBindings[i];
+        if (binding.stateProperty.lastWildCard !== this.patternName) continue;
+        this.#localTreeNodes.add(binding);
+        this.#loopContext?.loopTreeNodesByName[binding.statePropertyName]?.add(binding) ??
+          (this.#loopContext.loopTreeNodesByName[binding.statePropertyName] = new Set([binding]));
+      }
+    }
   }
 
   removeChildNodes():void {
@@ -150,7 +162,7 @@ class ContentBindings implements IContentBindings {
     this.loopContext?.dispose();
     this.#parentBinding = undefined;
     this.removeChildNodes();
-    const key = `${this.#uuid}\t${this.#useKeyed}\t${this.#loopable}`;
+    const key = `${this.#uuid}\t${this.#useKeyed}\t${this.#loopable}\t${this.#patternName}`;
     _cache[key]?.push(this) ?? (_cache[key] = [this]);
   }
 
@@ -195,11 +207,12 @@ export function createRootContentBindings(
   component: IComponentPartial,
   uuid: string,
 ): IContentBindings {
+  const useKeyed = component.useKeyed;
   const loopable = false;
-  const key = `${uuid}\t${component.useKeyed}\t${loopable}`;
+  const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
   let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(uuid, component.useKeyed, loopable);
+    contentBindings = new ContentBindings(uuid, useKeyed, loopable);
   }
   contentBindings.component = component;
   contentBindings.registerBindingsToSummary();

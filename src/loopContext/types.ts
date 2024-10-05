@@ -13,8 +13,8 @@ export interface ILoopContext {
   readonly contentBindings: IContentBindingsTreeNode;
   readonly namedLoopContexts: INamedLoopContexts;
 
-  readonly loopTreeNodeByName: Map<string, IBinding>;
-  readonly loopTreeLoopableNodeByName: Map<string, IBinding>;
+  readonly loopTreeNodesByName: {[key: string]: Set<IBinding>};
+  readonly loopTreeLoopableNodesByName: {[key: string]: Set<IBinding>};
   
   find(patternName:string):ILoopContext | undefined;
   dispose():void;

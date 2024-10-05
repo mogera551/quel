@@ -11,7 +11,6 @@ import { IStates } from "../state/types";
 import { IContentBindings, IBindingSummary, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createRootContentBindings } from "../binding/ContentBindings";
-import { createBindingSummary } from "../binding/BindingSummary";
 import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
 import { getAdoptedCssNamesFromStyleValue } from "./getAdoptedCssNamesFromStyleValue";
@@ -41,7 +40,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     constructor(...args:any[]) {
       super();
       this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
-      this.#bindingSummary = createBindingSummary();
       this.#newBindingSummary = createNewBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);
@@ -125,11 +123,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         node = node.parentNode;
       }
       return document;
-    }
-
-    #bindingSummary: IBindingSummary;
-    get bindingSummary(): IBindingSummary {
-      return this.#bindingSummary;
     }
 
     #newBindingSummary: INewBindingSummary;

@@ -3763,8 +3763,8 @@ class LoopContext {
     #patternInfo;
     #patternName;
     #namedLoopContexts;
-    #loopTreeNodeByName = new Map();
-    #loopTreeLoopableNodeByName = new Map();
+    #loopTreeNodesByName = {};
+    #loopTreeLoopableNodesByName = {};
     constructor(contentBindings) {
         this.#contentBindings = contentBindings;
     }
@@ -3845,11 +3845,11 @@ class LoopContext {
         }
         return this.#namedLoopContexts;
     }
-    get loopTreeNodeByName() {
-        return this.#loopTreeNodeByName;
+    get loopTreeNodesByName() {
+        return this.#loopTreeNodesByName;
     }
-    get loopTreeLoopableNodeByName() {
-        return this.#loopTreeLoopableNodeByName;
+    get loopTreeLoopableNodesByName() {
+        return this.#loopTreeLoopableNodesByName;
     }
     checkRevision() {
         const revision = this.contentBindings.parentBinding?.nodeProperty.revisionForLoop;
@@ -3896,6 +3896,7 @@ class ContentBindings {
     #loopable = false;
     #useKeyed;
     #patternName;
+    #localTreeNodes = new Set();
     get component() {
         return this.#component;
     }
@@ -3974,18 +3975,29 @@ class ContentBindings {
     get patternName() {
         return this.#patternName;
     }
+    get localTreeNodes() {
+        return this.#localTreeNodes;
+    }
     constructor(uuid, useKeyed = false, loopable = false, patternName = "") {
         this.#uuid = uuid;
         this.#useKeyed = useKeyed;
         this.#loopable = loopable;
         this.#patternName = patternName;
-        if (loopable) {
-            this.#loopContext = createLoopContext(this);
-        }
         const binder = createBinder(this.template, this.useKeyed);
         this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
         this.#childBindings = binder.createBindings(this.#fragment, this);
         this.#childNodes = Array.from(this.#fragment.childNodes);
+        if (loopable) {
+            this.#loopContext = createLoopContext(this);
+            for (let i = 0; i < this.childBindings.length; i++) {
+                const binding = this.childBindings[i];
+                if (binding.stateProperty.lastWildCard !== this.patternName)
+                    continue;
+                this.#localTreeNodes.add(binding);
+                this.#loopContext?.loopTreeNodesByName[binding.statePropertyName]?.add(binding) ??
+                    (this.#loopContext.loopTreeNodesByName[binding.statePropertyName] = new Set([binding]));
+            }
+        }
     }
     removeChildNodes() {
         this.fragment.append.apply(this.fragment, this.childNodes);
@@ -4007,7 +4019,7 @@ class ContentBindings {
         this.loopContext?.dispose();
         this.#parentBinding = undefined;
         this.removeChildNodes();
-        const key = `${this.#uuid}\t${this.#useKeyed}\t${this.#loopable}`;
+        const key = `${this.#uuid}\t${this.#useKeyed}\t${this.#loopable}\t${this.#patternName}`;
         _cache$2[key]?.push(this) ?? (_cache$2[key] = [this]);
     }
     rebuild() {
@@ -4043,132 +4055,16 @@ function createContentBindings(uuid, parentBinding) {
     return contentBindings;
 }
 function createRootContentBindings(component, uuid) {
+    const useKeyed = component.useKeyed;
     const loopable = false;
-    const key = `${uuid}\t${component.useKeyed}\t${loopable}`;
+    const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
     let contentBindings = _cache$2[key]?.pop();
     if (typeof contentBindings === "undefined") {
-        contentBindings = new ContentBindings(uuid, component.useKeyed, loopable);
+        contentBindings = new ContentBindings(uuid, useKeyed, loopable);
     }
     contentBindings.component = component;
     contentBindings.registerBindingsToSummary();
     return contentBindings;
-}
-
-/**
- * BindingSummary
- */
-class BindingSummary {
-    #updated = false;
-    get updated() {
-        return this.#updated;
-    }
-    set updated(value) {
-        this.#updated = value;
-    }
-    #updating = false;
-    #updateRevision = 0;
-    get updateRevision() {
-        return this.#updateRevision;
-    }
-    // viewModelキー（プロパティ名＋インデックス）からbindingのリストを返す 
-    #bindingsByKey = new Map; // Object<string,Binding[]>：16ms、Map<string,Binding[]>：9.2ms
-    get bindingsByKey() {
-        if (this.#updating)
-            utils.raise("BindingSummary.bindingsByKey can only be called after BindingSummary.update()");
-        return this.#bindingsByKey;
-    }
-    #keyByBinding = new Map;
-    // if/loopを持つbinding
-    #expandableBindings = new Set;
-    get expandableBindings() {
-        if (this.#updating)
-            utils.raise("BindingSummary.expandableBindings can only be called after BindingSummary.update()");
-        return this.#expandableBindings;
-    }
-    // componentを持つbinding
-    #componentBindings = new Set;
-    get componentBindings() {
-        if (this.#updating)
-            utils.raise("BindingSummary.componentBindings can only be called after BindingSummary.update()");
-        return this.#componentBindings;
-    }
-    // 全binding
-    #allBindings = new Set;
-    get allBindings() {
-        return this.#allBindings;
-    }
-    add(binding) {
-        if (!this.#updating)
-            utils.raise("BindingSummary.add() can only be called in BindingSummary.update()");
-        this.#updated = true;
-        this.#allBindings.add(binding);
-    }
-    delete(binding) {
-        if (!this.#updating)
-            utils.raise("BindingSummary.delete() can only be called in BindingSummary.update()");
-        this.#updated = true;
-        this.#allBindings.delete(binding);
-    }
-    exists(binding) {
-        return this.#allBindings.has(binding);
-    }
-    #flush() {
-        config.debug && performance.mark('BindingSummary.flush:start');
-        try {
-            this.rebuild(this.#allBindings);
-        }
-        finally {
-            if (config.debug) {
-                performance.mark('BindingSummary.flush:end');
-                performance.measure('BindingSummary.flush', 'BindingSummary.flush:start', 'BindingSummary.flush:end');
-                console.log(performance.getEntriesByType("measure"));
-                performance.clearMeasures('BindingSummary.flush');
-                performance.clearMarks('BindingSummary.flush:start');
-                performance.clearMarks('BindingSummary.flush:end');
-            }
-        }
-    }
-    update(callback) {
-        this.#updating = true;
-        this.#updated = false;
-        this.#updateRevision++;
-        try {
-            callback(this);
-        }
-        finally {
-            if (this.#updated)
-                this.#flush();
-            this.#updating = false;
-        }
-    }
-    rebuild(bindings) {
-        this.#allBindings = bindings;
-        /*
-            const arrayBindings = Array.from(bindings);
-            this.#keyByBinding = new Map(arrayBindings.map(binding => [binding, pickKey(binding)]));
-            this.#bindingsByKey = Map.groupBy(arrayBindings, binding => this.#keyByBinding.get(binding)) as Map<string,IBinding[]>;
-        //    this.#bindingsByKey = Map.groupBy(arrayBindings, pickKey) as Map<string,IBinding[]>;
-            this.#expandableBindings = new Set(arrayBindings.filter(filterExpandableBindings));
-            this.#componentBindings = new Set(arrayBindings.filter(filerComponentBindings));
-        */
-    }
-    partialUpdate(bindings) {
-        /*
-        for(let i = 0; i < bindings.length; i++) {
-          const binding = bindings[i];
-          const key = this.#keyByBinding.get(binding) ?? utils.raise("BindingSummary.partialUpdate: key is undefined");
-          const bindingsByKey = this.#bindingsByKey.get(key) ?? utils.raise("BindingSummary.partialUpdate: bindings is undefined");
-          const index = bindingsByKey.indexOf(binding);
-          bindingsByKey.splice(index, 1);
-          const newKey = pickKey(binding);
-          this.#keyByBinding.set(binding, newKey);
-          this.#bindingsByKey.get(newKey)?.push(binding) ?? this.#bindingsByKey.set(newKey, [binding]);
-        }
-        */
-    }
-}
-function createBindingSummary() {
-    return new BindingSummary;
 }
 
 const CREATE_BUFFER_METHOD = "$createBuffer";
@@ -4522,142 +4418,70 @@ function getAdoptedCssNamesFromStyleValue(component) {
 class NewBindingSummary {
     allBindings = new Set();
     /**
-     * ループコンテキストに紐づくバインディングを登録する
-     */
-    loopBindings = new Map();
-    /**
-     * ループコンテキストに紐づくループ可能なバインディングを登録する
-     */
-    loopLinks = new Map();
-    /**
      * ループコンテキストに紐づかないバインディングを登録する
      */
-    noloopBindings = new Map();
-    registerLoopBinding(binding, loopContext) {
-        const pattern = binding.statePropertyName;
-        let store = this.loopBindings.get(loopContext);
-        if (!store) {
-            store = new Map();
-            this.loopBindings.set(loopContext, store);
-        }
-        let bindings = store.get(pattern);
-        if (!bindings) {
-            bindings = new Set();
-            store.set(pattern, bindings);
-        }
-        bindings.add(binding);
-    }
-    deleteLoopBinding(binding, loopContext) {
-        const pattern = binding.statePropertyName;
-        const store = this.loopBindings.get(loopContext);
-        if (store) {
-            const bindings = store.get(pattern);
-            if (bindings) {
-                bindings.delete(binding);
-            }
-        }
-    }
-    registerLoopLink(binding) {
-        const loopContext = binding.parentContentBindings?.currentLoopContext;
-        let store = this.loopLinks.get(loopContext);
-        if (typeof store === "undefined") {
-            this.loopLinks.set(loopContext, store = new Map());
-        }
-        const pattern = binding.statePropertyName;
-        let bindings = store.get(pattern);
-        if (typeof bindings === "undefined") {
-            store.set(pattern, bindings = new Set());
-        }
-        bindings.add(binding);
-    }
-    deleteLoopLink(binding) {
-        const loopContext = binding.parentContentBindings?.currentLoopContext;
-        const pattern = binding.statePropertyName;
-        const store = this.loopLinks.get(loopContext);
-        if (store) {
-            const bindings = store.get(pattern);
-            if (bindings) {
-                bindings.delete(binding);
-            }
-        }
-    }
-    regsiterNoloopBinding(binding) {
-        const pattern = binding.statePropertyName;
-        let bindings = this.noloopBindings.get(pattern);
-        if (typeof bindings === "undefined") {
-            this.noloopBindings.set(pattern, bindings = new Set());
-        }
-        bindings.add(binding);
-    }
-    deleteNoloopBinding(binding) {
-        const pattern = binding.statePropertyName;
-        const bindings = this.noloopBindings.get(pattern);
-        if (bindings) {
-            bindings.delete(binding);
-        }
-    }
+    noloopBindings = {};
+    rootLoopableBindings = {};
     register(binding) {
+        const loopContext = binding.parentContentBindings?.currentLoopContext;
         this.allBindings.add(binding);
         if (binding.loopable) {
-            this.registerLoopLink(binding);
+            if (typeof loopContext === "undefined") {
+                this.rootLoopableBindings[binding.statePropertyName]?.add(binding) ??
+                    (this.rootLoopableBindings[binding.statePropertyName] = new Set([binding]));
+            }
+            else {
+                loopContext.loopTreeLoopableNodesByName[binding.statePropertyName]?.add(binding) ??
+                    (loopContext.loopTreeLoopableNodesByName[binding.statePropertyName] = new Set([binding]));
+            }
         }
-        const loopContext = binding.parentContentBindings?.currentLoopContext;
-        if (typeof loopContext === "undefined") {
-            this.regsiterNoloopBinding(binding);
+        if (binding.stateProperty.propInfo.wildcardCount === 0) {
+            this.noloopBindings[binding.statePropertyName]?.add(binding) ??
+                (this.noloopBindings[binding.statePropertyName] = new Set([binding]));
         }
         else {
-            this.registerLoopBinding(binding, loopContext);
+            if (!binding.parentContentBindings.localTreeNodes.has(binding)) {
+                const parentLoopContext = loopContext?.namedLoopContexts[binding.stateProperty.lastWildCard] ??
+                    utils.raise("loopContext is undefined");
+                parentLoopContext.loopTreeNodesByName[binding.statePropertyName]?.add(binding) ??
+                    (parentLoopContext.loopTreeNodesByName[binding.statePropertyName] = new Set([binding]));
+            }
         }
     }
     delete(binding) {
+        const loopContext = binding.parentContentBindings?.currentLoopContext;
         this.allBindings.delete(binding);
         if (binding.loopable) {
-            this.deleteLoopLink(binding);
-        }
-        const loopContext = binding.parentContentBindings?.currentLoopContext;
-        if (typeof loopContext === "undefined") {
-            this.deleteNoloopBinding(binding);
-        }
-        else {
-            this.deleteLoopBinding(binding, loopContext);
-        }
-    }
-    getLoopBindings(loopContext, pattern) {
-        const store = this.loopBindings.get(loopContext);
-        if (store) {
-            const bindings = store.get(pattern);
-            if (bindings) {
-                return Array.from(bindings);
+            if (typeof loopContext === "undefined") {
+                this.rootLoopableBindings[binding.statePropertyName]?.delete(binding);
+            }
+            else {
+                loopContext.loopTreeLoopableNodesByName[binding.statePropertyName]?.delete(binding);
             }
         }
-        return [];
+        if (binding.stateProperty.propInfo.wildcardCount === 0) {
+            this.noloopBindings[binding.statePropertyName]?.delete(binding);
+        }
+        else {
+            if (!binding.parentContentBindings.localTreeNodes.has(binding)) {
+                const parentLoopContext = loopContext?.namedLoopContexts[binding.stateProperty.lastWildCard] ??
+                    utils.raise("loopContext is undefined");
+                parentLoopContext.loopTreeNodesByName[binding.statePropertyName]?.delete(binding);
+            }
+        }
     }
     exists(binding) {
         return this.allBindings.has(binding);
-    }
-    getLoopLink(loopContext, pattern) {
-        const store = this.loopLinks.get(loopContext);
-        if (store) {
-            const bindings = store.get(pattern);
-            if (bindings) {
-                return Array.from(bindings);
-            }
-        }
-        return [];
-    }
-    getNoloopBindings(pattern) {
-        const bindings = this.noloopBindings.get(pattern);
-        if (bindings) {
-            return Array.from(bindings);
-        }
-        return [];
     }
     _search(loopContext, searchPath, indexes, wildcardPaths, index, resultBindings) {
         if (index < wildcardPaths.length) {
             const wildcardPath = wildcardPaths[index];
             const wildcardPathInfo = getPatternInfo(wildcardPath);
             const wildcardIndex = indexes[index];
-            const loopBindings = this.getLoopLink(loopContext, wildcardPathInfo.patternPaths.at(-2) ?? "");
+            const wildcardParentPath = wildcardPathInfo.patternPaths.at(-2) ?? "";
+            const loopBindings = typeof loopContext === "undefined" ?
+                Array.from(this.rootLoopableBindings[wildcardParentPath]) :
+                Array.from(loopContext.loopTreeLoopableNodesByName[wildcardParentPath]);
             for (let i = 0; i < loopBindings.length; i++) {
                 // リストが削除されている場合があるのでチェック
                 if (typeof loopBindings[i].childrenContentBindings[wildcardIndex] === "undefined")
@@ -4666,15 +4490,17 @@ class NewBindingSummary {
             }
         }
         else {
-            (typeof loopContext !== "undefined") ? resultBindings.push(...this.getLoopBindings(loopContext, searchPath)) : [];
+            (typeof loopContext !== "undefined") ?
+                resultBindings.push(...Array.from(loopContext.loopTreeNodesByName[searchPath] ?? [])) : [];
         }
     }
     gatherBindings(pattern, indexes) {
-        let bindings = [];
+        let bindings;
         if (indexes.length === 0) {
-            bindings = this.getNoloopBindings(pattern);
+            bindings = Array.from(this.noloopBindings[pattern] ?? []);
         }
         else {
+            bindings = [];
             const patternInfo = getPatternInfo(pattern);
             this._search(undefined, pattern, indexes, patternInfo.wildcardPaths, 0, bindings);
         }
@@ -4710,7 +4536,6 @@ function CustomComponent(Base) {
         constructor(...args) {
             super();
             this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
-            this.#bindingSummary = createBindingSummary();
             this.#newBindingSummary = createNewBindingSummary();
             this.#initialPromises = Promise.withResolvers(); // promises for initialize
             this.#updator = createUpdator(this);
@@ -4784,10 +4609,6 @@ function CustomComponent(Base) {
                 node = node.parentNode;
             }
             return document;
-        }
-        #bindingSummary;
-        get bindingSummary() {
-            return this.#bindingSummary;
         }
         #newBindingSummary;
         get newBindingSummary() {

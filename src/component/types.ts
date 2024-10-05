@@ -109,7 +109,6 @@ export interface ICustomComponent {
   pseudoParentNode?: Node;
   pseudoNode?: Node;
   readonly shadowRootOrDocument: ShadowRoot|Document;
-  readonly bindingSummary: IBindingSummary;
   readonly newBindingSummary: INewBindingSummary;
   readonly updator: IUpdator;
   readonly props: IProps;

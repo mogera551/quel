@@ -1,152 +1,68 @@
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { ILoopContext } from "../loopContext/types";
+import { utils } from "../utils";
 import { IBinding, INewBindingSummary } from "./types";
 
 class NewBindingSummary implements INewBindingSummary {
   allBindings = new Set<IBinding>();
 
   /**
-   * ループコンテキストに紐づくバインディングを登録する
-   */
-  loopBindings = new Map<ILoopContext,Map<string,Set<IBinding>>>();
-
-  /**
-   * ループコンテキストに紐づくループ可能なバインディングを登録する
-   */
-  loopLinks = new Map<ILoopContext|undefined,Map<string,Set<IBinding>>>();
-
-  /**
    * ループコンテキストに紐づかないバインディングを登録する
    */
-  noloopBindings = new Map<string,Set<IBinding>>();
+  noloopBindings: {[key: string]: Set<IBinding>} = {};
 
-  registerLoopBinding(binding: IBinding, loopContext: ILoopContext) {
-    const pattern = binding.statePropertyName;
-    let store = this.loopBindings.get(loopContext);
-    if (!store) {
-      store = new Map();
-      this.loopBindings.set(loopContext, store);
-    }
-    let bindings = store.get(pattern);
-    if (!bindings) {
-      bindings = new Set();
-      store.set(pattern, bindings);
-    }
-    bindings.add(binding);
-  }
-  
-  deleteLoopBinding(binding: IBinding, loopContext: ILoopContext) {
-    const pattern = binding.statePropertyName;
-    const store = this.loopBindings.get(loopContext);
-    if (store) {
-      const bindings = store.get(pattern);
-      if (bindings) {
-        bindings.delete(binding);
-      }
-    }
-  }
-
-  registerLoopLink(binding: IBinding) {
-    const loopContext = binding.parentContentBindings?.currentLoopContext;
-    let store = this.loopLinks.get(loopContext);
-    if (typeof store === "undefined") {
-      this.loopLinks.set(loopContext, store = new Map());
-    }
-    const pattern = binding.statePropertyName;
-    let bindings = store.get(pattern);
-    if (typeof bindings === "undefined") {
-      store.set(pattern, bindings = new Set());
-    }
-    bindings.add(binding);
-  }
-
-  deleteLoopLink(binding: IBinding) {
-    const loopContext = binding.parentContentBindings?.currentLoopContext;
-    const pattern = binding.statePropertyName;
-    const store = this.loopLinks.get(loopContext);
-    if (store) {
-      const bindings = store.get(pattern);
-      if (bindings) {
-        bindings.delete(binding);
-      }
-    }
-  }
-
-  regsiterNoloopBinding(binding: IBinding) {
-    const pattern = binding.statePropertyName;
-    let bindings = this.noloopBindings.get(pattern);
-    if (typeof bindings === "undefined") {
-      this.noloopBindings.set(pattern, bindings = new Set());
-    }
-    bindings.add(binding);
-  }
-
-  deleteNoloopBinding(binding: IBinding) {
-    const pattern = binding.statePropertyName;
-    const bindings = this.noloopBindings.get(pattern);
-    if (bindings) {
-      bindings.delete(binding);
-    }
-  }
+  rootLoopableBindings: {[key: string]: Set<IBinding>} = {};
 
   register(binding: IBinding) {
+    const loopContext = binding.parentContentBindings?.currentLoopContext;
+
     this.allBindings.add(binding);
     if (binding.loopable) {
-      this.registerLoopLink(binding);
+      if (typeof loopContext === "undefined") {
+        this.rootLoopableBindings[binding.statePropertyName]?.add(binding) ??
+        (this.rootLoopableBindings[binding.statePropertyName] = new Set([binding]));
+      } else {
+        loopContext.loopTreeLoopableNodesByName[binding.statePropertyName]?.add(binding) ??
+          (loopContext.loopTreeLoopableNodesByName[binding.statePropertyName] = new Set([binding]));
+      }
     }
-    const loopContext = binding.parentContentBindings?.currentLoopContext;
-    if (typeof loopContext === "undefined") {
-      this.regsiterNoloopBinding(binding);
+    if (binding.stateProperty.propInfo.wildcardCount === 0) {
+      this.noloopBindings[binding.statePropertyName]?.add(binding) ??
+        (this.noloopBindings[binding.statePropertyName] = new Set([binding]));
     } else {
-      this.registerLoopBinding(binding, loopContext);
-    }
-  }
-  
-  delete(binding: IBinding) {
-    this.allBindings.delete(binding);
-    if (binding.loopable) {
-      this.deleteLoopLink(binding);
-    }
-    const loopContext = binding.parentContentBindings?.currentLoopContext;
-    if (typeof loopContext === "undefined") {
-      this.deleteNoloopBinding(binding);
-    } else {
-      this.deleteLoopBinding(binding, loopContext);
+      if (!binding.parentContentBindings.localTreeNodes.has(binding)) {
+        const parentLoopContext = loopContext?.namedLoopContexts[binding.stateProperty.lastWildCard] ?? 
+          utils.raise("loopContext is undefined");
+        parentLoopContext.loopTreeNodesByName[binding.statePropertyName]?.add(binding) ??
+          (parentLoopContext.loopTreeNodesByName[binding.statePropertyName] = new Set([binding]));
+      }
     }
   }
 
-  getLoopBindings(loopContext: ILoopContext, pattern: string): IBinding[] {
-    const store = this.loopBindings.get(loopContext);
-    if (store) {
-      const bindings = store.get(pattern);
-      if (bindings) {
-        return Array.from(bindings);
+  delete(binding: IBinding) {
+    const loopContext = binding.parentContentBindings?.currentLoopContext;
+
+    this.allBindings.delete(binding);
+    if (binding.loopable) {
+      if (typeof loopContext === "undefined") {
+        this.rootLoopableBindings[binding.statePropertyName]?.delete(binding);
+      } else {
+        loopContext.loopTreeLoopableNodesByName[binding.statePropertyName]?.delete(binding);
       }
     }
-    return [];
+    if (binding.stateProperty.propInfo.wildcardCount === 0) {
+      this.noloopBindings[binding.statePropertyName]?.delete(binding);
+    } else {
+      if (!binding.parentContentBindings.localTreeNodes.has(binding)) {
+        const parentLoopContext = loopContext?.namedLoopContexts[binding.stateProperty.lastWildCard] ?? 
+          utils.raise("loopContext is undefined");
+        parentLoopContext.loopTreeNodesByName[binding.statePropertyName]?.delete(binding);
+      }
+    }
   }
 
   exists(binding: IBinding): boolean {
     return this.allBindings.has(binding);
-  }
-
-  getLoopLink(loopContext: ILoopContext|undefined, pattern:string): IBinding[] {
-    const store = this.loopLinks.get(loopContext);
-    if (store) {
-      const bindings = store.get(pattern);
-      if (bindings) {
-        return Array.from(bindings);
-      }
-    }
-    return [];
-  }
-
-  getNoloopBindings(pattern: string): IBinding[] {
-    const bindings = this.noloopBindings.get(pattern);
-    if (bindings) {
-      return Array.from(bindings);
-    }
-    return [];
   }
 
   _search(
@@ -161,7 +77,10 @@ class NewBindingSummary implements INewBindingSummary {
       const wildcardPath = wildcardPaths[index];
       const wildcardPathInfo = getPatternInfo(wildcardPath);
       const wildcardIndex = indexes[index];
-      const loopBindings = this.getLoopLink(loopContext, wildcardPathInfo.patternPaths.at(-2) ?? "");
+      const wildcardParentPath = wildcardPathInfo.patternPaths.at(-2) ?? "";
+      const loopBindings = typeof loopContext === "undefined" ? 
+        Array.from(this.rootLoopableBindings[wildcardParentPath]) :
+        Array.from(loopContext.loopTreeLoopableNodesByName[wildcardParentPath]);
       for(let i = 0; i < loopBindings.length; i++) {
         // リストが削除されている場合があるのでチェック
         if (typeof loopBindings[i].childrenContentBindings[wildcardIndex] === "undefined") continue;
@@ -175,7 +94,8 @@ class NewBindingSummary implements INewBindingSummary {
         );
       }
     } else {
-      (typeof loopContext !== "undefined") ? resultBindings.push(...this.getLoopBindings(loopContext, searchPath)) : [];
+      (typeof loopContext !== "undefined") ? 
+        resultBindings.push(...Array.from(loopContext.loopTreeNodesByName[searchPath] ?? [])) : [];
     }
   }
 
@@ -183,10 +103,11 @@ class NewBindingSummary implements INewBindingSummary {
     pattern: string, 
     indexes: number[]
   ): IBinding[] {
-    let bindings: IBinding[] = [];
+    let bindings: IBinding[];
     if (indexes.length === 0) {
-      bindings = this.getNoloopBindings(pattern);
+      bindings = Array.from(this.noloopBindings[pattern] ?? []);
     } else {
+      bindings = [];
       const patternInfo = getPatternInfo(pattern);
       this._search(undefined, pattern, indexes, patternInfo.wildcardPaths, 0, bindings);
     }

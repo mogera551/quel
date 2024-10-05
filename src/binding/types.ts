@@ -51,6 +51,7 @@ export interface IStateProperty {
   readonly key: string;
   readonly propInfo: IPropInfo;
   readonly level: number;
+  readonly lastWildCard: string;
   getChildValue(index:number):any;
   setChildValue(index:number, value:any):void;
   initialize(): void;
@@ -116,6 +117,8 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   readonly allChildBindings: IBinding[];
   readonly loopable: boolean;
   readonly useKeyed: boolean;
+  readonly patternName: string;
+  readonly localTreeNodes: Set<IBinding>;
 
 //  initialize():void;
   removeChildNodes():void;
@@ -149,9 +152,6 @@ export interface IBindingSummary {
 export interface INewBindingSummary {
   register(binding: IBinding): void;
   delete(binding: IBinding): void;
-  getLoopBindings(loopContext: ILoopContext, pattern: string): IBinding[];
-  getLoopLink(loopContext: ILoopContext|undefined, pattern:string): IBinding[];
-  getNoloopBindings(pattern: string): IBinding[];
   gatherBindings(pattern: string, indexes: number[]): IBinding[];
   exists(binding: IBinding): boolean;
 }

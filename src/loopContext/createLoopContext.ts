@@ -15,8 +15,8 @@ class LoopContext implements ILoopContext{
   #patternInfo?: IPatternInfo;
   #patternName?: string;
   #namedLoopContexts?: INamedLoopContexts;
-  #loopTreeNodeByName = new Map<string, IBinding>();
-  #loopTreeLoopableNodeByName = new Map<string, IBinding>();
+  #loopTreeNodesByName: {[key: string]: Set<IBinding>} = {};
+  #loopTreeLoopableNodesByName: {[key: string]: Set<IBinding>} = {};
   constructor(
     contentBindings: IContentBindingsTreeNode
   ) {
@@ -108,12 +108,12 @@ class LoopContext implements ILoopContext{
     return this.#namedLoopContexts;
   }
 
-  get loopTreeNodeByName(): Map<string, IBinding> {
-    return this.#loopTreeNodeByName;
+  get loopTreeNodesByName(): {[key: string]: Set<IBinding>} {
+    return this.#loopTreeNodesByName;
   }
 
-  get loopTreeLoopableNodeByName(): Map<string, IBinding> {
-    return this.#loopTreeLoopableNodeByName;
+  get loopTreeLoopableNodesByName(): {[key: string]: Set<IBinding>} {
+    return this.#loopTreeLoopableNodesByName;
   }
   
   checkRevision(): boolean {
