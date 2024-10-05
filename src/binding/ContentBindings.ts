@@ -177,12 +177,13 @@ export function createContentBindings(
   parentBinding: IBinding, 
 ): IContentBindings {
   const component = parentBinding.component ?? utils.raise("component is undefined");
+  const useKeyed = component.useKeyed;
   const loopable = parentBinding.loopable;
   const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
-  const key = `${uuid}\t${component.useKeyed}\t${loopable}\t${patterName}`;
+  const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
   let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(uuid, component.useKeyed, loopable, patterName);
+    contentBindings = new ContentBindings(uuid, useKeyed, loopable, patterName);
   }
   contentBindings.component = component;
   contentBindings.parentBinding = parentBinding;
