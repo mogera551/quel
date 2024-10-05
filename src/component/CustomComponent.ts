@@ -192,7 +192,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
 
       // build binding tree and dom 
       const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-      this.rootBindingManager = createRootContentBindings(this, this.template);
+      this.rootBindingManager = createRootContentBindings(this, uuid);
       this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
         this.rootBindingManager.rebuild([]);
       });

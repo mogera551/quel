@@ -27,15 +27,19 @@ export class ElementEvent extends ElementBase {
     return this.#handler;
   }
 
-  #eventFilters:EventFilterFunc[];
-  get eventFilters() {
+  #filterTexts: IFilterText[];
+  #eventFilters?:EventFilterFunc[];
+  get eventFilters(): EventFilterFunc[] {
+    if (typeof this.#eventFilters === "undefined") {
+      this.#eventFilters = Filters.create<"event">(this.#filterTexts, this.binding.eventFilterManager);
+    }
     return this.#eventFilters;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
+  constructor(binding:IBinding, node:Node, name:string, filterTexts:IFilterText[]) {
     if (!name.startsWith(PREFIX)) utils.raise(`ElementEvent: invalid property name ${name}`);
-    super(binding, node, name, filters);
-    this.#eventFilters = Filters.create<"event">(filters, binding.eventFilterManager);
+    super(binding, node, name, filterTexts);
+    this.#filterTexts = filterTexts;
   }
 
   /**

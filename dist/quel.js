@@ -2519,8 +2519,12 @@ class NodeProperty {
         this.node[this.name] = value;
         //    Reflect.set(this.node, this.name, value);
     }
+    #filterTexts;
     #filters;
     get filters() {
+        if (typeof this.#filters === "undefined") {
+            this.#filters = Filters.create(this.#filterTexts, this.binding.inputFilterManager);
+        }
         return this.#filters;
     }
     /** @type {any} */
@@ -2548,14 +2552,14 @@ class NodeProperty {
     get loopable() {
         return false;
     }
-    constructor(binding, node, name, filters) {
+    constructor(binding, node, name, filterTexts) {
         if (!(node instanceof Node))
             utils.raise("NodeProperty: not Node");
         this.#binding = binding;
         this.#node = node;
         this.#name = name;
         this.#nameElements = name.split(".");
-        this.#filters = Filters.create(filters, this.binding.inputFilterManager);
+        this.#filterTexts = filterTexts;
     }
     initialize() {
     }
@@ -2627,6 +2631,8 @@ class Repeat extends Loop {
     setValue(value) {
         if (!Array.isArray(value))
             utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
+        const uuid = this.uuid;
+        const binding = this.binding;
         const lastValueLength = this.getValue().length;
         const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
         const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
@@ -2635,7 +2641,7 @@ class Repeat extends Loop {
         if (lastValueLength < value.length) {
             this.binding.childrenContentBindings.forEach(rebuildFunc);
             for (let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
-                const contentBindings = createContentBindings(this.template, this.binding);
+                const contentBindings = createContentBindings(uuid, binding);
                 this.binding.appendChildContentBindings(contentBindings);
                 this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, stateName, newIndex, () => {
                     contentBindings.rebuild();
@@ -2672,9 +2678,11 @@ class Branch extends TemplateProperty {
         if (typeof value !== "boolean")
             utils.raise(`Branch: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`);
         const lastValue = this.getValue();
+        const uuid = this.uuid;
+        const binding = this.binding;
         if (lastValue !== value) {
             if (value) {
-                const contentBindings = createContentBindings(this.template, this.binding);
+                const contentBindings = createContentBindings(uuid, binding);
                 this.binding.appendChildContentBindings(contentBindings);
                 contentBindings.rebuild();
             }
@@ -2820,15 +2828,19 @@ class ElementEvent extends ElementBase {
         }
         return this.#handler;
     }
+    #filterTexts;
     #eventFilters;
     get eventFilters() {
+        if (typeof this.#eventFilters === "undefined") {
+            this.#eventFilters = Filters.create(this.#filterTexts, this.binding.eventFilterManager);
+        }
         return this.#eventFilters;
     }
-    constructor(binding, node, name, filters) {
+    constructor(binding, node, name, filterTexts) {
         if (!name.startsWith(PREFIX$2))
             utils.raise(`ElementEvent: invalid property name ${name}`);
-        super(binding, node, name, filters);
-        this.#eventFilters = Filters.create(filters, binding.eventFilterManager);
+        super(binding, node, name, filterTexts);
+        this.#filterTexts = filterTexts;
     }
     /**
      * 初期化処理
@@ -3035,13 +3047,13 @@ class RepeatKeyed extends Loop {
                 continue;
             children[i].dispose();
         }
+        const uuid = this.uuid;
+        const binding = this.binding;
         if (appendOnly) {
             const nextNode = this.node.nextSibling;
             const parentNode = this.node.parentNode ?? utils.raise("parentNode is null");
-            const binding = this.binding;
-            const template = this.template;
             for (let vi = 0; vi < valuesLength; vi++) {
-                const contentBindings = createContentBindings(template, binding);
+                const contentBindings = createContentBindings(uuid, binding);
                 children[vi] = contentBindings;
                 this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, vi, () => {
                     contentBindings.rebuild();
@@ -3058,7 +3070,7 @@ class RepeatKeyed extends Loop {
                 const beforeNode = beforeContentBindings?.lastChildNode ?? this.node;
                 if (this.#setOfNewIndexes.has(newIndex)) {
                     // 元のインデックスにない場合（新規）
-                    contentBindings = createContentBindings(this.template, this.binding);
+                    contentBindings = createContentBindings(uuid, binding);
                     children[newIndex] = contentBindings;
                     this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
                         contentBindings.rebuild();
@@ -3095,6 +3107,8 @@ class RepeatKeyed extends Loop {
     }
     applyToChildNodes(setOfIndex, indexes) {
         this.revisionUpForLoop();
+        const uuid = this.uuid;
+        const binding = this.binding;
         const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
         const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
         const wildCardName = this.binding.statePropertyName + ".*";
@@ -3122,7 +3136,7 @@ class RepeatKeyed extends Loop {
                 continue;
             let contentBindings = contentBindingsByValue.get(newValue);
             if (typeof contentBindings === "undefined") {
-                contentBindings = createContentBindings(this.template, this.binding);
+                contentBindings = createContentBindings(uuid, binding);
                 this.binding.replaceChildContentBindings(contentBindings, index);
                 this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
                     contentBindings?.rebuild();
@@ -3275,8 +3289,12 @@ class StateProperty {
             setValue(value);
         }
     }
+    #fileterTexts;
     #filters;
     get filters() {
+        if (typeof this.#filters === "undefined") {
+            this.#filters = Filters.create(this.#fileterTexts, this.binding.outputFilterManager);
+        }
         return this.#filters;
     }
     getFilteredValue() {
@@ -3291,13 +3309,13 @@ class StateProperty {
     get binding() {
         return this.#binding;
     }
-    constructor(binding, name, filters) {
+    constructor(binding, name, filterTexts) {
         this.#binding = binding;
         this.#name = name;
         this.#childName = name + ".*";
-        this.#filters = Filters.create(filters, binding.outputFilterManager);
         this.#propInfo = getPropInfo(name);
         this.#level = this.#propInfo.wildcardCount;
+        this.#fileterTexts = filterTexts;
         this.#lastWildCard = this.#propInfo.wildcardPaths[this.#propInfo.wildcardPaths.length - 1];
     }
     /**
@@ -3850,16 +3868,30 @@ function createLoopContext(contentBindings) {
 }
 
 class ContentBindings {
+    #uuid;
     #component;
-    template;
+    #template;
     #childBindings;
     #parentBinding;
     #loopContext;
     #childNodes;
     #fragment;
     #loopable = false;
+    #useKeyed;
     get component() {
         return this.#component;
+    }
+    set component(value) {
+        if (typeof value !== "undefined") {
+            (this.#useKeyed !== value.useKeyed) && utils.raise("useKeyed is different");
+        }
+        this.#component = value;
+    }
+    get template() {
+        if (typeof this.#template === "undefined") {
+            this.#template = getTemplateByUUID(this.#uuid) ?? utils.raise("template is undefined");
+        }
+        return this.#template;
     }
     get childBindings() {
         if (typeof this.#childBindings === "undefined") {
@@ -3872,7 +3904,6 @@ class ContentBindings {
     }
     set parentBinding(value) {
         if (typeof value !== "undefined") {
-            (this.#component !== value.component) && utils.raise("component is different");
             (this.#loopable !== value.loopable) && utils.raise("loopable is different");
         }
         this.#parentBinding = value;
@@ -3916,14 +3947,20 @@ class ContentBindings {
         }
         return allChildBindings;
     }
-    constructor(component, template, loopable = false) {
-        this.#component = component;
-        this.template = template;
+    get loopable() {
+        return this.#loopable;
+    }
+    get useKeyed() {
+        return this.#useKeyed;
+    }
+    constructor(uuid, useKeyed = false, loopable = false) {
+        this.#uuid = uuid;
+        this.#useKeyed = useKeyed;
         this.#loopable = loopable;
         if (loopable) {
             this.#loopContext = createLoopContext(this);
         }
-        const binder = createBinder(this.template, this.component?.useKeyed ?? utils.raise("useKeyed is undefined"));
+        const binder = createBinder(this.template, this.useKeyed ?? utils.raise("useKeyed is undefined"));
         this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
         this.#childBindings = binder.createBindings(this.#fragment, this);
         this.#childNodes = Array.from(this.#fragment.childNodes);
@@ -3948,8 +3985,8 @@ class ContentBindings {
         this.loopContext?.dispose();
         this.#parentBinding = undefined;
         this.removeChildNodes();
-        const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-        _cache$2[uuid]?.push(this) ?? (_cache$2[uuid] = [this]);
+        const key = `${this.#uuid}\t${this.#useKeyed}\t${this.#loopable}`;
+        _cache$2[key]?.push(this) ?? (_cache$2[key] = [this]);
     }
     rebuild() {
         const selectValues = [];
@@ -3968,19 +4005,26 @@ class ContentBindings {
     }
 }
 const _cache$2 = {};
-function createContentBindings(template, parentBinding) {
-    const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+function createContentBindings(uuid, parentBinding) {
     const component = parentBinding.component ?? utils.raise("component is undefined");
-    let contentBindings = _cache$2[uuid]?.pop();
+    const key = `${uuid}\t${component.useKeyed}\t${parentBinding.loopable}`;
+    let contentBindings = _cache$2[key]?.pop();
     if (typeof contentBindings === "undefined") {
-        contentBindings = new ContentBindings(component, template, parentBinding.loopable);
+        contentBindings = new ContentBindings(uuid, component.useKeyed, parentBinding.loopable);
     }
+    contentBindings.component = component;
     contentBindings.parentBinding = parentBinding;
     contentBindings.registerBindingsToSummary();
     return contentBindings;
 }
-function createRootContentBindings(component, template) {
-    const contentBindings = new ContentBindings(component, template);
+function createRootContentBindings(component, uuid) {
+    const loopable = false;
+    const key = `${uuid}\t${component.useKeyed}\t${loopable}`;
+    let contentBindings = _cache$2[key]?.pop();
+    if (typeof contentBindings === "undefined") {
+        contentBindings = new ContentBindings(uuid, component.useKeyed, loopable);
+    }
+    contentBindings.component = component;
     contentBindings.registerBindingsToSummary();
     return contentBindings;
 }
@@ -4775,8 +4819,8 @@ function CustomComponent(Base) {
                 await this.states.current[ConnectedCallbackSymbol]();
             });
             // build binding tree and dom 
-            this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-            this.rootBindingManager = createRootContentBindings(this, this.template);
+            const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+            this.rootBindingManager = createRootContentBindings(this, uuid);
             this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
                 this.rootBindingManager.rebuild([]);
             });

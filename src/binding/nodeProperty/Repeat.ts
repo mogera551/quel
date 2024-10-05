@@ -13,6 +13,8 @@ export class Repeat extends Loop {
   }
   setValue(value:any[]):void {
     if (!Array.isArray(value)) utils.raise(`Repeat: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not array`);
+    const uuid = this.uuid;
+    const binding = this.binding;
     const lastValueLength = this.getValue().length;
     const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
     const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
@@ -21,7 +23,7 @@ export class Repeat extends Loop {
     if (lastValueLength < value.length) {
       this.binding.childrenContentBindings.forEach(rebuildFunc);
       for(let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
-        const contentBindings = createContentBindings(this.template, this.binding);
+        const contentBindings = createContentBindings(uuid, binding);
         this.binding.appendChildContentBindings(contentBindings);
         this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, stateName, newIndex, () => {
           contentBindings.rebuild();

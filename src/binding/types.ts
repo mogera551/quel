@@ -107,13 +107,15 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   readonly template: HTMLTemplateElement;
   readonly childBindings: IBinding[];
   parentBinding?: IBinding;
-  readonly component?: IComponentPartial;
+  component?: IComponentPartial;
   readonly parentContentBindings?: IContentBindings;
 
   readonly fragment: DocumentFragment;
   readonly childNodes: Node[];
   readonly lastChildNode?: Node;
   readonly allChildBindings: IBinding[];
+  readonly loopable: boolean;
+  readonly useKeyed: boolean;
 
 //  initialize():void;
   removeChildNodes():void;

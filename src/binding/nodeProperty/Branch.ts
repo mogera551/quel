@@ -16,9 +16,11 @@ export class Branch extends TemplateProperty {
   setValue(value:any):void {
     if (typeof value !== "boolean") utils.raise(`Branch: ${this.binding.selectorName}.State['${this.binding.stateProperty.name}'] is not boolean`, );
     const lastValue = this.getValue();
+    const uuid = this.uuid;
+    const binding = this.binding;
     if (lastValue !== value) {
       if (value) {
-        const contentBindings = createContentBindings(this.template, this.binding);
+        const contentBindings = createContentBindings(uuid, binding);
         this.binding.appendChildContentBindings(contentBindings);
         contentBindings.rebuild();
       } else {

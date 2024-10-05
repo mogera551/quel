@@ -1,4 +1,5 @@
 import { createBinder } from "../binder/createBinder";
+import { getTemplateByUUID } from "../component/Template";
 import { CleanIndexes } from "../dotNotation/types";
 import { createLoopContext } from "../loopContext/createLoopContext";
 import { ILoopContext } from "../loopContext/types";
@@ -6,17 +7,31 @@ import { utils } from "../utils";
 import { IBinding, IContentBindings, IComponentPartial } from "./types";
 
 class ContentBindings implements IContentBindings {
+  #uuid: string;
   #component?: IComponentPartial;
-  template: HTMLTemplateElement;
+  #template?: HTMLTemplateElement;
   #childBindings?: IBinding[];
   #parentBinding?: IBinding;
   #loopContext?: ILoopContext;
   #childNodes?: Node[];
   #fragment?: DocumentFragment;
   #loopable = false;
+  #useKeyed: boolean;
 
   get component(): IComponentPartial | undefined {
     return this.#component;
+  }
+  set component(value: IComponentPartial | undefined) {
+    if (typeof value !== "undefined") {
+      (this.#useKeyed !== value.useKeyed) && utils.raise("useKeyed is different");  
+    }
+    this.#component = value;
+  }
+  get template(): HTMLTemplateElement {
+    if (typeof this.#template === "undefined") {
+      this.#template = getTemplateByUUID(this.#uuid) ?? utils.raise("template is undefined");
+    }
+    return this.#template;
   }
 
   get childBindings(): IBinding[] {
@@ -31,7 +46,6 @@ class ContentBindings implements IContentBindings {
   }
   set parentBinding(value: IBinding | undefined) {
     if (typeof value !== "undefined") {
-      (this.#component !== value.component) && utils.raise("component is different");
       (this.#loopable !== value.loopable) && utils.raise("loopable is different");
     }
     this.#parentBinding = value;
@@ -82,18 +96,26 @@ class ContentBindings implements IContentBindings {
     return allChildBindings;
   }
 
+  get loopable(): boolean {
+    return this.#loopable;
+  }
+
+  get useKeyed(): boolean {
+    return this.#useKeyed;
+  }
+
   constructor(
-    component: IComponentPartial,
-    template: HTMLTemplateElement,
+    uuid: string,
+    useKeyed: boolean = false,
     loopable: boolean = false,
   ) {
-    this.#component = component;
-    this.template = template;
+    this.#uuid = uuid;
+    this.#useKeyed = useKeyed;
     this.#loopable = loopable;
     if (loopable) {
       this.#loopContext = createLoopContext(this);
     }
-    const binder = createBinder(this.template, this.component?.useKeyed ?? utils.raise("useKeyed is undefined"));
+    const binder = createBinder(this.template, this.useKeyed ?? utils.raise("useKeyed is undefined"));
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#childBindings = binder.createBindings(this.#fragment, this);
     this.#childNodes = Array.from(this.#fragment.childNodes);
@@ -121,8 +143,8 @@ class ContentBindings implements IContentBindings {
     this.loopContext?.dispose();
     this.#parentBinding = undefined;
     this.removeChildNodes();
-    const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-    _cache[uuid]?.push(this) ?? (_cache[uuid] = [this]);
+    const key = `${this.#uuid}\t${this.#useKeyed}\t${this.#loopable}`;
+    _cache[key]?.push(this) ?? (_cache[key] = [this]);
   }
 
   rebuild(): void {
@@ -144,15 +166,16 @@ class ContentBindings implements IContentBindings {
 const _cache: {[ key: string ]: IContentBindings[]} = {};
 
 export function createContentBindings(
-  template: HTMLTemplateElement, 
+  uuid: string,
   parentBinding: IBinding, 
 ): IContentBindings {
-  const uuid = template.dataset["uuid"] ?? utils.raise("uuid is undefined");
   const component = parentBinding.component ?? utils.raise("component is undefined");
-  let contentBindings = _cache[uuid]?.pop();
+  const key = `${uuid}\t${component.useKeyed}\t${parentBinding.loopable}`;
+  let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(component, template, parentBinding.loopable);
+    contentBindings = new ContentBindings(uuid, component.useKeyed, parentBinding.loopable);
   }
+  contentBindings.component = component;
   contentBindings.parentBinding = parentBinding;
   contentBindings.registerBindingsToSummary();
   return contentBindings;
@@ -160,9 +183,15 @@ export function createContentBindings(
 
 export function createRootContentBindings(
   component: IComponentPartial,
-  template: HTMLTemplateElement 
+  uuid: string,
 ): IContentBindings {
-  const contentBindings = new ContentBindings(component, template);
+  const loopable = false;
+  const key = `${uuid}\t${component.useKeyed}\t${loopable}`;
+  let contentBindings = _cache[key]?.pop();
+  if (typeof contentBindings === "undefined") {
+    contentBindings = new ContentBindings(uuid, component.useKeyed, loopable);
+  }
+  contentBindings.component = component;
   contentBindings.registerBindingsToSummary();
   return contentBindings;
 }

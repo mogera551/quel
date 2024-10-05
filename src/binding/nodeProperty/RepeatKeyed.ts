@@ -59,13 +59,13 @@ export class RepeatKeyed extends Loop {
       children[i].dispose();
     }
 
+    const uuid = this.uuid;
+    const binding = this.binding;
     if (appendOnly) {
       const nextNode = this.node.nextSibling;
       const parentNode = this.node.parentNode ?? utils.raise("parentNode is null");
-      const binding = this.binding;
-      const template = this.template;
       for(let vi = 0; vi < valuesLength; vi++) {
-        const contentBindings = createContentBindings(template, binding);
+        const contentBindings = createContentBindings(uuid, binding);
         children[vi] = contentBindings;
         this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, vi, () => {
           contentBindings.rebuild();
@@ -81,7 +81,7 @@ export class RepeatKeyed extends Loop {
         const beforeNode = beforeContentBindings?.lastChildNode ?? this.node;
         if (this.#setOfNewIndexes.has(newIndex)) {
           // 元のインデックスにない場合（新規）
-          contentBindings = createContentBindings(this.template, this.binding);
+          contentBindings = createContentBindings(uuid, binding);
           children[newIndex] = contentBindings;
           this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
             contentBindings.rebuild();
@@ -118,6 +118,8 @@ export class RepeatKeyed extends Loop {
 
   applyToChildNodes(setOfIndex:Set<number>, indexes?:CleanIndexes):void {
     this.revisionUpForLoop();
+    const uuid = this.uuid;
+    const binding = this.binding;
     const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
     const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
     const wildCardName = this.binding.statePropertyName + ".*";
@@ -140,7 +142,7 @@ export class RepeatKeyed extends Loop {
       if (setOfPrimitiveType.has(typeofNewValue)) continue;
       let contentBindings = contentBindingsByValue.get(newValue);
       if (typeof contentBindings === "undefined") {
-        contentBindings = createContentBindings(this.template, this.binding);
+        contentBindings = createContentBindings(uuid, binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
         this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
           contentBindings?.rebuild();

@@ -86,8 +86,12 @@ export class StateProperty implements IStateProperty {
     }
   }
 
-  #filters:FilterFunc[];
+  #fileterTexts:IFilterText[];
+  #filters?:FilterFunc[];
   get filters() {
+    if (typeof this.#filters === "undefined") {
+      this.#filters = Filters.create<"output">(this.#fileterTexts, this.binding.outputFilterManager);
+    }
     return this.#filters;
   }
 
@@ -106,13 +110,13 @@ export class StateProperty implements IStateProperty {
     return this.#binding;
   }
 
-  constructor(binding:IBinding, name:string, filters:IFilterText[]) {
+  constructor(binding:IBinding, name:string, filterTexts:IFilterText[]) {
     this.#binding = binding;
     this.#name = name;
     this.#childName = name + ".*";
-    this.#filters = Filters.create<"output">(filters, binding.outputFilterManager);
     this.#propInfo = getPropInfo(name);
     this.#level = this.#propInfo.wildcardCount;
+    this.#fileterTexts = filterTexts;
     this.#lastWildCard = this.#propInfo.wildcardPaths[this.#propInfo.wildcardPaths.length - 1];
   }
 

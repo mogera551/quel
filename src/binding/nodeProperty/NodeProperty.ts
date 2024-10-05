@@ -31,8 +31,12 @@ export class NodeProperty implements INodeProperty {
 //    Reflect.set(this.node, this.name, value);
   }
 
-  #filters:FilterFunc[];
-  get filters() {
+  #filterTexts: IFilterText[];
+  #filters?:FilterFunc[];
+  get filters(): FilterFunc[] {
+    if (typeof this.#filters === "undefined") {
+      this.#filters = Filters.create<"input">(this.#filterTexts, this.binding.inputFilterManager);
+    }
     return this.#filters;
   }
 
@@ -68,13 +72,13 @@ export class NodeProperty implements INodeProperty {
     return false;
   }
 
-  constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
+  constructor(binding:IBinding, node:Node, name:string, filterTexts:IFilterText[]) {
     if (!(node instanceof Node)) utils.raise("NodeProperty: not Node");
     this.#binding = binding;
     this.#node = node;
     this.#name = name;
     this.#nameElements = name.split(".");
-    this.#filters = Filters.create<"input">(filters, this.binding.inputFilterManager);
+    this.#filterTexts = filterTexts;
   }
 
   initialize() {
