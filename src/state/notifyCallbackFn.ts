@@ -1,6 +1,6 @@
 import { createPropertyAccess } from "../binding/createPropertyAccess";
 import { CleanIndexes, NotifyCallbackFn } from "../dotNotation/types";
-import { IStateHandler, IWritableStateHandler } from "./types";
+import { IStateHandler } from "./types";
 
 type IHandlerPartial = Pick<IStateHandler, "updator">
 

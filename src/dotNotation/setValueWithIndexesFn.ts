@@ -7,6 +7,12 @@ type IHandlerPartial = Pick<IDotNotationHandler, "notifyCallback">;
 
 export type IHandlerPartialForSetValueWithIndexes = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue;
 
+/**
+ * ドット記法のプロパティとインデックスを指定して値を取得する関数を生成します
+ * setValueWithoutIndexesFnから呼び出されることを想定しています
+ * @param handler Proxyハンドラ
+ * @returns {SetValueWithIndexesFn} ドット記法のプロパティとインデックスを指定して値を取得する関数
+ */
 export const setValueWithIndexesFn = (handler: IHandlerPartialForSetValueWithIndexes): SetValueWithIndexesFn => {
   const withIndexes = withIndexesFn(handler);
   const getValue = getValueFn(handler);

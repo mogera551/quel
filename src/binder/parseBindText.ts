@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import { IFilterText } from "../filter/types";
 import { ParsedBindText } from "./types";
 
@@ -63,6 +62,9 @@ const _cache:BindTextsByKey = {};
 
 /**
  * 取得したバインドテキスト(getBindTextByNodeType)を解析して、バインド情報を取得する
+ * @param text バインドテキスト
+ * @param defaultName デフォルト名
+ * @returns {ParsedBindText[]} バインド情報
  */
 export function parseBindText(
   text: string, 

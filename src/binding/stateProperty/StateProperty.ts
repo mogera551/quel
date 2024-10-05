@@ -3,11 +3,10 @@ import { IFilterText, FilterFunc } from "../../filter/types";
 import { GetDirectSymbol, SetDirectSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { CleanIndexes, IPropInfo } from "../../dotNotation/types";
+import { IPropInfo } from "../../dotNotation/types";
 import { getPropInfo } from "../../dotNotation/getPropInfo";
 import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
-import { IUpdator } from "../../updator/types";
 
 export class StateProperty implements IStateProperty {
   get state(): IStateProxy {

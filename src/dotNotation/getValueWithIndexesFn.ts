@@ -4,6 +4,12 @@ import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
 
 export type IHandlerPartialForGetValueWithIndexes = IHandlerPartialForGetValue & IHandlerPartialForWithIndexes;
 
+/**
+ * ドット記法のプロパティとインデックスを指定して値を取得する関数を生成します
+ * getValueWithoutIndexesFnから呼び出されることを想定しています
+ * @param handler Proxyハンドラ
+ * @returns {GetValueWithIndexesFn} ドット記法のプロパティからインデックスを指定して値を取得する関数
+ */
 export const getValueWithIndexesFn = (handler: IHandlerPartialForGetValueWithIndexes): GetValueWithIndexesFn => {
   const withIndexes = withIndexesFn(handler);
   const getValue = getValueFn(handler);

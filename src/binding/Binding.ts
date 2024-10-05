@@ -6,7 +6,6 @@ import { IUpdator } from "../updator/types";
 import { IStateProxy } from "../state/types";
 import { setValueToState } from "./setValueToState";
 import { setValueToNode } from "./setValueToNode";
-import { CleanIndexes, Indexes } from "../dotNotation/types";
 
 let id = 1;
 class Binding implements IBinding {

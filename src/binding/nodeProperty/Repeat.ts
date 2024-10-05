@@ -3,7 +3,6 @@ import { IFilterText } from "../../filter/types";
 import { IContentBindings, IBinding } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
-import { CleanIndexes } from "../../dotNotation/types";
 
 const rebuildFunc = (contentBindings:IContentBindings):void => contentBindings.rebuild();
 

@@ -6,6 +6,12 @@ type IHandlerPartial = Pick<IDotNotationHandler, "getLastIndexes">;
 
 export type IHandlerPartialForSetValueWithoutIndexes = IHandlerPartial & IHandlerPartialForSetValueWithIndexes;
 
+/**
+ * ドット記法のプロパティからインデックスを指定せずに値をセットする関数を取得する
+ * ex) "aaa.1.bbb.2.ccc"のようなワイルドカードを含まないプロパティを想定
+ * @param handler Proxyハンドラ
+ * @returns {SetValueWithoutIndexesFn} ドット記法のプロパティからインデックスを指定せずに値をセットする関数
+ */
 export const setValueWithoutIndexesFn = (handler: IHandlerPartialForSetValueWithoutIndexes): SetValueWithoutIndexesFn => {
   const setValueWithIndexes = setValueWithIndexesFn(handler);
   return function (

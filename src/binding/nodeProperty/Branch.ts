@@ -3,7 +3,6 @@ import { IBinding } from "../types";
 import { IFilterText } from "../../filter/types";
 import { TemplateProperty } from "./TemplateProperty";
 import { createContentBindings } from "../ContentBindings";
-import { CleanIndexes } from "../../dotNotation/types";
 
 export class Branch extends TemplateProperty {
   getValue():boolean {

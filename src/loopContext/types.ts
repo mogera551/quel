@@ -29,6 +29,7 @@ export interface ILoopContextStack {
 }
 
 export interface ILoopIndexes {
+  readonly parentLoopIndexes: ILoopIndexes | undefined;
   readonly values: number[];
   add(index: number): ILoopIndexes;
 }
@@ -40,7 +41,7 @@ export type INamedLoopIndexes = {
 export interface INamedLoopIndexesStack {
   stack: INamedLoopIndexes[];
   asyncSetNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => Promise<void>): Promise<void>;
-  setNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => void): void;
+  setNamedLoopIndexes(namedLoopIndexes: INamedLoopIndexes, callback: () => void): void;
   setSubIndex(parentName: string | undefined, name: string, index: number, callback: () => void): void;
   getLoopIndexes(name: string): ILoopIndexes | undefined;
   getNamedLoopIndexes(): INamedLoopIndexes | undefined;

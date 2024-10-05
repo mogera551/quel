@@ -1,9 +1,25 @@
 
 import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
-import { IComponent, IDialogComponent, Constructor, ICustomComponent, IComponentBase } from "./types";
+import { IDialogComponent, Constructor, ICustomComponent, IComponentBase } from "./types";
 
-export function DialogComponent<TBase extends Constructor<HTMLElement & IComponentBase & ICustomComponent>>(Base: TBase) {
+type BaseComponent = HTMLElement & IComponentBase & ICustomComponent;
+
+/**
+ * コンポーネントをダイアログを簡単に表示できるように拡張する
+ * 拡張内容は以下の通り
+ * - dialogPromises: ダイアログ用Promise
+ * - returnValue: 戻り値
+ * - useBufferedBind: バッファードバインドを使用するかどうか
+ * - asyncShowModal: モーダルダイアログ表示
+ * - asyncShow: ダイアログ表示
+ * - showModal: モーダルダイアログ表示
+ * - show: ダイアログ表示
+ * - close: ダイアログを閉じる
+ * @param Base 元のコンポーネント
+ * @returns {IDialogComponent} 拡張されたコンポーネント
+ */
+export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: TBase): Constructor<BaseComponent & IDialogComponent> {
   return class extends Base implements IDialogComponent {
     #dialogPromises?: PromiseWithResolvers<any>;
     get dialogPromises(): PromiseWithResolvers<any>|undefined {

@@ -9,6 +9,9 @@ const SELECTOR = `[data-${BIND_DATASET}]`;
 
 /**
  * HTMLテンプレートからバインドノード情報を抽出する
+ * @param template テンプレート
+ * @param useKeyed オプションのキーを使用するかどうかのフラグ
+ * @returns {IBindingNode[]} バインドノード情報
  */
 export function extractBindNodeInfosFromTemplate(
   template: HTMLTemplateElement, 

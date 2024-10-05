@@ -212,6 +212,11 @@ class Handler implements ProxyHandler<IProps> {
   }
 }
 
+/**
+ * コンポーネント間のアクセスをするためのプロパティを作成します
+ * @param component {IComponentForProps} コンポーネント
+ * @returns {IProps} プロパティ
+ */
 export function createProps(component: IComponentForProps): IProps {
   return new Proxy<Object>({}, new Handler(component)) as IProps;
 }

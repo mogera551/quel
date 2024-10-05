@@ -8,7 +8,7 @@ import { createProps } from "./createProps";
 import { createGlobals } from "./createGlobals";
 import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
-import { IContentBindings, IBindingSummary, INewBindingSummary } from "../binding/types";
+import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createRootContentBindings } from "../binding/ContentBindings";
 import { createStates } from "../state/createStates";
@@ -35,7 +35,24 @@ const getParentComponent = (_node:Node): IComponent|undefined => {
 
 const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
-export function CustomComponent<TBase extends Constructor<HTMLElement & IComponentBase>>(Base: TBase) {
+/**
+ * コンポーネントを拡張する
+ * 拡張内容は以下の通り
+ * - states: Stateの生成
+ * - initialPromises: 初期化用Promise
+ * - alivePromises: アライブ用Promise
+ * - rootBindingManager: ルートバインディングマネージャ
+ * - viewRootElement: 表示用ルート要素
+ * - pseudoParentNode: 親ノード（use, case of useWebComponent is false）
+ * - pseudoNode: ダミーノード（use, case of useWebComponent is false）
+ * - newBindingSummary: 新規バインディングサマリ
+ * - updator: アップデータ
+ * - props: プロパティ
+ * - globals: グローバルデータ
+ * @param Base 元のコンポーネント
+ * @returns {CustomComponent} 拡張されたコンポーネント
+ */
+export function CustomComponent<TBase extends Constructor<HTMLElement & IComponentBase>>(Base: TBase): Constructor<HTMLElement & IComponentBase & ICustomComponent> {
   return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();
@@ -187,7 +204,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
       this.rootBindingManager = createRootContentBindings(this, uuid);
       this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
-        this.rootBindingManager.rebuild([]);
+        this.rootBindingManager.rebuild();
       });
       if (this.useWebComponent) {
         // case of useWebComponent,

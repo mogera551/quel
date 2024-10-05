@@ -9,6 +9,12 @@ type IHandlerPartial = Pick<Handler, "set">;
 
 export type IHandlerPartialForSetValueDirect = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForSetValueWithIndexes;
 
+/**
+ * ドット記法のプロパティと配列を指定して直接setValueから値をセットする関数を生成します
+ * 高速化のために使用します
+ * @param handler Proxyハンドラ
+ * @returns {SetValueDirectFn} ドット記法のプロパティと配列を指定して直接setValueから値をセットする関数
+ */
 export const setValueDirectFn = (handler: IHandlerPartialForSetValueDirect): SetValueDirectFn => {
   const withIndexes = withIndexesFn(handler);
   const setValueWithIndexes = setValueWithIndexesFn(handler);

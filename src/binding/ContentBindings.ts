@@ -1,6 +1,5 @@
 import { createBinder } from "../binder/createBinder";
 import { getTemplateByUUID } from "../component/Template";
-import { CleanIndexes } from "../dotNotation/types";
 import { createLoopContext } from "../loopContext/createLoopContext";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";

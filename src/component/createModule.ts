@@ -51,6 +51,11 @@ export class Module implements IModule {
   }
 }
 
+/**
+ * コンポーネントモジュールから中間モジュールを生成します。
+ * @param componentModule コンポーネントモジュール  
+ * @returns {IModule} 中間モジュール
+ */
 export function createModule(componentModule: ComponentModule): IModule {
   return Object.assign(new Module, componentModule);
 }

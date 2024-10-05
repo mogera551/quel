@@ -2,10 +2,13 @@ import { utils } from "../utils";
 import { ILoopIndexes } from "./types";
 
 class LoopIndexes implements ILoopIndexes {
-  parentLoopIndexes: ILoopIndexes | undefined;
+  #parentLoopIndexes: ILoopIndexes | undefined;
   #_values: number[] | undefined;
   #_value: number | undefined;
   #values: number[] | undefined;
+  get parentLoopIndexes(): ILoopIndexes | undefined {
+    return this.#parentLoopIndexes;
+  }
   get values(): number[] {
     if (typeof this.#values === "undefined") {
       if (typeof this.parentLoopIndexes === "undefined") {
@@ -34,7 +37,7 @@ class LoopIndexes implements ILoopIndexes {
     if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
       utils.raise(`LoopIndexes.constructor: values cannot be set without parentLoopIndexes.`);
     }
-    this.parentLoopIndexes = parentLoopIndexes;
+    this.#parentLoopIndexes = parentLoopIndexes;
     this.#_value = value;
     this.#_values = values;
   }
@@ -44,6 +47,11 @@ class LoopIndexes implements ILoopIndexes {
   }
 }
 
-export function createLoopIndexes(indexes: number[]): ILoopIndexes {
-  return new LoopIndexes({ parentLoopIndexes: undefined, value: undefined, values: indexes });
+export function createLoopIndexes(indexes: number[], index = indexes.length - 1): ILoopIndexes {
+  const value = indexes[index];
+  return new LoopIndexes({
+    parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
+    value: index > 0 ? value : undefined,
+    values: index === 0 ? [value] : undefined
+  });
 }

@@ -2,7 +2,6 @@ import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
-import { CleanIndexes } from "../../dotNotation/types";
 
 export class ElementStyle extends ElementBase {
   get htmlElement():HTMLElement {

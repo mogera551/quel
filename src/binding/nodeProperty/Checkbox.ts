@@ -4,7 +4,6 @@ import { IMultiValue, IBinding } from "../types";
 import { ElementBase } from "./ElementBase";
 import { MultiValue } from "./MultiValue";
 import { FilterManager } from "../../filter/Manager";
-import { CleanIndexes } from "../../dotNotation/types";
 
 export class Checkbox extends ElementBase {
   get inputElement():HTMLInputElement {

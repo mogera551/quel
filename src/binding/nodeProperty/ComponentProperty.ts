@@ -7,7 +7,6 @@ import { createPropertyAccess } from "../createPropertyAccess";
 import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../types";
 import { ILoopContext } from "../../loopContext/types";
 import { IComponent } from "../../component/types";
-import { CleanIndexes } from "../../dotNotation/types";
 
 export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;

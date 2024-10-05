@@ -1,6 +1,7 @@
 import { IBinding, IBindingSummary, INewBindingSummary, IPropertyAccess } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { Indexes } from "../dotNotation/types";
+import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
 import { IUpdator } from "./types";
 
 export async function updateNodes(
@@ -17,10 +18,7 @@ export async function updateNodes(
         selectBindings.push({binding, propertyAccess});
       } else {
         const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
-        const namedLoopIndexes = 
-          (propertyAccess.indexes.length > 0) ? 
-          { [lastWildCardPath]: propertyAccess.indexes } : 
-          {};
+        const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccess.indexes);
         updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.updateNodeForNoRecursive();
         });
@@ -31,10 +29,7 @@ export async function updateNodes(
     const info = selectBindings[si];
     const propertyAccess = info.propertyAccess;
     const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
-    const namedLoopIndexes = 
-      (propertyAccess.indexes.length > 0) ? 
-      { [lastWildCardPath]: propertyAccess.indexes } : 
-      {};
+    const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccess.indexes);
     updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
       info.binding.updateNodeForNoRecursive();
     });

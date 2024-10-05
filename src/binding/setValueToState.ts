@@ -1,4 +1,3 @@
-import { CleanIndexes } from "../dotNotation/types";
 import { INodeProperty, IStateProperty } from "./types";
 
 export function setValueToState(

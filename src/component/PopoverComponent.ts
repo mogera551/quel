@@ -1,9 +1,24 @@
 
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
 import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
-import { IComponent, IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
+import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
 
-export function PopoverComponent<TBase extends Constructor<HTMLElement & IComponentBase & ICustomComponent & IDialogComponent>>(Base: TBase) {
+type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogComponent
+
+/**
+ * コンポーネントをポップオーバーできるように拡張します
+ * 拡張内容は以下の通り
+ * - popoverPromises: ポップオーバー用Promise
+ * - popoverContextIndexesById: ポップオーバーコンテキストインデックス
+ * - canceled: キャンセルフラグ
+ * - asyncShowPopover: ポップオーバー表示
+ * - hidePopover: ポップオーバーを閉じる
+ * - cancelPopover: ポップオーバーをキャンセル
+ * 
+ * @param Base 元のコンポーネント
+ * @returns {IPopoverComponent} 拡張されたコンポーネント
+ */
+export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base: TBase): Constructor<BaseComponent & IPopoverComponent> {
   return class extends Base implements IPopoverComponent {
     #canceled: boolean = false;
     get canceled(): boolean {

@@ -19,6 +19,14 @@ function fromComment(html:string):string {
   });
 }
 
+/**
+ * 単一ファイルコンポーネントをロードしコンポーネントモジュールを取得します
+ * ファイルを読み込んで、テンプレート、スクリプト、スタイルを取得します
+ * スクリプトはdata　uri schemeで読み込みます
+ * なので、スクリプト内のimportは、絶対パス、importmap、エイリアスを使って記述してください
+ * @param path 単一ファイルコンポーネントのパス
+ * @returns {Promise<ComponentModule>} コンポーネントモジュール
+ */
 export async function loadSingleFileComponent(path: string): Promise<ComponentModule> {
   const template = document.createElement("template");
   const response = await fetch(importMetaResolve(import.meta as ImportMeta_, path));

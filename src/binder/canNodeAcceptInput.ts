@@ -30,6 +30,12 @@ const isInputableFn:IsInputableFn = {
   Template:    alwaysFalse,
 }
 
+/**
+ * ノードが入力を受け付けるかどうか
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {boolean} ノードが入力を受け付けるかどうか
+ */
 export function canNodeAcceptInput(
   node: Node, 
   nodeType: NodeType

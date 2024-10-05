@@ -10,6 +10,12 @@ type IHandlerPartial = Pick<Handler, "get">
 
 export type IHandlerPartialForGetValueDirect = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue & IHandlerPartialForGetValueWithoutIndexes;
 
+/**
+ * ドット記法のプロパティと配列を指定して直接getValueから値を取得する関数を生成します
+ * 高速化のために使用します
+ * @param handler Proxyハンドラ
+ * @returns {GetValueDirectFn} ドット記法のプロパティと配列を指定して直接getValueから値を取得する関数
+ */
 export const getValueDirectFn = (handler: IHandlerPartialForGetValueDirect): GetValueDirectFn => {
   const withIndexes = withIndexesFn(handler);
   const getValue = getValueFn(handler);

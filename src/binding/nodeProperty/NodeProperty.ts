@@ -2,7 +2,6 @@ import { utils } from "../../utils";
 import { FilterFunc, IFilterText } from "../../filter/types";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { IBinding, INodeProperty, IPropertyAccess } from "../types";
-import { CleanIndexes } from "../../dotNotation/types";
 
 export class NodeProperty implements INodeProperty {
   #node:Node;

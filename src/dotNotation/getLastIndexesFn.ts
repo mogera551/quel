@@ -2,8 +2,13 @@ import { GetLastIndexesFn, IDotNotationHandler, Indexes } from "./types";
 
 type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes">;
 
-export type IHandlerPartialForGetLastIndexes = IHandlerPartial;
+type IHandlerPartialForGetLastIndexes = IHandlerPartial;
 
+/**
+ * 名前付きワイルドカードインデックスの最後のインデックスを取得する関数を生成します
+ * @param handler Proxyハンドラ
+ * @returns {GetLastIndexesFn} 名前付きワイルドカードインデックスの最後のインデックスを取得する関数
+ */
 export const getLastIndexesFn = (handler: IHandlerPartialForGetLastIndexes): GetLastIndexesFn =>
 function(
   pattern:string

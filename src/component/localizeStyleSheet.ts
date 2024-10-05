@@ -1,3 +1,9 @@
+/**
+ * スタイルシートのセレクタをローカライズする
+ * @param styleSheet スタイルシート
+ * @param localSelector ローカルセレクタ
+ * @returns {CSSStyleSheet} ローカライズされたスタイルシート
+ */
 export function localizeStyleSheet(
   styleSheet: CSSStyleSheet, 
   localSelector: string

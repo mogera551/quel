@@ -4,6 +4,9 @@ import { IBinding, IContentBindings } from "../binding/types";
 
 /**
  * バインディング情報を元にバインディングを作成する関数を返す
+ * @param bindTextInfo バインドテキスト情報
+ * @param propertyCreators プロパティコンストラクタ
+ * @returns {IBinding} バインディング
  */
 export const getCreateBinding = 
 (bindTextInfo: ParsedBindText, propertyCreators: PropertyConstructors) => 

@@ -1,4 +1,3 @@
-import { CleanIndexes } from "../dotNotation/types";
 import { IUpdator } from "../updator/types";
 import { IBinding, INodeProperty, IStateProperty } from "./types";
 

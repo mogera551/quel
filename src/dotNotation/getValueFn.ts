@@ -6,6 +6,11 @@ type IHandlerPartial = Pick<Handler, "cache"|"findPropertyCallback">;
 
 export type IHandlerPartialForGetValue = IHandlerPartial;
 
+/**
+ * ドット記法のプロパティから値を取得する関数を生成します
+ * @param handler Proxyハンドラ
+ * @returns {GetValueFn} ドット記法のプロパティから値を取得する関数
+ */
 export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
   return function _getValue(
     target: object, 

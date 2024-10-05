@@ -2,10 +2,13 @@ import { IBindingNode } from "./types";
 import { findNodeByNodeRoute } from "./findNodeByNodeRoute";
 import { IContentBindings, IBinding } from "../binding/types";
 import { utils } from "../utils";
-import { DeepPick } from "../types";
 
 /**
  * HTMLテンプレートのコンテントからバインディング配列を作成する
+ * @param content コンテント
+ * @param contentBindings コンテントバインディング
+ * @param bindingNodes バインディングノード
+ * @returns {IBinding[]} バインディング配列
  */
 export function createBindings(
   content: DocumentFragment, 

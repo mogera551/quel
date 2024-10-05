@@ -7,7 +7,12 @@ function _createStyleSheet(cssText: string): CSSStyleSheet {
   return styleSheet;
 }
 
-// get style sheet by uuid, if not found, create style sheet
+/**
+ * uuidからスタイルシートを取得します。見つからない場合はスタイルシートを作成します。
+ * @param cssText スタイルシートのテキスト
+ * @param uuid UUID
+ * @returns {CSSStyleSheet} スタイルシート
+ */
 export function createStyleSheet(
   cssText: string, 
   uuid: string

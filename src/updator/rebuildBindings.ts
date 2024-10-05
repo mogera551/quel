@@ -1,4 +1,7 @@
 import { IBinding, INewBindingSummary, IPropertyAccess } from "../binding/types";
+import { createLoopIndexes } from "../loopContext/createLoopIndexes";
+import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
+import { ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
 import { IUpdator } from "./types";
 
 // ソートのための比較関数
@@ -20,11 +23,7 @@ export async function rebuildBindings(
       if (!binding.expandable) continue;
       const compareKey = binding.stateProperty.name + ".";
       const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-      const lastWildCardPath = binding.stateProperty.propInfo.wildcardPaths[binding.stateProperty.propInfo.wildcardPaths.length - 1];
-      const namedLoopIndexes = 
-        (propertyAccess.indexes.length > 0) ? 
-        { [lastWildCardPath]: propertyAccess.indexes } : 
-        {};
+      const namedLoopIndexes = createNamedLoopIndexesFromPattern(propertyAccess.pattern, propertyAccess.indexes);
       updator.setFullRebuild(isFullBuild, () => {
         updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.rebuild();

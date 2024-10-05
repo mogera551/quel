@@ -9,21 +9,19 @@ import { PopoverComponent } from "./PopoverComponent";
 import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers } from "./types";
 import { registerComponentModules } from "./registerComponentModules";
 
-const moduleByConstructor:Map<Function,IModule> = new Map;
 const customElementInfoByConstructor:Map<Function,CustomElementInfo> = new Map;
 const filterManagersByConstructor:Map<Function,FilterManagers> = new Map;
 
 /**
- * generate unique component class
+ * コンポーネントのベースとなるクラスを生成します
+ * @param componentModule コンポーネントモジュール
+ * @returns {typeof HTMLElement} コンポーネントクラス
  */
 export const generateComponentClass = (componentModule:ComponentModule):typeof HTMLElement => {
   const getBaseClass = function (module:IModule, baseConstructor:typeof HTMLElement):Constructor<HTMLElement & IComponentBase>  {
     const baseClass = class extends baseConstructor implements IComponentBase {
       #module:IModule = module;
       get module():IModule {
-//        if (typeof this.#module === "undefined") {
-//          this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
-//        }
         return this.#module;
       }
 
@@ -175,7 +173,6 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       }
     };
     baseClass.thisClass = baseClass;
-    moduleByConstructor.set(baseClass, module);
     return baseClass;
   };
 

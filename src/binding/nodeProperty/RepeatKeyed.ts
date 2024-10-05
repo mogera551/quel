@@ -2,8 +2,6 @@ import { utils } from "../../utils";
 import { IContentBindings } from "../types";
 import { createContentBindings } from "../ContentBindings";
 import { Loop } from "./Loop";
-import { CleanIndexes } from "../../dotNotation/types";
-import { IUpdator } from "../../updator/types";
 
 const setOfPrimitiveType = new Set(["boolean", "number", "string"]);
 
@@ -116,7 +114,7 @@ export class RepeatKeyed extends Loop {
     this.#lastValue = values.slice();
   }
 
-  applyToChildNodes(setOfIndex:Set<number>, indexes?:CleanIndexes):void {
+  applyToChildNodes(setOfIndex:Set<number>):void {
     this.revisionUpForLoop();
     const uuid = this.uuid;
     const binding = this.binding;

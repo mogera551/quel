@@ -129,13 +129,17 @@ function removeTopLevelBlankNodes(fragment:DocumentFragment):void {
 
 /**
  * UUIDからHTMLTemplateElementオブジェクトを取得(ループや分岐条件のブロック)
+ * @param uuid UUID
+ * @returns {HTMLTemplateElement|undefined} HTMLTemplateElementオブジェクト
  */
 export function getTemplateByUUID(uuid:string):(HTMLTemplateElement|undefined) {
   return templateByUUID[uuid];
 }
 
 /**
- * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
+ * htmlとcssの文字列からコンポーネント用のHTMLTemplateElementオブジェクトを生成
+ * @param html HTML文字列
+ * @param componentUuid コンポーネントUUID
  */
 export function createComponentTemplate(
   html: string, 

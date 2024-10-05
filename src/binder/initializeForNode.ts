@@ -74,6 +74,8 @@ const initializeNodeByNodeType:InitializeNodeByNodeType = {
 /**
  * ノードの初期化処理
  * 入力可のノードの場合、デフォルトイベントハンドラを設定する
+ * @param nodeInfo ノード情報
+ * @returns {function} ノードの初期化処理
  */
 export const initializeForNode = 
 (

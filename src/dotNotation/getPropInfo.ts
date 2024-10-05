@@ -7,6 +7,11 @@ import { getPatternInfo } from './getPatternInfo';
  */
 const _cache = new Map<string, IPropInfo>();
 
+/**
+ * プロパティ情報を取得します
+ * @param name プロパティ名
+ * @returns {IPropInfo} プロパティ情報
+ */
 function _getPropInfo(name:string):IPropInfo {
   const elements = name.split(".");
   const patternElements = elements.slice(0);

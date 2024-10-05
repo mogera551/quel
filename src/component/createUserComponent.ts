@@ -28,6 +28,12 @@ class UserProxyHandler {
   }
 }
 
+/**
+ * State内で使用するコンポーネントを生成する
+ * アクセス制限をかけるためのProxyを生成する
+ * @param component コンポーネントを元にProxyを生成する
+ * @returns {IUserComponent} ユーザーコンポーネント
+ */
 export function createUserComponent(component: IComponent): IUserComponent {
   return new Proxy(component, new UserProxyHandler);
 }

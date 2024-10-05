@@ -5,6 +5,11 @@ import { IPatternInfo } from './types';
  */
 const _cache = new Map<string, IPatternInfo>();
 
+/**
+ * パターン情報を取得します
+ * @param pattern パターン
+ * @returns {IPatternInfo} パターン情報
+ */
 function _getPatternInfo(pattern:string):IPatternInfo {
   const patternElements = pattern.split(".");
   const patternPaths = [];

@@ -1,5 +1,14 @@
 import { Indexes, IWildcardIndexes } from "./types";
 
+/**
+ * ワイルドカードインデックスを作成します
+ * 部分配列を作成するための情報を持ちます
+ * オンデマンドで部分配列を作成します
+ * なるべく部分配列を作成しないようにします
+ * @param pattern パターン
+ * @param wildcardCount ワイルドカード数
+ * @param indexes インデックス配列
+ */
 export class WildcardIndexes implements IWildcardIndexes {
   #baseIndexes: Indexes;
   #indexes?: Indexes;
@@ -21,6 +30,13 @@ export class WildcardIndexes implements IWildcardIndexes {
   }
 }
 
+/**
+ * ワイルドカードインデックスを作成します
+ * @param pattern パターン
+ * @param wildcardCount ワイルドカード数
+ * @param indexes インデックス配列
+ * @returns {IWildcardIndexes} ワイルドカードインデックス
+ */
 export function createWildCardIndexes(
   pattern: string, 
   wildcardCount: number, 

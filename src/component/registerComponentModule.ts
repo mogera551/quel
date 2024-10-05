@@ -6,6 +6,12 @@ import { ComponentModule } from "./types";
  * register component class with tag name, call customElements.define
  * generate component class from componentModule
  */
+/**
+ * コンポーネントモジュールをカスタムエレメント名を指定してカスタムコンポーネントとして登録します
+ * @param customElementName カスタムエレメント名
+ * @param componentModule コンポーネントモジュール
+ * @returns {void}
+ */
 export function registerComponentModule(
   customElementName: string, 
   componentModule: ComponentModule

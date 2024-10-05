@@ -21,13 +21,10 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
   }
   
   setNamedLoopIndexes(
-    namedLoopIndexes: {[key:string]:number[]}, 
+    namedLoopIndexes: INamedLoopIndexes, 
     callback: () => void
   ): void {
-    const tempNamedLoopIndexes = Object.fromEntries(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
-      return [name, createLoopIndexes(indexes)]
-    }));
-    this.stack.push(tempNamedLoopIndexes);
+    this.stack.push(namedLoopIndexes);
     try {
       callback();
     } finally {

@@ -7,6 +7,8 @@ const isCommentNode = (node:Node):boolean => node instanceof Comment && ((node.t
  * ノードツリーからexpandableなコメントノードを取得する
  * expandableなコメントノードとは、"@@:"もしくは"@@|"で始まるコメントノードのこと
  * {{ if: }}や{{ loop: }}を置き換えたもの指すためのコメントノード
+ * @param node ノード
+ * @returns {Comment[]} コメントノード
  */
 export function getExpandableComments(
   node:Node

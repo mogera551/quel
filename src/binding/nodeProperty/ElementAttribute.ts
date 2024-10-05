@@ -1,4 +1,3 @@
-import { CleanIndexes } from "../../dotNotation/types";
 import { ElementBase } from "./ElementBase";
 
 export class ElementAttribute extends ElementBase {

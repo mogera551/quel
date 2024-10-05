@@ -1,6 +1,6 @@
 
 import { ILoopContext } from "../loopContext/types";
-import { CleanIndexes, Indexes, IPropInfo } from "../dotNotation/types";
+import { IPropInfo } from "../dotNotation/types";
 import { IComponent } from "../component/types";
 import { IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";
@@ -35,7 +35,7 @@ export interface INodeProperty extends ILoopable {
   initialize(): void;
   postUpdate(propertyAccessByStatePropertyKey: Map<string,IPropertyAccess>):void;
   equals(value: any): boolean;
-  applyToChildNodes(setOfIndex: Set<number>, indexes?: CleanIndexes): void;
+  applyToChildNodes(setOfIndex: Set<number>): void;
   dispose(): void;
   getValue(): any;
   getFilteredValue(): any;
@@ -124,7 +124,7 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   removeChildNodes():void;
   dispose():void;
 
-  rebuild(indexes?: CleanIndexes | undefined): void;
+  rebuild(): void;
   registerBindingsToSummary(): void;
 }
 

@@ -5,6 +5,8 @@ import { NodeRoute } from "./types";
  * ex.
  * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
  * => [1,3,7,2]
+ * @param node ノード
+ * @returns {NodeRoute} ルートインデックスの配列
  */
 export function computeNodeRoute(
   node: Node

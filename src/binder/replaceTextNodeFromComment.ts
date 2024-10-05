@@ -21,6 +21,9 @@ const replaceTextNodeFn:ReplaceTextNodeFn = {
 
 /**
  * コメントノードをテキストノードに置き換える
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {Node} ノード
  */
 export function replaceTextNodeFromComment(
   node: Node, 

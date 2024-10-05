@@ -4,7 +4,6 @@ import { IMultiValue, IBinding } from "../types";
 import { MultiValue } from "./MultiValue";
 import { ElementBase } from "./ElementBase";
 import { FilterManager } from "../../filter/Manager";
-import { CleanIndexes } from "../../dotNotation/types";
 
 export class Radio extends ElementBase {
   get inputElement():HTMLInputElement {

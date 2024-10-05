@@ -65,6 +65,11 @@ class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobal
   }
 }
 
+/**
+ * 
+ * @param component グローバルデータへのアクセスを作成するコンポーネント
+ * @returns {IGlobalDataProxy} グローバルデータへのアクセス
+ */
 export function createGlobals(component: IComponentForGlobalData): IGlobalDataProxy {
   return new Proxy<Object>({}, new ComponentGlobalDataHandler(component)) as IGlobalDataProxy;
 }

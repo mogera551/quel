@@ -21,7 +21,12 @@ function copyStyleRules(fromStyleSheet:CSSStyleSheet, toStyleSheet:CSSStyleSheet
 /**
  * create adopted style sheet by name, and copy style rules from existing style sheet
  */
-function createStyleSheet(name:string):CSSStyleSheet|undefined {
+/**
+ * title属性名に一致するスタイルシートを取得し複製します
+ * @param name title属性名
+ * @returns {CSSStyleSheet} スタイルシート
+ */
+function createStyleSheet(name: string): CSSStyleSheet|undefined {
   const styleSheet = new CSSStyleSheet();
   const matchTitle = (sheet:CSSStyleSheet) => sheet.title === name;
   const fromStyleSheets = Array.from(document.styleSheets).filter(matchTitle);
@@ -50,6 +55,11 @@ const excludeEmptySheet = (styleSheet:CSSStyleSheet|undefined) => typeof styleSh
 
 /**
  * get adopted css list by names
+ */
+/**
+ * 名前リストに一致するスタイルシートを取得し複製します
+ * @param names 名前リスト
+ * @returns {CSSStyleSheet[]} 複製したスタイルシートリスト
  */
 export function getStyleSheetListByNames(names: string[]): CSSStyleSheet[] {
     // find adopted style sheet from map, if not found, create adopted style sheet

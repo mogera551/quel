@@ -2,6 +2,9 @@ import { NodeRoute } from "./types";
 
 /**
  * ノードのルート（道順）インデックスの配列からノードを探す
+ * @param node ノード
+ * @param nodeRoute ノードルート
+ * @returns {Node | undefined} 探したノード
  */
 export function findNodeByNodeRoute(
   node: Node, 

@@ -26,6 +26,9 @@ const bindTextByNodeType:BindTextByNodeType = {
 /**
  * バインドテキストをノードから取得
  * HTML要素の場合はdata-bind属性から、テキストノードの場合はtextContentから取得
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {string} バインドテキスト
  */
 export function getBindTextByNodeType(
   node: Node, 

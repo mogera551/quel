@@ -29,7 +29,9 @@ const setOfAttachableTags:Set<string> = new Set([
 const isCustomTag = (tagName:string):boolean => tagName.indexOf("-") !== -1;
 
 /**
- * タグ名がshadow rootを持つことが可能か
+ * タグがshadow rootを持つことが可能かを判定する
+ * @param {string} tagName タグ名
+ * @returns {boolean} shadow rootを持つことが可能か
  */
 export function isAttachableShadowRoot(tagName: string): boolean {
   return isCustomTag(tagName) || setOfAttachableTags.has(tagName);

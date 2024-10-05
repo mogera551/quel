@@ -16,7 +16,7 @@ const createStateProperty =
 /**
  * バインドのステートプロパティのコンストラクタを取得する
  * @param propertyName 
- * @returns 
+ * @returns {StatePropertyConstructor} ステートプロパティのコンストラクタ
  */
 export function getStatePropertyConstructor(
   propertyName: string

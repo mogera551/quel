@@ -37,6 +37,14 @@ class BindingNode implements IBindingNode {
 
 }
 
+/**
+ * バインディングノードを生成する
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @param bindText バインドテキスト
+ * @param useKeyed オプションのキーを使用するかどうかのフラグ
+ * @returns {IBindingNode} バインディングノード
+ */
 export function createBindingNode(
   node: Node, 
   nodeType: NodeType, 

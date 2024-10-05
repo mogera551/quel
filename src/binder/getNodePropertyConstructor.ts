@@ -78,6 +78,10 @@ const _cache: {[key:string]:NodePropertyConstructor} = {};
 
 /**
  * バインドのノードプロパティのコンストラクタを取得する
+ * @param node ノード
+ * @param propertyName プロパティ名
+ * @param useKeyed オプションのキーを使用するかどうかのフラグ
+ * @returns {NodePropertyConstructor} ノードプロパティのコンストラクタ
  */
 export function getNodePropertyConstructor(
   node:Node, 

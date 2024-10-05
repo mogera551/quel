@@ -10,6 +10,12 @@ type IHandlerPartial = Pick<Handler, "getLastIndexes">;
 
 export type IHandlerPartialForSetExpandValues = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue & IHandlerPartialForSetValueWithoutIndexes;
 
+/**
+ * ドット記法の"@"プロパティに値をセットする関数を生成します
+ * ex) "@aaa.*.bbb.*.ccc" => 値の配列
+ * @param handler Proxyハンドラ
+ * @returns {SetExpandValuesFn} ドット記法の"@"プロパティに値をセットする関数
+ */
 export const setExpandValuesFn = (handler: IHandlerPartialForSetExpandValues): SetExpandValuesFn => {
   const withIndexes = withIndexesFn(handler);
   const getValue = getValueFn(handler);

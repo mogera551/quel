@@ -803,12 +803,16 @@ function removeTopLevelBlankNodes(fragment) {
 }
 /**
  * UUIDからHTMLTemplateElementオブジェクトを取得(ループや分岐条件のブロック)
+ * @param uuid UUID
+ * @returns {HTMLTemplateElement|undefined} HTMLTemplateElementオブジェクト
  */
 function getTemplateByUUID(uuid) {
     return templateByUUID[uuid];
 }
 /**
- * htmlとcssの文字列からHTMLTemplateElementオブジェクトを生成
+ * htmlとcssの文字列からコンポーネント用のHTMLTemplateElementオブジェクトを生成
+ * @param html HTML文字列
+ * @param componentUuid コンポーネントUUID
  */
 function createComponentTemplate(html, componentUuid, customComponentNames) {
     const template = document.createElement("template");
@@ -826,7 +830,12 @@ function _createStyleSheet(cssText) {
     styleSheet.replaceSync(cssText);
     return styleSheet;
 }
-// get style sheet by uuid, if not found, create style sheet
+/**
+ * uuidからスタイルシートを取得します。見つからない場合はスタイルシートを作成します。
+ * @param cssText スタイルシートのテキスト
+ * @param uuid UUID
+ * @returns {CSSStyleSheet} スタイルシート
+ */
 function createStyleSheet$1(cssText, uuid) {
     const styleSheetFromMap = styleSheetByUUID.get(uuid);
     if (styleSheetFromMap)
@@ -872,6 +881,11 @@ class Module {
         return this.componentModules;
     }
 }
+/**
+ * コンポーネントモジュールから中間モジュールを生成します。
+ * @param componentModule コンポーネントモジュール
+ * @returns {IModule} 中間モジュール
+ */
 function createModule(componentModule) {
     return Object.assign(new Module, componentModule);
 }
@@ -920,7 +934,9 @@ const setOfAttachableTags = new Set([
  */
 const isCustomTag = (tagName) => tagName.indexOf("-") !== -1;
 /**
- * タグ名がshadow rootを持つことが可能か
+ * タグがshadow rootを持つことが可能かを判定する
+ * @param {string} tagName タグ名
+ * @returns {boolean} shadow rootを持つことが可能か
  */
 function isAttachableShadowRoot(tagName) {
     return isCustomTag(tagName) || setOfAttachableTags.has(tagName);
@@ -949,6 +965,11 @@ function copyStyleRules(fromStyleSheet, toStyleSheet) {
 /**
  * create adopted style sheet by name, and copy style rules from existing style sheet
  */
+/**
+ * title属性名に一致するスタイルシートを取得し複製します
+ * @param name title属性名
+ * @returns {CSSStyleSheet} スタイルシート
+ */
 function createStyleSheet(name) {
     const styleSheet = new CSSStyleSheet();
     const matchTitle = (sheet) => sheet.title === name;
@@ -974,11 +995,22 @@ const excludeEmptySheet = (styleSheet) => typeof styleSheet !== "undefined";
 /**
  * get adopted css list by names
  */
+/**
+ * 名前リストに一致するスタイルシートを取得し複製します
+ * @param names 名前リスト
+ * @returns {CSSStyleSheet[]} 複製したスタイルシートリスト
+ */
 function getStyleSheetListByNames(names) {
     // find adopted style sheet from map, if not found, create adopted style sheet
     return names.map(getStyleSheet).filter(excludeEmptySheet);
 }
 
+/**
+ * スタイルシートのセレクタをローカライズする
+ * @param styleSheet スタイルシート
+ * @param localSelector ローカルセレクタ
+ * @returns {CSSStyleSheet} ローカライズされたスタイルシート
+ */
 function localizeStyleSheet(styleSheet, localSelector) {
     for (let i = 0; i < styleSheet.cssRules.length; i++) {
         const rule = styleSheet.cssRules[i];
@@ -1042,6 +1074,11 @@ async function execProcesses(updator, states) {
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
 const _cache$8 = new Map();
+/**
+ * パターン情報を取得します
+ * @param pattern パターン
+ * @returns {IPatternInfo} パターン情報
+ */
 function _getPatternInfo(pattern) {
     const patternElements = pattern.split(".");
     const patternPaths = [];
@@ -1071,6 +1108,11 @@ function getPatternInfo(pattern) {
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
 const _cache$7 = new Map();
+/**
+ * プロパティ情報を取得します
+ * @param name プロパティ名
+ * @returns {IPropInfo} プロパティ情報
+ */
 function _getPropInfo(name) {
     const elements = name.split(".");
     const patternElements = elements.slice(0);
@@ -1265,8 +1307,70 @@ function expandStateProperties(states, updatedStateProperties) {
     return expandedStateProperties;
 }
 
-// ソートのための比較関数
-// BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
+class LoopIndexes {
+    #parentLoopIndexes;
+    #_values;
+    #_value;
+    #values;
+    get parentLoopIndexes() {
+        return this.#parentLoopIndexes;
+    }
+    get values() {
+        if (typeof this.#values === "undefined") {
+            if (typeof this.parentLoopIndexes === "undefined") {
+                this.#values = this.#_values;
+            }
+            else {
+                this.#values = this.parentLoopIndexes.values.concat(this.#_value);
+            }
+        }
+        return this.#values;
+    }
+    constructor({ parentLoopIndexes, value, values }) {
+        if (typeof value !== "undefined" && typeof values !== "undefined") {
+            utils.raise(`LoopIndexes.constructor: value and values cannot be set at the same time.`);
+        }
+        if (typeof value === "undefined" && typeof values === "undefined") {
+            utils.raise(`LoopIndexes.constructor: value or values must be set.`);
+        }
+        if (typeof parentLoopIndexes !== "undefined" && typeof value === "undefined") {
+            utils.raise(`LoopIndexes.constructor: value cannot be set with parentLoopIndexes.`);
+        }
+        if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
+            utils.raise(`LoopIndexes.constructor: values cannot be set without parentLoopIndexes.`);
+        }
+        this.#parentLoopIndexes = parentLoopIndexes;
+        this.#_value = value;
+        this.#_values = values;
+    }
+    add(index) {
+        return new LoopIndexes({ parentLoopIndexes: this, value: index, values: undefined });
+    }
+}
+function createLoopIndexes(indexes, index = indexes.length - 1) {
+    const value = indexes[index];
+    return new LoopIndexes({
+        parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
+        value: index > 0 ? value : undefined,
+        values: index === 0 ? [value] : undefined
+    });
+}
+
+function createNamedLoopIndexesFromPattern(pattern, indexes) {
+    const patternInfo = getPatternInfo(pattern);
+    const wildcardPaths = patternInfo.wildcardPaths;
+    const namedLoopIndexes = {};
+    if (wildcardPaths.length > 0) {
+        for (let wi = wildcardPaths.length - 1, loopIndexes = createLoopIndexes(indexes); wi >= 0; wi--) {
+            if (typeof loopIndexes === "undefined")
+                break;
+            namedLoopIndexes[wildcardPaths[wi]] = loopIndexes;
+            loopIndexes = loopIndexes.parentLoopIndexes;
+        }
+    }
+    return namedLoopIndexes;
+}
+
 // 
 async function rebuildBindings(updator, newBindingSummary, updatedStatePropertyAccesses, updatedKeys) {
     for (let i = 0; i < updatedStatePropertyAccesses.length; i++) {
@@ -1278,10 +1382,7 @@ async function rebuildBindings(updator, newBindingSummary, updatedStatePropertyA
                 continue;
             const compareKey = binding.stateProperty.name + ".";
             const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-            const lastWildCardPath = binding.stateProperty.propInfo.wildcardPaths[binding.stateProperty.propInfo.wildcardPaths.length - 1];
-            const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
-                { [lastWildCardPath]: propertyAccess.indexes } :
-                {};
+            const namedLoopIndexes = createNamedLoopIndexesFromPattern(propertyAccess.pattern, propertyAccess.indexes);
             updator.setFullRebuild(isFullBuild, () => {
                 updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                     binding.rebuild();
@@ -1306,9 +1407,9 @@ async function rebuildBindings(updator, newBindingSummary, updatedStatePropertyA
     */
 }
 
-function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex, indexes) {
+function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex) {
     updator?.applyNodeUpdatesByBinding(binding, () => {
-        nodeProperty.applyToChildNodes(setOfIndex, indexes);
+        nodeProperty.applyToChildNodes(setOfIndex);
     });
 }
 
@@ -1334,32 +1435,6 @@ function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccess
             setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
         });
     }
-    /*
-      const indexesByParentKey: {[k: string]: Set<number>} = {};
-      for(const propertyAccess of updatedStatePropertyAccesses) {
-        const patternElements = propertyAccess.propInfo.patternElements;
-        if (patternElements[patternElements.length - 1] !== "*") continue;
-    
-        const indexes = propertyAccess.indexes;
-        const lastIndex = indexes?.[indexes.length - 1];
-        if (typeof lastIndex === "undefined") continue;
-    
-        const patternPaths = propertyAccess.propInfo.patternPaths;
-        const parentKey = patternPaths[patternPaths.length - 2] + "\t" + indexes.slice(0, -1);
-    
-        indexesByParentKey[parentKey]?.add(lastIndex) ?? (indexesByParentKey[parentKey] = new Set([lastIndex]));
-      }
-    
-      for(const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
-        const bindings = bindingSummary.bindingsByKey.get(parentKey);
-        if (typeof bindings === "undefined") continue;
-    //    bindingSummary.update((bindingSummary) => {
-          for(const binding of bindings) {
-            setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
-          }
-    //    });
-      }
-    */
 }
 
 async function updateNodes(updator, newBindingSummary, updatedStatePropertyAccesses) {
@@ -1374,9 +1449,7 @@ async function updateNodes(updator, newBindingSummary, updatedStatePropertyAcces
             }
             else {
                 const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
-                const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
-                    { [lastWildCardPath]: propertyAccess.indexes } :
-                    {};
+                const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccess.indexes);
                 updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                     binding.updateNodeForNoRecursive();
                 });
@@ -1387,9 +1460,7 @@ async function updateNodes(updator, newBindingSummary, updatedStatePropertyAcces
         const info = selectBindings[si];
         const propertyAccess = info.propertyAccess;
         const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
-        const namedLoopIndexes = (propertyAccess.indexes.length > 0) ?
-            { [lastWildCardPath]: propertyAccess.indexes } :
-            {};
+        const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccess.indexes);
         updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
             info.binding.updateNodeForNoRecursive();
         });
@@ -1446,47 +1517,6 @@ function createLoopContextStack() {
     return new LoopContextStack();
 }
 
-class LoopIndexes {
-    parentLoopIndexes;
-    #_values;
-    #_value;
-    #values;
-    get values() {
-        if (typeof this.#values === "undefined") {
-            if (typeof this.parentLoopIndexes === "undefined") {
-                this.#values = this.#_values;
-            }
-            else {
-                this.#values = this.parentLoopIndexes.values.concat(this.#_value);
-            }
-        }
-        return this.#values;
-    }
-    constructor({ parentLoopIndexes, value, values }) {
-        if (typeof value !== "undefined" && typeof values !== "undefined") {
-            utils.raise(`LoopIndexes.constructor: value and values cannot be set at the same time.`);
-        }
-        if (typeof value === "undefined" && typeof values === "undefined") {
-            utils.raise(`LoopIndexes.constructor: value or values must be set.`);
-        }
-        if (typeof parentLoopIndexes !== "undefined" && typeof value === "undefined") {
-            utils.raise(`LoopIndexes.constructor: value cannot be set with parentLoopIndexes.`);
-        }
-        if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
-            utils.raise(`LoopIndexes.constructor: values cannot be set without parentLoopIndexes.`);
-        }
-        this.parentLoopIndexes = parentLoopIndexes;
-        this.#_value = value;
-        this.#_values = values;
-    }
-    add(index) {
-        return new LoopIndexes({ parentLoopIndexes: this, value: index, values: undefined });
-    }
-}
-function createLoopIndexes(indexes) {
-    return new LoopIndexes({ parentLoopIndexes: undefined, value: undefined, values: indexes });
-}
-
 class NamedLoopIndexesStack {
     stack = [];
     async asyncSetNamedLoopIndexes(namedLoopIndexes, callback) {
@@ -1502,10 +1532,7 @@ class NamedLoopIndexesStack {
         }
     }
     setNamedLoopIndexes(namedLoopIndexes, callback) {
-        const tempNamedLoopIndexes = Object.fromEntries(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
-            return [name, createLoopIndexes(indexes)];
-        }));
-        this.stack.push(tempNamedLoopIndexes);
+        this.stack.push(namedLoopIndexes);
         try {
             callback();
         }
@@ -1850,17 +1877,32 @@ let Handler$2 = class Handler {
         };
     }
 };
+/**
+ * コンポーネント間のアクセスをするためのプロパティを作成します
+ * @param component {IComponentForProps} コンポーネント
+ * @returns {IProps} プロパティ
+ */
 function createProps(component) {
     return new Proxy({}, new Handler$2(component));
 }
 
 const BoundByComponentSymbol = Symbol.for(`globalData.boundByComponent`);
 
+/**
+ * 名前付きワイルドカードインデックスの最後のインデックスを取得する関数を生成します
+ * @param handler Proxyハンドラ
+ * @returns {GetLastIndexesFn} 名前付きワイルドカードインデックスの最後のインデックスを取得する関数
+ */
 const getLastIndexesFn = (handler) => function (pattern) {
     const stackNamedWildcardIndexes = handler.stackNamedWildcardIndexes;
     return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes;
 };
 
+/**
+ * ドット記法のプロパティから値を取得する関数を生成します
+ * @param handler Proxyハンドラ
+ * @returns {GetValueFn} ドット記法のプロパティから値を取得する関数
+ */
 const getValueFn = (handler) => {
     return function _getValue(target, patternPaths, patternElements, wildcardIndexes, pathIndex, wildcardIndex, receiver, cache = handler.cache, findPropertyCallback = handler.findPropertyCallback, cachable = typeof handler.cache !== "undefined", callable = patternPaths.length > 1 && typeof handler.findPropertyCallback === "function", cacheKeys = undefined) {
         let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
@@ -1896,6 +1938,15 @@ const getValueFn = (handler) => {
     };
 };
 
+/**
+ * ワイルドカードインデックスを作成します
+ * 部分配列を作成するための情報を持ちます
+ * オンデマンドで部分配列を作成します
+ * なるべく部分配列を作成しないようにします
+ * @param pattern パターン
+ * @param wildcardCount ワイルドカード数
+ * @param indexes インデックス配列
+ */
 class WildcardIndexes {
     #baseIndexes;
     #indexes;
@@ -1914,10 +1965,25 @@ class WildcardIndexes {
         this.#indexes = (wildcardCount === indexes.length) ? indexes : undefined;
     }
 }
+/**
+ * ワイルドカードインデックスを作成します
+ * @param pattern パターン
+ * @param wildcardCount ワイルドカード数
+ * @param indexes インデックス配列
+ * @returns {IWildcardIndexes} ワイルドカードインデックス
+ */
 function createWildCardIndexes(pattern, wildcardCount, indexes) {
     return new WildcardIndexes(pattern, wildcardCount, indexes);
 }
 
+/**
+ * パターン情報を元に名前付きワイルドカードインデックスを作成します
+ * ex) patternInfo "aaa.*.bbb.*.ccc"、 indexes が [1, 2] の場合、
+ *     { "aaa.*" : [1], "aaa.*.bbb.*": [1, 2] }
+ * @param patternInfo パターン情報
+ * @param indexes インデックス配列
+ * @returns {NamedWildcardIndexes} 名前付きワイルドカードインデックス
+ */
 function createNamedWildcardIndexes(patternInfo, indexes) {
     const namedWildcardIndexes = {};
     for (let i = 0; i < patternInfo.wildcardPaths.length; i++) {
@@ -1927,6 +1993,12 @@ function createNamedWildcardIndexes(patternInfo, indexes) {
     return namedWildcardIndexes;
 }
 
+/**
+ * インデックス配列を指定して処理を行う関数を取得する
+ * インデックス配列は、スタックに積まれる
+ * @param handler Proxyハンドラ
+ * @returns {WithIndexesFn} インデックスを指定して処理を行う関数
+ */
 const withIndexesFn = (handler) => {
     return function (patternInfo, indexes, callback) {
         const { stackNamedWildcardIndexes, stackIndexes } = handler;
@@ -1942,6 +2014,12 @@ const withIndexesFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法のプロパティとインデックスを指定して値を取得する関数を生成します
+ * getValueWithoutIndexesFnから呼び出されることを想定しています
+ * @param handler Proxyハンドラ
+ * @returns {GetValueWithIndexesFn} ドット記法のプロパティからインデックスを指定して値を取得する関数
+ */
 const getValueWithIndexesFn = (handler) => {
     const withIndexes = withIndexesFn(handler);
     const getValue = getValueFn(handler);
@@ -1952,6 +2030,12 @@ const getValueWithIndexesFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法のプロパティからインデックスを指定せずに値を取得する関数を取得する
+ * ex) "aaa.1.bbb.2.ccc"のようなワイルドカードを含まないプロパティを想定
+ * @param handler Proxyハンドラ
+ * @returns {GetValueWithoutIndexesFn} ドット記法のプロパティからインデックスを指定せずに値を取得する関数
+ */
 const getValueWithoutIndexesFn = (handler) => {
     const getValueWithIndexes = getValueWithIndexesFn(handler);
     return function (target, prop, receiver) {
@@ -1964,6 +2048,12 @@ const getValueWithoutIndexesFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法のプロパティとインデックスを指定して値を取得する関数を生成します
+ * setValueWithoutIndexesFnから呼び出されることを想定しています
+ * @param handler Proxyハンドラ
+ * @returns {SetValueWithIndexesFn} ドット記法のプロパティとインデックスを指定して値を取得する関数
+ */
 const setValueWithIndexesFn = (handler) => {
     const withIndexes = withIndexesFn(handler);
     const getValue = getValueFn(handler);
@@ -2003,6 +2093,12 @@ const setValueWithIndexesFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法のプロパティからインデックスを指定せずに値をセットする関数を取得する
+ * ex) "aaa.1.bbb.2.ccc"のようなワイルドカードを含まないプロパティを想定
+ * @param handler Proxyハンドラ
+ * @returns {SetValueWithoutIndexesFn} ドット記法のプロパティからインデックスを指定せずに値をセットする関数
+ */
 const setValueWithoutIndexesFn = (handler) => {
     const setValueWithIndexes = setValueWithIndexesFn(handler);
     return function (target, prop, value, receiver) {
@@ -2015,6 +2111,12 @@ const setValueWithoutIndexesFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法の"@"プロパティから値を展開する関数を生成します
+ * ex) "@aaa.*.bbb.*.ccc" => 値の配列
+ * @param handler Proxyハンドラ
+ * @returns {GetExpandValuesFn} ドット記法の"@"プロパティから値を展開する関数
+ */
 const getExpandValuesFn = (handler) => {
     const withIndexes = withIndexesFn(handler);
     const getValue = getValueFn(handler);
@@ -2065,6 +2167,12 @@ const getExpandValuesFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法の"@"プロパティに値をセットする関数を生成します
+ * ex) "@aaa.*.bbb.*.ccc" => 値の配列
+ * @param handler Proxyハンドラ
+ * @returns {SetExpandValuesFn} ドット記法の"@"プロパティに値をセットする関数
+ */
 const setExpandValuesFn = (handler) => {
     const withIndexes = withIndexesFn(handler);
     const getValue = getValueFn(handler);
@@ -2108,6 +2216,12 @@ const setExpandValuesFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法のプロパティと配列を指定して直接getValueから値を取得する関数を生成します
+ * 高速化のために使用します
+ * @param handler Proxyハンドラ
+ * @returns {GetValueDirectFn} ドット記法のプロパティと配列を指定して直接getValueから値を取得する関数
+ */
 const getValueDirectFn = (handler) => {
     const withIndexes = withIndexesFn(handler);
     const getValue = getValueFn(handler);
@@ -2136,6 +2250,12 @@ const getValueDirectFn = (handler) => {
     };
 };
 
+/**
+ * ドット記法のプロパティと配列を指定して直接setValueから値をセットする関数を生成します
+ * 高速化のために使用します
+ * @param handler Proxyハンドラ
+ * @returns {SetValueDirectFn} ドット記法のプロパティと配列を指定して直接setValueから値をセットする関数
+ */
 const setValueDirectFn = (handler) => {
     const withIndexes = withIndexesFn(handler);
     const setValueWithIndexes = setValueWithIndexesFn(handler);
@@ -2338,6 +2458,11 @@ class ComponentGlobalDataHandler extends Handler$1 {
         return this.directSet(pattern, wildcardIndexes, value);
     }
 }
+/**
+ *
+ * @param component グローバルデータへのアクセスを作成するコンポーネント
+ * @returns {IGlobalDataProxy} グローバルデータへのアクセス
+ */
 function createGlobals(component) {
     return new Proxy({}, new ComponentGlobalDataHandler(component));
 }
@@ -2356,6 +2481,9 @@ const replaceTextNodeFn = {
 };
 /**
  * コメントノードをテキストノードに置き換える
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {Node} ノード
  */
 function replaceTextNodeFromComment(node, nodeType) {
     return replaceTextNodeFn[nodeType](node);
@@ -2376,6 +2504,9 @@ const removeAttributeByNodeType = {
 };
 /**
  * ノードからdata-bind属性を削除
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {Node} ノード
  */
 function removeDataBindAttribute(node, nodeType) {
     return removeAttributeByNodeType[nodeType](node);
@@ -2403,6 +2534,12 @@ const isInputableFn = {
     Text: alwaysFalse,
     Template: alwaysFalse,
 };
+/**
+ * ノードが入力を受け付けるかどうか
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {boolean} ノードが入力を受け付けるかどうか
+ */
 function canNodeAcceptInput(node, nodeType) {
     return isInputableFn[nodeType](node);
 }
@@ -2456,6 +2593,9 @@ const parseExpressions = (text, defaultName) => {
 const _cache$6 = {};
 /**
  * 取得したバインドテキスト(getBindTextByNodeType)を解析して、バインド情報を取得する
+ * @param text バインドテキスト
+ * @param defaultName デフォルト名
+ * @returns {ParsedBindText[]} バインド情報
  */
 function parseBindText(text, defaultName) {
     if (text.trim() === "")
@@ -2490,6 +2630,9 @@ const getDefaultPropertyByNodeType = {
 };
 /**
  * バインド情報でノードプロパティを省略された場合のデフォルトのプロパティ名を取得
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {string | undefined} デフォルトのプロパティ名
  */
 function getDefaultPropertyForNode(node, nodeType) {
     const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
@@ -3105,7 +3248,7 @@ class RepeatKeyed extends Loop {
         }
         this.#lastValue = values.slice();
     }
-    applyToChildNodes(setOfIndex, indexes) {
+    applyToChildNodes(setOfIndex) {
         this.revisionUpForLoop();
         const uuid = this.uuid;
         const binding = this.binding;
@@ -3215,6 +3358,10 @@ function _getNodePropertyConstructor(isComment, isElement, propertyName, useKeye
 const _cache$4 = {};
 /**
  * バインドのノードプロパティのコンストラクタを取得する
+ * @param node ノード
+ * @param propertyName プロパティ名
+ * @param useKeyed オプションのキーを使用するかどうかのフラグ
+ * @returns {NodePropertyConstructor} ノードプロパティのコンストラクタ
  */
 function getNodePropertyConstructor(node, propertyName, useKeyed) {
     const isComment = node instanceof Comment;
@@ -3364,7 +3511,7 @@ const createStateProperty = (StatePropertyConstructor) => (binding, name, filter
 /**
  * バインドのステートプロパティのコンストラクタを取得する
  * @param propertyName
- * @returns
+ * @returns {StatePropertyConstructor} ステートプロパティのコンストラクタ
  */
 function getStatePropertyConstructor(propertyName) {
     const statePropertyConstructor = regexp.test(propertyName) ? ContextIndex : StateProperty;
@@ -3373,6 +3520,11 @@ function getStatePropertyConstructor(propertyName) {
 
 /**
  * バインドのノードプロパティとステートプロパティのコンストラクタを取得する
+ * @param node ノード
+ * @param nodePropertyName ノードプロパティ名
+ * @param statePropertyName ステートプロパティ名
+ * @param useKeyed キー付きのプロパティを使用するかどうか
+ * @returns {PropertyConstructors} プロパティコンストラクタ
  */
 function getPropertyConstructors(node, nodePropertyName, statePropertyName, useKeyed) {
     return {
@@ -3534,6 +3686,9 @@ function createBinding(contentBindings, node, nodePropertyName, nodePropertyCons
 
 /**
  * バインディング情報を元にバインディングを作成する関数を返す
+ * @param bindTextInfo バインドテキスト情報
+ * @param propertyCreators プロパティコンストラクタ
+ * @returns {IBinding} バインディング
  */
 const getCreateBinding = (bindTextInfo, propertyCreators) => (contentBindings, node) => createBinding(contentBindings, node, bindTextInfo.nodeProperty, propertyCreators.nodePropertyConstructor, bindTextInfo.inputFilters, bindTextInfo.stateProperty, propertyCreators.statePropertyConstructor, bindTextInfo.outputFilters);
 
@@ -3542,6 +3697,8 @@ const getCreateBinding = (bindTextInfo, propertyCreators) => (contentBindings, n
  * ex.
  * rootNode.childNodes[1].childNodes[3].childNodes[7].childNodes[2]
  * => [1,3,7,2]
+ * @param node ノード
+ * @returns {NodeRoute} ルートインデックスの配列
  */
 function computeNodeRoute(node) {
     let routeIndexes = [];
@@ -3596,6 +3753,8 @@ const initializeNodeByNodeType = {
 /**
  * ノードの初期化処理
  * 入力可のノードの場合、デフォルトイベントハンドラを設定する
+ * @param nodeInfo ノード情報
+ * @returns {function} ノードの初期化処理
  */
 const initializeForNode = (nodeInfo) => (node, bindings) => initializeNodeByNodeType[nodeInfo.nodeType](node, nodeInfo.acceptInput, bindings, nodeInfo.defaultProperty);
 
@@ -3617,6 +3776,14 @@ class BindingNode {
         this.initializeForNode = initializeForNode(this);
     }
 }
+/**
+ * バインディングノードを生成する
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @param bindText バインドテキスト
+ * @param useKeyed オプションのキーを使用するかどうかのフラグ
+ * @returns {IBindingNode} バインディングノード
+ */
 function createBindingNode(node, nodeType, bindText, useKeyed) {
     // CommentNodeをTextに置換、template.contentの内容が書き換わることに注意
     node = replaceTextNodeFromComment(node, nodeType);
@@ -3655,6 +3822,9 @@ const bindTextByNodeType = {
 /**
  * バインドテキストをノードから取得
  * HTML要素の場合はdata-bind属性から、テキストノードの場合はtextContentから取得
+ * @param node ノード
+ * @param nodeType ノードタイプ
+ * @returns {string} バインドテキスト
  */
 function getBindTextByNodeType(node, nodeType) {
     return bindTextByNodeType[nodeType](node);
@@ -3668,6 +3838,8 @@ const isCommentNode = (node) => node instanceof Comment && ((node.textContent?.s
  * ノードツリーからexpandableなコメントノードを取得する
  * expandableなコメントノードとは、"@@:"もしくは"@@|"で始まるコメントノードのこと
  * {{ if: }}や{{ loop: }}を置き換えたもの指すためのコメントノード
+ * @param node ノード
+ * @returns {Comment[]} コメントノード
  */
 function getExpandableComments(node) {
     return Array.from(node.childNodes).flatMap(node => getExpandableComments(node).concat(isCommentNode(node) ? node : []));
@@ -3681,6 +3853,9 @@ const getNodeTypeByNode = (node) => (node instanceof Comment && node.textContent
             (node instanceof SVGElement) ? "SVGElement" : utils.raise(`Unknown NodeType: ${node.nodeType}`);
 /**
  * ノードのタイプを取得
+ * @param node ノード
+ * @param nodeKey ノードキー
+ * @returns {NodeType} ノードタイプ
  */
 function getNodeType(node, nodeKey = createNodeKey(node)) {
     return nodeTypeByNodeKey[nodeKey] ?? (nodeTypeByNodeKey[nodeKey] = getNodeTypeByNode(node));
@@ -3690,6 +3865,9 @@ const BIND_DATASET = "bind";
 const SELECTOR = `[data-${BIND_DATASET}]`;
 /**
  * HTMLテンプレートからバインドノード情報を抽出する
+ * @param template テンプレート
+ * @param useKeyed オプションのキーを使用するかどうかのフラグ
+ * @returns {IBindingNode[]} バインドノード情報
  */
 function extractBindNodeInfosFromTemplate(template, useKeyed) {
     const nodeInfos = [];
@@ -3708,6 +3886,9 @@ function extractBindNodeInfosFromTemplate(template, useKeyed) {
 
 /**
  * ノードのルート（道順）インデックスの配列からノードを探す
+ * @param node ノード
+ * @param nodeRoute ノードルート
+ * @returns {Node | undefined} 探したノード
  */
 function findNodeByNodeRoute(node, nodeRoute) {
     for (let i = 0; (typeof node !== "undefined") && (i < nodeRoute.length); node = node.childNodes[nodeRoute[i++]])
@@ -3717,6 +3898,10 @@ function findNodeByNodeRoute(node, nodeRoute) {
 
 /**
  * HTMLテンプレートのコンテントからバインディング配列を作成する
+ * @param content コンテント
+ * @param contentBindings コンテントバインディング
+ * @param bindingNodes バインディングノード
+ * @returns {IBinding[]} バインディング配列
  */
 function createBindings(content, contentBindings, bindingNodes) {
     const bindings = [];
@@ -3747,6 +3932,12 @@ class Binder {
         return createBindings(content, contentBindings, this.#nodeInfos);
     }
 }
+/**
+ * バインドを生成するためのクラスを生成します。
+ * @param template テンプレート
+ * @param useKeyed オプションのキーを使用するかどうかのフラグ
+ * @returns {IBinder}
+ */
 function createBinder(template, useKeyed) {
     const uuid = template.dataset[UUID_DATASET] ?? utils.raise("uuid not found");
     return _cache$3[uuid] ?? (_cache$3[uuid] = new Binder(template, useKeyed));
@@ -4163,6 +4354,12 @@ class UserProxyHandler {
         }
     }
 }
+/**
+ * State内で使用するコンポーネントを生成する
+ * アクセス制限をかけるためのProxyを生成する
+ * @param component コンポーネントを元にProxyを生成する
+ * @returns {IUserComponent} ユーザーコンポーネント
+ */
 function createUserComponent(component) {
     return new Proxy(component, new UserProxyHandler);
 }
@@ -4410,6 +4607,11 @@ const excludeEmptyName = (name) => name.length > 0;
 /**
  * get name list from component style variable '--adopted-css'
  */
+/**
+ * コンポーネントのスタイル属性の '--adopted-css' から名前リストを取得します
+ * @param component コンポーネント
+ * @returns {string[]} 名前リスト
+ */
 function getAdoptedCssNamesFromStyleValue(component) {
     // get adopted css names from component style variable '--adopted-css'
     return getComputedStyle(component)?.getPropertyValue(ADOPTED_VAR_NAME)?.split(" ").map(trim).filter(excludeEmptyName) ?? [];
@@ -4531,6 +4733,23 @@ const getParentComponent = (_node) => {
     } while (true);
 };
 const localStyleSheetByTagName = new Map;
+/**
+ * コンポーネントを拡張する
+ * 拡張内容は以下の通り
+ * - states: Stateの生成
+ * - initialPromises: 初期化用Promise
+ * - alivePromises: アライブ用Promise
+ * - rootBindingManager: ルートバインディングマネージャ
+ * - viewRootElement: 表示用ルート要素
+ * - pseudoParentNode: 親ノード（use, case of useWebComponent is false）
+ * - pseudoNode: ダミーノード（use, case of useWebComponent is false）
+ * - newBindingSummary: 新規バインディングサマリ
+ * - updator: アップデータ
+ * - props: プロパティ
+ * - globals: グローバルデータ
+ * @param Base 元のコンポーネント
+ * @returns {CustomComponent} 拡張されたコンポーネント
+ */
 function CustomComponent(Base) {
     return class extends Base {
         constructor(...args) {
@@ -4668,7 +4887,7 @@ function CustomComponent(Base) {
             const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
             this.rootBindingManager = createRootContentBindings(this, uuid);
             this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
-                this.rootBindingManager.rebuild([]);
+                this.rootBindingManager.rebuild();
             });
             if (this.useWebComponent) {
                 // case of useWebComponent,
@@ -4714,6 +4933,20 @@ function CustomComponent(Base) {
     };
 }
 
+/**
+ * コンポーネントをダイアログを簡単に表示できるように拡張する
+ * 拡張内容は以下の通り
+ * - dialogPromises: ダイアログ用Promise
+ * - returnValue: 戻り値
+ * - useBufferedBind: バッファードバインドを使用するかどうか
+ * - asyncShowModal: モーダルダイアログ表示
+ * - asyncShow: ダイアログ表示
+ * - showModal: モーダルダイアログ表示
+ * - show: ダイアログ表示
+ * - close: ダイアログを閉じる
+ * @param Base 元のコンポーネント
+ * @returns {IDialogComponent} 拡張されたコンポーネント
+ */
 function DialogComponent(Base) {
     return class extends Base {
         #dialogPromises;
@@ -4813,6 +5046,19 @@ function DialogComponent(Base) {
     };
 }
 
+/**
+ * コンポーネントをポップオーバーできるように拡張します
+ * 拡張内容は以下の通り
+ * - popoverPromises: ポップオーバー用Promise
+ * - popoverContextIndexesById: ポップオーバーコンテキストインデックス
+ * - canceled: キャンセルフラグ
+ * - asyncShowPopover: ポップオーバー表示
+ * - hidePopover: ポップオーバーを閉じる
+ * - cancelPopover: ポップオーバーをキャンセル
+ *
+ * @param Base 元のコンポーネント
+ * @returns {IPopoverComponent} 拡張されたコンポーネント
+ */
 function PopoverComponent(Base) {
     return class extends Base {
         #canceled = false;
@@ -4900,26 +5146,29 @@ function PopoverComponent(Base) {
     };
 }
 
+/**
+ * コンポーネントモジュールをカスタムエレメント名を指定してカスタムコンポーネントとして登録します
+ * @param componentModules コンポーネントモジュールのオブジェクト、名前とモジュールのペア
+ * @returns {void}
+ */
 function registerComponentModules(componentModules) {
     for (const [customElementName, userComponentModule] of Object.entries(componentModules)) {
         registerComponentModule(customElementName, userComponentModule);
     }
 }
 
-const moduleByConstructor = new Map;
 const customElementInfoByConstructor = new Map;
 const filterManagersByConstructor = new Map;
 /**
- * generate unique component class
+ * コンポーネントのベースとなるクラスを生成します
+ * @param componentModule コンポーネントモジュール
+ * @returns {typeof HTMLElement} コンポーネントクラス
  */
 const generateComponentClass = (componentModule) => {
     const getBaseClass = function (module, baseConstructor) {
         const baseClass = class extends baseConstructor {
             #module = module;
             get module() {
-                //        if (typeof this.#module === "undefined") {
-                //          this.#module = moduleByConstructor.get(this.thisClass) ?? utils.raise(`module is not found for ${this.constructor.name}`);
-                //        }
                 return this.#module;
             }
             get isQuelComponent() {
@@ -5047,7 +5296,6 @@ const generateComponentClass = (componentModule) => {
             }
         };
         baseClass.thisClass = baseClass;
-        moduleByConstructor.set(baseClass, module);
         return baseClass;
     };
     const module = createModule(componentModule);
@@ -5068,6 +5316,12 @@ const generateComponentClass = (componentModule) => {
 /**
  * register component class with tag name, call customElements.define
  * generate component class from componentModule
+ */
+/**
+ * コンポーネントモジュールをカスタムエレメント名を指定してカスタムコンポーネントとして登録します
+ * @param customElementName カスタムエレメント名
+ * @param componentModule コンポーネントモジュール
+ * @returns {void}
  */
 function registerComponentModule(customElementName, componentModule) {
     const customElementKebabName = utils.toKebabCase(customElementName);
@@ -5137,6 +5391,14 @@ function fromComment(html) {
         return `{{${expr}}}`;
     });
 }
+/**
+ * 単一ファイルコンポーネントをロードしコンポーネントモジュールを取得します
+ * ファイルを読み込んで、テンプレート、スクリプト、スタイルを取得します
+ * スクリプトはdata　uri schemeで読み込みます
+ * なので、スクリプト内のimportは、絶対パス、importmap、エイリアスを使って記述してください
+ * @param path 単一ファイルコンポーネントのパス
+ * @returns {Promise<ComponentModule>} コンポーネントモジュール
+ */
 async function loadSingleFileComponent(path) {
     const template = document.createElement("template");
     const response = await fetch(importMetaResolve(import.meta, path));
@@ -5164,17 +5426,33 @@ async function loadSingleFileComponent(path) {
     return Object.assign({}, scriptModule, htmlModule, cssModule);
 }
 
+/**
+ * 単一ファイルコンポーネントをカスタムエレメント名を指定して登録します
+ * @param customElementName カスタムエレメント名
+ * @param pathToSingleFileComponent 単一ファイルコンポーネントのパス
+ * @returns {Promise<void>}
+ */
 async function registerSingleFileComponent(customElementName, pathToSingleFileComponent) {
     const componentModule = await loadSingleFileComponent(pathToSingleFileComponent);
     registerComponentModule(customElementName, componentModule);
 }
 
+/**
+ * 単一ファイルコンポーネントをカスタムエレメント名を指定して登録します
+ * @param pathToSingleFileComponentByCustomElementName 単一ファイルコンポーネントのパスのオブジェクト、カスタムエレメント名とパスのペア
+ * @returns {Promise<void>}
+ */
 async function registerSingleFileComponents(pathToSingleFileComponentByCustomElementName) {
     for (const [customElementName, pathToSingleFileComponent] of Object.entries(pathToSingleFileComponentByCustomElementName ?? {})) {
-        registerSingleFileComponent(customElementName, pathToSingleFileComponent);
+        await registerSingleFileComponent(customElementName, pathToSingleFileComponent);
     }
 }
 
+/**
+ * 単一ファイルコンポーネントからコンポーネントクラスを生成します
+ * @param pathToSingleFileComponent 単一ファイルコンポーネントのパス
+ * @returns {Promise<typeof HTMLElement>} コンポーネントクラス
+ */
 async function generateSingleFileComponentClass(pathToSingleFileComponent) {
     const componentModule = await loadSingleFileComponent(pathToSingleFileComponent);
     return generateComponentClass(componentModule);
