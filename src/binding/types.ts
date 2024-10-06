@@ -135,20 +135,6 @@ export interface IMultiValue {
   enabled:boolean;
 }
 
-export interface IBindingSummary {
-  updated: boolean;
-  readonly updateRevision: number;
-  readonly bindingsByKey: Map<string,IBinding[]>;
-  readonly expandableBindings: Set<IBinding>;
-  readonly componentBindings: Set<IBinding>;
-  readonly allBindings: Set<IBinding>;
-  add(binding: IBinding): void;
-  delete(binding: IBinding): void;
-  exists(binding: IBinding): boolean;
-  update(callback:(summary: IBindingSummary)=>any): void;
-  partialUpdate(bindings: IBinding[]): void;
-}
-
 export interface INewBindingSummary {
   register(binding: IBinding): void;
   delete(binding: IBinding): void;

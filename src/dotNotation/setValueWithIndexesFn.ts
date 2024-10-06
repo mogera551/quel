@@ -46,13 +46,6 @@ export const setValueWithIndexesFn = (handler: IHandlerPartialForSetValueWithInd
               propInfo.wildcardCount - (isWildcard ? 1 : 0) - 1, 
               receiver);
             Reflect.set(parentValue, isWildcard ? indexes[indexes.length - 1] ?? utils.raise("wildcard is undefined") : lastElement, value);
-/*
-            if (isWildcard) {
-              parentValue[indexes[indexes.length - 1] ?? utils.raise("wildcard is undefined")] = value;
-            } else {
-              parentValue[lastElement] = value;
-            }
-*/
           }
         }
       );

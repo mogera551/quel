@@ -1,9 +1,7 @@
 
 import { IProcess } from "../component/types";
 import { IPropertyAccess } from "../binding/types";
-import { IBinding, IBindingSummary } from "../binding/types";
-import { IStates } from "../state/types";
-import { Indexes } from "../dotNotation/types";
+import { IBinding } from "../binding/types";
 import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loopContext/types";
 
 export interface IUpdator {

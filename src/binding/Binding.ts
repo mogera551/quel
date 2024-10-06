@@ -1,4 +1,4 @@
-import { IBinding, INodeProperty, IStateProperty, IContentBindings, IBindingSummary, IComponentPartial, INewBindingSummary } from "./types";
+import { IBinding, INodeProperty, IStateProperty, IContentBindings, IComponentPartial, INewBindingSummary } from "./types";
 import { NodePropertyConstructor, StatePropertyConstructor } from "../binder/types";
 import { IFilterText, IFilterManager } from "../filter/types";
 import { utils } from "../utils";

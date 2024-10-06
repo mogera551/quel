@@ -1,6 +1,6 @@
 import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
-import { IBinding, IBindingSummary, INewBindingSummary, IPropertyAccess } from "../binding/types";
+import { IBinding, INewBindingSummary, IPropertyAccess } from "../binding/types";
 import { IStates } from "../state/types";
 import { IUpdator } from "./types";
 import { execProcesses } from "./execProcesses";

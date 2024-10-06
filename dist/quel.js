@@ -1447,21 +1447,6 @@ async function rebuildBindings(updator, newBindingSummary, updatedStatePropertyA
             });
         }
     }
-    /*
-      const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
-      bindingSummary.update((bindingSummary) => {
-        for(let i = 0; i < expandableBindings.length; i++) {
-          const binding = expandableBindings[i];
-          if (!bindingSummary.exists(binding)) continue;
-          if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key)) continue;
-          const compareKey = binding.stateProperty.key + ".";
-          const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-          updator.setFullRebuild(isFullBuild, () => {
-            binding.rebuild();
-          });
-        }
-      });
-    */
 }
 
 function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex) {
@@ -1522,32 +1507,10 @@ async function updateNodes(updator, newBindingSummary, updatedStatePropertyAcces
             info.binding.updateNodeForNoRecursive();
         });
     }
-    /*
-      const allBindingsForUpdate: IBinding[] = [];
-      for(let key of updateStatePropertyAccessByKey.keys()) {
-        const bindings = bindingSummary.bindingsByKey.get(key);
-        if (typeof bindings === "undefined") continue;
-        allBindingsForUpdate.push.apply(allBindingsForUpdate, bindings);
-      }
-      const uniqueAllBindingsForUpdate = Array.from(new Set(allBindingsForUpdate));
-      const selectBindings = [];
-      for(let ui = 0; ui < uniqueAllBindingsForUpdate.length; ui++) {
-        const binding = uniqueAllBindingsForUpdate[ui];
-        if (binding.nodeProperty.isSelectValue) {
-          selectBindings.push(binding);
-        } else {
-          binding.updateNodeForNoRecursive();
-        }
-      }
-      for(let si = 0; si < selectBindings.length; si++) {
-        selectBindings[si].updateNodeForNoRecursive();
-      }
-    */
 }
 
 class LoopContextStack {
     stack;
-    //namedLoopIndexesStack: INamedLoopIndexesStack = createNamedLoopIndexesStack();
     async setLoopContext(namedLoopIndexesStack, loopContext, callback) {
         if (namedLoopIndexesStack.stack.length > 0) {
             utils.raise("namedLoopIndexesStack is already set.");
@@ -2161,13 +2124,6 @@ const setValueWithIndexesFn = (handler) => {
                     const isWildcard = lastPatternElement === "*";
                     const parentValue = getValue(target, propInfo.patternPaths, propInfo.patternElements, indexes, propInfo.paths.length - 2, propInfo.wildcardCount - (isWildcard ? 1 : 0) - 1, receiver);
                     Reflect.set(parentValue, isWildcard ? indexes[indexes.length - 1] ?? utils.raise("wildcard is undefined") : lastElement, value);
-                    /*
-                                if (isWildcard) {
-                                  parentValue[indexes[indexes.length - 1] ?? utils.raise("wildcard is undefined")] = value;
-                                } else {
-                                  parentValue[lastElement] = value;
-                                }
-                    */
                 }
             });
             return true;

@@ -1,10 +1,8 @@
 import { utils } from "../utils";
-import { createNamedLoopIndexesStack } from "./createNamedLoopIndexesStack";
-import { ILoopContext, ILoopContextStack, INamedLoopIndexes, INamedLoopIndexesStack } from "./types";
+import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "./types";
 
-class LoopContextStack {
+class LoopContextStack implements ILoopContextStack {
   stack: ILoopContext | undefined;
-  //namedLoopIndexesStack: INamedLoopIndexesStack = createNamedLoopIndexesStack();
 
   async setLoopContext(
     namedLoopIndexesStack: INamedLoopIndexesStack,

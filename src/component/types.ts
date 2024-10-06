@@ -2,7 +2,7 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
 import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
-import { IContentBindings, IBindingPropertyAccess, IBindingSummary, INewBindingSummary } from "../binding/types";
+import { IContentBindings, IBindingPropertyAccess, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
 import { ILoopContext } from "../loopContext/types";
 

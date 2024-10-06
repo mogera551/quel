@@ -31,20 +31,5 @@ export async function rebuildBindings(
       });
     }
   }
-/*
-  const expandableBindings = Array.from(bindingSummary.expandableBindings).toSorted(compareExpandableBindings);
-  bindingSummary.update((bindingSummary) => {
-    for(let i = 0; i < expandableBindings.length; i++) {
-      const binding = expandableBindings[i];
-      if (!bindingSummary.exists(binding)) continue;
-      if (!updateStatePropertyAccessByKey.has(binding.stateProperty.key)) continue;
-      const compareKey = binding.stateProperty.key + ".";
-      const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-      updator.setFullRebuild(isFullBuild, () => {
-        binding.rebuild();
-      });
-    }
-  });
-*/
 }
 
