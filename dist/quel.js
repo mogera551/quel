@@ -1456,7 +1456,7 @@ function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex) {
 }
 
 function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccesses) {
-    const propertyAccessByKey = {};
+    const parentPropertyAccessByKey = {};
     const indexesByParentKey = {};
     for (const propertyAccess of updatedStatePropertyAccesses) {
         const patternElements = propertyAccess.propInfo.patternElements;
@@ -1467,14 +1467,18 @@ function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccess
         if (typeof lastIndex === "undefined")
             continue;
         const patternPaths = propertyAccess.propInfo.patternPaths;
-        const parentKey = patternPaths[patternPaths.length - 2] + "\t" + indexes.slice(0, -1);
+        const parentPropertyAccess = createPropertyAccess(patternPaths[patternPaths.length - 2], indexes.slice(0, -1));
+        const parentKey = parentPropertyAccess.key;
         indexesByParentKey[parentKey]?.add(lastIndex) ?? (indexesByParentKey[parentKey] = new Set([lastIndex]));
-        propertyAccessByKey[parentKey] = propertyAccess;
+        parentPropertyAccessByKey[parentKey] = parentPropertyAccess;
     }
     for (const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
-        const propertyAccess = propertyAccessByKey[parentKey];
-        newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes).forEach(binding => {
-            setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
+        const parentPropertyAccess = parentPropertyAccessByKey[parentKey];
+        newBindingSummary.gatherBindings(parentPropertyAccess.pattern, parentPropertyAccess.indexes).forEach(binding => {
+            const namedLoopIndexes = createNamedLoopIndexesFromPattern(parentPropertyAccess.pattern, parentPropertyAccess.indexes);
+            updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+                setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
+            });
         });
     }
 }
