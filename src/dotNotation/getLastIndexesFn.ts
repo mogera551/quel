@@ -14,5 +14,5 @@ function(
   pattern:string
 ): Indexes | undefined {
   const stackNamedWildcardIndexes = handler.stackNamedWildcardIndexes;
-  return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes;
+  return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.get(pattern)?.indexes;
 };

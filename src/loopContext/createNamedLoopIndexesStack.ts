@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { createLoopIndexes } from "./createLoopIndexes";
+import { createLoopIndexes, disposeLoopIndexes } from "./createLoopIndexes";
 import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "./types";
 
 class NamedLoopIndexesStack implements INamedLoopIndexesStack {
@@ -9,14 +9,14 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     namedLoopIndexes: {[key:string]:number[]}, 
     callback: () => Promise<void>
   ): Promise<void> {
-    const tempNamedLoopIndexes = Object.fromEntries(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
+    const tempNamedLoopIndexes = new Map(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
       return [name, createLoopIndexes(indexes)]
     }));
     this.stack.push(tempNamedLoopIndexes);
     try {
       await callback();
     } finally {
-      this.stack.pop();
+      const namedLoopIndexes = this.stack.pop();
     }
   }
   
@@ -28,7 +28,7 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     try {
       callback();
     } finally {
-      this.stack.pop();
+      const namedLoopIndexes = this.stack.pop();
     }
   }
 
@@ -39,20 +39,25 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     callback: () => void
   ): void {
     const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
-    currentNamedLoopIndexes[name] = 
+    currentNamedLoopIndexes.set(name, 
       (typeof parentName !== "undefined") ? 
-      currentNamedLoopIndexes[parentName]?.add(index) ?? utils.raise(`NamedLoopIndexesStack.setSubIndex: parentName "${parentName}" is not found.`) :
-      currentNamedLoopIndexes[name] = createLoopIndexes([index]);
+      currentNamedLoopIndexes.get(parentName)?.add(index) ?? utils.raise(`NamedLoopIndexesStack.setSubIndex: parentName "${parentName}" is not found.`) :
+      createLoopIndexes([index])
+    );
     try {
       callback();
     } finally {
-      delete currentNamedLoopIndexes[name];
+      const loopIndexes = currentNamedLoopIndexes.get(name);
+      if (typeof loopIndexes !== "undefined") {
+        disposeLoopIndexes(loopIndexes, false);
+        currentNamedLoopIndexes.delete(name);
+      }
     }
   }
 
   getLoopIndexes(name: string): ILoopIndexes | undefined {
     const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
-    return currentNamedLoopIndexes?.[name];
+    return currentNamedLoopIndexes?.get(name);
   }
 
   getNamedLoopIndexes(): INamedLoopIndexes | undefined {

@@ -1307,11 +1307,13 @@ function expandStateProperties(states, updatedStateProperties) {
     return expandedStateProperties;
 }
 
+const _pool$3 = [];
 class LoopIndexes {
     #parentLoopIndexes;
     #_values;
     #_value;
     #values;
+    #disposed = false;
     get parentLoopIndexes() {
         return this.#parentLoopIndexes;
     }
@@ -1325,6 +1327,12 @@ class LoopIndexes {
             }
         }
         return this.#values;
+    }
+    get disposed() {
+        return this.#disposed;
+    }
+    set disposed(value) {
+        this.#disposed = value;
     }
     constructor({ parentLoopIndexes, value, values }) {
         if (typeof value !== "undefined" && typeof values !== "undefined") {
@@ -1343,28 +1351,77 @@ class LoopIndexes {
         this.#_value = value;
         this.#_values = values;
     }
+    assignValue({ parentLoopIndexes, value, values }) {
+        if (typeof value !== "undefined" && typeof values !== "undefined") {
+            utils.raise(`LoopIndexes.assignValue: value and values cannot be set at the same time.`);
+        }
+        if (typeof value === "undefined" && typeof values === "undefined") {
+            utils.raise(`LoopIndexes.assignValue: value or values must be set.`);
+        }
+        if (typeof parentLoopIndexes !== "undefined" && typeof value === "undefined") {
+            utils.raise(`LoopIndexes.assignValue: value cannot be set with parentLoopIndexes.`);
+        }
+        if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
+            utils.raise(`LoopIndexes.assignValue: values cannot be set without parentLoopIndexes.`);
+        }
+        this.#parentLoopIndexes = parentLoopIndexes;
+        this.#_value = value;
+        this.#_values = values;
+        this.#values = undefined;
+    }
     add(index) {
         return new LoopIndexes({ parentLoopIndexes: this, value: index, values: undefined });
+    }
+    dispose() {
+        this.#disposed = true;
+        this.#parentLoopIndexes = undefined;
+        this.#_value = undefined;
+        this.#_values = undefined;
+        this.#values = undefined;
     }
 }
 function createLoopIndexes(indexes, index = indexes.length - 1) {
     const value = indexes[index];
-    return new LoopIndexes({
-        parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
-        value: index > 0 ? value : undefined,
-        values: index === 0 ? [value] : undefined
-    });
+    if (_pool$3.length > 0) {
+        const loopIndexes = _pool$3.pop();
+        loopIndexes.disposed = false;
+        loopIndexes.assignValue({
+            parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
+            value: index > 0 ? value : undefined,
+            values: index === 0 ? [value] : undefined
+        });
+        return loopIndexes;
+    }
+    else {
+        return new LoopIndexes({
+            parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
+            value: index > 0 ? value : undefined,
+            values: index === 0 ? [value] : undefined
+        });
+    }
+}
+function disposeLoopIndexes(loopIndexes, recursive = true) {
+    const parentLoopIndexes = loopIndexes.parentLoopIndexes;
+    if (!loopIndexes.disposed) {
+        loopIndexes.dispose();
+        loopIndexes.disposed = true;
+        _pool$3.push(loopIndexes);
+    }
+    if (typeof parentLoopIndexes !== "undefined" && recursive) {
+        disposeLoopIndexes(parentLoopIndexes);
+    }
 }
 
+const _pool$2 = [];
 function createNamedLoopIndexesFromPattern(pattern, indexes) {
     const patternInfo = getPatternInfo(pattern);
     const wildcardPaths = patternInfo.wildcardPaths;
-    const namedLoopIndexes = {};
+    const namedLoopIndexes = _pool$2.pop() ?? new Map();
     if (wildcardPaths.length > 0) {
         for (let wi = wildcardPaths.length - 1, loopIndexes = createLoopIndexes(indexes); wi >= 0; wi--) {
             if (typeof loopIndexes === "undefined")
                 break;
-            namedLoopIndexes[wildcardPaths[wi]] = loopIndexes;
+            namedLoopIndexes.set(wildcardPaths[wi], loopIndexes);
             loopIndexes = loopIndexes.parentLoopIndexes;
         }
     }
@@ -1520,7 +1577,7 @@ function createLoopContextStack() {
 class NamedLoopIndexesStack {
     stack = [];
     async asyncSetNamedLoopIndexes(namedLoopIndexes, callback) {
-        const tempNamedLoopIndexes = Object.fromEntries(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
+        const tempNamedLoopIndexes = new Map(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
             return [name, createLoopIndexes(indexes)];
         }));
         this.stack.push(tempNamedLoopIndexes);
@@ -1542,20 +1599,23 @@ class NamedLoopIndexesStack {
     }
     setSubIndex(parentName, name, index, callback) {
         const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
-        currentNamedLoopIndexes[name] =
-            (typeof parentName !== "undefined") ?
-                currentNamedLoopIndexes[parentName]?.add(index) ?? utils.raise(`NamedLoopIndexesStack.setSubIndex: parentName "${parentName}" is not found.`) :
-                currentNamedLoopIndexes[name] = createLoopIndexes([index]);
+        currentNamedLoopIndexes.set(name, (typeof parentName !== "undefined") ?
+            currentNamedLoopIndexes.get(parentName)?.add(index) ?? utils.raise(`NamedLoopIndexesStack.setSubIndex: parentName "${parentName}" is not found.`) :
+            createLoopIndexes([index]));
         try {
             callback();
         }
         finally {
-            delete currentNamedLoopIndexes[name];
+            const loopIndexes = currentNamedLoopIndexes.get(name);
+            if (typeof loopIndexes !== "undefined") {
+                disposeLoopIndexes(loopIndexes, false);
+                currentNamedLoopIndexes.delete(name);
+            }
         }
     }
     getLoopIndexes(name) {
         const currentNamedLoopIndexes = this.stack[this.stack.length - 1];
-        return currentNamedLoopIndexes?.[name];
+        return currentNamedLoopIndexes?.get(name);
     }
     getNamedLoopIndexes() {
         return this.stack[this.stack.length - 1];
@@ -1895,7 +1955,7 @@ const BoundByComponentSymbol = Symbol.for(`globalData.boundByComponent`);
  */
 const getLastIndexesFn = (handler) => function (pattern) {
     const stackNamedWildcardIndexes = handler.stackNamedWildcardIndexes;
-    return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes;
+    return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.get(pattern)?.indexes;
 };
 
 /**
@@ -1938,6 +1998,7 @@ const getValueFn = (handler) => {
     };
 };
 
+const _pool$1 = [];
 /**
  * ワイルドカードインデックスを作成します
  * 部分配列を作成するための情報を持ちます
@@ -1964,6 +2025,12 @@ class WildcardIndexes {
         this.#baseIndexes = indexes;
         this.#indexes = (wildcardCount === indexes.length) ? indexes : undefined;
     }
+    assignValue(pattern, wildcardCount, indexes) {
+        this.pattern = pattern;
+        this.wildcardCount = wildcardCount;
+        this.#baseIndexes = indexes;
+        this.#indexes = (wildcardCount === indexes.length) ? indexes : undefined;
+    }
 }
 /**
  * ワイルドカードインデックスを作成します
@@ -1973,9 +2040,20 @@ class WildcardIndexes {
  * @returns {IWildcardIndexes} ワイルドカードインデックス
  */
 function createWildCardIndexes(pattern, wildcardCount, indexes) {
-    return new WildcardIndexes(pattern, wildcardCount, indexes);
+    if (_pool$1.length > 0) {
+        const wildcardIndexes = _pool$1.pop();
+        wildcardIndexes.assignValue(pattern, wildcardCount, indexes);
+        return wildcardIndexes;
+    }
+    else {
+        return new WildcardIndexes(pattern, wildcardCount, indexes);
+    }
+}
+function disposeWildCardIndexes(wildcardIndexes) {
+    _pool$1.push(wildcardIndexes);
 }
 
+const _pool = [];
 /**
  * パターン情報を元に名前付きワイルドカードインデックスを作成します
  * ex) patternInfo "aaa.*.bbb.*.ccc"、 indexes が [1, 2] の場合、
@@ -1985,12 +2063,20 @@ function createWildCardIndexes(pattern, wildcardCount, indexes) {
  * @returns {NamedWildcardIndexes} 名前付きワイルドカードインデックス
  */
 function createNamedWildcardIndexes(patternInfo, indexes) {
-    const namedWildcardIndexes = {};
+    const namedWildcardIndexes = _pool.pop() ?? new Map();
     for (let i = 0; i < patternInfo.wildcardPaths.length; i++) {
         const wildcardPath = patternInfo.wildcardPaths[i];
-        namedWildcardIndexes[wildcardPath] = createWildCardIndexes(wildcardPath, i + 1, indexes);
+        namedWildcardIndexes.set(wildcardPath, createWildCardIndexes(wildcardPath, i + 1, indexes));
     }
     return namedWildcardIndexes;
+}
+function disposeNamedWildcardIndexes(namedWildcardIndexes) {
+    const wildcardIndexesList = namedWildcardIndexes.values();
+    for (const wildcardIndexes of wildcardIndexesList) {
+        disposeWildCardIndexes(wildcardIndexes);
+    }
+    namedWildcardIndexes.clear();
+    _pool.push(namedWildcardIndexes);
 }
 
 /**
@@ -2008,7 +2094,8 @@ const withIndexesFn = (handler) => {
             return callback();
         }
         finally {
-            stackNamedWildcardIndexes.pop();
+            const namedWildcardIndexes = stackNamedWildcardIndexes.pop();
+            namedWildcardIndexes && disposeNamedWildcardIndexes(namedWildcardIndexes);
             stackIndexes.pop();
         }
     };
@@ -4535,7 +4622,7 @@ function createReadonlyState(component, base) {
 const getLastIndexesFnByWritableStateHandler = (handler) => {
     return function (pattern) {
         const { updator, stackNamedWildcardIndexes } = handler;
-        return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ??
+        return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.get(pattern)?.indexes ??
             updator.namedLoopIndexesStack?.getLoopIndexes(pattern)?.values;
     };
 };
@@ -4886,7 +4973,7 @@ function CustomComponent(Base) {
             // build binding tree and dom 
             const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
             this.rootBindingManager = createRootContentBindings(this, uuid);
-            this.updator.namedLoopIndexesStack.setNamedLoopIndexes({}, () => {
+            this.updator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromPattern("", []), () => {
                 this.rootBindingManager.rebuild();
             });
             if (this.useWebComponent) {

@@ -1,4 +1,4 @@
-import { createNamedWildcardIndexes } from "./createNamedWildcardIndexes";
+import { createNamedWildcardIndexes, disposeNamedWildcardIndexes } from "./createNamedWildcardIndexes";
 import { IDotNotationHandler, Indexes, IPatternInfo, WithIndexesFn } from "./types";
 
 type IHandlerPartial = Pick<IDotNotationHandler, "stackNamedWildcardIndexes"|"stackIndexes">;
@@ -23,7 +23,8 @@ export const withIndexesFn = (handler: IHandlerPartialForWithIndexes): WithIndex
     try {
       return callback();
     } finally {
-      stackNamedWildcardIndexes.pop();
+      const namedWildcardIndexes = stackNamedWildcardIndexes.pop();
+      namedWildcardIndexes && disposeNamedWildcardIndexes(namedWildcardIndexes);
       stackIndexes.pop();
     }
   }

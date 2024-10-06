@@ -1,5 +1,7 @@
-import { createWildCardIndexes } from "./createWildCardIndexes";
-import { Indexes, IPatternInfo, NamedWildcardIndexes } from "./types";
+import { createWildCardIndexes, disposeWildCardIndexes } from "./createWildCardIndexes";
+import { Indexes, IPatternInfo, IWildcardIndexes, NamedWildcardIndexes } from "./types";
+
+const _pool: NamedWildcardIndexes[] = [];
 
 /**
  * パターン情報を元に名前付きワイルドカードインデックスを作成します
@@ -13,10 +15,19 @@ export function createNamedWildcardIndexes(
   patternInfo: IPatternInfo,
   indexes: Indexes
 ): NamedWildcardIndexes {
-  const namedWildcardIndexes: NamedWildcardIndexes = {};
+  const namedWildcardIndexes = _pool.pop() ?? new Map<string, IWildcardIndexes>();
   for(let i = 0; i < patternInfo.wildcardPaths.length; i++) {
     const wildcardPath = patternInfo.wildcardPaths[i];
-    namedWildcardIndexes[wildcardPath] = createWildCardIndexes(wildcardPath, i + 1, indexes);
+    namedWildcardIndexes.set(wildcardPath, createWildCardIndexes(wildcardPath, i + 1, indexes));
   }
   return namedWildcardIndexes;
+}
+
+export function disposeNamedWildcardIndexes(namedWildcardIndexes: NamedWildcardIndexes): void {
+  const wildcardIndexesList = namedWildcardIndexes.values();
+  for(const wildcardIndexes of wildcardIndexesList) {
+    disposeWildCardIndexes(wildcardIndexes);
+  }
+  namedWildcardIndexes.clear();
+  _pool.push(namedWildcardIndexes);
 }

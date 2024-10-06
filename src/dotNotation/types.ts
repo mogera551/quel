@@ -1,4 +1,4 @@
-import { GetDirectSymbol, SetDirectSymbol } from "./symbols";
+import { GetDirectSymbol, NamedWildcardIndexesDisposeSymbol, SetDirectSymbol } from "./symbols";
 
 //export type PropType = "primitive" | "object" | "array";
 //export type ArrayIncompleteType = "none" | "parital" | "all";
@@ -31,9 +31,7 @@ export interface IWildcardIndexes {
   pattern: string;
 }
 
-export type NamedWildcardIndexes = {
-  [key:string]:IWildcardIndexes;
-}
+export type NamedWildcardIndexes = Map<string, IWildcardIndexes>;
 
 export interface IDotNotationHandler {
   cache?: StateCache;

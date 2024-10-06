@@ -7,7 +7,7 @@ type IHandlerPartial = Pick<IWritableStateHandler & Handler, "stackNamedWildcard
 export const getLastIndexesFnByWritableStateHandler = (handler: IHandlerPartial): GetLastIndexesFn => {
   return function (pattern: string): Indexes | undefined {
     const { updator, stackNamedWildcardIndexes } = handler;
-    return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.[pattern]?.indexes ?? 
+    return stackNamedWildcardIndexes[stackNamedWildcardIndexes.length - 1]?.get(pattern)?.indexes ?? 
       updator.namedLoopIndexesStack?.getLoopIndexes(pattern)?.values;
   }
 }

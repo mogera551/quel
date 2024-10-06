@@ -12,10 +12,8 @@ export interface ILoopContext {
   readonly parentBinding:IBindingTreeNode;
   readonly contentBindings: IContentBindingsTreeNode;
   readonly namedLoopContexts: INamedLoopContexts;
-
   readonly loopTreeNodesByName: {[key: string]: Set<IBinding>};
   readonly loopTreeLoopableNodesByName: {[key: string]: Set<IBinding>};
-  
   find(patternName:string):ILoopContext | undefined;
   dispose():void;
 }
@@ -29,14 +27,19 @@ export interface ILoopContextStack {
 }
 
 export interface ILoopIndexes {
+  disposed: boolean;
   readonly parentLoopIndexes: ILoopIndexes | undefined;
   readonly values: number[];
+  assignValue({ parentLoopIndexes, value, values }: { 
+    parentLoopIndexes: ILoopIndexes | undefined,
+    value: number | undefined,
+    values: number[] | undefined
+  }): void;
   add(index: number): ILoopIndexes;
+  dispose(): void;
 }
 
-export type INamedLoopIndexes = {
-  [key: string]: ILoopIndexes;
-}
+export type INamedLoopIndexes = Map<string, ILoopIndexes>;
 
 export interface INamedLoopIndexesStack {
   stack: INamedLoopIndexes[];

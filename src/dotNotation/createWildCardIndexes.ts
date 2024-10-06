@@ -1,5 +1,7 @@
 import { Indexes, IWildcardIndexes } from "./types";
 
+const _pool: IWildcardIndexes[] = [];
+
 /**
  * ワイルドカードインデックスを作成します
  * 部分配列を作成するための情報を持ちます
@@ -28,6 +30,13 @@ export class WildcardIndexes implements IWildcardIndexes {
     this.#baseIndexes = indexes;
     this.#indexes = (wildcardCount === indexes.length) ? indexes : undefined;
   }
+
+  assignValue(pattern: string, wildcardCount: number, indexes: Indexes) {
+    this.pattern = pattern;
+    this.wildcardCount = wildcardCount;
+    this.#baseIndexes = indexes;
+    this.#indexes = (wildcardCount === indexes.length) ? indexes : undefined;
+  }
 }
 
 /**
@@ -42,5 +51,15 @@ export function createWildCardIndexes(
   wildcardCount: number, 
   indexes: Indexes
 ): IWildcardIndexes {
-  return new WildcardIndexes(pattern, wildcardCount, indexes);
+  if (_pool.length > 0) {
+    const wildcardIndexes = _pool.pop() as WildcardIndexes;
+    wildcardIndexes.assignValue(pattern, wildcardCount, indexes);
+    return wildcardIndexes;
+  } else {
+    return new WildcardIndexes(pattern, wildcardCount, indexes);
+  }
+}
+
+export function disposeWildCardIndexes(wildcardIndexes: IWildcardIndexes): void {
+  _pool.push(wildcardIndexes);
 }
