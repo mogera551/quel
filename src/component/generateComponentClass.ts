@@ -48,10 +48,22 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         }
       }
 
+      get html(): string {
+        return this.module.html;
+      }
+      set html(value: string) {
+        this.module.html = value;
+      }
       get template(): HTMLTemplateElement {
         return this.module.template;
       }
 
+      get css(): string|undefined {
+        return this.module.css;
+      }
+      set css(value: string|undefined) {
+        this.module.css = value;
+      }
       get styleSheet(): CSSStyleSheet|undefined {
         return this.module.styleSheet;
       }
@@ -170,6 +182,19 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       static thisClass: Function|undefined;
       get thisClass(): Function {
         return Reflect.get(this.constructor, "thisClass");
+      }
+      static _module: IModule = module;
+      static get html():string {
+        return this._module.html;
+      }
+      static set html(value:string) {
+        this._module.html = value;
+      }
+      static get css():string|undefined {
+        return this._module.css;
+      }
+      static set css(value:string|undefined) {
+        this._module.css = value;
       }
     };
     baseClass.thisClass = baseClass;

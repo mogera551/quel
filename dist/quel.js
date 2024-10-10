@@ -850,14 +850,36 @@ class Module {
     get uuid() {
         return this.#uuid;
     }
-    html = "";
-    css;
-    get template() {
-        const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
-        return createComponentTemplate(this.html, this.uuid, customComponentNames);
+    #html = "";
+    get html() {
+        return this.#html;
     }
+    set html(value) {
+        this.#html = value;
+        this.#template = undefined;
+    }
+    #css;
+    get css() {
+        return this.#css;
+    }
+    set css(value) {
+        this.#css = value;
+        this.#styleSheet = undefined;
+    }
+    #template;
+    get template() {
+        if (typeof this.#template === "undefined") {
+            const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
+            this.#template = createComponentTemplate(this.html, this.uuid, customComponentNames);
+        }
+        return this.#template;
+    }
+    #styleSheet;
     get styleSheet() {
-        return this.css ? createStyleSheet$1(this.css, this.uuid) : undefined;
+        if (typeof this.#styleSheet === "undefined") {
+            this.#styleSheet = this.css ? createStyleSheet$1(this.css, this.uuid) : undefined;
+        }
+        return this.#styleSheet;
     }
     State = class {
     };
@@ -1414,9 +1436,11 @@ function disposeLoopIndexes(loopIndexes, recursive = true) {
 
 const _pool$2 = [];
 function createNamedLoopIndexesFromPattern(pattern, indexes) {
+    const namedLoopIndexes = _pool$2.pop() ?? new Map();
+    if (typeof pattern === "undefined")
+        return namedLoopIndexes;
     const patternInfo = getPatternInfo(pattern);
     const wildcardPaths = patternInfo.wildcardPaths;
-    const namedLoopIndexes = _pool$2.pop() ?? new Map();
     if (wildcardPaths.length > 0) {
         for (let wi = wildcardPaths.length - 1, loopIndexes = createLoopIndexes(indexes); wi >= 0; wi--) {
             if (typeof loopIndexes === "undefined")
@@ -5239,8 +5263,20 @@ const generateComponentClass = (componentModule) => {
                     customElementInfoByConstructor.set(this.thisClass, { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement });
                 }
             }
+            get html() {
+                return this.module.html;
+            }
+            set html(value) {
+                this.module.html = value;
+            }
             get template() {
                 return this.module.template;
+            }
+            get css() {
+                return this.module.css;
+            }
+            set css(value) {
+                this.module.css = value;
             }
             get styleSheet() {
                 return this.module.styleSheet;
@@ -5340,6 +5376,19 @@ const generateComponentClass = (componentModule) => {
             static thisClass;
             get thisClass() {
                 return Reflect.get(this.constructor, "thisClass");
+            }
+            static _module = module;
+            static get html() {
+                return this._module.html;
+            }
+            static set html(value) {
+                this._module.html = value;
+            }
+            static get css() {
+                return this._module.css;
+            }
+            static set css(value) {
+                this._module.css = value;
             }
         };
         baseClass.thisClass = baseClass;

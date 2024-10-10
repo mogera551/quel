@@ -10,17 +10,39 @@ export class Module implements IModule {
     return this.#uuid;
   }
 
-  html: string = "";
-
-  css?: string;
-
-  get template(): HTMLTemplateElement {
-    const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
-    return createComponentTemplate(this.html, this.uuid, customComponentNames);
+  #html: string = "";
+  get html(): string {
+    return this.#html;
+  }
+  set html(value: string) {
+    this.#html = value;
+    this.#template = undefined;
   }
 
+  #css?: string;
+  get css(): string | undefined {
+    return this.#css;
+  }
+  set css(value: string | undefined) {
+    this.#css = value;
+    this.#styleSheet = undefined;
+  }
+
+  #template?: HTMLTemplateElement;
+  get template(): HTMLTemplateElement {
+    if (typeof this.#template === "undefined") {
+      const customComponentNames = (this.config.useLocalTagName ?? config.useLocalTagName) ? Object.keys(this.componentModules ?? {}) : [];
+      this.#template = createComponentTemplate(this.html, this.uuid, customComponentNames);
+    }
+    return this.#template;
+  }
+
+  #styleSheet?: CSSStyleSheet;
   get styleSheet():CSSStyleSheet | undefined {
-    return this.css ? createStyleSheet(this.css, this.uuid) : undefined;
+    if (typeof this.#styleSheet === "undefined") {
+      this.#styleSheet = this.css ? createStyleSheet(this.css, this.uuid) : undefined;
+    }
+    return this.#styleSheet;
   }
 
   State:typeof Object = class {} as typeof Object;

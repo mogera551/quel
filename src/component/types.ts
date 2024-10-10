@@ -40,8 +40,8 @@ export type ComponentModule = {
 
 export interface IModule {
   readonly uuid: string;
-  readonly html: string;
-  readonly css?: string;
+  html: string;
+  css?: string;
   readonly template: HTMLTemplateElement;
   readonly styleSheet?: CSSStyleSheet;
   readonly State: typeof Object;
@@ -70,7 +70,9 @@ export interface IComponentBase {
   readonly module: IModule;
   readonly isQuelComponent: boolean;
   readonly customElementInfo: CustomElementInfo;
+  html: string;
   readonly template: HTMLTemplateElement;
+  css?: string;
   readonly styleSheet?: CSSStyleSheet;
   readonly State: typeof Object;
   readonly inputFilters: {[key: string]: FilterFuncWithOption};
