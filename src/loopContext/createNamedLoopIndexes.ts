@@ -5,12 +5,13 @@ import { ILoopIndexes, INamedLoopIndexes } from "./types";
 const _pool: INamedLoopIndexes[] = [];
 
 export function createNamedLoopIndexesFromPattern(
-  pattern: string,
+  pattern: string | undefined,
   indexes: number[]
 ): INamedLoopIndexes {
+  const namedLoopIndexes: INamedLoopIndexes = _pool.pop() ?? new Map();
+  if (typeof pattern === "undefined") return namedLoopIndexes;
   const patternInfo = getPatternInfo(pattern);
   const wildcardPaths = patternInfo.wildcardPaths;
-  const namedLoopIndexes: INamedLoopIndexes = _pool.pop() ?? new Map();
   if (wildcardPaths.length > 0) {
     for(let wi = wildcardPaths.length - 1, loopIndexes: ILoopIndexes | undefined = createLoopIndexes(indexes); wi >= 0 ; wi--) {
       if (typeof loopIndexes === "undefined") break;
