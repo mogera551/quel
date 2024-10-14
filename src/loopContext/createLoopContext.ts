@@ -63,7 +63,7 @@ class LoopContext implements ILoopContext{
     this.checkRevision();
     if (typeof this.#namedLoopIndexes === "undefined") {
       this.#namedLoopIndexes = (typeof this.parentNamedLoopContext === "undefined") ?
-        createLoopIndexes([this.index]) : this.parentNamedLoopContext.loopIndexes.add(this.index);
+        createLoopIndexes(undefined, this.index) : this.parentNamedLoopContext.loopIndexes.add(this.index);
     }
     return this.#namedLoopIndexes;
   }
@@ -72,7 +72,7 @@ class LoopContext implements ILoopContext{
     this.checkRevision();
     if (typeof this.#loopIndexes === "undefined") {
       this.#loopIndexes = (typeof this.parentLoopContext === "undefined") ?
-        createLoopIndexes([this.index]) : this.parentLoopContext.loopIndexes.add(this.index);
+        createLoopIndexes(undefined, this.index) : this.parentLoopContext.loopIndexes.add(this.index);
     }
     return this.#loopIndexes;
 

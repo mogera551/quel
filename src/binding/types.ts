@@ -130,6 +130,6 @@ export interface IMultiValue {
 export interface INewBindingSummary {
   register(binding: IBinding): void;
   delete(binding: IBinding): void;
-  gatherBindings(pattern: string, loopIndexes: ILoopIndexes | undefined): IBinding[];
+  gatherBindings(propertyAccessor: IStatePropertyAccessor): IBinding[];
   exists(binding: IBinding): boolean;
 }

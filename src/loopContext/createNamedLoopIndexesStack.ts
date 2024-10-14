@@ -6,12 +6,10 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
   stack: INamedLoopIndexes[] = [];
 
   async asyncSetNamedLoopIndexes(
-    namedLoopIndexes: {[key:string]:number[]}, 
+    namedLoopIndexes: {[key:string]:ILoopIndexes}, 
     callback: () => Promise<void>
   ): Promise<void> {
-    const tempNamedLoopIndexes = new Map(Object.entries(namedLoopIndexes).map(([name, indexes]) => {
-      return [name, createLoopIndexes(indexes)]
-    }));
+    const tempNamedLoopIndexes = new Map(Object.entries(namedLoopIndexes));
     this.stack.push(tempNamedLoopIndexes);
     try {
       await callback();
@@ -42,7 +40,7 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     currentNamedLoopIndexes.set(name, 
       (typeof parentName !== "undefined") ? 
       currentNamedLoopIndexes.get(parentName)?.add(index) ?? utils.raise(`NamedLoopIndexesStack.setSubIndex: parentName "${parentName}" is not found.`) :
-      createLoopIndexes([index])
+      createLoopIndexes(undefined, index)
     );
     try {
       callback();

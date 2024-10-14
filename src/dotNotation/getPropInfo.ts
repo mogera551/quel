@@ -28,9 +28,7 @@ function _getPropInfo(name:string):IPropInfo {
   for(let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (element === "*") {
-      wildcardLoopIndexes = (typeof wildcardLoopIndexes !== "undefined") ? 
-        wildcardLoopIndexes.add(undefined) :
-        createLoopIndexes([undefined]);
+      wildcardLoopIndexes = createLoopIndexes(wildcardLoopIndexes, undefined);
       wildcardIndexes.push(undefined);
       patternElements[i] = "*";
       lastIncompleteWildcardIndex = wildcardIndexes.length - 1;
@@ -39,9 +37,7 @@ function _getPropInfo(name:string):IPropInfo {
     } else {
       const number = Number(element);
       if (!Number.isNaN(number)) {
-        wildcardLoopIndexes = (typeof wildcardLoopIndexes !== "undefined") ? 
-          wildcardLoopIndexes.add(number) :
-          createLoopIndexes([number]);
+        wildcardLoopIndexes = createLoopIndexes(wildcardLoopIndexes, number);
         wildcardIndexes.push(number);
         patternElements[i] = "*";
         completeCount++;

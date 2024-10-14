@@ -1,25 +1,32 @@
 import { getPropInfo } from "../dotNotation/getPropInfo";
-import { Index } from "../dotNotation/types";
-import { createLoopIndexes as _createLoopIndexes } from "../loopContext/createLoopIndexes";
+import { IPatternInfo } from "../dotNotation/types";
+import { createLoopIndexes } from "../loopContext/createLoopIndexes";
 import { ILoopIndexes, INamedLoopIndexesStack } from "../loopContext/types";
 import { utils } from "../utils";
 import { IStatePropertyAccessor } from "./types";
 
-function createLoopIndexes(
-  loopIndexes:ILoopIndexes | undefined, 
-  indexValue: Index
-): ILoopIndexes {
-  return (typeof loopIndexes === "undefined") ? _createLoopIndexes([indexValue]) : loopIndexes.add(indexValue);
-}
-
 class StatePropertyAccessor implements IStatePropertyAccessor{
   #pattern: string;
+  #patternInfo: IPatternInfo | undefined;
   #loopIndexes: ILoopIndexes | undefined;
+  #key: string | undefined;
   get pattern(): string {
     return this.#pattern;
   }
+  get patternInfo(): IPatternInfo {
+    if (typeof this.#patternInfo === "undefined") {
+      this.#patternInfo = getPropInfo(this.#pattern);
+    }
+    return this.#patternInfo;
+  }
   get loopIndexes(): ILoopIndexes | undefined {
     return this.#loopIndexes;
+  }
+  get key() {
+    if (typeof this.#key === "undefined") {
+      this.#key = this.pattern + "\t" + (this.loopIndexes?.toString() ?? "");
+    }
+    return this.#key;
   }
   constructor(pattern: string, loopIndexes: ILoopIndexes | undefined = undefined) {
     this.#pattern = pattern;

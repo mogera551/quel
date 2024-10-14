@@ -1,5 +1,7 @@
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
+import { Index } from "../dotNotation/types";
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
+import { IStatePropertyAccessor } from "../state/types";
 import { utils } from "../utils";
 import { IBinding, INewBindingSummary } from "./types";
 
@@ -68,7 +70,7 @@ class NewBindingSummary implements INewBindingSummary {
   _search(
     loopContext: ILoopContext | undefined, 
     searchPath: string,
-    loopIndexes: ILoopIndexes, 
+    loopIndexesIterator: IterableIterator<Index>,
     wildcardPaths:string[],
     index:number,
     resultBindings: IBinding[]
@@ -76,7 +78,7 @@ class NewBindingSummary implements INewBindingSummary {
     if (index < wildcardPaths.length) {
       const wildcardPath = wildcardPaths[index];
       const wildcardPathInfo = getPatternInfo(wildcardPath);
-      const wildcardIndex = loopIndexes.at(index) ?? utils.raise(`loopIndexes.at(${index}) is null`);
+      const wildcardIndex = loopIndexesIterator.next().value ?? utils.raise(`loopIndexes.at(${index}) is null`);
       const wildcardParentPath = wildcardPathInfo.patternPaths.at(-2) ?? "";
       const loopBindings = typeof loopContext === "undefined" ? 
         Array.from(this.rootLoopableBindings[wildcardParentPath]) :
@@ -87,7 +89,7 @@ class NewBindingSummary implements INewBindingSummary {
         this._search(
           loopBindings[i].childrenContentBindings[wildcardIndex].loopContext, 
           searchPath, 
-          loopIndexes, 
+          loopIndexesIterator, 
           wildcardPaths, 
           index + 1,
           resultBindings
@@ -100,16 +102,20 @@ class NewBindingSummary implements INewBindingSummary {
   }
 
   gatherBindings(
-    pattern: string, 
-    loopIndexes: ILoopIndexes | undefined
+    propertyAccessor: IStatePropertyAccessor
   ): IBinding[] {
     let bindings: IBinding[];
-    if (typeof loopIndexes === "undefined" || loopIndexes.size === 0) {
-      bindings = Array.from(this.noloopBindings[pattern] ?? []);
+    if (typeof propertyAccessor.loopIndexes === "undefined" || propertyAccessor.loopIndexes.size === 0) {
+      bindings = Array.from(this.noloopBindings[propertyAccessor.pattern] ?? []);
     } else {
       bindings = [];
-      const patternInfo = getPatternInfo(pattern);
-      this._search(undefined, pattern, loopIndexes, patternInfo.wildcardPaths, 0, bindings);
+      this._search(
+        undefined, 
+        propertyAccessor.pattern, 
+        propertyAccessor.loopIndexes.forward(),
+        propertyAccessor.patternInfo.wildcardPaths, 
+        0, 
+        bindings);
     }
     return bindings;
   }

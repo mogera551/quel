@@ -16,13 +16,13 @@ export async function rebuildBindings(
 ): Promise<void> {
   for(let i = 0; i < updatedStatePropertyAccessors.length; i++) {
     const propertyAccessor = updatedStatePropertyAccessors[i];
-    const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor.pattern, propertyAccessor.loopIndexes);
+    const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor);
     for(let gi = 0; gi < gatheredBindings.length; gi++) {
       const binding = gatheredBindings[gi];
       if (!binding.expandable) continue;
       const compareKey = binding.stateProperty.name + ".";
       const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-      const namedLoopIndexes = createNamedLoopIndexesFromPattern(propertyAccessor.pattern, propertyAccessor.loopIndexes);
+      const namedLoopIndexes = createNamedLoopIndexesFromPattern(propertyAccessor);
       updator.setFullRebuild(isFullBuild, () => {
         updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.rebuild();

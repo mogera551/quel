@@ -5,15 +5,7 @@ import { GetAccessorSymbol } from "../dotNotation/symbols";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { getPropInfo } from "../dotNotation/getPropInfo";
 import { ILoopIndexes } from "../loopContext/types";
-import { createLoopIndexes as _createLoopIndexes } from "../loopContext/createLoopIndexes";
-import { Index } from "../dotNotation/types";
-
-function createLoopIndexes(
-  loopIndexes:ILoopIndexes | undefined, 
-  indexValue: Index
-): ILoopIndexes {
-  return (typeof loopIndexes === "undefined") ? _createLoopIndexes([indexValue]) : loopIndexes.add(indexValue);
-}
+import { createLoopIndexes } from "../loopContext/createLoopIndexes";
 
 function expandStateProperty(
   state:IStateProxy, 

@@ -1,6 +1,6 @@
 import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "./symbols";
 import { IComponent } from "../component/types";
-import { IDotNotationProxy } from "../dotNotation/types";
+import { IDotNotationProxy, IPatternInfo } from "../dotNotation/types";
 import { IGlobalDataProxy } from "../global/types";
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
 import { IUpdator } from "../updator/types";
@@ -64,5 +64,7 @@ export type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTML
 
 export interface IStatePropertyAccessor {
   readonly pattern: string;
+  readonly patternInfo: IPatternInfo;
   readonly loopIndexes: ILoopIndexes | undefined;
+  readonly key: string;
 }
