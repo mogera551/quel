@@ -1,19 +1,15 @@
 import { IBinding, IBindingTreeNode, IContentBindingsTreeNode } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
-import { IPatternInfo } from "../dotNotation/types";
 import { utils } from "../utils";
-import { ILoopContext, INamedLoopContexts } from "./types";
+import { createLoopIndexes } from "./createLoopIndexes";
+import { ILoopContext, ILoopIndexes, INamedLoopContexts } from "./types";
 
 class LoopContext implements ILoopContext{
   #revision?: number;
   #contentBindings: IContentBindingsTreeNode;
   #index?: number;
-  #parentLoopContext?: ILoopContext;
-  #parentLoopCache = false;
-  #parentBinding?: IBindingTreeNode;
-  #statePropertyName?: string;
-  #patternInfo?: IPatternInfo;
-  #patternName?: string;
+  #loopIndexes?: ILoopIndexes;
+  #namedLoopIndexes?: ILoopIndexes;
   #namedLoopContexts?: INamedLoopContexts;
   #loopTreeNodesByName: {[key: string]: Set<IBinding>} = {};
   #loopTreeLoopableNodesByName: {[key: string]: Set<IBinding>} = {};
@@ -27,77 +23,59 @@ class LoopContext implements ILoopContext{
     return this.#contentBindings;
   }
 
-  get parentBinding(): IBindingTreeNode {
-    if (typeof this.#parentBinding === "undefined") {
-      this.#parentBinding = this.contentBindings.parentBinding ?? utils.raise("parentBinding is undefined");
-      (this.#parentBinding.loopable === false) && utils.raise("parentBinding is not loopable");
-    }
-    return this.#parentBinding;
-  }
-
-  get statePropertyName(): string {
-    if (typeof this.#statePropertyName === "undefined") {
-      this.#statePropertyName = this.parentBinding.statePropertyName;
-    }
-    return this.#statePropertyName;
-  }
-
-  get patternInfo(): IPatternInfo {
-    if (typeof this.#patternInfo === "undefined") {
-      this.#patternInfo = getPatternInfo(this.statePropertyName + ".*");
-    }
-    return this.#patternInfo;
-  }
-
   get patternName(): string {
-    if (typeof this.#patternName === "undefined") {
-      this.#patternName = this.patternInfo.wildcardPaths.at(-1) ?? utils.raise("patternName is undefined");
+    return this.contentBindings.patternName;
+  }
+
+  get parentPatternName(): string | undefined {
+    const patternInfo = getPatternInfo(this.patternName);
+    return patternInfo.wildcardPaths.at(-2);
+  }
+
+  get parentNamedLoopContext(): ILoopContext | undefined {
+    // インデックスは変わるが親子関係は変わらないので、checkRevisionは不要
+    const parentPatternName = this.parentPatternName;
+    if (typeof parentPatternName !== "undefined") {
+      return this.namedLoopContexts[parentPatternName];
     }
-    return this.#patternName;
   }
 
   get parentLoopContext(): ILoopContext | undefined {
-    // インデックスは変わるが親子関係は変わらないので、checkRevisionは不要
-    if (!this.#parentLoopCache) {
-      const parentPattern = this.patternInfo.wildcardPaths.at(-2);
-      let curContentBindings:IContentBindingsTreeNode | undefined = undefined;
-      if (typeof parentPattern !== "undefined") {
-        curContentBindings = this.parentBinding.parentContentBindings;        
-        while (typeof curContentBindings !== "undefined") {
-          if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === parentPattern) {
-            break;
-          }
-          curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
-        }
-        if (typeof curContentBindings === "undefined") {
-          utils.raise("parentLoopContext is undefined");
-        }
+    let tmpContentBindings = this.contentBindings.parentBinding?.parentContentBindings;
+    while(typeof tmpContentBindings !== "undefined") {
+      if (typeof tmpContentBindings.loopContext !== "undefined" && tmpContentBindings.loopContext !== this) {
+        return tmpContentBindings.loopContext;
       }
-      this.#parentLoopContext = curContentBindings?.loopContext;
-      this.#parentLoopCache = true;
+      tmpContentBindings = this.contentBindings.parentBinding?.parentContentBindings;
     }
-    return this.#parentLoopContext;
   }
 
   get index(): number {
     this.checkRevision();
     if (typeof this.#index === "undefined") {
-      this.#index = this.parentBinding.childrenContentBindings.indexOf(this.contentBindings);
+      this.#index = this.contentBindings.parentBinding?.childrenContentBindings.indexOf(this.contentBindings) ?? 
+        utils.raise("index is undefined");
     }
     return this.#index;
   }
 
-  #indexes?: number[];
-  get indexes(): number[] {
+  get namedLoopIndexes(): ILoopIndexes {
     this.checkRevision();
-    if (typeof this.#indexes === "undefined") {
-      if (typeof this.parentLoopContext === "undefined") {
-        this.#indexes = [this.index];
-      } else {
-        this.#indexes = this.parentLoopContext.indexes.concat(this.index);
-      }
+    if (typeof this.#namedLoopIndexes === "undefined") {
+      this.#namedLoopIndexes = (typeof this.parentNamedLoopContext === "undefined") ?
+        createLoopIndexes([this.index]) : this.parentNamedLoopContext.loopIndexes.add(this.index);
     }
-    return this.#indexes;
+    return this.#namedLoopIndexes;
+  }
+
+  get loopIndexes(): ILoopIndexes {
+    this.checkRevision();
+    if (typeof this.#loopIndexes === "undefined") {
+      this.#loopIndexes = (typeof this.parentLoopContext === "undefined") ?
+        createLoopIndexes([this.index]) : this.parentLoopContext.loopIndexes.add(this.index);
+    }
+    return this.#loopIndexes;
+
   }
 
   get namedLoopContexts(): INamedLoopContexts {
@@ -108,10 +86,12 @@ class LoopContext implements ILoopContext{
     return this.#namedLoopContexts;
   }
 
+  // ルート検索用
   get loopTreeNodesByName(): {[key: string]: Set<IBinding>} {
     return this.#loopTreeNodesByName;
   }
 
+  // ルート検索用
   get loopTreeLoopableNodesByName(): {[key: string]: Set<IBinding>} {
     return this.#loopTreeLoopableNodesByName;
   }
@@ -120,31 +100,19 @@ class LoopContext implements ILoopContext{
     const revision = (this.contentBindings.parentBinding as IBinding)?.nodeProperty.revisionForLoop;
     if (typeof this.#revision === "undefined" || this.#revision !== revision) {
       this.#index = undefined;
-      this.#indexes = undefined;
-      this.#parentLoopCache = false;
-      this.#revision = revision;
+      this.#loopIndexes = undefined;
+      this.#namedLoopIndexes = undefined;
+      this.#namedLoopContexts = undefined;
       return true;
     }
     return false;
   }
 
-  find(patternName: string): ILoopContext | undefined {
-    let curContentBindings:IContentBindingsTreeNode | undefined = this.contentBindings;
-    while (typeof curContentBindings !== "undefined") {
-      if (typeof curContentBindings.loopContext !== "undefined" && curContentBindings.loopContext.patternName === patternName) {
-        break;
-      }
-      curContentBindings = curContentBindings.parentBinding?.parentContentBindings;
-    }
-    return curContentBindings?.loopContext;
-  }
-
   dispose(): void {
+    this.#index = undefined;
+    this.#loopIndexes = undefined;
+    this.#namedLoopIndexes = undefined;
     this.#namedLoopContexts = undefined;
-    this.#parentBinding = undefined;
-    this.#statePropertyName = undefined;
-    this.#patternInfo = undefined;
-    this.#patternName = undefined;
   }
 }
 

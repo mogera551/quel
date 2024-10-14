@@ -4,7 +4,7 @@ import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
 import { IContentBindings, IBindingPropertyAccess, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
-import { ILoopContext } from "../loopContext/types";
+import { ILoopContext, ILoopIndexes } from "../loopContext/types";
 
 export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -135,7 +135,7 @@ export interface IDialogComponent {
 export interface IPopoverComponent {
   canceled: boolean;
   popoverPromises: PromiseWithResolvers<any> | undefined;
-  readonly popoverContextIndexesById: Map<string, number[]>;
+  readonly popoverLoopIndexesById: Map<string, ILoopIndexes | undefined>;
   asyncShowPopover(props: {[key: string]: any}): Promise<any>;
   hidePopover(): void;
   cancelPopover(): void;

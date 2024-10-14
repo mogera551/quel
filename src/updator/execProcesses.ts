@@ -1,7 +1,6 @@
-import { IPropertyAccess } from "../binding/types";
 import { IProcess } from "../component/types";
 import { UpdatedCallbackSymbol } from "../state/symbols";
-import { IStates } from "../state/types";
+import { IStatePropertyAccessor, IStates } from "../state/types";
 import { IUpdator } from "./types";
 
 async function execProcess (updator: IUpdator, process: IProcess): Promise<void> {
@@ -14,7 +13,7 @@ async function execProcess (updator: IUpdator, process: IProcess): Promise<void>
   }
 }
 
-async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<IPropertyAccess[]> {
+async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<IStatePropertyAccessor[]> {
   for(let i = 0; i < processes.length; i++) {
     // Stateのイベント処理を実行する
     // Stateのプロパティに更新があった場合、
@@ -24,9 +23,9 @@ async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<
   return updator.retrieveAllUpdatedStateProperties();
 }
 
-function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateProperties: IPropertyAccess[]): void {
+function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateProperties: IStatePropertyAccessor[]): void {
   // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
-  const updateInfos = updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.indexes }));
+  const updateInfos = updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.loopIndexes?.values }));
   updator.addProcess(async () => {
     await states.current[UpdatedCallbackSymbol](updateInfos);
   }, undefined, [], undefined);
@@ -35,8 +34,8 @@ function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateP
 export async function execProcesses(
   updator: IUpdator, 
   states: IStates
-): Promise<IPropertyAccess[]> {
-  const totalUpdatedStateProperties: IPropertyAccess[] = [];
+): Promise<IStatePropertyAccessor[]> {
+  const totalUpdatedStateProperties: IStatePropertyAccessor[] = [];
   await states.writable(async () => {
     do {
       const processes = updator.retrieveAllProcesses();

@@ -1,7 +1,7 @@
 import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
-import { IBinding, INewBindingSummary, IPropertyAccess } from "../binding/types";
-import { IStates } from "../state/types";
+import { IBinding, INewBindingSummary } from "../binding/types";
+import { IStatePropertyAccessor, IStates } from "../state/types";
 import { IUpdator } from "./types";
 import { execProcesses } from "./execProcesses";
 import { expandStateProperties } from "./expandStateProperties";
@@ -18,8 +18,8 @@ type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary">;
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
   processQueue: IProcess[] = [];
-  updatedStateProperties: IPropertyAccess[] = [];
-  expandedStateProperties: IPropertyAccess[] = [];
+  updatedStateProperties: IStatePropertyAccessor[] = [];
+  expandedStateProperties: IStatePropertyAccessor[] = [];
   updatedBindings: Set<IBinding> = new Set();
   bindingsForUpdateNode: IBinding[] = [];
 
@@ -62,12 +62,12 @@ class Updator implements IUpdator {
     return allProcesses;
   }
 
-  addUpdatedStateProperty(prop:IPropertyAccess):void {
-    this.updatedStateProperties.push(prop);
+  addUpdatedStateProperty(accessor: IStatePropertyAccessor):void {
+    this.updatedStateProperties.push(accessor);
   }
 
   // 取得後updateStatePropertiesは空になる
-  retrieveAllUpdatedStateProperties() {
+  retrieveAllUpdatedStateProperties(): IStatePropertyAccessor[] {
     const updatedStateProperties = this.updatedStateProperties;
     this.updatedStateProperties = [];
     return updatedStateProperties;
@@ -97,10 +97,11 @@ class Updator implements IUpdator {
         this.updatedBindings.clear();
 
         // 戻り値は更新されたStateのプロパティ情報
-        const _updatedStatePropertyAccesses = await execProcesses(this, this.states);
-        const updatedKeys = _updatedStatePropertyAccesses.map(propertyAccess => propertyAccess.key);
+        const _updatedStatePropertyAccessors = await execProcesses(this, this.states);
+        const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => 
+          propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
         // 戻り値は依存関係により更新されたStateのプロパティ情報
-        const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccesses);
+        const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccessors);
 
         await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
         updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses)

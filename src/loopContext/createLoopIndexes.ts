@@ -1,3 +1,4 @@
+import { Index } from "../dotNotation/types";
 import { utils } from "../utils";
 import { ILoopIndexes } from "./types";
 
@@ -5,44 +6,54 @@ const _pool: LoopIndexes[] = [];
 
 class LoopIndexes implements ILoopIndexes {
   #parentLoopIndexes: ILoopIndexes | undefined;
-  #_values: number[] | undefined;
-  #_value: number | undefined;
-  #values: number[] | undefined;
-  #disposed = false;
+  #_values: Index[] | undefined;
+  #_value: Index;
+  #values: Index[] | undefined;
+  #stringValue: string | undefined;
+  #index: number | undefined;
   get parentLoopIndexes(): ILoopIndexes | undefined {
     return this.#parentLoopIndexes;
   }
-  get values(): number[] {
+  get values(): Index[] {
     if (typeof this.#values === "undefined") {
       if (typeof this.parentLoopIndexes === "undefined") {
-        this.#values = this.#_values as number[];
+        this.#values = this.#_values as Index[];
       } else {
-        this.#values = this.parentLoopIndexes.values.concat(this.#_value as number);
+        this.#values = this.parentLoopIndexes.values.concat(this.#_value);
       }
     }
     return this.#values;
   }
-  get disposed(): boolean {
-    return this.#disposed;
+
+  get index(): number {
+    if (typeof this.#index === "undefined") {
+      if (typeof this.parentLoopIndexes === "undefined") {
+        this.#index = 0;
+      } else {
+        this.#index = this.parentLoopIndexes.index + 1;
+      }
+    }
+    return this.#index
   }
-  set disposed(value: boolean) {
-    this.#disposed = value;
+
+  get size(): number {
+    return this.index + 1;
+  }
+
+  truncate(length: number): ILoopIndexes | undefined {
+    let loopIndexes: ILoopIndexes | undefined = this;
+    while(typeof loopIndexes !== "undefined") {
+      if (loopIndexes.index < length) return loopIndexes;
+      loopIndexes = loopIndexes.parentLoopIndexes;
+    }
+    return undefined;
   }
 
   constructor({ parentLoopIndexes, value, values }: { 
     parentLoopIndexes: ILoopIndexes | undefined,
-    value: number | undefined,
-    values: number[] | undefined
+    value: Index,
+    values: Index[] | undefined
   }) {
-    if (typeof value !== "undefined" && typeof values !== "undefined") {
-      utils.raise(`LoopIndexes.constructor: value and values cannot be set at the same time.`);
-    }
-    if (typeof value === "undefined" && typeof values === "undefined") {
-      utils.raise(`LoopIndexes.constructor: value or values must be set.`);
-    }
-    if (typeof parentLoopIndexes !== "undefined" && typeof value === "undefined") {
-      utils.raise(`LoopIndexes.constructor: value cannot be set with parentLoopIndexes.`);
-    }
     if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
       utils.raise(`LoopIndexes.constructor: values cannot be set without parentLoopIndexes.`);
     }
@@ -51,71 +62,63 @@ class LoopIndexes implements ILoopIndexes {
     this.#_values = values;
   }
 
-  assignValue({ parentLoopIndexes, value, values }: { 
-    parentLoopIndexes: ILoopIndexes | undefined,
-    value: number | undefined,
-    values: number[] | undefined
-  }): void {
-    if (typeof value !== "undefined" && typeof values !== "undefined") {
-      utils.raise(`LoopIndexes.assignValue: value and values cannot be set at the same time.`);
-    }
-    if (typeof value === "undefined" && typeof values === "undefined") {
-      utils.raise(`LoopIndexes.assignValue: value or values must be set.`);
-    }
-    if (typeof parentLoopIndexes !== "undefined" && typeof value === "undefined") {
-      utils.raise(`LoopIndexes.assignValue: value cannot be set with parentLoopIndexes.`);
-    }
-    if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
-      utils.raise(`LoopIndexes.assignValue: values cannot be set without parentLoopIndexes.`);
-    }
-    this.#parentLoopIndexes = parentLoopIndexes;
-    this.#_value = value;
-    this.#_values = values;
-    this.#values = undefined;
+  add(value: Index): ILoopIndexes {
+    return new LoopIndexes({ parentLoopIndexes: this, value, values: undefined });
   }
 
-  add(index: number): ILoopIndexes {
-    return new LoopIndexes({ parentLoopIndexes: this, value: index, values: undefined });
+  *backward(): Generator<Index> {
+    if (typeof this.#parentLoopIndexes !== "undefined") {
+      yield this.#_value;
+      yield* this.#parentLoopIndexes.backward();
+    } else {
+      yield this.#_values?.[0];
+    }
+    return;
   }
 
-  dispose(): void {
-    this.#disposed = true;
-    this.#parentLoopIndexes = undefined;
-    this.#_value = undefined;
-    this.#_values = undefined;
-    this.#values = undefined;
+  *forward(): Generator<Index> {
+    if (typeof this.#parentLoopIndexes !== "undefined") {
+      yield* this.#parentLoopIndexes.forward();
+      yield this.#_value;
+    } else {
+      yield this.#_values?.[0];
+    }
+    return;
+  }
+
+  toString(): string {
+    if (typeof this.#stringValue === "undefined") {
+      if (typeof this.#parentLoopIndexes !== "undefined") {
+        this.#stringValue = this.#parentLoopIndexes.toString() + "," + this.#_value;
+      } else {
+        this.#stringValue = this.#_values?.[0]?.toString() ?? "";
+      }
+    }
+    return this.#stringValue;
+  }
+
+  at(index: number): number | undefined {
+    let iterator;
+    if (index >= 0) {
+      iterator = this.forward();
+    } else {
+      index = - index - 1 
+      iterator = this.backward();
+    }
+    let next;
+    while(index >= 0) {
+      next = iterator.next();
+      index--;
+    }
+    return next?.value;
   }
 }
 
-export function createLoopIndexes(indexes: number[], index = indexes.length - 1): ILoopIndexes {
-  const value = indexes[index];
-  if (_pool.length > 0) {
-    const loopIndexes = _pool.pop() as LoopIndexes;
-    loopIndexes.disposed = false;
-    loopIndexes.assignValue({
-      parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
-      value: index > 0 ? value : undefined,
-      values: index === 0 ? [value] : undefined
-    });
-    return loopIndexes;
-  } else {
-    return new LoopIndexes({
-      parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
-      value: index > 0 ? value : undefined,
-      values: index === 0 ? [value] : undefined
-    });
-  }
- 
-}
-
-export function disposeLoopIndexes(loopIndexes: ILoopIndexes, recursive: boolean = true): void {
-  const parentLoopIndexes = loopIndexes.parentLoopIndexes;
-  if (!loopIndexes.disposed) {
-    loopIndexes.dispose();
-    loopIndexes.disposed = true;
-    _pool.push(loopIndexes as LoopIndexes);
-  }
-  if (typeof parentLoopIndexes !== "undefined" && recursive) {
-    disposeLoopIndexes(parentLoopIndexes);
-  }
+export function createLoopIndexes(indexes: Index[], index = indexes.length - 1): ILoopIndexes {
+  const value: Index = indexes[index];
+  return new LoopIndexes({
+    parentLoopIndexes: index > 0 ? createLoopIndexes(indexes, index - 1) : undefined,
+    value: index > 0 ? value : undefined,
+    values: index === 0 ? [value] : undefined
+  });
 }

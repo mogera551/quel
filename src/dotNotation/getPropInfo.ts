@@ -1,6 +1,8 @@
 
 import { IPropInfo } from './types';
 import { getPatternInfo } from './getPatternInfo';
+import { createLoopIndexes } from '../loopContext/createLoopIndexes';
+import { ILoopIndexes } from '../loopContext/types';
 
 /**
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
@@ -16,24 +18,34 @@ function _getPropInfo(name:string):IPropInfo {
   const elements = name.split(".");
   const patternElements = elements.slice(0);
   const wildcardIndexes:(number|undefined)[] = [];
+  let wildcardLoopIndexes: ILoopIndexes | undefined = undefined;
   const paths = [];
   let lastIncompleteWildcardIndex = -1;
   let incompleteCount = 0;
   let completeCount = 0;
   let lastPath = "";
+  let wildcardCount = 0;
   for(let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (element === "*") {
+      wildcardLoopIndexes = (typeof wildcardLoopIndexes !== "undefined") ? 
+        wildcardLoopIndexes.add(undefined) :
+        createLoopIndexes([undefined]);
       wildcardIndexes.push(undefined);
       patternElements[i] = "*";
       lastIncompleteWildcardIndex = wildcardIndexes.length - 1;
       incompleteCount++;
+      wildcardCount++;
     } else {
       const number = Number(element);
       if (!Number.isNaN(number)) {
+        wildcardLoopIndexes = (typeof wildcardLoopIndexes !== "undefined") ? 
+          wildcardLoopIndexes.add(number) :
+          createLoopIndexes([number]);
         wildcardIndexes.push(number);
         patternElements[i] = "*";
         completeCount++;
+        wildcardCount++;
       }
     }
     lastPath += element;
@@ -41,7 +53,7 @@ function _getPropInfo(name:string):IPropInfo {
     lastPath += (i < elements.length - 1 ? "." : "");
   }
   const pattern = patternElements.join(".");
-  const wildcardCount = wildcardIndexes.length;
+//  const wildcardCount = wildcardIndexes.length;
   return Object.assign({
     name,
     pattern,
@@ -50,6 +62,7 @@ function _getPropInfo(name:string):IPropInfo {
     paths,
     wildcardCount,
     wildcardIndexes,
+    wildcardLoopIndexes,
     lastIncompleteWildcardIndex,
     allComplete: completeCount === wildcardCount,
     allIncomplete: incompleteCount === wildcardCount,

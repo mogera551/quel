@@ -5,6 +5,7 @@ import { IGlobalDataProxy } from "../global/types";
 import { Handler } from "../dotNotation/Handler";
 import { IComponent } from "./types";
 import { getPropInfo } from "../dotNotation/getPropInfo";
+import { ILoopIndexes } from "../loopContext/types";
 
 type IComponentForGlobalData = Pick<IComponent, "states">;
 
@@ -26,18 +27,18 @@ class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobal
     this.setOfProps.add(prop);
   }
 
-  directGet = (name:string, indexes:number[]) => {
+  directGet = (name:string, loopIndexes:ILoopIndexes | undefined) => {
     if (!this.setOfProps.has(name)) {
       this.bindProperty(name);
     }
-    return GlobalData.data[GetDirectSymbol](name, indexes);
+    return GlobalData.data[GetDirectSymbol](name, loopIndexes);
   }
 
-  directSet = (name:string, indexes:number[], value:any) => {
+  directSet = (name:string, loopIndexes:ILoopIndexes | undefined, value:any) => {
     if (!this.setOfProps.has(name)) {
       this.bindProperty(name);
     }
-    return GlobalData.data[SetDirectSymbol](name, indexes, value);
+    return GlobalData.data[SetDirectSymbol](name, loopIndexes, value);
   }
 
   /**
@@ -54,14 +55,14 @@ class ComponentGlobalDataHandler extends Handler implements ProxyHandler<IGlobal
       return this.directSet;
     }
     if (typeof prop !== "string") return Reflect.get(target, prop, receiver);
-    const { pattern, wildcardIndexes } = getPropInfo(prop);
-    return this.directGet(pattern, wildcardIndexes as number[]);
+    const { pattern, wildcardLoopIndexes } = getPropInfo(prop);
+    return this.directGet(pattern, wildcardLoopIndexes);
   }
 
   set(target:Object, prop:PropertyKey, value:any, receiver:IGlobalDataProxy):boolean {
     if (typeof prop !== "string") return Reflect.set(target, prop, value, receiver);
-    const { pattern, wildcardIndexes } = getPropInfo(prop);
-    return this.directSet(pattern, wildcardIndexes as number[], value);
+    const { pattern, wildcardLoopIndexes } = getPropInfo(prop);
+    return this.directSet(pattern, wildcardLoopIndexes, value);
   }
 }
 

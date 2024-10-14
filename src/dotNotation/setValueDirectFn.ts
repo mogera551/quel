@@ -4,6 +4,7 @@ import { Handler } from "./Handler";
 import { SetValueDirectFn } from "./types";
 import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { setValueWithIndexesFn, IHandlerPartialForSetValueWithIndexes } from "./setValueWithIndexesFn";
+import { ILoopIndexes } from "../loopContext/types";
 
 type IHandlerPartial = Pick<Handler, "set">;
 
@@ -21,7 +22,7 @@ export const setValueDirectFn = (handler: IHandlerPartialForSetValueDirect): Set
   return function (
     target: object, 
     prop: string, 
-    indexes: number[], 
+    loopIndexes: ILoopIndexes | undefined, 
     value: any, 
     receiver: object
   ): boolean {
@@ -33,11 +34,11 @@ export const setValueDirectFn = (handler: IHandlerPartialForSetValueDirect): Set
     const propInfo = getPropInfo(propName);
     if (isIndex || isExpand) {
       return withIndexes(
-        propInfo, indexes, () => {
+        propInfo, loopIndexes, () => {
         return handler.set(target, prop, value, receiver);
       });
     } else {
-      return setValueWithIndexes(target, propInfo, indexes, value, receiver);
+      return setValueWithIndexes(target, propInfo, loopIndexes, value, receiver);
     }
   }
 }

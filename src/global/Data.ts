@@ -1,10 +1,11 @@
-import { SetDirectSymbol } from "../dotNotation/symbols";
+import { SetAccessorSymbol, SetDirectSymbol } from "../dotNotation/symbols";
 import { BoundByComponentSymbol } from "./symbols";
 import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { Handler } from "../dotNotation/Handler";
 import { IComponent } from "../component/types";
 import { IGlobalDataProxy } from "./types";
 import { getPropInfo } from "../dotNotation/getPropInfo";
+import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 
 type IComponentForGlobalData = Pick<IComponent, "states">;
 
@@ -34,12 +35,12 @@ class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy
 
   set(target:any, prop:PropertyKey, value:any, receiver:IGlobalDataProxy) {
     if (typeof prop !== "string") return Reflect.set(target, prop, value, receiver);
-    const { pattern, wildcardIndexes } = getPropInfo(prop);
-    const result = receiver[SetDirectSymbol](pattern, wildcardIndexes as number[], value);
+    const { pattern, wildcardLoopIndexes } = getPropInfo(prop);
+    const result = receiver[SetAccessorSymbol](createStatePropertyAccessor(pattern, wildcardLoopIndexes), value);
     let setOfComponent = this.#setOfComponentByProp.get(pattern);
     if (setOfComponent) {
       for(const component of setOfComponent) {
-        component.states.current[NotifyForDependentPropsApiSymbol]("$globals." + pattern, wildcardIndexes as number[]);
+        component.states.current[NotifyForDependentPropsApiSymbol]("$globals." + pattern, wildcardLoopIndexes);
       }
     }
     return result;

@@ -1,12 +1,14 @@
 import { IBinding, IStateProperty } from "../types";
 import { IFilterText, FilterFunc } from "../../filter/types";
-import { GetDirectSymbol, SetDirectSymbol } from "../../dotNotation/symbols";
+import { GetAccessorSymbol, SetAccessorSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { IPropInfo } from "../../dotNotation/types";
 import { getPropInfo } from "../../dotNotation/getPropInfo";
 import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
+import { ILoopIndexes } from "../../loopContext/types";
+import { createStatePropertyAccessorFromBinding } from "../../state/createStatePropertyAccessor";
 
 export class StateProperty implements IStateProperty {
   get state(): IStateProxy {
@@ -38,38 +40,18 @@ export class StateProperty implements IStateProperty {
     return this.#level;
   }
 
-  get indexes():number[] {
-    return this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard)?.values ?? [];
-  }
-
-  get indexesString():string {
-    return this.indexes.toString();
-  }
-
-  get key():string {
-    return this.name + "\t" + this.indexesString;
-  }
-
-  #oldKey:string = "";
-  get oldKey():string {
-    return this.#oldKey;
-  }
-
-  get isChagedKey():boolean {
-    return this.#oldKey !== this.key;
-  }
-
-  getKey():string {
-    this.#oldKey = this.key;
-    return this.key;
+  get loopIndexes(): ILoopIndexes | undefined {
+    return this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard)    
   }
 
   getValue():any {
-    return this.state[GetDirectSymbol](this.name, this.indexes);
+    const accessor = createStatePropertyAccessorFromBinding(this.name, this.loopIndexes);
+    return this.state[GetAccessorSymbol](accessor);
   }
   setValue(value:any) {
     const setValue = (value:any) => {
-      this.state[SetDirectSymbol](this.name, this.indexes, value);
+      const accessor = createStatePropertyAccessorFromBinding(this.name, this.loopIndexes);
+      this.state[SetAccessorSymbol](accessor, value);
     };
     if (value instanceof MultiValue) {
       const thisValue = this.getValue();
@@ -127,11 +109,13 @@ export class StateProperty implements IStateProperty {
   }
 
   getChildValue(index:number) {
-    return this.state[GetDirectSymbol](this.#childName , this.indexes.concat(index));
+    const accessor = createStatePropertyAccessorFromBinding(this.#childName, this.loopIndexes?.add(index));
+    return this.state[GetAccessorSymbol](accessor);
   }
 
   setChildValue(index:number, value:any) {
-    return this.state[SetDirectSymbol](this.#childName , this.indexes.concat(index), value);
+    const accessor = createStatePropertyAccessorFromBinding(this.#childName, this.loopIndexes?.add(index));
+    return this.state[SetAccessorSymbol](accessor, value);
   }
 
   dispose() {

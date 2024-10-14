@@ -2,6 +2,7 @@ import { IDotNotationHandler, IPropInfo, SetValueWithIndexesFn } from "./types";
 import { utils } from "../utils";
 import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
+import { ILoopIndexes } from "../loopContext/types";
 
 type IHandlerPartial = Pick<IDotNotationHandler, "notifyCallback">;
 
@@ -19,7 +20,7 @@ export const setValueWithIndexesFn = (handler: IHandlerPartialForSetValueWithInd
   return function (
     target: object, 
     propInfo: IPropInfo, 
-    indexes: (number|undefined)[], 
+    loopIndexes: ILoopIndexes | undefined, 
     value: any, 
     receiver: object
   ): boolean {
@@ -30,7 +31,7 @@ export const setValueWithIndexesFn = (handler: IHandlerPartialForSetValueWithInd
         return Reflect.set(target, propInfo.name, value, receiver);
       }
       withIndexes(
-        propInfo, indexes, () => {
+        propInfo, loopIndexes, () => {
           if (propInfo.pattern in target) {
             Reflect.set(target, propInfo.pattern, value, receiver)
           } else {
@@ -41,18 +42,18 @@ export const setValueWithIndexesFn = (handler: IHandlerPartialForSetValueWithInd
               target, 
               propInfo.patternPaths, 
               propInfo.patternElements,
-              indexes, 
+              loopIndexes, 
               propInfo.paths.length - 2, 
               propInfo.wildcardCount - (isWildcard ? 1 : 0) - 1, 
               receiver);
-            Reflect.set(parentValue, isWildcard ? indexes[indexes.length - 1] ?? utils.raise("wildcard is undefined") : lastElement, value);
+            Reflect.set(parentValue, isWildcard ? loopIndexes?.index ?? utils.raise("wildcard is undefined") : lastElement, value);
           }
         }
       );
       return true;
     } finally {
       if (callable) {
-        notifyCallback(propInfo.pattern, indexes as number[]);
+        notifyCallback(propInfo.pattern, loopIndexes);
       }
     }
   }

@@ -5,6 +5,7 @@ import { GetValueDirectFn } from "./types";
 import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
 import { getValueWithoutIndexesFn, IHandlerPartialForGetValueWithoutIndexes } from "./getValueWithoutIndexesFn";
+import { ILoopIndexes } from "../loopContext/types";
 
 type IHandlerPartial = Pick<Handler, "get">
 
@@ -23,7 +24,7 @@ export const getValueDirectFn = (handler: IHandlerPartialForGetValueDirect): Get
   return function (
     target: object, 
     prop: string, 
-    indexes: number[], 
+    loopIndexes: ILoopIndexes | undefined, 
     receiver: object
   ) {
     if (typeof prop !== "string") utils.raise(`prop is not string`);
@@ -33,7 +34,7 @@ export const getValueDirectFn = (handler: IHandlerPartialForGetValueDirect): Get
     // パターンではないものも来る可能性がある
     const propInfo = getPropInfo(propName);
     return withIndexes(
-      propInfo, indexes, () => {
+      propInfo, loopIndexes, () => {
       if (isIndex || isExpand) {
         return handler.get(target, prop, receiver);
       } else {
@@ -42,7 +43,7 @@ export const getValueDirectFn = (handler: IHandlerPartialForGetValueDirect): Get
             target, 
             propInfo.patternPaths,
             propInfo.patternElements, 
-            indexes, 
+            loopIndexes, 
             propInfo.paths.length - 1, 
             propInfo.wildcardCount - 1, 
             receiver);

@@ -1,11 +1,31 @@
-import { GetDirectSymbol, NamedWildcardIndexesDisposeSymbol, SetDirectSymbol } from "./symbols";
+import { ILoopIndexes } from "../loopContext/types";
+import { IStatePropertyAccessor } from "../state/types";
+import { GetAccessorSymbol, GetDirectSymbol, NamedWildcardIndexesDisposeSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
 
 //export type PropType = "primitive" | "object" | "array";
 //export type ArrayIncompleteType = "none" | "parital" | "all";
 
 export interface IPatternInfo {
+  /** 
+   * ex. aaa.\*.bbb.\*.ccc => ["aaa", "\*", "bbb", "\*", "ccc"]
+   */
   readonly patternElements: string[];
+  /** 
+   * ex. aaa.\*.bbb.\*.ccc => [
+   *   "aaa",
+   *   "aaa.\*",
+   *   "aaa.\*.bbb",
+   *   "aaa.\*.bbb.\*",
+   *   "aaa.\*.bbb.\*.ccc"
+   * ]
+   */
   readonly patternPaths: string[];
+  /**
+   * ex. aaa.\*.bbb.\*.ccc => [
+   *   "aaa.\*",
+   *   "aaa.\*.bbb.\*"
+   * ]
+   */
   readonly wildcardPaths: string[];
 }
 
@@ -14,13 +34,14 @@ export interface IPropInfo extends IPatternInfo {
   readonly pattern: string; // The pattern 
   readonly elements: string[];
   readonly paths: string[];
-  readonly wildcardIndexes: (number|undefined)[];
+  readonly wildcardLoopIndexes: ILoopIndexes | undefined,
   readonly wildcardCount: number;
   readonly lastIncompleteWildcardIndex: number;
   readonly allComplete: boolean;
   readonly allIncomplete: boolean;
 }
 
+export type Index = number | undefined;
 export type Indexes = (undefined|number)[];
 export type CleanIndexes = number[];
 export type StackIndexes = Indexes[];
@@ -48,6 +69,9 @@ export interface IDotNotationHandler {
   setExpandValues: SetExpandValuesFn;
   getValueDirect: GetValueDirectFn;
   setValueDirect: SetValueDirectFn;
+  getValueAccessor: GetValueAccessorFn;
+  setValueAccessor: SetValueAccessorFn;
+
   get(target:object, prop:PropertyKey, receiver:object):any;
   set(target:object, prop:PropertyKey, value:any, receiver:object):boolean;
   clearCache():void;
@@ -56,8 +80,10 @@ export interface IDotNotationHandler {
 }
 
 export interface IDotNotationProxy {
-  [GetDirectSymbol](prop:string, indexes:number[]): any;
-  [SetDirectSymbol](prop:string, indexes:number[], value:any): boolean;
+  [GetDirectSymbol](prop:string, indexes:ILoopIndexes | undefined): any;
+  [SetDirectSymbol](prop:string, indexes:ILoopIndexes | undefined, value:any): boolean;
+  [GetAccessorSymbol](accessor:IStatePropertyAccessor): any;
+  [SetAccessorSymbol](accessor:IStatePropertyAccessor, value:any): boolean;
   readonly $1?: number;
   readonly $2?: number;
   readonly $3?: number;
@@ -81,23 +107,25 @@ export type GetValueFn = (
   target:object, 
   patternPaths:string[],
   patternElements:string[],
-  wildcardIndexes:(number|undefined)[], 
+  wildcardLoopIndexes: ILoopIndexes | undefined,
   pathIndex:number, 
   wildcardIndex:number,
   receiver:object
 ) => any;
 
-export type GetLastIndexesFn = (pattern:string) =>  Indexes | undefined ;
-export type GetValueWithIndexesFn = (target:object, propInfo:IPropInfo, indexes:(number|undefined)[], receiver:object) => any;
+export type GetLastIndexesFn = (pattern:string) =>  ILoopIndexes | undefined ;
+export type GetValueWithIndexesFn = (target:object, propInfo:IPropInfo, loopIndexes:ILoopIndexes | undefined, receiver:object) => any;
 export type GetValueWithoutIndexesFn = (target:object, prop:string, receiver:object) => any;
-export type WithIndexesFn = (patternInfo: IPatternInfo, indexes:Indexes, callback:() => any) => any; 
-export type SetValueWithIndexesFn = (target:object, propInfo:IPropInfo, indexes:(number|undefined)[], value:any, receiver:object) => boolean;
+export type WithIndexesFn = (patternInfo: IPatternInfo, loopIndexes:ILoopIndexes | undefined, callback:() => any) => any; 
+export type SetValueWithIndexesFn = (target:object, propInfo:IPropInfo, loopIndexes:ILoopIndexes | undefined, value:any, receiver:object) => boolean;
 export type SetValueWithoutIndexesFn = (target:object, prop:string, value:any, receiver:object) => boolean;
 export type GetExpandValuesFn = (target:object, prop:string, receiver:object) => any[];
 export type SetExpandValuesFn = (target:object, prop:string, value:any, receiver:object) => any;
-export type GetValueDirectFn = (target:object, prop:string, indexes:number[], receiver:object) => any;
-export type SetValueDirectFn = (target:object, prop:string, indexes:number[], value:any, receiver:object) => boolean;
+export type GetValueDirectFn = (target:object, prop:string, loopIndexes:ILoopIndexes | undefined, receiver:object) => any;
+export type SetValueDirectFn = (target:object, prop:string, loopIndexes:ILoopIndexes | undefined, value:any, receiver:object) => boolean;
 export type FindPropertyCallbackFn = (prop: string) => void;
-export type NotifyCallbackFn = (pattern:string, indexes:CleanIndexes) => void;
+export type NotifyCallbackFn = (pattern:string, loopIndexes:ILoopIndexes | undefined) => void;
+export type GetValueAccessorFn = (target:object, accessor:IStatePropertyAccessor, receiver:object) => any;
+export type SetValueAccessorFn = (target:object, accessor:IStatePropertyAccessor, value:any, receiver:object) => boolean;
 
 export type StateCache = {[key:string]:any};

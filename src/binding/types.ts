@@ -1,21 +1,14 @@
 
-import { ILoopContext } from "../loopContext/types";
+import { ILoopContext, ILoopIndexes } from "../loopContext/types";
 import { IPropInfo } from "../dotNotation/types";
 import { IComponent } from "../component/types";
-import { IStateProxy } from "../state/types";
+import { IStatePropertyAccessor, IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";
 import { IUpdator } from "../updator/types";
 
-export interface IPropertyAccess {
-  readonly pattern: string;
-  readonly indexes: number[];
-  readonly propInfo: IPropInfo;
-  readonly key: string;
-}
-
 export interface IBindingPropertyAccess {
   readonly name: string;
-  readonly indexes: number[];
+  readonly loopIndexes: ILoopIndexes | undefined;
   readonly loopContext?: ILoopContext;
 }
 
@@ -33,7 +26,7 @@ export interface INodeProperty extends ILoopable {
   readonly isSelectValue: boolean;
   readonly loopable: boolean;
   initialize(): void;
-  postUpdate(propertyAccessByStatePropertyKey: Map<string,IPropertyAccess>):void;
+  postUpdate(propertyAccessByStatePropertyKey: Map<string,IStatePropertyAccessor>):void;
   equals(value: any): boolean;
   applyToChildNodes(setOfIndex: Set<number>): void;
   dispose(): void;
@@ -46,9 +39,8 @@ export interface IStateProperty {
   readonly state: IStateProxy;
   readonly name: string;
   readonly binding: IBinding;
-  readonly indexes: number[];
+  readonly loopIndexes: ILoopIndexes | undefined
   readonly applicable: boolean;
-  readonly key: string;
   readonly propInfo: IPropInfo;
   readonly level: number;
   readonly lastWildCard: string;
@@ -61,7 +53,7 @@ export interface IStateProperty {
   setValue(value: any): void;
 }
 
-export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "newBindingSummary" | "updator">;
+export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "newBindingSummary" | "updator" | "popoverLoopIndexesById">;
 
 export interface IBindingTreeNode {
   readonly childrenContentBindings: IContentBindingsTreeNode[];
@@ -102,6 +94,7 @@ export interface IContentBindingsTreeNode {
   parentBinding?: IBindingTreeNode;
   readonly loopContext?: ILoopContext;
   readonly currentLoopContext?: ILoopContext;
+  readonly patternName: string;
 }
 
 export interface IContentBindings extends IContentBindingsTreeNode {
@@ -117,7 +110,6 @@ export interface IContentBindings extends IContentBindingsTreeNode {
   readonly allChildBindings: IBinding[];
   readonly loopable: boolean;
   readonly useKeyed: boolean;
-  readonly patternName: string;
   readonly localTreeNodes: Set<IBinding>;
 
 //  initialize():void;
@@ -138,6 +130,6 @@ export interface IMultiValue {
 export interface INewBindingSummary {
   register(binding: IBinding): void;
   delete(binding: IBinding): void;
-  gatherBindings(pattern: string, indexes: number[]): IBinding[];
+  gatherBindings(pattern: string, loopIndexes: ILoopIndexes | undefined): IBinding[];
   exists(binding: IBinding): boolean;
 }

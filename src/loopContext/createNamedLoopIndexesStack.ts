@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { createLoopIndexes, disposeLoopIndexes } from "./createLoopIndexes";
+import { createLoopIndexes } from "./createLoopIndexes";
 import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "./types";
 
 class NamedLoopIndexesStack implements INamedLoopIndexesStack {
@@ -16,7 +16,7 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     try {
       await callback();
     } finally {
-      const namedLoopIndexes = this.stack.pop();
+      this.stack.pop();
     }
   }
   
@@ -28,7 +28,7 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     try {
       callback();
     } finally {
-      const namedLoopIndexes = this.stack.pop();
+      this.stack.pop();
     }
   }
 
@@ -49,7 +49,6 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     } finally {
       const loopIndexes = currentNamedLoopIndexes.get(name);
       if (typeof loopIndexes !== "undefined") {
-        disposeLoopIndexes(loopIndexes, false);
         currentNamedLoopIndexes.delete(name);
       }
     }

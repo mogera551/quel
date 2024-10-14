@@ -5,22 +5,23 @@ import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol,
 import { IComponent, IProps } from "./types";
 import { IBindingPropertyAccess } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
+import { ILoopIndexes } from "../loopContext/types";
 
 const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
 
 type IComponentForProps = Pick<IComponent, "parentComponent" | "states"> & HTMLElement;
 
-function getPopoverContextIndexes(component:IComponentForProps): number[] | undefined {
-  return component.parentComponent?.popoverContextIndexesById?.get(component.id);
+function getPopoverLoopIndexes(component:IComponentForProps): ILoopIndexes | undefined {
+  return component.parentComponent?.popoverLoopIndexesById?.get(component.id);
 }
 
-const contextLoopIndexes = (handler:Handler, props:IBindingPropertyAccess): number[] => {
+const contextLoopIndexes = (handler:Handler, props:IBindingPropertyAccess): ILoopIndexes | undefined => {
   let indexes;
   const patternInfo = getPatternInfo(props.name);
-  if (patternInfo.wildcardPaths.length > 0 && props.indexes.length === 0 && handler.component.hasAttribute("popover")) {
-    indexes = getPopoverContextIndexes(handler.component)?.slice(0 , patternInfo.wildcardPaths.length);
+  if (patternInfo.wildcardPaths.length > 0 && props.loopIndexes?.size === 0 && handler.component.hasAttribute("popover")) {
+    indexes = getPopoverLoopIndexes(handler.component)?.truncate(patternInfo.wildcardPaths.length);
   }
-  return indexes ?? props.indexes;
+  return indexes ?? props.loopIndexes;
 }
 
 class Handler implements ProxyHandler<IProps> {
@@ -58,11 +59,11 @@ class Handler implements ProxyHandler<IProps> {
         const match = RE_CONTEXT_INDEX.exec(props.name);
         if (match) {
           const loopIndex = Number(match[1]) - 1;
-          let indexes = props.loopContext?.indexes ?? []; // todo: loopContextがundefinedの場合の処理
-          if (indexes.length === 0 && handler.component.hasAttribute("popover")) {
-            indexes = getPopoverContextIndexes(handler.component) ?? [];
+          let indexes = props.loopContext?.loopIndexes; // todo: loopContextがundefinedの場合の処理
+          if (typeof indexes === "undefined" && handler.component.hasAttribute("popover")) {
+            indexes = getPopoverLoopIndexes(handler.component);
           }
-          return indexes[loopIndex];
+          return indexes?.at(loopIndex);
         } else {
           const loopIndexes = contextLoopIndexes(handler, props);
           return handler.component.parentComponent?.states.current[GetDirectSymbol](props.name, loopIndexes) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
@@ -109,7 +110,7 @@ class Handler implements ProxyHandler<IProps> {
     this.#buffer = buffer;
     for(const key in buffer) {
       this.#bindProperty(key);
-      this.#component.states.current[NotifyForDependentPropsApiSymbol](key, []);
+      this.#component.states.current[NotifyForDependentPropsApiSymbol](key, undefined);
     }
   }
 

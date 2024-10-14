@@ -2,7 +2,7 @@ import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, D
 import { IComponent } from "../component/types";
 import { IDotNotationProxy } from "../dotNotation/types";
 import { IGlobalDataProxy } from "../global/types";
-import { ILoopContext } from "../loopContext/types";
+import { ILoopContext, ILoopIndexes } from "../loopContext/types";
 import { IUpdator } from "../updator/types";
 
 export interface IStateHandler {
@@ -29,7 +29,7 @@ export interface IStateProxy extends IDotNotationProxy, IBaseState {
   readonly [DependenciesSymbol]: IDependentProps;
   // API
   [DirectryCallApiSymbol](prop: string, event: Event, loopContext: ILoopContext | undefined): Promise<void>;
-  [NotifyForDependentPropsApiSymbol](prop:string, indexes:number[]): void;
+  [NotifyForDependentPropsApiSymbol](prop:string, loopIndexes:ILoopIndexes | undefined): void;
   [GetDependentPropsApiSymbol](): IDependentProps;
   [ClearCacheApiSymbol](): void;
   [CreateBufferApiSymbol](component:IComponent): void;
@@ -61,3 +61,8 @@ export interface IStates {
 }
 
 export type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTMLElement;
+
+export interface IStatePropertyAccessor {
+  readonly pattern: string;
+  readonly loopIndexes: ILoopIndexes | undefined;
+}

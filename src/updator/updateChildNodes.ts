@@ -1,36 +1,39 @@
-import { createPropertyAccess } from "../binding/createPropertyAccess";
 import { setValueToChildNodes } from "../binding/setValueToChildNodes";
-import { INewBindingSummary, IPropertyAccess } from "../binding/types";
+import { INewBindingSummary } from "../binding/types";
+import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
+import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
+import { IStatePropertyAccessor } from "../state/types";
 import { IUpdator } from "./types";
 
 export function updateChildNodes(
   updator: IUpdator,
   newBindingSummary: INewBindingSummary, 
-  updatedStatePropertyAccesses: IPropertyAccess[]
+  updatedStatePropertyAccesseors: IStatePropertyAccessor[]
 ): void {
-  const parentPropertyAccessByKey: {[key: string]: IPropertyAccess} = {};
+  const parentPropertyAccessorByKey: {[key: string]: IStatePropertyAccessor} = {};
   const indexesByParentKey: {[key: string]: Set<number>} = {};
-  for(const propertyAccess of updatedStatePropertyAccesses) {
-    const patternElements = propertyAccess.propInfo.patternElements;
+  for(const propertyAccessor of updatedStatePropertyAccesseors) {
+    const patternInfo = getPatternInfo(propertyAccessor.pattern)
+    const patternElements = patternInfo.patternElements;
     if (patternElements[patternElements.length - 1] !== "*") continue;
 
-    const indexes = propertyAccess.indexes;
-    const lastIndex = indexes?.[indexes.length - 1];
+    const lastIndex = propertyAccessor.loopIndexes?.index;
     if (typeof lastIndex === "undefined") continue;
 
-    const patternPaths = propertyAccess.propInfo.patternPaths;
-    const parentPropertyAccess = createPropertyAccess(patternPaths[patternPaths.length - 2], indexes.slice(0, -1));
-    const parentKey = parentPropertyAccess.key;
+    const patternPaths = patternInfo.patternPaths;
+    const parentLoopIndexes = propertyAccessor.loopIndexes?.parentLoopIndexes;
+    const parentPropertyAccessor = createStatePropertyAccessor(patternPaths.at(-2) ?? "", parentLoopIndexes);
+    const parentKey = parentPropertyAccessor.pattern + "\t" + (parentPropertyAccessor.loopIndexes?.toString() ?? "");
 
     indexesByParentKey[parentKey]?.add(lastIndex) ?? (indexesByParentKey[parentKey] = new Set([lastIndex]));
-    parentPropertyAccessByKey[parentKey] = parentPropertyAccess;
+    parentPropertyAccessorByKey[parentKey] = parentPropertyAccessor;
   }
 
   for(const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
-    const parentPropertyAccess = parentPropertyAccessByKey[parentKey];
-    newBindingSummary.gatherBindings(parentPropertyAccess.pattern, parentPropertyAccess.indexes).forEach(binding => {
-      const namedLoopIndexes = createNamedLoopIndexesFromPattern(parentPropertyAccess.pattern, parentPropertyAccess.indexes);
+    const parentPropertyAccessor = parentPropertyAccessorByKey[parentKey];
+    newBindingSummary.gatherBindings(parentPropertyAccessor.pattern, parentPropertyAccessor.loopIndexes).forEach(binding => {
+      const namedLoopIndexes = createNamedLoopIndexesFromPattern(parentPropertyAccessor.pattern, parentPropertyAccessor.loopIndexes);
       updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
         setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
       });

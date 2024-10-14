@@ -1,20 +1,22 @@
 import { IBinding, IBindingTreeNode, IContentBindingsTreeNode } from "../binding/types";
+import { Index } from "../dotNotation/types";
 
 export type INamedLoopContexts = {
   [key: string]: ILoopContext;
 }
 
 export interface ILoopContext {
-  readonly parentLoopContext?: ILoopContext;
-  readonly index: number;
-  readonly indexes: number[];
-  readonly patternName:string;
-  readonly parentBinding:IBindingTreeNode;
   readonly contentBindings: IContentBindingsTreeNode;
+  readonly patternName:string;
+  readonly parentPatternName:string | undefined;
+  readonly parentNamedLoopContext: ILoopContext | undefined
+  readonly parentLoopContext: ILoopContext | undefined;
+  readonly index: number;
+  readonly namedLoopIndexes: ILoopIndexes;
+  readonly loopIndexes: ILoopIndexes;
   readonly namedLoopContexts: INamedLoopContexts;
   readonly loopTreeNodesByName: {[key: string]: Set<IBinding>};
   readonly loopTreeLoopableNodesByName: {[key: string]: Set<IBinding>};
-  find(patternName:string):ILoopContext | undefined;
   dispose():void;
 }
 
@@ -27,16 +29,16 @@ export interface ILoopContextStack {
 }
 
 export interface ILoopIndexes {
-  disposed: boolean;
   readonly parentLoopIndexes: ILoopIndexes | undefined;
-  readonly values: number[];
-  assignValue({ parentLoopIndexes, value, values }: { 
-    parentLoopIndexes: ILoopIndexes | undefined,
-    value: number | undefined,
-    values: number[] | undefined
-  }): void;
-  add(index: number): ILoopIndexes;
-  dispose(): void;
+  readonly values: Index[];
+  readonly index: number;
+  readonly size: number;
+  add(value: Index): ILoopIndexes;
+  backward(): Generator<Index>;
+  forward(): Generator<Index>;
+  toString(): string;
+  truncate(length: number): ILoopIndexes | undefined;
+  at(index: number): Index;
 }
 
 export type INamedLoopIndexes = Map<string, ILoopIndexes>;

@@ -1,7 +1,6 @@
-import { IBinding, INewBindingSummary, IPropertyAccess } from "../binding/types";
-import { createLoopIndexes } from "../loopContext/createLoopIndexes";
+import { IBinding, INewBindingSummary } from "../binding/types";
 import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
-import { ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
+import { IStatePropertyAccessor } from "../state/types";
 import { IUpdator } from "./types";
 
 // ソートのための比較関数
@@ -12,18 +11,18 @@ const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateP
 export async function rebuildBindings(
   updator: IUpdator, 
   newBindingSummary: INewBindingSummary, 
-  updatedStatePropertyAccesses: IPropertyAccess[],
+  updatedStatePropertyAccessors: IStatePropertyAccessor[],
   updatedKeys: string[]
 ): Promise<void> {
-  for(let i = 0; i < updatedStatePropertyAccesses.length; i++) {
-    const propertyAccess = updatedStatePropertyAccesses[i];
-    const gatheredBindings = newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes);
+  for(let i = 0; i < updatedStatePropertyAccessors.length; i++) {
+    const propertyAccessor = updatedStatePropertyAccessors[i];
+    const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor.pattern, propertyAccessor.loopIndexes);
     for(let gi = 0; gi < gatheredBindings.length; gi++) {
       const binding = gatheredBindings[gi];
       if (!binding.expandable) continue;
       const compareKey = binding.stateProperty.name + ".";
       const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-      const namedLoopIndexes = createNamedLoopIndexesFromPattern(propertyAccess.pattern, propertyAccess.indexes);
+      const namedLoopIndexes = createNamedLoopIndexesFromPattern(propertyAccessor.pattern, propertyAccessor.loopIndexes);
       updator.setFullRebuild(isFullBuild, () => {
         updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.rebuild();

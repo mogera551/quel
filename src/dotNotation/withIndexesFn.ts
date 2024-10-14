@@ -1,3 +1,4 @@
+import { ILoopIndexes } from "../loopContext/types";
 import { createNamedWildcardIndexes, disposeNamedWildcardIndexes } from "./createNamedWildcardIndexes";
 import { IDotNotationHandler, Indexes, IPatternInfo, WithIndexesFn } from "./types";
 
@@ -14,7 +15,7 @@ export type IHandlerPartialForWithIndexes = IHandlerPartial;
 export const withIndexesFn = (handler: IHandlerPartialForWithIndexes): WithIndexesFn => {
   return function (
     patternInfo: IPatternInfo, 
-    indexes: Indexes, 
+    loopIndexes: ILoopIndexes | undefined, 
     callback: () => any
   ): any {
     const { stackNamedWildcardIndexes, stackIndexes } = handler;

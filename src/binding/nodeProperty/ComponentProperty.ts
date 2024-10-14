@@ -3,10 +3,11 @@ import { IFilterText } from "../../filter/types";
 import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
-import { createPropertyAccess } from "../createPropertyAccess";
-import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../types";
-import { ILoopContext } from "../../loopContext/types";
+import { IBinding, IBindingPropertyAccess, IStateProperty } from "../types";
+import { ILoopContext, ILoopIndexes } from "../../loopContext/types";
 import { IComponent } from "../../component/types";
+import { IStatePropertyAccessor } from "../../state/types";
+import { getPatternInfo } from "../../dotNotation/getPatternInfo";
 
 export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;
@@ -15,8 +16,8 @@ export class BindingPropertyAccess implements IBindingPropertyAccess{
     return this.#stateProperty.name;
   }
 
-  get indexes():number[] {
-    return this.#stateProperty.indexes;
+  get loopIndexes(): ILoopIndexes | undefined {
+    return this.#stateProperty.loopIndexes;
   }
 
   get loopContext():ILoopContext | undefined {
@@ -53,7 +54,7 @@ export class ComponentProperty extends ElementBase {
   }
   setValue(value:any) {
     try {
-      this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, []);
+      this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
     } catch(e) {
       console.log(e);
     }
@@ -69,14 +70,15 @@ export class ComponentProperty extends ElementBase {
   /**
    * 更新後処理
    */
-  postUpdate(propertyAccessBystatePropertyKey:Map<string,IPropertyAccess>):void {
+  postUpdate(propertyAccessBystatePropertyKey:Map<string,IStatePropertyAccessor>):void {
     const statePropertyName = this.binding.stateProperty.name;
-    for(const [key, propertyAccess] of propertyAccessBystatePropertyKey.entries()) {
-      if (propertyAccess.pattern === statePropertyName || 
-        propertyAccess.propInfo.patternPaths.includes(statePropertyName)) {
-        const remain = propertyAccess.pattern.slice(statePropertyName.length);
-        this.thisComponent.states.current[UpdatedCallbackSymbol]([createPropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
-        this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
+    for(const [key, propertyAccessor] of propertyAccessBystatePropertyKey.entries()) {
+      const patternInfo = getPatternInfo(propertyAccessor.pattern);
+      if (propertyAccessor.pattern === statePropertyName || 
+        patternInfo.patternPaths.includes(statePropertyName)) {
+        const remain = propertyAccessor.pattern.slice(statePropertyName.length);
+        this.thisComponent.states.current[UpdatedCallbackSymbol]([{name:`${this.propertyName}${remain}`, indexes:propertyAccessor.loopIndexes?.values}]);
+        this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
       }
     }
   }

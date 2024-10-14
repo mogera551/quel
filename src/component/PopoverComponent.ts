@@ -2,6 +2,7 @@
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
 import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
+import { ILoopIndexes } from "../loopContext/types";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogComponent
 
@@ -9,7 +10,7 @@ type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogCo
  * コンポーネントをポップオーバーできるように拡張します
  * 拡張内容は以下の通り
  * - popoverPromises: ポップオーバー用Promise
- * - popoverContextIndexesById: ポップオーバーコンテキストインデックス
+ * - popoverLoopIndexesById: ポップオーバーループインデックス
  * - canceled: キャンセルフラグ
  * - asyncShowPopover: ポップオーバー表示
  * - hidePopover: ポップオーバーを閉じる
@@ -36,12 +37,12 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
       this.#popoverPromises = value;
     }
 
-    #popoverContextIndexesById?: Map<string,number[]>;
-    get popoverContextIndexesById(): Map<string,number[]> {
-      if (typeof this.#popoverContextIndexesById === "undefined") {
-        this.#popoverContextIndexesById = new Map;
+    #popoverLoopIndexesById?: Map<string, ILoopIndexes | undefined>;
+    get popoverLoopIndexesById(): Map<string, ILoopIndexes | undefined> {
+      if (typeof this.#popoverLoopIndexesById === "undefined") {
+        this.#popoverLoopIndexesById = new Map;
       }
-      return this.#popoverContextIndexesById;
+      return this.#popoverLoopIndexesById;
     }
   
     constructor(...args:any[]) {
@@ -66,7 +67,7 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
         // remove loop context
         const id = this.id;
         if (typeof id !== "undefined") {
-          this.popoverContextIndexesById.delete(id);
+          this.popoverLoopIndexesById.delete(id);
         }
       });
       this.addEventListener("shown", () => {
@@ -76,7 +77,7 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
           this.props[SetBufferSymbol](buffer);
         }
         for(const key in this.props) {
-          this.states.current[NotifyForDependentPropsApiSymbol](key, []);
+          this.states.current[NotifyForDependentPropsApiSymbol](key, undefined);
         }
       });
       this.addEventListener("toggle", (e:Event) => {

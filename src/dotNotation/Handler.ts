@@ -1,6 +1,6 @@
-import { GetDirectSymbol, SetDirectSymbol } from "./symbols";
+import { GetAccessorSymbol, GetDirectSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
-import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
+import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetValueAccessorFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueAccessorFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
 import { getLastIndexesFn } from "./getLastIndexesFn";
 import { getValueFn } from "./getValueFn";
 import { getValueWithIndexesFn } from "./getValueWithIndexesFn";
@@ -11,6 +11,9 @@ import { getExpandValuesFn } from "./getExpandValuesFn";
 import { setExpandValuesFn } from "./setExpandVauesFn";
 import { getValueDirectFn } from "./getValueDirectFn";
 import { setValueDirectFn } from "./setValueDirectFn";
+import { ILoopIndexes } from "../loopContext/types";
+import { getValueAccessorFn } from "./getAccessorValueFn";
+import { setValueAccessorFn } from "./setAccessorValueFn";
 
 /**
  * ドット記法でプロパティを取得するためのハンドラ
@@ -37,6 +40,9 @@ export class Handler implements IDotNotationHandler {
   getValueDirect: GetValueDirectFn = getValueDirectFn(this);
   setValueDirect: SetValueDirectFn = setValueDirectFn(this);
 
+  getValueAccessor: GetValueAccessorFn = getValueAccessorFn(this);
+  setValueAccessor: SetValueAccessorFn = setValueAccessorFn(this);
+
   clearCache() {
     if (typeof this.cache !== "undefined") {
       this.cache = {};
@@ -51,11 +57,17 @@ export class Handler implements IDotNotationHandler {
     do {
       if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) break;
       if (prop === GetDirectSymbol) {
-        return (prop:string, indexes:number[])=>this.getValueDirect.apply(this, [target, prop, indexes, receiver]);
+        return (prop:string, loopIndexes:ILoopIndexes)=>this.getValueDirect.apply(this, [target, prop, loopIndexes, receiver]);
       }
       if (prop === SetDirectSymbol) {
-        return (prop:string, indexes:number[], value:any)=>
-          this.setValueDirect.apply(this, [target, prop, indexes, value, receiver]);
+        return (prop:string, loopIndexes:ILoopIndexes, value:any)=>
+          this.setValueDirect.apply(this, [target, prop, loopIndexes, value, receiver]);
+      }
+      if (prop === GetAccessorSymbol) {
+
+      }
+      if (prop === SetAccessorSymbol) {
+
       }
       if (!isPropString) break;
       if (prop[0] === "$") {

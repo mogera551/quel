@@ -1,22 +1,25 @@
-import { IBinding, INewBindingSummary, IPropertyAccess } from "../binding/types";
+import { IBinding, INewBindingSummary } from "../binding/types";
+import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
+import { IStatePropertyAccessor } from "../state/types";
 import { IUpdator } from "./types";
 
 export async function updateNodes(
   updator: IUpdator,
   newBindingSummary: INewBindingSummary,
-  updatedStatePropertyAccesses: IPropertyAccess[]
+  updatedStatePropertyAccessors: IStatePropertyAccessor[]
 ) {
-  const selectBindings: {binding:IBinding, propertyAccess:IPropertyAccess}[] = [];
-  for(let i = 0; i < updatedStatePropertyAccesses.length; i++) {
-    const propertyAccess = updatedStatePropertyAccesses[i];
-    newBindingSummary.gatherBindings(propertyAccess.pattern, propertyAccess.indexes).forEach(async binding => {
+  const selectBindings: {binding:IBinding, propertyAccessor:IStatePropertyAccessor}[] = [];
+  for(let i = 0; i < updatedStatePropertyAccessors.length; i++) {
+    const propertyAccessor = updatedStatePropertyAccessors[i];
+    newBindingSummary.gatherBindings(propertyAccessor.pattern, propertyAccessor.loopIndexes).forEach(async binding => {
       if (binding.expandable) return;
       if (binding.nodeProperty.isSelectValue) {
-        selectBindings.push({binding, propertyAccess});
+        selectBindings.push({binding, propertyAccessor});
       } else {
-        const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
-        const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccess.indexes);
+        const propInfo = getPatternInfo(propertyAccessor.pattern);
+        const lastWildCardPath = propInfo.wildcardPaths.at(-1);
+        const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccessor.loopIndexes);
         updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.updateNodeForNoRecursive();
         });
@@ -25,9 +28,10 @@ export async function updateNodes(
   }
   for(let si = 0; si < selectBindings.length; si++) {
     const info = selectBindings[si];
-    const propertyAccess = info.propertyAccess;
-    const lastWildCardPath = propertyAccess.propInfo.wildcardPaths[propertyAccess.propInfo.wildcardPaths.length - 1];
-    const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccess.indexes);
+    const propertyAccessor = info.propertyAccessor;
+    const propInfo = getPatternInfo(propertyAccessor.pattern);
+    const lastWildCardPath = propInfo.wildcardPaths.at(-1);
+    const namedLoopIndexes = createNamedLoopIndexesFromPattern(lastWildCardPath, propertyAccessor.loopIndexes);
     updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
       info.binding.updateNodeForNoRecursive();
     });

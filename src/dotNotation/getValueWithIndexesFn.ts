@@ -1,6 +1,7 @@
 import { GetValueWithIndexesFn, IPropInfo } from "./types";
 import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
+import { ILoopIndexes } from "../loopContext/types";
 
 export type IHandlerPartialForGetValueWithIndexes = IHandlerPartialForGetValue & IHandlerPartialForWithIndexes;
 
@@ -16,18 +17,18 @@ export const getValueWithIndexesFn = (handler: IHandlerPartialForGetValueWithInd
   return function(
     target:object, 
     propInfo:IPropInfo, 
-    indexes:(number|undefined)[], 
+    loopIndexes:ILoopIndexes | undefined, 
     receiver:object
   ): any {
     return withIndexes(
       propInfo, 
-      indexes, 
+      loopIndexes, 
       () => {
         return getValue(
           target, 
           propInfo.patternPaths,
           propInfo.patternElements, 
-          indexes, 
+          loopIndexes, 
           propInfo.paths.length - 1, 
           propInfo.wildcardCount - 1, 
           receiver);
