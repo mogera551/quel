@@ -45,10 +45,7 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     try {
       callback();
     } finally {
-      const loopIndexes = currentNamedLoopIndexes.get(name);
-      if (typeof loopIndexes !== "undefined") {
-        currentNamedLoopIndexes.delete(name);
-      }
+      currentNamedLoopIndexes.delete(name);
     }
   }
 

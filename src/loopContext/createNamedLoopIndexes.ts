@@ -1,5 +1,5 @@
-import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { IStatePropertyAccessor } from "../state/types";
+import { utils } from "../utils";
 import { ILoopIndexes, INamedLoopIndexes } from "./types";
 
 const _pool: INamedLoopIndexes[] = [];
@@ -11,8 +11,9 @@ export function createNamedLoopIndexesFromPattern(
   if (typeof propertyAccessor === "undefined") return namedLoopIndexes;
   const wildcardPaths = propertyAccessor.patternInfo.wildcardPaths;
   if (wildcardPaths.length > 0 && typeof propertyAccessor.loopIndexes !== "undefined") {
-    for(let wi = wildcardPaths.length - 1, loopIndexes: ILoopIndexes | undefined = propertyAccessor.loopIndexes; wi >= 0 ; wi--) {
-      if (typeof loopIndexes === "undefined") break;
+    let loopIndexes: ILoopIndexes | undefined = propertyAccessor.loopIndexes;
+    for(let wi = wildcardPaths.length - 1; wi >= 0; wi--) {
+      if (typeof loopIndexes === "undefined") utils.raise(`createNamedLoopIndexesFromPattern: loopIndexes is undefined.`);
       namedLoopIndexes.set(wildcardPaths[wi], loopIndexes);
       loopIndexes = loopIndexes.parentLoopIndexes;
     }
