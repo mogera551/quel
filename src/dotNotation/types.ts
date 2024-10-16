@@ -37,7 +37,6 @@ export interface IPropInfo extends IPatternInfo {
   readonly wildcardLoopIndexes: ILoopIndexes | undefined,
   readonly wildcardNamedLoopIndexes: INamedLoopIndexes;
   readonly wildcardCount: number;
-  readonly lastIncompleteWildcardIndex: number;
   readonly allComplete: boolean;
   readonly allIncomplete: boolean;
 }

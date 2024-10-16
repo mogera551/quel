@@ -9,6 +9,48 @@ import { ILoopIndexes, INamedLoopIndexes } from '../loopContext/types';
  */
 const _cache = new Map<string, IPropInfo>();
 
+export class PropInfo implements IPropInfo {
+  name: string;
+  pattern: string;
+  elements: string[];
+  paths: string[];
+  wildcardCount: number;
+  wildcardLoopIndexes: ILoopIndexes | undefined;
+  wildcardNamedLoopIndexes: INamedLoopIndexes;
+  allComplete: boolean;
+  allIncomplete: boolean;
+  patternElements: string[];
+  patternPaths: string[];
+  wildcardPaths: string[];
+  constructor(
+    name: string,
+    pattern: string,
+    elements: string[],
+    paths: string[],
+    wildcardCount: number,
+    wildcardLoopIndexes: ILoopIndexes | undefined,
+    wildcardNamedLoopIndexes: INamedLoopIndexes,
+    allComplete: boolean,
+    allIncomplete: boolean,
+    patternElements: string[],
+    patternPaths: string[],
+    wildcardPaths: string[]
+    ) {
+    this.name = name;
+    this.pattern = pattern;
+    this.elements = elements;
+    this.paths = paths;
+    this.wildcardCount = wildcardCount;
+    this.wildcardLoopIndexes = wildcardLoopIndexes;
+    this.wildcardNamedLoopIndexes = wildcardNamedLoopIndexes;
+    this.allComplete = allComplete;
+    this.allIncomplete = allIncomplete;
+    this.patternElements = patternElements;
+    this.patternPaths = patternPaths;
+    this.wildcardPaths = wildcardPaths;
+  }
+}
+
 /**
  * プロパティ情報を取得します
  * @param name プロパティ名
@@ -17,12 +59,9 @@ const _cache = new Map<string, IPropInfo>();
 function _getPropInfo(name:string):IPropInfo {
   const wildcardNamedLoopIndexes: INamedLoopIndexes = new Map;
   const elements = name.split(".");
-  const patternElements = elements.slice(0);
-  const wildcardIndexes:(number|undefined)[] = [];
-  const patternInfo = getPatternInfo(name);
+  const tmpPatternElements = elements.slice();
   let wildcardLoopIndexes: ILoopIndexes | undefined = undefined;
   const paths = [];
-  let lastIncompleteWildcardIndex = -1;
   let incompleteCount = 0;
   let completeCount = 0;
   let lastPath = "";
@@ -31,19 +70,14 @@ function _getPropInfo(name:string):IPropInfo {
     const element = elements[i];
     if (element === "*") {
       wildcardLoopIndexes = createLoopIndexes(wildcardLoopIndexes, undefined);
-      wildcardNamedLoopIndexes.set(patternInfo.wildcardPaths[wildcardCount], wildcardLoopIndexes);
-      wildcardIndexes.push(undefined);
-      patternElements[i] = "*";
-      lastIncompleteWildcardIndex = wildcardIndexes.length - 1;
+      tmpPatternElements[i] = "*";
       incompleteCount++;
       wildcardCount++;
     } else {
       const number = Number(element);
       if (!Number.isNaN(number)) {
         wildcardLoopIndexes = createLoopIndexes(wildcardLoopIndexes, number);
-        wildcardNamedLoopIndexes.set(patternInfo.wildcardPaths[wildcardCount], wildcardLoopIndexes);
-        wildcardIndexes.push(number);
-        patternElements[i] = "*";
+        tmpPatternElements[i] = "*";
         completeCount++;
         wildcardCount++;
       }
@@ -52,22 +86,29 @@ function _getPropInfo(name:string):IPropInfo {
     paths.push(lastPath);
     lastPath += (i < elements.length - 1 ? "." : "");
   }
-  const pattern = patternElements.join(".");
-//  const wildcardCount = wildcardIndexes.length;
-  return Object.assign({
+  const pattern = tmpPatternElements.join(".");
+  const patternInfo = getPatternInfo(name);
+  let tmpWildcardLoopIndexes = wildcardLoopIndexes;
+  for(let i = patternInfo.wildcardPaths.length - 1; i >= 0; i--) {
+    if (typeof tmpWildcardLoopIndexes === "undefined") throw new Error(`_getPropInfo: tmpWildcardLoopIndexes is undefined.`);
+    wildcardNamedLoopIndexes.set(patternInfo.wildcardPaths[i], tmpWildcardLoopIndexes);
+    tmpWildcardLoopIndexes = tmpWildcardLoopIndexes?.parentLoopIndexes;
+  }
+
+  return new PropInfo(
     name,
     pattern,
     elements,
-    patternElements,
     paths,
     wildcardCount,
-    wildcardIndexes,
     wildcardLoopIndexes,
     wildcardNamedLoopIndexes,
-    lastIncompleteWildcardIndex,
-    allComplete: completeCount === wildcardCount,
-    allIncomplete: incompleteCount === wildcardCount,
-  }, patternInfo);
+    completeCount === wildcardCount,
+    incompleteCount === wildcardCount,
+    patternInfo.patternElements,
+    patternInfo.patternPaths,
+    patternInfo.wildcardPaths
+  )
 }
 
 export function getPropInfo(name:string):IPropInfo {
