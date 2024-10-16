@@ -1,6 +1,6 @@
 import { GetAccessorSymbol, GetDirectSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
-import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetNamedLoopIndexesStackFn, GetValueAccessorFn, GetValueByPropInfoFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueAccessorFn, SetValueByPropInfoFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
+import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetNamedLoopIndexesStackFn, GetValueAccessorFn, GetValueByPropInfoFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, IPropInfo, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueAccessorFn, SetValueByPropInfoFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
 import { getLastIndexesFn } from "./getLastIndexesFn";
 import { getValueFn } from "./getValueFn";
 import { getValueWithIndexesFn } from "./getValueWithIndexesFn";
@@ -16,6 +16,7 @@ import { getValueAccessorFn } from "./getAccessorValueFn";
 import { setValueAccessorFn } from "./setAccessorValueFn";
 import { getValueByPropInfoFn } from "./getValueByPropInfoFn";
 import { setValueByPropInfoFn } from "./setValueByPropInfoFn";
+import { PropInfo } from "./getPropInfo";
 
 /**
  * ドット記法でプロパティを取得するためのハンドラ
@@ -58,9 +59,14 @@ export class Handler implements IDotNotationHandler {
   findPropertyCallback?: FindPropertyCallbackFn;
   notifyCallback?: NotifyCallbackFn;
 
-  get(target:object, prop:PropertyKey, receiver:object):any {
+  get(target:object, prop:any, receiver:object):any {
     const isPropString = typeof prop === "string";
+    const isPropInfo = prop instanceof PropInfo;
     do {
+      if (prop instanceof PropInfo) {
+        return this.getValueByPropInfo(target, prop, receiver);
+      }
+      
       if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) break;
       if (prop === GetDirectSymbol) {
         return (prop:string, loopIndexes:ILoopIndexes)=>this.getValueDirect.apply(this, [target, prop, loopIndexes, receiver]);

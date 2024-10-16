@@ -31,6 +31,7 @@ export interface IPatternInfo {
 
 export interface IPropInfo extends IPatternInfo {
   readonly name: string; // The original name
+  readonly expandable: boolean,
   readonly pattern: string; // The pattern 
   readonly elements: string[];
   readonly paths: string[];

@@ -50,9 +50,7 @@ export function setValueByPropInfoFn(handler: IHandlerPartialForSetValueByPropIn
         if (notifyCallback) {
           notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.pattern));
         }
-  
       }
-   
     };
     const namedLoopIndexesStack = handler.getNamedLoopIndexesStack?.() ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
     if (propInfo.allIncomplete) {

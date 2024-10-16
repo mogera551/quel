@@ -11,6 +11,7 @@ const _cache = new Map<string, IPropInfo>();
 
 export class PropInfo implements IPropInfo {
   name: string;
+  expandable: boolean;
   pattern: string;
   elements: string[];
   paths: string[];
@@ -24,6 +25,7 @@ export class PropInfo implements IPropInfo {
   wildcardPaths: string[];
   constructor(
     name: string,
+    expandable: boolean,
     pattern: string,
     elements: string[],
     paths: string[],
@@ -37,6 +39,7 @@ export class PropInfo implements IPropInfo {
     wildcardPaths: string[]
     ) {
     this.name = name;
+    this.expandable = expandable;
     this.pattern = pattern;
     this.elements = elements;
     this.paths = paths;
@@ -57,6 +60,11 @@ export class PropInfo implements IPropInfo {
  * @returns {IPropInfo} プロパティ情報
  */
 function _getPropInfo(name:string):IPropInfo {
+  let expandable = false;
+  if (name[0] === "@") {
+    name = name.slice(1);
+    expandable = true;
+  }
   const wildcardNamedLoopIndexes: INamedLoopIndexes = new Map;
   const elements = name.split(".");
   const tmpPatternElements = elements.slice();
@@ -97,6 +105,7 @@ function _getPropInfo(name:string):IPropInfo {
 
   return new PropInfo(
     name,
+    expandable,
     pattern,
     elements,
     paths,
