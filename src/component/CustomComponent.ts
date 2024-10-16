@@ -15,7 +15,7 @@ import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
 import { getAdoptedCssNamesFromStyleValue } from "./getAdoptedCssNamesFromStyleValue";
 import { createNewBindingSummary } from "../binding/createNewBindingSummary";
-import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 
@@ -204,7 +204,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       // build binding tree and dom 
       const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
       this.rootBindingManager = createRootContentBindings(this, uuid);
-      this.updator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromPattern(), () => {
+      this.updator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
         this.rootBindingManager.rebuild();
       });
       if (this.useWebComponent) {

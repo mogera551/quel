@@ -1,4 +1,4 @@
-import { ILoopIndexes } from "../loopContext/types";
+import { ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
 import { IStatePropertyAccessor } from "../state/types";
 import { GetAccessorSymbol, GetDirectSymbol, NamedWildcardIndexesDisposeSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
 
@@ -107,7 +107,8 @@ export type GetValueFn = (
   target:object, 
   patternPaths:string[],
   patternElements:string[],
-  wildcardLoopIndexes: ILoopIndexes | undefined,
+  wildcardPaths: string[],
+  namedLoopIndexes: INamedLoopIndexes,
   pathIndex:number, 
   wildcardIndex:number,
   receiver:object

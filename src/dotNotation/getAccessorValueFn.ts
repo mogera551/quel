@@ -5,6 +5,8 @@ import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
 import { IHandlerPartialForGetValueWithoutIndexes } from "./getValueWithoutIndexesFn";
 import { IStatePropertyAccessor } from "../state/types";
+import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 
 type IHandlerPartial = Pick<Handler, "get">
 
@@ -26,13 +28,15 @@ export const getValueAccessorFn = (handler: IHandlerPartialForGetValueAccessor):
   ) {
     // パターンではないものはこない
     const propInfo = getPropInfo(accessor.pattern);
+    const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
     return withIndexes(
       propInfo, accessor.loopIndexes, () => {
         return getValue(
           target, 
           propInfo.patternPaths,
           propInfo.patternElements, 
-          accessor.loopIndexes, 
+          propInfo.wildcardPaths,
+          namedLoopIndexes,
           propInfo.paths.length - 1, 
           propInfo.wildcardCount - 1, 
           receiver);

@@ -30,6 +30,7 @@ export interface ILoopContextStack {
 
 export interface ILoopIndexes {
   readonly parentLoopIndexes: ILoopIndexes | undefined;
+  readonly value: Index;
   readonly values: Index[];
   readonly index: number;
   readonly size: number;

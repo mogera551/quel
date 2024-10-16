@@ -1,5 +1,5 @@
 import { IBinding, INewBindingSummary } from "../binding/types";
-import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { IStatePropertyAccessor } from "../state/types";
 import { IUpdator } from "./types";
 
@@ -22,7 +22,7 @@ export async function rebuildBindings(
       if (!binding.expandable) continue;
       const compareKey = binding.stateProperty.name + ".";
       const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
-      const namedLoopIndexes = createNamedLoopIndexesFromPattern(propertyAccessor);
+      const namedLoopIndexes = createNamedLoopIndexesFromAccessor(propertyAccessor);
       updator.setFullRebuild(isFullBuild, () => {
         updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.rebuild();

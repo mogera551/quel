@@ -1,7 +1,7 @@
-import { ILoopIndexes } from "../loopContext/types";
+import { ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
-import { FindPropertyCallbackFn, GetValueFn, StateCache } from "./types";
+import { FindPropertyCallbackFn, GetValueFn, NamedWildcardIndexes, StateCache } from "./types";
 
 type IHandlerPartial = Pick<Handler, "cache"|"findPropertyCallback">;
 
@@ -17,7 +17,8 @@ export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
     target: object, 
     patternPaths: string[],
     patternElements: string[],
-    wildcardLoopIndexes: ILoopIndexes | undefined,
+    wildcardPaths: string[],
+    namedLoopIndexes: INamedLoopIndexes,
     pathIndex: number, 
     wildcardIndex: number,
     receiver: object, 
@@ -28,24 +29,16 @@ export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
     cacheKeys: string[] | undefined = undefined
   ): any {
     let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
-    if (typeof cacheKeys === "undefined") {
-      // ToDo: 最適化する
-      cacheKeys = [];
-      let tmpKey = "";
-      for(let ki = 0, len = wildcardLoopIndexes?.size ?? 0; ki < len; ki++) {
-        tmpKey += wildcardLoopIndexes?.at(ki) + ",";
-        cacheKeys[ki] = tmpKey;
-      }
-    }
     if (callable) {
       // @ts-ignore
       findPropertyCallback(path);
     }
+    const wildcardLoopIndexes = namedLoopIndexes.get(wildcardPaths[wildcardIndex]);
     // @ts-ignore
     return cachable ? 
       (/* use cache */ 
         // @ts-ignore
-        value = cache[cacheKey = path + ":" + (cacheKeys[wildcardIndex] ?? "")] ?? (
+        value = cache[cacheKey = path + ":" + (wildcardLoopIndexes?.toString() ?? "")] ?? (
           /* cache value is null or undefined */
           // @ts-ignore
           (cacheKey in cache) ? value : (
@@ -60,7 +53,8 @@ export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
                     target, 
                     patternPaths,
                     patternElements,
-                    wildcardLoopIndexes, 
+                    wildcardPaths,
+                    namedLoopIndexes, 
                     pathIndex - 1, 
                     wildcardIndex - (isWildcard ? 1 : 0), 
                     receiver,
@@ -69,7 +63,7 @@ export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
                     cachable,
                     callable,
                     cacheKeys
-                  )[isWildcard ? (wildcardLoopIndexes?.at(wildcardIndex) ?? utils.raise(`wildcard is undefined`)) : element]
+                  )[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element]
                 )
               )
             )
@@ -85,7 +79,8 @@ export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
               target, 
               patternPaths,
               patternElements,
-              wildcardLoopIndexes, 
+              wildcardPaths,
+              namedLoopIndexes, 
               pathIndex - 1, 
               wildcardIndex - (isWildcard ? 1 : 0), 
               receiver,
@@ -94,7 +89,7 @@ export const getValueFn = (handler: IHandlerPartialForGetValue): GetValueFn => {
               cachable,
               callable,
               cacheKeys
-            )[isWildcard ? (wildcardLoopIndexes?.at(wildcardIndex) ?? utils.raise(`wildcard is undefined`)) : element]
+            )[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element]
           )
         )
       );

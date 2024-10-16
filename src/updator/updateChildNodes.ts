@@ -1,7 +1,7 @@
 import { setValueToChildNodes } from "../binding/setValueToChildNodes";
 import { INewBindingSummary } from "../binding/types";
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
-import { createNamedLoopIndexesFromPattern } from "../loopContext/createNamedLoopIndexes";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { IStatePropertyAccessor } from "../state/types";
 import { IUpdator } from "./types";
@@ -32,7 +32,7 @@ export function updateChildNodes(
   for(const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
     const parentPropertyAccessor = parentPropertyAccessorByKey[parentKey];
     newBindingSummary.gatherBindings(parentPropertyAccessor).forEach(binding => {
-      const namedLoopIndexes = createNamedLoopIndexesFromPattern(parentPropertyAccessor);
+      const namedLoopIndexes = createNamedLoopIndexesFromAccessor(parentPropertyAccessor);
       updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
         setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
       });

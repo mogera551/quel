@@ -14,6 +14,15 @@ class LoopIndexes implements ILoopIndexes {
   get parentLoopIndexes(): ILoopIndexes | undefined {
     return this.#parentLoopIndexes;
   }
+
+  get value(): Index {
+    if (typeof this.parentLoopIndexes === "undefined") {
+      return this.#_values?.[0];
+    } else {
+      return this.#_value;
+    }
+  }
+
   get values(): Index[] {
     if (typeof this.#values === "undefined") {
       if (typeof this.parentLoopIndexes === "undefined") {
