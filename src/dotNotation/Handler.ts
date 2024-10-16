@@ -1,6 +1,6 @@
 import { GetAccessorSymbol, GetDirectSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
-import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetValueAccessorFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueAccessorFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
+import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetNamedLoopIndexesStackFn, GetValueAccessorFn, GetValueByPropInfoFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueAccessorFn, SetValueByPropInfoFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
 import { getLastIndexesFn } from "./getLastIndexesFn";
 import { getValueFn } from "./getValueFn";
 import { getValueWithIndexesFn } from "./getValueWithIndexesFn";
@@ -14,6 +14,8 @@ import { setValueDirectFn } from "./setValueDirectFn";
 import { ILoopIndexes } from "../loopContext/types";
 import { getValueAccessorFn } from "./getAccessorValueFn";
 import { setValueAccessorFn } from "./setAccessorValueFn";
+import { getValueByPropInfoFn } from "./getValueByPropInfoFn";
+import { setValueByPropInfoFn } from "./setValueByPropInfoFn";
 
 /**
  * ドット記法でプロパティを取得するためのハンドラ
@@ -42,6 +44,10 @@ export class Handler implements IDotNotationHandler {
 
   getValueAccessor: GetValueAccessorFn = getValueAccessorFn(this);
   setValueAccessor: SetValueAccessorFn = setValueAccessorFn(this);
+
+  getValueByPropInfo: GetValueByPropInfoFn = getValueByPropInfoFn(this);
+  setValueByPropInfo: SetValueByPropInfoFn = setValueByPropInfoFn(this);
+  getNamedLoopIndexesStack: GetNamedLoopIndexesStackFn | undefined;
 
   clearCache() {
     if (typeof this.cache !== "undefined") {

@@ -6,7 +6,6 @@ const _pool: LoopIndexes[] = [];
 
 class LoopIndexes implements ILoopIndexes {
   #parentLoopIndexes: ILoopIndexes | undefined;
-  #_values: Index[] | undefined;
   #_value: Index;
   #values: Index[] | undefined;
   #stringValue: string | undefined;
@@ -16,17 +15,13 @@ class LoopIndexes implements ILoopIndexes {
   }
 
   get value(): Index {
-    if (typeof this.parentLoopIndexes === "undefined") {
-      return this.#_values?.[0];
-    } else {
-      return this.#_value;
-    }
+    return this.#_value;
   }
 
   get values(): Index[] {
     if (typeof this.#values === "undefined") {
       if (typeof this.parentLoopIndexes === "undefined") {
-        this.#values = this.#_values as Index[];
+        this.#values = [this.#_value];
       } else {
         this.#values = this.parentLoopIndexes.values.concat(this.#_value);
       }
@@ -58,29 +53,22 @@ class LoopIndexes implements ILoopIndexes {
     return undefined;
   }
 
-  constructor({ parentLoopIndexes, value, values }: { 
+  constructor(
     parentLoopIndexes: ILoopIndexes | undefined,
     value: Index,
-    values: Index[] | undefined
-  }) {
-    if (typeof parentLoopIndexes === "undefined" && typeof values === "undefined") {
-      utils.raise(`LoopIndexes.constructor: values cannot be set without parentLoopIndexes.`);
-    }
+  ) {
     this.#parentLoopIndexes = parentLoopIndexes;
     this.#_value = value;
-    this.#_values = values;
   }
 
   add(value: Index): ILoopIndexes {
-    return new LoopIndexes({ parentLoopIndexes: this, value, values: undefined });
+    return new LoopIndexes(this, value);
   }
 
   *backward(): Generator<Index> {
+    yield this.#_value;
     if (typeof this.#parentLoopIndexes !== "undefined") {
-      yield this.#_value;
       yield* this.#parentLoopIndexes.backward();
-    } else {
-      yield this.#_values?.[0];
     }
     return;
   }
@@ -88,10 +76,8 @@ class LoopIndexes implements ILoopIndexes {
   *forward(): Generator<Index> {
     if (typeof this.#parentLoopIndexes !== "undefined") {
       yield* this.#parentLoopIndexes.forward();
-      yield this.#_value;
-    } else {
-      yield this.#_values?.[0];
     }
+    yield this.#_value;
     return;
   }
 
@@ -100,7 +86,7 @@ class LoopIndexes implements ILoopIndexes {
       if (typeof this.#parentLoopIndexes !== "undefined") {
         this.#stringValue = this.#parentLoopIndexes.toString() + "," + this.#_value;
       } else {
-        this.#stringValue = this.#_values?.[0]?.toString() ?? "";
+        this.#stringValue = this.#_value?.toString() ?? "";
       }
     }
     return this.#stringValue;
@@ -125,11 +111,10 @@ class LoopIndexes implements ILoopIndexes {
 
 export function _createLoopIndexes(indexes: Index[], index = indexes.length - 1): ILoopIndexes {
   const value: Index = indexes[index];
-  return new LoopIndexes({
-    parentLoopIndexes: index > 0 ? _createLoopIndexes(indexes, index - 1) : undefined,
-    value: index > 0 ? value : undefined,
-    values: index === 0 ? [value] : undefined
-  });
+  return new LoopIndexes(
+    index > 0 ? _createLoopIndexes(indexes, index - 1) : undefined,
+    value
+  );
 }
 
 export function createLoopIndexes(

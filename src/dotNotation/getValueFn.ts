@@ -1,7 +1,7 @@
-import { ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
+import { INamedLoopIndexes } from "../loopContext/types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
-import { FindPropertyCallbackFn, GetValueFn, NamedWildcardIndexes, StateCache } from "./types";
+import { FindPropertyCallbackFn, GetValueFn, StateCache } from "./types";
 
 type IHandlerPartial = Pick<Handler, "cache"|"findPropertyCallback">;
 

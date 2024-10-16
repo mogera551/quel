@@ -2,7 +2,7 @@
 import { IPropInfo } from './types';
 import { getPatternInfo } from './getPatternInfo';
 import { createLoopIndexes } from '../loopContext/createLoopIndexes';
-import { ILoopIndexes } from '../loopContext/types';
+import { ILoopIndexes, INamedLoopIndexes } from '../loopContext/types';
 
 /**
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
@@ -15,9 +15,11 @@ const _cache = new Map<string, IPropInfo>();
  * @returns {IPropInfo} プロパティ情報
  */
 function _getPropInfo(name:string):IPropInfo {
+  const wildcardNamedLoopIndexes: INamedLoopIndexes = new Map;
   const elements = name.split(".");
   const patternElements = elements.slice(0);
   const wildcardIndexes:(number|undefined)[] = [];
+  const patternInfo = getPatternInfo(name);
   let wildcardLoopIndexes: ILoopIndexes | undefined = undefined;
   const paths = [];
   let lastIncompleteWildcardIndex = -1;
@@ -29,6 +31,7 @@ function _getPropInfo(name:string):IPropInfo {
     const element = elements[i];
     if (element === "*") {
       wildcardLoopIndexes = createLoopIndexes(wildcardLoopIndexes, undefined);
+      wildcardNamedLoopIndexes.set(patternInfo.wildcardPaths[wildcardCount], wildcardLoopIndexes);
       wildcardIndexes.push(undefined);
       patternElements[i] = "*";
       lastIncompleteWildcardIndex = wildcardIndexes.length - 1;
@@ -38,6 +41,7 @@ function _getPropInfo(name:string):IPropInfo {
       const number = Number(element);
       if (!Number.isNaN(number)) {
         wildcardLoopIndexes = createLoopIndexes(wildcardLoopIndexes, number);
+        wildcardNamedLoopIndexes.set(patternInfo.wildcardPaths[wildcardCount], wildcardLoopIndexes);
         wildcardIndexes.push(number);
         patternElements[i] = "*";
         completeCount++;
@@ -59,10 +63,11 @@ function _getPropInfo(name:string):IPropInfo {
     wildcardCount,
     wildcardIndexes,
     wildcardLoopIndexes,
+    wildcardNamedLoopIndexes,
     lastIncompleteWildcardIndex,
     allComplete: completeCount === wildcardCount,
     allIncomplete: incompleteCount === wildcardCount,
-  }, getPatternInfo(pattern));
+  }, patternInfo);
 }
 
 export function getPropInfo(name:string):IPropInfo {

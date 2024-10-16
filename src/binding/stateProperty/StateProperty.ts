@@ -1,6 +1,6 @@
 import { IBinding, IStateProperty } from "../types";
 import { IFilterText, FilterFunc } from "../../filter/types";
-import { GetAccessorSymbol, SetAccessorSymbol } from "../../dotNotation/symbols";
+import { GetAccessorSymbol, GetByPropInfoSymbol, SetAccessorSymbol, SetByPropInfoSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { IPropInfo } from "../../dotNotation/types";
@@ -45,13 +45,12 @@ export class StateProperty implements IStateProperty {
   }
 
   getValue():any {
-    const accessor = createStatePropertyAccessorFromBinding(this.name, this.loopIndexes);
-    return this.state[GetAccessorSymbol](accessor);
+    return this.state[GetByPropInfoSymbol](this.propInfo);
+
   }
   setValue(value:any) {
     const setValue = (value:any) => {
-      const accessor = createStatePropertyAccessorFromBinding(this.name, this.loopIndexes);
-      this.state[SetAccessorSymbol](accessor, value);
+      this.state[SetByPropInfoSymbol](this.propInfo, value)
     };
     if (value instanceof MultiValue) {
       const thisValue = this.getValue();
@@ -109,13 +108,17 @@ export class StateProperty implements IStateProperty {
   }
 
   getChildValue(index:number) {
-    const accessor = createStatePropertyAccessorFromBinding(this.#childName, this.loopIndexes?.add(index));
-    return this.state[GetAccessorSymbol](accessor);
+    return this.binding.updator?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
+      const propInfo = getPropInfo(this.#childName);
+      return this.state[GetByPropInfoSymbol](propInfo);
+    });
   }
 
   setChildValue(index:number, value:any) {
-    const accessor = createStatePropertyAccessorFromBinding(this.#childName, this.loopIndexes?.add(index));
-    return this.state[SetAccessorSymbol](accessor, value);
+    return this.binding.updator?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
+      const propInfo = getPropInfo(this.#childName);
+      return this.state[SetByPropInfoSymbol](propInfo, value);
+    });
   }
 
   dispose() {

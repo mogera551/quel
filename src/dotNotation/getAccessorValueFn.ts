@@ -19,7 +19,6 @@ export type IHandlerPartialForGetValueAccessor = IHandlerPartial & IHandlerParti
  * @returns {GetValueDirectFn} ドット記法のプロパティと配列を指定して直接getValueから値を取得する関数
  */
 export const getValueAccessorFn = (handler: IHandlerPartialForGetValueAccessor): GetValueAccessorFn => {
-  const withIndexes = withIndexesFn(handler);
   const getValue = getValueFn(handler);
   return function (
     target: object, 
@@ -29,19 +28,15 @@ export const getValueAccessorFn = (handler: IHandlerPartialForGetValueAccessor):
     // パターンではないものはこない
     const propInfo = getPropInfo(accessor.pattern);
     const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-    return withIndexes(
-      propInfo, accessor.loopIndexes, () => {
-        return getValue(
-          target, 
-          propInfo.patternPaths,
-          propInfo.patternElements, 
-          propInfo.wildcardPaths,
-          namedLoopIndexes,
-          propInfo.paths.length - 1, 
-          propInfo.wildcardCount - 1, 
-          receiver);
-      }
-    );
+    return getValue(
+      target, 
+      propInfo.patternPaths,
+      propInfo.patternElements, 
+      propInfo.wildcardPaths,
+      namedLoopIndexes,
+      propInfo.paths.length - 1, 
+      propInfo.wildcardCount - 1, 
+      receiver);
   
   }
 }

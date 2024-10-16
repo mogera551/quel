@@ -1,4 +1,4 @@
-import { ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
+import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "../loopContext/types";
 import { IStatePropertyAccessor } from "../state/types";
 import { GetAccessorSymbol, GetDirectSymbol, NamedWildcardIndexesDisposeSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
 
@@ -35,6 +35,7 @@ export interface IPropInfo extends IPatternInfo {
   readonly elements: string[];
   readonly paths: string[];
   readonly wildcardLoopIndexes: ILoopIndexes | undefined,
+  readonly wildcardNamedLoopIndexes: INamedLoopIndexes;
   readonly wildcardCount: number;
   readonly lastIncompleteWildcardIndex: number;
   readonly allComplete: boolean;
@@ -71,6 +72,10 @@ export interface IDotNotationHandler {
   setValueDirect: SetValueDirectFn;
   getValueAccessor: GetValueAccessorFn;
   setValueAccessor: SetValueAccessorFn;
+
+  getValueByPropInfo: GetValueByPropInfoFn;
+  setValueByPropInfo: SetValueByPropInfoFn;
+  getNamedLoopIndexesStack?: GetNamedLoopIndexesStackFn;
 
   get(target:object, prop:PropertyKey, receiver:object):any;
   set(target:object, prop:PropertyKey, value:any, receiver:object):boolean;
@@ -128,5 +133,10 @@ export type FindPropertyCallbackFn = (prop: string) => void;
 export type NotifyCallbackFn = (pattern:string, loopIndexes:ILoopIndexes | undefined) => void;
 export type GetValueAccessorFn = (target:object, accessor:IStatePropertyAccessor, receiver:object) => any;
 export type SetValueAccessorFn = (target:object, accessor:IStatePropertyAccessor, value:any, receiver:object) => boolean;
+
+export type GetValueByPropInfoFn = (target:object, propInfo:IPropInfo, receiver:object) => any;
+export type SetValueByPropInfoFn = (target:object, propInfo:IPropInfo, value:any, receiver:object) => boolean;
+
+export type GetNamedLoopIndexesStackFn = () => INamedLoopIndexesStack;
 
 export type StateCache = {[key:string]:any};

@@ -59,6 +59,7 @@ class LoopContext implements ILoopContext{
     return this.#index;
   }
 
+  // ToDo:名前が良くない
   get namedLoopIndexes(): ILoopIndexes {
     this.checkRevision();
     if (typeof this.#namedLoopIndexes === "undefined") {
