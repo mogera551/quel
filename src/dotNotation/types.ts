@@ -29,6 +29,8 @@ export interface IPatternInfo {
   readonly wildcardPaths: string[];
 }
 
+export type WildcardType = "none" | "context" | "partial" | "all";
+
 export interface IPropInfo extends IPatternInfo {
   readonly name: string; // The original name
   readonly expandable: boolean,
@@ -40,6 +42,7 @@ export interface IPropInfo extends IPatternInfo {
   readonly wildcardCount: number;
   readonly allComplete: boolean;
   readonly allIncomplete: boolean;
+  readonly wildcardType: WildcardType;
 }
 
 export type Index = number | undefined;
@@ -125,8 +128,8 @@ export type GetValueWithoutIndexesFn = (target:object, prop:string, receiver:obj
 export type WithIndexesFn = (patternInfo: IPatternInfo, loopIndexes:ILoopIndexes | undefined, callback:() => any) => any; 
 export type SetValueWithIndexesFn = (target:object, propInfo:IPropInfo, loopIndexes:ILoopIndexes | undefined, value:any, receiver:object) => boolean;
 export type SetValueWithoutIndexesFn = (target:object, prop:string, value:any, receiver:object) => boolean;
-export type GetExpandValuesFn = (target:object, prop:string, receiver:object) => any[];
-export type SetExpandValuesFn = (target:object, prop:string, value:any, receiver:object) => any;
+export type GetExpandValuesFn = (target:object, propInfo:IPropInfo, receiver:object) => any[];
+export type SetExpandValuesFn = (target:object, propInfo:IPropInfo, value:any, receiver:object) => any;
 export type GetValueDirectFn = (target:object, prop:string, loopIndexes:ILoopIndexes | undefined, receiver:object) => any;
 export type SetValueDirectFn = (target:object, prop:string, loopIndexes:ILoopIndexes | undefined, value:any, receiver:object) => boolean;
 export type FindPropertyCallbackFn = (prop: string) => void;

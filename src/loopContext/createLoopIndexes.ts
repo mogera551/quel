@@ -109,10 +109,10 @@ class LoopIndexes implements ILoopIndexes {
   }
 }
 
-export function _createLoopIndexes(indexes: Index[], index = indexes.length - 1): ILoopIndexes {
+export function createLoopIndexesFromArray(indexes: Index[], index = indexes.length - 1): ILoopIndexes {
   const value: Index = indexes[index];
   return new LoopIndexes(
-    index > 0 ? _createLoopIndexes(indexes, index - 1) : undefined,
+    index > 0 ? createLoopIndexesFromArray(indexes, index - 1) : undefined,
     value
   );
 }
@@ -121,5 +121,5 @@ export function createLoopIndexes(
   parentLoopIndexes: ILoopIndexes | undefined, 
   value: Index
 ): ILoopIndexes {
-  return (typeof parentLoopIndexes === "undefined") ? _createLoopIndexes([value]) : parentLoopIndexes.add(value);
+  return (typeof parentLoopIndexes === "undefined") ? createLoopIndexesFromArray([value]) : parentLoopIndexes.add(value);
 }

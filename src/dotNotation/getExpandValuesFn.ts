@@ -1,12 +1,17 @@
 import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
-import { GetExpandValuesFn } from "./types";
+import { GetExpandValuesFn, Index, IPropInfo } from "./types";
 import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
 import { getValueWithoutIndexesFn, IHandlerPartialForGetValueWithoutIndexes } from "./getValueWithoutIndexesFn";
+import { ILoopIndexes } from "../loopContext/types";
+import { createOverrideLoopIndexes } from "../loopContext/createOverrideLoopIndexes";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
+import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
+import { createLoopIndexesFromArray } from "../loopContext/createLoopIndexes";
 
-type IHandlerPartial = Pick<Handler, "getLastIndexes">;
+type IHandlerPartial = Pick<Handler, "getNamedLoopIndexesStack">;
 
 export type IHandlerPartialForGetExpandValues = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue & IHandlerPartialForGetValueWithoutIndexes;
 
@@ -17,12 +22,10 @@ export type IHandlerPartialForGetExpandValues = IHandlerPartial & IHandlerPartia
  * @returns {GetExpandValuesFn} ドット記法の"@"プロパティから値を展開する関数
  */
 export const getExpandValuesFn = (handler: IHandlerPartialForGetExpandValues): GetExpandValuesFn => {
-  const withIndexes = withIndexesFn(handler);
   const getValue = getValueFn(handler);
-  const getValueWithoutIndexes = getValueWithoutIndexesFn(handler);
   return function (
     target: object, 
-    prop: string, 
+    propInfo: IPropInfo, 
     receiver: object
   ): any[] {
     // ex.
@@ -30,49 +33,80 @@ export const getExpandValuesFn = (handler: IHandlerPartialForGetExpandValues): G
     // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
     // prop = "aaa.1.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
     // prop = "aaa.*.bbb.1.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
-    const propInfo = getPropInfo(prop);
-    let lastIndexes = undefined;
-    for(let i = propInfo.wildcardPaths.length - 1; i >= 0; i--) {
-      const wildcardPath = propInfo.wildcardPaths[i];
-      lastIndexes = handler.getLastIndexes(wildcardPath);
-      if (typeof lastIndexes !== "undefined") break;
+    // prop = "aaa.0.bbb.1.ccc", NG 
+    if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
+      utils.raise(`wildcard type is invalid`);
     }
-    lastIndexes = lastIndexes ?? [];
-    let _lastIndex: number | undefined = undefined;
-    const wildcardIndexes = propInfo.wildcardIndexes.map((i, index) => {
-      if (typeof i === "undefined") {
-        _lastIndex = index;
-        return lastIndexes[index];
-      } else {
-        return i;
+    const namedLoopIndexesStack = handler.getNamedLoopIndexesStack?.() ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
+    const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
+    let indexes: Index[] | undefined;
+    let lastIndex = undefined;
+    if (propInfo.wildcardType === "context") {
+      // 一番後ろの*を展開する
+      lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
+      indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
+      indexes[indexes.length - 1] = undefined;
+    } else {
+      // partialの場合、後ろから*を探す
+      let loopIndexes: Index[] = [];
+      const values = propInfo.wildcardLoopIndexes?.values ?? [];
+      for(let i = values.length - 1; i >= 0; i--) {
+        if (typeof lastIndex === "undefined"  && typeof values[i] === "undefined") {
+          lastIndex = i;
+        }
+        if (typeof loopIndexes === "undefined"  && namedLoopIndexes.has(propInfo.wildcardPaths[i])) {
+          loopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[i])?.values ?? utils.raise(`loopIndexes is undefined`);
+        }
+        if (typeof lastIndex !== "undefined" && typeof loopIndexes !== "undefined") {
+          break;
+        }
       }
-    });
-    const lastIndex = _lastIndex ?? (wildcardIndexes.length - 1);
-    const wildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
-    const wildcardPathInfo = getPropInfo(wildcardPath);
-    const wildcardParentPath = wildcardPathInfo.paths[wildcardPathInfo.paths.length - 2] ?? utils.raise(`wildcard parent path is undefined`);
-    const wildcardParentPathInfo = getPropInfo(wildcardParentPath);
-    return withIndexes(
-      propInfo, wildcardIndexes, () => {
-      const parentValue = getValue(
-        target, 
-        wildcardParentPathInfo.patternPaths, 
-        wildcardParentPathInfo.patternElements,
-        wildcardIndexes, 
-        wildcardParentPathInfo.paths.length - 1, 
-        wildcardParentPathInfo.wildcardCount - 1, 
+      indexes = [];
+      const wildcardIndexes = propInfo.wildcardLoopIndexes?.values ?? utils.raise(`wildcardIndexes is undefined`);
+      for(let i = 0; i < propInfo.wildcardCount; i++) {
+        if (i === lastIndex) {
+          indexes.push(undefined);
+        } else {
+          indexes.push(wildcardIndexes[i] ?? loopIndexes[i]);
+        }
+      }
+    }
+    if (typeof lastIndex === "undefined") {
+      utils.raise(`lastIndex is undefined`);
+    }
+    const expandWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
+    const expandWildcardPathInfo = getPropInfo(expandWildcardPath);
+    const expandWildcardParentPath = expandWildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
+    const expandWildcardParentPathInfo = getPropInfo(expandWildcardParentPath);
+    const wildcardLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, lastIndex));
+    const wildcardAccessor = createStatePropertyAccessor(expandWildcardParentPathInfo.pattern, wildcardLoopIndexes)
+    const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
+    const length = getValue(
+      target,
+      expandWildcardParentPathInfo.patternPaths,
+      expandWildcardParentPathInfo.patternElements,
+      expandWildcardParentPathInfo.wildcardPaths,
+      wildcardNamedLoopIndexes,
+      expandWildcardParentPathInfo.paths.length - 1,
+      expandWildcardParentPathInfo.wildcardCount - 1,
+      receiver).length;
+    const values = [];
+    for(let i = 0; i < length; i++) {
+      indexes[lastIndex] = i;
+      const LoopIndexes = createLoopIndexesFromArray(indexes);
+      const accessor = createStatePropertyAccessor(propInfo.pattern, LoopIndexes)
+      const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+      const value = getValue(
+        target,
+        propInfo.patternPaths,
+        propInfo.patternElements,
+        propInfo.wildcardPaths,
+        namedLoopIndexes,
+        propInfo.paths.length - 1,
+        propInfo.wildcardCount - 1,
         receiver);
-      if (!Array.isArray(parentValue)) utils.raise(`parent value is not array`);
-      const values = [];
-      for(let i = 0; i < parentValue.length; i++) {
-        wildcardIndexes[lastIndex] = i;
-        values.push(withIndexes(
-          propInfo, wildcardIndexes, () => {
-          return getValueWithoutIndexes(target, propInfo.pattern, receiver);
-        }));
-      }
-      return values;
-    });
-
+      values.push(value);
+    }
+    return values;
   }
 }

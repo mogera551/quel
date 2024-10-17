@@ -1,5 +1,5 @@
 
-import { IPropInfo } from './types';
+import { IPropInfo, WildcardType } from './types';
 import { getPatternInfo } from './getPatternInfo';
 import { createLoopIndexes } from '../loopContext/createLoopIndexes';
 import { ILoopIndexes, INamedLoopIndexes } from '../loopContext/types';
@@ -23,6 +23,7 @@ export class PropInfo implements IPropInfo {
   patternElements: string[];
   patternPaths: string[];
   wildcardPaths: string[];
+  wildcardType: WildcardType;
   constructor(
     name: string,
     expandable: boolean,
@@ -36,7 +37,8 @@ export class PropInfo implements IPropInfo {
     allIncomplete: boolean,
     patternElements: string[],
     patternPaths: string[],
-    wildcardPaths: string[]
+    wildcardPaths: string[],
+    wildcardType: WildcardType
     ) {
     this.name = name;
     this.expandable = expandable;
@@ -51,6 +53,7 @@ export class PropInfo implements IPropInfo {
     this.patternElements = patternElements;
     this.patternPaths = patternPaths;
     this.wildcardPaths = wildcardPaths;
+    this.wildcardType = wildcardType
   }
 }
 
@@ -74,6 +77,7 @@ function _getPropInfo(name:string):IPropInfo {
   let completeCount = 0;
   let lastPath = "";
   let wildcardCount = 0;
+  let wildcardType: WildcardType = "none";
   for(let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (element === "*") {
@@ -102,6 +106,15 @@ function _getPropInfo(name:string):IPropInfo {
     wildcardNamedLoopIndexes.set(patternInfo.wildcardPaths[i], tmpWildcardLoopIndexes);
     tmpWildcardLoopIndexes = tmpWildcardLoopIndexes?.parentLoopIndexes;
   }
+  if (incompleteCount > 0 || completeCount > 0) {
+    if (incompleteCount === wildcardCount) {
+      wildcardType = "context";
+    } else if (completeCount === wildcardCount) {
+      wildcardType = "all";
+    } else {
+      wildcardType = "partial";
+    }
+  }
 
   return new PropInfo(
     name,
@@ -116,7 +129,8 @@ function _getPropInfo(name:string):IPropInfo {
     incompleteCount === wildcardCount,
     patternInfo.patternElements,
     patternInfo.patternPaths,
-    patternInfo.wildcardPaths
+    patternInfo.wildcardPaths,
+    wildcardType
   )
 }
 

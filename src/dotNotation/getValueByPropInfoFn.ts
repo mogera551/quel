@@ -19,6 +19,7 @@ export function getValueByPropInfoFn(handler: IHandlerPartialForGetValueByPropIn
     receiver: object
   ) {
     let namedLoopIndexes: INamedLoopIndexes;
+    propInfo.expandable
     const _getValue = () => getValue(
       target, 
       propInfo.patternPaths,
@@ -31,10 +32,10 @@ export function getValueByPropInfoFn(handler: IHandlerPartialForGetValueByPropIn
     );
 
     const namedLoopIndexesStack = handler.getNamedLoopIndexesStack?.() ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
-    if (propInfo.allIncomplete) {
+    if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
       namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
       return _getValue();
-    } else if (propInfo.allComplete) {
+    } else if (propInfo.wildcardType === "all") {
       namedLoopIndexes = propInfo.wildcardNamedLoopIndexes;
       return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _getValue);
     } else {

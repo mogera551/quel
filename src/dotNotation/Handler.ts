@@ -1,4 +1,4 @@
-import { GetAccessorSymbol, GetDirectSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
+import { GetAccessorSymbol, GetByPropInfoSymbol, GetDirectSymbol, SetAccessorSymbol, SetByPropInfoSymbol, SetDirectSymbol } from "./symbols";
 import { utils } from "../utils";
 import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetNamedLoopIndexesStackFn, GetValueAccessorFn, GetValueByPropInfoFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, IPropInfo, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueAccessorFn, SetValueByPropInfoFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
 import { getLastIndexesFn } from "./getLastIndexesFn";
@@ -16,7 +16,7 @@ import { getValueAccessorFn } from "./getAccessorValueFn";
 import { setValueAccessorFn } from "./setAccessorValueFn";
 import { getValueByPropInfoFn } from "./getValueByPropInfoFn";
 import { setValueByPropInfoFn } from "./setValueByPropInfoFn";
-import { PropInfo } from "./getPropInfo";
+import { getPropInfo, PropInfo } from "./getPropInfo";
 
 /**
  * ドット記法でプロパティを取得するためのハンドラ
@@ -61,36 +61,28 @@ export class Handler implements IDotNotationHandler {
 
   get(target:object, prop:any, receiver:object):any {
     const isPropString = typeof prop === "string";
-    const isPropInfo = prop instanceof PropInfo;
     do {
-      if (prop instanceof PropInfo) {
-        return this.getValueByPropInfo(target, prop, receiver);
-      }
-      
       if (isPropString && (prop.startsWith("@@__") || prop === "constructor")) break;
-      if (prop === GetDirectSymbol) {
-        return (prop:string, loopIndexes:ILoopIndexes)=>this.getValueDirect.apply(this, [target, prop, loopIndexes, receiver]);
+      if (prop === GetByPropInfoSymbol) {
+        return (propInfo:IPropInfo):any=>this.getValueByPropInfo(target, propInfo, receiver);
       }
-      if (prop === SetDirectSymbol) {
-        return (prop:string, loopIndexes:ILoopIndexes, value:any)=>
-          this.setValueDirect.apply(this, [target, prop, loopIndexes, value, receiver]);
-      }
-      if (prop === GetAccessorSymbol) {
-
-      }
-      if (prop === SetAccessorSymbol) {
-
+      if (prop === SetByPropInfoSymbol) {
+        return (propInfo:IPropInfo, value:any):boolean=>this.setValueByPropInfo(target, propInfo, value, receiver);
       }
       if (!isPropString) break;
       if (prop[0] === "$") {
         const index = Number(prop.slice(1));
         if (isNaN(index)) break;
-        return (this.lastStackIndexes ?? [])[index - 1];
-      } else if (prop[0] === "@") {
-        const propertyName = prop.slice(1);
-        return this.getExpandValues(target, propertyName, receiver);
+        const namedLoopIndexesStack = this.getNamedLoopIndexesStack?.() ?? utils.raise("get: namedLoopIndexesStack is undefined");
+        const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("get: namedLoopIndexes is undefined");
+        const tmpNamedLoopIndexes = Array.from(namedLoopIndexes.values()).filter(v => v.size === (index + 1));
+        if (tmpNamedLoopIndexes.length !== 1) {
+          utils.raise(`context index(${prop}) is ambiguous or null`);
+        }
+        return tmpNamedLoopIndexes[0].value;
       }
-      return this.getValueWithoutIndexes(target, prop, receiver);
+      const propInfo = getPropInfo(prop);
+      return this.getValueByPropInfo(target, propInfo, receiver);
     } while(false);
     return Reflect.get(target, prop, receiver);
   }
@@ -104,12 +96,9 @@ export class Handler implements IDotNotationHandler {
         const index = Number(prop.slice(1));
         if (isNaN(index)) break;
         utils.raise(`context index(${prop}) is read only`);
-      } else if (prop[0] === "@") {
-        const propertyName = prop.slice(1);
-        this.setExpandValues(target, propertyName, value, receiver);
-        return true;
       }
-      return this.setValueWithoutIndexes(target, prop, value, receiver);
+      const propInfo = getPropInfo(prop);
+      return this.setValueByPropInfo(target, propInfo, value, receiver);
     } while(false);
     return Reflect.set(target, prop, value, receiver);
   }
