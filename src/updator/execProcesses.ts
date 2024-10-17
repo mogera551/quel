@@ -1,13 +1,16 @@
 import { IProcess } from "../component/types";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { UpdatedCallbackSymbol } from "../state/symbols";
 import { IStatePropertyAccessor, IStates } from "../state/types";
 import { IUpdator } from "./types";
 
 async function execProcess (updator: IUpdator, process: IProcess): Promise<void> {
   if (typeof process.loopContext === "undefined") {
-    return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+    return updator.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
+      return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+    })
   } else {
-    updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async (): Promise<void> => {
+    return updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async (): Promise<void> => {
       return Reflect.apply(process.target, process.thisArgument, process.argumentList);
     });
   }

@@ -1,51 +1,21 @@
-import { GetAccessorSymbol, GetByPropInfoSymbol, GetDirectSymbol, SetAccessorSymbol, SetByPropInfoSymbol, SetDirectSymbol } from "./symbols";
+import { GetByPropInfoSymbol, SetByPropInfoSymbol } from "./symbols";
 import { utils } from "../utils";
-import { FindPropertyCallbackFn, GetExpandValuesFn, GetLastIndexesFn, GetNamedLoopIndexesStackFn, GetValueAccessorFn, GetValueByPropInfoFn, GetValueDirectFn, GetValueFn, GetValueWithIndexesFn, GetValueWithoutIndexesFn, IDotNotationHandler, Indexes, IPropInfo, NamedWildcardIndexes, NotifyCallbackFn, SetExpandValuesFn, SetValueAccessorFn, SetValueByPropInfoFn, SetValueDirectFn, SetValueWithIndexesFn, SetValueWithoutIndexesFn, StackIndexes, StateCache, WithIndexesFn } from "./types";
-import { getLastIndexesFn } from "./getLastIndexesFn";
+import { FindPropertyCallbackFn, GetExpandValuesFn, GetNamedLoopIndexesStackFn, GetValueByPropInfoFn, GetValueFn, IDotNotationHandler, IPropInfo, NotifyCallbackFn, SetExpandValuesFn, SetValueByPropInfoFn, StateCache } from "./types";
 import { getValueFn } from "./getValueFn";
-import { getValueWithIndexesFn } from "./getValueWithIndexesFn";
-import { getValueWithoutIndexesFn } from "./getValueWithoutIndexesFn";
-import { setValueWithIndexesFn } from "./setValueWithIndexesFn";
-import { setValueWithoutIndexesFn } from "./setValueWithoutIndexesFn";
 import { getExpandValuesFn } from "./getExpandValuesFn";
 import { setExpandValuesFn } from "./setExpandVauesFn";
-import { getValueDirectFn } from "./getValueDirectFn";
-import { setValueDirectFn } from "./setValueDirectFn";
-import { ILoopIndexes } from "../loopContext/types";
-import { getValueAccessorFn } from "./getAccessorValueFn";
-import { setValueAccessorFn } from "./setAccessorValueFn";
 import { getValueByPropInfoFn } from "./getValueByPropInfoFn";
 import { setValueByPropInfoFn } from "./setValueByPropInfoFn";
-import { getPropInfo, PropInfo } from "./getPropInfo";
+import { getPropInfo } from "./getPropInfo";
 
 /**
  * ドット記法でプロパティを取得するためのハンドラ
  */
 export class Handler implements IDotNotationHandler {
   cache?: StateCache = undefined;
-  stackIndexes: StackIndexes = [];
-  stackNamedWildcardIndexes: NamedWildcardIndexes[] = [];
-  get lastStackIndexes(): Indexes | undefined {
-    return this.stackIndexes[this.stackIndexes.length - 1];
-  }
-  getLastIndexes: GetLastIndexesFn = getLastIndexesFn(this);
   getValue: GetValueFn = getValueFn(this);
-
-  getValueWithIndexes: GetValueWithIndexesFn = getValueWithIndexesFn(this);
-  getValueWithoutIndexes: GetValueWithoutIndexesFn = getValueWithoutIndexesFn(this);
-
-  setValueWithIndexes: SetValueWithIndexesFn = setValueWithIndexesFn(this);
-  setValueWithoutIndexes: SetValueWithoutIndexesFn = setValueWithoutIndexesFn(this);
-  
   getExpandValues: GetExpandValuesFn = getExpandValuesFn(this);
   setExpandValues: SetExpandValuesFn = setExpandValuesFn(this);
-
-  getValueDirect: GetValueDirectFn = getValueDirectFn(this);
-  setValueDirect: SetValueDirectFn = setValueDirectFn(this);
-
-  getValueAccessor: GetValueAccessorFn = getValueAccessorFn(this);
-  setValueAccessor: SetValueAccessorFn = setValueAccessorFn(this);
-
   getValueByPropInfo: GetValueByPropInfoFn = getValueByPropInfoFn(this);
   setValueByPropInfo: SetValueByPropInfoFn = setValueByPropInfoFn(this);
   getNamedLoopIndexesStack: GetNamedLoopIndexesStackFn | undefined;
@@ -75,7 +45,7 @@ export class Handler implements IDotNotationHandler {
         if (isNaN(index)) break;
         const namedLoopIndexesStack = this.getNamedLoopIndexesStack?.() ?? utils.raise("get: namedLoopIndexesStack is undefined");
         const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("get: namedLoopIndexes is undefined");
-        const tmpNamedLoopIndexes = Array.from(namedLoopIndexes.values()).filter(v => v.size === (index + 1));
+        const tmpNamedLoopIndexes = Array.from(namedLoopIndexes.values()).filter(v => v.size === index);
         if (tmpNamedLoopIndexes.length !== 1) {
           utils.raise(`context index(${prop}) is ambiguous or null`);
         }

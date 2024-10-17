@@ -42,9 +42,7 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
   ): any {
     const currentNamedLoopIndexes = this.lastNamedLoopIndexes;
     currentNamedLoopIndexes?.set(name, 
-      (typeof parentName !== "undefined") ? 
-      currentNamedLoopIndexes?.get(parentName)?.add(index) ?? utils.raise(`NamedLoopIndexesStack.setSubIndex: parentName "${parentName}" is not found.`) :
-      createLoopIndexes(undefined, index)
+      currentNamedLoopIndexes?.get(parentName ?? "")?.add(index) ?? createLoopIndexes(undefined, index)
     );
     try {
       return callback();

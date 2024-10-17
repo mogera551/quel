@@ -60,22 +60,9 @@ export type NamedWildcardIndexes = Map<string, IWildcardIndexes>;
 
 export interface IDotNotationHandler {
   cache?: StateCache;
-  stackIndexes: StackIndexes;
-  stackNamedWildcardIndexes:NamedWildcardIndexes[];
-  lastStackIndexes: Indexes | undefined;
-  getLastIndexes: GetLastIndexesFn;
   getValue: GetValueFn;
-  getValueWithIndexes: GetValueWithIndexesFn;
-  getValueWithoutIndexes: GetValueWithoutIndexesFn;
-  setValueWithIndexes: SetValueWithIndexesFn;
-  setValueWithoutIndexes: SetValueWithoutIndexesFn;
   getExpandValues: GetExpandValuesFn;
   setExpandValues: SetExpandValuesFn;
-  getValueDirect: GetValueDirectFn;
-  setValueDirect: SetValueDirectFn;
-  getValueAccessor: GetValueAccessorFn;
-  setValueAccessor: SetValueAccessorFn;
-
   getValueByPropInfo: GetValueByPropInfoFn;
   setValueByPropInfo: SetValueByPropInfoFn;
   getNamedLoopIndexesStack?: GetNamedLoopIndexesStackFn;

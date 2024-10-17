@@ -2,18 +2,14 @@ import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { GetExpandValuesFn, Index, IPropInfo } from "./types";
-import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
-import { getValueWithoutIndexesFn, IHandlerPartialForGetValueWithoutIndexes } from "./getValueWithoutIndexesFn";
-import { ILoopIndexes } from "../loopContext/types";
-import { createOverrideLoopIndexes } from "../loopContext/createOverrideLoopIndexes";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { createLoopIndexesFromArray } from "../loopContext/createLoopIndexes";
 
 type IHandlerPartial = Pick<Handler, "getNamedLoopIndexesStack">;
 
-export type IHandlerPartialForGetExpandValues = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue & IHandlerPartialForGetValueWithoutIndexes;
+export type IHandlerPartialForGetExpandValues = IHandlerPartial & IHandlerPartialForGetValue;
 
 /**
  * ドット記法の"@"プロパティから値を展開する関数を生成します

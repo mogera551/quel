@@ -23,8 +23,11 @@ export function setValueByPropInfoFn(handler: IHandlerPartialForSetValueByPropIn
     let namedLoopIndexes: INamedLoopIndexes;
     const _setValue = () => {
       try {
-        if (propInfo.elements.length === 1 || propInfo.name in target) {
+        if (propInfo.elements.length === 1) {
           return Reflect.set(target, propInfo.name, value, receiver);
+        }
+        if (propInfo.pattern in target) {
+          return Reflect.set(target, propInfo.pattern, value, receiver);
         }
         const parentPath = propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined");
         const parentPropInfo = getPropInfo(parentPath);
@@ -45,10 +48,12 @@ export function setValueByPropInfoFn(handler: IHandlerPartialForSetValueByPropIn
           parentValue, 
           isWildcard ? (
             namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")
-          ) : lastElement  , value, receiver);
+          ) : lastElement  , value);
       } finally {
         if (notifyCallback) {
-          notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.pattern));
+          notifyCallback(
+            propInfo.pattern, 
+            namedLoopIndexes.get(propInfo.wildcardPaths.at(-1) ?? ""));
         }
       }
     };

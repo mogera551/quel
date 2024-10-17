@@ -2,16 +2,14 @@ import { utils } from "../utils";
 import { getPropInfo } from "./getPropInfo";
 import { Handler } from "./Handler";
 import { Index, IPropInfo, SetExpandValuesFn } from "./types";
-import { withIndexesFn, IHandlerPartialForWithIndexes } from "./withIndexesFn";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
-import { setValueWithoutIndexesFn, IHandlerPartialForSetValueWithoutIndexes } from "./setValueWithoutIndexesFn";
 import { createLoopIndexesFromArray } from "../loopContext/createLoopIndexes";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 
 type IHandlerPartial = Pick<Handler, "notifyCallback"|"getNamedLoopIndexesStack">;
 
-export type IHandlerPartialForSetExpandValues = IHandlerPartial & IHandlerPartialForWithIndexes & IHandlerPartialForGetValue & IHandlerPartialForSetValueWithoutIndexes;
+export type IHandlerPartialForSetExpandValues = IHandlerPartial & IHandlerPartialForGetValue;
 
 /**
  * ドット記法の"@"プロパティに値をセットする関数を生成します
@@ -106,7 +104,7 @@ export const setExpandValuesFn = (handler: IHandlerPartialForSetExpandValues): S
         parentValue, 
         isWildcard ? (
           namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")
-        ) : lastElement, Array.isArray(value) ? value[i] : value, receiver);
+        ) : lastElement, Array.isArray(value) ? value[i] : value);
       if (notifyCallback) {
         notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.pattern));
       }

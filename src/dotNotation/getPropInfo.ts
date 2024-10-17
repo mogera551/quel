@@ -99,7 +99,7 @@ function _getPropInfo(name:string):IPropInfo {
     lastPath += (i < elements.length - 1 ? "." : "");
   }
   const pattern = tmpPatternElements.join(".");
-  const patternInfo = getPatternInfo(name);
+  const patternInfo = getPatternInfo(pattern);
   let tmpWildcardLoopIndexes = wildcardLoopIndexes;
   for(let i = patternInfo.wildcardPaths.length - 1; i >= 0; i--) {
     if (typeof tmpWildcardLoopIndexes === "undefined") throw new Error(`_getPropInfo: tmpWildcardLoopIndexes is undefined.`);

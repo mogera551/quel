@@ -8,7 +8,7 @@ import { createProps } from "./createProps";
 import { createGlobals } from "./createGlobals";
 import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
-import { IContentBindings, INewBindingSummary } from "../binding/types";
+import { IComponentPartial, IContentBindings, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createRootContentBindings } from "../binding/ContentBindings";
 import { createStates } from "../state/createStates";
@@ -203,7 +203,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
 
       // build binding tree and dom 
       const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-      this.rootBindingManager = createRootContentBindings(this, uuid);
+      this.rootBindingManager = createRootContentBindings(this as unknown as IComponent , uuid);
       this.updator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
         this.rootBindingManager.rebuild();
       });

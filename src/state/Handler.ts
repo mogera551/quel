@@ -8,8 +8,9 @@ import { getSpecialProps } from "./getSpecialProps";
 import { getStateInfo } from "./getStateInfo";
 import { IBaseState, IDependentProps, IStateHandler, IStateProxy } from "./types";
 import { IUpdator } from "../updator/types";
-import { FindPropertyCallbackFn } from "../dotNotation/types";
+import { FindPropertyCallbackFn, GetNamedLoopIndexesStackFn } from "../dotNotation/types";
 import { findPropertyCallbackFn } from "./findPropertyCallbackFn";
+import { getNamedLoopIndexesStackFn } from "./getNamedLoopIndexesStackFn";
 
 /**
  * ステートを扱うためのベースハンドラ
@@ -60,6 +61,7 @@ export class Handler extends DotNotationHandler implements IStateHandler {
   }
 
   findPropertyCallback: FindPropertyCallbackFn = findPropertyCallbackFn(this);
+  getNamedLoopIndexesStack: GetNamedLoopIndexesStackFn = getNamedLoopIndexesStackFn(this);
 
   #getBySymbol(
     target: Object, 
