@@ -1252,13 +1252,11 @@ class PropInfo {
     wildcardCount;
     wildcardLoopIndexes;
     wildcardNamedLoopIndexes;
-    allComplete;
-    allIncomplete;
     patternElements;
     patternPaths;
     wildcardPaths;
     wildcardType;
-    constructor(name, expandable, pattern, elements, paths, wildcardCount, wildcardLoopIndexes, wildcardNamedLoopIndexes, allComplete, allIncomplete, patternElements, patternPaths, wildcardPaths, wildcardType) {
+    constructor(name, expandable, pattern, elements, paths, wildcardCount, wildcardLoopIndexes, wildcardNamedLoopIndexes, patternElements, patternPaths, wildcardPaths, wildcardType) {
         this.name = name;
         this.expandable = expandable;
         this.pattern = pattern;
@@ -1267,8 +1265,6 @@ class PropInfo {
         this.wildcardCount = wildcardCount;
         this.wildcardLoopIndexes = wildcardLoopIndexes;
         this.wildcardNamedLoopIndexes = wildcardNamedLoopIndexes;
-        this.allComplete = allComplete;
-        this.allIncomplete = allIncomplete;
         this.patternElements = patternElements;
         this.patternPaths = patternPaths;
         this.wildcardPaths = wildcardPaths;
@@ -1337,7 +1333,7 @@ function _getPropInfo(name) {
             wildcardType = "partial";
         }
     }
-    return new PropInfo(name, expandable, pattern, elements, paths, wildcardCount, wildcardLoopIndexes, wildcardNamedLoopIndexes, completeCount === wildcardCount, incompleteCount === wildcardCount, patternInfo.patternElements, patternInfo.patternPaths, patternInfo.wildcardPaths, wildcardType);
+    return new PropInfo(name, expandable, pattern, elements, paths, wildcardCount, wildcardLoopIndexes, wildcardNamedLoopIndexes, patternInfo.patternElements, patternInfo.patternPaths, patternInfo.wildcardPaths, wildcardType);
 }
 function getPropInfo(name) {
     let info;

@@ -43,10 +43,10 @@ class StatePropertyAccessor implements IStatePropertyAccessor{
 export function createStatePropertyAccessorFromState(name: string, namedLoopIndexesStack: INamedLoopIndexesStack) {
   name[0] === "@" && utils.raise(`Cannot access to the property starting with "@" in the state.`);
   const propInfo = getPropInfo(name);
-  if (propInfo.wildcardCount === 0) {
+  if (propInfo.wildcardType === "none") {
     return new StatePropertyAccessor(name);
   }
-  if (propInfo.allComplete) {
+  if (propInfo.wildcardType === "all") {
     return new StatePropertyAccessor(propInfo.pattern, propInfo.wildcardLoopIndexes);
   }
   const indexes = namedLoopIndexesStack.getLoopIndexes(propInfo.pattern) ?? utils.raise(`createStatePropertyAccessorFromState: loopIndexes is not found.`);
@@ -75,13 +75,13 @@ export function createStatePropertyAccessorFromBinding(name: string, loopIndexes
   (name[0] === "@" || name[0] === "$") && utils.raise(`Cannot access to the property starting with "@" or "$"  in the state.`);
   const propInfo = getPropInfo(name);
   // 
-  if (propInfo.wildcardCount === 0) {
+  if (propInfo.wildcardType === "none") {
     return new StatePropertyAccessor(name);
   }
-  if (propInfo.allComplete) {
+  if (propInfo.wildcardType === "all") {
     return new StatePropertyAccessor(propInfo.pattern, propInfo.wildcardLoopIndexes);
   }
-  if (propInfo.allIncomplete) {
+  if (propInfo.wildcardType === "context") {
     return new StatePropertyAccessor(name, loopIndexes);
   }
   const iterator = loopIndexes?.forward();

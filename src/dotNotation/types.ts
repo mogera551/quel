@@ -32,16 +32,32 @@ export interface IPatternInfo {
 export type WildcardType = "none" | "context" | "partial" | "all";
 
 export interface IPropInfo extends IPatternInfo {
+  /**
+   * ex. aaa.0.bbb.2.ccc => aaa.0.bbb.2.ccc
+   */
   readonly name: string; // The original name
   readonly expandable: boolean,
+  /**
+   * ex. aaa.0.bbb.2.ccc => aaa.*.bbb.*.ccc
+   */
   readonly pattern: string; // The pattern 
+  /** 
+   * ex. aaa.0.bbb.2.ccc => ["aaa", "0", "bbb", "2", "ccc"]
+   */
   readonly elements: string[];
+  /** 
+   * ex. aaa.0.bbb.2.ccc => [
+   *   "aaa",
+   *   "aaa.0",
+   *   "aaa.0.bbb",
+   *   "aaa.0.bbb.2",
+   *   "aaa.0.bbb.2.ccc"
+   * ]
+   */
   readonly paths: string[];
   readonly wildcardLoopIndexes: ILoopIndexes | undefined,
   readonly wildcardNamedLoopIndexes: INamedLoopIndexes;
   readonly wildcardCount: number;
-  readonly allComplete: boolean;
-  readonly allIncomplete: boolean;
   readonly wildcardType: WildcardType;
 }
 

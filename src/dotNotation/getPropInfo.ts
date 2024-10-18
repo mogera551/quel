@@ -18,8 +18,6 @@ export class PropInfo implements IPropInfo {
   wildcardCount: number;
   wildcardLoopIndexes: ILoopIndexes | undefined;
   wildcardNamedLoopIndexes: INamedLoopIndexes;
-  allComplete: boolean;
-  allIncomplete: boolean;
   patternElements: string[];
   patternPaths: string[];
   wildcardPaths: string[];
@@ -33,8 +31,6 @@ export class PropInfo implements IPropInfo {
     wildcardCount: number,
     wildcardLoopIndexes: ILoopIndexes | undefined,
     wildcardNamedLoopIndexes: INamedLoopIndexes,
-    allComplete: boolean,
-    allIncomplete: boolean,
     patternElements: string[],
     patternPaths: string[],
     wildcardPaths: string[],
@@ -48,8 +44,6 @@ export class PropInfo implements IPropInfo {
     this.wildcardCount = wildcardCount;
     this.wildcardLoopIndexes = wildcardLoopIndexes;
     this.wildcardNamedLoopIndexes = wildcardNamedLoopIndexes;
-    this.allComplete = allComplete;
-    this.allIncomplete = allIncomplete;
     this.patternElements = patternElements;
     this.patternPaths = patternPaths;
     this.wildcardPaths = wildcardPaths;
@@ -125,8 +119,6 @@ function _getPropInfo(name:string):IPropInfo {
     wildcardCount,
     wildcardLoopIndexes,
     wildcardNamedLoopIndexes,
-    completeCount === wildcardCount,
-    incompleteCount === wildcardCount,
     patternInfo.patternElements,
     patternInfo.patternPaths,
     patternInfo.wildcardPaths,
