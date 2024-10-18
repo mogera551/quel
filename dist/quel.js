@@ -3942,7 +3942,7 @@ class LoopContext {
             if (typeof tmpContentBindings.loopContext !== "undefined" && tmpContentBindings.loopContext !== this) {
                 return tmpContentBindings.loopContext;
             }
-            tmpContentBindings = this.contentBindings.parentBinding?.parentContentBindings;
+            tmpContentBindings = tmpContentBindings.parentBinding?.parentContentBindings;
         }
     }
     get index() {
