@@ -1,6 +1,6 @@
 import { IBinding, IStateProperty } from "../types";
 import { IFilterText, FilterFunc } from "../../filter/types";
-import { GetAccessorSymbol, GetByPropInfoSymbol, SetAccessorSymbol, SetByPropInfoSymbol } from "../../dotNotation/symbols";
+import { GetByPropInfoSymbol, SetByPropInfoSymbol } from "../../dotNotation/symbols";
 import { MultiValue } from "../nodeProperty/MultiValue";
 import { FilterManager, Filters } from "../../filter/Manager";
 import { IPropInfo } from "../../dotNotation/types";
@@ -8,7 +8,6 @@ import { getPropInfo } from "../../dotNotation/getPropInfo";
 import { IStateProxy } from "../../state/types";
 import { utils } from "../../utils";
 import { ILoopIndexes } from "../../loopContext/types";
-import { createStatePropertyAccessorFromBinding } from "../../state/createStatePropertyAccessor";
 
 export class StateProperty implements IStateProperty {
   get state(): IStateProxy {

@@ -1,6 +1,6 @@
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { Index } from "../dotNotation/types";
-import { ILoopContext, ILoopIndexes } from "../loopContext/types";
+import { ILoopContext } from "../loopContext/types";
 import { IStatePropertyAccessor } from "../state/types";
 import { utils } from "../utils";
 import { IBinding, INewBindingSummary } from "./types";

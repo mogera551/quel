@@ -8,7 +8,7 @@ import { createProps } from "./createProps";
 import { createGlobals } from "./createGlobals";
 import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
-import { IComponentPartial, IContentBindings, INewBindingSummary } from "../binding/types";
+import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
 import { createRootContentBindings } from "../binding/ContentBindings";
 import { createStates } from "../state/createStates";

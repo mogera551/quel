@@ -1,6 +1,6 @@
 import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "../loopContext/types";
 import { IStatePropertyAccessor } from "../state/types";
-import { GetAccessorSymbol, GetDirectSymbol, NamedWildcardIndexesDisposeSymbol, SetAccessorSymbol, SetDirectSymbol } from "./symbols";
+import { GetByPropInfoSymbol, GetDirectSymbol, SetByPropInfoSymbol, SetDirectSymbol } from "./symbols";
 
 //export type PropType = "primitive" | "object" | "array";
 //export type ArrayIncompleteType = "none" | "parital" | "all";
@@ -93,8 +93,8 @@ export interface IDotNotationHandler {
 export interface IDotNotationProxy {
   [GetDirectSymbol](prop:string, indexes:ILoopIndexes | undefined): any;
   [SetDirectSymbol](prop:string, indexes:ILoopIndexes | undefined, value:any): boolean;
-  [GetAccessorSymbol](accessor:IStatePropertyAccessor): any;
-  [SetAccessorSymbol](accessor:IStatePropertyAccessor, value:any): boolean;
+  [GetByPropInfoSymbol](propInfo:IPropInfo): any;
+  [SetByPropInfoSymbol](propInfo:IPropInfo, value:any): boolean;
   readonly $1?: number;
   readonly $2?: number;
   readonly $3?: number;

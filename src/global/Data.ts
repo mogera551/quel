@@ -6,6 +6,7 @@ import { IComponent } from "../component/types";
 import { IGlobalDataProxy } from "./types";
 import { getPropInfo } from "../dotNotation/getPropInfo";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 
 type IComponentForGlobalData = Pick<IComponent, "states">;
 
@@ -35,7 +36,13 @@ class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy
 
   set(target:any, prop:PropertyKey, value:any, receiver:IGlobalDataProxy) {
     if (typeof prop !== "string") return Reflect.set(target, prop, value, receiver);
-    const { pattern, wildcardLoopIndexes } = getPropInfo(prop);
+    /**
+     * ToDo:GlobalDataを変更する
+     */
+    return true;
+/*
+    const { pattern, wildcardLoopIndexes, wildcardNamedLoopIndexes } = getPropInfo(prop);
+    const namedLoopIndexes = wildcardNamedLoopIndexes;
     const result = receiver[SetAccessorSymbol](createStatePropertyAccessor(pattern, wildcardLoopIndexes), value);
     let setOfComponent = this.#setOfComponentByProp.get(pattern);
     if (setOfComponent) {
@@ -44,6 +51,7 @@ class GlobalDataHandler extends Handler implements ProxyHandler<IGlobalDataProxy
       }
     }
     return result;
+*/
   }
 }
 

@@ -1,11 +1,12 @@
 import { GetDependentPropsApiSymbol } from "../state/symbols";
 import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { IStatePropertyAccessor, IStateProxy, IStates } from "../state/types";
-import { GetAccessorSymbol } from "../dotNotation/symbols";
+import { GetByPropInfoSymbol } from "../dotNotation/symbols";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { getPropInfo } from "../dotNotation/getPropInfo";
 import { ILoopIndexes } from "../loopContext/types";
 import { createLoopIndexes } from "../loopContext/createLoopIndexes";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 
 function expandStateProperty(
   state:IStateProxy, 
@@ -76,8 +77,13 @@ function expandIndexes(
   } else if (propInfo.wildcardCount < loopIndexes.size) {
     return [ loopIndexes.truncate(propInfo.wildcardCount) as ILoopIndexes ];
   } else {
-    const getValuesLength = (name:string, loopIndexes:ILoopIndexes | undefined) => 
-      state[GetAccessorSymbol](createStatePropertyAccessor(name, loopIndexes)).length;
+    const getValuesLength = (name:string, loopIndexes:ILoopIndexes | undefined) => {
+      const accessor = createStatePropertyAccessor(name, loopIndexes);
+      const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+      return state.updator?.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
+        return state[GetByPropInfoSymbol](propInfo).length;
+      });
+    }
     const traverse = (parentName:string, elementIndex:number, _loopIndexes:ILoopIndexes | undefined):ILoopIndexes[] => {
       const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
       const element = propInfo.elements[elementIndex];

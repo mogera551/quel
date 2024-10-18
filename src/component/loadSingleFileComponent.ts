@@ -1,7 +1,5 @@
-import { generateComponentClass } from "./generateComponentClass";
 import { ImportMeta_ } from "../@types/importMeta";
 import { ComponentModule } from "./types";
-import { registerComponentModule } from "./registerComponentModule";
 
 function importMetaResolve(importMeta:ImportMeta_, path:string):string {
   return importMeta.resolve(path);

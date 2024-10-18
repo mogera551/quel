@@ -9,48 +9,6 @@ import { ILoopIndexes, INamedLoopIndexes } from '../loopContext/types';
  */
 const _cache = new Map<string, IPropInfo>();
 
-export class PropInfo implements IPropInfo {
-  name: string;
-  expandable: boolean;
-  pattern: string;
-  elements: string[];
-  paths: string[];
-  wildcardCount: number;
-  wildcardLoopIndexes: ILoopIndexes | undefined;
-  wildcardNamedLoopIndexes: INamedLoopIndexes;
-  patternElements: string[];
-  patternPaths: string[];
-  wildcardPaths: string[];
-  wildcardType: WildcardType;
-  constructor(
-    name: string,
-    expandable: boolean,
-    pattern: string,
-    elements: string[],
-    paths: string[],
-    wildcardCount: number,
-    wildcardLoopIndexes: ILoopIndexes | undefined,
-    wildcardNamedLoopIndexes: INamedLoopIndexes,
-    patternElements: string[],
-    patternPaths: string[],
-    wildcardPaths: string[],
-    wildcardType: WildcardType
-    ) {
-    this.name = name;
-    this.expandable = expandable;
-    this.pattern = pattern;
-    this.elements = elements;
-    this.paths = paths;
-    this.wildcardCount = wildcardCount;
-    this.wildcardLoopIndexes = wildcardLoopIndexes;
-    this.wildcardNamedLoopIndexes = wildcardNamedLoopIndexes;
-    this.patternElements = patternElements;
-    this.patternPaths = patternPaths;
-    this.wildcardPaths = wildcardPaths;
-    this.wildcardType = wildcardType
-  }
-}
-
 /**
  * プロパティ情報を取得します
  * @param name プロパティ名
@@ -110,7 +68,7 @@ function _getPropInfo(name:string):IPropInfo {
     }
   }
 
-  return new PropInfo(
+  return {
     name,
     expandable,
     pattern,
@@ -119,11 +77,11 @@ function _getPropInfo(name:string):IPropInfo {
     wildcardCount,
     wildcardLoopIndexes,
     wildcardNamedLoopIndexes,
-    patternInfo.patternElements,
-    patternInfo.patternPaths,
-    patternInfo.wildcardPaths,
+    patternElements: patternInfo.patternElements,
+    patternPaths: patternInfo.patternPaths,
+    wildcardPaths: patternInfo.wildcardPaths,
     wildcardType
-  )
+  }
 }
 
 export function getPropInfo(name:string):IPropInfo {

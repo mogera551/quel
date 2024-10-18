@@ -1,4 +1,3 @@
-
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
 import { IPropInfo } from "../dotNotation/types";
 import { IComponent } from "../component/types";

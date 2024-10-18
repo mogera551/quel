@@ -1,4 +1,3 @@
-import { createLoopIndexes } from "../loopContext/createLoopIndexes";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { createOverrideLoopIndexes } from "../loopContext/createOverrideLoopIndexes";
 import { INamedLoopIndexes } from "../loopContext/types";

@@ -1243,34 +1243,6 @@ function createLoopIndexes(parentLoopIndexes, value) {
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
 const _cache$7 = new Map();
-class PropInfo {
-    name;
-    expandable;
-    pattern;
-    elements;
-    paths;
-    wildcardCount;
-    wildcardLoopIndexes;
-    wildcardNamedLoopIndexes;
-    patternElements;
-    patternPaths;
-    wildcardPaths;
-    wildcardType;
-    constructor(name, expandable, pattern, elements, paths, wildcardCount, wildcardLoopIndexes, wildcardNamedLoopIndexes, patternElements, patternPaths, wildcardPaths, wildcardType) {
-        this.name = name;
-        this.expandable = expandable;
-        this.pattern = pattern;
-        this.elements = elements;
-        this.paths = paths;
-        this.wildcardCount = wildcardCount;
-        this.wildcardLoopIndexes = wildcardLoopIndexes;
-        this.wildcardNamedLoopIndexes = wildcardNamedLoopIndexes;
-        this.patternElements = patternElements;
-        this.patternPaths = patternPaths;
-        this.wildcardPaths = wildcardPaths;
-        this.wildcardType = wildcardType;
-    }
-}
 /**
  * プロパティ情報を取得します
  * @param name プロパティ名
@@ -1333,7 +1305,20 @@ function _getPropInfo(name) {
             wildcardType = "partial";
         }
     }
-    return new PropInfo(name, expandable, pattern, elements, paths, wildcardCount, wildcardLoopIndexes, wildcardNamedLoopIndexes, patternInfo.patternElements, patternInfo.patternPaths, patternInfo.wildcardPaths, wildcardType);
+    return {
+        name,
+        expandable,
+        pattern,
+        elements,
+        paths,
+        wildcardCount,
+        wildcardLoopIndexes,
+        wildcardNamedLoopIndexes,
+        patternElements: patternInfo.patternElements,
+        patternPaths: patternInfo.patternPaths,
+        wildcardPaths: patternInfo.wildcardPaths,
+        wildcardType
+    };
 }
 function getPropInfo(name) {
     let info;
