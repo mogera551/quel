@@ -197,7 +197,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         }
       }
 
-      this.states.writable(async () => {
+      await this.states.asyncSetWritable(async () => {
         await this.states.current[ConnectedCallbackSymbol]();
       });
 

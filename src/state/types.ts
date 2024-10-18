@@ -57,7 +57,8 @@ export type StatePropertyInfo = {
 export interface IStates {
   readonly base: Object;
   readonly current: IStateProxy;
-  writable(callback: () => Promise<void>): Promise<void>;
+  asyncSetWritable(callback: () => Promise<any>): Promise<any>;
+  setWritable(callback: () => any): any;
 }
 
 export type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTMLElement;

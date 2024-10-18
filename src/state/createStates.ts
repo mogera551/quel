@@ -38,11 +38,21 @@ class States implements IStates {
     return this.#writable ? this.#writableState : this.#readonlyState;
   }
 
-  async writable(callback: () => Promise<void>): Promise<void> {
+  async asyncSetWritable(callback: () => Promise<any>): Promise<any> {
     if (this.#writable) utils.raise("States: already writable");
     this.#writable = true;
     try {
       return await callback();
+    } finally {
+      this.#writable = false;
+    }
+  }
+
+  setWritable(callback: () => any): any {
+    if (this.#writable) utils.raise("States: already writable");
+    this.#writable = true;
+    try {
+      return callback();
     } finally {
       this.#writable = false;
     }
