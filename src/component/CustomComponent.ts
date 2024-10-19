@@ -4,9 +4,9 @@ import { isAttachableShadowRoot } from "./isAttachableShadowRoot";
 import { getStyleSheetListByNames } from "./getStyleSheetListByNames";
 import { localizeStyleSheet } from "./localizeStyleSheet";
 import { createUpdator } from "../updator/Updator";
-import { createProps } from "./createProps";
+import { createProps } from "../props/createProps";
 import { createGlobals } from "./createGlobals";
-import { IComponent, ICustomComponent, IProps, Constructor, IComponentBase } from "./types";
+import { IComponent, ICustomComponent, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { IGlobalDataProxy } from "../global/types";
@@ -16,6 +16,7 @@ import { IUpdator } from "../updator/types";
 import { getAdoptedCssNamesFromStyleValue } from "./getAdoptedCssNamesFromStyleValue";
 import { createNewBindingSummary } from "../binding/createNewBindingSummary";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
+import { IProps } from "../props/types";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 

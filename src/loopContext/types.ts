@@ -12,7 +12,7 @@ export interface ILoopContext {
   readonly parentNamedLoopContext: ILoopContext | undefined
   readonly parentLoopContext: ILoopContext | undefined;
   readonly index: number;
-  readonly namedLoopIndexes: ILoopIndexes;
+  readonly serialLoopIndexes: ILoopIndexes;
   readonly loopIndexes: ILoopIndexes;
   readonly namedLoopContexts: INamedLoopContexts;
   readonly loopTreeNodesByName: {[key: string]: Set<IBinding>};

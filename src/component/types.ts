@@ -5,6 +5,7 @@ import { IStates } from "../state/types";
 import { IContentBindings, IBindingPropertyAccess, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
+import { IProps } from "../props/types";
 
 export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -151,7 +152,7 @@ export interface IProcess {
   readonly argumentList: any[];
   readonly loopContext: ILoopContext | undefined;
 }
-
+/*
 export interface IProps {
   [BindPropertySymbol](prop: string, propAccess: IBindingPropertyAccess): void;
   [SetBufferSymbol](buffer: {[key: string]: any}): void;
@@ -165,7 +166,7 @@ export interface IProps {
   ownKeys(target: IProps): (symbol|string)[];
   getOwnPropertyDescriptor(target: IProps, prop: string|symbol): PropertyDescriptor;
 }
-
+*/
 // ToDo: addProcessをどうするか検討
 export type IUserComponent = Pick<
   IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,

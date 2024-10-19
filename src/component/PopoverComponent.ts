@@ -1,5 +1,5 @@
 
-import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
+import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../props/symbols";
 import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
 import { ILoopIndexes } from "../loopContext/types";

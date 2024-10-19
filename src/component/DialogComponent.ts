@@ -1,6 +1,6 @@
 
 import { utils } from "../utils";
-import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
+import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../props/symbols";
 import { IDialogComponent, Constructor, ICustomComponent, IComponentBase } from "./types";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent;

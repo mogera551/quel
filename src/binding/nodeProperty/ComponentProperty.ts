@@ -1,6 +1,6 @@
 import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
-import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols";
+import { IsComponentSymbol } from "../../component/symbols";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
 import { IBinding, IBindingPropertyAccess, IStateProperty } from "../types";
@@ -8,6 +8,7 @@ import { ILoopContext, ILoopIndexes } from "../../loopContext/types";
 import { IComponent } from "../../component/types";
 import { IStatePropertyAccessor } from "../../state/types";
 import { getPatternInfo } from "../../dotNotation/getPatternInfo";
+import { BindPropertySymbol } from "../../props/symbols";
 
 export class BindingPropertyAccess implements IBindingPropertyAccess{
   #stateProperty:IStateProperty;
@@ -64,7 +65,10 @@ export class ComponentProperty extends ElementBase {
    * コンポーネントプロパティのバインドを行う
    */
   initialize() {
-    this.thisComponent.props[BindPropertySymbol](this.propertyName, new BindingPropertyAccess(this.binding.stateProperty));
+    this.thisComponent.props[BindPropertySymbol](
+      this.binding.stateProperty.name, 
+      this.propertyName, 
+      this.binding.parentContentBindings.currentLoopContext);
   }
 
   /**

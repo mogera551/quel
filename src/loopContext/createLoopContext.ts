@@ -9,7 +9,7 @@ class LoopContext implements ILoopContext{
   #contentBindings: IContentBindingsTreeNode;
   #index?: number;
   #loopIndexes?: ILoopIndexes;
-  #namedLoopIndexes?: ILoopIndexes;
+  #serialLoopIndexes?: ILoopIndexes;
   #namedLoopContexts?: INamedLoopContexts;
   #loopTreeNodesByName: {[key: string]: Set<IBinding>} = {};
   #loopTreeLoopableNodesByName: {[key: string]: Set<IBinding>} = {};
@@ -59,14 +59,13 @@ class LoopContext implements ILoopContext{
     return this.#index;
   }
 
-  // ToDo:名前が良くない
-  get namedLoopIndexes(): ILoopIndexes {
+  get serialLoopIndexes(): ILoopIndexes {
     this.checkRevision();
-    if (typeof this.#namedLoopIndexes === "undefined") {
-      this.#namedLoopIndexes = (typeof this.parentNamedLoopContext === "undefined") ?
+    if (typeof this.#serialLoopIndexes === "undefined") {
+      this.#serialLoopIndexes = (typeof this.parentNamedLoopContext === "undefined") ?
         createLoopIndexes(undefined, this.index) : this.parentNamedLoopContext.loopIndexes.add(this.index);
     }
-    return this.#namedLoopIndexes;
+    return this.#serialLoopIndexes;
   }
 
   get loopIndexes(): ILoopIndexes {
@@ -102,7 +101,7 @@ class LoopContext implements ILoopContext{
     if (typeof this.#revision === "undefined" || this.#revision !== revision) {
       this.#index = undefined;
       this.#loopIndexes = undefined;
-      this.#namedLoopIndexes = undefined;
+      this.#serialLoopIndexes = undefined;
       this.#namedLoopContexts = undefined;
       return true;
     }
@@ -112,7 +111,7 @@ class LoopContext implements ILoopContext{
   dispose(): void {
     this.#index = undefined;
     this.#loopIndexes = undefined;
-    this.#namedLoopIndexes = undefined;
+    this.#serialLoopIndexes = undefined;
     this.#namedLoopContexts = undefined;
   }
 }

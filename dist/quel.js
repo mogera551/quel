@@ -912,21 +912,21 @@ function createModule(componentModule) {
     return Object.assign(new Module, componentModule);
 }
 
-const name$2 = "state";
-const AccessorPropertiesSymbol = Symbol.for(`${name$2}.accessorProperties`);
-const DependenciesSymbol = Symbol.for(`${name$2}.dependencies`);
-const ConnectedEventSymbol = Symbol.for(`${name$2}.connectedEvent`);
-const DisconnectedEventSymbol = Symbol.for(`${name$2}.disconnectedEvent`);
-const UpdatedEventSymbol = Symbol.for(`${name$2}.updatedEvent`);
-const ConnectedCallbackSymbol = Symbol.for(`${name$2}.connectedCallback`);
-const DisconnectedCallbackSymbol = Symbol.for(`${name$2}.disconnectedCallback`);
-const UpdatedCallbackSymbol = Symbol.for(`${name$2}.updatedCallback`);
-const DirectryCallApiSymbol = Symbol.for(`${name$2}.directlyCallApi`);
-const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$2}.notifyForDependentPropsApi`);
-const GetDependentPropsApiSymbol = Symbol.for(`${name$2}.getDependentPropsApi`);
-const ClearCacheApiSymbol = Symbol.for(`${name$2}.clearCacheApi`);
-const CreateBufferApiSymbol = Symbol.for(`${name$2}.createBufferApi`);
-const FlushBufferApiSymbol = Symbol.for(`${name$2}.flushBufferApi`);
+const name$3 = "state";
+const AccessorPropertiesSymbol = Symbol.for(`${name$3}.accessorProperties`);
+const DependenciesSymbol = Symbol.for(`${name$3}.dependencies`);
+const ConnectedEventSymbol = Symbol.for(`${name$3}.connectedEvent`);
+const DisconnectedEventSymbol = Symbol.for(`${name$3}.disconnectedEvent`);
+const UpdatedEventSymbol = Symbol.for(`${name$3}.updatedEvent`);
+const ConnectedCallbackSymbol = Symbol.for(`${name$3}.connectedCallback`);
+const DisconnectedCallbackSymbol = Symbol.for(`${name$3}.disconnectedCallback`);
+const UpdatedCallbackSymbol = Symbol.for(`${name$3}.updatedCallback`);
+const DirectryCallApiSymbol = Symbol.for(`${name$3}.directlyCallApi`);
+const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$3}.notifyForDependentPropsApi`);
+const GetDependentPropsApiSymbol = Symbol.for(`${name$3}.getDependentPropsApi`);
+const ClearCacheApiSymbol = Symbol.for(`${name$3}.clearCacheApi`);
+const CreateBufferApiSymbol = Symbol.for(`${name$3}.createBufferApi`);
+const FlushBufferApiSymbol = Symbol.for(`${name$3}.flushBufferApi`);
 
 // shadow rootが可能なタグ名一覧
 const setOfAttachableTags = new Set([
@@ -1079,7 +1079,7 @@ function enqueueUpdatedCallback(updator, states, updatedStateProperties) {
 }
 async function execProcesses(updator, states) {
     const totalUpdatedStateProperties = [];
-    await states.writable(async () => {
+    await states.asyncSetWritable(async () => {
         do {
             const processes = updator.retrieveAllProcesses();
             if (processes.length === 0)
@@ -1128,13 +1128,11 @@ function getPatternInfo(pattern) {
     return _cache$8.get(pattern) ?? (info = _getPatternInfo(pattern), _cache$8.set(pattern, info), info);
 }
 
-const name$1 = "do-notation";
-const GetDirectSymbol = Symbol.for(`${name$1}.getDirect`);
-const SetDirectSymbol = Symbol.for(`${name$1}.setDirect`);
-const GetAccessorSymbol = Symbol.for(`${name$1}.getAccessor`);
-const SetAccessorSymbol = Symbol.for(`${name$1}.setAccessor`);
-const GetByPropInfoSymbol = Symbol.for(`${name$1}.getAccessor`);
-const SetByPropInfoSymbol = Symbol.for(`${name$1}.setAccessor`);
+const name$2 = "do-notation";
+const GetDirectSymbol = Symbol.for(`${name$2}.getDirect`);
+const SetDirectSymbol = Symbol.for(`${name$2}.setDirect`);
+const GetByPropInfoSymbol = Symbol.for(`${name$2}.getAccessor`);
+const SetByPropInfoSymbol = Symbol.for(`${name$2}.setAccessor`);
 
 class LoopIndexes {
     #parentLoopIndexes;
@@ -1357,6 +1355,25 @@ function createStatePropertyAccessor(pattern, loopIndexes) {
     return new StatePropertyAccessor(pattern, loopIndexes);
 }
 
+const _pool = [];
+function createNamedLoopIndexesFromAccessor(propertyAccessor = undefined) {
+    const namedLoopIndexes = _pool.pop() ?? new Map();
+    if (typeof propertyAccessor === "undefined")
+        return namedLoopIndexes;
+    const wildcardPaths = propertyAccessor.patternInfo.wildcardPaths;
+    if (wildcardPaths.length === 0 || typeof propertyAccessor.loopIndexes === "undefined")
+        return namedLoopIndexes;
+    let loopIndexes = propertyAccessor.loopIndexes;
+    for (let wi = 0; wi < wildcardPaths.length; wi++) {
+        if (typeof loopIndexes === "undefined")
+            utils.raise(`createNamedLoopIndexesFromAccessor: loopIndexes is undefined.`);
+        const wildcardPath = wildcardPaths.at(-(wi + 1)) ?? utils.raise(`createNamedLoopIndexesFromAccessor: wildcardPath is undefined.`);
+        namedLoopIndexes.set(wildcardPath, loopIndexes);
+        loopIndexes = loopIndexes.parentLoopIndexes;
+    }
+    return namedLoopIndexes;
+}
+
 function expandStateProperty(state, accessor, updatedStatePropertiesSet, expandedPropertyAccessKeys = new Set([])) {
     const { pattern, loopIndexes } = accessor;
     const propertyAccessKey = pattern + "\t" + (loopIndexes?.toString() ?? "");
@@ -1416,7 +1433,13 @@ function expandIndexes(state, statePropertyAccessor) {
         return [loopIndexes.truncate(propInfo.wildcardCount)];
     }
     else {
-        const getValuesLength = (name, loopIndexes) => state[GetAccessorSymbol](createStatePropertyAccessor(name, loopIndexes)).length;
+        const getValuesLength = (name, loopIndexes) => {
+            const accessor = createStatePropertyAccessor(name, loopIndexes);
+            const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+            return state.updator?.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
+                return state[GetByPropInfoSymbol](propInfo).length;
+            });
+        };
         const traverse = (parentName, elementIndex, _loopIndexes) => {
             const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
             const element = propInfo.elements[elementIndex];
@@ -1467,25 +1490,6 @@ function expandStateProperties(states, updatedStateProperties) {
         expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(states.current, updatedStateProperties[i], updatedStatePropertiesSet));
     }
     return expandedStateProperties;
-}
-
-const _pool = [];
-function createNamedLoopIndexesFromAccessor(propertyAccessor = undefined) {
-    const namedLoopIndexes = _pool.pop() ?? new Map();
-    if (typeof propertyAccessor === "undefined")
-        return namedLoopIndexes;
-    const wildcardPaths = propertyAccessor.patternInfo.wildcardPaths;
-    if (wildcardPaths.length === 0 || typeof propertyAccessor.loopIndexes === "undefined")
-        return namedLoopIndexes;
-    let loopIndexes = propertyAccessor.loopIndexes;
-    for (let wi = 0; wi < wildcardPaths.length; wi++) {
-        if (typeof loopIndexes === "undefined")
-            utils.raise(`createNamedLoopIndexesFromAccessor: loopIndexes is undefined.`);
-        const wildcardPath = wildcardPaths.at(-(wi + 1)) ?? utils.raise(`createNamedLoopIndexesFromAccessor: wildcardPath is undefined.`);
-        namedLoopIndexes.set(wildcardPath, loopIndexes);
-        loopIndexes = loopIndexes.parentLoopIndexes;
-    }
-    return namedLoopIndexes;
 }
 
 // 
@@ -1585,7 +1589,7 @@ class LoopContextStack {
         const namedLoopIndexes = {};
         while (typeof currentLoopContext !== "undefined") {
             const name = currentLoopContext.patternName;
-            namedLoopIndexes[name] = currentLoopContext.namedLoopIndexes;
+            namedLoopIndexes[name] = currentLoopContext.serialLoopIndexes;
             currentLoopContext = currentLoopContext.parentLoopContext;
         }
         this.stack = loopContext;
@@ -1752,219 +1756,134 @@ function createUpdator(component) {
     return new Updator(component);
 }
 
-const name = "component";
-const IsComponentSymbol = Symbol.for(`${name}.isComponent`);
-const props = "props";
-const BindPropertySymbol = Symbol.for(`${props}.bindProperty`);
-const SetBufferSymbol = Symbol.for(`${props}.setBuffer`);
-const GetBufferSymbol = Symbol.for(`${props}.getBuffer`);
-const ClearBufferSymbol = Symbol.for(`${props}.clearBuffer`);
-const CreateBufferSymbol = Symbol.for(`${props}.createBuffer`);
-const FlushBufferSymbol = Symbol.for(`${props}.flushBuffer`);
-const ClearSymbol = Symbol.for(`${props}.clear`);
-
-const RE_CONTEXT_INDEX = new RegExp(/^\$([0-9]+)$/);
-function getPopoverLoopIndexes(component) {
-    return component.parentComponent?.popoverLoopIndexesById?.get(component.id);
-}
-const contextLoopIndexes = (handler, props) => {
-    let indexes;
-    const patternInfo = getPatternInfo(props.name);
-    if (patternInfo.wildcardPaths.length > 0 && props.loopIndexes?.size === 0 && handler.component.hasAttribute("popover")) {
-        indexes = getPopoverLoopIndexes(handler.component)?.truncate(patternInfo.wildcardPaths.length);
-    }
-    return indexes ?? props.loopIndexes;
+const getterFn = (loopContext, parentComponent, parentPropInfo) => {
+    return function () {
+        const parentState = parentComponent.states["current"];
+        const loopIndexes = loopContext?.serialLoopIndexes;
+        const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
+        const accessor = (typeof lastWildcardPath !== "undefined") ?
+            createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
+        const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+        return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+            return parentState[GetByPropInfoSymbol](parentPropInfo);
+        });
+    };
 };
-let Handler$2 = class Handler {
-    constructor(component) {
-        this.#component = component;
-    }
-    #component;
-    get component() {
-        return this.#component;
-    }
-    #buffer;
-    get buffer() {
-        return this.#buffer;
-    }
-    #binds = [];
-    get binds() {
-        return this.#binds;
-    }
-    #saveBindProperties = {};
-    /**
-     * bind parent component's property
-     */
-    #bindProperty(prop, propAccess) {
-        const getFunc = (handler, name, props) => function () {
-            if (typeof handler.buffer !== "undefined") {
-                return handler.buffer[name];
-            }
-            else {
-                if (typeof props === "undefined")
-                    utils.raise(`PropertyAccess is required`);
-                const match = RE_CONTEXT_INDEX.exec(props.name);
-                if (match) {
-                    const loopIndex = Number(match[1]) - 1;
-                    let indexes = props.loopContext?.loopIndexes; // todo: loopContextがundefinedの場合の処理
-                    if (typeof indexes === "undefined" && handler.component.hasAttribute("popover")) {
-                        indexes = getPopoverLoopIndexes(handler.component);
-                    }
-                    return indexes?.at(loopIndex);
-                }
-                else {
-                    const loopIndexes = contextLoopIndexes(handler, props);
-                    return handler.component.parentComponent?.states.current[GetDirectSymbol](props.name, loopIndexes) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
-                }
-            }
-        };
-        /**
-         * return parent component's property setter function
-         */
-        const setFunc = (handler, name, props) => function (value) {
-            if (typeof handler.buffer !== "undefined") {
-                handler.buffer[name] = value;
-            }
-            else {
-                if (typeof props === "undefined")
-                    utils.raise(`PropertyAccess is required`);
-                const loopIndexes = contextLoopIndexes(handler, props);
-                handler.component.parentComponent?.states.writable(async () => {
-                    handler.component.parentComponent?.states.current[SetDirectSymbol](props.name, loopIndexes, value) ?? utils.raise(`Property ${props.name} is not found`); // todo: 例外処理
-                });
-            }
-            return true;
-        };
-        // save
-        this.#saveBindProperties[prop] = Object.getOwnPropertyDescriptor(this.#component.states.base, prop) ?? {
+
+const setterFn = (loopContext, parentComponent, parentPropInfo) => {
+    return function (value) {
+        const loopIndexes = loopContext?.serialLoopIndexes;
+        const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1);
+        const accessor = (typeof lastWildcardPath !== "undefined") ?
+            createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
+        const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+        return parentComponent.states.setWritable(() => {
+            const parentState = parentComponent.states["current"];
+            return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+                return parentState[SetByPropInfoSymbol](parentPropInfo, value);
+            });
+        });
+    };
+};
+
+const name$1 = "bindingProps";
+const BindPropertySymbol = Symbol.for(`${name$1}.bindPropertySymbol`);
+const GetBufferSymbol = Symbol.for(`${name$1}.getBufferSymbol`);
+const SetBufferSymbol = Symbol.for(`${name$1}.setBufferSymbol`);
+const CreateBufferSymbol = Symbol.for(`${name$1}.createBufferSymbol`);
+const FlushBufferSymbol = Symbol.for(`${name$1}.flushBufferSymbol`);
+const ClearBufferSymbol = Symbol.for(`${name$1}.clearBufferSymbol`);
+
+class PropsProxyHandler {
+    parentPropToThisProp = new Map();
+    parentProps = new Set();
+    thisProps = new Set();
+    bindProperty(loopContext, component, parentProp, thisProp) {
+        if (this.parentProps.has(parentProp)) {
+            utils.raise(`Duplicate binding property: ${parentProp}`);
+        }
+        if (this.thisProps.has(thisProp)) {
+            utils.raise(`Duplicate binding property: ${thisProp}`);
+        }
+        const propInfo = getPropInfo(thisProp);
+        if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
+            utils.raise(`Invalid prop name: ${thisProp}`);
+        }
+        const parentPropInfo = getPropInfo(parentProp);
+        this.parentPropToThisProp.set(parentProp, thisProp);
+        this.parentProps.add(parentProp);
+        this.thisProps.add(thisProp);
+        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        const state = component.states["base"];
+        const attributes = {
             value: undefined,
             writable: true,
             enumerable: true,
             configurable: true,
+            get: getterFn(loopContext, parentComponent, parentPropInfo),
+            set: setterFn(loopContext, parentComponent, parentPropInfo)
         };
-        // define component's property
-        Object.defineProperty(this.#component.states.base, prop, {
-            get: getFunc(this, prop, propAccess),
-            set: setFunc(this, prop, propAccess),
-            configurable: true,
-            enumerable: true,
-        });
-        if (typeof propAccess !== "undefined") {
-            this.#binds.push({ prop, propAccess });
-        }
+        Object.defineProperty(state, thisProp, attributes);
     }
-    #setBuffer(buffer) {
-        this.#buffer = buffer;
-        for (const key in buffer) {
-            this.#bindProperty(key);
-            this.#component.states.current[NotifyForDependentPropsApiSymbol](key, undefined);
-        }
+    setBuffer(buffer) {
     }
-    #getBuffer() {
-        return this.#buffer;
+    getBuffer() {
+        return {};
     }
-    #clearBuffer() {
-        this.#buffer = undefined;
+    clearBuffer() {
     }
-    #createBuffer() {
-        let buffer;
-        // ToDo: as INewComponentを修正する
-        buffer = this.#component.parentComponent?.states.current[CreateBufferApiSymbol](this.#component) ?? utils.raise(`CreateBufferApiSymbol is not found`);
-        if (typeof buffer !== "undefined") {
-            return buffer;
-        }
-        buffer = {};
-        this.#binds.forEach(({ prop, propAccess }) => {
-            const loopIndexes = contextLoopIndexes(this, propAccess);
-            buffer[prop] = this.#component.parentComponent?.states.current[GetDirectSymbol](propAccess.name, loopIndexes) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
-        });
-        return buffer;
+    createBuffer() {
+        return {};
     }
-    #flushBuffer() {
-        if (typeof this.#buffer !== "undefined") {
-            const buffer = this.#buffer;
-            this.#component.parentComponent?.states.writable(async () => {
-                // ToDo: as INewComponentを修正する
-                const result = this.#component.parentComponent?.states.current[FlushBufferApiSymbol](buffer, this.#component) ?? utils.raise(`FlushBufferApiSymbol is not found`);
-                if (result !== true) {
-                    this.#binds.forEach(({ prop, propAccess }) => {
-                        const loopIndexes = contextLoopIndexes(this, propAccess);
-                        this.#component.parentComponent?.states.current[SetDirectSymbol](propAccess.name, loopIndexes, buffer[prop]) ?? utils.raise(`Property ${propAccess.name} is not found`); // todo: 例外処理  
-                    });
-                }
-            });
-        }
+    flushBuffer() {
     }
-    #clear() {
-        this.#buffer = undefined;
-        this.#binds = [];
-        for (const [key, desc] of Object.entries(this.#saveBindProperties)) {
-            Object.defineProperty(this.#component.states.base, key, desc);
-        }
-        this.#saveBindProperties = {};
-    }
-    /**
-     * Proxy.get
-     */
     get(target, prop, receiver) {
+        const component = target;
         if (prop === BindPropertySymbol) {
-            return (prop, propAccess) => this.#bindProperty(prop, propAccess);
+            return (parentProp, thisProp, loopContext) => this.bindProperty(loopContext, component, parentProp, thisProp);
         }
         else if (prop === SetBufferSymbol) {
-            return (buffer) => this.#setBuffer(buffer);
+            return (buffer) => this.setBuffer(buffer);
         }
         else if (prop === GetBufferSymbol) {
-            return () => this.#getBuffer();
+            return () => this.getBuffer();
         }
         else if (prop === ClearBufferSymbol) {
-            return () => this.#clearBuffer();
+            return () => this.clearBuffer();
         }
         else if (prop === CreateBufferSymbol) {
-            return () => this.#createBuffer();
+            return () => this.createBuffer();
         }
         else if (prop === FlushBufferSymbol) {
-            return () => this.#flushBuffer();
+            return () => this.flushBuffer();
         }
-        else if (prop === ClearSymbol) {
-            return () => this.#clear();
+        if (typeof prop === "symbol" || typeof prop === "number") {
+            return Reflect.get(target, prop, receiver);
         }
-        return this.#component.states.current[prop];
+        const propInfo = getPropInfo(prop);
+        if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
+            utils.raise(`Invalid prop name: ${prop}`);
+        }
+        const state = component.states["current"];
+        return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[GetByPropInfoSymbol](propInfo));
     }
     set(target, prop, value, receiver) {
-        this.#component.states.writable(async () => {
-            this.#component.states.current[prop] = value;
+        if (typeof prop === "symbol" || typeof prop === "number") {
+            return Reflect.set(target, prop, value, receiver);
+        }
+        const component = target;
+        const propInfo = getPropInfo(prop);
+        if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
+            utils.raise(`Invalid prop name: ${prop}`);
+        }
+        return component.states.setWritable(() => {
+            const state = component.states["current"];
+            return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
         });
-        return true;
     }
-    /**
-     * Proxy.ownKeys
-     */
-    ownKeys(target) {
-        if (typeof this.buffer !== "undefined") {
-            return Reflect.ownKeys(this.buffer);
-        }
-        else {
-            return this.#binds.map(({ prop }) => prop);
-        }
-    }
-    /**
-     * Proxy.getOwnPropertyDescriptor
-     */
-    getOwnPropertyDescriptor(target, prop) {
-        return {
-            enumerable: true,
-            configurable: true
-            /* ...other flags, probable "value:..."" */
-        };
-    }
-};
-/**
- * コンポーネント間のアクセスをするためのプロパティを作成します
- * @param component {IComponentForProps} コンポーネント
- * @returns {IProps} プロパティ
- */
+}
 function createProps(component) {
-    return new Proxy({}, new Handler$2(component));
+    return new Proxy(component, new PropsProxyHandler());
 }
 
 const BoundByComponentSymbol = Symbol.for(`globalData.boundByComponent`);
@@ -2337,15 +2256,22 @@ class GlobalDataHandler extends Handler$1 {
     set(target, prop, value, receiver) {
         if (typeof prop !== "string")
             return Reflect.set(target, prop, value, receiver);
-        const { pattern, wildcardLoopIndexes } = getPropInfo(prop);
-        const result = receiver[SetAccessorSymbol](createStatePropertyAccessor(pattern, wildcardLoopIndexes), value);
-        let setOfComponent = this.#setOfComponentByProp.get(pattern);
-        if (setOfComponent) {
-            for (const component of setOfComponent) {
+        /**
+         * ToDo:GlobalDataを変更する
+         */
+        return true;
+        /*
+            const { pattern, wildcardLoopIndexes, wildcardNamedLoopIndexes } = getPropInfo(prop);
+            const namedLoopIndexes = wildcardNamedLoopIndexes;
+            const result = receiver[SetAccessorSymbol](createStatePropertyAccessor(pattern, wildcardLoopIndexes), value);
+            let setOfComponent = this.#setOfComponentByProp.get(pattern);
+            if (setOfComponent) {
+              for(const component of setOfComponent) {
                 component.states.current[NotifyForDependentPropsApiSymbol]("$globals." + pattern, wildcardLoopIndexes);
+              }
             }
-        }
-        return result;
+            return result;
+        */
     }
 }
 class GlobalData {
@@ -3028,21 +2954,9 @@ class ElementProperty extends ElementBase {
     }
 }
 
-class BindingPropertyAccess {
-    #stateProperty;
-    get name() {
-        return this.#stateProperty.name;
-    }
-    get loopIndexes() {
-        return this.#stateProperty.loopIndexes;
-    }
-    get loopContext() {
-        return this.#stateProperty.binding.parentContentBindings.currentLoopContext;
-    }
-    constructor(stateProperty) {
-        this.#stateProperty = stateProperty;
-    }
-}
+const name = "component";
+const IsComponentSymbol = Symbol.for(`${name}.isComponent`);
+
 class ComponentProperty extends ElementBase {
     get propertyName() {
         return this.nameElements[1];
@@ -3076,7 +2990,7 @@ class ComponentProperty extends ElementBase {
      * コンポーネントプロパティのバインドを行う
      */
     initialize() {
-        this.thisComponent.props[BindPropertySymbol](this.propertyName, new BindingPropertyAccess(this.binding.stateProperty));
+        this.thisComponent.props[BindPropertySymbol](this.binding.stateProperty.name, this.propertyName, this.binding.parentContentBindings.currentLoopContext);
     }
     /**
      * 更新後処理
@@ -3893,7 +3807,7 @@ class LoopContext {
     #contentBindings;
     #index;
     #loopIndexes;
-    #namedLoopIndexes;
+    #serialLoopIndexes;
     #namedLoopContexts;
     #loopTreeNodesByName = {};
     #loopTreeLoopableNodesByName = {};
@@ -3934,14 +3848,13 @@ class LoopContext {
         }
         return this.#index;
     }
-    // ToDo:名前が良くない
-    get namedLoopIndexes() {
+    get serialLoopIndexes() {
         this.checkRevision();
-        if (typeof this.#namedLoopIndexes === "undefined") {
-            this.#namedLoopIndexes = (typeof this.parentNamedLoopContext === "undefined") ?
+        if (typeof this.#serialLoopIndexes === "undefined") {
+            this.#serialLoopIndexes = (typeof this.parentNamedLoopContext === "undefined") ?
                 createLoopIndexes(undefined, this.index) : this.parentNamedLoopContext.loopIndexes.add(this.index);
         }
-        return this.#namedLoopIndexes;
+        return this.#serialLoopIndexes;
     }
     get loopIndexes() {
         this.checkRevision();
@@ -3971,7 +3884,7 @@ class LoopContext {
         if (typeof this.#revision === "undefined" || this.#revision !== revision) {
             this.#index = undefined;
             this.#loopIndexes = undefined;
-            this.#namedLoopIndexes = undefined;
+            this.#serialLoopIndexes = undefined;
             this.#namedLoopContexts = undefined;
             return true;
         }
@@ -3980,7 +3893,7 @@ class LoopContext {
     dispose() {
         this.#index = undefined;
         this.#loopIndexes = undefined;
-        this.#namedLoopIndexes = undefined;
+        this.#serialLoopIndexes = undefined;
         this.#namedLoopContexts = undefined;
     }
 }
@@ -4490,12 +4403,23 @@ class States {
     get current() {
         return this.#writable ? this.#writableState : this.#readonlyState;
     }
-    async writable(callback) {
+    async asyncSetWritable(callback) {
         if (this.#writable)
             utils.raise("States: already writable");
         this.#writable = true;
         try {
             return await callback();
+        }
+        finally {
+            this.#writable = false;
+        }
+    }
+    setWritable(callback) {
+        if (this.#writable)
+            utils.raise("States: already writable");
+        this.#writable = true;
+        try {
+            return callback();
         }
         finally {
             this.#writable = false;
@@ -4790,7 +4714,7 @@ function CustomComponent(Base) {
                     this.style.overscrollBehavior = "contain";
                 }
             }
-            this.states.writable(async () => {
+            await this.states.asyncSetWritable(async () => {
                 await this.states.current[ConnectedCallbackSymbol]();
             });
             // build binding tree and dom 

@@ -16,7 +16,7 @@ class LoopContextStack implements ILoopContextStack {
     const namedLoopIndexes: { [key: string]: ILoopIndexes; } = {};
     while (typeof currentLoopContext !== "undefined") {
       const name = currentLoopContext.patternName;
-      namedLoopIndexes[name] = currentLoopContext.namedLoopIndexes;
+      namedLoopIndexes[name] = currentLoopContext.serialLoopIndexes;
       currentLoopContext = currentLoopContext.parentLoopContext;
     }
     this.stack = loopContext;
