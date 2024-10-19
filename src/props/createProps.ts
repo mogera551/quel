@@ -36,16 +36,14 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     this.parentProps.add(parentProp);
     this.thisProps.add(thisProp);
 
-    const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-
     const state = component.states["base"];
     const attributes = {
       value: undefined,
       writable: true,
       enumerable: true,
       configurable: true,
-      get: getterFn(loopContext, parentComponent, parentPropInfo),
-      set: setterFn(loopContext, parentComponent, parentPropInfo)
+      get: getterFn(loopContext, component, parentPropInfo),
+      set: setterFn(loopContext, component, parentPropInfo)
     }
     Object.defineProperty(state, thisProp, attributes)
   }

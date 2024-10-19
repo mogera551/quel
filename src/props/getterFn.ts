@@ -4,17 +4,25 @@ import { IPropInfo } from "../dotNotation/types";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { ILoopContext } from "../loopContext/types";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
+import { utils } from "../utils";
 
-type IComponentPartial = Pick<IComponent, "updator"|"states">;
+type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states">;
+
+const regexp = RegExp(/^\$[0-9]+$/);
 
 export const getterFn = (
   loopContext:ILoopContext | undefined,
-  parentComponent:IComponentPartial,
+  component:IComponentPartial,
   parentPropInfo:IPropInfo
 ): any => {
   return function () {
-    const parentState = parentComponent.states["current"];
     const loopIndexes = loopContext?.serialLoopIndexes;
+    if (regexp.test(parentPropInfo.name)) {
+      const index = Number(parentPropInfo.name.slice(1));
+      return loopIndexes?.at(index);
+    } 
+    const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+    const parentState = parentComponent.states["current"];
     const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
     const accessor = (typeof lastWildcardPath !== "undefined") ? 
       createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;

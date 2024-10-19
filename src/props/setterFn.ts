@@ -4,15 +4,17 @@ import { IPropInfo } from "../dotNotation/types";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { ILoopContext } from "../loopContext/types";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
+import { utils } from "../utils";
 
-type IComponentPartial = Pick<IComponent, "updator"|"states">;
+type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states">;
 
 export const setterFn = (
   loopContext:ILoopContext | undefined,
-  parentComponent:IComponentPartial, 
+  component:IComponentPartial, 
   parentPropInfo:IPropInfo
 ): any => {
   return function (value: any): boolean {
+    const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     const loopIndexes = loopContext?.serialLoopIndexes;
     const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1);
     const accessor = (typeof lastWildcardPath !== "undefined") ? 
