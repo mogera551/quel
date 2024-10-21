@@ -5,22 +5,28 @@ import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLo
 import { ILoopContext } from "../loopContext/types";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { utils } from "../utils";
+import { GetBufferSymbol } from "./symbols";
 
-type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states">;
+type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states"|"props">;
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
 export const getterFn = (
   loopContext:ILoopContext | undefined,
   component:IComponentPartial,
-  parentPropInfo:IPropInfo
+  parentPropInfo:IPropInfo,
+  thisPropIfo:IPropInfo
 ): any => {
   return function () {
     const loopIndexes = loopContext?.serialLoopIndexes;
     if (regexp.test(parentPropInfo.name)) {
       const index = Number(parentPropInfo.name.slice(1));
       return loopIndexes?.at(index);
-    } 
+    }
+    const buffer = component.props[GetBufferSymbol]();
+    if (buffer) {
+      return buffer[thisPropIfo.name];
+    }
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     const parentState = parentComponent.states["current"];
     const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
