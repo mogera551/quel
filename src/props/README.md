@@ -14,6 +14,7 @@ class State {
   popover() {
     const { message } = this;
     try {
+      const dialog = this.$component.querySelector("dialog[is=my-dialog]");
       const resutlts = await dialog.asyncShowDialog({ message });
       this.message = results.message;
     } catch(e) {
@@ -32,15 +33,17 @@ class State {
 // ダイアログ、親コンポーネントのプロパティとバインド
 // プロパティはバインドされるが、ダイアログをキャンセルしたときに元に戻す必要がある
 
+// Dialog
 class State {
   message = "";
 }
 
+// Main
 class State {
   message = "";
   async openDialog() {
-    const saveMessage = this,.message;
-    const dialog = this.$component.querySelector("my-dialog");
+    const saveMessage = this.message;
+    const dialog = this.$component.querySelector("dialog[is=my-dialog]");
     try {
       await dialog.asyncShowModal();
     } catch(e) {
@@ -52,43 +55,49 @@ class State {
 
 <main-app>
   <button data-bind="openDialog"></button>
-  <my-dialog data-bind="props.message:message"></my-dialog>
+  <dialog is="my-dialog" data-bind="props.message:message"></dialog>
 </main-app>
 
 // ダイアログ、親コンポーネントのプロパティとバインド（バッファあり）
 
+// Dialog
 class State {
   message = "";
 }
 
+// Main
 class State {
   message = "";
   openDialog() {
-    const dialog = this.$component.querySelector("my-dialog");
+    const dialog = this.$component.querySelector("dialog[is=my-dialog]");
     // dialogでキャンセルの時messageは更新されない
-    await dialog.asyncShowModal();
+    // 自動化されているのでawaitで待つ必要はない
+    dialog.showModal();
   }
 }
 
 <main-app>
   <button data-bind="openDialog"></button>
-  <my-dialog data-bind="props.message:message" buffered-bind></my-dialog>
+  <dialog is="my-dialog" data-bind="props.message:message" buffered-bind></dialog>
 </main-app>
 
 // ダイアログ、親コンポーネントのプロパティとバインド（バッファあり）
 // ループコンテキストが異なる場合
 
+// Dialog
 class State {
   message = "";
 }
 
+// Main
 class State {
   messages = [];
   openDialog() {
     const message = this["messages.*"];
 
-    const dialog = this.$component.querySelector("my-dialog");
     try {
+
+      const dialog = this.$component.querySelector("dialog[is=my-dialog]");
       const results = await dialog.asyncShowModal({message});
       this["messages.*"] = results.message;
     } catch(e) {
@@ -101,11 +110,12 @@ class State {
   {{ loop:messages }}
     <button data-bind="openDialog"></button>
   {{ endloop: }}
-  <my-dialog></my-dialog>
+  <dialog is="my-dialog"></dialog>
 </main-app>
 
 // ポップオーバー、プロパティはバインドされず、ポップオーバーへの入出力を管理する必要がある
-// Dialog
+
+// Popover
 class State {
   message = "";
 }
@@ -130,12 +140,14 @@ class State {
 </main-app>
 
 // ポップオーバー、親コンポーネントのプロパティとバインド
-// プロパティはバインドされるが、ダイアログをキャンセルしたときに元に戻す必要がある
+// プロパティはバインドされるが、ポップオーバーをキャンセルしたときに元に戻す必要がある
 
+// Popover
 class State {
   message = "";
 }
 
+// Main
 class State {
   message = "";
   async popover() {
@@ -157,10 +169,12 @@ class State {
 
 // ポップオーバー、親コンポーネントのプロパティとバインド（バッファあり）
 
+// Popover
 class State {
   message = "";
 }
 
+// Main
 class State {
   message = "";
   async popover() {
@@ -178,10 +192,12 @@ class State {
 // ポップオーバー、親コンポーネントのプロパティとバインド（バッファあり）
 // 自動ポップオーバー、openPopover()が不要
 
+// Popover
 class State {
   message = "";
 }
 
+// Main
 class State {
   message = "";
 }
@@ -194,10 +210,12 @@ class State {
 // ポップオーバー、親コンポーネントのプロパティとバインド（バッファあり）
 // 自動ポップオーバー、openPopover()が不要、ループコンテキストが異なる場合
 
+// Popover
 class State {
   message = "";
 }
 
+// Main
 class State {
   messages = [];
 }
