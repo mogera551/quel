@@ -152,6 +152,7 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
       utils.raise(`Invalid prop name: ${prop}`);
     }
+    // ToDo: プロセスキューに積むかどうか検討する
     return component.states.setWritable(() => {
       const state = component.states["current"];
       return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(
