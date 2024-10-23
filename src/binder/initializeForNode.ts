@@ -51,6 +51,9 @@ function initializeHTMLElement(
       setDefaultEventHandler(defaultBinding);
     }
   }
+
+  // ToDo: PopoverTargetの場合、popoverInfoに登録する処理を追加する
+  
 }
 
 const thru = () => {};
