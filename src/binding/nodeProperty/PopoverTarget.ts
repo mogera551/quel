@@ -1,4 +1,6 @@
+import { IComponent } from "../../component/types";
 import { IFilterText } from "../../filter/types";
+import { BindPropertySymbol, CheckDuplicateSymbol } from "../../props/symbols";
 import { utils } from "../../utils";
 import { IBinding, INodeProperty } from "../types";
 import { NodeProperty } from "./NodeProperty";
@@ -38,6 +40,18 @@ export class PopoverTarget extends NodeProperty {
   initialize() {
     super.initialize();
     this.binding.component?.popoverInfo.addBinding(this.button, this.binding);
+    this.binding.defaultEventHandler = 
+      (popoverTarget => event => popoverTarget.registerCurrentButton())(this);
+    const props = (this.target as IComponent as Pick<IComponent,"props">).props;
+    if (!props[CheckDuplicateSymbol](this.targetId, this.name)) {
+      const getLoopContext = (component:Pick<IComponent,"popoverInfo">) => () => {
+        const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
+        const popoverButton = component.popoverInfo?.get(button);
+        return popoverButton?.loopContext;
+      }
+      const component = this.binding.component ?? utils.raise("PopoverTarget: no component");
+      props[BindPropertySymbol](this.binding.statePropertyName, this.name, getLoopContext(component));
+    }
   }
 
   get applicable(): boolean {
@@ -46,6 +60,12 @@ export class PopoverTarget extends NodeProperty {
       return true;
     }
     return false;
+  }
+
+  // ボタン押下時、ボタンを登録する
+  registerCurrentButton() {
+    const popoverInfo = this.binding.component?.popoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
+    popoverInfo.currentButton = this.button;
   }
 
 }

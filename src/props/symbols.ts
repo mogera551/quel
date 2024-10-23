@@ -1,6 +1,7 @@
 const name = "bindingProps";
 
 export const BindPropertySymbol:unique symbol = Symbol.for(`${name}.bindPropertySymbol`);
+export const CheckDuplicateSymbol:unique symbol = Symbol.for(`${name}.checkDuplicateSymbol`);
 export const HasBufferSymbol:unique symbol = Symbol.for(`${name}.hasBufferSymbol`);
 export const CreateBufferSymbol:unique symbol = Symbol.for(`${name}.createBufferSymbol`);
 export const GetBufferSymbol:unique symbol = Symbol.for(`${name}.getBufferSymbol`);

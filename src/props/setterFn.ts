@@ -12,7 +12,7 @@ type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states"|"
 const regexp = RegExp(/^\$[0-9]+$/);
 
 export const setterFn = (
-  loopContext:ILoopContext | undefined,
+  getLoopContext:()=>(ILoopContext | undefined),
   component:IComponentPartial, 
   parentPropInfo:IPropInfo,
   thisPropIfo:IPropInfo
@@ -27,6 +27,7 @@ export const setterFn = (
     }
     // ToDo: プロセスキューに積むかどうか検討する
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+    const loopContext = getLoopContext();
     const loopIndexes = loopContext?.serialLoopIndexes;
     const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1);
     const accessor = (typeof lastWildcardPath !== "undefined") ? 

@@ -12,12 +12,13 @@ type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states"|"
 const regexp = RegExp(/^\$[0-9]+$/);
 
 export const getterFn = (
-  loopContext:ILoopContext | undefined,
+  getLoopContext:()=>(ILoopContext | undefined),
   component:IComponentPartial,
   parentPropInfo:IPropInfo,
   thisPropIfo:IPropInfo
 ): any => {
   return function () {
+    const loopContext = getLoopContext();
     const loopIndexes = loopContext?.serialLoopIndexes;
     if (regexp.test(parentPropInfo.name)) {
       const index = Number(parentPropInfo.name.slice(1));

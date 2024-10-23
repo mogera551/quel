@@ -68,7 +68,7 @@ export class ComponentProperty extends ElementBase {
     this.thisComponent.props[BindPropertySymbol](
       this.binding.stateProperty.name, 
       this.propertyName, 
-      this.binding.parentContentBindings.currentLoopContext);
+      () => this.binding.parentContentBindings.currentLoopContext);
   }
 
   /**

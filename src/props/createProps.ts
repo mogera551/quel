@@ -5,18 +5,22 @@ import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLo
 import { ILoopContext } from "../loopContext/types";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { utils } from "../utils";
+import { createPropsBindingInfo } from "./createPropsBindingInfo";
 import { getterFn } from "./getterFn";
 import { setterFn } from "./setterFn";
-import { BindPropertySymbol, ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
-import { IPropBuffer, IProps } from "./types";
+import { BindPropertySymbol, CheckDuplicateSymbol, ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
+import { IPropBuffer, IProps, IPropsBindingInfo } from "./types";
 
 type IComponentPartialForProps = Pick<IComponent,"parentComponent"|"states"|"updator"|"props">;
 
+
 class PropsProxyHandler implements ProxyHandler<IProps> {
-  parentPropToThisProp: Map<string, string> = new Map();
+  propsBindingInfos: IPropsBindingInfo[] = [];
+  propsBindingInfoKeys: Set<string> = new Set();
+//  parentPropToThisProp: Map<string, string> = new Map();
   parentProps: Set<string> = new Set();
   thisProps: Set<string> = new Set();
-  loopContextByParentProp: Map<string, ILoopContext | undefined> = new Map();
+  loopContextByParentProp: Map<string, ()=>(ILoopContext | undefined)> = new Map();
 
   #propBuffer: IPropBuffer | undefined;
   get propBuffer() {
@@ -24,11 +28,12 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
   }
 
   bindProperty(
-    loopContext:ILoopContext | undefined, 
+    getLoopContext:()=>(ILoopContext | undefined), 
     component:IComponentPartialForProps, 
     parentProp: string, 
     thisProp: string
   ): void {
+    const bindingInfo = createPropsBindingInfo(parentProp, thisProp);
     if (this.parentProps.has(parentProp)) {
       utils.raise(`Duplicate binding property: ${parentProp}`);
     }
@@ -39,11 +44,15 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
       utils.raise(`Invalid prop name: ${thisProp}`);
     }
+    if (this.propsBindingInfoKeys.has(bindingInfo.key)) {
+      utils.raise(`Duplicate binding property: ${parentProp}:${thisProp}`);
+    }
     const parentPropInfo = getPropInfo(parentProp);
-    this.parentPropToThisProp.set(parentProp, thisProp);
+    this.propsBindingInfos.push(bindingInfo);
+    this.propsBindingInfoKeys.add(bindingInfo.key);
     this.parentProps.add(parentProp);
     this.thisProps.add(thisProp);
-    this.loopContextByParentProp.set(parentProp, loopContext);
+    this.loopContextByParentProp.set(parentProp, getLoopContext);
 
     const state = component.states["base"];
     const attributes = {
@@ -51,8 +60,8 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
       writable: true,
       enumerable: true,
       configurable: true,
-      get: getterFn(loopContext, component, parentPropInfo, propInfo),
-      set: setterFn(loopContext, component, parentPropInfo, propInfo)
+      get: getterFn(getLoopContext, component, parentPropInfo, propInfo),
+      set: setterFn(getLoopContext, component, parentPropInfo, propInfo)
     }
     Object.defineProperty(state, thisProp, attributes)
   }
@@ -75,8 +84,10 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     this.#propBuffer = {};
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     const parentState = parentComponent.states["current"];
-    for(const [parentProp, thisProp] of this.parentPropToThisProp) {
-      const loopContext = this.loopContextByParentProp.get(parentProp);
+    for(const bindingInfo of this.propsBindingInfos) {
+      const { parentProp, thisProp } = bindingInfo;
+      const getLoopContext = this.loopContextByParentProp.get(parentProp);
+      const loopContext = getLoopContext?.();
       const loopIndexes = loopContext?.serialLoopIndexes;
       const parentPropInfo = getPropInfo(parentProp);
       const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
@@ -95,8 +106,10 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     if (this.#propBuffer === undefined) return;
     // ToDo: プロセスキューに積むかどうか検討する
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-    for(const [parentProp, thisProp] of this.parentPropToThisProp) {
-      const loopContext = this.loopContextByParentProp.get(parentProp);
+    for(const bindingInfo of this.propsBindingInfos) {
+      const { parentProp, thisProp } = bindingInfo;
+      const getLoopContext = this.loopContextByParentProp.get(parentProp);
+      const loopContext = getLoopContext?.();
       const loopIndexes = loopContext?.serialLoopIndexes;
       const parentPropInfo = getPropInfo(parentProp);
       const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
@@ -116,8 +129,8 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
   get(target: any, prop: PropertyKey, receiver: any): any {
     const component = target as IComponentPartialForProps;
     if (prop === BindPropertySymbol) {
-      return (parentProp: string, thisProp: string, loopContext:ILoopContext | undefined): void => 
-        this.bindProperty(loopContext, component, parentProp, thisProp);
+      return (parentProp: string, thisProp: string, getLoopContext:()=>(ILoopContext | undefined)): void => 
+        this.bindProperty(getLoopContext, component, parentProp, thisProp);
     } else if (prop === SetBufferSymbol) {
       return (buffer: IPropBuffer): void => this.setBuffer(buffer);
     } else if (prop === GetBufferSymbol) {
@@ -128,6 +141,11 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
       return (): IPropBuffer => this.createBuffer(component);
     } else if (prop === FlushBufferSymbol) {
       return (): void => this.flushBuffer(component);
+    } else if (prop === CheckDuplicateSymbol) {
+      return (parentProp: string, thisProp: string): boolean => {
+        const bindingInfo = createPropsBindingInfo(parentProp, thisProp);
+        return this.propsBindingInfoKeys.has(bindingInfo.key);
+      }
     }
     if (typeof prop === "symbol" || typeof prop === "number") {
       return Reflect.get(target, prop, receiver);;

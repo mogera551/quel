@@ -98,6 +98,9 @@ class Binding implements IBinding {
     }
     return this.#defaultEventHandler;
   }
+  set defaultEventHandler(value:((event:Event)=>void)) {
+    this.#defaultEventHandler = value;
+  }
 
   initialize() {
     this.nodeProperty.initialize();
