@@ -6,6 +6,7 @@ import { IContentBindings, IBindingPropertyAccess, INewBindingSummary } from "..
 import { IUpdator } from "../updator/types";
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
 import { IProps } from "../props/types";
+import { IPopoverInfo } from "../popover/types";
 
 export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -137,6 +138,7 @@ export interface IPopoverComponent {
   canceled: boolean;
   popoverPromises: PromiseWithResolvers<any> | undefined;
   readonly popoverLoopIndexesById: Map<string, ILoopIndexes | undefined>;
+  readonly popoverInfo: IPopoverInfo
   asyncShowPopover(props: {[key: string]: any}): Promise<any>;
   hidePopover(): void;
   cancelPopover(): void;

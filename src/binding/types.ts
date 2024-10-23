@@ -52,7 +52,9 @@ export interface IStateProperty {
   setValue(value: any): void;
 }
 
-export type IComponentPartial = Pick<IComponent, "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" | "states" | "newBindingSummary" | "updator" | "popoverLoopIndexesById">;
+export type IComponentPartial = HTMLElement & Pick<IComponent, 
+  "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" |
+  "states" | "newBindingSummary" | "updator" | "popoverLoopIndexesById" | "popoverInfo" | "isQuelComponent">;
 
 export interface IBindingTreeNode {
   readonly childrenContentBindings: IContentBindingsTreeNode[];

@@ -3,6 +3,8 @@ import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymb
 import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
 import { ILoopIndexes } from "../loopContext/types";
+import { createPopoverInfo } from "../popover/createPopoverInfo";
+import { IPopoverInfo } from "../popover/types";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogComponent
 
@@ -43,6 +45,11 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
         this.#popoverLoopIndexesById = new Map;
       }
       return this.#popoverLoopIndexesById;
+    }
+
+    #popoverInfo = createPopoverInfo();
+    get popoverInfo(): IPopoverInfo {
+      return this.#popoverInfo;
     }
   
     constructor(...args:any[]) {
