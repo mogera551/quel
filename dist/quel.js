@@ -1051,13 +1051,13 @@ function localizeStyleSheet(styleSheet, localSelector) {
 
 async function execProcess(updator, process) {
     if (typeof process.loopContext === "undefined") {
-        return updator.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
-            return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+        return await updator.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
+            return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
         });
     }
     else {
-        return updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async () => {
-            return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+        return await updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async () => {
+            return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
         });
     }
 }
@@ -1085,6 +1085,7 @@ async function execProcesses(updator, states) {
             if (processes.length === 0)
                 break;
             const updateStateProperties = await _execProcesses(updator, processes);
+            console.log(updateStateProperties);
             if (updateStateProperties.length > 0) {
                 totalUpdatedStateProperties.push(...updateStateProperties);
                 enqueueUpdatedCallback(updator, states, updateStateProperties);
@@ -1595,7 +1596,7 @@ class LoopContextStack {
         this.stack = loopContext;
         try {
             await namedLoopIndexesStack.asyncSetNamedLoopIndexes(namedLoopIndexes, async () => {
-                await callback();
+                return await callback();
             });
         }
         finally {
@@ -1717,6 +1718,8 @@ class Updator {
                 this.updatedBindings.clear();
                 // 戻り値は更新されたStateのプロパティ情報
                 const _updatedStatePropertyAccessors = await execProcesses(this, this.states);
+                console.log(_updatedStatePropertyAccessors);
+                console.log("bbb");
                 const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccessors);
@@ -1756,10 +1759,45 @@ function createUpdator(component) {
     return new Updator(component);
 }
 
-const getterFn = (loopContext, parentComponent, parentPropInfo) => {
+class PropsBindingInfo {
+    parentProp;
+    thisProp;
+    get key() {
+        return `${this.parentProp}:${this.thisProp}`;
+    }
+    constructor(parentProp, thisProp) {
+        this.parentProp = parentProp;
+        this.thisProp = thisProp;
+    }
+}
+function createPropsBindingInfo(parentProp, thisProp) {
+    return new PropsBindingInfo(parentProp, thisProp);
+}
+
+const name$1 = "bindingProps";
+const BindPropertySymbol = Symbol.for(`${name$1}.bindPropertySymbol`);
+const CheckDuplicateSymbol = Symbol.for(`${name$1}.checkDuplicateSymbol`);
+const CreateBufferSymbol = Symbol.for(`${name$1}.createBufferSymbol`);
+const GetBufferSymbol = Symbol.for(`${name$1}.getBufferSymbol`);
+const FlushBufferSymbol = Symbol.for(`${name$1}.flushBufferSymbol`);
+const SetBufferSymbol = Symbol.for(`${name$1}.setBufferSymbol`);
+const ClearBufferSymbol = Symbol.for(`${name$1}.clearBufferSymbol`);
+
+const regexp$3 = RegExp(/^\$[0-9]+$/);
+const getterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
     return function () {
-        const parentState = parentComponent.states["current"];
+        const loopContext = getLoopContext();
         const loopIndexes = loopContext?.serialLoopIndexes;
+        if (regexp$3.test(parentPropInfo.name)) {
+            const index = Number(parentPropInfo.name.slice(1));
+            return loopIndexes?.at(index);
+        }
+        const buffer = component.props[GetBufferSymbol]();
+        if (buffer) {
+            return buffer[thisPropIfo.name];
+        }
+        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        const parentState = parentComponent.states["current"];
         const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
         const accessor = (typeof lastWildcardPath !== "undefined") ?
             createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
@@ -1770,8 +1808,19 @@ const getterFn = (loopContext, parentComponent, parentPropInfo) => {
     };
 };
 
-const setterFn = (loopContext, parentComponent, parentPropInfo) => {
+const regexp$2 = RegExp(/^\$[0-9]+$/);
+const setterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
     return function (value) {
+        if (regexp$2.test(parentPropInfo.name)) {
+            utils.raise("Cannot set value to loop index");
+        }
+        const buffer = component.props[GetBufferSymbol]();
+        if (buffer) {
+            return buffer[thisPropIfo.name] = value;
+        }
+        // ToDo: プロセスキューに積むかどうか検討する
+        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        const loopContext = getLoopContext();
         const loopIndexes = loopContext?.serialLoopIndexes;
         const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1);
         const accessor = (typeof lastWildcardPath !== "undefined") ?
@@ -1786,19 +1835,19 @@ const setterFn = (loopContext, parentComponent, parentPropInfo) => {
     };
 };
 
-const name$1 = "bindingProps";
-const BindPropertySymbol = Symbol.for(`${name$1}.bindPropertySymbol`);
-const GetBufferSymbol = Symbol.for(`${name$1}.getBufferSymbol`);
-const SetBufferSymbol = Symbol.for(`${name$1}.setBufferSymbol`);
-const CreateBufferSymbol = Symbol.for(`${name$1}.createBufferSymbol`);
-const FlushBufferSymbol = Symbol.for(`${name$1}.flushBufferSymbol`);
-const ClearBufferSymbol = Symbol.for(`${name$1}.clearBufferSymbol`);
-
 class PropsProxyHandler {
-    parentPropToThisProp = new Map();
+    propsBindingInfos = [];
+    propsBindingInfoKeys = new Set();
+    //  parentPropToThisProp: Map<string, string> = new Map();
     parentProps = new Set();
     thisProps = new Set();
-    bindProperty(loopContext, component, parentProp, thisProp) {
+    loopContextByParentProp = new Map();
+    #propBuffer;
+    get propBuffer() {
+        return this.#propBuffer;
+    }
+    bindProperty(getLoopContext, component, parentProp, thisProp) {
+        const bindingInfo = createPropsBindingInfo(parentProp, thisProp);
         if (this.parentProps.has(parentProp)) {
             utils.raise(`Duplicate binding property: ${parentProp}`);
         }
@@ -1809,38 +1858,86 @@ class PropsProxyHandler {
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
             utils.raise(`Invalid prop name: ${thisProp}`);
         }
+        if (this.propsBindingInfoKeys.has(bindingInfo.key)) {
+            utils.raise(`Duplicate binding property: ${parentProp}:${thisProp}`);
+        }
         const parentPropInfo = getPropInfo(parentProp);
-        this.parentPropToThisProp.set(parentProp, thisProp);
+        this.propsBindingInfos.push(bindingInfo);
+        this.propsBindingInfoKeys.add(bindingInfo.key);
         this.parentProps.add(parentProp);
         this.thisProps.add(thisProp);
-        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        this.loopContextByParentProp.set(parentProp, getLoopContext);
         const state = component.states["base"];
         const attributes = {
-            value: undefined,
-            writable: true,
             enumerable: true,
             configurable: true,
-            get: getterFn(loopContext, parentComponent, parentPropInfo),
-            set: setterFn(loopContext, parentComponent, parentPropInfo)
+            get: getterFn(getLoopContext, component, parentPropInfo, propInfo),
+            set: setterFn(getLoopContext, component, parentPropInfo, propInfo)
         };
         Object.defineProperty(state, thisProp, attributes);
     }
     setBuffer(buffer) {
+        if (this.parentProps.size > 0)
+            utils.raise("Binding properties already set");
+        this.#propBuffer = buffer;
     }
     getBuffer() {
-        return {};
+        return this.#propBuffer;
     }
     clearBuffer() {
+        this.#propBuffer = undefined;
     }
-    createBuffer() {
-        return {};
+    createBuffer(component) {
+        if (this.parentProps.size === 0)
+            utils.raise("No binding properties to buffer");
+        this.#propBuffer = {};
+        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        const parentState = parentComponent.states["current"];
+        for (const bindingInfo of this.propsBindingInfos) {
+            const { parentProp, thisProp } = bindingInfo;
+            const getLoopContext = this.loopContextByParentProp.get(parentProp);
+            const loopContext = getLoopContext?.();
+            const loopIndexes = loopContext?.serialLoopIndexes;
+            const parentPropInfo = getPropInfo(parentProp);
+            const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
+            const accessor = (typeof lastWildcardPath !== "undefined") ?
+                createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
+            const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+            const parentValue = parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+                return parentState[GetByPropInfoSymbol](parentPropInfo);
+            });
+            this.#propBuffer[thisProp] = parentValue;
+        }
+        return this.#propBuffer;
     }
-    flushBuffer() {
+    flushBuffer(component) {
+        if (this.#propBuffer === undefined)
+            return;
+        // ToDo: プロセスキューに積むかどうか検討する
+        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        for (const bindingInfo of this.propsBindingInfos) {
+            const { parentProp, thisProp } = bindingInfo;
+            const getLoopContext = this.loopContextByParentProp.get(parentProp);
+            const loopContext = getLoopContext?.();
+            const loopIndexes = loopContext?.serialLoopIndexes;
+            const parentPropInfo = getPropInfo(parentProp);
+            const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
+            const accessor = (typeof lastWildcardPath !== "undefined") ?
+                createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
+            const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+            const value = this.#propBuffer[thisProp];
+            parentComponent.states.setWritable(() => {
+                const parentState = parentComponent.states["current"];
+                return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+                    return parentState[SetByPropInfoSymbol](parentPropInfo, value);
+                });
+            });
+        }
     }
     get(target, prop, receiver) {
         const component = target;
         if (prop === BindPropertySymbol) {
-            return (parentProp, thisProp, loopContext) => this.bindProperty(loopContext, component, parentProp, thisProp);
+            return (parentProp, thisProp, getLoopContext) => this.bindProperty(getLoopContext, component, parentProp, thisProp);
         }
         else if (prop === SetBufferSymbol) {
             return (buffer) => this.setBuffer(buffer);
@@ -1852,10 +1949,16 @@ class PropsProxyHandler {
             return () => this.clearBuffer();
         }
         else if (prop === CreateBufferSymbol) {
-            return () => this.createBuffer();
+            return () => this.createBuffer(component);
         }
         else if (prop === FlushBufferSymbol) {
-            return () => this.flushBuffer();
+            return () => this.flushBuffer(component);
+        }
+        else if (prop === CheckDuplicateSymbol) {
+            return (parentProp, thisProp) => {
+                const bindingInfo = createPropsBindingInfo(parentProp, thisProp);
+                return this.propsBindingInfoKeys.has(bindingInfo.key);
+            };
         }
         if (typeof prop === "symbol" || typeof prop === "number") {
             return Reflect.get(target, prop, receiver);
@@ -1876,10 +1979,26 @@ class PropsProxyHandler {
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
             utils.raise(`Invalid prop name: ${prop}`);
         }
+        // ToDo: プロセスキューに積むかどうか検討する
         return component.states.setWritable(() => {
             const state = component.states["current"];
             return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
         });
+    }
+    ownKeys(target) {
+        return Array.from(this.thisProps);
+    }
+    getOwnPropertyDescriptor(target, prop) {
+        if (!this.thisProps.has(prop))
+            return {
+                enumerable: false,
+                configurable: true
+            };
+        return {
+            enumerable: true,
+            configurable: true
+            /* ...other flags, probable "value:..."" */
+        };
     }
 }
 function createProps(component) {
@@ -2990,7 +3109,7 @@ class ComponentProperty extends ElementBase {
      * コンポーネントプロパティのバインドを行う
      */
     initialize() {
-        this.thisComponent.props[BindPropertySymbol](this.binding.stateProperty.name, this.propertyName, this.binding.parentContentBindings.currentLoopContext);
+        this.thisComponent.props[BindPropertySymbol](this.binding.stateProperty.name, this.propertyName, () => this.binding.parentContentBindings.currentLoopContext);
     }
     /**
      * 更新後処理
@@ -3176,6 +3295,72 @@ class RepeatKeyed extends Loop {
     }
 }
 
+class PopoverTarget extends ElementBase {
+    #targetId = "";
+    get propertyName() {
+        return this.nameElements[1];
+    }
+    get targetId() {
+        return this.#targetId;
+    }
+    get target() {
+        return document.getElementById(this.#targetId);
+    }
+    get button() {
+        if (this.node instanceof HTMLButtonElement) {
+            return this.node;
+        }
+        if (this.node instanceof HTMLInputElement) {
+            return this.node;
+        }
+        utils.raise("PopoverTarget: not button element");
+    }
+    constructor(binding, node, name, filters) {
+        if (!(node instanceof HTMLButtonElement) && !(node instanceof HTMLInputElement && node.type === "button")) {
+            utils.raise("PopoverTarget: not button element");
+        }
+        if (!node.hasAttribute("popovertarget")) {
+            utils.raise("PopoverTarget: missing popovertarget attribute");
+        }
+        super(binding, node, name, filters);
+        this.#targetId = node.getAttribute("popovertarget");
+    }
+    initialize() {
+        super.initialize();
+        this.binding.defaultEventHandler =
+            (popoverTarget => event => popoverTarget.registerCurrentButton())(this);
+    }
+    get applicable() {
+        if (this.binding.component?.popoverInfo.currentButton === this.button &&
+            (this.target?.matches(":popover-open") ?? false)) {
+            return true;
+        }
+        return false;
+    }
+    // ボタン押下時、ボタンを登録する
+    registerCurrentButton() {
+        this.binding.component?.popoverInfo.addBinding(this.button, this.binding);
+        const popoverInfo = this.binding.component?.popoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
+        popoverInfo.currentButton = this.button;
+        // ボタンのバインドを取得する
+        const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
+        const buttonBindings = allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
+        const props = this.target.props;
+        for (const binding of buttonBindings) {
+            const popoverTarget = binding.nodeProperty;
+            if (!props[CheckDuplicateSymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName)) {
+                const getLoopContext = (binding) => () => {
+                    const component = binding.component ?? utils.raise("PopoverTarget: no component");
+                    const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
+                    const popoverButton = component.popoverInfo?.get(button);
+                    return popoverButton?.loopContext;
+                };
+                props[BindPropertySymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName, getLoopContext(popoverTarget.binding));
+            }
+        }
+    }
+}
+
 const nodePropertyConstructorByNameByIsComment = {
     0: {
         "class": ElementClassName,
@@ -3194,6 +3379,7 @@ const nodePropertyConstructorByFirstName = {
     "attr": ElementAttribute,
     "style": ElementStyle,
     "props": ComponentProperty,
+    "target": PopoverTarget,
 };
 function _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed) {
     let nodePropertyConstructor;
@@ -3485,6 +3671,9 @@ class Binding {
         }
         return this.#defaultEventHandler;
     }
+    set defaultEventHandler(value) {
+        this.#defaultEventHandler = value;
+    }
     initialize() {
         this.nodeProperty.initialize();
         this.stateProperty.initialize();
@@ -3570,7 +3759,7 @@ function computeNodeRoute(node) {
 
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
-const setDefaultEventHandlerByElement = (element) => (binding) => element.addEventListener(DEFAULT_EVENT_TYPE, binding.defaultEventHandler);
+const setDefaultEventHandlerByElement = (element) => (binding, eventType = DEFAULT_EVENT_TYPE) => element.addEventListener(eventType, event => binding.defaultEventHandler(event));
 function initializeHTMLElement(node, acceptInput, bindings, defaultName) {
     const element = node;
     // set event handler
@@ -3578,11 +3767,13 @@ function initializeHTMLElement(node, acceptInput, bindings, defaultName) {
     let defaultBinding = null;
     let radioBinding = null;
     let checkboxBinding = null;
+    let targetPopoverBinding = null;
     for (let i = 0; i < bindings.length; i++) {
         const binding = bindings[i];
         hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
         radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
         checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
+        targetPopoverBinding = (binding.nodeProperty.constructor === PopoverTarget) ? binding : targetPopoverBinding;
         defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
     }
     if (!hasDefaultEvent) {
@@ -3592,6 +3783,9 @@ function initializeHTMLElement(node, acceptInput, bindings, defaultName) {
         }
         else if (checkboxBinding) {
             setDefaultEventHandler(checkboxBinding);
+        }
+        else if (targetPopoverBinding) {
+            setDefaultEventHandler(targetPopoverBinding, "click");
         }
         else if (defaultBinding && acceptInput) {
             // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
@@ -4880,6 +5074,62 @@ function DialogComponent(Base) {
     };
 }
 
+class PopoverButton {
+    #targetId;
+    #button;
+    #bindings = new Set();
+    get targetId() {
+        return this.#targetId;
+    }
+    get button() {
+        return this.#button;
+    }
+    get bindings() {
+        return this.#bindings;
+    }
+    get target() {
+        return document.getElementById(this.#targetId);
+    }
+    get loopContext() {
+        return this.#bindings.values().next().value?.parentContentBindings.loopContext;
+    }
+    constructor(button) {
+        this.#button = button;
+        this.#targetId = button.getAttribute("popovertarget") ?? "";
+    }
+    addBinding(binding) {
+        this.#bindings.add(binding);
+    }
+}
+class PopoverInfo {
+    #popoverButtonByButton = new Map();
+    #currentButton;
+    add(button) {
+        const popoverButton = new PopoverButton(button);
+        this.#popoverButtonByButton.set(button, popoverButton);
+        return popoverButton;
+    }
+    addBinding(button, binding) {
+        let popoverButton = this.#popoverButtonByButton.get(button);
+        if (!popoverButton) {
+            popoverButton = this.add(button);
+        }
+        popoverButton.addBinding(binding);
+    }
+    get(button) {
+        return this.#popoverButtonByButton.get(button);
+    }
+    get currentButton() {
+        return this.#currentButton;
+    }
+    set currentButton(value) {
+        this.#currentButton = value;
+    }
+}
+function createPopoverInfo() {
+    return new PopoverInfo();
+}
+
 /**
  * コンポーネントをポップオーバーできるように拡張します
  * 拡張内容は以下の通り
@@ -4915,6 +5165,10 @@ function PopoverComponent(Base) {
                 this.#popoverLoopIndexesById = new Map;
             }
             return this.#popoverLoopIndexesById;
+        }
+        #popoverInfo = createPopoverInfo();
+        get popoverInfo() {
+            return this.#popoverInfo;
         }
         constructor(...args) {
             super();

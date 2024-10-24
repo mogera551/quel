@@ -22,7 +22,7 @@ class LoopContextStack implements ILoopContextStack {
     this.stack = loopContext;
     try {
       await namedLoopIndexesStack.asyncSetNamedLoopIndexes(namedLoopIndexes, async () => {
-        await callback();
+        return await callback();
       });
     } finally {
       this.stack = undefined;

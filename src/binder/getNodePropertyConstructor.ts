@@ -14,6 +14,7 @@ import { ElementStyle } from "../binding/nodeProperty/ElementStyle";
 import { ElementProperty } from "../binding/nodeProperty/ElementProperty";
 import { ComponentProperty } from "../binding/nodeProperty/ComponentProperty";
 import { RepeatKeyed } from "../binding/nodeProperty/RepeatKeyed";
+import { PopoverTarget } from "../binding/nodeProperty/PopoverTarget";
 import { IBinding, INodeProperty } from "../binding/types";
 
 type NodePropertyConstructorByName = {[key:string]:typeof NodeProperty};
@@ -46,6 +47,7 @@ const nodePropertyConstructorByFirstName:NodePropertyConstructorByFirstName = {
   "attr": ElementAttribute,
   "style": ElementStyle,
   "props": ComponentProperty,
+  "target": PopoverTarget,
 };
 
 function _getNodePropertyConstructor(isComment:boolean, isElement: boolean, propertyName: string, useKeyed: boolean): NodePropertyConstructor {

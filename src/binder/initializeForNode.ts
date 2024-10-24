@@ -9,8 +9,8 @@ const DEFAULT_EVENT_TYPE = "input";
 
 const setDefaultEventHandlerByElement = 
 (element:HTMLElement) => 
-  (defaultEventHandler:(event:Event)=>void) => 
-    element.addEventListener(DEFAULT_EVENT_TYPE, defaultEventHandler);
+  (binding:Pick<IBinding, "defaultEventHandler">, eventType:string = DEFAULT_EVENT_TYPE) => 
+    element.addEventListener(eventType, event => binding.defaultEventHandler(event));
 
 function initializeHTMLElement(
   node: Node, 
@@ -44,17 +44,17 @@ function initializeHTMLElement(
     const setDefaultEventHandler = setDefaultEventHandlerByElement(element);
 
     if (radioBinding) {
-      setDefaultEventHandler(radioBinding.defaultEventHandler);
+      setDefaultEventHandler(radioBinding);
     } else if (checkboxBinding) {
-      setDefaultEventHandler(checkboxBinding.defaultEventHandler);
+      setDefaultEventHandler(checkboxBinding);
     } else if (targetPopoverBinding) {
-      setDefaultEventHandler(targetPopoverBinding.defaultEventHandler);
+      setDefaultEventHandler(targetPopoverBinding, "click");
     } else if (defaultBinding && acceptInput) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ
       // ・oninputのイベントがバインドされていない → デフォルトイベント（oninput）が既にバインドされている場合、上書きしない
       // ・nodeが入力系（input, textarea, select） → 入力系に限定
-      setDefaultEventHandler(defaultBinding.defaultEventHandler);
+      setDefaultEventHandler(defaultBinding);
     }
   }
 }

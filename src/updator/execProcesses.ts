@@ -6,12 +6,12 @@ import { IUpdator } from "./types";
 
 async function execProcess (updator: IUpdator, process: IProcess): Promise<void> {
   if (typeof process.loopContext === "undefined") {
-    return updator.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
-      return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+    return await updator.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
+      return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
     })
   } else {
-    return updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async (): Promise<void> => {
-      return Reflect.apply(process.target, process.thisArgument, process.argumentList);
+    return await updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async () => {
+      return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
     });
   }
 }
@@ -44,6 +44,7 @@ export async function execProcesses(
       const processes = updator.retrieveAllProcesses();
       if (processes.length === 0) break;
       const updateStateProperties = await _execProcesses(updator, processes);
+      console.log(updateStateProperties);  
       if (updateStateProperties.length > 0) {
         totalUpdatedStateProperties.push(...updateStateProperties);
         enqueueUpdatedCallback(updator, states, updateStateProperties)

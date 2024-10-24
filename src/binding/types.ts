@@ -129,6 +129,7 @@ export interface IMultiValue {
 }
 
 export interface INewBindingSummary {
+  readonly allBindings: Set<IBinding>;
   register(binding: IBinding): void;
   delete(binding: IBinding): void;
   gatherBindings(propertyAccessor: IStatePropertyAccessor): IBinding[];

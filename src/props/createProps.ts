@@ -56,8 +56,6 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
 
     const state = component.states["base"];
     const attributes = {
-      value: undefined,
-      writable: true,
       enumerable: true,
       configurable: true,
       get: getterFn(getLoopContext, component, parentPropInfo, propInfo),
@@ -178,6 +176,22 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
         () => state[SetByPropInfoSymbol](propInfo, value)
       );
     })
+  }
+
+  ownKeys(target: any):string[] {
+    return Array.from(this.thisProps);
+  }
+
+  getOwnPropertyDescriptor(target: any, prop: string):PropertyDescriptor { // プロパティ毎に呼ばれます
+    if (!this.thisProps.has(prop)) return {
+      enumerable: false,
+      configurable: true
+    };
+    return {
+      enumerable: true,
+      configurable: true
+      /* ...other flags, probable "value:..."" */
+    };
   }
 
 }

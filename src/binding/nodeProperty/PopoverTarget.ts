@@ -1,14 +1,20 @@
 import { IComponent } from "../../component/types";
 import { IFilterText } from "../../filter/types";
+import { ILoopContext } from "../../loopContext/types";
 import { BindPropertySymbol, CheckDuplicateSymbol } from "../../props/symbols";
 import { utils } from "../../utils";
 import { IBinding, INodeProperty } from "../types";
+import { ElementBase } from "./ElementBase";
 import { NodeProperty } from "./NodeProperty";
 
 type IButton = HTMLButtonElement | HTMLInputElement;
 
-export class PopoverTarget extends NodeProperty {
+export class PopoverTarget extends ElementBase {
   #targetId:string = "";
+  get propertyName():string {
+    return this.nameElements[1];
+  }
+
   get targetId():string { 
     return this.#targetId; 
   }
@@ -39,19 +45,8 @@ export class PopoverTarget extends NodeProperty {
 
   initialize() {
     super.initialize();
-    this.binding.component?.popoverInfo.addBinding(this.button, this.binding);
     this.binding.defaultEventHandler = 
       (popoverTarget => event => popoverTarget.registerCurrentButton())(this);
-    const props = (this.target as IComponent as Pick<IComponent,"props">).props;
-    if (!props[CheckDuplicateSymbol](this.targetId, this.name)) {
-      const getLoopContext = (component:Pick<IComponent,"popoverInfo">) => () => {
-        const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
-        const popoverButton = component.popoverInfo?.get(button);
-        return popoverButton?.loopContext;
-      }
-      const component = this.binding.component ?? utils.raise("PopoverTarget: no component");
-      props[BindPropertySymbol](this.binding.statePropertyName, this.name, getLoopContext(component));
-    }
   }
 
   get applicable(): boolean {
@@ -64,8 +59,28 @@ export class PopoverTarget extends NodeProperty {
 
   // ボタン押下時、ボタンを登録する
   registerCurrentButton() {
+    this.binding.component?.popoverInfo.addBinding(this.button, this.binding);
     const popoverInfo = this.binding.component?.popoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
     popoverInfo.currentButton = this.button;
+    // ボタンのバインドを取得する
+    const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
+    const buttonBindings = 
+      allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
+    const props = (this.target as IComponent as Pick<IComponent,"props">).props;
+    for(const binding of buttonBindings) {
+      const popoverTarget = binding.nodeProperty as PopoverTarget;
+      if (!props[CheckDuplicateSymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName)) {
+        const getLoopContext = (binding:IBinding) => ():ILoopContext | undefined => {
+          const component:Pick<IComponent,"popoverInfo"> = binding.component ?? utils.raise("PopoverTarget: no component");
+          const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
+          const popoverButton = component.popoverInfo?.get(button);
+          return popoverButton?.loopContext;
+        }
+        props[BindPropertySymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName, getLoopContext(popoverTarget.binding));
+      }
+    }
+
+
   }
 
 }

@@ -98,6 +98,8 @@ class Updator implements IUpdator {
 
         // 戻り値は更新されたStateのプロパティ情報
         const _updatedStatePropertyAccessors = await execProcesses(this, this.states);
+        console.log(_updatedStatePropertyAccessors);
+        console.log("bbb");
         const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => 
           propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
         // 戻り値は依存関係により更新されたStateのプロパティ情報
