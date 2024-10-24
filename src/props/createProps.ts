@@ -18,22 +18,26 @@ type IComponentPartialForProps = Pick<IComponent,"parentComponent"|"states"|"upd
 class PropsProxyHandler implements ProxyHandler<IProps> {
   propsBindingInfos: IPropsBindingInfo[] = [];
   propsBindingInfoKeys: Set<string> = new Set();
-//  parentPropToThisProp: Map<string, string> = new Map();
   parentProps: Set<string> = new Set();
   thisProps: Set<string> = new Set();
   loopContextByParentProp: Map<string, ()=>(ILoopContext | undefined)> = new Map();
 
+  #component: IComponentPartialForProps;
   #propBuffer: IPropBuffer | undefined;
   get propBuffer() {
     return this.#propBuffer;
   }
 
+  constructor(component:IComponentPartialForProps) {
+    this.#component = component;
+  }
+
   bindProperty(
     getLoopContext:()=>(ILoopContext | undefined), 
-    component:IComponentPartialForProps, 
     parentProp: string, 
     thisProp: string
   ): void {
+    const component = this.#component;
     const bindingInfo = createPropsBindingInfo(parentProp, thisProp);
     if (this.parentProps.has(parentProp)) {
       utils.raise(`Duplicate binding property: ${parentProp}`);
@@ -78,7 +82,8 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     this.#propBuffer = undefined;
   }
 
-  createBuffer(component: IComponentPartialForProps): IPropBuffer {
+  createBuffer(): IPropBuffer {
+    const component = this.#component;
     if (this.parentProps.size === 0) utils.raise("No binding properties to buffer");
     this.#propBuffer = {};
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
@@ -101,35 +106,30 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     return this.#propBuffer;
   }
 
-  flushBuffer(component: IComponentPartialForProps): void {
+  flushBuffer(): void {
+    const component = this.#component;
     if (this.#propBuffer === undefined) return;
-    // ToDo: プロセスキューに積むかどうか検討する
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     for(const bindingInfo of this.propsBindingInfos) {
       const { parentProp, thisProp } = bindingInfo;
       const getLoopContext = this.loopContextByParentProp.get(parentProp);
       const loopContext = getLoopContext?.();
-      const loopIndexes = loopContext?.serialLoopIndexes;
       const parentPropInfo = getPropInfo(parentProp);
-      const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
-      const accessor = (typeof lastWildcardPath !== "undefined") ? 
-        createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
-      const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
       const value = this.#propBuffer[thisProp];
-      parentComponent.states.setWritable(() => {
-        const parentState = parentComponent.states["current"];
-        return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-          return parentState[SetByPropInfoSymbol](parentPropInfo, value);
-        });
-      });
+
+      // プロセスキューに積む
+      const writeProperty = (component: IComponentPartialForProps, propInfo: IPropInfo, value: any) => {
+        const state = component.states["current"];
+        return state[SetByPropInfoSymbol](propInfo, value);
+      };
+      parentComponent.updator?.addProcess(writeProperty, undefined, [ parentComponent, parentPropInfo, value ], loopContext);
     }
   }
 
   get(target: any, prop: PropertyKey, receiver: any): any {
-    const component = target as IComponentPartialForProps;
     if (prop === BindPropertySymbol) {
       return (parentProp: string, thisProp: string, getLoopContext:()=>(ILoopContext | undefined)): void => 
-        this.bindProperty(getLoopContext, component, parentProp, thisProp);
+        this.bindProperty(getLoopContext, parentProp, thisProp);
     } else if (prop === SetBufferSymbol) {
       return (buffer: IPropBuffer): void => this.setBuffer(buffer);
     } else if (prop === GetBufferSymbol) {
@@ -137,9 +137,9 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     } else if (prop === ClearBufferSymbol) {
       return (): void => this.clearBuffer();
     } else if (prop === CreateBufferSymbol) {
-      return (): IPropBuffer => this.createBuffer(component);
+      return (): IPropBuffer => this.createBuffer();
     } else if (prop === FlushBufferSymbol) {
-      return (): void => this.flushBuffer(component);
+      return (): void => this.flushBuffer();
     } else if (prop === CheckDuplicateSymbol) {
       return (parentProp: string, thisProp: string): boolean => {
         const bindingInfo = createPropsBindingInfo(parentProp, thisProp);
@@ -147,12 +147,13 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
       }
     }
     if (typeof prop === "symbol" || typeof prop === "number") {
-      return Reflect.get(target, prop, receiver);;
+      return Reflect.get(target, prop, receiver);
     }
     const propInfo = getPropInfo(prop);
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
       utils.raise(`Invalid prop name: ${prop}`);
     }
+    const component = this.#component;
     const state = component.states["current"];
     return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(
       propInfo.wildcardNamedLoopIndexes,
@@ -164,12 +165,12 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     if (typeof prop === "symbol" || typeof prop === "number") {
       return Reflect.set(target, prop, value, receiver);
     }
-    const component = target as IComponentPartialForProps;
     const propInfo = getPropInfo(prop);
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
       utils.raise(`Invalid prop name: ${prop}`);
     }
     // プロセスキューに積む
+    const component = this.#component;
     const writeProperty = (component: IComponentPartialForProps, propInfo: IPropInfo, value: any) => {
       const state = component.states["current"];
       return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(
@@ -200,5 +201,5 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
 }
 
 export function createProps(component:IComponentPartialForProps): IProps {
-  return new Proxy(component, new PropsProxyHandler());
+  return new Proxy({}, new PropsProxyHandler(component));
 }

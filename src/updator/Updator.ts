@@ -78,14 +78,12 @@ class Updator implements IUpdator {
   async execCallbackWithPerformance(callback: () => any): Promise<void> {
     this.executing = true;
     const uuid = this.#component.template.dataset["uuid"];
-    console.log(`Updator#${uuid}.exec:start`);
     config.debug && performance.mark(`Updator#${uuid}.exec:start`);
     try {
       await callback();
     } finally {
       if (config.debug) {
         performance.mark(`Updator#${uuid}.exec:end`)
-        console.log(`Updator#${uuid}.exec:end`);
         performance.measure(`Updator#${uuid}.exec`, `Updator#${uuid}.exec:start`, `Updator#${uuid}.exec:end`);
         console.log(performance.getEntriesByType("measure"));    
         performance.clearMeasures(`Updator#${uuid}.exec`);

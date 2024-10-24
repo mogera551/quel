@@ -28,7 +28,6 @@ export const setterFn = (
     // プロセスキューに積む
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     const loopContext = getLoopContext();
-
     const writeProperty = (component: IComponentPartial, propInfo: IPropInfo, value: any) => {
       const state = component.states["current"];
       return state[SetByPropInfoSymbol](propInfo, value);

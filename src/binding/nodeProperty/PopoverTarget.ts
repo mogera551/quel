@@ -3,9 +3,8 @@ import { IFilterText } from "../../filter/types";
 import { ILoopContext } from "../../loopContext/types";
 import { BindPropertySymbol, CheckDuplicateSymbol } from "../../props/symbols";
 import { utils } from "../../utils";
-import { IBinding, INodeProperty } from "../types";
+import { IBinding } from "../types";
 import { ElementBase } from "./ElementBase";
-import { NodeProperty } from "./NodeProperty";
 
 type IButton = HTMLButtonElement | HTMLInputElement;
 
@@ -18,8 +17,12 @@ export class PopoverTarget extends ElementBase {
   get targetId():string { 
     return this.#targetId; 
   }
-  get target():HTMLElement {
-    return document.getElementById(this.#targetId) as HTMLElement;
+  get target():IComponent {
+    const target = document.getElementById(this.#targetId) as IComponent;
+    if (target?.isQuelComponent !== true) {
+      utils.raise("PopoverTarget: not Quel Component");
+    }
+    return target;
   }
 
   get button(): IButton {
@@ -57,16 +60,17 @@ export class PopoverTarget extends ElementBase {
     return false;
   }
 
-  // ボタン押下時、ボタンを登録する
   registerCurrentButton() {
+    // ボタン押下時、ボタンを登録する
     this.binding.component?.popoverInfo.addBinding(this.button, this.binding);
     const popoverInfo = this.binding.component?.popoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
     popoverInfo.currentButton = this.button;
-    // ボタンのバインドを取得する
+
+    // ボタンのバインドを設定する
     const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
     const buttonBindings = 
       allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
-    const props = (this.target as IComponent as Pick<IComponent,"props">).props;
+    const props = this.target.props;
     for(const binding of buttonBindings) {
       const popoverTarget = binding.nodeProperty as PopoverTarget;
       if (!props[CheckDuplicateSymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName)) {
