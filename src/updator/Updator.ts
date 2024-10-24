@@ -13,7 +13,7 @@ import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loop
 import { createLoopContextStack } from "../loopContext/createLoopContextStack";
 import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
-type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary">;
+type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary" | "template">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
@@ -64,6 +64,8 @@ class Updator implements IUpdator {
 
   addUpdatedStateProperty(accessor: IStatePropertyAccessor):void {
     this.updatedStateProperties.push(accessor);
+    if (this.executing) return;
+    this.exec();
   }
 
   // 取得後updateStatePropertiesは空になる
@@ -75,17 +77,20 @@ class Updator implements IUpdator {
 
   async execCallbackWithPerformance(callback: () => any): Promise<void> {
     this.executing = true;
-    config.debug && performance.mark('Updator.exec:start');
+    const uuid = this.#component.template.dataset["uuid"];
+    console.log(`Updator#${uuid}.exec:start`);
+    config.debug && performance.mark(`Updator#${uuid}.exec:start`);
     try {
       await callback();
     } finally {
       if (config.debug) {
-        performance.mark('Updator.exec:end')
-        performance.measure('Updator.exec', 'Updator.exec:start', 'Updator.exec:end');
+        performance.mark(`Updator#${uuid}.exec:end`)
+        console.log(`Updator#${uuid}.exec:end`);
+        performance.measure(`Updator#${uuid}.exec`, `Updator#${uuid}.exec:start`, `Updator#${uuid}.exec:end`);
         console.log(performance.getEntriesByType("measure"));    
-        performance.clearMeasures('Updator.exec');
-        performance.clearMarks('Updator.exec:start');
-        performance.clearMarks('Updator.exec:end');
+        performance.clearMeasures(`Updator#${uuid}.exec`);
+        performance.clearMarks(`Updator#${uuid}.exec:start`);
+        performance.clearMarks(`Updator#${uuid}.exec:end`);
       }
       this.executing = false;
     }
@@ -93,13 +98,11 @@ class Updator implements IUpdator {
 
   async exec():Promise<void> {
     await this.execCallbackWithPerformance(async () => {
-      while(this.processQueue.length > 0) {
+      while(this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
         this.updatedBindings.clear();
 
         // 戻り値は更新されたStateのプロパティ情報
         const _updatedStatePropertyAccessors = await execProcesses(this, this.states);
-        console.log(_updatedStatePropertyAccessors);
-        console.log("bbb");
         const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => 
           propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
         // 戻り値は依存関係により更新されたStateのプロパティ情報

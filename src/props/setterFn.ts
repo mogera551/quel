@@ -25,19 +25,15 @@ export const setterFn = (
     if (buffer) {
       return buffer[thisPropIfo.name] = value;
     }
-    // ToDo: プロセスキューに積むかどうか検討する
+    // プロセスキューに積む
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     const loopContext = getLoopContext();
-    const loopIndexes = loopContext?.serialLoopIndexes;
-    const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1);
-    const accessor = (typeof lastWildcardPath !== "undefined") ? 
-      createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
-    const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-    return parentComponent.states.setWritable(() => {
-      const parentState = parentComponent.states["current"];
-      return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-        return parentState[SetByPropInfoSymbol](parentPropInfo, value);
-      });
-    });
+
+    const writeProperty = (component: IComponentPartial, propInfo: IPropInfo, value: any) => {
+      const state = component.states["current"];
+      return state[SetByPropInfoSymbol](propInfo, value);
+    };
+    parentComponent.updator?.addProcess(writeProperty, undefined, [ parentComponent, parentPropInfo, value ], loopContext);
+    return true;
   }
 }

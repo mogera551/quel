@@ -61,7 +61,7 @@ export interface IStates {
   setWritable(callback: () => any): any;
 }
 
-export type IComponentForHandler = Pick<IComponent, "states" | "updator"> & HTMLElement;
+export type IComponentForHandler = Pick<IComponent, "states" | "updator" | "template"> & HTMLElement;
 
 export interface IStatePropertyAccessor {
   readonly pattern: string;

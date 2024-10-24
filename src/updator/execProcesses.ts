@@ -38,7 +38,8 @@ export async function execProcesses(
   updator: IUpdator, 
   states: IStates
 ): Promise<IStatePropertyAccessor[]> {
-  const totalUpdatedStateProperties: IStatePropertyAccessor[] = [];
+  const totalUpdatedStateProperties: IStatePropertyAccessor[] = 
+    updator.retrieveAllUpdatedStateProperties();
   await states.asyncSetWritable(async () => {
     do {
       const processes = updator.retrieveAllProcesses();

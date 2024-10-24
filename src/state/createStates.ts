@@ -10,14 +10,17 @@ class States implements IStates {
   #readonlyState: IStateProxy;
   #writableState: IStateProxy;
   #_writable = false;
+  #uuid: string;
   constructor(
     base: Object,
     readOnlyState: IStateProxy,
-    writableState: IStateProxy
+    writableState: IStateProxy,
+    uuid: string
   ) {
     this.#base = base;
     this.#readonlyState = readOnlyState;
     this.#writableState = writableState;
+    this.#uuid = uuid;
   }
 
   get base():Object {
@@ -28,10 +31,12 @@ class States implements IStates {
     return this.#_writable;
   }
   set #writable(value:boolean) {
+    const uuid = this.#uuid;
     this.#_writable = value;
     if (value === false) {
       this.#readonlyState[ClearCacheApiSymbol]();
     }
+    console.log(`States#${uuid}.#writable = ${this.#writable}`);
   }
 
   get current(): IStateProxy {
@@ -39,12 +44,16 @@ class States implements IStates {
   }
 
   async asyncSetWritable(callback: () => Promise<any>): Promise<any> {
-    if (this.#writable) utils.raise("States: already writable");
+    const uuid = this.#uuid;
+    if (this.#writable) utils.raise(`States#${uuid}: already writable`);
+    console.log(`States#${uuid}: set writable`);
     this.#writable = true;
     try {
       return await callback();
     } finally {
       this.#writable = false;
+      console.log(`States#${uuid}: unset writable`);
+//      console.log(`States#${uuid}.#writable = ${this.#writable}`);
     }
   }
 
@@ -65,5 +74,5 @@ export function createStates(
   readOnlyState: IStateProxy = createReadonlyState(component, base),
   writableState: IStateProxy = createWritableState(component, base)
 ): IStates {
-  return new States(base, readOnlyState, writableState);
+  return new States(base, readOnlyState, writableState, component.template.dataset["uuid"] ?? "");
 }

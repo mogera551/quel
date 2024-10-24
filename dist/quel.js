@@ -1078,7 +1078,7 @@ function enqueueUpdatedCallback(updator, states, updatedStateProperties) {
     }, undefined, [], undefined);
 }
 async function execProcesses(updator, states) {
-    const totalUpdatedStateProperties = [];
+    const totalUpdatedStateProperties = updator.retrieveAllUpdatedStateProperties();
     await states.asyncSetWritable(async () => {
         do {
             const processes = updator.retrieveAllProcesses();
@@ -1687,6 +1687,9 @@ class Updator {
     }
     addUpdatedStateProperty(accessor) {
         this.updatedStateProperties.push(accessor);
+        if (this.executing)
+            return;
+        this.exec();
     }
     // 取得後updateStatePropertiesは空になる
     retrieveAllUpdatedStateProperties() {
@@ -1696,30 +1699,31 @@ class Updator {
     }
     async execCallbackWithPerformance(callback) {
         this.executing = true;
-        config.debug && performance.mark('Updator.exec:start');
+        const uuid = this.#component.template.dataset["uuid"];
+        console.log(`Updator#${uuid}.exec:start`);
+        config.debug && performance.mark(`Updator#${uuid}.exec:start`);
         try {
             await callback();
         }
         finally {
             if (config.debug) {
-                performance.mark('Updator.exec:end');
-                performance.measure('Updator.exec', 'Updator.exec:start', 'Updator.exec:end');
+                performance.mark(`Updator#${uuid}.exec:end`);
+                console.log(`Updator#${uuid}.exec:end`);
+                performance.measure(`Updator#${uuid}.exec`, `Updator#${uuid}.exec:start`, `Updator#${uuid}.exec:end`);
                 console.log(performance.getEntriesByType("measure"));
-                performance.clearMeasures('Updator.exec');
-                performance.clearMarks('Updator.exec:start');
-                performance.clearMarks('Updator.exec:end');
+                performance.clearMeasures(`Updator#${uuid}.exec`);
+                performance.clearMarks(`Updator#${uuid}.exec:start`);
+                performance.clearMarks(`Updator#${uuid}.exec:end`);
             }
             this.executing = false;
         }
     }
     async exec() {
         await this.execCallbackWithPerformance(async () => {
-            while (this.processQueue.length > 0) {
+            while (this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
                 this.updatedBindings.clear();
                 // 戻り値は更新されたStateのプロパティ情報
                 const _updatedStatePropertyAccessors = await execProcesses(this, this.states);
-                console.log(_updatedStatePropertyAccessors);
-                console.log("bbb");
                 const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccessors);
@@ -1818,20 +1822,15 @@ const setterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
         if (buffer) {
             return buffer[thisPropIfo.name] = value;
         }
-        // ToDo: プロセスキューに積むかどうか検討する
+        // プロセスキューに積む
         const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
         const loopContext = getLoopContext();
-        const loopIndexes = loopContext?.serialLoopIndexes;
-        const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1);
-        const accessor = (typeof lastWildcardPath !== "undefined") ?
-            createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
-        const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-        return parentComponent.states.setWritable(() => {
-            const parentState = parentComponent.states["current"];
-            return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-                return parentState[SetByPropInfoSymbol](parentPropInfo, value);
-            });
-        });
+        const writeProperty = (component, propInfo, value) => {
+            const state = component.states["current"];
+            return state[SetByPropInfoSymbol](propInfo, value);
+        };
+        parentComponent.updator?.addProcess(writeProperty, undefined, [parentComponent, parentPropInfo, value], loopContext);
+        return true;
     };
 };
 
@@ -1979,11 +1978,13 @@ class PropsProxyHandler {
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
             utils.raise(`Invalid prop name: ${prop}`);
         }
-        // ToDo: プロセスキューに積むかどうか検討する
-        return component.states.setWritable(() => {
+        // プロセスキューに積む
+        const writeProperty = (component, propInfo, value) => {
             const state = component.states["current"];
             return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
-        });
+        };
+        component.updator?.addProcess(writeProperty, undefined, [component, propInfo, value], undefined);
+        return true;
     }
     ownKeys(target) {
         return Array.from(this.thisProps);
@@ -4577,10 +4578,12 @@ class States {
     #readonlyState;
     #writableState;
     #_writable = false;
-    constructor(base, readOnlyState, writableState) {
+    #uuid;
+    constructor(base, readOnlyState, writableState, uuid) {
         this.#base = base;
         this.#readonlyState = readOnlyState;
         this.#writableState = writableState;
+        this.#uuid = uuid;
     }
     get base() {
         return this.#base;
@@ -4589,23 +4592,29 @@ class States {
         return this.#_writable;
     }
     set #writable(value) {
+        const uuid = this.#uuid;
         this.#_writable = value;
         if (value === false) {
             this.#readonlyState[ClearCacheApiSymbol]();
         }
+        console.log(`States#${uuid}.#writable = ${this.#writable}`);
     }
     get current() {
         return this.#writable ? this.#writableState : this.#readonlyState;
     }
     async asyncSetWritable(callback) {
+        const uuid = this.#uuid;
         if (this.#writable)
-            utils.raise("States: already writable");
+            utils.raise(`States#${uuid}: already writable`);
+        console.log(`States#${uuid}: set writable`);
         this.#writable = true;
         try {
             return await callback();
         }
         finally {
             this.#writable = false;
+            console.log(`States#${uuid}: unset writable`);
+            //      console.log(`States#${uuid}.#writable = ${this.#writable}`);
         }
     }
     setWritable(callback) {
@@ -4621,7 +4630,7 @@ class States {
     }
 }
 function createStates(component, base, readOnlyState = createReadonlyState(component, base), writableState = createWritableState(component, base)) {
-    return new States(base, readOnlyState, writableState);
+    return new States(base, readOnlyState, writableState, component.template.dataset["uuid"] ?? "");
 }
 
 const ADOPTED_VAR_NAME = '--adopted-css';

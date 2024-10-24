@@ -1,6 +1,7 @@
 import { IComponent } from "../component/types";
 import { getPropInfo } from "../dotNotation/getPropInfo";
 import { GetByPropInfoSymbol, SetByPropInfoSymbol } from "../dotNotation/symbols";
+import { IPropInfo } from "../dotNotation/types";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { ILoopContext } from "../loopContext/types";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
@@ -168,14 +169,16 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "partial") {
       utils.raise(`Invalid prop name: ${prop}`);
     }
-    // ToDo: プロセスキューに積むかどうか検討する
-    return component.states.setWritable(() => {
+    // プロセスキューに積む
+    const writeProperty = (component: IComponentPartialForProps, propInfo: IPropInfo, value: any) => {
       const state = component.states["current"];
       return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(
         propInfo.wildcardNamedLoopIndexes,
         () => state[SetByPropInfoSymbol](propInfo, value)
       );
-    })
+    };
+    component.updator?.addProcess(writeProperty, undefined, [ component, propInfo, value ], undefined);
+    return true;
   }
 
   ownKeys(target: any):string[] {
