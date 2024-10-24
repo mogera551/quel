@@ -53,8 +53,10 @@ export class PopoverTarget extends ElementBase {
   }
 
   get applicable(): boolean {
-    if (this.binding.component?.popoverInfo.currentButton === this.button &&
-      (this.target?.matches(":popover-open") ?? false)) {
+    // ポップオーバーがオープンしているかどうかの判定
+    // see https://blog.asial.co.jp/3940/
+    const popoverOpened = this.target?.matches(":popover-open") ?? false;
+    if (this.binding.component?.popoverInfo.currentButton === this.button && popoverOpened) {
       return true;
     }
     return false;
