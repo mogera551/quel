@@ -69,6 +69,7 @@ export class PopoverTarget extends ElementBase {
     popoverInfo.currentButton = this.button;
 
     // ボタンのバインドを設定する
+    // ToDo: ここでバインドすべきか、それともtarget側でするべきか？
     const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
     const buttonBindings = 
       allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
