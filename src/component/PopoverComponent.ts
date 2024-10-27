@@ -5,6 +5,7 @@ import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, ICo
 import { ILoopIndexes } from "../loopContext/types";
 import { createPopoverInfo } from "../popover/createPopoverInfo";
 import { IPopoverInfo } from "../popover/types";
+import { utils } from "../utils";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogComponent
 
@@ -12,7 +13,6 @@ type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogCo
  * コンポーネントをポップオーバーできるように拡張します
  * 拡張内容は以下の通り
  * - popoverPromises: ポップオーバー用Promise
- * - popoverLoopIndexesById: ポップオーバーループインデックス
  * - canceled: キャンセルフラグ
  * - asyncShowPopover: ポップオーバー表示
  * - hidePopover: ポップオーバーを閉じる
@@ -37,14 +37,6 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
     }
     set popoverPromises(value:PromiseWithResolvers<any>|undefined) {
       this.#popoverPromises = value;
-    }
-
-    #popoverLoopIndexesById?: Map<string, ILoopIndexes | undefined>;
-    get popoverLoopIndexesById(): Map<string, ILoopIndexes | undefined> {
-      if (typeof this.#popoverLoopIndexesById === "undefined") {
-        this.#popoverLoopIndexesById = new Map;
-      }
-      return this.#popoverLoopIndexesById;
     }
 
     #popoverInfo = createPopoverInfo();
@@ -73,9 +65,6 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
         this.canceled = true;
         // remove loop context
         const id = this.id;
-        if (typeof id !== "undefined") {
-          this.popoverLoopIndexesById.delete(id);
-        }
       });
       this.addEventListener("shown", () => {
         this.canceled = true;

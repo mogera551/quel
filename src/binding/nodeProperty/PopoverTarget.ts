@@ -69,21 +69,28 @@ export class PopoverTarget extends ElementBase {
     popoverInfo.currentButton = this.button;
 
     // ボタンのバインドを設定する
-    // ToDo: ここでバインドすべきか、それともtarget側でするべきか？
+    // ターゲット側でボタンのバインドを設定するのは、難しそうなので、ここで設定する
     const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
+    // このボタンに関連するバインディングを取得
     const buttonBindings = 
       allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
     const props = this.target.props;
     for(const binding of buttonBindings) {
       const popoverTarget = binding.nodeProperty as PopoverTarget;
-      if (!props[CheckDuplicateSymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName)) {
+      const popoverBinding = popoverTarget.binding;
+      const statePropertyName = popoverTarget.binding.statePropertyName;
+      const nodePropertyName = popoverTarget.propertyName; 
+      if (!props[CheckDuplicateSymbol](statePropertyName, nodePropertyName)) {
         const getLoopContext = (binding:IBinding) => ():ILoopContext | undefined => {
+          // ポップオーバー情報を取得し、現在のボタンを取得する
           const component:Pick<IComponent,"popoverInfo"> = binding.component ?? utils.raise("PopoverTarget: no component");
           const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
+          // 現在のボタンに関連するポップオーバー情報を取得する
           const popoverButton = component.popoverInfo?.get(button);
+          // ポップオーバー情報が存在する場合、ループコンテキストを返す
           return popoverButton?.loopContext;
         }
-        props[BindPropertySymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName, getLoopContext(popoverTarget.binding));
+        props[BindPropertySymbol](statePropertyName, nodePropertyName, getLoopContext(popoverBinding));
       }
     }
 

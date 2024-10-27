@@ -70,7 +70,6 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
   }
 
   setBuffer(buffer: IPropBuffer): void {
-    if (this.parentProps.size > 0) utils.raise("Binding properties already set");
     this.#propBuffer = buffer;
   }
 
@@ -82,10 +81,15 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     this.#propBuffer = undefined;
   }
 
+  /**
+   * バインドプロパティからバッファを作成します
+   * asyncShowPopover, async
+   * @returns {IPropBuffer} バッファ
+   */
   createBuffer(): IPropBuffer {
     const component = this.#component;
     if (this.parentProps.size === 0) utils.raise("No binding properties to buffer");
-    this.#propBuffer = {};
+    const propsBuffer: {[key:string]: any} = {};
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     const parentState = parentComponent.states["current"];
     for(const bindingInfo of this.propsBindingInfos) {
@@ -101,9 +105,9 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
       const parentValue = parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
         return parentState[GetByPropInfoSymbol](parentPropInfo);
       });
-      this.#propBuffer[thisProp] = parentValue;
+      propsBuffer[thisProp] = parentValue;
     }
-    return this.#propBuffer;
+    return propsBuffer;
   }
 
   flushBuffer(): void {

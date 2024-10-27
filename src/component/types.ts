@@ -137,7 +137,6 @@ export interface IDialogComponent {
 export interface IPopoverComponent {
   canceled: boolean;
   popoverPromises: PromiseWithResolvers<any> | undefined;
-  readonly popoverLoopIndexesById: Map<string, ILoopIndexes | undefined>;
   readonly popoverInfo: IPopoverInfo
   asyncShowPopover(props: {[key: string]: any}): Promise<any>;
   hidePopover(): void;
