@@ -1878,8 +1878,6 @@ class PropsProxyHandler {
         Object.defineProperty(state, thisProp, attributes);
     }
     setBuffer(buffer) {
-        if (this.parentProps.size > 0)
-            utils.raise("Binding properties already set");
         this.#propBuffer = buffer;
     }
     getBuffer() {
@@ -1888,11 +1886,16 @@ class PropsProxyHandler {
     clearBuffer() {
         this.#propBuffer = undefined;
     }
+    /**
+     * バインドプロパティからバッファを作成します
+     * asyncShowPopover, async
+     * @returns {IPropBuffer} バッファ
+     */
     createBuffer() {
         const component = this.#component;
         if (this.parentProps.size === 0)
             utils.raise("No binding properties to buffer");
-        this.#propBuffer = {};
+        const propsBuffer = {};
         const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
         const parentState = parentComponent.states["current"];
         for (const bindingInfo of this.propsBindingInfos) {
@@ -1908,9 +1911,9 @@ class PropsProxyHandler {
             const parentValue = parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                 return parentState[GetByPropInfoSymbol](parentPropInfo);
             });
-            this.#propBuffer[thisProp] = parentValue;
+            propsBuffer[thisProp] = parentValue;
         }
-        return this.#propBuffer;
+        return propsBuffer;
     }
     flushBuffer() {
         const component = this.#component;
@@ -3348,20 +3351,27 @@ class PopoverTarget extends ElementBase {
         const popoverInfo = this.binding.component?.popoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
         popoverInfo.currentButton = this.button;
         // ボタンのバインドを設定する
-        // ToDo: ここでバインドすべきか、それともtarget側でするべきか？
+        // ターゲット側でボタンのバインドを設定するのは、難しそうなので、ここで設定する
         const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
+        // このボタンに関連するバインディングを取得
         const buttonBindings = allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
         const props = this.target.props;
         for (const binding of buttonBindings) {
             const popoverTarget = binding.nodeProperty;
-            if (!props[CheckDuplicateSymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName)) {
+            const popoverBinding = popoverTarget.binding;
+            const statePropertyName = popoverTarget.binding.statePropertyName;
+            const nodePropertyName = popoverTarget.propertyName;
+            if (!props[CheckDuplicateSymbol](statePropertyName, nodePropertyName)) {
                 const getLoopContext = (binding) => () => {
+                    // ポップオーバー情報を取得し、現在のボタンを取得する
                     const component = binding.component ?? utils.raise("PopoverTarget: no component");
                     const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
+                    // 現在のボタンに関連するポップオーバー情報を取得する
                     const popoverButton = component.popoverInfo?.get(button);
+                    // ポップオーバー情報が存在する場合、ループコンテキストを返す
                     return popoverButton?.loopContext;
                 };
-                props[BindPropertySymbol](popoverTarget.binding.statePropertyName, popoverTarget.propertyName, getLoopContext(popoverTarget.binding));
+                props[BindPropertySymbol](statePropertyName, nodePropertyName, getLoopContext(popoverBinding));
             }
         }
     }
@@ -5140,7 +5150,6 @@ function createPopoverInfo() {
  * コンポーネントをポップオーバーできるように拡張します
  * 拡張内容は以下の通り
  * - popoverPromises: ポップオーバー用Promise
- * - popoverLoopIndexesById: ポップオーバーループインデックス
  * - canceled: キャンセルフラグ
  * - asyncShowPopover: ポップオーバー表示
  * - hidePopover: ポップオーバーを閉じる
@@ -5164,13 +5173,6 @@ function PopoverComponent(Base) {
         }
         set popoverPromises(value) {
             this.#popoverPromises = value;
-        }
-        #popoverLoopIndexesById;
-        get popoverLoopIndexesById() {
-            if (typeof this.#popoverLoopIndexesById === "undefined") {
-                this.#popoverLoopIndexesById = new Map;
-            }
-            return this.#popoverLoopIndexesById;
         }
         #popoverInfo = createPopoverInfo();
         get popoverInfo() {
@@ -5197,10 +5199,7 @@ function PopoverComponent(Base) {
                 }
                 this.canceled = true;
                 // remove loop context
-                const id = this.id;
-                if (typeof id !== "undefined") {
-                    this.popoverLoopIndexesById.delete(id);
-                }
+                this.id;
             });
             this.addEventListener("shown", () => {
                 this.canceled = true;
