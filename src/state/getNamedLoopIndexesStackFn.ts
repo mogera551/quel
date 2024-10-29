@@ -1,4 +1,4 @@
-import { GetNamedLoopIndexesStackFn } from "../dotNotation/types";
+import { GetNamedLoopIndexesStackFn } from "./types";
 import { INamedLoopIndexesStack } from "../loopContext/types";
 import { IStateHandler } from "./types";
 

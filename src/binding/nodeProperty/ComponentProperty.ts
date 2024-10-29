@@ -6,7 +6,7 @@ import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
 import { IComponent } from "../../component/types";
 import { IStatePropertyAccessor } from "../../state/types";
-import { getPatternInfo } from "../../dotNotation/getPatternInfo";
+import { getPatternInfo } from "../../propertyInfo/getPatternInfo";
 import { BindPropertySymbol } from "../../props/symbols";
 
 export class ComponentProperty extends ElementBase {

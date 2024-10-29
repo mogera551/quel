@@ -1,4 +1,4 @@
-import { NotifyCallbackFn } from "../dotNotation/types";
+import { NotifyCallbackFn } from "./types";
 import { Handler } from "./Handler";
 import { notifyCallbackFn } from "./notifyCallbackFn";
 import { IComponentForHandler, IStateProxy, IWritableStateHandler } from "./types";

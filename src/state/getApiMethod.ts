@@ -4,12 +4,11 @@ import {
 } from "./symbols";
 import { IDependentProps, IStateHandler, IStateProxy } from "./types";
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
-import { IDotNotationHandler } from "../dotNotation/types";
 import { createStatePropertyAccessor } from "./createStatePropertyAccessor";
 
 type State = { [key:string]: any };
 
-type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler & IDotNotationHandler}
+type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler}
 
 const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
   [DirectryCallApiSymbol]:

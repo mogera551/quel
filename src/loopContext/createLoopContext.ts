@@ -1,5 +1,5 @@
 import { IBinding, IContentBindingsTreeNode } from "../binding/types";
-import { getPatternInfo } from "../dotNotation/getPatternInfo";
+import { getPatternInfo } from "../propertyInfo/getPatternInfo";
 import { utils } from "../utils";
 import { createLoopIndexes } from "./createLoopIndexes";
 import { ILoopContext, ILoopIndexes, INamedLoopContexts } from "./types";

@@ -1,13 +1,13 @@
 import { utils } from "../utils";
-import { getPropInfo } from "./getPropInfo";
-import { Handler } from "./Handler";
-import { GetExpandValuesFn, Index, IPropInfo } from "./types";
+import { getPropInfo } from "../propertyInfo/getPropInfo";
+import { Index, IPropInfo } from "../propertyInfo/types";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { createLoopIndexesFromArray } from "../loopContext/createLoopIndexes";
+import { GetExpandValuesFn, IStateHandler } from "./types";
 
-type IHandlerPartial = Pick<Handler, "getNamedLoopIndexesStack">;
+type IHandlerPartial = Pick<IStateHandler, "getNamedLoopIndexesStack">;
 
 export type IHandlerPartialForGetExpandValues = IHandlerPartial & IHandlerPartialForGetValue;
 

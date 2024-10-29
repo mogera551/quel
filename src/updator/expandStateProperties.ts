@@ -1,9 +1,9 @@
 import { GetDependentPropsApiSymbol } from "../state/symbols";
-import { getPatternInfo } from "../dotNotation/getPatternInfo";
+import { getPatternInfo } from "../propertyInfo/getPatternInfo";
 import { IStatePropertyAccessor, IStateProxy, IStates } from "../state/types";
-import { GetByPropInfoSymbol } from "../dotNotation/symbols";
+import { GetByPropInfoSymbol } from "../state/symbols";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
-import { getPropInfo } from "../dotNotation/getPropInfo";
+import { getPropInfo } from "../propertyInfo/getPropInfo";
 import { ILoopIndexes } from "../loopContext/types";
 import { createLoopIndexes } from "../loopContext/createLoopIndexes";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";

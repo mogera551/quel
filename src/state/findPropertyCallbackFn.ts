@@ -1,4 +1,4 @@
-import { FindPropertyCallbackFn } from "../dotNotation/types";
+import { FindPropertyCallbackFn } from "./types";
 import { Handler } from "./Handler";
 
 type IHandlerPartial = Pick<Handler, "dependentProps">;

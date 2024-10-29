@@ -4,9 +4,10 @@ import { INamedLoopIndexes } from "../loopContext/types";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { utils } from "../utils";
 import { getValueFn, IHandlerPartialForGetValue } from "./getValueFn";
-import { IDotNotationHandler, IPropInfo } from "./types";
+import { IPropInfo } from "../propertyInfo/types";
+import { IStateHandler } from "./types";
 
-type IHandlerPartial = Pick<IDotNotationHandler, "getNamedLoopIndexesStack">;
+type IHandlerPartial = Pick<IStateHandler, "getNamedLoopIndexesStack">;
 
 export type IHandlerPartialForGetValueByPropInfo = IHandlerPartial & IHandlerPartialForGetValue;
 

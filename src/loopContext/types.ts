@@ -1,5 +1,5 @@
 import { IBinding, IContentBindingsTreeNode } from "../binding/types";
-import { Index } from "../dotNotation/types";
+import { Index } from "../propertyInfo/types";
 
 export type INamedLoopContexts = {
   [key: string]: ILoopContext;

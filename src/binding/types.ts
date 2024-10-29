@@ -1,5 +1,5 @@
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
-import { IPropInfo } from "../dotNotation/types";
+import { IPropInfo } from "../propertyInfo/types";
 import { IComponent } from "../component/types";
 import { IStatePropertyAccessor, IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";

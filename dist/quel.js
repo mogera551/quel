@@ -912,19 +912,21 @@ function createModule(componentModule) {
     return Object.assign(new Module, componentModule);
 }
 
-const name$3 = "state";
-const AccessorPropertiesSymbol = Symbol.for(`${name$3}.accessorProperties`);
-const DependenciesSymbol = Symbol.for(`${name$3}.dependencies`);
-const ConnectedEventSymbol = Symbol.for(`${name$3}.connectedEvent`);
-const DisconnectedEventSymbol = Symbol.for(`${name$3}.disconnectedEvent`);
-const UpdatedEventSymbol = Symbol.for(`${name$3}.updatedEvent`);
-const ConnectedCallbackSymbol = Symbol.for(`${name$3}.connectedCallback`);
-const DisconnectedCallbackSymbol = Symbol.for(`${name$3}.disconnectedCallback`);
-const UpdatedCallbackSymbol = Symbol.for(`${name$3}.updatedCallback`);
-const DirectryCallApiSymbol = Symbol.for(`${name$3}.directlyCallApi`);
-const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$3}.notifyForDependentPropsApi`);
-const GetDependentPropsApiSymbol = Symbol.for(`${name$3}.getDependentPropsApi`);
-const ClearCacheApiSymbol = Symbol.for(`${name$3}.clearCacheApi`);
+const name$2 = "state";
+const AccessorPropertiesSymbol = Symbol.for(`${name$2}.accessorProperties`);
+const DependenciesSymbol = Symbol.for(`${name$2}.dependencies`);
+const ConnectedEventSymbol = Symbol.for(`${name$2}.connectedEvent`);
+const DisconnectedEventSymbol = Symbol.for(`${name$2}.disconnectedEvent`);
+const UpdatedEventSymbol = Symbol.for(`${name$2}.updatedEvent`);
+const ConnectedCallbackSymbol = Symbol.for(`${name$2}.connectedCallback`);
+const DisconnectedCallbackSymbol = Symbol.for(`${name$2}.disconnectedCallback`);
+const UpdatedCallbackSymbol = Symbol.for(`${name$2}.updatedCallback`);
+const DirectryCallApiSymbol = Symbol.for(`${name$2}.directlyCallApi`);
+const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$2}.notifyForDependentPropsApi`);
+const GetDependentPropsApiSymbol = Symbol.for(`${name$2}.getDependentPropsApi`);
+const ClearCacheApiSymbol = Symbol.for(`${name$2}.clearCacheApi`);
+const GetByPropInfoSymbol = Symbol.for(`${name$2}.getAccessor`);
+const SetByPropInfoSymbol = Symbol.for(`${name$2}.setAccessor`);
 
 // shadow rootが可能なタグ名一覧
 const setOfAttachableTags = new Set([
@@ -1125,10 +1127,6 @@ function getPatternInfo(pattern) {
     let info;
     return _cache$8.get(pattern) ?? (info = _getPatternInfo(pattern), _cache$8.set(pattern, info), info);
 }
-
-const name$2 = "do-notation";
-const GetByPropInfoSymbol = Symbol.for(`${name$2}.getAccessor`);
-const SetByPropInfoSymbol = Symbol.for(`${name$2}.setAccessor`);
 
 class LoopIndexes {
     #parentLoopIndexes;
@@ -3827,6 +3825,217 @@ function createRootContentBindings(component, uuid) {
     return contentBindings;
 }
 
+const callFuncBySymbol = {
+    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, event, loopContext) => state[prop].apply(stateProxy, [event, ...(loopContext?.loopIndexes.values ?? [])]),
+    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, loopIndexes) => handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
+    [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
+    [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
+};
+function getApiMethod(state, stateProxy, handler, prop) {
+    return callFuncBySymbol[prop]?.({ state, stateProxy, handler });
+}
+
+const CONNECTED_EVENT = "connected";
+const DISCONNECTED_EVENT = "disconnected";
+const UPDATED_EVENT = "updated";
+const createConnectedDetail = (...args) => ({});
+const createDisconnectedDetail = (...args) => ({});
+const createUpdatedDetail = (...args) => ({ props: args });
+const createDetailFn = {
+    [ConnectedEventSymbol]: createConnectedDetail,
+    [DisconnectedEventSymbol]: createDisconnectedDetail,
+    [UpdatedEventSymbol]: createUpdatedDetail,
+};
+const customEventNames = {
+    [ConnectedEventSymbol]: CONNECTED_EVENT,
+    [DisconnectedEventSymbol]: DISCONNECTED_EVENT,
+    [UpdatedEventSymbol]: UPDATED_EVENT,
+};
+function dispatchCustomEvent(component, symbol, args) {
+    const eventName = customEventNames[symbol] ?? utils.raise(`Unknown event symbol: ${symbol.description} `);
+    const detailFn = createDetailFn[symbol] ?? utils.raise(`Unknown detail function for event symbol: ${symbol.description}`);
+    const detail = detailFn(...args);
+    const event = new CustomEvent(eventName, { detail });
+    component.dispatchEvent(event);
+}
+
+const CONNECTED_CALLBACK = "$connectedCallback";
+const DISCONNECTED_CALLBACK = "$disconnectedCallback";
+const UPDATED_CALLBACK = "$updatedCallback";
+const callbackNameBySymbol = {
+    [ConnectedCallbackSymbol]: CONNECTED_CALLBACK,
+    [DisconnectedCallbackSymbol]: DISCONNECTED_CALLBACK,
+    [UpdatedCallbackSymbol]: UPDATED_CALLBACK,
+};
+const allCallbacks = new Set([
+    ConnectedCallbackSymbol,
+    DisconnectedCallbackSymbol,
+    UpdatedCallbackSymbol,
+]);
+const callbackToEvent = {
+    [ConnectedCallbackSymbol]: ConnectedEventSymbol,
+    [DisconnectedCallbackSymbol]: DisconnectedEventSymbol,
+    [UpdatedCallbackSymbol]: UpdatedEventSymbol,
+};
+const applyCallback = (state, stateProxy, handler, prop) => async (...args) => {
+    const returnValue = (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
+    dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
+    return returnValue;
+};
+function getCallbackMethod(state, stateProxy, handler, prop) {
+    return (allCallbacks.has(prop)) ?
+        (...args) => applyCallback(state, stateProxy, handler, prop)(...args) :
+        undefined;
+}
+
+function existsProperty(baseClass, prop) {
+    if (typeof baseClass.prototype === "undefined")
+        return false;
+    if (baseClass.prototype === Object.prototype)
+        return false;
+    if (typeof baseClass.prototype[prop] !== "undefined")
+        return true;
+    return existsProperty(Object.getPrototypeOf(baseClass), prop);
+}
+const permittedProps = new Set([
+    "element", "addProcess", "viewRootElement ", "queryRoot",
+    "asyncShowModal", "asyncShow",
+    "asyncShowPopover", "cancelPopover"
+]);
+class UserProxyHandler {
+    get(target, prop) {
+        if (permittedProps.has(prop)) {
+            return Reflect.get(target, prop);
+        }
+        else {
+            if (existsProperty(target.baseClass, prop)) {
+                return Reflect.get(target, prop);
+            }
+            else {
+                utils.raise(`property ${prop} is not found in ${target.baseClass.name}`);
+            }
+        }
+    }
+}
+/**
+ * State内で使用するコンポーネントを生成する
+ * アクセス制限をかけるためのProxyを生成する
+ * @param component コンポーネントを元にProxyを生成する
+ * @returns {IUserComponent} ユーザーコンポーネント
+ */
+function createUserComponent(component) {
+    return new Proxy(component, new UserProxyHandler);
+}
+
+const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
+const COMPONENT_PROPERTY = "$component";
+const ADD_PROCESS_PROPERTY = "$addProcess";
+const funcByName = {
+    [DEPENDENT_PROPS_PROPERTY]: ({ state }) => state[DEPENDENT_PROPS_PROPERTY],
+    [COMPONENT_PROPERTY]: ({ handler }) => createUserComponent(handler.element),
+    [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updator.addProcess(func, stateProxy, [], handler.loopContext)
+};
+function getSpecialProps(state, stateProxy, handler, prop) {
+    return funcByName[prop]?.({ state, stateProxy, handler, prop });
+}
+
+function getDescByNames(target) {
+    const descByNames = {};
+    let object = target;
+    while (object !== Object.prototype) {
+        const descs = Object.getOwnPropertyDescriptors(object);
+        for (const [name, desc] of Object.entries(descs)) {
+            if (Reflect.has(descByNames, name))
+                continue;
+            descByNames[name] = desc;
+        }
+        object = Object.getPrototypeOf(object);
+    }
+    return descByNames;
+}
+function _getAccessorProperties(target) {
+    const descByNames = getDescByNames(target);
+    const accessorProperties = [];
+    for (const [name, desc] of Object.entries(descByNames)) {
+        if (desc.get || desc.set)
+            accessorProperties.push(name);
+    }
+    return accessorProperties;
+}
+const _cache$1 = new Map();
+function getAccessorProperties(target) {
+    let accessorProperties = _cache$1.get(target.constructor);
+    if (typeof accessorProperties === "undefined") {
+        accessorProperties = _getAccessorProperties(target);
+        if ({}.constructor !== target.constructor)
+            _cache$1.set(target.constructor, accessorProperties);
+    }
+    return accessorProperties;
+}
+
+/**
+ * $dependentPropsを表現
+ */
+class DependentProps {
+    defaultProps = new Set;
+    propsByRefProp = {};
+    constructor(props) {
+        this.#setDependentProps(props);
+    }
+    setDefaultProp(pattern) {
+        if (this.defaultProps.has(pattern))
+            return;
+        const patternInfo = getPatternInfo(pattern);
+        for (let i = patternInfo.patternPaths.length - 1; i >= 1; i--) {
+            const parentPattern = patternInfo.patternPaths[i - 1];
+            const pattern = patternInfo.patternPaths[i];
+            this.propsByRefProp[parentPattern]?.add(pattern) ??
+                (this.propsByRefProp[parentPattern] = new Set([pattern]));
+            this.defaultProps.add(pattern);
+        }
+    }
+    #setDependentProps(props) {
+        for (const [prop, refProps] of Object.entries(props)) {
+            for (const refProp of refProps) {
+                this.propsByRefProp[refProp]?.add(prop) ?? (this.propsByRefProp[refProp] = new Set([prop]));
+            }
+        }
+    }
+}
+function createDependentProps(props) {
+    return new DependentProps(props);
+}
+
+const DEPENDENT_PROPS = "$dependentProps";
+const _cache = new Map;
+function getStateInfo(state) {
+    // readonlyとwritableで同じものを使う
+    let stateProeprtyInfo = _cache.get(state);
+    if (typeof stateProeprtyInfo === "undefined") {
+        stateProeprtyInfo = {
+            accessorProperties: new Set(getAccessorProperties(state)),
+            dependentProps: createDependentProps(state[DEPENDENT_PROPS] ?? {})
+        };
+        _cache.set(state, stateProeprtyInfo);
+    }
+    return stateProeprtyInfo;
+}
+
+const findPropertyCallbackFn = (handler) => {
+    return function (prop) {
+        const dependentProps = handler.dependentProps;
+        if (!dependentProps.defaultProps.has(prop)) {
+            dependentProps.setDefaultProp(prop);
+        }
+    };
+};
+
+function getNamedLoopIndexesStackFn(handler) {
+    return function () {
+        return handler.updator.namedLoopIndexesStack;
+    };
+}
+
 /**
  * ドット記法のプロパティから値を取得する関数を生成します
  * @param handler Proxyハンドラ
@@ -4101,27 +4310,81 @@ function setValueByPropInfoFn(handler) {
     };
 }
 
-/**
- * ドット記法でプロパティを取得するためのハンドラ
- */
-let Handler$1 = class Handler {
-    cache = undefined;
+const notifyCallbackFn = (handler) => {
+    return function (pattern, loopIndexes) {
+        handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
+    };
+};
+
+class Handler {
+    #component;
+    #accessorProperties;
+    #dependentProps;
+    #objectBySymbol;
+    get accessorProperties() {
+        return this.#accessorProperties;
+    }
+    get dependentProps() {
+        return this.#dependentProps;
+    }
+    get element() {
+        return this.#component;
+    }
+    get component() {
+        return this.#component;
+    }
+    get updator() {
+        return this.component.updator;
+    }
+    get loopContext() {
+        return undefined;
+    }
+    get cache() {
+        return undefined;
+    }
+    set cache(value) {
+    }
+    constructor(component, base) {
+        this.#component = component;
+        const { accessorProperties, dependentProps } = getStateInfo(base);
+        this.#accessorProperties = accessorProperties;
+        this.#dependentProps = dependentProps;
+        this.#objectBySymbol = {
+            [AccessorPropertiesSymbol]: this.#accessorProperties,
+            [DependenciesSymbol]: this.#dependentProps
+        };
+        this.#getterByType["symbol"] = (target, prop, receiver) => this.#getBySymbol.apply(this, [target, prop, receiver]);
+        this.#getterByType["string"] = (target, prop, receiver) => this.#getByString.apply(this, [target, prop, receiver]);
+    }
     getValue = getValueFn(this);
     getExpandValues = getExpandValuesFn(this);
     setExpandValues = setExpandValuesFn(this);
     getValueByPropInfo = getValueByPropInfoFn(this);
     setValueByPropInfo = setValueByPropInfoFn(this);
-    getNamedLoopIndexesStack;
+    findPropertyCallback = findPropertyCallbackFn(this);
+    getNamedLoopIndexesStack = getNamedLoopIndexesStackFn(this);
+    notifyCallback = notifyCallbackFn(this);
+    #getBySymbol(target, prop, receiver) {
+        return this.#objectBySymbol[prop] ??
+            getCallbackMethod(target, receiver, this, prop) ??
+            getApiMethod(target, receiver, this, prop) ??
+            undefined;
+    }
+    #getByString(target, prop, receiver) {
+        return getSpecialProps(target, receiver, this, prop) ?? undefined;
+    }
+    #getterByType = {};
     clearCache() {
         if (typeof this.cache !== "undefined") {
             this.cache = {};
         }
     }
-    findPropertyCallback;
-    notifyCallback;
     get(target, prop, receiver) {
         const isPropString = typeof prop === "string";
         do {
+            const getterValue = this.#getterByType[typeof prop]?.(target, prop, receiver);
+            if (typeof getterValue !== "undefined")
+                return getterValue;
             if (isPropString && (prop.startsWith("@@__") || prop === "constructor"))
                 break;
             if (prop === GetByPropInfoSymbol) {
@@ -4167,275 +4430,17 @@ let Handler$1 = class Handler {
         } while (false);
         return Reflect.set(target, prop, value, receiver);
     }
-};
-
-const callFuncBySymbol = {
-    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, event, loopContext) => state[prop].apply(stateProxy, [event, ...(loopContext?.loopIndexes.values ?? [])]),
-    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, loopIndexes) => handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
-    [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
-    [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
-};
-function getApiMethod(state, stateProxy, handler, prop) {
-    return callFuncBySymbol[prop]?.({ state, stateProxy, handler });
-}
-
-const CONNECTED_EVENT = "connected";
-const DISCONNECTED_EVENT = "disconnected";
-const UPDATED_EVENT = "updated";
-const createConnectedDetail = (...args) => ({});
-const createDisconnectedDetail = (...args) => ({});
-const createUpdatedDetail = (...args) => ({ props: args });
-const createDetailFn = {
-    [ConnectedEventSymbol]: createConnectedDetail,
-    [DisconnectedEventSymbol]: createDisconnectedDetail,
-    [UpdatedEventSymbol]: createUpdatedDetail,
-};
-const customEventNames = {
-    [ConnectedEventSymbol]: CONNECTED_EVENT,
-    [DisconnectedEventSymbol]: DISCONNECTED_EVENT,
-    [UpdatedEventSymbol]: UPDATED_EVENT,
-};
-function dispatchCustomEvent(component, symbol, args) {
-    const eventName = customEventNames[symbol] ?? utils.raise(`Unknown event symbol: ${symbol.description} `);
-    const detailFn = createDetailFn[symbol] ?? utils.raise(`Unknown detail function for event symbol: ${symbol.description}`);
-    const detail = detailFn(...args);
-    const event = new CustomEvent(eventName, { detail });
-    component.dispatchEvent(event);
-}
-
-const CONNECTED_CALLBACK = "$connectedCallback";
-const DISCONNECTED_CALLBACK = "$disconnectedCallback";
-const UPDATED_CALLBACK = "$updatedCallback";
-const callbackNameBySymbol = {
-    [ConnectedCallbackSymbol]: CONNECTED_CALLBACK,
-    [DisconnectedCallbackSymbol]: DISCONNECTED_CALLBACK,
-    [UpdatedCallbackSymbol]: UPDATED_CALLBACK,
-};
-const allCallbacks = new Set([
-    ConnectedCallbackSymbol,
-    DisconnectedCallbackSymbol,
-    UpdatedCallbackSymbol,
-]);
-const callbackToEvent = {
-    [ConnectedCallbackSymbol]: ConnectedEventSymbol,
-    [DisconnectedCallbackSymbol]: DisconnectedEventSymbol,
-    [UpdatedCallbackSymbol]: UpdatedEventSymbol,
-};
-const applyCallback = (state, stateProxy, handler, prop) => async (...args) => {
-    const returnValue = (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
-    dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
-    return returnValue;
-};
-function getCallbackMethod(state, stateProxy, handler, prop) {
-    return (allCallbacks.has(prop)) ?
-        (...args) => applyCallback(state, stateProxy, handler, prop)(...args) :
-        undefined;
-}
-
-function existsProperty(baseClass, prop) {
-    if (typeof baseClass.prototype === "undefined")
-        return false;
-    if (baseClass.prototype === Object.prototype)
-        return false;
-    if (typeof baseClass.prototype[prop] !== "undefined")
-        return true;
-    return existsProperty(Object.getPrototypeOf(baseClass), prop);
-}
-const permittedProps = new Set([
-    "element", "addProcess", "viewRootElement ", "queryRoot",
-    "asyncShowModal", "asyncShow",
-    "asyncShowPopover", "cancelPopover"
-]);
-class UserProxyHandler {
-    get(target, prop) {
-        if (permittedProps.has(prop)) {
-            return Reflect.get(target, prop);
-        }
-        else {
-            if (existsProperty(target.baseClass, prop)) {
-                return Reflect.get(target, prop);
-            }
-            else {
-                utils.raise(`property ${prop} is not found in ${target.baseClass.name}`);
-            }
-        }
-    }
-}
-/**
- * State内で使用するコンポーネントを生成する
- * アクセス制限をかけるためのProxyを生成する
- * @param component コンポーネントを元にProxyを生成する
- * @returns {IUserComponent} ユーザーコンポーネント
- */
-function createUserComponent(component) {
-    return new Proxy(component, new UserProxyHandler);
-}
-
-const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
-const COMPONENT_PROPERTY = "$component";
-const ADD_PROCESS_PROPERTY = "$addProcess";
-const funcByName = {
-    [DEPENDENT_PROPS_PROPERTY]: ({ state }) => state[DEPENDENT_PROPS_PROPERTY],
-    [COMPONENT_PROPERTY]: ({ handler }) => createUserComponent(handler.element),
-    [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updator.addProcess(func, stateProxy, [], handler.loopContext)
-};
-function getSpecialProps(state, stateProxy, handler, prop) {
-    return funcByName[prop]?.({ state, stateProxy, handler, prop });
-}
-
-function getDescByNames(target) {
-    const descByNames = {};
-    let object = target;
-    while (object !== Object.prototype) {
-        const descs = Object.getOwnPropertyDescriptors(object);
-        for (const [name, desc] of Object.entries(descs)) {
-            if (Reflect.has(descByNames, name))
-                continue;
-            descByNames[name] = desc;
-        }
-        object = Object.getPrototypeOf(object);
-    }
-    return descByNames;
-}
-function _getAccessorProperties(target) {
-    const descByNames = getDescByNames(target);
-    const accessorProperties = [];
-    for (const [name, desc] of Object.entries(descByNames)) {
-        if (desc.get || desc.set)
-            accessorProperties.push(name);
-    }
-    return accessorProperties;
-}
-const _cache$1 = new Map();
-function getAccessorProperties(target) {
-    let accessorProperties = _cache$1.get(target.constructor);
-    if (typeof accessorProperties === "undefined") {
-        accessorProperties = _getAccessorProperties(target);
-        if ({}.constructor !== target.constructor)
-            _cache$1.set(target.constructor, accessorProperties);
-    }
-    return accessorProperties;
-}
-
-/**
- * $dependentPropsを表現
- */
-class DependentProps {
-    defaultProps = new Set;
-    propsByRefProp = {};
-    constructor(props) {
-        this.#setDependentProps(props);
-    }
-    setDefaultProp(pattern) {
-        if (this.defaultProps.has(pattern))
-            return;
-        const patternInfo = getPatternInfo(pattern);
-        for (let i = patternInfo.patternPaths.length - 1; i >= 1; i--) {
-            const parentPattern = patternInfo.patternPaths[i - 1];
-            const pattern = patternInfo.patternPaths[i];
-            this.propsByRefProp[parentPattern]?.add(pattern) ??
-                (this.propsByRefProp[parentPattern] = new Set([pattern]));
-            this.defaultProps.add(pattern);
-        }
-    }
-    #setDependentProps(props) {
-        for (const [prop, refProps] of Object.entries(props)) {
-            for (const refProp of refProps) {
-                this.propsByRefProp[refProp]?.add(prop) ?? (this.propsByRefProp[refProp] = new Set([prop]));
-            }
-        }
-    }
-}
-function createDependentProps(props) {
-    return new DependentProps(props);
-}
-
-const DEPENDENT_PROPS = "$dependentProps";
-const _cache = new Map;
-function getStateInfo(state) {
-    // readonlyとwritableで同じものを使う
-    let stateProeprtyInfo = _cache.get(state);
-    if (typeof stateProeprtyInfo === "undefined") {
-        stateProeprtyInfo = {
-            accessorProperties: new Set(getAccessorProperties(state)),
-            dependentProps: createDependentProps(state[DEPENDENT_PROPS] ?? {})
-        };
-        _cache.set(state, stateProeprtyInfo);
-    }
-    return stateProeprtyInfo;
-}
-
-const findPropertyCallbackFn = (handler) => {
-    return function (prop) {
-        const dependentProps = handler.dependentProps;
-        if (!dependentProps.defaultProps.has(prop)) {
-            dependentProps.setDefaultProp(prop);
-        }
-    };
-};
-
-function getNamedLoopIndexesStackFn(handler) {
-    return function () {
-        return handler.updator.namedLoopIndexesStack;
-    };
-}
-
-class Handler extends Handler$1 {
-    #component;
-    #accessorProperties;
-    #dependentProps;
-    #objectBySymbol;
-    get accessorProperties() {
-        return this.#accessorProperties;
-    }
-    get dependentProps() {
-        return this.#dependentProps;
-    }
-    get element() {
-        return this.#component;
-    }
-    get component() {
-        return this.#component;
-    }
-    get updator() {
-        return this.component.updator;
-    }
-    get loopContext() {
-        return undefined;
-    }
-    constructor(component, base) {
-        super();
-        this.#component = component;
-        const { accessorProperties, dependentProps } = getStateInfo(base);
-        this.#accessorProperties = accessorProperties;
-        this.#dependentProps = dependentProps;
-        this.#objectBySymbol = {
-            [AccessorPropertiesSymbol]: this.#accessorProperties,
-            [DependenciesSymbol]: this.#dependentProps
-        };
-        this.#getterByType["symbol"] = (target, prop, receiver) => this.#getBySymbol.apply(this, [target, prop, receiver]);
-        this.#getterByType["string"] = (target, prop, receiver) => this.#getByString.apply(this, [target, prop, receiver]);
-    }
-    findPropertyCallback = findPropertyCallbackFn(this);
-    getNamedLoopIndexesStack = getNamedLoopIndexesStackFn(this);
-    #getBySymbol(target, prop, receiver) {
-        return this.#objectBySymbol[prop] ??
-            getCallbackMethod(target, receiver, this, prop) ??
-            getApiMethod(target, receiver, this, prop) ??
-            undefined;
-    }
-    #getByString(target, prop, receiver) {
-        return getSpecialProps(target, receiver, this, prop) ?? undefined;
-    }
-    #getterByType = {};
-    get(target, prop, receiver) {
-        return this.#getterByType[typeof prop]?.(target, prop, receiver) ?? super.get(target, prop, receiver);
-    }
 }
 
 class ReadonlyHandler extends Handler {
     // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
-    cache = {};
+    #cache = {};
+    get cache() {
+        return this.#cache;
+    }
+    set cache(value) {
+        this.#cache = value;
+    }
     set(target, prop, value, receiver) {
         utils.raise("ReadonlyHandler: set is not allowed");
     }
@@ -4443,12 +4448,6 @@ class ReadonlyHandler extends Handler {
 function createReadonlyState(component, base) {
     return new Proxy(base, new ReadonlyHandler(component, base));
 }
-
-const notifyCallbackFn = (handler) => {
-    return function (pattern, loopIndexes) {
-        handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
-    };
-};
 
 class WritableHandler extends Handler {
     notifyCallback = notifyCallbackFn(this);

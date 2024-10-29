@@ -1,6 +1,6 @@
 import { IComponent } from "../component/types";
-import { SetByPropInfoSymbol } from "../dotNotation/symbols";
-import { IPropInfo } from "../dotNotation/types";
+import { SetByPropInfoSymbol } from "../state/symbols";
+import { IPropInfo } from "../propertyInfo/types";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { GetBufferSymbol } from "./symbols";

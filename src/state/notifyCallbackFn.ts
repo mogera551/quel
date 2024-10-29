@@ -1,4 +1,4 @@
-import { NotifyCallbackFn } from "../dotNotation/types";
+import { NotifyCallbackFn } from "./types";
 import { ILoopIndexes } from "../loopContext/types";
 import { createStatePropertyAccessor } from "./createStatePropertyAccessor";
 import { IStateHandler } from "./types";

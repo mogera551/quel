@@ -1,6 +1,6 @@
 import { IComponent } from "../component/types";
-import { GetByPropInfoSymbol } from "../dotNotation/symbols";
-import { IPropInfo } from "../dotNotation/types";
+import { GetByPropInfoSymbol } from "../state/symbols";
+import { IPropInfo } from "../propertyInfo/types";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { ILoopContext } from "../loopContext/types";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";

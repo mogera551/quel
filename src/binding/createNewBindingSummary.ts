@@ -1,5 +1,5 @@
-import { getPatternInfo } from "../dotNotation/getPatternInfo";
-import { Index } from "../dotNotation/types";
+import { getPatternInfo } from "../propertyInfo/getPatternInfo";
+import { Index } from "../propertyInfo/types";
 import { ILoopContext } from "../loopContext/types";
 import { IStatePropertyAccessor } from "../state/types";
 import { utils } from "../utils";

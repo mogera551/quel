@@ -1,11 +1,17 @@
-import { StateCache } from "../dotNotation/types";
+import { StateCache } from "./types";
 import { utils } from "../utils";
 import { Handler } from "./Handler";
 import { IComponentForHandler, IReadonlyStateHandler, IStateProxy } from "./types";
 
 class ReadonlyHandler extends Handler implements IReadonlyStateHandler {
   // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
-  cache: StateCache = {};
+  #cache: StateCache = {};
+  get cache(): StateCache {
+    return this.#cache;
+  }
+  set cache(value: StateCache) {
+    this.#cache = value;
+  }
   
   set(
     target: object, 

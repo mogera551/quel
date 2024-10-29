@@ -1,5 +1,5 @@
-import { getPropInfo } from "../dotNotation/getPropInfo";
-import { IPatternInfo } from "../dotNotation/types";
+import { getPropInfo } from "../propertyInfo/getPropInfo";
+import { IPatternInfo } from "../propertyInfo/types";
 import { createLoopIndexes } from "../loopContext/createLoopIndexes";
 import { ILoopIndexes, INamedLoopIndexesStack } from "../loopContext/types";
 import { utils } from "../utils";
