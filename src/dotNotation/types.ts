@@ -2,9 +2,6 @@ import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "../loop
 import { IStatePropertyAccessor } from "../state/types";
 import { GetByPropInfoSymbol, GetDirectSymbol, SetByPropInfoSymbol, SetDirectSymbol } from "./symbols";
 
-//export type PropType = "primitive" | "object" | "array";
-//export type ArrayIncompleteType = "none" | "parital" | "all";
-
 export interface IPatternInfo {
   /** 
    * ex. aaa.\*.bbb.\*.ccc => ["aaa", "\*", "bbb", "\*", "ccc"]
@@ -65,14 +62,6 @@ export type Index = number | undefined;
 export type Indexes = (undefined|number)[];
 export type CleanIndexes = number[];
 export type StackIndexes = Indexes[];
-
-export interface IWildcardIndexes {
-  indexes: Indexes;
-  wildcardCount: number;
-  pattern: string;
-}
-
-export type NamedWildcardIndexes = Map<string, IWildcardIndexes>;
 
 export interface IDotNotationHandler {
   cache?: StateCache;

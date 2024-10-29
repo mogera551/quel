@@ -1083,7 +1083,6 @@ async function execProcesses(updator, states) {
             if (processes.length === 0)
                 break;
             const updateStateProperties = await _execProcesses(updator, processes);
-            console.log(updateStateProperties);
             if (updateStateProperties.length > 0) {
                 totalUpdatedStateProperties.push(...updateStateProperties);
                 enqueueUpdatedCallback(updator, states, updateStateProperties);
