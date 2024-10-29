@@ -1,4 +1,4 @@
-import { AccessorPropertiesSymbol, ClearCacheApiSymbol, CreateBufferApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, FlushBufferApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "./symbols";
+import { AccessorPropertiesSymbol, ClearCacheApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol } from "./symbols";
 import { IComponent } from "../component/types";
 import { IDotNotationProxy, IPatternInfo } from "../dotNotation/types";
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
@@ -31,8 +31,6 @@ export interface IStateProxy extends IDotNotationProxy, IBaseState {
   [NotifyForDependentPropsApiSymbol](prop:string, loopIndexes:ILoopIndexes | undefined): void;
   [GetDependentPropsApiSymbol](): IDependentProps;
   [ClearCacheApiSymbol](): void;
-  [CreateBufferApiSymbol](component:IComponent): void;
-  [FlushBufferApiSymbol](buffer:{[key:string]:any}, component:IComponent): boolean;
   // Special Property
   readonly $component: IComponent; // todo:後でIUserComponentに変更する
 }

@@ -925,8 +925,6 @@ const DirectryCallApiSymbol = Symbol.for(`${name$3}.directlyCallApi`);
 const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$3}.notifyForDependentPropsApi`);
 const GetDependentPropsApiSymbol = Symbol.for(`${name$3}.getDependentPropsApi`);
 const ClearCacheApiSymbol = Symbol.for(`${name$3}.clearCacheApi`);
-const CreateBufferApiSymbol = Symbol.for(`${name$3}.createBufferApi`);
-const FlushBufferApiSymbol = Symbol.for(`${name$3}.flushBufferApi`);
 
 // shadow rootが可能なタグ名一覧
 const setOfAttachableTags = new Set([
@@ -4172,15 +4170,11 @@ let Handler$1 = class Handler {
     }
 };
 
-const CREATE_BUFFER_METHOD = "$createBuffer";
-const FLUSH_BUFFER_METHOD = "$flushBuffer";
 const callFuncBySymbol = {
     [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, event, loopContext) => state[prop].apply(stateProxy, [event, ...(loopContext?.loopIndexes.values ?? [])]),
     [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, loopIndexes) => handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
     [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
     [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
-    [CreateBufferApiSymbol]: ({ stateProxy }) => (component) => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
-    [FlushBufferApiSymbol]: ({ stateProxy }) => (buffer, component) => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 };
 function getApiMethod(state, stateProxy, handler, prop) {
     return callFuncBySymbol[prop]?.({ state, stateProxy, handler });
