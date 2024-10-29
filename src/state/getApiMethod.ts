@@ -4,12 +4,8 @@ import {
 } from "./symbols";
 import { IDependentProps, IStateHandler, IStateProxy } from "./types";
 import { ILoopContext, ILoopIndexes } from "../loopContext/types";
-import { IComponent } from "../component/types";
 import { IDotNotationHandler } from "../dotNotation/types";
 import { createStatePropertyAccessor } from "./createStatePropertyAccessor";
-
-const CREATE_BUFFER_METHOD = "$createBuffer";
-const FLUSH_BUFFER_METHOD = "$flushBuffer";
 
 type State = { [key:string]: any };
 
