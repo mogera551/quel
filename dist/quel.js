@@ -4042,12 +4042,9 @@ function getNamedLoopIndexesStackFn(handler) {
  * @returns {GetValueFn} ドット記法のプロパティから値を取得する関数
  */
 const getValueFn = (handler) => {
-    return function _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex, wildcardIndex, receiver, cache = handler.cache, findPropertyCallback = handler.findPropertyCallback, cachable = typeof handler.cache !== "undefined", callable = patternPaths.length > 1 && typeof handler.findPropertyCallback === "function", cacheKeys = undefined) {
+    return function _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex, wildcardIndex, receiver, findPropertyCallback = handler.findPropertyCallback, cache = handler.cache, cachable = typeof handler.cache !== "undefined", cacheKeys = undefined) {
         let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
-        if (callable) {
-            // @ts-ignore
-            findPropertyCallback(path);
-        }
+        findPropertyCallback(path);
         const wildcardLoopIndexes = namedLoopIndexes.get(wildcardPaths[wildcardIndex]);
         // @ts-ignore
         return cachable ?
@@ -4061,11 +4058,11 @@ const getValueFn = (handler) => {
             // @ts-ignore
             cache[cacheKey] = ((value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
                 isWildcard = element === "*",
-                _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver, cache, findPropertyCallback, cachable, callable, cacheKeys)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])))))) : (
+                _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver, findPropertyCallback, cache, cachable, cacheKeys)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])))))) : (
         /* not use cache */
         (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
             isWildcard = element === "*",
-            _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver, cache, findPropertyCallback, cachable, callable, cacheKeys)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])));
+            _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver, findPropertyCallback, cache, cachable, cacheKeys)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])));
     };
 };
 
