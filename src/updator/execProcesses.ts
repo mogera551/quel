@@ -1,5 +1,4 @@
 import { IProcess } from "../component/types";
-import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { UpdatedCallbackSymbol } from "../state/symbols";
 import { IStatePropertyAccessor, IStates } from "../state/types";
 import { IUpdator } from "./types";

@@ -9,7 +9,6 @@ export { registerSingleFileComponents } from "./component/registerSingleFileComp
 export { generateSingleFileComponentClass } from "./component/generateSingleFileComponentClass";
 import { EventFilterFuncWithOption, FilterFuncWithOption } from "./filter/types";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "./filter/Manager";
-import { GlobalData } from "./global/Data";
 
 type FilterFuncWithOptions = {
   input:FilterFuncWithOption, output:FilterFuncWithOption, event:EventFilterFuncWithOption
@@ -22,10 +21,6 @@ export function registerFilters(filters:{[key:string]:FilterFuncWithOptions}) {
     output && OutputFilterManager.registerFilter(name, output);
     event && EventFilterManager.registerFilter(name, event);
   });
-}
-
-export function registerGlobal(data:{[key:string]:any}) {
-  Object.assign(GlobalData.data, data);
 }
 
 import "./polyfill/load";

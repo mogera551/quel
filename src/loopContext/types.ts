@@ -1,4 +1,4 @@
-import { IBinding, IBindingTreeNode, IContentBindingsTreeNode } from "../binding/types";
+import { IBinding, IContentBindingsTreeNode } from "../binding/types";
 import { Index } from "../dotNotation/types";
 
 export type INamedLoopContexts = {

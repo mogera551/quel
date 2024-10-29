@@ -5,11 +5,9 @@ import { getStyleSheetListByNames } from "./getStyleSheetListByNames";
 import { localizeStyleSheet } from "./localizeStyleSheet";
 import { createUpdator } from "../updator/Updator";
 import { createProps } from "../props/createProps";
-import { createGlobals } from "./createGlobals";
 import { IComponent, ICustomComponent, Constructor, IComponentBase } from "./types";
 import { IStates } from "../state/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
-import { IGlobalDataProxy } from "../global/types";
 import { createRootContentBindings } from "../binding/ContentBindings";
 import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
@@ -50,7 +48,6 @@ const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
  * - newBindingSummary: 新規バインディングサマリ
  * - updator: アップデータ
  * - props: プロパティ
- * - globals: グローバルデータ
  * @param Base 元のコンポーネント
  * @returns {CustomComponent} 拡張されたコンポーネント
  */
@@ -63,7 +60,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);
       this.#props = createProps(this);
-      this.#globals = createGlobals(this);  
     }
 
     get component():IComponent {
@@ -159,11 +155,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       return this.#props;
     }
 
-    #globals: IGlobalDataProxy;
-    get globals(): IGlobalDataProxy {
-      return this.#globals;
-    }
-  
     async build() {
       if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
         const shadowRoot = this.attachShadow({mode: 'open'});

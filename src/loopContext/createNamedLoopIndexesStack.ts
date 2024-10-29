@@ -1,4 +1,3 @@
-import { utils } from "../utils";
 import { createLoopIndexes } from "./createLoopIndexes";
 import { ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "./types";
 

@@ -1,4 +1,4 @@
-import { CaseType, CaseTypeNames }  from "./types";
+import { CaseType }  from "./types";
 import { getNameByCaseType } from "./getNameByCaseType";
 
 const REPLACE_PREFIX = "prefix-name";

@@ -1,6 +1,5 @@
 import { setValueToChildNodes } from "../binding/setValueToChildNodes";
 import { INewBindingSummary } from "../binding/types";
-import { getPatternInfo } from "../dotNotation/getPatternInfo";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { IStatePropertyAccessor } from "../state/types";

@@ -5,12 +5,6 @@ import { IStatePropertyAccessor, IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";
 import { IUpdator } from "../updator/types";
 
-export interface IBindingPropertyAccess {
-  readonly name: string;
-  readonly loopIndexes: ILoopIndexes | undefined;
-  readonly loopContext?: ILoopContext;
-}
-
 export interface ILoopable {
   readonly revisionForLoop: number;
   revisionUpForLoop(): number;

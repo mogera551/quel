@@ -1,10 +1,8 @@
-import { BindPropertySymbol, ClearBufferSymbol, ClearSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
 import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
-import { IGlobalDataProxy } from "../global/types";
 import { IStates } from "../state/types";
-import { IContentBindings, IBindingPropertyAccess, INewBindingSummary } from "../binding/types";
+import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
-import { ILoopContext, ILoopIndexes } from "../loopContext/types";
+import { ILoopContext } from "../loopContext/types";
 import { IProps } from "../props/types";
 import { IPopoverInfo } from "../popover/types";
 
@@ -116,7 +114,6 @@ export interface ICustomComponent {
   readonly newBindingSummary: INewBindingSummary;
   readonly updator: IUpdator;
   readonly props: IProps;
-  readonly globals: IGlobalDataProxy;
 
   build():Promise<void>;
   connectedCallback():Promise<void>;
@@ -153,21 +150,7 @@ export interface IProcess {
   readonly argumentList: any[];
   readonly loopContext: ILoopContext | undefined;
 }
-/*
-export interface IProps {
-  [BindPropertySymbol](prop: string, propAccess: IBindingPropertyAccess): void;
-  [SetBufferSymbol](buffer: {[key: string]: any}): void;
-  [GetBufferSymbol](): {[key: string]: any};
-  [ClearBufferSymbol](): void;
-  [CreateBufferSymbol]():{[key: string]: any};
-  [FlushBufferSymbol](): void;
-  [ClearSymbol](): void;
-  get(target: any, prop: PropertyKey, receiver: IProps): any;
-  set(target: any, prop: PropertyKey, value: any, receiver: IProps): boolean;
-  ownKeys(target: IProps): (symbol|string)[];
-  getOwnPropertyDescriptor(target: IProps, prop: string|symbol): PropertyDescriptor;
-}
-*/
+
 // ToDo: addProcessをどうするか検討
 export type IUserComponent = Pick<
   IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,

@@ -1,5 +1,4 @@
 import { Index } from "../dotNotation/types";
-import { utils } from "../utils";
 import { ILoopIndexes } from "./types";
 
 const _pool: LoopIndexes[] = [];

@@ -3,32 +3,11 @@ import { IFilterText } from "../../filter/types";
 import { IsComponentSymbol } from "../../component/symbols";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
-import { IBinding, IBindingPropertyAccess, IStateProperty } from "../types";
-import { ILoopContext, ILoopIndexes } from "../../loopContext/types";
+import { IBinding } from "../types";
 import { IComponent } from "../../component/types";
 import { IStatePropertyAccessor } from "../../state/types";
 import { getPatternInfo } from "../../dotNotation/getPatternInfo";
 import { BindPropertySymbol } from "../../props/symbols";
-
-export class BindingPropertyAccess implements IBindingPropertyAccess{
-  #stateProperty:IStateProperty;
-
-  get name():string {
-    return this.#stateProperty.name;
-  }
-
-  get loopIndexes(): ILoopIndexes | undefined {
-    return this.#stateProperty.loopIndexes;
-  }
-
-  get loopContext():ILoopContext | undefined {
-    return this.#stateProperty.binding.parentContentBindings.currentLoopContext;
-  }
-
-  constructor(stateProperty:IStateProperty) {
-    this.#stateProperty = stateProperty;
-  }
-}
 
 export class ComponentProperty extends ElementBase {
   get propertyName():string {

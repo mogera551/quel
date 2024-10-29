@@ -2,10 +2,8 @@
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../props/symbols";
 import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
-import { ILoopIndexes } from "../loopContext/types";
 import { createPopoverInfo } from "../popover/createPopoverInfo";
 import { IPopoverInfo } from "../popover/types";
-import { utils } from "../utils";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogComponent
 
