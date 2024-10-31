@@ -4438,6 +4438,7 @@ class Handler {
         }
         finally {
             this.#wrirtable = false;
+            this.clearCache();
         }
     }
     async asyncSetWritable(callbackFn) {

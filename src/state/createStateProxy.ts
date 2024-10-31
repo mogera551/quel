@@ -463,6 +463,7 @@ export class Handler implements IStateHandler {
       return callbackFn();
     } finally {
       this.#wrirtable = false;
+      this.clearCache();
     }
   }
 
