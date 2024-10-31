@@ -1,5 +1,5 @@
 import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
-import { IStates } from "../state/types";
+import { IStateProxy } from "../state/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { IUpdator } from "../updator/types";
 import { ILoopContext } from "../loopContext/types";
@@ -104,7 +104,7 @@ export interface ICustomComponent {
   readonly parentComponent?: IComponent & HTMLElement;
   readonly initialPromises: PromiseWithResolvers<void>;
   alivePromises: PromiseWithResolvers<void>;
-  readonly states: IStates;
+  readonly state: IStateProxy;
   rootBindingManager: IContentBindings; // ToDo
   readonly viewRootElement: ShadowRoot | HTMLElement;
   readonly queryRoot: ShadowRoot | HTMLElement;

@@ -34,7 +34,7 @@ export class ComponentProperty extends ElementBase {
   }
   setValue(value:any) {
     try {
-      this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
+      this.thisComponent.state[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
     } catch(e) {
       console.log(e);
     }
@@ -60,8 +60,8 @@ export class ComponentProperty extends ElementBase {
       if (propertyAccessor.pattern === statePropertyName || 
         patternInfo.patternPaths.includes(statePropertyName)) {
         const remain = propertyAccessor.pattern.slice(statePropertyName.length);
-        this.thisComponent.states.current[UpdatedCallbackSymbol]([{name:`${this.propertyName}${remain}`, indexes:propertyAccessor.loopIndexes?.values}]);
-        this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
+        this.thisComponent.state[UpdatedCallbackSymbol]([{name:`${this.propertyName}${remain}`, indexes:propertyAccessor.loopIndexes?.values}]);
+        this.thisComponent.state[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
       }
     }
   }

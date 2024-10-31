@@ -925,8 +925,11 @@ const DirectryCallApiSymbol = Symbol.for(`${name$2}.directlyCallApi`);
 const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$2}.notifyForDependentPropsApi`);
 const GetDependentPropsApiSymbol = Symbol.for(`${name$2}.getDependentPropsApi`);
 const ClearCacheApiSymbol = Symbol.for(`${name$2}.clearCacheApi`);
-const GetByPropInfoSymbol = Symbol.for(`${name$2}.getAccessor`);
-const SetByPropInfoSymbol = Symbol.for(`${name$2}.setAccessor`);
+const GetByPropInfoSymbol = Symbol.for(`${name$2}.getPropByInfo`);
+const SetByPropInfoSymbol = Symbol.for(`${name$2}.setPropByInfo`);
+const SetWritableSymbol = Symbol.for(`${name$2}.setWritable`);
+const AsyncSetWritableSymbol = Symbol.for(`${name$2}.asyncSetWritable`);
+const GetBaseStateSymbol = Symbol.for(`${name$2}.getBaseState`);
 
 // shadow rootが可能なタグ名一覧
 const setOfAttachableTags = new Set([
@@ -1070,16 +1073,16 @@ async function _execProcesses(updator, processes) {
     }
     return updator.retrieveAllUpdatedStateProperties();
 }
-function enqueueUpdatedCallback(updator, states, updatedStateProperties) {
+function enqueueUpdatedCallback(updator, state, updatedStateProperties) {
     // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
     const updateInfos = updatedStateProperties.map(prop => ({ name: prop.pattern, indexes: prop.loopIndexes?.values }));
     updator.addProcess(async () => {
-        await states.current[UpdatedCallbackSymbol](updateInfos);
+        await state[UpdatedCallbackSymbol](updateInfos);
     }, undefined, [], undefined);
 }
-async function execProcesses(updator, states) {
+async function execProcesses(updator, state) {
     const totalUpdatedStateProperties = updator.retrieveAllUpdatedStateProperties();
-    await states.asyncSetWritable(async () => {
+    await state[AsyncSetWritableSymbol](async () => {
         do {
             const processes = updator.retrieveAllProcesses();
             if (processes.length === 0)
@@ -1087,7 +1090,7 @@ async function execProcesses(updator, states) {
             const updateStateProperties = await _execProcesses(updator, processes);
             if (updateStateProperties.length > 0) {
                 totalUpdatedStateProperties.push(...updateStateProperties);
-                enqueueUpdatedCallback(updator, states, updateStateProperties);
+                enqueueUpdatedCallback(updator, state, updateStateProperties);
             }
         } while (true);
     });
@@ -1097,7 +1100,7 @@ async function execProcesses(updator, states) {
 /**
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
-const _cache$8 = new Map();
+const _cache$7 = new Map();
 /**
  * パターン情報を取得します
  * @param pattern パターン
@@ -1125,7 +1128,7 @@ function _getPatternInfo(pattern) {
 }
 function getPatternInfo(pattern) {
     let info;
-    return _cache$8.get(pattern) ?? (info = _getPatternInfo(pattern), _cache$8.set(pattern, info), info);
+    return _cache$7.get(pattern) ?? (info = _getPatternInfo(pattern), _cache$7.set(pattern, info), info);
 }
 
 class LoopIndexes {
@@ -1234,7 +1237,7 @@ function createLoopIndexes(parentLoopIndexes, value) {
 /**
  * constructorが指定されると、破綻するのでObjectではなくMapを使う
  */
-const _cache$7 = new Map();
+const _cache$6 = new Map();
 /**
  * プロパティ情報を取得します
  * @param name プロパティ名
@@ -1314,7 +1317,7 @@ function _getPropInfo(name) {
 }
 function getPropInfo(name) {
     let info;
-    return _cache$7.get(name) ?? (info = _getPropInfo(name), _cache$7.set(name, info), info);
+    return _cache$6.get(name) ?? (info = _getPropInfo(name), _cache$6.set(name, info), info);
 }
 
 class StatePropertyAccessor {
@@ -1476,12 +1479,12 @@ function expandIndexes(state, statePropertyAccessor) {
         return traverse("", 0, undefined);
     }
 }
-function expandStateProperties(states, updatedStateProperties) {
+function expandStateProperties(state, updatedStateProperties) {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.pattern + "\t" + (prop.loopIndexes?.toString() ?? "")));
     for (let i = 0; i < updatedStateProperties.length; i++) {
-        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(states.current, updatedStateProperties[i], updatedStatePropertiesSet));
+        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(state, updatedStateProperties[i], updatedStatePropertiesSet));
     }
     return expandedStateProperties;
 }
@@ -1654,8 +1657,8 @@ class Updator {
     loopContextStack = createLoopContextStack();
     namedLoopIndexesStack = createNamedLoopIndexesStack();
     executing = false;
-    get states() {
-        return this.#component.states;
+    get state() {
+        return this.#component.state;
     }
     get newBindingSummary() {
         return this.#component.newBindingSummary;
@@ -1714,10 +1717,10 @@ class Updator {
             while (this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
                 this.updatedBindings.clear();
                 // 戻り値は更新されたStateのプロパティ情報
-                const _updatedStatePropertyAccessors = await execProcesses(this, this.states);
+                const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
                 const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
-                const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccessors);
+                const updatedStatePropertyAccesses = expandStateProperties(this.state, _updatedStatePropertyAccessors);
                 await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
                 updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
                 await updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
@@ -1792,7 +1795,7 @@ const getterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
             return buffer[thisPropIfo.name];
         }
         const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-        const parentState = parentComponent.states["current"];
+        const parentState = parentComponent.state;
         const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
         const accessor = (typeof lastWildcardPath !== "undefined") ?
             createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
@@ -1817,7 +1820,7 @@ const setterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
         const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
         const loopContext = getLoopContext();
         const writeProperty = (component, propInfo, value) => {
-            const state = component.states["current"];
+            const state = component.state;
             return state[SetByPropInfoSymbol](propInfo, value);
         };
         parentComponent.updator?.addProcess(writeProperty, undefined, [parentComponent, parentPropInfo, value], loopContext);
@@ -1861,7 +1864,7 @@ class PropsProxyHandler {
         this.parentProps.add(parentProp);
         this.thisProps.add(thisProp);
         this.loopContextByParentProp.set(parentProp, getLoopContext);
-        const state = component.states["base"];
+        const state = component.state[GetBaseStateSymbol]();
         const attributes = {
             enumerable: true,
             configurable: true,
@@ -1890,7 +1893,7 @@ class PropsProxyHandler {
             utils.raise("No binding properties to buffer");
         const propsBuffer = {};
         const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-        const parentState = parentComponent.states["current"];
+        const parentState = parentComponent.state;
         for (const bindingInfo of this.propsBindingInfos) {
             const { parentProp, thisProp } = bindingInfo;
             const getLoopContext = this.loopContextByParentProp.get(parentProp);
@@ -1921,7 +1924,7 @@ class PropsProxyHandler {
             const value = this.#propBuffer[thisProp];
             // プロセスキューに積む
             const writeProperty = (component, propInfo, value) => {
-                const state = component.states["current"];
+                const state = component.state;
                 return state[SetByPropInfoSymbol](propInfo, value);
             };
             parentComponent.updator?.addProcess(writeProperty, undefined, [parentComponent, parentPropInfo, value], loopContext);
@@ -1960,7 +1963,7 @@ class PropsProxyHandler {
             utils.raise(`Invalid prop name: ${prop}`);
         }
         const component = this.#component;
-        const state = component.states["current"];
+        const state = component.state;
         return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[GetByPropInfoSymbol](propInfo));
     }
     set(target, prop, value, receiver) {
@@ -1974,7 +1977,7 @@ class PropsProxyHandler {
         // プロセスキューに積む
         const component = this.#component;
         const writeProperty = (component, propInfo, value) => {
-            const state = component.states["current"];
+            const state = component.state;
             return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
         };
         component.updator?.addProcess(writeProperty, undefined, [component, propInfo, value], undefined);
@@ -2123,7 +2126,7 @@ const parseExpressions = (text, defaultName) => {
         return { nodeProperty, stateProperty, inputFilters, outputFilters };
     });
 };
-const _cache$6 = {};
+const _cache$5 = {};
 /**
  * 取得したバインドテキスト(getBindTextByNodeType)を解析して、バインド情報を取得する
  * @param text バインドテキスト
@@ -2134,7 +2137,7 @@ function parseBindText(text, defaultName) {
     if (text.trim() === "")
         return [];
     const key = text + "\t" + defaultName;
-    return _cache$6[key] ?? (_cache$6[key] = parseExpressions(text, defaultName));
+    return _cache$5[key] ?? (_cache$5[key] = parseExpressions(text, defaultName));
 }
 
 const DEFAULT_PROPERTY = "textContent";
@@ -2152,7 +2155,7 @@ const getDefaultPropertyHTMLElement = (node) => node instanceof HTMLSelectElemen
             node instanceof HTMLFormElement ? "onsubmit" :
                 node instanceof HTMLInputElement ? (defaultPropertyByElementType[node.type] ?? "value") :
                     DEFAULT_PROPERTY;
-const _cache$5 = {};
+const _cache$4 = {};
 const undefinedProperty = (node) => undefined;
 const textContentProperty = (node) => DEFAULT_PROPERTY;
 const getDefaultPropertyByNodeType = {
@@ -2169,7 +2172,7 @@ const getDefaultPropertyByNodeType = {
  */
 function getDefaultPropertyForNode(node, nodeType) {
     const key = node.constructor.name + "\t" + (node.type ?? ""); // type attribute
-    return _cache$5[key] ?? (_cache$5[key] = getDefaultPropertyByNodeType[nodeType](node));
+    return _cache$4[key] ?? (_cache$4[key] = getDefaultPropertyByNodeType[nodeType](node));
 }
 
 class NodeProperty {
@@ -2631,7 +2634,7 @@ class ComponentProperty extends ElementBase {
     }
     setValue(value) {
         try {
-            this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
+            this.thisComponent.state[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
         }
         catch (e) {
             console.log(e);
@@ -2654,8 +2657,8 @@ class ComponentProperty extends ElementBase {
             if (propertyAccessor.pattern === statePropertyName ||
                 patternInfo.patternPaths.includes(statePropertyName)) {
                 const remain = propertyAccessor.pattern.slice(statePropertyName.length);
-                this.thisComponent.states.current[UpdatedCallbackSymbol]([{ name: `${this.propertyName}${remain}`, indexes: propertyAccessor.loopIndexes?.values }]);
-                this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
+                this.thisComponent.state[UpdatedCallbackSymbol]([{ name: `${this.propertyName}${remain}`, indexes: propertyAccessor.loopIndexes?.values }]);
+                this.thisComponent.state[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
             }
         }
     }
@@ -2958,7 +2961,7 @@ function _getNodePropertyConstructor(isComment, isElement, propertyName, useKeye
     } while (false);
     return createNodeProperty(nodePropertyConstructor);
 }
-const _cache$4 = {};
+const _cache$3 = {};
 /**
  * バインドのノードプロパティのコンストラクタを取得する
  * @param node ノード
@@ -2970,7 +2973,7 @@ function getNodePropertyConstructor(node, propertyName, useKeyed) {
     const isComment = node instanceof Comment;
     const isElement = node instanceof Element;
     const key = isComment + "\t" + isElement + "\t" + propertyName + "\t" + useKeyed;
-    return _cache$4[key] ?? (_cache$4[key] = _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed));
+    return _cache$3[key] ?? (_cache$3[key] = _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed));
 }
 
 class StateProperty {
@@ -3182,7 +3185,7 @@ class Binding {
         return this.component?.newBindingSummary;
     }
     get state() {
-        return this.component?.states.current;
+        return this.component?.state;
     }
     get selectorName() {
         return this.component?.selectorName;
@@ -3520,7 +3523,7 @@ function createBindings(content, contentBindings, bindingNodes) {
 }
 
 const UUID_DATASET = "uuid";
-const _cache$3 = {};
+const _cache$2 = {};
 class Binder {
     #template;
     #nodeInfos;
@@ -3540,7 +3543,7 @@ class Binder {
  */
 function createBinder(template, useKeyed) {
     const uuid = template.dataset[UUID_DATASET] ?? utils.raise("uuid not found");
-    return _cache$3[uuid] ?? (_cache$3[uuid] = new Binder(template, useKeyed));
+    return _cache$2[uuid] ?? (_cache$2[uuid] = new Binder(template, useKeyed));
 }
 
 class LoopContext {
@@ -3778,7 +3781,7 @@ class ContentBindings {
         this.#parentBinding = undefined;
         this.removeChildNodes();
         const key = `${this.#uuid}\t${this.#useKeyed}\t${this.#loopable}\t${this.#patternName}`;
-        _cache$2[key]?.push(this) ?? (_cache$2[key] = [this]);
+        _cache$1[key]?.push(this) ?? (_cache$1[key] = [this]);
     }
     rebuild() {
         const selectValues = [];
@@ -3796,14 +3799,14 @@ class ContentBindings {
         }
     }
 }
-const _cache$2 = {};
+const _cache$1 = {};
 function createContentBindings(uuid, parentBinding) {
     const component = parentBinding.component ?? utils.raise("component is undefined");
     const useKeyed = component.useKeyed;
     const loopable = parentBinding.loopable;
     const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
     const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
-    let contentBindings = _cache$2[key]?.pop();
+    let contentBindings = _cache$1[key]?.pop();
     if (typeof contentBindings === "undefined") {
         contentBindings = new ContentBindings(uuid, useKeyed, loopable, patterName);
     }
@@ -3816,693 +3819,13 @@ function createRootContentBindings(component, uuid) {
     const useKeyed = component.useKeyed;
     const loopable = false;
     const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
-    let contentBindings = _cache$2[key]?.pop();
+    let contentBindings = _cache$1[key]?.pop();
     if (typeof contentBindings === "undefined") {
         contentBindings = new ContentBindings(uuid, useKeyed, loopable);
     }
     contentBindings.component = component;
     contentBindings.registerBindingsToSummary();
     return contentBindings;
-}
-
-const callFuncBySymbol = {
-    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, event, loopContext) => state[prop].apply(stateProxy, [event, ...(loopContext?.loopIndexes.values ?? [])]),
-    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, loopIndexes) => handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
-    [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
-    [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
-};
-function getApiMethod(state, stateProxy, handler, prop) {
-    return callFuncBySymbol[prop]?.({ state, stateProxy, handler });
-}
-
-const CONNECTED_EVENT = "connected";
-const DISCONNECTED_EVENT = "disconnected";
-const UPDATED_EVENT = "updated";
-const createConnectedDetail = (...args) => ({});
-const createDisconnectedDetail = (...args) => ({});
-const createUpdatedDetail = (...args) => ({ props: args });
-const createDetailFn = {
-    [ConnectedEventSymbol]: createConnectedDetail,
-    [DisconnectedEventSymbol]: createDisconnectedDetail,
-    [UpdatedEventSymbol]: createUpdatedDetail,
-};
-const customEventNames = {
-    [ConnectedEventSymbol]: CONNECTED_EVENT,
-    [DisconnectedEventSymbol]: DISCONNECTED_EVENT,
-    [UpdatedEventSymbol]: UPDATED_EVENT,
-};
-function dispatchCustomEvent(component, symbol, args) {
-    const eventName = customEventNames[symbol] ?? utils.raise(`Unknown event symbol: ${symbol.description} `);
-    const detailFn = createDetailFn[symbol] ?? utils.raise(`Unknown detail function for event symbol: ${symbol.description}`);
-    const detail = detailFn(...args);
-    const event = new CustomEvent(eventName, { detail });
-    component.dispatchEvent(event);
-}
-
-const CONNECTED_CALLBACK = "$connectedCallback";
-const DISCONNECTED_CALLBACK = "$disconnectedCallback";
-const UPDATED_CALLBACK = "$updatedCallback";
-const callbackNameBySymbol = {
-    [ConnectedCallbackSymbol]: CONNECTED_CALLBACK,
-    [DisconnectedCallbackSymbol]: DISCONNECTED_CALLBACK,
-    [UpdatedCallbackSymbol]: UPDATED_CALLBACK,
-};
-const allCallbacks = new Set([
-    ConnectedCallbackSymbol,
-    DisconnectedCallbackSymbol,
-    UpdatedCallbackSymbol,
-]);
-const callbackToEvent = {
-    [ConnectedCallbackSymbol]: ConnectedEventSymbol,
-    [DisconnectedCallbackSymbol]: DisconnectedEventSymbol,
-    [UpdatedCallbackSymbol]: UpdatedEventSymbol,
-};
-const applyCallback = (state, stateProxy, handler, prop) => async (...args) => {
-    const returnValue = (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
-    dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
-    return returnValue;
-};
-function getCallbackMethod(state, stateProxy, handler, prop) {
-    return (allCallbacks.has(prop)) ?
-        (...args) => applyCallback(state, stateProxy, handler, prop)(...args) :
-        undefined;
-}
-
-function existsProperty(baseClass, prop) {
-    if (typeof baseClass.prototype === "undefined")
-        return false;
-    if (baseClass.prototype === Object.prototype)
-        return false;
-    if (typeof baseClass.prototype[prop] !== "undefined")
-        return true;
-    return existsProperty(Object.getPrototypeOf(baseClass), prop);
-}
-const permittedProps = new Set([
-    "element", "addProcess", "viewRootElement ", "queryRoot",
-    "asyncShowModal", "asyncShow",
-    "asyncShowPopover", "cancelPopover"
-]);
-class UserProxyHandler {
-    get(target, prop) {
-        if (permittedProps.has(prop)) {
-            return Reflect.get(target, prop);
-        }
-        else {
-            if (existsProperty(target.baseClass, prop)) {
-                return Reflect.get(target, prop);
-            }
-            else {
-                utils.raise(`property ${prop} is not found in ${target.baseClass.name}`);
-            }
-        }
-    }
-}
-/**
- * State内で使用するコンポーネントを生成する
- * アクセス制限をかけるためのProxyを生成する
- * @param component コンポーネントを元にProxyを生成する
- * @returns {IUserComponent} ユーザーコンポーネント
- */
-function createUserComponent(component) {
-    return new Proxy(component, new UserProxyHandler);
-}
-
-const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
-const COMPONENT_PROPERTY = "$component";
-const ADD_PROCESS_PROPERTY = "$addProcess";
-const funcByName = {
-    [DEPENDENT_PROPS_PROPERTY]: ({ state }) => state[DEPENDENT_PROPS_PROPERTY],
-    [COMPONENT_PROPERTY]: ({ handler }) => createUserComponent(handler.element),
-    [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updator.addProcess(func, stateProxy, [], handler.loopContext)
-};
-function getSpecialProps(state, stateProxy, handler, prop) {
-    return funcByName[prop]?.({ state, stateProxy, handler, prop });
-}
-
-function getDescByNames(target) {
-    const descByNames = {};
-    let object = target;
-    while (object !== Object.prototype) {
-        const descs = Object.getOwnPropertyDescriptors(object);
-        for (const [name, desc] of Object.entries(descs)) {
-            if (Reflect.has(descByNames, name))
-                continue;
-            descByNames[name] = desc;
-        }
-        object = Object.getPrototypeOf(object);
-    }
-    return descByNames;
-}
-function _getAccessorProperties(target) {
-    const descByNames = getDescByNames(target);
-    const accessorProperties = [];
-    for (const [name, desc] of Object.entries(descByNames)) {
-        if (desc.get || desc.set)
-            accessorProperties.push(name);
-    }
-    return accessorProperties;
-}
-const _cache$1 = new Map();
-function getAccessorProperties(target) {
-    let accessorProperties = _cache$1.get(target.constructor);
-    if (typeof accessorProperties === "undefined") {
-        accessorProperties = _getAccessorProperties(target);
-        if ({}.constructor !== target.constructor)
-            _cache$1.set(target.constructor, accessorProperties);
-    }
-    return accessorProperties;
-}
-
-/**
- * $dependentPropsを表現
- */
-class DependentProps {
-    defaultProps = new Set;
-    propsByRefProp = {};
-    constructor(props) {
-        this.#setDependentProps(props);
-    }
-    setDefaultProp(pattern) {
-        if (this.defaultProps.has(pattern))
-            return;
-        const patternInfo = getPatternInfo(pattern);
-        for (let i = patternInfo.patternPaths.length - 1; i >= 1; i--) {
-            const parentPattern = patternInfo.patternPaths[i - 1];
-            const pattern = patternInfo.patternPaths[i];
-            this.propsByRefProp[parentPattern]?.add(pattern) ??
-                (this.propsByRefProp[parentPattern] = new Set([pattern]));
-            this.defaultProps.add(pattern);
-        }
-    }
-    #setDependentProps(props) {
-        for (const [prop, refProps] of Object.entries(props)) {
-            for (const refProp of refProps) {
-                this.propsByRefProp[refProp]?.add(prop) ?? (this.propsByRefProp[refProp] = new Set([prop]));
-            }
-        }
-    }
-}
-function createDependentProps(props) {
-    return new DependentProps(props);
-}
-
-const DEPENDENT_PROPS = "$dependentProps";
-const _cache = new Map;
-function getStateInfo(state) {
-    // readonlyとwritableで同じものを使う
-    let stateProeprtyInfo = _cache.get(state);
-    if (typeof stateProeprtyInfo === "undefined") {
-        stateProeprtyInfo = {
-            accessorProperties: new Set(getAccessorProperties(state)),
-            dependentProps: createDependentProps(state[DEPENDENT_PROPS] ?? {})
-        };
-        _cache.set(state, stateProeprtyInfo);
-    }
-    return stateProeprtyInfo;
-}
-
-const findPropertyCallbackFn = (handler) => {
-    return function (prop) {
-        const dependentProps = handler.dependentProps;
-        if (!dependentProps.defaultProps.has(prop)) {
-            dependentProps.setDefaultProp(prop);
-        }
-    };
-};
-
-function getNamedLoopIndexesStackFn(handler) {
-    return function () {
-        return handler.updator.namedLoopIndexesStack;
-    };
-}
-
-/**
- * ドット記法のプロパティから値を取得する関数を生成します
- * @param handler Proxyハンドラ
- * @returns {GetValueFn} ドット記法のプロパティから値を取得する関数
- */
-const getValueFn = (handler) => {
-    return function _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex, wildcardIndex, receiver, findPropertyCallback = handler.findPropertyCallback, cache = handler.cache, cachable = typeof handler.cache !== "undefined", cacheKeys = undefined) {
-        let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
-        findPropertyCallback(path);
-        const wildcardLoopIndexes = namedLoopIndexes.get(wildcardPaths[wildcardIndex]);
-        // @ts-ignore
-        return cachable ?
-            ( /* use cache */
-            // @ts-ignore
-            value = cache[cacheKey = path + ":" + (wildcardLoopIndexes?.toString() ?? "")] ?? (
-            /* cache value is null or undefined */
-            // @ts-ignore
-            (cacheKey in cache) ? value : (
-            /* no cahce */
-            // @ts-ignore
-            cache[cacheKey] = ((value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
-                isWildcard = element === "*",
-                _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver, findPropertyCallback, cache, cachable, cacheKeys)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])))))) : (
-        /* not use cache */
-        (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
-            isWildcard = element === "*",
-            _getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver, findPropertyCallback, cache, cachable, cacheKeys)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])));
-    };
-};
-
-/**
- * ドット記法の"@"プロパティから値を展開する関数を生成します
- * ex) "@aaa.*.bbb.*.ccc" => 値の配列
- * @param handler Proxyハンドラ
- * @returns {GetExpandValuesFn} ドット記法の"@"プロパティから値を展開する関数
- */
-const getExpandValuesFn = (handler) => {
-    const getValue = getValueFn(handler);
-    return function (target, propInfo, receiver) {
-        // ex.
-        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
-        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
-        // prop = "aaa.1.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
-        // prop = "aaa.*.bbb.1.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
-        // prop = "aaa.0.bbb.1.ccc", NG 
-        if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
-            utils.raise(`wildcard type is invalid`);
-        }
-        const namedLoopIndexesStack = handler.getNamedLoopIndexesStack?.() ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
-        const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
-        let indexes;
-        let lastIndex = undefined;
-        if (propInfo.wildcardType === "context") {
-            // 一番後ろの*を展開する
-            lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
-            indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
-            indexes[indexes.length - 1] = undefined;
-        }
-        else {
-            // partialの場合、後ろから*を探す
-            let loopIndexes = [];
-            const values = propInfo.wildcardLoopIndexes?.values ?? [];
-            for (let i = values.length - 1; i >= 0; i--) {
-                if (typeof lastIndex === "undefined" && typeof values[i] === "undefined") {
-                    lastIndex = i;
-                }
-                if (typeof loopIndexes === "undefined" && namedLoopIndexes.has(propInfo.wildcardPaths[i])) {
-                    loopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[i])?.values ?? utils.raise(`loopIndexes is undefined`);
-                }
-                if (typeof lastIndex !== "undefined" && typeof loopIndexes !== "undefined") {
-                    break;
-                }
-            }
-            indexes = [];
-            const wildcardIndexes = propInfo.wildcardLoopIndexes?.values ?? utils.raise(`wildcardIndexes is undefined`);
-            for (let i = 0; i < propInfo.wildcardCount; i++) {
-                if (i === lastIndex) {
-                    indexes.push(undefined);
-                }
-                else {
-                    indexes.push(wildcardIndexes[i] ?? loopIndexes[i]);
-                }
-            }
-        }
-        if (typeof lastIndex === "undefined") {
-            utils.raise(`lastIndex is undefined`);
-        }
-        const expandWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
-        const expandWildcardPathInfo = getPropInfo(expandWildcardPath);
-        const expandWildcardParentPath = expandWildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
-        const expandWildcardParentPathInfo = getPropInfo(expandWildcardParentPath);
-        const wildcardLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, lastIndex));
-        const wildcardAccessor = createStatePropertyAccessor(expandWildcardParentPathInfo.pattern, wildcardLoopIndexes);
-        const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
-        const length = getValue(target, expandWildcardParentPathInfo.patternPaths, expandWildcardParentPathInfo.patternElements, expandWildcardParentPathInfo.wildcardPaths, wildcardNamedLoopIndexes, expandWildcardParentPathInfo.paths.length - 1, expandWildcardParentPathInfo.wildcardCount - 1, receiver).length;
-        const values = [];
-        for (let i = 0; i < length; i++) {
-            indexes[lastIndex] = i;
-            const LoopIndexes = createLoopIndexesFromArray(indexes);
-            const accessor = createStatePropertyAccessor(propInfo.pattern, LoopIndexes);
-            const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-            const value = getValue(target, propInfo.patternPaths, propInfo.patternElements, propInfo.wildcardPaths, namedLoopIndexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
-            values.push(value);
-        }
-        return values;
-    };
-};
-
-/**
- * ドット記法の"@"プロパティに値をセットする関数を生成します
- * ex) "@aaa.*.bbb.*.ccc" => 値の配列
- * @param handler Proxyハンドラ
- * @returns {SetExpandValuesFn} ドット記法の"@"プロパティに値をセットする関数
- */
-const setExpandValuesFn = (handler) => {
-    const getValue = getValueFn(handler);
-    return function (target, propInfo, value, receiver) {
-        if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
-            utils.raise(`wildcard type is invalid`);
-        }
-        const notifyCallback = handler.notifyCallback;
-        const namedLoopIndexesStack = handler.getNamedLoopIndexesStack?.() ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
-        const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
-        let indexes;
-        let lastIndex = undefined;
-        if (propInfo.wildcardType === "context") {
-            // 一番後ろの*を展開する
-            lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
-            indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
-            indexes[indexes.length - 1] = undefined;
-        }
-        else {
-            // partialの場合、後ろから*を探す
-            let loopIndexes = [];
-            const values = propInfo.wildcardLoopIndexes?.values ?? [];
-            for (let i = values.length - 1; i >= 0; i--) {
-                if (typeof lastIndex === "undefined" && typeof values[i] === "undefined") {
-                    lastIndex = i;
-                }
-                if (typeof loopIndexes === "undefined" && namedLoopIndexes.has(propInfo.wildcardPaths[i])) {
-                    loopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[i])?.values ?? utils.raise(`loopIndexes is undefined`);
-                }
-                if (typeof lastIndex !== "undefined" && typeof loopIndexes !== "undefined") {
-                    break;
-                }
-            }
-            indexes = [];
-            const wildcardIndexes = propInfo.wildcardLoopIndexes?.values ?? utils.raise(`wildcardIndexes is undefined`);
-            for (let i = 0; i < propInfo.wildcardCount; i++) {
-                if (i === lastIndex) {
-                    indexes.push(undefined);
-                }
-                else {
-                    indexes.push(wildcardIndexes[i] ?? loopIndexes[i]);
-                }
-            }
-        }
-        if (typeof lastIndex === "undefined") {
-            utils.raise(`lastIndex is undefined`);
-        }
-        const expandWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
-        const expandWildcardPathInfo = getPropInfo(expandWildcardPath);
-        const expandWildcardParentPath = expandWildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
-        const expandWildcardParentPathInfo = getPropInfo(expandWildcardParentPath);
-        const wildcardLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, lastIndex));
-        const wildcardAccessor = createStatePropertyAccessor(expandWildcardParentPathInfo.pattern, wildcardLoopIndexes);
-        const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
-        const length = getValue(target, expandWildcardParentPathInfo.patternPaths, expandWildcardParentPathInfo.patternElements, expandWildcardParentPathInfo.wildcardPaths, wildcardNamedLoopIndexes, expandWildcardParentPathInfo.paths.length - 1, expandWildcardParentPathInfo.wildcardCount - 1, receiver).length;
-        for (let i = 0; i < length; i++) {
-            indexes[lastIndex] = i;
-            const parentPropInfo = getPropInfo(propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined"));
-            const parentLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, parentPropInfo.wildcardCount - 1));
-            const parentAccessor = createStatePropertyAccessor(parentPropInfo.pattern, parentLoopIndexes);
-            const parentNamedLoopIndexes = createNamedLoopIndexesFromAccessor(parentAccessor);
-            const parentValue = getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, parentNamedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
-            const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
-            const isWildcard = lastElement === "*";
-            Reflect.set(parentValue, isWildcard ? (namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, Array.isArray(value) ? value[i] : value);
-            if (notifyCallback) {
-                notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.pattern));
-            }
-        }
-    };
-};
-
-function createOverrideLoopIndexes(baseIndexes, overrideIndexes) {
-    let loopIndexes = undefined;
-    const iteratorBase = baseIndexes.forward();
-    const iteratorOverride = overrideIndexes.forward();
-    while (true) {
-        const baseIndex = iteratorBase.next();
-        const overrideIndex = iteratorOverride.next();
-        if (baseIndex.done || overrideIndex.done)
-            break;
-        loopIndexes = createLoopIndexes(loopIndexes, overrideIndex.value ?? baseIndex.value);
-    }
-    return loopIndexes ?? utils.raise(`createOverrideLoopIndexes: loopIndexes is undefined.`);
-}
-
-function getValueByPropInfoFn(handler) {
-    const getValue = getValueFn(handler);
-    return function (target, propInfo, receiver) {
-        let namedLoopIndexes;
-        propInfo.expandable;
-        const _getValue = () => getValue(target, propInfo.patternPaths, propInfo.patternElements, propInfo.wildcardPaths, namedLoopIndexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
-        const namedLoopIndexesStack = handler.getNamedLoopIndexesStack?.() ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
-        if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
-            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
-            return _getValue();
-        }
-        else if (propInfo.wildcardType === "all") {
-            namedLoopIndexes = propInfo.wildcardNamedLoopIndexes;
-            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _getValue);
-        }
-        else {
-            const baseLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes?.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
-            const overrideLoopIndexes = propInfo.wildcardNamedLoopIndexes.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
-            const loopIndexes = createOverrideLoopIndexes(baseLoopIndexes, overrideLoopIndexes);
-            const accessor = createStatePropertyAccessor(propInfo.pattern, loopIndexes);
-            namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _getValue);
-        }
-    };
-}
-
-function setValueByPropInfoFn(handler) {
-    const getValue = getValueFn(handler);
-    return function (target, propInfo, value, receiver) {
-        const notifyCallback = handler.notifyCallback;
-        let namedLoopIndexes;
-        const _setValue = () => {
-            try {
-                if (propInfo.elements.length === 1) {
-                    return Reflect.set(target, propInfo.name, value, receiver);
-                }
-                if (propInfo.pattern in target) {
-                    return Reflect.set(target, propInfo.pattern, value, receiver);
-                }
-                const parentPath = propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined");
-                const parentPropInfo = getPropInfo(parentPath);
-                const parentValue = getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, namedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
-                const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
-                const isWildcard = lastElement === "*";
-                return Reflect.set(parentValue, isWildcard ? (namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, value);
-            }
-            finally {
-                if (notifyCallback) {
-                    notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.wildcardPaths.at(-1) ?? ""));
-                }
-            }
-        };
-        const namedLoopIndexesStack = handler.getNamedLoopIndexesStack?.() ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
-        if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
-            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
-            return _setValue();
-        }
-        else if (propInfo.wildcardType === "all") {
-            namedLoopIndexes = propInfo.wildcardNamedLoopIndexes;
-            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _setValue);
-        }
-        else {
-            const baseLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes?.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
-            const overrideLoopIndexes = propInfo.wildcardNamedLoopIndexes.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
-            const loopIndexes = createOverrideLoopIndexes(baseLoopIndexes, overrideLoopIndexes);
-            const accessor = createStatePropertyAccessor(propInfo.pattern, loopIndexes);
-            namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _setValue);
-        }
-    };
-}
-
-const notifyCallbackFn = (handler) => {
-    return function (pattern, loopIndexes) {
-        handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
-    };
-};
-
-class Handler {
-    #component;
-    #accessorProperties;
-    #dependentProps;
-    #objectBySymbol;
-    get accessorProperties() {
-        return this.#accessorProperties;
-    }
-    get dependentProps() {
-        return this.#dependentProps;
-    }
-    get element() {
-        return this.#component;
-    }
-    get component() {
-        return this.#component;
-    }
-    get updator() {
-        return this.component.updator;
-    }
-    get loopContext() {
-        return undefined;
-    }
-    get cache() {
-        return undefined;
-    }
-    set cache(value) {
-    }
-    constructor(component, base) {
-        this.#component = component;
-        const { accessorProperties, dependentProps } = getStateInfo(base);
-        this.#accessorProperties = accessorProperties;
-        this.#dependentProps = dependentProps;
-        this.#objectBySymbol = {
-            [AccessorPropertiesSymbol]: this.#accessorProperties,
-            [DependenciesSymbol]: this.#dependentProps
-        };
-        this.#getterByType["symbol"] = (target, prop, receiver) => this.#getBySymbol.apply(this, [target, prop, receiver]);
-        this.#getterByType["string"] = (target, prop, receiver) => this.#getByString.apply(this, [target, prop, receiver]);
-    }
-    getValue = getValueFn(this);
-    getExpandValues = getExpandValuesFn(this);
-    setExpandValues = setExpandValuesFn(this);
-    getValueByPropInfo = getValueByPropInfoFn(this);
-    setValueByPropInfo = setValueByPropInfoFn(this);
-    findPropertyCallback = findPropertyCallbackFn(this);
-    getNamedLoopIndexesStack = getNamedLoopIndexesStackFn(this);
-    notifyCallback = notifyCallbackFn(this);
-    #getBySymbol(target, prop, receiver) {
-        return this.#objectBySymbol[prop] ??
-            getCallbackMethod(target, receiver, this, prop) ??
-            getApiMethod(target, receiver, this, prop) ??
-            undefined;
-    }
-    #getByString(target, prop, receiver) {
-        return getSpecialProps(target, receiver, this, prop) ?? undefined;
-    }
-    #getterByType = {};
-    clearCache() {
-        if (typeof this.cache !== "undefined") {
-            this.cache = {};
-        }
-    }
-    get(target, prop, receiver) {
-        const isPropString = typeof prop === "string";
-        do {
-            const getterValue = this.#getterByType[typeof prop]?.(target, prop, receiver);
-            if (typeof getterValue !== "undefined")
-                return getterValue;
-            if (isPropString && (prop.startsWith("@@__") || prop === "constructor"))
-                break;
-            if (prop === GetByPropInfoSymbol) {
-                return (propInfo) => this.getValueByPropInfo(target, propInfo, receiver);
-            }
-            if (prop === SetByPropInfoSymbol) {
-                return (propInfo, value) => this.setValueByPropInfo(target, propInfo, value, receiver);
-            }
-            if (!isPropString)
-                break;
-            if (prop[0] === "$") {
-                const index = Number(prop.slice(1));
-                if (isNaN(index))
-                    break;
-                const namedLoopIndexesStack = this.getNamedLoopIndexesStack?.() ?? utils.raise("get: namedLoopIndexesStack is undefined");
-                const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("get: namedLoopIndexes is undefined");
-                const tmpNamedLoopIndexes = Array.from(namedLoopIndexes.values()).filter(v => v.size === index);
-                if (tmpNamedLoopIndexes.length !== 1) {
-                    utils.raise(`context index(${prop}) is ambiguous or null`);
-                }
-                return tmpNamedLoopIndexes[0].value;
-            }
-            const propInfo = getPropInfo(prop);
-            return this.getValueByPropInfo(target, propInfo, receiver);
-        } while (false);
-        return Reflect.get(target, prop, receiver);
-    }
-    set(target, prop, value, receiver) {
-        const isPropString = typeof prop === "string";
-        do {
-            if (isPropString && prop.startsWith("@@__"))
-                break;
-            if (!isPropString)
-                break;
-            if (prop[0] === "$") {
-                const index = Number(prop.slice(1));
-                if (isNaN(index))
-                    break;
-                utils.raise(`context index(${prop}) is read only`);
-            }
-            const propInfo = getPropInfo(prop);
-            return this.setValueByPropInfo(target, propInfo, value, receiver);
-        } while (false);
-        return Reflect.set(target, prop, value, receiver);
-    }
-}
-
-class ReadonlyHandler extends Handler {
-    // MapよりObjectのほうが速かった。keyにconstructorやlengthがある場合は、Mapを選択
-    #cache = {};
-    get cache() {
-        return this.#cache;
-    }
-    set cache(value) {
-        this.#cache = value;
-    }
-    set(target, prop, value, receiver) {
-        utils.raise("ReadonlyHandler: set is not allowed");
-    }
-}
-function createReadonlyState(component, base) {
-    return new Proxy(base, new ReadonlyHandler(component, base));
-}
-
-class WritableHandler extends Handler {
-    notifyCallback = notifyCallbackFn(this);
-}
-function createWritableState(component, base) {
-    return new Proxy(base, new WritableHandler(component, base));
-}
-
-class States {
-    #base;
-    #readonlyState;
-    #writableState;
-    #_writable = false;
-    constructor(base, readOnlyState, writableState) {
-        this.#base = base;
-        this.#readonlyState = readOnlyState;
-        this.#writableState = writableState;
-    }
-    get base() {
-        return this.#base;
-    }
-    get #writable() {
-        return this.#_writable;
-    }
-    set #writable(value) {
-        this.#_writable = value;
-        if (value === false) {
-            this.#readonlyState[ClearCacheApiSymbol]();
-        }
-    }
-    get current() {
-        return this.#writable ? this.#writableState : this.#readonlyState;
-    }
-    async asyncSetWritable(callback) {
-        if (this.#writable)
-            utils.raise(`States: already writable`);
-        this.#writable = true;
-        try {
-            return await callback();
-        }
-        finally {
-            this.#writable = false;
-        }
-    }
-    setWritable(callback) {
-        if (this.#writable)
-            utils.raise("States: already writable");
-        this.#writable = true;
-        try {
-            return callback();
-        }
-        finally {
-            this.#writable = false;
-        }
-    }
-}
-function createStates(component, base, readOnlyState = createReadonlyState(component, base), writableState = createWritableState(component, base)) {
-    return new States(base, readOnlyState, writableState);
 }
 
 const ADOPTED_VAR_NAME = '--adopted-css';
@@ -4622,6 +3945,576 @@ function createNewBindingSummary() {
     return new NewBindingSummary();
 }
 
+const callFuncBySymbol = {
+    [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, event, loopContext) => state[prop].apply(stateProxy, [event, ...(loopContext?.loopIndexes.values ?? [])]),
+    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, loopIndexes) => handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
+    [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
+    [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
+};
+function getApiMethod(state, stateProxy, handler, prop) {
+    return callFuncBySymbol[prop]?.({ state, stateProxy, handler });
+}
+
+const CONNECTED_EVENT = "connected";
+const DISCONNECTED_EVENT = "disconnected";
+const UPDATED_EVENT = "updated";
+const createConnectedDetail = (...args) => ({});
+const createDisconnectedDetail = (...args) => ({});
+const createUpdatedDetail = (...args) => ({ props: args });
+const createDetailFn = {
+    [ConnectedEventSymbol]: createConnectedDetail,
+    [DisconnectedEventSymbol]: createDisconnectedDetail,
+    [UpdatedEventSymbol]: createUpdatedDetail,
+};
+const customEventNames = {
+    [ConnectedEventSymbol]: CONNECTED_EVENT,
+    [DisconnectedEventSymbol]: DISCONNECTED_EVENT,
+    [UpdatedEventSymbol]: UPDATED_EVENT,
+};
+function dispatchCustomEvent(component, symbol, args) {
+    const eventName = customEventNames[symbol] ?? utils.raise(`Unknown event symbol: ${symbol.description} `);
+    const detailFn = createDetailFn[symbol] ?? utils.raise(`Unknown detail function for event symbol: ${symbol.description}`);
+    const detail = detailFn(...args);
+    const event = new CustomEvent(eventName, { detail });
+    component.dispatchEvent(event);
+}
+
+const CONNECTED_CALLBACK = "$connectedCallback";
+const DISCONNECTED_CALLBACK = "$disconnectedCallback";
+const UPDATED_CALLBACK = "$updatedCallback";
+const callbackNameBySymbol = {
+    [ConnectedCallbackSymbol]: CONNECTED_CALLBACK,
+    [DisconnectedCallbackSymbol]: DISCONNECTED_CALLBACK,
+    [UpdatedCallbackSymbol]: UPDATED_CALLBACK,
+};
+const allCallbacks = new Set([
+    ConnectedCallbackSymbol,
+    DisconnectedCallbackSymbol,
+    UpdatedCallbackSymbol,
+]);
+const callbackToEvent = {
+    [ConnectedCallbackSymbol]: ConnectedEventSymbol,
+    [DisconnectedCallbackSymbol]: DisconnectedEventSymbol,
+    [UpdatedCallbackSymbol]: UpdatedEventSymbol,
+};
+const applyCallback = (state, stateProxy, handler, prop) => async (...args) => {
+    const returnValue = (state[callbackNameBySymbol[prop]])?.apply(stateProxy, args);
+    dispatchCustomEvent(handler.element, callbackToEvent[prop], args);
+    return returnValue;
+};
+function getCallbackMethod(state, stateProxy, handler, prop) {
+    return (allCallbacks.has(prop)) ?
+        (...args) => applyCallback(state, stateProxy, handler, prop)(...args) :
+        undefined;
+}
+
+function existsProperty(baseClass, prop) {
+    if (typeof baseClass.prototype === "undefined")
+        return false;
+    if (baseClass.prototype === Object.prototype)
+        return false;
+    if (typeof baseClass.prototype[prop] !== "undefined")
+        return true;
+    return existsProperty(Object.getPrototypeOf(baseClass), prop);
+}
+const permittedProps = new Set([
+    "element", "addProcess", "viewRootElement ", "queryRoot",
+    "asyncShowModal", "asyncShow",
+    "asyncShowPopover", "cancelPopover"
+]);
+class UserProxyHandler {
+    get(target, prop) {
+        if (permittedProps.has(prop)) {
+            return Reflect.get(target, prop);
+        }
+        else {
+            if (existsProperty(target.baseClass, prop)) {
+                return Reflect.get(target, prop);
+            }
+            else {
+                utils.raise(`property ${prop} is not found in ${target.baseClass.name}`);
+            }
+        }
+    }
+}
+/**
+ * State内で使用するコンポーネントを生成する
+ * アクセス制限をかけるためのProxyを生成する
+ * @param component コンポーネントを元にProxyを生成する
+ * @returns {IUserComponent} ユーザーコンポーネント
+ */
+function createUserComponent(component) {
+    return new Proxy(component, new UserProxyHandler);
+}
+
+const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
+const COMPONENT_PROPERTY = "$component";
+const ADD_PROCESS_PROPERTY = "$addProcess";
+const funcByName = {
+    [DEPENDENT_PROPS_PROPERTY]: ({ state }) => state[DEPENDENT_PROPS_PROPERTY],
+    [COMPONENT_PROPERTY]: ({ handler }) => createUserComponent(handler.element),
+    [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updator.addProcess(func, stateProxy, [], handler.loopContext)
+};
+function getSpecialProps(state, stateProxy, handler, prop) {
+    return funcByName[prop]?.({ state, stateProxy, handler, prop });
+}
+
+function createOverrideLoopIndexes(baseIndexes, overrideIndexes) {
+    let loopIndexes = undefined;
+    const iteratorBase = baseIndexes.forward();
+    const iteratorOverride = overrideIndexes.forward();
+    while (true) {
+        const baseIndex = iteratorBase.next();
+        const overrideIndex = iteratorOverride.next();
+        if (baseIndex.done || overrideIndex.done)
+            break;
+        loopIndexes = createLoopIndexes(loopIndexes, overrideIndex.value ?? baseIndex.value);
+    }
+    return loopIndexes ?? utils.raise(`createOverrideLoopIndexes: loopIndexes is undefined.`);
+}
+
+function getDescByNames(target) {
+    const descByNames = {};
+    let object = target;
+    while (object !== Object.prototype) {
+        const descs = Object.getOwnPropertyDescriptors(object);
+        for (const [name, desc] of Object.entries(descs)) {
+            if (Reflect.has(descByNames, name))
+                continue;
+            descByNames[name] = desc;
+        }
+        object = Object.getPrototypeOf(object);
+    }
+    return descByNames;
+}
+function _getAccessorProperties(target) {
+    const descByNames = getDescByNames(target);
+    const accessorProperties = [];
+    for (const [name, desc] of Object.entries(descByNames)) {
+        if (desc.get || desc.set)
+            accessorProperties.push(name);
+    }
+    return accessorProperties;
+}
+const _cache = new Map();
+function getAccessorProperties(target) {
+    let accessorProperties = _cache.get(target.constructor);
+    if (typeof accessorProperties === "undefined") {
+        accessorProperties = _getAccessorProperties(target);
+        if ({}.constructor !== target.constructor)
+            _cache.set(target.constructor, accessorProperties);
+    }
+    return accessorProperties;
+}
+
+/**
+ * $dependentPropsを表現
+ */
+class DependentProps {
+    defaultProps = new Set;
+    propsByRefProp = {};
+    constructor(props) {
+        this.#setDependentProps(props);
+    }
+    setDefaultProp(pattern) {
+        if (this.defaultProps.has(pattern))
+            return;
+        const patternInfo = getPatternInfo(pattern);
+        for (let i = patternInfo.patternPaths.length - 1; i >= 1; i--) {
+            const parentPattern = patternInfo.patternPaths[i - 1];
+            const pattern = patternInfo.patternPaths[i];
+            this.propsByRefProp[parentPattern]?.add(pattern) ??
+                (this.propsByRefProp[parentPattern] = new Set([pattern]));
+            this.defaultProps.add(pattern);
+        }
+    }
+    #setDependentProps(props) {
+        for (const [prop, refProps] of Object.entries(props)) {
+            for (const refProp of refProps) {
+                this.propsByRefProp[refProp]?.add(prop) ?? (this.propsByRefProp[refProp] = new Set([prop]));
+            }
+        }
+    }
+}
+function createDependentProps(props) {
+    return new DependentProps(props);
+}
+
+const DEPENDENT_PROPS = "$dependentProps";
+class Handler {
+    #component;
+    #accessorProperties;
+    #dependentProps;
+    #objectBySymbol;
+    #wrirtable = false;
+    #cache = {};
+    get accessorProperties() {
+        return this.#accessorProperties;
+    }
+    get dependentProps() {
+        return this.#dependentProps;
+    }
+    get element() {
+        return this.#component;
+    }
+    get component() {
+        return this.#component;
+    }
+    get updator() {
+        return this.component.updator;
+    }
+    get loopContext() {
+        return undefined;
+    }
+    get cache() {
+        return this.#cache;
+    }
+    set cache(value) {
+        this.#cache = value;
+    }
+    get writable() {
+        return this.#wrirtable;
+    }
+    constructor(component, base) {
+        this.#component = component;
+        this.#accessorProperties = new Set(getAccessorProperties(base)),
+            this.#dependentProps = createDependentProps(base[DEPENDENT_PROPS] ?? {});
+        this.#objectBySymbol = {
+            [AccessorPropertiesSymbol]: this.#accessorProperties,
+            [DependenciesSymbol]: this.#dependentProps
+        };
+        this.#getterByType["symbol"] = (target, prop, receiver) => this.#getBySymbol.apply(this, [target, prop, receiver]);
+        this.#getterByType["string"] = (target, prop, receiver) => this.#getByString.apply(this, [target, prop, receiver]);
+    }
+    getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex, wildcardIndex, receiver) {
+        let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
+        this.findPropertyCallback(path);
+        const wildcardLoopIndexes = namedLoopIndexes.get(wildcardPaths[wildcardIndex]);
+        // @ts-ignore
+        return (!this.writable) ?
+            ( /* use cache */
+            // @ts-ignore
+            value = this.cache[cacheKey = path + ":" + (wildcardLoopIndexes?.toString() ?? "")] ?? (
+            /* cache value is null or undefined */
+            // @ts-ignore
+            (cacheKey in this.cache) ? value : (
+            /* no cahce */
+            // @ts-ignore
+            this.cache[cacheKey] = ((value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
+                isWildcard = element === "*",
+                this.getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])))))) : (
+        /* not use cache */
+        (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
+            isWildcard = element === "*",
+            this.getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])));
+    }
+    getValueByPropInfo(target, propInfo, receiver) {
+        let namedLoopIndexes;
+        propInfo.expandable;
+        const _getValue = () => this.getValue(target, propInfo.patternPaths, propInfo.patternElements, propInfo.wildcardPaths, namedLoopIndexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
+        if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
+            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            return _getValue();
+        }
+        else if (propInfo.wildcardType === "all") {
+            namedLoopIndexes = propInfo.wildcardNamedLoopIndexes;
+            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _getValue);
+        }
+        else {
+            const baseLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes?.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            const overrideLoopIndexes = propInfo.wildcardNamedLoopIndexes.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            const loopIndexes = createOverrideLoopIndexes(baseLoopIndexes, overrideLoopIndexes);
+            const accessor = createStatePropertyAccessor(propInfo.pattern, loopIndexes);
+            namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _getValue);
+        }
+    }
+    setValueByPropInfo(target, propInfo, value, receiver) {
+        if (!this.writable)
+            utils.raise(`state is readonly`);
+        let namedLoopIndexes;
+        const _setValue = () => {
+            try {
+                if (propInfo.elements.length === 1) {
+                    return Reflect.set(target, propInfo.name, value, receiver);
+                }
+                if (propInfo.pattern in target) {
+                    return Reflect.set(target, propInfo.pattern, value, receiver);
+                }
+                const parentPath = propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined");
+                const parentPropInfo = getPropInfo(parentPath);
+                const parentValue = this.getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, namedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
+                const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
+                const isWildcard = lastElement === "*";
+                return Reflect.set(parentValue, isWildcard ? (namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, value);
+            }
+            finally {
+                this.notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.wildcardPaths.at(-1) ?? ""));
+            }
+        };
+        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
+        if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
+            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            return _setValue();
+        }
+        else if (propInfo.wildcardType === "all") {
+            namedLoopIndexes = propInfo.wildcardNamedLoopIndexes;
+            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _setValue);
+        }
+        else {
+            const baseLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes?.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            const overrideLoopIndexes = propInfo.wildcardNamedLoopIndexes.get(propInfo.pattern) ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            const loopIndexes = createOverrideLoopIndexes(baseLoopIndexes, overrideLoopIndexes);
+            const accessor = createStatePropertyAccessor(propInfo.pattern, loopIndexes);
+            namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+            return namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, _setValue);
+        }
+    }
+    getExpandValues(target, propInfo, receiver) {
+        // ex.
+        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0] }
+        // prop = "aaa.*.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        // prop = "aaa.1.bbb.*.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        // prop = "aaa.*.bbb.1.ccc", stack = { "aaa.*": [0], "aaa.*.bbb.*": [0,1] }
+        // prop = "aaa.0.bbb.1.ccc", NG 
+        if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
+            utils.raise(`wildcard type is invalid`);
+        }
+        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
+        const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
+        let indexes;
+        let lastIndex = undefined;
+        if (propInfo.wildcardType === "context") {
+            // 一番後ろの*を展開する
+            lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
+            indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
+            indexes[indexes.length - 1] = undefined;
+        }
+        else {
+            // partialの場合、後ろから*を探す
+            let loopIndexes = [];
+            const values = propInfo.wildcardLoopIndexes?.values ?? [];
+            for (let i = values.length - 1; i >= 0; i--) {
+                if (typeof lastIndex === "undefined" && typeof values[i] === "undefined") {
+                    lastIndex = i;
+                }
+                if (typeof loopIndexes === "undefined" && namedLoopIndexes.has(propInfo.wildcardPaths[i])) {
+                    loopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[i])?.values ?? utils.raise(`loopIndexes is undefined`);
+                }
+                if (typeof lastIndex !== "undefined" && typeof loopIndexes !== "undefined") {
+                    break;
+                }
+            }
+            indexes = [];
+            const wildcardIndexes = propInfo.wildcardLoopIndexes?.values ?? utils.raise(`wildcardIndexes is undefined`);
+            for (let i = 0; i < propInfo.wildcardCount; i++) {
+                if (i === lastIndex) {
+                    indexes.push(undefined);
+                }
+                else {
+                    indexes.push(wildcardIndexes[i] ?? loopIndexes[i]);
+                }
+            }
+        }
+        if (typeof lastIndex === "undefined") {
+            utils.raise(`lastIndex is undefined`);
+        }
+        const expandWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
+        const expandWildcardPathInfo = getPropInfo(expandWildcardPath);
+        const expandWildcardParentPath = expandWildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
+        const expandWildcardParentPathInfo = getPropInfo(expandWildcardParentPath);
+        const wildcardLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, lastIndex));
+        const wildcardAccessor = createStatePropertyAccessor(expandWildcardParentPathInfo.pattern, wildcardLoopIndexes);
+        const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
+        const length = this.getValue(target, expandWildcardParentPathInfo.patternPaths, expandWildcardParentPathInfo.patternElements, expandWildcardParentPathInfo.wildcardPaths, wildcardNamedLoopIndexes, expandWildcardParentPathInfo.paths.length - 1, expandWildcardParentPathInfo.wildcardCount - 1, receiver).length;
+        const values = [];
+        for (let i = 0; i < length; i++) {
+            indexes[lastIndex] = i;
+            const LoopIndexes = createLoopIndexesFromArray(indexes);
+            const accessor = createStatePropertyAccessor(propInfo.pattern, LoopIndexes);
+            const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+            const value = this.getValue(target, propInfo.patternPaths, propInfo.patternElements, propInfo.wildcardPaths, namedLoopIndexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+            values.push(value);
+        }
+        return values;
+    }
+    setExpandValues(target, propInfo, value, receiver) {
+        if (!this.writable)
+            utils.raise(`state is readonly`);
+        if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
+            utils.raise(`wildcard type is invalid`);
+        }
+        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
+        const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
+        let indexes;
+        let lastIndex = undefined;
+        if (propInfo.wildcardType === "context") {
+            // 一番後ろの*を展開する
+            lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
+            indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
+            indexes[indexes.length - 1] = undefined;
+        }
+        else {
+            // partialの場合、後ろから*を探す
+            let loopIndexes = [];
+            const values = propInfo.wildcardLoopIndexes?.values ?? [];
+            for (let i = values.length - 1; i >= 0; i--) {
+                if (typeof lastIndex === "undefined" && typeof values[i] === "undefined") {
+                    lastIndex = i;
+                }
+                if (typeof loopIndexes === "undefined" && namedLoopIndexes.has(propInfo.wildcardPaths[i])) {
+                    loopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[i])?.values ?? utils.raise(`loopIndexes is undefined`);
+                }
+                if (typeof lastIndex !== "undefined" && typeof loopIndexes !== "undefined") {
+                    break;
+                }
+            }
+            indexes = [];
+            const wildcardIndexes = propInfo.wildcardLoopIndexes?.values ?? utils.raise(`wildcardIndexes is undefined`);
+            for (let i = 0; i < propInfo.wildcardCount; i++) {
+                if (i === lastIndex) {
+                    indexes.push(undefined);
+                }
+                else {
+                    indexes.push(wildcardIndexes[i] ?? loopIndexes[i]);
+                }
+            }
+        }
+        if (typeof lastIndex === "undefined") {
+            utils.raise(`lastIndex is undefined`);
+        }
+        const expandWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`wildcard path is undefined`);
+        const expandWildcardPathInfo = getPropInfo(expandWildcardPath);
+        const expandWildcardParentPath = expandWildcardPathInfo.paths.at(-2) ?? utils.raise(`wildcard parent path is undefined`);
+        const expandWildcardParentPathInfo = getPropInfo(expandWildcardParentPath);
+        const wildcardLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, lastIndex));
+        const wildcardAccessor = createStatePropertyAccessor(expandWildcardParentPathInfo.pattern, wildcardLoopIndexes);
+        const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
+        const length = this.getValue(target, expandWildcardParentPathInfo.patternPaths, expandWildcardParentPathInfo.patternElements, expandWildcardParentPathInfo.wildcardPaths, wildcardNamedLoopIndexes, expandWildcardParentPathInfo.paths.length - 1, expandWildcardParentPathInfo.wildcardCount - 1, receiver).length;
+        for (let i = 0; i < length; i++) {
+            indexes[lastIndex] = i;
+            const parentPropInfo = getPropInfo(propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined"));
+            const parentLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, parentPropInfo.wildcardCount - 1));
+            const parentAccessor = createStatePropertyAccessor(parentPropInfo.pattern, parentLoopIndexes);
+            const parentNamedLoopIndexes = createNamedLoopIndexesFromAccessor(parentAccessor);
+            const parentValue = this.getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, parentNamedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
+            const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
+            const isWildcard = lastElement === "*";
+            Reflect.set(parentValue, isWildcard ? (namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, Array.isArray(value) ? value[i] : value);
+            if (this.writable) {
+                this.notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.pattern));
+            }
+        }
+    }
+    findPropertyCallback(prop) {
+        const dependentProps = this.dependentProps;
+        if (!dependentProps.defaultProps.has(prop)) {
+            dependentProps.setDefaultProp(prop);
+        }
+    }
+    notifyCallback(pattern, loopIndexes) {
+        this.updator.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
+    }
+    #getBySymbol(target, prop, receiver) {
+        return this.#objectBySymbol[prop] ??
+            getCallbackMethod(target, receiver, this, prop) ??
+            getApiMethod(target, receiver, this, prop) ??
+            undefined;
+    }
+    #getByString(target, prop, receiver) {
+        return getSpecialProps(target, receiver, this, prop) ?? undefined;
+    }
+    #getterByType = {};
+    clearCache() {
+        this.cache = {};
+    }
+    setWritable(callbackFn) {
+        if (this.writable)
+            utils.raise("States: already writable");
+        this.#wrirtable = true;
+        try {
+            return callbackFn();
+        }
+        finally {
+            this.#wrirtable = false;
+        }
+    }
+    async asyncSetWritable(callbackFn) {
+        if (this.writable)
+            utils.raise("States: already writable");
+        this.#wrirtable = true;
+        try {
+            return await callbackFn();
+        }
+        finally {
+            this.#wrirtable = false;
+        }
+    }
+    funcBySymbol = {
+        [GetByPropInfoSymbol]: (target, receiver) => (propInfo) => this.getValueByPropInfo(target, propInfo, receiver),
+        [SetByPropInfoSymbol]: (target, receiver) => (propInfo, value) => this.setValueByPropInfo(target, propInfo, value, receiver),
+        [SetWritableSymbol]: (target, receiver) => (callbackFn) => this.setWritable(callbackFn),
+        [AsyncSetWritableSymbol]: (target, receiver) => (callbackFn) => this.asyncSetWritable(callbackFn),
+        [GetBaseStateSymbol]: (target, receiver) => () => target
+    };
+    get(target, prop, receiver) {
+        const isPropString = typeof prop === "string";
+        do {
+            const getterValue = this.#getterByType[typeof prop]?.(target, prop, receiver);
+            if (typeof getterValue !== "undefined")
+                return getterValue;
+            if (isPropString && (prop.startsWith("@@__") || prop === "constructor"))
+                break;
+            if (typeof prop === "symbol") {
+                let fn = this.funcBySymbol[prop]?.(target, receiver);
+                if (typeof fn !== "undefined")
+                    return fn;
+            }
+            if (!isPropString)
+                break;
+            if (prop[0] === "$") {
+                const index = Number(prop.slice(1));
+                if (isNaN(index))
+                    break;
+                const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("get: namedLoopIndexesStack is undefined");
+                const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("get: namedLoopIndexes is undefined");
+                const tmpNamedLoopIndexes = Array.from(namedLoopIndexes.values()).filter(v => v.size === index);
+                if (tmpNamedLoopIndexes.length !== 1) {
+                    utils.raise(`context index(${prop}) is ambiguous or null`);
+                }
+                return tmpNamedLoopIndexes[0].value;
+            }
+            const propInfo = getPropInfo(prop);
+            return this.getValueByPropInfo(target, propInfo, receiver);
+        } while (false);
+        return Reflect.get(target, prop, receiver);
+    }
+    set(target, prop, value, receiver) {
+        if (!this.writable)
+            utils.raise(`state is readonly`);
+        const isPropString = typeof prop === "string";
+        do {
+            if (isPropString && prop.startsWith("@@__"))
+                break;
+            if (!isPropString)
+                break;
+            if (prop[0] === "$") {
+                const index = Number(prop.slice(1));
+                if (isNaN(index))
+                    break;
+                utils.raise(`context index(${prop}) is read only`);
+            }
+            const propInfo = getPropInfo(prop);
+            return this.setValueByPropInfo(target, propInfo, value, receiver);
+        } while (false);
+        return Reflect.set(target, prop, value, receiver);
+    }
+}
+function createStateProxy(component, base) {
+    return new Proxy(base, new Handler(component, base));
+}
+
 const pseudoComponentByNode = new Map;
 const getParentComponent = (_node) => {
     let node = _node;
@@ -4645,7 +4538,7 @@ const localStyleSheetByTagName = new Map;
 /**
  * コンポーネントを拡張する
  * 拡張内容は以下の通り
- * - states: Stateの生成
+ * - state: Stateの生成
  * - initialPromises: 初期化用Promise
  * - alivePromises: アライブ用Promise
  * - rootBindingManager: ルートバインディングマネージャ
@@ -4662,7 +4555,7 @@ function CustomComponent(Base) {
     return class extends Base {
         constructor(...args) {
             super();
-            this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
+            this.#state = createStateProxy(this, Reflect.construct(this.State, [])); // create state
             this.#newBindingSummary = createNewBindingSummary();
             this.#initialPromises = Promise.withResolvers(); // promises for initialize
             this.#updator = createUpdator(this);
@@ -4689,9 +4582,9 @@ function CustomComponent(Base) {
         set alivePromises(promises) {
             this.#alivePromises = promises;
         }
-        #states;
-        get states() {
-            return this.#states;
+        #state;
+        get state() {
+            return this.#state;
         }
         #rootBindingManager;
         get rootBindingManager() {
@@ -4783,8 +4676,8 @@ function CustomComponent(Base) {
                     this.style.overscrollBehavior = "contain";
                 }
             }
-            await this.states.asyncSetWritable(async () => {
-                await this.states.current[ConnectedCallbackSymbol]();
+            await this.state[AsyncSetWritableSymbol](async () => {
+                await this.state[ConnectedCallbackSymbol]();
             });
             // build binding tree and dom 
             const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
@@ -4830,7 +4723,7 @@ function CustomComponent(Base) {
         }
         async disconnectedCallback() {
             this.updator.addProcess(async () => {
-                await this.states.current[DisconnectedCallbackSymbol]();
+                await this.state[DisconnectedCallbackSymbol]();
             }, undefined, [], undefined);
         }
     };
@@ -5067,7 +4960,7 @@ function PopoverComponent(Base) {
                     this.props[SetBufferSymbol](buffer);
                 }
                 for (const key in this.props) {
-                    this.states.current[NotifyForDependentPropsApiSymbol](key, undefined);
+                    this.state[NotifyForDependentPropsApiSymbol](key, undefined);
                 }
             });
             this.addEventListener("toggle", (e) => {

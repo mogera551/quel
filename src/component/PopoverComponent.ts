@@ -71,7 +71,7 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
           this.props[SetBufferSymbol](buffer);
         }
         for(const key in this.props) {
-          this.states.current[NotifyForDependentPropsApiSymbol](key, undefined);
+          this.state[NotifyForDependentPropsApiSymbol](key, undefined);
         }
       });
       this.addEventListener("toggle", (e:Event) => {

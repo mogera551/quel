@@ -1,20 +1,20 @@
 import { utils } from "../utils";
-import { ConnectedCallbackSymbol, DisconnectedCallbackSymbol } from "../state/symbols";
+import { AsyncSetWritableSymbol, ConnectedCallbackSymbol, DisconnectedCallbackSymbol } from "../state/symbols";
 import { isAttachableShadowRoot } from "./isAttachableShadowRoot";
 import { getStyleSheetListByNames } from "./getStyleSheetListByNames";
 import { localizeStyleSheet } from "./localizeStyleSheet";
 import { createUpdator } from "../updator/Updator";
 import { createProps } from "../props/createProps";
 import { IComponent, ICustomComponent, Constructor, IComponentBase } from "./types";
-import { IStates } from "../state/types";
+import { IStateProxy } from "../state/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { createRootContentBindings } from "../binding/ContentBindings";
-import { createStates } from "../state/createStates";
 import { IUpdator } from "../updator/types";
 import { getAdoptedCssNamesFromStyleValue } from "./getAdoptedCssNamesFromStyleValue";
 import { createNewBindingSummary } from "../binding/createNewBindingSummary";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { IProps } from "../props/types";
+import { createStateProxy } from "../state/createStateProxy";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 
@@ -38,7 +38,7 @@ const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 /**
  * コンポーネントを拡張する
  * 拡張内容は以下の通り
- * - states: Stateの生成
+ * - state: Stateの生成
  * - initialPromises: 初期化用Promise
  * - alivePromises: アライブ用Promise
  * - rootBindingManager: ルートバインディングマネージャ
@@ -55,7 +55,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
   return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();
-      this.#states = createStates(this, Reflect.construct(this.State, [])); // create state
+      this.#state = createStateProxy(this, Reflect.construct(this.State, [])); // create state
       this.#newBindingSummary = createNewBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);
@@ -86,9 +86,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       this.#alivePromises = promises;
     }
 
-    #states: IStates;
-    get states(): IStates {
-      return this.#states;
+    #state: IStateProxy;
+    get state(): IStateProxy {
+      return this.#state;
     }
 
     #rootBindingManager?: IContentBindings;
@@ -189,8 +189,8 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         }
       }
 
-      await this.states.asyncSetWritable(async () => {
-        await this.states.current[ConnectedCallbackSymbol]();
+      await this.state[AsyncSetWritableSymbol](async () => {
+        await this.state[ConnectedCallbackSymbol]();
       });
 
       // build binding tree and dom 
@@ -240,7 +240,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     }
     async disconnectedCallback() {
       this.updator.addProcess(async () => {
-        await this.states.current[DisconnectedCallbackSymbol]();
+        await this.state[DisconnectedCallbackSymbol]();
       }, undefined, [], undefined);
     }
   };

@@ -7,7 +7,7 @@ import { createStatePropertyAccessor } from "../state/createStatePropertyAccesso
 import { utils } from "../utils";
 import { GetBufferSymbol } from "./symbols";
 
-type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states"|"props">;
+type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"state"|"props">;
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -29,7 +29,7 @@ export const getterFn = (
       return buffer[thisPropIfo.name];
     }
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-    const parentState = parentComponent.states["current"];
+    const parentState = parentComponent.state;
     const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
     const accessor = (typeof lastWildcardPath !== "undefined") ? 
       createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;

@@ -1,7 +1,7 @@
 import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
 import { IBinding, INewBindingSummary } from "../binding/types";
-import { IStatePropertyAccessor, IStates } from "../state/types";
+import { IStatePropertyAccessor, IStateProxy } from "../state/types";
 import { IUpdator } from "./types";
 import { execProcesses } from "./execProcesses";
 import { expandStateProperties } from "./expandStateProperties";
@@ -13,7 +13,7 @@ import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loop
 import { createLoopContextStack } from "../loopContext/createLoopContextStack";
 import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
-type IComponentForUpdator = Pick<IComponent, "states" | "newBindingSummary" | "template">;
+type IComponentForUpdator = Pick<IComponent, "state" | "newBindingSummary" | "template">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
@@ -28,8 +28,8 @@ class Updator implements IUpdator {
 
   executing = false;
 
-  get states(): IStates {
-    return this.#component.states;
+  get state(): IStateProxy {
+    return this.#component.state;
   }
 
   get newBindingSummary(): INewBindingSummary {
@@ -100,11 +100,11 @@ class Updator implements IUpdator {
         this.updatedBindings.clear();
 
         // 戻り値は更新されたStateのプロパティ情報
-        const _updatedStatePropertyAccessors = await execProcesses(this, this.states);
+        const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
         const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => 
           propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
         // 戻り値は依存関係により更新されたStateのプロパティ情報
-        const updatedStatePropertyAccesses = expandStateProperties(this.states, _updatedStatePropertyAccessors);
+        const updatedStatePropertyAccesses = expandStateProperties(this.state, _updatedStatePropertyAccessors);
 
         await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
         updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses)

@@ -1,6 +1,6 @@
 import { IProcess } from "../component/types";
-import { UpdatedCallbackSymbol } from "../state/symbols";
-import { IStatePropertyAccessor, IStates } from "../state/types";
+import { AsyncSetWritableSymbol, UpdatedCallbackSymbol } from "../state/symbols";
+import { IStatePropertyAccessor, IStateProxy } from "../state/types";
 import { IUpdator } from "./types";
 
 async function execProcess (updator: IUpdator, process: IProcess): Promise<void> {
@@ -25,28 +25,28 @@ async function _execProcesses(updator:IUpdator, processes: IProcess[]): Promise<
   return updator.retrieveAllUpdatedStateProperties();
 }
 
-function enqueueUpdatedCallback(updator:IUpdator, states: IStates, updatedStateProperties: IStatePropertyAccessor[]): void {
+function enqueueUpdatedCallback(updator:IUpdator, state: IStateProxy, updatedStateProperties: IStatePropertyAccessor[]): void {
   // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
   const updateInfos = updatedStateProperties.map(prop => ({ name:prop.pattern, indexes:prop.loopIndexes?.values }));
   updator.addProcess(async () => {
-    await states.current[UpdatedCallbackSymbol](updateInfos);
+    await state[UpdatedCallbackSymbol](updateInfos);
   }, undefined, [], undefined);
 }
 
 export async function execProcesses(
   updator: IUpdator, 
-  states: IStates
+  state: IStateProxy
 ): Promise<IStatePropertyAccessor[]> {
   const totalUpdatedStateProperties: IStatePropertyAccessor[] = 
     updator.retrieveAllUpdatedStateProperties();
-  await states.asyncSetWritable(async () => {
+  await state[AsyncSetWritableSymbol](async () => {
     do {
       const processes = updator.retrieveAllProcesses();
       if (processes.length === 0) break;
       const updateStateProperties = await _execProcesses(updator, processes);
       if (updateStateProperties.length > 0) {
         totalUpdatedStateProperties.push(...updateStateProperties);
-        enqueueUpdatedCallback(updator, states, updateStateProperties)
+        enqueueUpdatedCallback(updator, state, updateStateProperties)
       }
     } while(true);
   });

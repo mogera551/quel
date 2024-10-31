@@ -5,7 +5,7 @@ import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { GetBufferSymbol } from "./symbols";
 
-type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"states"|"props">;
+type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"state"|"props">;
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -27,7 +27,7 @@ export const setterFn = (
     const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
     const loopContext = getLoopContext();
     const writeProperty = (component: IComponentPartial, propInfo: IPropInfo, value: any) => {
-      const state = component.states["current"];
+      const state = component.state;
       return state[SetByPropInfoSymbol](propInfo, value);
     };
     parentComponent.updator?.addProcess(writeProperty, undefined, [ parentComponent, parentPropInfo, value ], loopContext);

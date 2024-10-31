@@ -1,6 +1,6 @@
 import { GetDependentPropsApiSymbol } from "../state/symbols";
 import { getPatternInfo } from "../propertyInfo/getPatternInfo";
-import { IStatePropertyAccessor, IStateProxy, IStates } from "../state/types";
+import { IStatePropertyAccessor, IStateProxy } from "../state/types";
 import { GetByPropInfoSymbol } from "../state/symbols";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { getPropInfo } from "../propertyInfo/getPropInfo";
@@ -124,7 +124,7 @@ function expandIndexes(
 }
 
 export function expandStateProperties(
-  states: IStates, 
+  state: IStateProxy, 
   updatedStateProperties: IStatePropertyAccessor[]
 ): IStatePropertyAccessor[] {
   // expand state properties
@@ -132,7 +132,7 @@ export function expandStateProperties(
   const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.pattern + "\t" + (prop.loopIndexes?.toString() ?? "") ));
   for(let i = 0; i < updatedStateProperties.length; i++) {
     expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(
-      states.current, updatedStateProperties[i], updatedStatePropertiesSet
+      state, updatedStateProperties[i], updatedStatePropertiesSet
     ));
   }
   return expandedStateProperties;

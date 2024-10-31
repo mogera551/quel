@@ -1,43 +1,15 @@
-import { AccessorPropertiesSymbol, ClearCacheApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, GetByPropInfoSymbol, GetDependentPropsApiSymbol, GetDirectSymbol, NotifyForDependentPropsApiSymbol, SetByPropInfoSymbol, SetDirectSymbol } from "./symbols";
+import { AccessorPropertiesSymbol, AsyncSetWritableSymbol, ClearCacheApiSymbol, DependenciesSymbol, DirectryCallApiSymbol, GetBaseStateSymbol, GetByPropInfoSymbol, GetDependentPropsApiSymbol, NotifyForDependentPropsApiSymbol, SetByPropInfoSymbol, SetWritableSymbol } from "./symbols";
 import { IComponent } from "../component/types";
 import { IPatternInfo } from "../propertyInfo/types";
-import { ILoopContext, ILoopIndexes, INamedLoopIndexes, INamedLoopIndexesStack } from "../loopContext/types";
+import { ILoopContext, ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
 import { IUpdator } from "../updator/types";
 import { Indexes, IPropInfo } from "../propertyInfo/types";
 
 export type CleanIndexes = number[];
 export type StackIndexes = Indexes[];
 
-export type GetValueFn = (
-  target:object, 
-  patternPaths:string[],
-  patternElements:string[],
-  wildcardPaths: string[],
-  namedLoopIndexes: INamedLoopIndexes,
-  pathIndex:number, 
-  wildcardIndex:number,
-  receiver:object
-) => any;
-
-export type GetLastIndexesFn = (pattern:string) =>  ILoopIndexes | undefined ;
-export type GetValueWithIndexesFn = (target:object, propInfo:IPropInfo, loopIndexes:ILoopIndexes | undefined, receiver:object) => any;
-export type GetValueWithoutIndexesFn = (target:object, prop:string, receiver:object) => any;
-export type WithIndexesFn = (patternInfo: IPatternInfo, loopIndexes:ILoopIndexes | undefined, callback:() => any) => any; 
-export type SetValueWithIndexesFn = (target:object, propInfo:IPropInfo, loopIndexes:ILoopIndexes | undefined, value:any, receiver:object) => boolean;
-export type SetValueWithoutIndexesFn = (target:object, prop:string, value:any, receiver:object) => boolean;
-export type GetExpandValuesFn = (target:object, propInfo:IPropInfo, receiver:object) => any[];
-export type SetExpandValuesFn = (target:object, propInfo:IPropInfo, value:any, receiver:object) => any;
-export type GetValueDirectFn = (target:object, prop:string, loopIndexes:ILoopIndexes | undefined, receiver:object) => any;
-export type SetValueDirectFn = (target:object, prop:string, loopIndexes:ILoopIndexes | undefined, value:any, receiver:object) => boolean;
-export type FindPropertyCallbackFn = (prop: string) => void;
+// ToDo: この型は削除する
 export type NotifyCallbackFn = (pattern:string, loopIndexes:ILoopIndexes | undefined) => void;
-export type GetValueAccessorFn = (target:object, accessor:IStatePropertyAccessor, receiver:object) => any;
-export type SetValueAccessorFn = (target:object, accessor:IStatePropertyAccessor, value:any, receiver:object) => boolean;
-
-export type GetValueByPropInfoFn = (target:object, propInfo:IPropInfo, receiver:object) => any;
-export type SetValueByPropInfoFn = (target:object, propInfo:IPropInfo, value:any, receiver:object) => boolean;
-
-export type GetNamedLoopIndexesStackFn = () => INamedLoopIndexesStack;
 
 export type StateCache = {[key:string]:any};
 
@@ -48,15 +20,43 @@ export interface IStateHandler {
   readonly updator: IUpdator;
   readonly loopContext?: ILoopContext;
   cache?: StateCache;
-  readonly getValue: GetValueFn;
-  readonly getExpandValues: GetExpandValuesFn;
-  readonly setExpandValues: SetExpandValuesFn;
-  readonly getValueByPropInfo: GetValueByPropInfoFn;
-  readonly setValueByPropInfo: SetValueByPropInfoFn;
-  readonly getNamedLoopIndexesStack: GetNamedLoopIndexesStackFn;
-  readonly findPropertyCallback: FindPropertyCallbackFn;
-  readonly notifyCallback: NotifyCallbackFn;
-
+  getValue(
+    target: object, 
+    patternPaths: string[],
+    patternElements: string[],
+    wildcardPaths: string[],
+    namedLoopIndexes: INamedLoopIndexes,
+    pathIndex: number, 
+    wildcardIndex: number,
+    receiver: object
+  ): any;
+  getValueByPropInfo (
+    target: object, 
+    propInfo: IPropInfo,
+    receiver: object
+  ): any;
+  setValueByPropInfo (
+    target: object, 
+    propInfo: IPropInfo,
+    value: any,
+    receiver: object
+  ): boolean;
+  getExpandValues(
+    target:   object, 
+    propInfo: IPropInfo, 
+    receiver: object
+  ):any[];
+  setExpandValues (
+    target:   object, 
+    propInfo: IPropInfo, 
+    value:    any, 
+    receiver: object
+  ): any;
+  findPropertyCallback(prop:string): void;
+  notifyCallback(
+    pattern:     string,
+    loopIndexes: ILoopIndexes | undefined
+  ): void;
   get(target:object, prop:PropertyKey, receiver:object):any;
   set(target:object, prop:PropertyKey, value:any, receiver:object):boolean;
   clearCache():void;
@@ -70,15 +70,12 @@ export type IWritableStateHandler = {
 export type IReadonlyStateHandler = {
 }
 
-export interface IBaseState  {
-  readonly $dependentProps?: Dependencies;
-}
-
-export interface IStateProxy extends IBaseState {
-  [GetDirectSymbol](prop:string, indexes:ILoopIndexes | undefined): any;
-  [SetDirectSymbol](prop:string, indexes:ILoopIndexes | undefined, value:any): boolean;
+export interface IStateProxy {
   [GetByPropInfoSymbol](propInfo:IPropInfo): any;
   [SetByPropInfoSymbol](propInfo:IPropInfo, value:any): boolean;
+  [SetWritableSymbol](callbackFn:()=>any): any;
+  [AsyncSetWritableSymbol](callbackFn:()=>Promise<any>): Promise<any>;
+  [GetBaseStateSymbol]() : Object;
   readonly [AccessorPropertiesSymbol]: Set<string>;
   readonly [DependenciesSymbol]: IDependentProps;
   // API
@@ -87,6 +84,7 @@ export interface IStateProxy extends IBaseState {
   [GetDependentPropsApiSymbol](): IDependentProps;
   [ClearCacheApiSymbol](): void;
   // Special Property
+  readonly $dependentProps?: Dependencies;
   readonly $component: IComponent; // todo:後でIUserComponentに変更する
   readonly $1?: number;
   readonly $2?: number;
@@ -123,14 +121,7 @@ export type StatePropertyInfo = {
   readonly dependentProps: IDependentProps;
 }
 
-export interface IStates {
-  readonly base: Object;
-  readonly current: IStateProxy;
-  asyncSetWritable(callback: () => Promise<any>): Promise<any>;
-  setWritable(callback: () => any): any;
-}
-
-export type IComponentForHandler = Pick<IComponent, "states" | "updator" | "template"> & HTMLElement;
+export type IComponentForHandler = Pick<IComponent, "state" | "updator" | "template"> & HTMLElement;
 
 export interface IStatePropertyAccessor {
   readonly pattern: string;

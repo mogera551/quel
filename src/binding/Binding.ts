@@ -51,7 +51,7 @@ class Binding implements IBinding {
     return this.component?.newBindingSummary;
   }
   get state(): IStateProxy | undefined {
-    return this.component?.states.current;
+    return this.component?.state;
   }
   get selectorName(): string | undefined{
     return this.component?.selectorName;
