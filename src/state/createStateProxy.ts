@@ -474,6 +474,7 @@ export class Handler implements IStateHandler {
       return await callbackFn();
     } finally {
       this.#wrirtable = false;
+      this.clearCache();
     }
   }
 

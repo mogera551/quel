@@ -4450,6 +4450,7 @@ class Handler {
         }
         finally {
             this.#wrirtable = false;
+            this.clearCache();
         }
     }
     funcBySymbol = {
