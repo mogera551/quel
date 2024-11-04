@@ -264,10 +264,28 @@ export class Handler implements IStateHandler {
     let lastIndex = undefined;
     if (propInfo.wildcardType === "context") {
       // 一番後ろの*を展開する
-      lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
-      const lastWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`lastWildcardPath is undefined`);
-      indexes = namedLoopIndexes.get(lastWildcardPath)?.values ?? [ undefined ];
-      indexes[indexes.length - 1] = undefined;
+      if (propInfo.wildcardCount > 1) {
+        for(let wi = propInfo.wildcardPaths.length - 1; wi >= 0; wi--) {
+          if (namedLoopIndexes.has(propInfo.wildcardPaths[wi])) {
+            indexes = namedLoopIndexes.get(propInfo.wildcardPaths[wi])?.values;
+            break;
+          }
+        }
+        if (typeof indexes === "undefined") {
+          utils.raise(`indexes is undefined`);
+        }
+        if (indexes.length === propInfo.wildcardCount) {
+          indexes[indexes.length - 1] = undefined;
+        } else if ((indexes.length + 1) === propInfo.wildcardCount) {
+          indexes.push(undefined);
+        } else {
+          utils.raise(`indexes length is invalid`);
+        }
+        lastIndex = indexes.length - 1;
+      } else {
+        lastIndex = 0;
+        indexes = [ undefined ];
+      }
     } else {
       // partialの場合、後ろから*を探す
       let loopIndexes: Index[] = [];
@@ -318,15 +336,17 @@ export class Handler implements IStateHandler {
       const LoopIndexes = createLoopIndexesFromArray(indexes);
       const accessor = createStatePropertyAccessor(propInfo.pattern, LoopIndexes)
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-      const value = this.getValue(
-        target,
-        propInfo.patternPaths,
-        propInfo.patternElements,
-        propInfo.wildcardPaths,
-        namedLoopIndexes,
-        propInfo.paths.length - 1,
-        propInfo.wildcardCount - 1,
-        receiver);
+      const value = namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+        return this.getValue(
+          target,
+          propInfo.patternPaths,
+          propInfo.patternElements,
+          propInfo.wildcardPaths,
+          namedLoopIndexes,
+          propInfo.paths.length - 1,
+          propInfo.wildcardCount - 1,
+          receiver);
+      });
       values.push(value);
     }
     return values;
