@@ -7,8 +7,10 @@ import { getPropInfo } from "../propertyInfo/getPropInfo";
 import { ILoopIndexes } from "../loopContext/types";
 import { createLoopIndexes } from "../loopContext/createLoopIndexes";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
+import { IUpdator } from "./types";
 
 function expandStateProperty(
+  updator: IUpdator,
   state:IStateProxy, 
   accessor:IStatePropertyAccessor, 
   updatedStatePropertiesSet:Set<string>,
@@ -51,7 +53,7 @@ function expandStateProperty(
 
     if ((loopIndexes?.size ?? 0) < curPropertyNameInfo.wildcardPaths.length) {
       // ワイルドカードのインデックスを展開する
-      const listOfIndexes = expandIndexes(state, createStatePropertyAccessor(prop, loopIndexes));
+      const listOfIndexes = expandIndexes(updator, state, createStatePropertyAccessor(prop, loopIndexes));
       propertyAccesses.push(...listOfIndexes.map(loopIndexes => createStatePropertyAccessor(prop, loopIndexes)));
     } else {
       // ワイルドカードのインデックスを展開する必要がない場合
@@ -60,30 +62,33 @@ function expandStateProperty(
     }
 
     // 再帰的に展開
-    propertyAccesses.push(...expandStateProperty(state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
+    propertyAccesses.push(...expandStateProperty(updator, state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
   }
   return propertyAccesses;
 }
 
 function expandIndexes(
+  updator: IUpdator,
   state:IStateProxy, 
   statePropertyAccessor:IStatePropertyAccessor
 ):ILoopIndexes[] {
   const { pattern, loopIndexes } = statePropertyAccessor;
-  if (typeof loopIndexes === "undefined") return [];
+  const validLoopIndexes = (typeof loopIndexes !== "undefined");
   const propInfo = getPropInfo(pattern);
-  if (propInfo.wildcardCount === loopIndexes.size) {
+  if (validLoopIndexes && propInfo.wildcardCount === loopIndexes.size) {
     return [ loopIndexes ];
-  } else if (propInfo.wildcardCount < loopIndexes.size) {
+  } else if (validLoopIndexes && propInfo.wildcardCount < loopIndexes.size) {
     return [ loopIndexes.truncate(propInfo.wildcardCount) as ILoopIndexes ];
   } else {
-    const getValuesLength = (name:string, loopIndexes:ILoopIndexes | undefined) => {
-      const accessor = createStatePropertyAccessor(name, loopIndexes);
+    const getValuesLength = (name:string, _loopIndexes:ILoopIndexes | undefined) => {
+      const accessor = createStatePropertyAccessor(name, _loopIndexes);
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-      return state.updator?.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
+      const propInfo = getPropInfo(name);
+      return updator.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
         return state[GetByPropInfoSymbol](propInfo).length;
       });
     }
+    const loopIndexesSize = loopIndexes?.size ?? 0;
     const traverse = (parentName:string, elementIndex:number, _loopIndexes:ILoopIndexes | undefined):ILoopIndexes[] => {
       const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
       const element = propInfo.elements[elementIndex];
@@ -104,8 +109,8 @@ function expandIndexes(
         // 終端でない場合
         const currentName = parentNameDot + element;
         if (element === "*") {
-          if (loopIndexes.size < (_loopIndexes?.size ?? 0)) {
-            return traverse(currentName, elementIndex + 1, _loopIndexes?.truncate(loopIndexes.size + 1));
+          if (loopIndexesSize < (_loopIndexes?.size ?? 0)) {
+            return traverse(currentName, elementIndex + 1, _loopIndexes?.truncate(loopIndexesSize + 1));
           } else {
             const indexesArray = [];
             const len = getValuesLength(parentName, _loopIndexes);
@@ -124,6 +129,7 @@ function expandIndexes(
 }
 
 export function expandStateProperties(
+  updator: IUpdator,
   state: IStateProxy, 
   updatedStateProperties: IStatePropertyAccessor[]
 ): IStatePropertyAccessor[] {
@@ -132,7 +138,7 @@ export function expandStateProperties(
   const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.pattern + "\t" + (prop.loopIndexes?.toString() ?? "") ));
   for(let i = 0; i < updatedStateProperties.length; i++) {
     expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(
-      state, updatedStateProperties[i], updatedStatePropertiesSet
+      updator, state, updatedStateProperties[i], updatedStatePropertiesSet
     ));
   }
   return expandedStateProperties;

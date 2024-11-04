@@ -8,15 +8,15 @@ import { IUpdator } from "./types";
 const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 
 // 
-export async function rebuildBindings(
+export function rebuildBindings(
   updator: IUpdator, 
   newBindingSummary: INewBindingSummary, 
   updatedStatePropertyAccessors: IStatePropertyAccessor[],
   updatedKeys: string[]
-): Promise<void> {
+): void {
   for(let i = 0; i < updatedStatePropertyAccessors.length; i++) {
     const propertyAccessor = updatedStatePropertyAccessors[i];
-    const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor);
+    const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor).toSorted(compareExpandableBindings);
     for(let gi = 0; gi < gatheredBindings.length; gi++) {
       const binding = gatheredBindings[gi];
       if (!binding.expandable) continue;

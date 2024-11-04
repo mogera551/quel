@@ -4,12 +4,13 @@ import { createStatePropertyAccessor } from "../state/createStatePropertyAccesso
 import { IStatePropertyAccessor } from "../state/types";
 import { IUpdator } from "./types";
 
-export async function updateNodes(
+export function updateNodes(
   updator: IUpdator,
   newBindingSummary: INewBindingSummary,
   updatedStatePropertyAccessors: IStatePropertyAccessor[]
 ) {
   const selectBindings: {binding:IBinding, propertyAccessor:IStatePropertyAccessor}[] = [];
+  // select要素以外を更新
   for(let i = 0; i < updatedStatePropertyAccessors.length; i++) {
     const propertyAccessor = updatedStatePropertyAccessors[i];
     const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
@@ -26,6 +27,7 @@ export async function updateNodes(
       }
     });
   }
+  // select要素を更新
   for(let si = 0; si < selectBindings.length; si++) {
     const info = selectBindings[si];
     const propertyAccessor = info.propertyAccessor;

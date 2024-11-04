@@ -1371,7 +1371,7 @@ function createNamedLoopIndexesFromAccessor(propertyAccessor = undefined) {
     return namedLoopIndexes;
 }
 
-function expandStateProperty(state, accessor, updatedStatePropertiesSet, expandedPropertyAccessKeys = new Set([])) {
+function expandStateProperty(updator, state, accessor, updatedStatePropertiesSet, expandedPropertyAccessKeys = new Set([])) {
     const { pattern, loopIndexes } = accessor;
     const propertyAccessKey = pattern + "\t" + (loopIndexes?.toString() ?? "");
     // すでに展開済みの場合は何もしない
@@ -1405,7 +1405,7 @@ function expandStateProperty(state, accessor, updatedStatePropertiesSet, expande
         }
         if ((loopIndexes?.size ?? 0) < curPropertyNameInfo.wildcardPaths.length) {
             // ワイルドカードのインデックスを展開する
-            const listOfIndexes = expandIndexes(state, createStatePropertyAccessor(prop, loopIndexes));
+            const listOfIndexes = expandIndexes(updator, state, createStatePropertyAccessor(prop, loopIndexes));
             propertyAccesses.push(...listOfIndexes.map(loopIndexes => createStatePropertyAccessor(prop, loopIndexes)));
         }
         else {
@@ -1414,29 +1414,30 @@ function expandStateProperty(state, accessor, updatedStatePropertiesSet, expande
             propertyAccesses.push(createStatePropertyAccessor(prop, notifyIndexes));
         }
         // 再帰的に展開
-        propertyAccesses.push(...expandStateProperty(state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
+        propertyAccesses.push(...expandStateProperty(updator, state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
     }
     return propertyAccesses;
 }
-function expandIndexes(state, statePropertyAccessor) {
+function expandIndexes(updator, state, statePropertyAccessor) {
     const { pattern, loopIndexes } = statePropertyAccessor;
-    if (typeof loopIndexes === "undefined")
-        return [];
+    const validLoopIndexes = (typeof loopIndexes !== "undefined");
     const propInfo = getPropInfo(pattern);
-    if (propInfo.wildcardCount === loopIndexes.size) {
+    if (validLoopIndexes && propInfo.wildcardCount === loopIndexes.size) {
         return [loopIndexes];
     }
-    else if (propInfo.wildcardCount < loopIndexes.size) {
+    else if (validLoopIndexes && propInfo.wildcardCount < loopIndexes.size) {
         return [loopIndexes.truncate(propInfo.wildcardCount)];
     }
     else {
-        const getValuesLength = (name, loopIndexes) => {
-            const accessor = createStatePropertyAccessor(name, loopIndexes);
+        const getValuesLength = (name, _loopIndexes) => {
+            const accessor = createStatePropertyAccessor(name, _loopIndexes);
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-            return state.updator?.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
+            const propInfo = getPropInfo(name);
+            return updator.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
                 return state[GetByPropInfoSymbol](propInfo).length;
             });
         };
+        const loopIndexesSize = loopIndexes?.size ?? 0;
         const traverse = (parentName, elementIndex, _loopIndexes) => {
             const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
             const element = propInfo.elements[elementIndex];
@@ -1459,8 +1460,8 @@ function expandIndexes(state, statePropertyAccessor) {
                 // 終端でない場合
                 const currentName = parentNameDot + element;
                 if (element === "*") {
-                    if (loopIndexes.size < (_loopIndexes?.size ?? 0)) {
-                        return traverse(currentName, elementIndex + 1, _loopIndexes?.truncate(loopIndexes.size + 1));
+                    if (loopIndexesSize < (_loopIndexes?.size ?? 0)) {
+                        return traverse(currentName, elementIndex + 1, _loopIndexes?.truncate(loopIndexesSize + 1));
                     }
                     else {
                         const indexesArray = [];
@@ -1479,21 +1480,24 @@ function expandIndexes(state, statePropertyAccessor) {
         return traverse("", 0, undefined);
     }
 }
-function expandStateProperties(state, updatedStateProperties) {
+function expandStateProperties(updator, state, updatedStateProperties) {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.pattern + "\t" + (prop.loopIndexes?.toString() ?? "")));
     for (let i = 0; i < updatedStateProperties.length; i++) {
-        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(state, updatedStateProperties[i], updatedStatePropertiesSet));
+        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(updator, state, updatedStateProperties[i], updatedStatePropertiesSet));
     }
     return expandedStateProperties;
 }
 
+// ソートのための比較関数
+// BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
+const compareExpandableBindings = (a, b) => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 // 
-async function rebuildBindings(updator, newBindingSummary, updatedStatePropertyAccessors, updatedKeys) {
+function rebuildBindings(updator, newBindingSummary, updatedStatePropertyAccessors, updatedKeys) {
     for (let i = 0; i < updatedStatePropertyAccessors.length; i++) {
         const propertyAccessor = updatedStatePropertyAccessors[i];
-        const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor);
+        const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor).toSorted(compareExpandableBindings);
         for (let gi = 0; gi < gatheredBindings.length; gi++) {
             const binding = gatheredBindings[gi];
             if (!binding.expandable)
@@ -1544,8 +1548,9 @@ function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccess
     }
 }
 
-async function updateNodes(updator, newBindingSummary, updatedStatePropertyAccessors) {
+function updateNodes(updator, newBindingSummary, updatedStatePropertyAccessors) {
     const selectBindings = [];
+    // select要素以外を更新
     for (let i = 0; i < updatedStatePropertyAccessors.length; i++) {
         const propertyAccessor = updatedStatePropertyAccessors[i];
         const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
@@ -1564,6 +1569,7 @@ async function updateNodes(updator, newBindingSummary, updatedStatePropertyAcces
             }
         });
     }
+    // select要素を更新
     for (let si = 0; si < selectBindings.length; si++) {
         const info = selectBindings[si];
         const propertyAccessor = info.propertyAccessor;
@@ -1720,10 +1726,13 @@ class Updator {
                 const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
                 const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
-                const updatedStatePropertyAccesses = expandStateProperties(this.state, _updatedStatePropertyAccessors);
-                await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
+                const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
+                // バインディングの再構築
+                rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
+                // リスト要素の更新
                 updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
-                await updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+                // ノードの更新
+                updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
             }
         });
     }
@@ -4210,7 +4219,9 @@ class Handler {
     }
     getValueByPropInfo(target, propInfo, receiver) {
         let namedLoopIndexes;
-        propInfo.expandable;
+        if (propInfo.expandable) {
+            return this.getExpandValues(target, propInfo, receiver);
+        }
         const _getValue = () => this.getValue(target, propInfo.patternPaths, propInfo.patternElements, propInfo.wildcardPaths, namedLoopIndexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
         const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
@@ -4233,6 +4244,9 @@ class Handler {
     setValueByPropInfo(target, propInfo, value, receiver) {
         if (!this.writable)
             utils.raise(`state is readonly`);
+        if (propInfo.expandable) {
+            return this.setExpandValues(target, propInfo, value, receiver);
+        }
         let namedLoopIndexes;
         const _setValue = () => {
             try {
@@ -4288,7 +4302,8 @@ class Handler {
         if (propInfo.wildcardType === "context") {
             // 一番後ろの*を展開する
             lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
-            indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
+            const lastWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`lastWildcardPath is undefined`);
+            indexes = namedLoopIndexes.get(lastWildcardPath)?.values ?? [undefined];
             indexes[indexes.length - 1] = undefined;
         }
         else {
@@ -4352,7 +4367,8 @@ class Handler {
         if (propInfo.wildcardType === "context") {
             // 一番後ろの*を展開する
             lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
-            indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
+            const lastWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`lastWildcardPath is undefined`);
+            indexes = namedLoopIndexes.get(lastWildcardPath)?.values ?? [undefined];
             indexes[indexes.length - 1] = undefined;
         }
         else {

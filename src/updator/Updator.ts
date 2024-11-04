@@ -104,12 +104,16 @@ class Updator implements IUpdator {
         const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => 
           propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
         // 戻り値は依存関係により更新されたStateのプロパティ情報
-        const updatedStatePropertyAccesses = expandStateProperties(this.state, _updatedStatePropertyAccessors);
+        const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
 
-        await rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
-        updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses)
+        // バインディングの再構築
+        rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
 
-        await updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+        // リスト要素の更新
+        updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+
+        // ノードの更新
+        updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
 
       }
     });

@@ -150,7 +150,9 @@ export class Handler implements IStateHandler {
     receiver: object
   ): any {
     let namedLoopIndexes: INamedLoopIndexes;
-    propInfo.expandable
+    if (propInfo.expandable) {
+      return this.getExpandValues(target, propInfo, receiver);
+    }
     const _getValue = () => this.getValue(
       target, 
       propInfo.patternPaths,
@@ -186,6 +188,10 @@ export class Handler implements IStateHandler {
     receiver: object
   ): boolean {
     if (!this.writable) utils.raise(`state is readonly`);
+    if (propInfo.expandable) {
+      return this.setExpandValues(target, propInfo, value, receiver);
+    }
+
     let namedLoopIndexes: INamedLoopIndexes;
     const _setValue = () => {
       try {
@@ -259,7 +265,8 @@ export class Handler implements IStateHandler {
     if (propInfo.wildcardType === "context") {
       // 一番後ろの*を展開する
       lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
-      indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
+      const lastWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`lastWildcardPath is undefined`);
+      indexes = namedLoopIndexes.get(lastWildcardPath)?.values ?? [ undefined ];
       indexes[indexes.length - 1] = undefined;
     } else {
       // partialの場合、後ろから*を探す
@@ -342,7 +349,8 @@ export class Handler implements IStateHandler {
     if (propInfo.wildcardType === "context") {
       // 一番後ろの*を展開する
       lastIndex = (propInfo.wildcardLoopIndexes?.size ?? 0) - 1;
-      indexes = namedLoopIndexes.get(propInfo.pattern)?.values ?? utils.raise(`namedLoopIndexes is undefined`);
+      const lastWildcardPath = propInfo.wildcardPaths[lastIndex] ?? utils.raise(`lastWildcardPath is undefined`);
+      indexes = namedLoopIndexes.get(lastWildcardPath)?.values ?? [ undefined ];
       indexes[indexes.length - 1] = undefined;
     } else {
       // partialの場合、後ろから*を探す
