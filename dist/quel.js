@@ -4434,17 +4434,21 @@ class Handler {
         for (let i = 0; i < length; i++) {
             indexes[lastIndex] = i;
             const parentPropInfo = getPropInfo(propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined"));
-            const parentLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, parentPropInfo.wildcardCount - 1));
+            const parentLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, parentPropInfo.wildcardCount));
             const parentAccessor = createStatePropertyAccessor(parentPropInfo.pattern, parentLoopIndexes);
             const parentNamedLoopIndexes = createNamedLoopIndexesFromAccessor(parentAccessor);
-            const parentValue = this.getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, parentNamedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
+            const parentValue = namedLoopIndexesStack.setNamedLoopIndexes(parentNamedLoopIndexes, () => {
+                return this.getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, parentNamedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
+            });
+            const loopIndexes = createLoopIndexesFromArray(indexes);
             const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
             const isWildcard = lastElement === "*";
-            Reflect.set(parentValue, isWildcard ? (namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, Array.isArray(value) ? value[i] : value);
+            Reflect.set(parentValue, isWildcard ? (indexes.at(-1) ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, Array.isArray(value) ? value[i] : value);
             if (this.writable) {
-                this.notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.pattern));
+                this.notifyCallback(propInfo.pattern, loopIndexes);
             }
         }
+        return true;
     }
     findPropertyCallback(prop) {
         const dependentProps = this.dependentProps;
