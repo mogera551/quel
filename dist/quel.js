@@ -4195,10 +4195,10 @@ class Handler {
         this.#getterByType["symbol"] = (target, prop, receiver) => this.#getBySymbol.apply(this, [target, prop, receiver]);
         this.#getterByType["string"] = (target, prop, receiver) => this.#getByString.apply(this, [target, prop, receiver]);
     }
-    getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex, wildcardIndex, receiver) {
-        let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
+    getValue(target, propInfo, namedLoopIndexes, receiver, pathIndex = propInfo.paths.length - 1, wildcardIndex = propInfo.wildcardCount - 1) {
+        let value, element, isWildcard, path = propInfo.patternPaths[pathIndex], cacheKey;
         this.findPropertyCallback(path);
-        const wildcardLoopIndexes = namedLoopIndexes.get(wildcardPaths[wildcardIndex]);
+        const wildcardLoopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[wildcardIndex]);
         // @ts-ignore
         return (!this.writable) ?
             ( /* use cache */
@@ -4209,20 +4209,20 @@ class Handler {
             (cacheKey in this.cache) ? value : (
             /* no cahce */
             // @ts-ignore
-            this.cache[cacheKey] = ((value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
+            this.cache[cacheKey] = ((value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = propInfo.patternElements[pathIndex],
                 isWildcard = element === "*",
-                this.getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])))))) : (
+                this.getValue(target, propInfo, namedLoopIndexes, receiver, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0))[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])))))) : (
         /* not use cache */
-        (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = patternElements[pathIndex],
+        (value = Reflect.get(target, path, receiver)) ?? ((path in target || pathIndex === 0) ? value : (element = propInfo.patternElements[pathIndex],
             isWildcard = element === "*",
-            this.getValue(target, patternPaths, patternElements, wildcardPaths, namedLoopIndexes, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0), receiver)[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])));
+            this.getValue(target, propInfo, namedLoopIndexes, receiver, pathIndex - 1, wildcardIndex - (isWildcard ? 1 : 0))[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element])));
     }
     getValueByPropInfo(target, propInfo, receiver) {
         let namedLoopIndexes;
         if (propInfo.expandable) {
             return this.getExpandValues(target, propInfo, receiver);
         }
-        const _getValue = () => this.getValue(target, propInfo.patternPaths, propInfo.patternElements, propInfo.wildcardPaths, namedLoopIndexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+        const _getValue = () => this.getValue(target, propInfo, namedLoopIndexes, receiver);
         const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
             namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
@@ -4258,7 +4258,7 @@ class Handler {
                 }
                 const parentPath = propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined");
                 const parentPropInfo = getPropInfo(parentPath);
-                const parentValue = this.getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, namedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
+                const parentValue = this.getValue(target, parentPropInfo, namedLoopIndexes, receiver);
                 const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
                 const isWildcard = lastElement === "*";
                 return Reflect.set(parentValue, isWildcard ? (namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, value);
@@ -4363,7 +4363,7 @@ class Handler {
         const wildcardLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, lastIndex));
         const wildcardAccessor = createStatePropertyAccessor(expandWildcardParentPathInfo.pattern, wildcardLoopIndexes);
         const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
-        const length = this.getValue(target, expandWildcardParentPathInfo.patternPaths, expandWildcardParentPathInfo.patternElements, expandWildcardParentPathInfo.wildcardPaths, wildcardNamedLoopIndexes, expandWildcardParentPathInfo.paths.length - 1, expandWildcardParentPathInfo.wildcardCount - 1, receiver).length;
+        const length = this.getValue(target, expandWildcardParentPathInfo, wildcardNamedLoopIndexes, receiver).length;
         const values = [];
         for (let i = 0; i < length; i++) {
             indexes[lastIndex] = i;
@@ -4371,7 +4371,7 @@ class Handler {
             const accessor = createStatePropertyAccessor(propInfo.pattern, LoopIndexes);
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
             const value = namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-                return this.getValue(target, propInfo.patternPaths, propInfo.patternElements, propInfo.wildcardPaths, namedLoopIndexes, propInfo.paths.length - 1, propInfo.wildcardCount - 1, receiver);
+                return this.getValue(target, propInfo, namedLoopIndexes, receiver);
             });
             values.push(value);
         }
@@ -4430,7 +4430,7 @@ class Handler {
         const wildcardLoopIndexes = createLoopIndexesFromArray(indexes.slice(0, lastIndex));
         const wildcardAccessor = createStatePropertyAccessor(expandWildcardParentPathInfo.pattern, wildcardLoopIndexes);
         const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
-        const length = this.getValue(target, expandWildcardParentPathInfo.patternPaths, expandWildcardParentPathInfo.patternElements, expandWildcardParentPathInfo.wildcardPaths, wildcardNamedLoopIndexes, expandWildcardParentPathInfo.paths.length - 1, expandWildcardParentPathInfo.wildcardCount - 1, receiver).length;
+        const length = this.getValue(target, expandWildcardParentPathInfo, wildcardNamedLoopIndexes, receiver).length;
         for (let i = 0; i < length; i++) {
             indexes[lastIndex] = i;
             const parentPropInfo = getPropInfo(propInfo.patternPaths.at(-2) ?? utils.raise("setValueFromPropInfoFn: parentPropInfo is undefined"));
@@ -4438,7 +4438,7 @@ class Handler {
             const parentAccessor = createStatePropertyAccessor(parentPropInfo.pattern, parentLoopIndexes);
             const parentNamedLoopIndexes = createNamedLoopIndexesFromAccessor(parentAccessor);
             const parentValue = namedLoopIndexesStack.setNamedLoopIndexes(parentNamedLoopIndexes, () => {
-                return this.getValue(target, parentPropInfo.patternPaths, parentPropInfo.patternElements, parentPropInfo.wildcardPaths, parentNamedLoopIndexes, parentPropInfo.paths.length - 1, parentPropInfo.wildcardCount - 1, receiver);
+                return this.getValue(target, parentPropInfo, parentNamedLoopIndexes, receiver);
             });
             const loopIndexes = createLoopIndexesFromArray(indexes);
             const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");

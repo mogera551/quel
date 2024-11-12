@@ -82,17 +82,15 @@ export class Handler implements IStateHandler {
 
   getValue(
     target:           object, 
-    patternPaths:     string[],
-    patternElements:  string[],
-    wildcardPaths:    string[],
+    propInfo:         IPropInfo,
     namedLoopIndexes: INamedLoopIndexes,
-    pathIndex:        number, 
-    wildcardIndex:    number,
-    receiver:         object
+    receiver:         object,
+    pathIndex:        number = propInfo.paths.length - 1, 
+    wildcardIndex:    number = propInfo.wildcardCount - 1
   ): any {
-    let value, element, isWildcard, path = patternPaths[pathIndex], cacheKey;
+    let value, element, isWildcard, path = propInfo.patternPaths[pathIndex], cacheKey;
     this.findPropertyCallback(path);
-    const wildcardLoopIndexes = namedLoopIndexes.get(wildcardPaths[wildcardIndex]);
+    const wildcardLoopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[wildcardIndex]);
     // @ts-ignore
     return (!this.writable) ? 
       (/* use cache */ 
@@ -106,17 +104,15 @@ export class Handler implements IStateHandler {
             this.cache[cacheKey] = (
               (value = Reflect.get(target, path, receiver)) ?? (
                 (path in target || pathIndex === 0) ? value : (
-                  element = patternElements[pathIndex],
+                  element = propInfo.patternElements[pathIndex],
                   isWildcard = element === "*",
                   this.getValue(
                     target, 
-                    patternPaths,
-                    patternElements,
-                    wildcardPaths,
+                    propInfo,
                     namedLoopIndexes, 
+                    receiver,
                     pathIndex - 1, 
-                    wildcardIndex - (isWildcard ? 1 : 0), 
-                    receiver
+                    wildcardIndex - (isWildcard ? 1 : 0)
                   )[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element]
                 )
               )
@@ -127,17 +123,15 @@ export class Handler implements IStateHandler {
         /* not use cache */
         (value = Reflect.get(target, path, receiver)) ?? (
           (path in target || pathIndex === 0) ? value : (
-            element = patternElements[pathIndex],
+            element = propInfo.patternElements[pathIndex],
             isWildcard = element === "*",
             this.getValue(
               target, 
-              patternPaths,
-              patternElements,
-              wildcardPaths,
+              propInfo,
               namedLoopIndexes, 
+              receiver, 
               pathIndex - 1, 
-              wildcardIndex - (isWildcard ? 1 : 0), 
-              receiver
+              wildcardIndex - (isWildcard ? 1 : 0) 
             )[isWildcard ? (wildcardLoopIndexes?.value ?? utils.raise(`wildcard is undefined`)) : element]
           )
         )
@@ -155,12 +149,8 @@ export class Handler implements IStateHandler {
     }
     const _getValue = () => this.getValue(
       target, 
-      propInfo.patternPaths,
-      propInfo.patternElements,
-      propInfo.wildcardPaths,
+      propInfo,
       namedLoopIndexes,
-      propInfo.paths.length - 1, 
-      propInfo.wildcardCount - 1, 
       receiver 
     );
 
@@ -205,12 +195,8 @@ export class Handler implements IStateHandler {
         const parentPropInfo = getPropInfo(parentPath);
         const parentValue = this.getValue(
           target, 
-          parentPropInfo.patternPaths,
-          parentPropInfo.patternElements,
-          parentPropInfo.wildcardPaths,
+          parentPropInfo,
           namedLoopIndexes,
-          parentPropInfo.paths.length - 1, 
-          parentPropInfo.wildcardCount - 1, 
           receiver 
         );
         const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
@@ -323,12 +309,8 @@ export class Handler implements IStateHandler {
     const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
     const length = this.getValue(
       target,
-      expandWildcardParentPathInfo.patternPaths,
-      expandWildcardParentPathInfo.patternElements,
-      expandWildcardParentPathInfo.wildcardPaths,
+      expandWildcardParentPathInfo,
       wildcardNamedLoopIndexes,
-      expandWildcardParentPathInfo.paths.length - 1,
-      expandWildcardParentPathInfo.wildcardCount - 1,
       receiver).length;
     const values = [];
     for(let i = 0; i < length; i++) {
@@ -339,12 +321,8 @@ export class Handler implements IStateHandler {
       const value = namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
         return this.getValue(
           target,
-          propInfo.patternPaths,
-          propInfo.patternElements,
-          propInfo.wildcardPaths,
+          propInfo,
           namedLoopIndexes,
-          propInfo.paths.length - 1,
-          propInfo.wildcardCount - 1,
           receiver);
       });
       values.push(value);
@@ -409,12 +387,8 @@ export class Handler implements IStateHandler {
     const wildcardNamedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardAccessor);
     const length = this.getValue(
       target,
-      expandWildcardParentPathInfo.patternPaths,
-      expandWildcardParentPathInfo.patternElements,
-      expandWildcardParentPathInfo.wildcardPaths,
+      expandWildcardParentPathInfo,
       wildcardNamedLoopIndexes,
-      expandWildcardParentPathInfo.paths.length - 1,
-      expandWildcardParentPathInfo.wildcardCount - 1,
       receiver).length;
 
     for(let i = 0; i < length; i++) {
@@ -426,12 +400,8 @@ export class Handler implements IStateHandler {
       const parentValue = namedLoopIndexesStack.setNamedLoopIndexes(parentNamedLoopIndexes, () => {
         return this.getValue(
           target,
-          parentPropInfo.patternPaths,
-          parentPropInfo.patternElements,
-          parentPropInfo.wildcardPaths,
+          parentPropInfo,
           parentNamedLoopIndexes,
-          parentPropInfo.paths.length - 1,
-          parentPropInfo.wildcardCount - 1,
           receiver);
       });
 

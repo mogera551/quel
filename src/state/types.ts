@@ -22,13 +22,11 @@ export interface IStateHandler {
   cache?: StateCache;
   getValue(
     target: object, 
-    patternPaths: string[],
-    patternElements: string[],
-    wildcardPaths: string[],
+    propInfo: IPropInfo,
     namedLoopIndexes: INamedLoopIndexes,
-    pathIndex: number, 
-    wildcardIndex: number,
-    receiver: object
+    receiver: object,
+    pathIndex?: number, 
+    wildcardIndex?: number
   ): any;
   getValueByPropInfo (
     target: object, 
