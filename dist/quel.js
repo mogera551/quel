@@ -2311,7 +2311,6 @@ class Loop extends TemplateProperty {
     }
 }
 
-const rebuildFunc = (contentBindings) => contentBindings.rebuild();
 class Repeat extends Loop {
     getValue() {
         return this.binding.childrenContentBindings;
@@ -2327,7 +2326,11 @@ class Repeat extends Loop {
         const wildCardName = this.binding.statePropertyName + ".*";
         this.revisionUpForLoop();
         if (lastValueLength < value.length) {
-            this.binding.childrenContentBindings.forEach(rebuildFunc);
+            this.binding.childrenContentBindings.forEach((contentBindings, index) => {
+                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                    contentBindings.rebuild();
+                });
+            });
             for (let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
                 const contentBindings = createContentBindings(uuid, binding);
                 this.binding.appendChildContentBindings(contentBindings);
@@ -2338,11 +2341,19 @@ class Repeat extends Loop {
         }
         else if (lastValueLength > value.length) {
             const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);
-            this.binding.childrenContentBindings.forEach(rebuildFunc);
+            this.binding.childrenContentBindings.forEach((contentBindings, index) => {
+                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                    contentBindings.rebuild();
+                });
+            });
             removeContentBindings.forEach(contentBindings => contentBindings.dispose());
         }
         else {
-            this.binding.childrenContentBindings.forEach(rebuildFunc);
+            this.binding.childrenContentBindings.forEach((contentBindings, index) => {
+                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                    contentBindings.rebuild();
+                });
+            });
         }
     }
     constructor(binding, node, name, filters) {
