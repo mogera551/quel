@@ -17,14 +17,15 @@ export class Repeat extends Loop {
     const lastValueLength = this.getValue().length;
     const wildcardPaths = this.binding.stateProperty.propInfo?.wildcardPaths;
     const parentLastWildCard = wildcardPaths?.[wildcardPaths.length - 1];
-    const stateName = this.binding.stateProperty.name;
+    const wildCardName = this.binding.statePropertyName + ".*";
+
     this.revisionUpForLoop();
     if (lastValueLength < value.length) {
       this.binding.childrenContentBindings.forEach(rebuildFunc);
       for(let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
         const contentBindings = createContentBindings(uuid, binding);
         this.binding.appendChildContentBindings(contentBindings);
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, stateName, newIndex, () => {
+        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
           contentBindings.rebuild();
         })
       }
