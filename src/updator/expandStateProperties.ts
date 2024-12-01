@@ -1,18 +1,23 @@
 import { GetDependentPropsApiSymbol } from "../state/symbols";
-import { IPropertyAccess } from "../binding/types";
-import { getPatternInfo } from "../dotNotation/getPatternInfo";
-import { IStateProxy, IStates } from "../state/types";
-import { createPropertyAccess } from "../binding/createPropertyAccess";
-import { GetDirectSymbol } from "../dotNotation/symbols";
+import { getPatternInfo } from "../propertyInfo/getPatternInfo";
+import { IStatePropertyAccessor, IStateProxy } from "../state/types";
+import { GetByPropInfoSymbol } from "../state/symbols";
+import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
+import { getPropInfo } from "../propertyInfo/getPropInfo";
+import { ILoopIndexes } from "../loopContext/types";
+import { createLoopIndexes } from "../loopContext/createLoopIndexes";
+import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
+import { IUpdator } from "./types";
 
 function expandStateProperty(
+  updator: IUpdator,
   state:IStateProxy, 
-  propertyAccess:IPropertyAccess, 
+  accessor:IStatePropertyAccessor, 
   updatedStatePropertiesSet:Set<string>,
   expandedPropertyAccessKeys:Set<string> = new Set([])
-):IPropertyAccess[] {
-  const { propInfo, indexes } = propertyAccess;
-  const propertyAccessKey = propInfo.pattern + "\t" + indexes.toString();
+):IStatePropertyAccessor[] {
+  const { pattern, loopIndexes } = accessor;
+  const propertyAccessKey = pattern + "\t" + (loopIndexes?.toString() ?? "");
 
   // すでに展開済みの場合は何もしない
   if (expandedPropertyAccessKeys.has(propertyAccessKey)) return [];
@@ -21,14 +26,14 @@ function expandStateProperty(
 
   // 依存関係を記述したプロパティ（$dependentProps）を取得
   const dependentProps = state[GetDependentPropsApiSymbol]();
-  const props = dependentProps.propsByRefProp[propInfo.pattern];
+  const props = dependentProps.propsByRefProp[pattern];
   if (typeof props === "undefined") return [];
 
-  const propertyAccesses = [];
+  const propertyAccesses: IStatePropertyAccessor[] = [];
   const indexesKey: string[] = [];
   const curIndexes = [];
-  for(let i = 0; i < indexes.length; i++) {
-    curIndexes.push(indexes[i]);
+  for(let i = 0; i < (loopIndexes?.size ?? 0); i++) {
+    curIndexes.push(loopIndexes?.at(i));
     indexesKey.push(curIndexes.toString());
   }
 
@@ -38,7 +43,7 @@ function expandStateProperty(
     // 親の配列が更新されている場合は、子の展開は不要
     const updatedParentArray = curPropertyNameInfo.wildcardPaths.some((wildcardPath, index) => {
       const propInfo = getPatternInfo(wildcardPath);
-      const parentPath = propInfo.patternPaths[propInfo.patternPaths.length - 2];
+      const parentPath = propInfo.patternPaths.at(-2);
       const key = parentPath + "\t" + (indexesKey[index - 1] ?? "");
       return updatedStatePropertiesSet.has(key);
     });
@@ -46,60 +51,71 @@ function expandStateProperty(
       continue;
     }
 
-    if (indexes.length < curPropertyNameInfo.wildcardPaths.length) {
+    if ((loopIndexes?.size ?? 0) < curPropertyNameInfo.wildcardPaths.length) {
       // ワイルドカードのインデックスを展開する
-      const listOfIndexes = expandIndexes(state, createPropertyAccess(prop, indexes));
-      propertyAccesses.push(...listOfIndexes.map(indexes => createPropertyAccess(prop, indexes)));
+      const listOfIndexes = expandIndexes(updator, state, createStatePropertyAccessor(prop, loopIndexes));
+      propertyAccesses.push(...listOfIndexes.map(loopIndexes => createStatePropertyAccessor(prop, loopIndexes)));
     } else {
       // ワイルドカードのインデックスを展開する必要がない場合
-      const notifyIndexes = indexes.slice(0, curPropertyNameInfo.wildcardPaths.length);
-      propertyAccesses.push(createPropertyAccess(prop, notifyIndexes));
+      const notifyIndexes = loopIndexes?.truncate(curPropertyNameInfo.wildcardPaths.length);
+      propertyAccesses.push(createStatePropertyAccessor(prop, notifyIndexes));
     }
 
     // 再帰的に展開
-    propertyAccesses.push(...expandStateProperty(state, createPropertyAccess(prop, indexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
+    propertyAccesses.push(...expandStateProperty(updator, state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
   }
   return propertyAccesses;
 }
 
 function expandIndexes(
+  updator: IUpdator,
   state:IStateProxy, 
-  propertyAccess:IPropertyAccess
-):number[][] {
-  const { propInfo, indexes } = propertyAccess;
-  if (propInfo.wildcardCount === indexes.length) {
-    return [ indexes ];
-  } else if (propInfo.wildcardCount < indexes.length) {
-    return [ indexes.slice(0, propInfo.wildcardCount) ];
+  statePropertyAccessor:IStatePropertyAccessor
+):ILoopIndexes[] {
+  const { pattern, loopIndexes } = statePropertyAccessor;
+  const validLoopIndexes = (typeof loopIndexes !== "undefined");
+  const propInfo = getPropInfo(pattern);
+  if (validLoopIndexes && propInfo.wildcardCount === loopIndexes.size) {
+    return [ loopIndexes ];
+  } else if (validLoopIndexes && propInfo.wildcardCount < loopIndexes.size) {
+    return [ loopIndexes.truncate(propInfo.wildcardCount) as ILoopIndexes ];
   } else {
-    const getValuesLength = (name:string, indexes:number[]) => state[GetDirectSymbol](name, indexes).length;
-    const traverse = (parentName:string, elementIndex:number, loopIndexes:number[]):number[][] => {
+    const getValuesLength = (name:string, _loopIndexes:ILoopIndexes | undefined) => {
+      const accessor = createStatePropertyAccessor(name, _loopIndexes);
+      const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
+      const propInfo = getPropInfo(name);
+      return updator.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
+        return state[GetByPropInfoSymbol](propInfo).length;
+      });
+    }
+    const loopIndexesSize = loopIndexes?.size ?? 0;
+    const traverse = (parentName:string, elementIndex:number, _loopIndexes:ILoopIndexes | undefined):ILoopIndexes[] => {
       const parentNameDot = parentName !== "" ? (parentName + ".") : parentName;
       const element = propInfo.elements[elementIndex];
       const isTerminate = (propInfo.elements.length - 1) === elementIndex;
       if (isTerminate) {
         // 終端の場合
         if (element === "*") {
-          const indexesArray: number[][] = [];
-          const len = getValuesLength(parentName, loopIndexes);
+          const indexesArray: ILoopIndexes[] = [];
+          const len = getValuesLength(parentName, _loopIndexes);
           for(let i = 0; i < len; i++) {
-            indexesArray.push(loopIndexes.concat(i));
+            indexesArray.push(createLoopIndexes(_loopIndexes, i));
           }
           return indexesArray;
         } else {
-          return [ loopIndexes ];
+          return (typeof _loopIndexes !== "undefined") ? [ _loopIndexes ] : [];
         }
       } else {
         // 終端でない場合
         const currentName = parentNameDot + element;
         if (element === "*") {
-          if (loopIndexes.length < indexes.length) {
-            return traverse(currentName, elementIndex + 1, indexes.slice(0, loopIndexes.length + 1));
+          if (loopIndexesSize < (_loopIndexes?.size ?? 0)) {
+            return traverse(currentName, elementIndex + 1, _loopIndexes?.truncate(loopIndexesSize + 1));
           } else {
             const indexesArray = [];
-            const len = getValuesLength(parentName, loopIndexes);
+            const len = getValuesLength(parentName, _loopIndexes);
             for(let i = 0; i < len; i++) {
-                indexesArray.push(...traverse(currentName, elementIndex + 1, loopIndexes.concat(i)));
+                indexesArray.push(...traverse(currentName, elementIndex + 1, createLoopIndexes(_loopIndexes, i)));
             }
             return indexesArray;
           }
@@ -108,20 +124,21 @@ function expandIndexes(
         }
       }
     };
-    return traverse("", 0, []);
+    return traverse("", 0, undefined);
   }
 }
 
 export function expandStateProperties(
-  states: IStates, 
-  updatedStateProperties: IPropertyAccess[]
-): IPropertyAccess[] {
+  updator: IUpdator,
+  state: IStateProxy, 
+  updatedStateProperties: IStatePropertyAccessor[]
+): IStatePropertyAccessor[] {
   // expand state properties
   const expandedStateProperties = updatedStateProperties.slice(0);
-  const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.propInfo.pattern + "\t" + prop.indexes.toString()));
+  const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.pattern + "\t" + (prop.loopIndexes?.toString() ?? "") ));
   for(let i = 0; i < updatedStateProperties.length; i++) {
     expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(
-      states.current, updatedStateProperties[i], updatedStatePropertiesSet
+      updator, state, updatedStateProperties[i], updatedStatePropertiesSet
     ));
   }
   return expandedStateProperties;

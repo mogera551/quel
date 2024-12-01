@@ -2,6 +2,7 @@ import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
 import { StateProperty } from "./StateProperty";
 import { IBinding } from "../types";
+import { ILoopIndexes } from "../../loopContext/types";
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -12,15 +13,15 @@ export class ContextIndex extends StateProperty {
   }
 
   getValue():number {
-    return this.binding.parentContentBindings?.currentLoopContext?.indexes[this.index] ?? utils.raise(`ContextIndex: invalid index ${this.name}`);
+    return this.binding.parentContentBindings?.currentLoopContext?.loopIndexes.at(this.index) ?? utils.raise(`ContextIndex: invalid index ${this.name}`);
   }
 
+  get loopIndexes(): ILoopIndexes | undefined {
+    return undefined;
+
+  }
   get indexes():number[] {
     return [];
-  }
-
-  get indexesString():string {
-    return "";
   }
 
   constructor(binding:IBinding, name:string, filters:IFilterText[]) {

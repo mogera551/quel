@@ -1,6 +1,6 @@
 import { utils } from "../utils";
 import { FilterFuncWithOption, EventFilterFuncWithOption } from "../filter/types";
-import { createModule, Module } from "./createModule";
+import { createModule } from "./createModule";
 import { config } from "../Config";
 import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../filter/Manager";
 import { CustomComponent } from "./CustomComponent";

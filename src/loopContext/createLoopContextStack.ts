@@ -1,5 +1,5 @@
 import { utils } from "../utils";
-import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "./types";
+import { ILoopContext, ILoopContextStack, ILoopIndexes, INamedLoopIndexesStack } from "./types";
 
 class LoopContextStack implements ILoopContextStack {
   stack: ILoopContext | undefined;
@@ -13,16 +13,16 @@ class LoopContextStack implements ILoopContextStack {
       utils.raise("namedLoopIndexesStack is already set.");
     }
     let currentLoopContext = loopContext;
-    const namedLoopIndexes: { [key: string]: number[]; } = {};
+    const namedLoopIndexes: { [key: string]: ILoopIndexes; } = {};
     while (typeof currentLoopContext !== "undefined") {
       const name = currentLoopContext.patternName;
-      namedLoopIndexes[name] = currentLoopContext.indexes;
+      namedLoopIndexes[name] = currentLoopContext.serialLoopIndexes;
       currentLoopContext = currentLoopContext.parentLoopContext;
     }
     this.stack = loopContext;
     try {
       await namedLoopIndexesStack.asyncSetNamedLoopIndexes(namedLoopIndexes, async () => {
-        await callback();
+        return await callback();
       });
     } finally {
       this.stack = undefined;

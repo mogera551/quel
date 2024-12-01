@@ -15,6 +15,9 @@ export const DirectryCallApiSymbol:unique symbol = Symbol.for(`${name}.directlyC
 export const NotifyForDependentPropsApiSymbol:unique symbol = Symbol.for(`${name}.notifyForDependentPropsApi`);
 export const GetDependentPropsApiSymbol:unique symbol = Symbol.for(`${name}.getDependentPropsApi`);
 export const ClearCacheApiSymbol:unique symbol = Symbol.for(`${name}.clearCacheApi`);
-export const CreateBufferApiSymbol:unique symbol = Symbol.for(`${name}.createBufferApi`);
-export const FlushBufferApiSymbol:unique symbol = Symbol.for(`${name}.flushBufferApi`);
 
+export const GetByPropInfoSymbol:unique symbol = Symbol.for(`${name}.getPropByInfo`);
+export const SetByPropInfoSymbol:unique symbol = Symbol.for(`${name}.setPropByInfo`);
+export const SetWritableSymbol:unique symbol = Symbol.for(`${name}.setWritable`);
+export const AsyncSetWritableSymbol:unique symbol = Symbol.for(`${name}.asyncSetWritable`);
+export const GetBaseStateSymbol:unique symbol = Symbol.for(`${name}.getBaseState`);

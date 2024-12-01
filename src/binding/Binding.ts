@@ -51,7 +51,7 @@ class Binding implements IBinding {
     return this.component?.newBindingSummary;
   }
   get state(): IStateProxy | undefined {
-    return this.component?.states.current;
+    return this.component?.state;
   }
   get selectorName(): string | undefined{
     return this.component?.selectorName;
@@ -97,6 +97,9 @@ class Binding implements IBinding {
       this.#defaultEventHandler = (binding => event => binding.execDefaultEventHandler(event))(this);
     }
     return this.#defaultEventHandler;
+  }
+  set defaultEventHandler(value:((event:Event)=>void)) {
+    this.#defaultEventHandler = value;
   }
 
   initialize() {

@@ -1,20 +1,22 @@
-import { IBinding, IBindingTreeNode, IContentBindingsTreeNode } from "../binding/types";
+import { IBinding, IContentBindingsTreeNode } from "../binding/types";
+import { Index } from "../propertyInfo/types";
 
 export type INamedLoopContexts = {
   [key: string]: ILoopContext;
 }
 
 export interface ILoopContext {
-  readonly parentLoopContext?: ILoopContext;
-  readonly index: number;
-  readonly indexes: number[];
-  readonly patternName:string;
-  readonly parentBinding:IBindingTreeNode;
   readonly contentBindings: IContentBindingsTreeNode;
+  readonly patternName:string;
+  readonly parentPatternName:string | undefined;
+  readonly parentNamedLoopContext: ILoopContext | undefined
+  readonly parentLoopContext: ILoopContext | undefined;
+  readonly index: number;
+  readonly serialLoopIndexes: ILoopIndexes;
+  readonly loopIndexes: ILoopIndexes;
   readonly namedLoopContexts: INamedLoopContexts;
   readonly loopTreeNodesByName: {[key: string]: Set<IBinding>};
   readonly loopTreeLoopableNodesByName: {[key: string]: Set<IBinding>};
-  find(patternName:string):ILoopContext | undefined;
   dispose():void;
 }
 
@@ -27,25 +29,26 @@ export interface ILoopContextStack {
 }
 
 export interface ILoopIndexes {
-  disposed: boolean;
   readonly parentLoopIndexes: ILoopIndexes | undefined;
-  readonly values: number[];
-  assignValue({ parentLoopIndexes, value, values }: { 
-    parentLoopIndexes: ILoopIndexes | undefined,
-    value: number | undefined,
-    values: number[] | undefined
-  }): void;
-  add(index: number): ILoopIndexes;
-  dispose(): void;
+  readonly value: Index;
+  readonly values: Index[];
+  readonly index: number;
+  readonly size: number;
+  add(value: Index): ILoopIndexes;
+  backward(): Generator<Index>;
+  forward(): Generator<Index>;
+  toString(): string;
+  truncate(length: number): ILoopIndexes | undefined;
+  at(index: number): Index;
 }
 
 export type INamedLoopIndexes = Map<string, ILoopIndexes>;
 
 export interface INamedLoopIndexesStack {
   stack: INamedLoopIndexes[];
-  asyncSetNamedLoopIndexes(namedLoopIndexes: {[key:string]:number[]}, callback: () => Promise<void>): Promise<void>;
-  setNamedLoopIndexes(namedLoopIndexes: INamedLoopIndexes, callback: () => void): void;
-  setSubIndex(parentName: string | undefined, name: string, index: number, callback: () => void): void;
+  readonly lastNamedLoopIndexes: INamedLoopIndexes | undefined;
+  asyncSetNamedLoopIndexes(namedLoopIndexes: {[key:string]:ILoopIndexes}, callback: () => Promise<void>): Promise<void>;
+  setNamedLoopIndexes(namedLoopIndexes: INamedLoopIndexes, callback: () => any): any;
+  setSubIndex(parentName: string | undefined, name: string, index: number, callback: () => any): any;
   getLoopIndexes(name: string): ILoopIndexes | undefined;
-  getNamedLoopIndexes(): INamedLoopIndexes | undefined;
 }

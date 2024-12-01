@@ -1,34 +1,27 @@
 import { 
   DirectryCallApiSymbol, NotifyForDependentPropsApiSymbol, GetDependentPropsApiSymbol, 
-  ClearCacheApiSymbol, CreateBufferApiSymbol, FlushBufferApiSymbol
+  ClearCacheApiSymbol
 } from "./symbols";
 import { IDependentProps, IStateHandler, IStateProxy } from "./types";
-import { createPropertyAccess } from "../binding/createPropertyAccess";
-import { ILoopContext } from "../loopContext/types";
-import { IComponent } from "../component/types";
-import { IDotNotationHandler } from "../dotNotation/types";
-
-const CREATE_BUFFER_METHOD = "$createBuffer";
-const FLUSH_BUFFER_METHOD = "$flushBuffer";
+import { ILoopContext, ILoopIndexes } from "../loopContext/types";
+import { createStatePropertyAccessor } from "./createStatePropertyAccessor";
 
 type State = { [key:string]: any };
 
-type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler & IDotNotationHandler}
+type CallbackParam = {state:State, stateProxy:IStateProxy, handler:IStateHandler}
 
 const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
   [DirectryCallApiSymbol]:
   ({state, stateProxy, handler}:CallbackParam) => 
     async (prop:string, event:Event, loopContext:ILoopContext):Promise<void> => 
-      (state[prop] as Function).apply(stateProxy, [event, ...(loopContext?.indexes ?? [])])
+      (state[prop] as Function).apply(stateProxy, [event, ...(loopContext?.loopIndexes.values ?? [])])
       ,
   [NotifyForDependentPropsApiSymbol]:
     ({handler}:CallbackParam) => 
-      (prop:string, indexes:number[]):void => 
-        handler.updator.addUpdatedStateProperty(createPropertyAccess(prop, indexes)),
+      (prop:string, loopIndexes:ILoopIndexes | undefined):void => 
+        handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
   [GetDependentPropsApiSymbol]:({handler}:CallbackParam) => ():IDependentProps => handler.dependentProps,
   [ClearCacheApiSymbol]:({handler}:CallbackParam) => ():void => handler.clearCache(),
-  [CreateBufferApiSymbol]:({stateProxy}:CallbackParam) => (component:IComponent):void => stateProxy[CREATE_BUFFER_METHOD]?.apply(stateProxy, [component]),
-  [FlushBufferApiSymbol]:({stateProxy}:CallbackParam) => (buffer:{[key:string]:any}, component:IComponent):boolean => stateProxy[FLUSH_BUFFER_METHOD]?.apply(stateProxy, [buffer, component]),
 }
 
 export function getApiMethod(

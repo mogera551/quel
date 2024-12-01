@@ -1,7 +1,8 @@
 import { utils } from "../../utils";
 import { FilterFunc, IFilterText } from "../../filter/types";
 import { FilterManager, Filters } from "../../filter/Manager";
-import { IBinding, INodeProperty, IPropertyAccess } from "../types";
+import { IBinding, INodeProperty } from "../types";
+import { IStatePropertyAccessor } from "../../state/types";
 
 export class NodeProperty implements INodeProperty {
   #node:Node;
@@ -83,7 +84,7 @@ export class NodeProperty implements INodeProperty {
   initialize() {
   }
 
-  postUpdate(propertyAccessByStatePropertyKey:Map<string,IPropertyAccess>) {
+  postUpdate(propertyAccessByStatePropertyKey:Map<string,IStatePropertyAccessor>) {
   }
 
   equals(value:any):boolean {

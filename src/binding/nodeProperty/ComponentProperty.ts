@@ -1,32 +1,13 @@
 import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
-import { BindPropertySymbol, IsComponentSymbol } from "../../component/symbols";
+import { IsComponentSymbol } from "../../component/symbols";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
-import { createPropertyAccess } from "../createPropertyAccess";
-import { IBinding, IBindingPropertyAccess, IPropertyAccess, IStateProperty } from "../types";
-import { ILoopContext } from "../../loopContext/types";
+import { IBinding } from "../types";
 import { IComponent } from "../../component/types";
-
-export class BindingPropertyAccess implements IBindingPropertyAccess{
-  #stateProperty:IStateProperty;
-
-  get name():string {
-    return this.#stateProperty.name;
-  }
-
-  get indexes():number[] {
-    return this.#stateProperty.indexes;
-  }
-
-  get loopContext():ILoopContext | undefined {
-    return this.#stateProperty.binding.parentContentBindings.currentLoopContext;
-  }
-
-  constructor(stateProperty:IStateProperty) {
-    this.#stateProperty = stateProperty;
-  }
-}
+import { IStatePropertyAccessor } from "../../state/types";
+import { getPatternInfo } from "../../propertyInfo/getPatternInfo";
+import { BindPropertySymbol } from "../../props/symbols";
 
 export class ComponentProperty extends ElementBase {
   get propertyName():string {
@@ -53,7 +34,7 @@ export class ComponentProperty extends ElementBase {
   }
   setValue(value:any) {
     try {
-      this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](this.propertyName, []);
+      this.thisComponent.state[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
     } catch(e) {
       console.log(e);
     }
@@ -63,20 +44,24 @@ export class ComponentProperty extends ElementBase {
    * コンポーネントプロパティのバインドを行う
    */
   initialize() {
-    this.thisComponent.props[BindPropertySymbol](this.propertyName, new BindingPropertyAccess(this.binding.stateProperty));
+    this.thisComponent.props[BindPropertySymbol](
+      this.binding.stateProperty.name, 
+      this.propertyName, 
+      () => this.binding.parentContentBindings.currentLoopContext);
   }
 
   /**
    * 更新後処理
    */
-  postUpdate(propertyAccessBystatePropertyKey:Map<string,IPropertyAccess>):void {
+  postUpdate(propertyAccessBystatePropertyKey:Map<string,IStatePropertyAccessor>):void {
     const statePropertyName = this.binding.stateProperty.name;
-    for(const [key, propertyAccess] of propertyAccessBystatePropertyKey.entries()) {
-      if (propertyAccess.pattern === statePropertyName || 
-        propertyAccess.propInfo.patternPaths.includes(statePropertyName)) {
-        const remain = propertyAccess.pattern.slice(statePropertyName.length);
-        this.thisComponent.states.current[UpdatedCallbackSymbol]([createPropertyAccess(`${this.propertyName}${remain}`, propertyAccess.indexes)]);
-        this.thisComponent.states.current[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccess.indexes);
+    for(const [key, propertyAccessor] of propertyAccessBystatePropertyKey.entries()) {
+      const patternInfo = getPatternInfo(propertyAccessor.pattern);
+      if (propertyAccessor.pattern === statePropertyName || 
+        patternInfo.patternPaths.includes(statePropertyName)) {
+        const remain = propertyAccessor.pattern.slice(statePropertyName.length);
+        this.thisComponent.state[UpdatedCallbackSymbol]([{name:`${this.propertyName}${remain}`, indexes:propertyAccessor.loopIndexes?.values}]);
+        this.thisComponent.state[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
       }
     }
   }

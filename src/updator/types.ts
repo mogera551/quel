@@ -1,8 +1,8 @@
 
 import { IProcess } from "../component/types";
-import { IPropertyAccess } from "../binding/types";
 import { IBinding } from "../binding/types";
 import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loopContext/types";
+import { IStatePropertyAccessor } from "../state/types";
 
 export interface IUpdator {
   executing: boolean;
@@ -12,8 +12,8 @@ export interface IUpdator {
   addProcess(target: Function, thisArgument: object | undefined, argumentList: any[], loopContext?: ILoopContext): void;
   retrieveAllProcesses(): IProcess[];
 
-  addUpdatedStateProperty(prop: IPropertyAccess): void;
-  retrieveAllUpdatedStateProperties(): IPropertyAccess[];
+  addUpdatedStateProperty(accessor: IStatePropertyAccessor): void;
+  retrieveAllUpdatedStateProperties(): IStatePropertyAccessor[];
 
   exec(): Promise<void>;
   applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;
