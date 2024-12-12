@@ -189,9 +189,9 @@ export const moduleConfig = { useShadowRoot: true};
       <ul class="todo-list">
         {{ loop:list }}
           <li data-bind="
-            class.completed:list.*.completed; 
-            class.editing:list.*.editing; 
-            ondblclick:startEditing
+            class.completed: list.*.completed; 
+            class.editing:   list.*.editing; 
+            ondblclick:      startEditing
           ">
             {{ if:list.*.editing|falsey }}
               <div class="view">
@@ -203,8 +203,8 @@ export const moduleConfig = { useShadowRoot: true};
               <form data-bind="onsubmit|preventDefault:completeEditing">
                 <input is="myapp-edit" class="edit" data-bind="
                   editingContent; 
-                  onfocusout:completeEditing; 
-                  onkeyup:keyUpOnEditing
+                  onfocusout: completeEditing; 
+                  onkeyup:    keyUpOnEditing
                 ">
               </form>
             {{ endif: }}
