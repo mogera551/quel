@@ -10,9 +10,9 @@
 <script type="importmap">
 {
   "imports": {
-    "quel": "../../dist/quel.js",
-    "main": "./main.sfc.html",
-    "states": "./states.js"
+    "@quel":       "https://cdn.jsdelivr.net/gh/mogera551/quel@latest/dist/quel.min.js",
+    "@app/main":   "./main.sfc.html",
+    "@app/states": "./states.js"
   }
 }
 </script>
@@ -26,9 +26,9 @@ body {
 <myapp-main></myapp-main>
 
 <script type="module">
-import { registerSingleFileComponents } from "quel";
+import { registerSingleFileComponents } from "@quel";
 
-registerSingleFileComponents({ "myapp-main": "main" });
+registerSingleFileComponents({ "myapp-main": "@app/main" });
 </script>
 
 </html>

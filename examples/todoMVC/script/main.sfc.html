@@ -1,54 +1,4 @@
-import * as myappEdit from "./edit.js";
-
-export const componentModules = { myappEdit };
-
-export const html = `
-<section class="todoapp">
-  <header class="header">
-    <h1>todos</h1>
-    <form data-bind="add|preventDefault">
-      <input class="new-todo" data-bind="content" placeholder="What needs to be done?" autofocus="">
-    </form>
-  </header>
-  {{ if:allList.length|gt,0 }}
-    <section class="main">
-      <input class="toggle-all" id="toggle-all" type="checkbox" data-bind="toggleAll;">
-      <label for="toggle-all">Mark all as complete</label>
-      <ul class="todo-list">
-        {{ loop:list }}
-          <li data-bind="class.completed:list.*.completed; class.editing:list.*.editing; ondblclick:startEditing">
-            {{ if:list.*.editing|falsey }}
-              <div class="view">
-                <input class="toggle" type="checkbox" data-bind="list.*.completed">
-                <label data-bind="class.completed:list.*.completed">{{ list.*.content }}</label>
-                <button class="destroy" data-bind="deleteItem"></button>
-              </div>
-            {{ else: }}
-              <form data-bind="completeEditing|preventDefault">
-                <input is="myapp-edit" class="edit" data-bind="editingContent; onfocusout:completeEditing; onkeyup:keyUpOnEditing">
-              </form>
-            {{ endif: }}
-          </li>
-        {{endloop:}}
-      </ul>
-    </section>
-    <footer class="footer">
-      <span class="todo-count"><strong>{{ activeCount }}</strong> item left</span>
-      <ul class="filters">
-        {{ loop:filters }}
-          <li>
-            <a data-bind="selectFilter; class.selected:filters.*.selected">{{ filters.*.text }}</a>
-          </li>
-        {{endloop:}}
-      </ul>
-      {{ if:completedCount|gt,0 }}
-        <button class="clear-completed" data-bind="clearCompleted">Clear completed</button>
-      {{ endif: }}
-    </footer>  
-  {{ endif: }}
-</section>
-`;
-
+<script type="module">
 /**
  * @typedef {Object} TodoItem
  * @property {string} content
@@ -222,3 +172,61 @@ export class State {
 }
 
 export const moduleConfig = { useShadowRoot: true};
+  
+</script>
+  
+<section class="todoapp">
+  <header class="header">
+    <h1>todos</h1>
+    <form data-bind="onsubmit|preventDefault:add">
+      <input class="new-todo" data-bind="content" placeholder="What needs to be done?" autofocus="">
+    </form>
+  </header>
+  {{ if:allList.length|gt,0 }}
+    <section class="main">
+      <input class="toggle-all" id="toggle-all" type="checkbox" data-bind="toggleAll;">
+      <label for="toggle-all">Mark all as complete</label>
+      <ul class="todo-list">
+        {{ loop:list }}
+          <li data-bind="
+            class.completed:list.*.completed; 
+            class.editing:list.*.editing; 
+            ondblclick:startEditing
+          ">
+            {{ if:list.*.editing|falsey }}
+              <div class="view">
+                <input class="toggle" type="checkbox" data-bind="list.*.completed">
+                <label data-bind="class.completed:list.*.completed">{{ list.*.content }}</label>
+                <button class="destroy" data-bind="deleteItem"></button>
+              </div>
+            {{ else: }}
+              <form data-bind="onsubmit|preventDefault:completeEditing">
+                <input is="myapp-edit" class="edit" data-bind="
+                  editingContent; 
+                  onfocusout:completeEditing; 
+                  onkeyup:keyUpOnEditing
+                ">
+              </form>
+            {{ endif: }}
+          </li>
+        {{endloop:}}
+      </ul>
+    </section>
+    <footer class="footer">
+      <span class="todo-count"><strong>{{ activeCount }}</strong> item left</span>
+      <ul class="filters">
+        {{ loop:filters }}
+          <li>
+            <a data-bind="
+              selectFilter; 
+              class.selected:filters.*.selected
+            ">{{ filters.*.text }}</a>
+          </li>
+        {{endloop:}}
+      </ul>
+      {{ if:completedCount|gt,0 }}
+        <button class="clear-completed" data-bind="clearCompleted">Clear completed</button>
+      {{ endif: }}
+    </footer>  
+  {{ endif: }}
+</section>

@@ -1,4 +1,6 @@
-import { registerComponentModules } from "quel";
-import * as myappMain from "./main.js";
+import { registerSingleFileComponents as register } from "@quel";
 
-registerComponentModules({myappMain});
+register({ 
+  "myapp-main": "@app/main",
+  "myapp-edit": "@app/edit"
+});

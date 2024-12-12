@@ -1,17 +1,17 @@
 <script type="module">
-import { allStates } from "states";
+import { allStates } from "@app/states";
 
 const summaryPopulation = (sum, population) => sum + population;
 
 /** @type {string[]} list of region */
-const regions = ["Northeast", "Midwest", "South", "West"];
+const allRegions = ["Northeast", "Midwest", "South", "West"];
 
 /** @type {Map<string,StateInfo[]>} list of States by region name */
 const statesByRegionName = Map.groupBy(allStates, state => state.region);
 
 export class State {
   /** @type {string[]} list of region */
-  regions = regions;
+  regions = allRegions;
 
   /** @type {number} total population, population of all States */
   get totalPopulation() {

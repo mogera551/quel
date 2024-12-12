@@ -1,12 +1,17 @@
-export const html = ``;
+<script type="module">
 
 export class State {
   /**
    * called when the component is connected to the DOM
    */
   async $connectedCallback() {
-    setTimeout(() => this.$component.focus(), 0);
+    const { $component } = this;
+    setTimeout(function () {
+      $component.element.focus();
+    }, 0);
   }
 }
 
 export const options = { extends:"input" };
+
+</script>
