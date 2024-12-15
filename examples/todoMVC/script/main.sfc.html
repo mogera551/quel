@@ -9,15 +9,15 @@ const ESCAPE_KEY = 27;
 
 /** @enum {string} */
 const FilterType = {
-  all: "all",
-  active: "active",
+  all:       "all",
+  active:    "active",
   completed: "completed",
 }
 
 /** @type {Object<FilterType,(item:TodoItem)=>boolean>} filter function by filter type */
 const filterFuncByFilterType = {
-  [FilterType.all]: item => true,
-  [FilterType.active]: item => !item.completed,
+  [FilterType.all]: item       => true,
+  [FilterType.active]: item    => !item.completed,
   [FilterType.completed]: item => item.completed,
 };
 
@@ -30,8 +30,8 @@ export class State {
 
   /** @type {{text:string,value:FilterType}[]} filter list */
   filters = [ 
-    { text:"All", value:FilterType.all }, 
-    { text:"Active", value:FilterType.active }, 
+    { text:"All",       value:FilterType.all }, 
+    { text:"Active",    value:FilterType.active }, 
     { text:"Completed", value:FilterType.completed } 
   ];
 
@@ -146,12 +146,11 @@ export class State {
 
   /**
    * write property callback, used for clear editing
-   * @param {string} prop 
-   * @param {number[]} indexes 
+   * @param {{name:string,indexes:number[]}[]} propInfos 
    */
-  $writeCallback(prop, indexes) {
+  $updatedCallback(propInfos) {
     // clear editing when selected filter changed
-    if (prop === "selectedFilter") {
+    if (propInfos.some(propInfo => propInfo.name === "selectedFilter")) {
       this.clearEditing();
     }
   }
@@ -162,12 +161,15 @@ export class State {
    */
   $dependentProps = {
     "filters.*.selected": [ "filters.*.value", "selectedFilter" ],
-    "list": [ "selectedFilter", "allList", "list.*.completed" ],
-    "list.*.editing": [ "list.*", "editingItem" ],
-    "activeCount": [ "allList", "list.*.completed" ],
-    "completedCount": [ "allList", "list.*.completed" ],
-    "toggleAll": [ "list.*.completed" ],
+
+    "list":             [ "selectedFilter", "allList", "list.*.completed" ],
+    "list.*.editing":   [ "list.*", "editingItem" ],
     "list.*.completed": [ "toggleAll" ],
+
+    "activeCount":    [ "allList", "list.*.completed" ],
+    "completedCount": [ "allList", "list.*.completed" ],
+
+    "toggleAll": [ "list.*.completed" ],
   }
 }
 
@@ -191,7 +193,7 @@ export const moduleConfig = { useShadowRoot: true};
           <li data-bind="
             class.completed: list.*.completed; 
             class.editing:   list.*.editing; 
-            ondblclick:      startEditing
+            ondblclick:      startEditing;
           ">
             {{ if:list.*.editing|falsey }}
               <div class="view">
@@ -204,7 +206,7 @@ export const moduleConfig = { useShadowRoot: true};
                 <input is="myapp-edit" class="edit" data-bind="
                   editingContent; 
                   onfocusout: completeEditing; 
-                  onkeyup:    keyUpOnEditing
+                  onkeyup:    keyUpOnEditing;
                 ">
               </form>
             {{ endif: }}
@@ -219,7 +221,7 @@ export const moduleConfig = { useShadowRoot: true};
           <li>
             <a data-bind="
               selectFilter; 
-              class.selected:filters.*.selected
+              class.selected:filters.*.selected;
             ">{{ filters.*.text }}</a>
           </li>
         {{endloop:}}

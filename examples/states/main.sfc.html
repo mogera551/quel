@@ -1,6 +1,7 @@
 <script type="module">
 import { allStates } from "@app/states";
 
+/** @type {function(number,number):number} sum function */
 const summaryPopulation = (sum, population) => sum + population;
 
 /** @type {string[]} list of region */
@@ -66,7 +67,7 @@ export class State {
  */
 export const filters = {
   output: {
-    "percent": options => value => (Number(value) * 100).toFixed(options[0]),
+    "percent": options => value => (Number(value) * 100).toFixed(options[0] ?? 0),
   }
 }
 
