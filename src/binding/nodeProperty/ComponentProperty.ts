@@ -23,7 +23,7 @@ export class ComponentProperty extends ElementBase {
   }
 
   constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
-    if (Reflect.get(node, IsComponentSymbol) !== true) utils.raise("ComponentProperty: not Quel Component");
+    if (Reflect.get(node, "isQuelComponent") !== true) utils.raise("ComponentProperty: not Quel Component");
     // todo: バインドするプロパティ名のチェック
     // 「*」を含まないようにする
     super(binding, node, name, filters);
