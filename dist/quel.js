@@ -912,24 +912,24 @@ function createModule(componentModule) {
     return Object.assign(new Module, componentModule);
 }
 
-const name$2 = "state";
-const AccessorPropertiesSymbol = Symbol.for(`${name$2}.accessorProperties`);
-const DependenciesSymbol = Symbol.for(`${name$2}.dependencies`);
-const ConnectedEventSymbol = Symbol.for(`${name$2}.connectedEvent`);
-const DisconnectedEventSymbol = Symbol.for(`${name$2}.disconnectedEvent`);
-const UpdatedEventSymbol = Symbol.for(`${name$2}.updatedEvent`);
-const ConnectedCallbackSymbol = Symbol.for(`${name$2}.connectedCallback`);
-const DisconnectedCallbackSymbol = Symbol.for(`${name$2}.disconnectedCallback`);
-const UpdatedCallbackSymbol = Symbol.for(`${name$2}.updatedCallback`);
-const DirectryCallApiSymbol = Symbol.for(`${name$2}.directlyCallApi`);
-const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$2}.notifyForDependentPropsApi`);
-const GetDependentPropsApiSymbol = Symbol.for(`${name$2}.getDependentPropsApi`);
-const ClearCacheApiSymbol = Symbol.for(`${name$2}.clearCacheApi`);
-const GetByPropInfoSymbol = Symbol.for(`${name$2}.getPropByInfo`);
-const SetByPropInfoSymbol = Symbol.for(`${name$2}.setPropByInfo`);
-const SetWritableSymbol = Symbol.for(`${name$2}.setWritable`);
-const AsyncSetWritableSymbol = Symbol.for(`${name$2}.asyncSetWritable`);
-const GetBaseStateSymbol = Symbol.for(`${name$2}.getBaseState`);
+const name$1 = "state";
+const AccessorPropertiesSymbol = Symbol.for(`${name$1}.accessorProperties`);
+const DependenciesSymbol = Symbol.for(`${name$1}.dependencies`);
+const ConnectedEventSymbol = Symbol.for(`${name$1}.connectedEvent`);
+const DisconnectedEventSymbol = Symbol.for(`${name$1}.disconnectedEvent`);
+const UpdatedEventSymbol = Symbol.for(`${name$1}.updatedEvent`);
+const ConnectedCallbackSymbol = Symbol.for(`${name$1}.connectedCallback`);
+const DisconnectedCallbackSymbol = Symbol.for(`${name$1}.disconnectedCallback`);
+const UpdatedCallbackSymbol = Symbol.for(`${name$1}.updatedCallback`);
+const DirectryCallApiSymbol = Symbol.for(`${name$1}.directlyCallApi`);
+const NotifyForDependentPropsApiSymbol = Symbol.for(`${name$1}.notifyForDependentPropsApi`);
+const GetDependentPropsApiSymbol = Symbol.for(`${name$1}.getDependentPropsApi`);
+const ClearCacheApiSymbol = Symbol.for(`${name$1}.clearCacheApi`);
+const GetByPropInfoSymbol = Symbol.for(`${name$1}.getPropByInfo`);
+const SetByPropInfoSymbol = Symbol.for(`${name$1}.setPropByInfo`);
+const SetWritableSymbol = Symbol.for(`${name$1}.setWritable`);
+const AsyncSetWritableSymbol = Symbol.for(`${name$1}.asyncSetWritable`);
+const GetBaseStateSymbol = Symbol.for(`${name$1}.getBaseState`);
 
 // shadow rootが可能なタグ名一覧
 const setOfAttachableTags = new Set([
@@ -1781,14 +1781,14 @@ function createPropsBindingInfo(parentProp, thisProp) {
     return new PropsBindingInfo(parentProp, thisProp);
 }
 
-const name$1 = "bindingProps";
-const BindPropertySymbol = Symbol.for(`${name$1}.bindPropertySymbol`);
-const CheckDuplicateSymbol = Symbol.for(`${name$1}.checkDuplicateSymbol`);
-const CreateBufferSymbol = Symbol.for(`${name$1}.createBufferSymbol`);
-const GetBufferSymbol = Symbol.for(`${name$1}.getBufferSymbol`);
-const FlushBufferSymbol = Symbol.for(`${name$1}.flushBufferSymbol`);
-const SetBufferSymbol = Symbol.for(`${name$1}.setBufferSymbol`);
-const ClearBufferSymbol = Symbol.for(`${name$1}.clearBufferSymbol`);
+const name = "bindingProps";
+const BindPropertySymbol = Symbol.for(`${name}.bindPropertySymbol`);
+const CheckDuplicateSymbol = Symbol.for(`${name}.checkDuplicateSymbol`);
+const CreateBufferSymbol = Symbol.for(`${name}.createBufferSymbol`);
+const GetBufferSymbol = Symbol.for(`${name}.getBufferSymbol`);
+const FlushBufferSymbol = Symbol.for(`${name}.flushBufferSymbol`);
+const SetBufferSymbol = Symbol.for(`${name}.setBufferSymbol`);
+const ClearBufferSymbol = Symbol.for(`${name}.clearBufferSymbol`);
 
 const regexp$3 = RegExp(/^\$[0-9]+$/);
 const getterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
@@ -2629,9 +2629,6 @@ class ElementProperty extends ElementBase {
     }
 }
 
-const name = "component";
-const IsComponentSymbol = Symbol.for(`${name}.isComponent`);
-
 class ComponentProperty extends ElementBase {
     get propertyName() {
         return this.nameElements[1];
@@ -2643,7 +2640,7 @@ class ComponentProperty extends ElementBase {
         return this.node;
     }
     constructor(binding, node, name, filters) {
-        if (Reflect.get(node, IsComponentSymbol) !== true)
+        if (Reflect.get(node, "isQuelComponent") !== true)
             utils.raise("ComponentProperty: not Quel Component");
         // todo: バインドするプロパティ名のチェック
         // 「*」を含まないようにする
