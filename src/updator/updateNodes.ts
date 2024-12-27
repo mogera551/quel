@@ -6,7 +6,7 @@ import { IUpdator } from "./types";
 
 export function updateNodes(
   updator: IUpdator,
-  newBindingSummary: INewBindingSummary,
+  quelBindingSummary: INewBindingSummary,
   updatedStatePropertyAccessors: IStatePropertyAccessor[]
 ) {
   const selectBindings: {binding:IBinding, propertyAccessor:IStatePropertyAccessor}[] = [];
@@ -15,7 +15,7 @@ export function updateNodes(
     const propertyAccessor = updatedStatePropertyAccessors[i];
     const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
     const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
-    newBindingSummary.gatherBindings(propertyAccessor).forEach(async binding => {
+    quelBindingSummary.gatherBindings(propertyAccessor).forEach(async binding => {
       if (binding.expandable) return;
       if (binding.nodeProperty.isSelectValue) {
         selectBindings.push({binding, propertyAccessor});

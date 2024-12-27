@@ -49,15 +49,15 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
           if (this.canceled) {
             this.popoverPromises.reject();
           } else {
-            const buffer = this.props[GetBufferSymbol]();
-            this.props[ClearBufferSymbol]();
+            const buffer = this.quelProps[GetBufferSymbol]();
+            this.quelProps[ClearBufferSymbol]();
             this.popoverPromises.resolve(buffer);
           }
           this.popoverPromises = undefined;
         }
-        if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+        if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
           if (!this.canceled) {
-            this.props[FlushBufferSymbol]();
+            this.quelProps[FlushBufferSymbol]();
           }
         }
         this.canceled = true;
@@ -66,12 +66,12 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
       });
       this.addEventListener("shown", () => {
         this.canceled = true;
-        if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
-          const buffer = this.props[CreateBufferSymbol]();
-          this.props[SetBufferSymbol](buffer);
+        if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
+          const buffer = this.quelProps[CreateBufferSymbol]();
+          this.quelProps[SetBufferSymbol](buffer);
         }
-        for(const key in this.props) {
-          this.state[NotifyForDependentPropsApiSymbol](key, undefined);
+        for(const key in this.quelProps) {
+          this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
         }
       });
       this.addEventListener("toggle", (e:Event) => {
@@ -88,7 +88,7 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
 
     async asyncShowPopover(props:{[key:string]:any}):Promise<any> {
       this.popoverPromises = Promise.withResolvers();
-      this.props[SetBufferSymbol](props);
+      this.quelProps[SetBufferSymbol](props);
       HTMLElement.prototype.showPopover.apply(this);
       return this.popoverPromises.promise;
     }

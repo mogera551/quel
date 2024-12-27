@@ -70,11 +70,11 @@ export class PopoverTarget extends ElementBase {
 
     // ボタンのバインドを設定する
     // ターゲット側でボタンのバインドを設定するのは、難しそうなので、ここで設定する
-    const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
+    const allBindings = Array.from(this.binding.component?.quelBindingSummary?.allBindings ?? []);
     // このボタンに関連するバインディングを取得
     const buttonBindings = 
       allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
-    const props = this.target?.props ?? utils.raise("PopoverTarget: no target props");
+    const props = this.target?.quelProps ?? utils.raise("PopoverTarget: no target props");
     for(const binding of buttonBindings) {
       const popoverTarget = binding.nodeProperty as PopoverTarget;
       const popoverBinding = popoverTarget.binding;

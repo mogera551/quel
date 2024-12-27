@@ -48,7 +48,7 @@ export interface IStateProperty {
 
 export type IComponentPartial = HTMLElement & Pick<IComponent, 
   "useKeyed" | "selectorName" | "eventFilterManager" | "inputFilterManager" | "outputFilterManager" |
-  "state" | "newBindingSummary" | "updator" | "popoverInfo" | "isQuelComponent">;
+  "quelState" | "quelBindingSummary" | "quelUpdator" | "popoverInfo" | "isQuelComponent">;
 
 export interface IBindingTreeNode {
   readonly childrenContentBindings: IContentBindingsTreeNode[];
@@ -71,7 +71,7 @@ export interface IBinding extends IBindingTreeNode {
   readonly eventFilterManager: IFilterManager<"event">;
   readonly inputFilterManager: IFilterManager<"input">;
   readonly outputFilterManager: IFilterManager<"output">;
-  readonly newBindingSummary?: INewBindingSummary;
+  readonly quelBindingSummary?: INewBindingSummary;
   defaultEventHandler: (event:Event)=>void;
   execDefaultEventHandler(event:Event): void;
   initialize(): void;

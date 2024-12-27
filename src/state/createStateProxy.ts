@@ -31,7 +31,7 @@ type IBaseState = {
   [key: string]: any;
 };
 
-type IComponentForHandler = Pick<IComponent, "state" | "updator"> & HTMLElement;
+type IComponentForHandler = Pick<IComponent, "quelState" | "quelUpdator"> & HTMLElement;
 
 export class Handler implements IStateHandler {
   #component: IComponentForHandler;
@@ -53,7 +53,7 @@ export class Handler implements IStateHandler {
     return this.#component;
   }
   get updator(): IUpdator {
-    return this.component.updator;
+    return this.component.quelUpdator;
   }
   get loopContext(): ILoopContext | undefined {
     return undefined;

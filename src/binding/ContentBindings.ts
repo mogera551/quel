@@ -147,9 +147,9 @@ class ContentBindings implements IContentBindings {
    * register bindings to summary
    */
   registerBindingsToSummary() {
-    const newBindingSummary = this.component?.newBindingSummary ?? utils.raise("bindingSummary is undefined");
+    const quelBindingSummary = this.component?.quelBindingSummary ?? utils.raise("bindingSummary is undefined");
     for(let i = 0; i < this.childBindings.length; i++) {
-      newBindingSummary.register(this.childBindings[i]);
+      quelBindingSummary.register(this.childBindings[i]);
     }
   }
 

@@ -7,7 +7,7 @@ import { createStatePropertyAccessor } from "../state/createStatePropertyAccesso
 import { utils } from "../utils";
 import { GetBufferSymbol } from "./symbols";
 
-type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"state"|"props">;
+type IComponentPartial = Pick<IComponent, "quelParentComponent"|"quelUpdator"|"quelState"|"quelProps">;
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -24,17 +24,17 @@ export const getterFn = (
       const index = Number(parentPropInfo.name.slice(1));
       return loopIndexes?.at(index);
     }
-    const buffer = component.props[GetBufferSymbol]();
+    const buffer = component.quelProps[GetBufferSymbol]();
     if (buffer) {
       return buffer[thisPropIfo.name];
     }
-    const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-    const parentState = parentComponent.state;
+    const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
+    const parentState = quelParentComponent.quelState;
     const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
     const accessor = (typeof lastWildcardPath !== "undefined") ? 
       createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
     const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-    return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+    return quelParentComponent.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
       return parentState[GetByPropInfoSymbol](parentPropInfo);
     });
   }

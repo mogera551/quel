@@ -48,15 +48,15 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
           if (this.returnValue === "") {
             this.dialogPromises.reject();
           } else {
-            const buffer = this.props[GetBufferSymbol]();
-            this.props[ClearBufferSymbol]();
+            const buffer = this.quelProps[GetBufferSymbol]();
+            this.quelProps[ClearBufferSymbol]();
             this.dialogPromises.resolve(buffer);
           }
           this.dialogPromises = undefined;
         }
-        if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+        if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
           if (this.returnValue !== "") {
-            this.props[FlushBufferSymbol]();
+            this.quelProps[FlushBufferSymbol]();
           }
         }
       });
@@ -69,7 +69,7 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
     async #show(props:{[key:string]:any}, modal = true) {
       this.returnValue = "";
       this.dialogPromises = Promise.withResolvers();
-      this.props[SetBufferSymbol](props);
+      this.quelProps[SetBufferSymbol](props);
       if (modal) {
         HTMLDialogElement.prototype.showModal.apply(this);
       } else {
@@ -96,10 +96,10 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
       }
-      if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+      if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
         this.returnValue = "";
-        const buffer = this.props[CreateBufferSymbol]();
-        this.props[SetBufferSymbol](buffer);
+        const buffer = this.quelProps[CreateBufferSymbol]();
+        this.quelProps[SetBufferSymbol](buffer);
       }
       return HTMLDialogElement.prototype.showModal.apply(this);
     }
@@ -108,10 +108,10 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: show is only for HTMLDialogElement");
       }
-      if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+      if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
         this.returnValue = "";
-        const buffer = this.props[CreateBufferSymbol]();
-        this.props[SetBufferSymbol](buffer);
+        const buffer = this.quelProps[CreateBufferSymbol]();
+        this.quelProps[SetBufferSymbol](buffer);
       }
       return HTMLDialogElement.prototype.show.apply(this);
     }

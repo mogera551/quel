@@ -33,21 +33,35 @@ const getParentComponent = (_node:Node): IComponent|undefined => {
   } while(true);
 };
 
+// find parent shadow root for adoptedCSS 
+function getParentShadowRoot(parentNode: Node | null): ShadowRoot|undefined{
+  let node: Node | null = parentNode;
+  while(node) {
+    if (node instanceof ShadowRoot) {
+      return node;
+    }
+    node = node.parentNode;
+  }
+}
+
+
 const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
 
 /**
+ * ToDo: quelAlivePromisesが必要かどうかを検討する
+ */
+/**
  * コンポーネントを拡張する
  * 拡張内容は以下の通り
- * - state: Stateの生成
- * - initialPromises: 初期化用Promise
- * - alivePromises: アライブ用Promise
- * - rootBindingManager: ルートバインディングマネージャ
- * - viewRootElement: 表示用ルート要素
- * - pseudoParentNode: 親ノード（use, case of useWebComponent is false）
- * - pseudoNode: ダミーノード（use, case of useWebComponent is false）
- * - newBindingSummary: 新規バインディングサマリ
- * - updator: アップデータ
- * - props: プロパティ
+ * - quelState: Stateの生成
+ * - quelInitialPromises: 初期化用Promise
+ * - quelAlivePromises: アライブ用Promise
+ * - quelViewRootElement: 表示用ルート要素
+ * - quelPseudoParentNode: 親ノード（use, case of useWebComponent is false）
+ * - quelPseudoNode: ダミーノード（use, case of useWebComponent is false）
+ * - quelBindingSummary: 新規バインディングサマリ
+ * - quelUpdator: アップデータ
+ * - quelProps: プロパティ
  * @param Base 元のコンポーネント
  * @returns {CustomComponent} 拡張されたコンポーネント
  */
@@ -56,17 +70,14 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     constructor(...args:any[]) {
       super();
       this.#state = createStateProxy(this, Reflect.construct(this.State, [])); // create state
-      this.#newBindingSummary = createNewBindingSummary();
+      this.#quelBindingSummary = createNewBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);
       this.#props = createProps(this);
     }
 
-    get component():IComponent {
-      return this as unknown as IComponent;
-    }
     #parentComponent?:IComponent;
-    get parentComponent(): IComponent | undefined {
+    get quelParentComponent(): IComponent | undefined {
       if (typeof this.#parentComponent === "undefined") {
         this.#parentComponent = getParentComponent(this);
       }
@@ -74,88 +85,66 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     }
 
     #initialPromises: PromiseWithResolvers<void>;
-    get initialPromises():PromiseWithResolvers<void> {
+    get quelInitialPromises():PromiseWithResolvers<void> {
       return this.#initialPromises;
     }
 
     #alivePromises: PromiseWithResolvers<void>|undefined;
-    get alivePromises():PromiseWithResolvers<void> {
-      return this.#alivePromises ?? utils.raise("alivePromises is undefined");
+    get quelAlivePromises():PromiseWithResolvers<void> {
+      return this.#alivePromises ?? utils.raise("quelAlivePromises is undefined");
     }
-    set alivePromises(promises:PromiseWithResolvers<void>) {
+    set quelAlivePromises(promises:PromiseWithResolvers<void>) {
       this.#alivePromises = promises;
     }
 
-    #state: IStateProxy;
-    get state(): IStateProxy {
-      return this.#state;
+    #state?: IStateProxy;
+    get quelState(): IStateProxy {
+      return this.#state ?? utils.raise("quelState is undefined");
     }
 
-    #rootBindingManager?: IContentBindings;
-    get rootBindingManager(): IContentBindings {
-      return this.#rootBindingManager ?? utils.raise("rootBindingManager is undefined");
-    }
-    set rootBindingManager(bindingManager: IContentBindings) {
-      this.#rootBindingManager = bindingManager;
-    }
+    #rootOfBindingTree?: IContentBindings;
 
-    get viewRootElement():ShadowRoot|HTMLElement {
-      return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode as HTMLElement;
+    get quelViewRootElement():ShadowRoot|HTMLElement {
+      return this.useWebComponent ? (this.shadowRoot ?? this) : this.quelPseudoParentNode as HTMLElement;
     }
 
     // alias view root element */
-    get queryRoot():ShadowRoot|HTMLElement {
-      return this.viewRootElement;
+    get quelQueryRoot():ShadowRoot|HTMLElement {
+      return this.quelViewRootElement;
     }
 
     // parent node（use, case of useWebComponent is false）
-    #pseudoParentNode:Node|undefined;
-    get pseudoParentNode():Node {
+    #pseudoParentNode?:Node;
+    get quelPseudoParentNode():Node {
       return !this.useWebComponent ? 
         (this.#pseudoParentNode ?? utils.raise("pseudoParentNode is undefined")) : 
-        utils.raise("mixInComponent: useWebComponent must be false");
-    }
-    set pseudoParentNode(node:Node) {
-      this.#pseudoParentNode = node;
+        utils.raise("useWebComponent must be false");
     }
 
     // pseudo node（use, case of useWebComponent is false） */
     #pseudoNode?: Node;
-    get pseudoNode(): Node {
-      return this.#pseudoNode ?? utils.raise("pseudoNode is undefined");
-    }
-    set pseudoNode(node:Node) {
-      this.#pseudoNode = node;
-    }
-
-    // find parent shadow root, or document, for adoptedCSS 
-    get shadowRootOrDocument(): ShadowRoot|Document {
-      let node = this.parentNode;
-      while(node) {
-        if (node instanceof ShadowRoot) {
-          return node;
-        }
-        node = node.parentNode;
-      }
-      return document;
+    get quelPseudoNode(): Node {
+      return !this.useWebComponent ? 
+        (this.#pseudoNode ?? utils.raise("pseudoNode is undefined")) :
+        utils.raise("useWebComponent must be false");
     }
 
-    #newBindingSummary: INewBindingSummary;
-    get newBindingSummary(): INewBindingSummary {
-      return this.#newBindingSummary;
+    #quelBindingSummary: INewBindingSummary;
+    get quelBindingSummary(): INewBindingSummary {
+      return this.#quelBindingSummary;
     }
 
     #updator: IUpdator;
-    get updator(): IUpdator {
+    get quelUpdator(): IUpdator {
       return this.#updator;
     }
 
     #props: IProps;
-    get props(): IProps {
+    get quelProps(): IProps {
       return this.#props;
     }
 
-    async build() {
+    async #build() {
       if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
         const shadowRoot = this.attachShadow({mode: 'open'});
         const names = getAdoptedCssNamesFromStyleValue(this);
@@ -176,7 +165,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
               localStyleSheetByTagName.set(this.tagName, adoptedStyleSheet);
             }
           }
-          const shadowRootOrDocument = this.shadowRootOrDocument;
+          const shadowRootOrDocument = getParentShadowRoot(this.parentNode) ?? document;
           const adoptedStyleSheets = shadowRootOrDocument.adoptedStyleSheets;
           if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
             shadowRootOrDocument.adoptedStyleSheets = adoptedStyleSheets.concat(adoptedStyleSheet);
@@ -189,58 +178,58 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         }
       }
 
-      await this.state[AsyncSetWritableSymbol](async () => {
-        await this.state[ConnectedCallbackSymbol]();
+      await this.quelState[AsyncSetWritableSymbol](async () => {
+        await this.quelState[ConnectedCallbackSymbol]();
       });
 
       // build binding tree and dom 
       const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-      this.rootBindingManager = createRootContentBindings(this as unknown as IComponent , uuid);
-      this.updator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
-        this.rootBindingManager.rebuild();
+      const rootOfBindingTree = this.#rootOfBindingTree = createRootContentBindings(this as unknown as IComponent , uuid);
+      this.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
+        rootOfBindingTree.rebuild();
       });
       if (this.useWebComponent) {
         // case of useWebComponent,
-        // then append fragment block to viewRootElement
-        this.viewRootElement.appendChild(this.rootBindingManager.fragment);
+        // then append fragment block to quelViewRootElement
+        this.quelViewRootElement.appendChild(rootOfBindingTree.fragment);
       } else {
         // case of no useWebComponent, 
         // then insert fragment block before pseudo node nextSibling
-        this.viewRootElement.insertBefore(this.rootBindingManager.fragment, this.pseudoNode?.nextSibling ?? null);
+        this.quelViewRootElement.insertBefore(rootOfBindingTree.fragment, this.quelPseudoNode?.nextSibling ?? null);
         // child nodes add pseudoComponentByNode
-        this.rootBindingManager.childNodes.forEach(node => pseudoComponentByNode.set(node, this as unknown as IComponent));
+        rootOfBindingTree.childNodes.forEach(node => pseudoComponentByNode.set(node, this as unknown as IComponent));
       }
     }
 
     async connectedCallback() {
       try {
         // wait for parent component initialize
-        if (this.parentComponent) {
-          await this.parentComponent.initialPromises.promise;
+        if (this.quelParentComponent) {
+          await this.quelParentComponent.quelInitialPromises.promise;
         } else {
         }
   
         if (!this.useWebComponent) {
           // case of no useWebComponent
           const comment = document.createComment(`@@/${this.tagName}`);
-          this.pseudoParentNode = this.parentNode ?? utils.raise("parentNode is undefined");
-          this.pseudoNode = comment;
-          this.pseudoParentNode.replaceChild(comment, this);
+          const pseudoParentNode = this.#pseudoParentNode = this.parentNode ?? utils.raise("parentNode is undefined");
+          this.#pseudoNode = comment;
+          pseudoParentNode.replaceChild(comment, this);
         }
   
         // promises for alive
-        this.alivePromises = Promise.withResolvers<void>();
+        this.#alivePromises = Promise.withResolvers<void>();
   
-        await this.build();
+        await this.#build();
         
       } finally {
-        this.initialPromises?.resolve && this.initialPromises.resolve();
+        this.quelInitialPromises?.resolve && this.quelInitialPromises.resolve();
       }
   
     }
     async disconnectedCallback() {
-      this.updator.addProcess(async () => {
-        await this.state[DisconnectedCallbackSymbol]();
+      this.quelUpdator.addProcess(async () => {
+        await this.quelState[DisconnectedCallbackSymbol]();
       }, undefined, [], undefined);
     }
   };

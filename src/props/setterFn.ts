@@ -5,7 +5,7 @@ import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { GetBufferSymbol } from "./symbols";
 
-type IComponentPartial = Pick<IComponent, "parentComponent"|"updator"|"state"|"props">;
+type IComponentPartial = Pick<IComponent, "quelParentComponent"|"quelUpdator"|"quelState"|"quelProps">;
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -19,18 +19,18 @@ export const setterFn = (
     if (regexp.test(parentPropInfo.name)) {
       utils.raise("Cannot set value to loop index");
     }
-    const buffer = component.props[GetBufferSymbol]();
+    const buffer = component.quelProps[GetBufferSymbol]();
     if (buffer) {
       return buffer[thisPropIfo.name] = value;
     }
     // プロセスキューに積む
-    const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+    const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
     const loopContext = getLoopContext();
     const writeProperty = (component: IComponentPartial, propInfo: IPropInfo, value: any) => {
-      const state = component.state;
+      const state = component.quelState;
       return state[SetByPropInfoSymbol](propInfo, value);
     };
-    parentComponent.updator?.addProcess(writeProperty, undefined, [ parentComponent, parentPropInfo, value ], loopContext);
+    quelParentComponent.quelUpdator?.addProcess(writeProperty, undefined, [ quelParentComponent, parentPropInfo, value ], loopContext);
     return true;
   }
 }

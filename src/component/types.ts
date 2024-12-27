@@ -100,22 +100,17 @@ export interface IComponentBase {
 }
 
 export interface ICustomComponent {
-  readonly component: IComponent & HTMLElement;
-  readonly parentComponent?: IComponent & HTMLElement;
-  readonly initialPromises: PromiseWithResolvers<void>;
-  alivePromises: PromiseWithResolvers<void>;
-  readonly state: IStateProxy;
-  rootBindingManager: IContentBindings; // ToDo
-  readonly viewRootElement: ShadowRoot | HTMLElement;
-  readonly queryRoot: ShadowRoot | HTMLElement;
-  pseudoParentNode?: Node;
-  pseudoNode?: Node;
-  readonly shadowRootOrDocument: ShadowRoot|Document;
-  readonly newBindingSummary: INewBindingSummary;
-  readonly updator: IUpdator;
-  readonly props: IProps;
-
-  build():Promise<void>;
+  readonly quelParentComponent?: IComponent & HTMLElement;
+  readonly quelInitialPromises: PromiseWithResolvers<void>;
+  quelAlivePromises: PromiseWithResolvers<void>;
+  readonly quelState: IStateProxy;
+  readonly quelViewRootElement: ShadowRoot | HTMLElement;
+  readonly quelQueryRoot: ShadowRoot | HTMLElement;
+  readonly quelPseudoParentNode: Node;
+  readonly quelPseudoNode: Node;
+  readonly quelBindingSummary: INewBindingSummary;
+  readonly quelUpdator: IUpdator;
+  readonly quelProps: IProps;
   connectedCallback():Promise<void>;
   disconnectedCallback():Promise<void>;
 } 
@@ -154,6 +149,6 @@ export interface IProcess {
 // ToDo: addProcessをどうするか検討
 export type IUserComponent = Pick<
   IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,
-  /* "addProcess" | */ "element" | "viewRootElement" | "queryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
+  /* "addProcess" | */ "element" | "quelViewRootElement" | "quelQueryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
 >;
 

@@ -9,7 +9,7 @@ function existsProperty(baseClass:Function, prop:PropertyKey):boolean {
 }
 
 const permittedProps = new Set([
-  "element", "addProcess", "viewRootElement ", "queryRoot",
+  "element", "addProcess", "quelViewRootElement ", "quelQueryRoot",
   "asyncShowModal", "asyncShow",
   "asyncShowPopover", "cancelPopover"
 ]);

@@ -45,13 +45,13 @@ class Binding implements IBinding {
     return this.#parentContentBindings.component;
   }
   get updator(): IUpdator | undefined {
-    return this.component?.updator;
+    return this.component?.quelUpdator;
   }
-  get newBindingSummary(): INewBindingSummary | undefined {
-    return this.component?.newBindingSummary;
+  get quelBindingSummary(): INewBindingSummary | undefined {
+    return this.component?.quelBindingSummary;
   }
   get state(): IStateProxy | undefined {
-    return this.component?.state;
+    return this.component?.quelState;
   }
   get selectorName(): string | undefined{
     return this.component?.selectorName;
@@ -85,7 +85,7 @@ class Binding implements IBinding {
   /**
    */
   execDefaultEventHandler(event:Event) {
-    if (!(this.newBindingSummary?.exists(this) ?? false)) return;
+    if (!(this.quelBindingSummary?.exists(this) ?? false)) return;
     event.stopPropagation();
     const { nodeProperty, stateProperty } = this;
     this.updator?.addProcess(setValueToState, undefined, [ nodeProperty, stateProperty ], this.parentContentBindings?.currentLoopContext);
@@ -137,7 +137,7 @@ class Binding implements IBinding {
   }
 
   dispose(): void {
-    this.newBindingSummary?.delete(this);
+    this.quelBindingSummary?.delete(this);
     this.nodeProperty.dispose();
     this.stateProperty.dispose();
     this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());

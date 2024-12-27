@@ -7,7 +7,7 @@ import { IUpdator } from "./types";
 
 export function updateChildNodes(
   updator: IUpdator,
-  newBindingSummary: INewBindingSummary, 
+  quelBindingSummary: INewBindingSummary, 
   updatedStatePropertyAccesseors: IStatePropertyAccessor[]
 ): void {
   const parentPropertyAccessorByKey: {[key: string]: IStatePropertyAccessor} = {};
@@ -30,7 +30,7 @@ export function updateChildNodes(
 
   for(const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
     const parentPropertyAccessor = parentPropertyAccessorByKey[parentKey];
-    newBindingSummary.gatherBindings(parentPropertyAccessor).forEach(binding => {
+    quelBindingSummary.gatherBindings(parentPropertyAccessor).forEach(binding => {
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(parentPropertyAccessor);
       updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
         setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);

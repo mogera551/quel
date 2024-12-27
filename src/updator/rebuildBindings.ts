@@ -10,13 +10,13 @@ const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateP
 // 
 export function rebuildBindings(
   updator: IUpdator, 
-  newBindingSummary: INewBindingSummary, 
+  quelBindingSummary: INewBindingSummary, 
   updatedStatePropertyAccessors: IStatePropertyAccessor[],
   updatedKeys: string[]
 ): void {
   for(let i = 0; i < updatedStatePropertyAccessors.length; i++) {
     const propertyAccessor = updatedStatePropertyAccessors[i];
-    const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor).toSorted(compareExpandableBindings);
+    const gatheredBindings = quelBindingSummary.gatherBindings(propertyAccessor).toSorted(compareExpandableBindings);
     for(let gi = 0; gi < gatheredBindings.length; gi++) {
       const binding = gatheredBindings[gi];
       if (!binding.expandable) continue;

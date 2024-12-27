@@ -13,7 +13,7 @@ import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loop
 import { createLoopContextStack } from "../loopContext/createLoopContextStack";
 import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
-type IComponentForUpdator = Pick<IComponent, "state" | "newBindingSummary" | "template">;
+type IComponentForUpdator = Pick<IComponent, "quelState" | "quelBindingSummary" | "template">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
@@ -29,11 +29,11 @@ class Updator implements IUpdator {
   executing = false;
 
   get state(): IStateProxy {
-    return this.#component.state;
+    return this.#component.quelState;
   }
 
-  get newBindingSummary(): INewBindingSummary {
-    return this.#component.newBindingSummary;
+  get quelBindingSummary(): INewBindingSummary {
+    return this.#component.quelBindingSummary;
   }
 
   get component(): IComponentForUpdator {
@@ -107,13 +107,13 @@ class Updator implements IUpdator {
         const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
 
         // バインディングの再構築
-        rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
+        rebuildBindings(this, this.quelBindingSummary, updatedStatePropertyAccesses, updatedKeys);
 
         // リスト要素の更新
-        updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+        updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
 
         // ノードの更新
-        updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+        updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
 
       }
     });
