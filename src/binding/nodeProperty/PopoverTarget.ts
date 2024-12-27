@@ -17,9 +17,9 @@ export class PopoverTarget extends ElementBase {
   get targetId():string { 
     return this.#targetId; 
   }
-  get target():IComponent {
+  get target():IComponent | null {
     const target = document.getElementById(this.#targetId) as IComponent;
-    if (target?.isQuelComponent !== true) {
+    if (target != null && target?.isQuelComponent !== true) {
       utils.raise("PopoverTarget: not Quel Component");
     }
     return target;
@@ -74,7 +74,7 @@ export class PopoverTarget extends ElementBase {
     // このボタンに関連するバインディングを取得
     const buttonBindings = 
       allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
-    const props = this.target.props;
+    const props = this.target?.props ?? utils.raise("PopoverTarget: no target props");
     for(const binding of buttonBindings) {
       const popoverTarget = binding.nodeProperty as PopoverTarget;
       const popoverBinding = popoverTarget.binding;
