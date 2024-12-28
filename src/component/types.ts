@@ -1,7 +1,7 @@
 import { EventFilterFuncWithOption, FilterFuncWithOption, IFilterManager } from "../filter/types";
 import { IStateProxy } from "../state/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
-import { IUpdator } from "../updator/types";
+import { IUpdater } from "../updater/types";
 import { ILoopContext } from "../loopContext/types";
 import { IProps } from "../props/types";
 import { IPopoverInfo } from "../popover/types";
@@ -106,7 +106,7 @@ export interface ICustomComponent {
   readonly quelPseudoParentNode: Node;
   readonly quelPseudoNode: Node;
   readonly quelBindingSummary: INewBindingSummary;
-  readonly quelUpdator: IUpdator;
+  readonly quelUpdater: IUpdater;
   readonly quelProps: IProps;
   connectedCallback():Promise<void>;
   disconnectedCallback():Promise<void>;

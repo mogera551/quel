@@ -1,13 +1,13 @@
-import { IUpdator } from "../updator/types";
+import { IUpdater } from "../updater/types";
 import { IBinding, INodeProperty } from "./types";
 
 export function setValueToChildNodes(
   binding: IBinding,
-  updator: IUpdator | undefined,
+  updater: IUpdater | undefined,
   nodeProperty: INodeProperty,
   setOfIndex:Set<number>
 ): void {
-  updator?.applyNodeUpdatesByBinding(binding, () => {
+  updater?.applyNodeUpdatesByBinding(binding, () => {
     nodeProperty.applyToChildNodes(setOfIndex);
   });
 }

@@ -2,7 +2,7 @@ import { IBinding, INodeProperty, IStateProperty, IContentBindings, IComponentPa
 import { NodePropertyConstructor, StatePropertyConstructor } from "../binder/types";
 import { IFilterText, IFilterManager } from "../filter/types";
 import { utils } from "../utils";
-import { IUpdator } from "../updator/types";
+import { IUpdater } from "../updater/types";
 import { IStateProxy } from "../state/types";
 import { setValueToState } from "./setValueToState";
 import { setValueToNode } from "./setValueToNode";
@@ -44,8 +44,8 @@ class Binding implements IBinding {
   get component(): IComponentPartial | undefined {
     return this.#parentContentBindings.component;
   }
-  get updator(): IUpdator | undefined {
-    return this.component?.quelUpdator;
+  get updater(): IUpdater | undefined {
+    return this.component?.quelUpdater;
   }
   get quelBindingSummary(): INewBindingSummary | undefined {
     return this.component?.quelBindingSummary;
@@ -88,7 +88,7 @@ class Binding implements IBinding {
     if (!(this.quelBindingSummary?.exists(this) ?? false)) return;
     event.stopPropagation();
     const { nodeProperty, stateProperty } = this;
-    this.updator?.addProcess(setValueToState, undefined, [ nodeProperty, stateProperty ], this.parentContentBindings?.currentLoopContext);
+    this.updater?.addProcess(setValueToState, undefined, [ nodeProperty, stateProperty ], this.parentContentBindings?.currentLoopContext);
   }
 
   #defaultEventHandler:(((event:Event)=>void)|undefined) = undefined;
@@ -145,16 +145,16 @@ class Binding implements IBinding {
   }
 
   rebuild(): void {
-    const { updator, nodeProperty, stateProperty } = this;
-    setValueToNode(this, updator, nodeProperty, stateProperty);
+    const { updater, nodeProperty, stateProperty } = this;
+    setValueToNode(this, updater, nodeProperty, stateProperty);
   }
 
   updateNodeForNoRecursive(): void {
     // rebuildで再帰的にupdateするnodeが決まるため
     // 再帰的に呼び出す必要はない
     if (!this.expandable) {
-      const { updator, nodeProperty, stateProperty } = this;
-      setValueToNode(this, updator, nodeProperty, stateProperty);
+      const { updater, nodeProperty, stateProperty } = this;
+      setValueToNode(this, updater, nodeProperty, stateProperty);
     }
   }
 

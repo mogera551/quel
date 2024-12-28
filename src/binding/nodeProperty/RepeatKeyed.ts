@@ -65,7 +65,7 @@ export class RepeatKeyed extends Loop {
       for(let vi = 0; vi < valuesLength; vi++) {
         const contentBindings = createContentBindings(uuid, binding);
         children[vi] = contentBindings;
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, vi, () => {
+        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, vi, () => {
           contentBindings.rebuild();
         });
         parentNode.insertBefore(contentBindings.fragment, nextNode);
@@ -81,7 +81,7 @@ export class RepeatKeyed extends Loop {
           // 元のインデックスにない場合（新規）
           contentBindings = createContentBindings(uuid, binding);
           children[newIndex] = contentBindings;
-          this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+          this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
             contentBindings.rebuild();
           });
           parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
@@ -91,14 +91,14 @@ export class RepeatKeyed extends Loop {
           if (contentBindings.childNodes[0]?.previousSibling !== beforeNode) {
             contentBindings.removeChildNodes();
             children[newIndex] = contentBindings;
-            this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+            this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
               contentBindings.rebuild();
             });
             parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
           } else {
             children[newIndex] = contentBindings;
-            if (this.binding.updator?.isFullRebuild) {
-              this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+            if (this.binding.updater?.isFullRebuild) {
+              this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
                 contentBindings.rebuild();
               });
             }
@@ -142,13 +142,13 @@ export class RepeatKeyed extends Loop {
       if (typeof contentBindings === "undefined") {
         contentBindings = createContentBindings(uuid, binding);
         this.binding.replaceChildContentBindings(contentBindings, index);
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
           contentBindings?.rebuild();
         });
         updatedBindings.push(...contentBindings.allChildBindings);
       } else {
         this.binding.replaceChildContentBindings(contentBindings, index);
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
           contentBindings?.rebuild();
         });
         updatedBindings.push(...contentBindings.allChildBindings);

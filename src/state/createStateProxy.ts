@@ -5,7 +5,7 @@ import { getApiMethod } from "./getApiMethod";
 import { getCallbackMethod } from "./getCallbackMethod";
 import { getSpecialProps } from "./getSpecialProps";
 import { Dependencies, IDependentProps, IStateHandler, IStateProxy, StateCache } from "./types";
-import { IUpdator } from "../updator/types";
+import { IUpdater } from "../updater/types";
 import { Index, IPropInfo } from "../propertyInfo/types";
 import { utils } from "../utils";
 import { getPropInfo } from "../propertyInfo/getPropInfo";
@@ -31,7 +31,7 @@ type IBaseState = {
   [key: string]: any;
 };
 
-type IComponentForHandler = Pick<IComponent, "quelState" | "quelUpdator"> & HTMLElement;
+type IComponentForHandler = Pick<IComponent, "quelState" | "quelUpdater"> & HTMLElement;
 
 export class Handler implements IStateHandler {
   #component: IComponentForHandler;
@@ -52,8 +52,8 @@ export class Handler implements IStateHandler {
   get component(): IComponentForHandler {
     return this.#component;
   }
-  get updator(): IUpdator {
-    return this.component.quelUpdator;
+  get updater(): IUpdater {
+    return this.component.quelUpdater;
   }
   get loopContext(): ILoopContext | undefined {
     return undefined;
@@ -154,7 +154,7 @@ export class Handler implements IStateHandler {
       receiver 
     );
 
-    const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
+    const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
       namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
       return _getValue();
@@ -213,7 +213,7 @@ export class Handler implements IStateHandler {
           namedLoopIndexes.get(propInfo.wildcardPaths.at(-1) ?? ""));
       }
     };
-    const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
+    const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
       namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
       return _setValue();
@@ -244,7 +244,7 @@ export class Handler implements IStateHandler {
     if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
       utils.raise(`wildcard type is invalid`);
     }
-    const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
+    const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
     const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
     let indexes: Index[] | undefined;
     let lastIndex = undefined;
@@ -340,7 +340,7 @@ export class Handler implements IStateHandler {
     if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
       utils.raise(`wildcard type is invalid`);
     }
-    const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
+    const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
     const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
     let indexes: Index[] | undefined;
     let lastIndex = undefined;
@@ -431,7 +431,7 @@ export class Handler implements IStateHandler {
     pattern: string,
     loopIndexes: ILoopIndexes | undefined
   ): void {
-    this.updator.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
+    this.updater.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
   }  
 
   #getBySymbol(
@@ -503,7 +503,7 @@ export class Handler implements IStateHandler {
       if (prop[0] === "$") {
         const index = Number(prop.slice(1));
         if (isNaN(index)) break;
-        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("get: namedLoopIndexesStack is undefined");
+        const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("get: namedLoopIndexesStack is undefined");
         const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("get: namedLoopIndexes is undefined");
         const tmpNamedLoopIndexes = Array.from(namedLoopIndexes.values()).filter(v => v.size === index);
         if (tmpNamedLoopIndexes.length !== 1) {

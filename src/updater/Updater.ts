@@ -2,7 +2,7 @@ import { config } from "../Config";
 import { IComponent, IProcess } from "../component/types";
 import { IBinding, INewBindingSummary } from "../binding/types";
 import { IStatePropertyAccessor, IStateProxy } from "../state/types";
-import { IUpdator } from "./types";
+import { IUpdater } from "./types";
 import { execProcesses } from "./execProcesses";
 import { expandStateProperties } from "./expandStateProperties";
 import { rebuildBindings } from "./rebuildBindings";
@@ -13,10 +13,10 @@ import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loop
 import { createLoopContextStack } from "../loopContext/createLoopContextStack";
 import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
-type IComponentForUpdator = Pick<IComponent, "quelState" | "quelBindingSummary" | "quelTemplate">;
+type IComponentForUpdater = Pick<IComponent, "quelState" | "quelBindingSummary" | "quelTemplate">;
 
-class Updator implements IUpdator {
-  #component: IComponentForUpdator;
+class Updater implements IUpdater {
+  #component: IComponentForUpdater;
   processQueue: IProcess[] = [];
   updatedStateProperties: IStatePropertyAccessor[] = [];
   expandedStateProperties: IStatePropertyAccessor[] = [];
@@ -36,11 +36,11 @@ class Updator implements IUpdator {
     return this.#component.quelBindingSummary;
   }
 
-  get component(): IComponentForUpdator {
+  get component(): IComponentForUpdater {
     return this.#component;
   }
 
-  constructor(component:IComponentForUpdator) {
+  constructor(component:IComponentForUpdater) {
     this.#component = component;
   }
 
@@ -78,17 +78,17 @@ class Updator implements IUpdator {
   async execCallbackWithPerformance(callback: () => any): Promise<void> {
     this.executing = true;
     const uuid = this.#component.quelTemplate.dataset["uuid"];
-    config.debug && performance.mark(`Updator#${uuid}.exec:start`);
+    config.debug && performance.mark(`Updater#${uuid}.exec:start`);
     try {
       await callback();
     } finally {
       if (config.debug) {
-        performance.mark(`Updator#${uuid}.exec:end`)
-        performance.measure(`Updator#${uuid}.exec`, `Updator#${uuid}.exec:start`, `Updator#${uuid}.exec:end`);
+        performance.mark(`Updater#${uuid}.exec:end`)
+        performance.measure(`Updater#${uuid}.exec`, `Updater#${uuid}.exec:start`, `Updater#${uuid}.exec:end`);
         console.log(performance.getEntriesByType("measure"));    
-        performance.clearMeasures(`Updator#${uuid}.exec`);
-        performance.clearMarks(`Updator#${uuid}.exec:start`);
-        performance.clearMarks(`Updator#${uuid}.exec:end`);
+        performance.clearMeasures(`Updater#${uuid}.exec`);
+        performance.clearMarks(`Updater#${uuid}.exec:start`);
+        performance.clearMarks(`Updater#${uuid}.exec:end`);
       }
       this.executing = false;
     }
@@ -121,7 +121,7 @@ class Updator implements IUpdator {
 
   applyNodeUpdatesByBinding(
     binding: IBinding, 
-    callback: (updator:IUpdator) => void
+    callback: (updater:IUpdater) => void
   ): void {
     if (this.updatedBindings.has(binding)) return;
     try {
@@ -149,6 +149,6 @@ class Updator implements IUpdator {
   }
 }
 
-export function createUpdator(component:IComponentForUpdator):IUpdator {
-  return new Updator(component);
+export function createUpdater(component:IComponentForUpdater):IUpdater {
+  return new Updater(component);
 }

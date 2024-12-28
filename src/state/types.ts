@@ -2,7 +2,7 @@ import { AccessorPropertiesSymbol, AsyncSetWritableSymbol, ClearCacheApiSymbol, 
 import { IComponent } from "../component/types";
 import { IPatternInfo } from "../propertyInfo/types";
 import { ILoopContext, ILoopIndexes, INamedLoopIndexes } from "../loopContext/types";
-import { IUpdator } from "../updator/types";
+import { IUpdater } from "../updater/types";
 import { Indexes, IPropInfo } from "../propertyInfo/types";
 
 export type CleanIndexes = number[];
@@ -17,7 +17,7 @@ export interface IStateHandler {
   readonly accessorProperties: Set<string>;
   readonly dependentProps: IDependentProps;
   readonly element: HTMLElement;
-  readonly updator: IUpdator;
+  readonly updater: IUpdater;
   readonly loopContext?: ILoopContext;
   cache?: StateCache;
   getValue(
@@ -119,7 +119,7 @@ export type StatePropertyInfo = {
   readonly dependentProps: IDependentProps;
 }
 
-export type IComponentForHandler = Pick<IComponent, "quelState" | "quelUpdator" | "quelTemplate"> & HTMLElement;
+export type IComponentForHandler = Pick<IComponent, "quelState" | "quelUpdater" | "quelTemplate"> & HTMLElement;
 
 export interface IStatePropertyAccessor {
   readonly pattern: string;

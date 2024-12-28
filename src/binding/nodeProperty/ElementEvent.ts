@@ -68,6 +68,6 @@ export class ElementEvent extends ElementBase {
     if ((Reflect.get(event, "noStopPropagation") ?? false) === false) {
       event.stopPropagation();
     }
-    this.binding.updator?.addProcess(this.directlyCall, this, [event], this.binding.parentContentBindings?.currentLoopContext);
+    this.binding.updater?.addProcess(this.directlyCall, this, [event], this.binding.parentContentBindings?.currentLoopContext);
   }
 }

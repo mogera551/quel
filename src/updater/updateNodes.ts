@@ -2,10 +2,10 @@ import { IBinding, INewBindingSummary } from "../binding/types";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { IStatePropertyAccessor } from "../state/types";
-import { IUpdator } from "./types";
+import { IUpdater } from "./types";
 
 export function updateNodes(
-  updator: IUpdator,
+  updater: IUpdater,
   quelBindingSummary: INewBindingSummary,
   updatedStatePropertyAccessors: IStatePropertyAccessor[]
 ) {
@@ -21,7 +21,7 @@ export function updateNodes(
         selectBindings.push({binding, propertyAccessor});
       } else {
         const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
-        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+        updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.updateNodeForNoRecursive();
         });
       }
@@ -34,7 +34,7 @@ export function updateNodes(
     const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
     const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
     const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
-    updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+    updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
       info.binding.updateNodeForNoRecursive();
     });
   }

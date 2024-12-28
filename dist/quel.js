@@ -1052,45 +1052,45 @@ function localizeStyleSheet(styleSheet, localSelector) {
     return styleSheet;
 }
 
-async function execProcess(updator, process) {
+async function execProcess(updater, process) {
     if (typeof process.loopContext === "undefined") {
-        return await updator.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
+        return await updater.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
             return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
         });
     }
     else {
-        return await updator.loopContextStack.setLoopContext(updator.namedLoopIndexesStack, process.loopContext, async () => {
+        return await updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, process.loopContext, async () => {
             return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
         });
     }
 }
-async function _execProcesses(updator, processes) {
+async function _execProcesses(updater, processes) {
     for (let i = 0; i < processes.length; i++) {
         // Stateのイベント処理を実行する
         // Stateのプロパティに更新があった場合、
-        // UpdatorのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
-        await execProcess(updator, processes[i]);
+        // UpdaterのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
+        await execProcess(updater, processes[i]);
     }
-    return updator.retrieveAllUpdatedStateProperties();
+    return updater.retrieveAllUpdatedStateProperties();
 }
-function enqueueUpdatedCallback(updator, state, updatedStateProperties) {
+function enqueueUpdatedCallback(updater, state, updatedStateProperties) {
     // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
     const updateInfos = updatedStateProperties.map(prop => ({ name: prop.pattern, indexes: prop.loopIndexes?.values }));
-    updator.addProcess(async () => {
+    updater.addProcess(async () => {
         await state[UpdatedCallbackSymbol](updateInfos);
     }, undefined, [], undefined);
 }
-async function execProcesses(updator, state) {
-    const totalUpdatedStateProperties = updator.retrieveAllUpdatedStateProperties();
+async function execProcesses(updater, state) {
+    const totalUpdatedStateProperties = updater.retrieveAllUpdatedStateProperties();
     await state[AsyncSetWritableSymbol](async () => {
         do {
-            const processes = updator.retrieveAllProcesses();
+            const processes = updater.retrieveAllProcesses();
             if (processes.length === 0)
                 break;
-            const updateStateProperties = await _execProcesses(updator, processes);
+            const updateStateProperties = await _execProcesses(updater, processes);
             if (updateStateProperties.length > 0) {
                 totalUpdatedStateProperties.push(...updateStateProperties);
-                enqueueUpdatedCallback(updator, state, updateStateProperties);
+                enqueueUpdatedCallback(updater, state, updateStateProperties);
             }
         } while (true);
     });
@@ -1371,7 +1371,7 @@ function createNamedLoopIndexesFromAccessor(propertyAccessor = undefined) {
     return namedLoopIndexes;
 }
 
-function expandStateProperty(updator, state, accessor, updatedStatePropertiesSet, expandedPropertyAccessKeys = new Set([])) {
+function expandStateProperty(updater, state, accessor, updatedStatePropertiesSet, expandedPropertyAccessKeys = new Set([])) {
     const { pattern, loopIndexes } = accessor;
     const propertyAccessKey = pattern + "\t" + (loopIndexes?.toString() ?? "");
     // すでに展開済みの場合は何もしない
@@ -1405,7 +1405,7 @@ function expandStateProperty(updator, state, accessor, updatedStatePropertiesSet
         }
         if ((loopIndexes?.size ?? 0) < curPropertyNameInfo.wildcardPaths.length) {
             // ワイルドカードのインデックスを展開する
-            const listOfIndexes = expandIndexes(updator, state, createStatePropertyAccessor(prop, loopIndexes));
+            const listOfIndexes = expandIndexes(updater, state, createStatePropertyAccessor(prop, loopIndexes));
             propertyAccesses.push(...listOfIndexes.map(loopIndexes => createStatePropertyAccessor(prop, loopIndexes)));
         }
         else {
@@ -1414,11 +1414,11 @@ function expandStateProperty(updator, state, accessor, updatedStatePropertiesSet
             propertyAccesses.push(createStatePropertyAccessor(prop, notifyIndexes));
         }
         // 再帰的に展開
-        propertyAccesses.push(...expandStateProperty(updator, state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
+        propertyAccesses.push(...expandStateProperty(updater, state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
     }
     return propertyAccesses;
 }
-function expandIndexes(updator, state, statePropertyAccessor) {
+function expandIndexes(updater, state, statePropertyAccessor) {
     const { pattern, loopIndexes } = statePropertyAccessor;
     const validLoopIndexes = (typeof loopIndexes !== "undefined");
     const propInfo = getPropInfo(pattern);
@@ -1433,7 +1433,7 @@ function expandIndexes(updator, state, statePropertyAccessor) {
             const accessor = createStatePropertyAccessor(name, _loopIndexes);
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
             const propInfo = getPropInfo(name);
-            return updator.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
+            return updater.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
                 return state[GetByPropInfoSymbol](propInfo).length;
             });
         };
@@ -1480,12 +1480,12 @@ function expandIndexes(updator, state, statePropertyAccessor) {
         return traverse("", 0, undefined);
     }
 }
-function expandStateProperties(updator, state, updatedStateProperties) {
+function expandStateProperties(updater, state, updatedStateProperties) {
     // expand state properties
     const expandedStateProperties = updatedStateProperties.slice(0);
     const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.pattern + "\t" + (prop.loopIndexes?.toString() ?? "")));
     for (let i = 0; i < updatedStateProperties.length; i++) {
-        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(updator, state, updatedStateProperties[i], updatedStatePropertiesSet));
+        expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(updater, state, updatedStateProperties[i], updatedStatePropertiesSet));
     }
     return expandedStateProperties;
 }
@@ -1494,7 +1494,7 @@ function expandStateProperties(updator, state, updatedStateProperties) {
 // BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
 const compareExpandableBindings = (a, b) => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 // 
-function rebuildBindings(updator, quelBindingSummary, updatedStatePropertyAccessors, updatedKeys) {
+function rebuildBindings(updater, quelBindingSummary, updatedStatePropertyAccessors, updatedKeys) {
     for (let i = 0; i < updatedStatePropertyAccessors.length; i++) {
         const propertyAccessor = updatedStatePropertyAccessors[i];
         const gatheredBindings = quelBindingSummary.gatherBindings(propertyAccessor).toSorted(compareExpandableBindings);
@@ -1505,8 +1505,8 @@ function rebuildBindings(updator, quelBindingSummary, updatedStatePropertyAccess
             const compareKey = binding.stateProperty.name + ".";
             const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(propertyAccessor);
-            updator.setFullRebuild(isFullBuild, () => {
-                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+            updater.setFullRebuild(isFullBuild, () => {
+                updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                     binding.rebuild();
                 });
             });
@@ -1514,13 +1514,13 @@ function rebuildBindings(updator, quelBindingSummary, updatedStatePropertyAccess
     }
 }
 
-function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex) {
-    updator?.applyNodeUpdatesByBinding(binding, () => {
+function setValueToChildNodes(binding, updater, nodeProperty, setOfIndex) {
+    updater?.applyNodeUpdatesByBinding(binding, () => {
         nodeProperty.applyToChildNodes(setOfIndex);
     });
 }
 
-function updateChildNodes(updator, quelBindingSummary, updatedStatePropertyAccesseors) {
+function updateChildNodes(updater, quelBindingSummary, updatedStatePropertyAccesseors) {
     const parentPropertyAccessorByKey = {};
     const indexesByParentKey = {};
     for (const propertyAccessor of updatedStatePropertyAccesseors) {
@@ -1541,14 +1541,14 @@ function updateChildNodes(updator, quelBindingSummary, updatedStatePropertyAcces
         const parentPropertyAccessor = parentPropertyAccessorByKey[parentKey];
         quelBindingSummary.gatherBindings(parentPropertyAccessor).forEach(binding => {
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(parentPropertyAccessor);
-            updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-                setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
+            updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+                setValueToChildNodes(binding, updater, binding.nodeProperty, indexes);
             });
         });
     }
 }
 
-function updateNodes(updator, quelBindingSummary, updatedStatePropertyAccessors) {
+function updateNodes(updater, quelBindingSummary, updatedStatePropertyAccessors) {
     const selectBindings = [];
     // select要素以外を更新
     for (let i = 0; i < updatedStatePropertyAccessors.length; i++) {
@@ -1563,7 +1563,7 @@ function updateNodes(updator, quelBindingSummary, updatedStatePropertyAccessors)
             }
             else {
                 const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
-                updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+                updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                     binding.updateNodeForNoRecursive();
                 });
             }
@@ -1576,7 +1576,7 @@ function updateNodes(updator, quelBindingSummary, updatedStatePropertyAccessors)
         const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
         const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
         const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
-        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+        updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
             info.binding.updateNodeForNoRecursive();
         });
     }
@@ -1653,7 +1653,7 @@ function createNamedLoopIndexesStack() {
     return new NamedLoopIndexesStack();
 }
 
-class Updator {
+class Updater {
     #component;
     processQueue = [];
     updatedStateProperties = [];
@@ -1702,18 +1702,18 @@ class Updator {
     async execCallbackWithPerformance(callback) {
         this.executing = true;
         const uuid = this.#component.quelTemplate.dataset["uuid"];
-        config.debug && performance.mark(`Updator#${uuid}.exec:start`);
+        config.debug && performance.mark(`Updater#${uuid}.exec:start`);
         try {
             await callback();
         }
         finally {
             if (config.debug) {
-                performance.mark(`Updator#${uuid}.exec:end`);
-                performance.measure(`Updator#${uuid}.exec`, `Updator#${uuid}.exec:start`, `Updator#${uuid}.exec:end`);
+                performance.mark(`Updater#${uuid}.exec:end`);
+                performance.measure(`Updater#${uuid}.exec`, `Updater#${uuid}.exec:start`, `Updater#${uuid}.exec:end`);
                 console.log(performance.getEntriesByType("measure"));
-                performance.clearMeasures(`Updator#${uuid}.exec`);
-                performance.clearMarks(`Updator#${uuid}.exec:start`);
-                performance.clearMarks(`Updator#${uuid}.exec:end`);
+                performance.clearMeasures(`Updater#${uuid}.exec`);
+                performance.clearMarks(`Updater#${uuid}.exec:start`);
+                performance.clearMarks(`Updater#${uuid}.exec:end`);
             }
             this.executing = false;
         }
@@ -1762,8 +1762,8 @@ class Updator {
         }
     }
 }
-function createUpdator(component) {
-    return new Updator(component);
+function createUpdater(component) {
+    return new Updater(component);
 }
 
 class PropsBindingInfo {
@@ -1809,7 +1809,7 @@ const getterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
         const accessor = (typeof lastWildcardPath !== "undefined") ?
             createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
         const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-        return quelParentComponent.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+        return quelParentComponent.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
             return parentState[GetByPropInfoSymbol](parentPropInfo);
         });
     };
@@ -1832,7 +1832,7 @@ const setterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
             const state = component.quelState;
             return state[SetByPropInfoSymbol](propInfo, value);
         };
-        quelParentComponent.quelUpdator?.addProcess(writeProperty, undefined, [quelParentComponent, parentPropInfo, value], loopContext);
+        quelParentComponent.quelUpdater?.addProcess(writeProperty, undefined, [quelParentComponent, parentPropInfo, value], loopContext);
         return true;
     };
 };
@@ -1913,7 +1913,7 @@ class PropsProxyHandler {
             const accessor = (typeof lastWildcardPath !== "undefined") ?
                 createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-            const parentValue = quelParentComponent.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+            const parentValue = quelParentComponent.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                 return parentState[GetByPropInfoSymbol](parentPropInfo);
             });
             propsBuffer[thisProp] = parentValue;
@@ -1936,7 +1936,7 @@ class PropsProxyHandler {
                 const state = component.quelState;
                 return state[SetByPropInfoSymbol](propInfo, value);
             };
-            quelParentComponent.quelUpdator?.addProcess(writeProperty, undefined, [quelParentComponent, parentPropInfo, value], loopContext);
+            quelParentComponent.quelUpdater?.addProcess(writeProperty, undefined, [quelParentComponent, parentPropInfo, value], loopContext);
         }
     }
     get(target, prop, receiver) {
@@ -1973,7 +1973,7 @@ class PropsProxyHandler {
         }
         const component = this.#component;
         const state = component.quelState;
-        return component.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[GetByPropInfoSymbol](propInfo));
+        return component.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[GetByPropInfoSymbol](propInfo));
     }
     set(target, prop, value, receiver) {
         if (typeof prop === "symbol" || typeof prop === "number") {
@@ -1987,9 +1987,9 @@ class PropsProxyHandler {
         const component = this.#component;
         const writeProperty = (component, propInfo, value) => {
             const state = component.quelState;
-            return component.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
+            return component.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
         };
-        component.quelUpdator?.addProcess(writeProperty, undefined, [component, propInfo, value], undefined);
+        component.quelUpdater?.addProcess(writeProperty, undefined, [component, propInfo, value], undefined);
         return true;
     }
     ownKeys(target) {
@@ -2327,14 +2327,14 @@ class Repeat extends Loop {
         this.revisionUpForLoop();
         if (lastValueLength < value.length) {
             this.binding.childrenContentBindings.forEach((contentBindings, index) => {
-                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
                     contentBindings.rebuild();
                 });
             });
             for (let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
                 const contentBindings = createContentBindings(uuid, binding);
                 this.binding.appendChildContentBindings(contentBindings);
-                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+                this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
                     contentBindings.rebuild();
                 });
             }
@@ -2342,7 +2342,7 @@ class Repeat extends Loop {
         else if (lastValueLength > value.length) {
             const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);
             this.binding.childrenContentBindings.forEach((contentBindings, index) => {
-                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
                     contentBindings.rebuild();
                 });
             });
@@ -2350,7 +2350,7 @@ class Repeat extends Loop {
         }
         else {
             this.binding.childrenContentBindings.forEach((contentBindings, index) => {
-                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
                     contentBindings.rebuild();
                 });
             });
@@ -2563,7 +2563,7 @@ class ElementEvent extends ElementBase {
         if ((Reflect.get(event, "noStopPropagation") ?? false) === false) {
             event.stopPropagation();
         }
-        this.binding.updator?.addProcess(this.directlyCall, this, [event], this.binding.parentContentBindings?.currentLoopContext);
+        this.binding.updater?.addProcess(this.directlyCall, this, [event], this.binding.parentContentBindings?.currentLoopContext);
     }
 }
 
@@ -2740,7 +2740,7 @@ class RepeatKeyed extends Loop {
             for (let vi = 0; vi < valuesLength; vi++) {
                 const contentBindings = createContentBindings(uuid, binding);
                 children[vi] = contentBindings;
-                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, vi, () => {
+                this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, vi, () => {
                     contentBindings.rebuild();
                 });
                 parentNode.insertBefore(contentBindings.fragment, nextNode);
@@ -2757,7 +2757,7 @@ class RepeatKeyed extends Loop {
                     // 元のインデックスにない場合（新規）
                     contentBindings = createContentBindings(uuid, binding);
                     children[newIndex] = contentBindings;
-                    this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+                    this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
                         contentBindings.rebuild();
                     });
                     parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
@@ -2768,15 +2768,15 @@ class RepeatKeyed extends Loop {
                     if (contentBindings.childNodes[0]?.previousSibling !== beforeNode) {
                         contentBindings.removeChildNodes();
                         children[newIndex] = contentBindings;
-                        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+                        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
                             contentBindings.rebuild();
                         });
                         parentNode.insertBefore(contentBindings.fragment, beforeNode.nextSibling);
                     }
                     else {
                         children[newIndex] = contentBindings;
-                        if (this.binding.updator?.isFullRebuild) {
-                            this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+                        if (this.binding.updater?.isFullRebuild) {
+                            this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
                                 contentBindings.rebuild();
                             });
                         }
@@ -2823,14 +2823,14 @@ class RepeatKeyed extends Loop {
             if (typeof contentBindings === "undefined") {
                 contentBindings = createContentBindings(uuid, binding);
                 this.binding.replaceChildContentBindings(contentBindings, index);
-                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
                     contentBindings?.rebuild();
                 });
                 updatedBindings.push(...contentBindings.allChildBindings);
             }
             else {
                 this.binding.replaceChildContentBindings(contentBindings, index);
-                this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+                this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
                     contentBindings?.rebuild();
                 });
                 updatedBindings.push(...contentBindings.allChildBindings);
@@ -3018,7 +3018,7 @@ class StateProperty {
         return this.#level;
     }
     get loopIndexes() {
-        return this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard);
+        return this.binding.updater?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard);
     }
     getValue() {
         return this.state[GetByPropInfoSymbol](this.propInfo);
@@ -3078,13 +3078,13 @@ class StateProperty {
     initialize() {
     }
     getChildValue(index) {
-        return this.binding.updator?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
+        return this.binding.updater?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
             const propInfo = getPropInfo(this.#childName);
             return this.state[GetByPropInfoSymbol](propInfo);
         });
     }
     setChildValue(index, value) {
-        return this.binding.updator?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
+        return this.binding.updater?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
             const propInfo = getPropInfo(this.#childName);
             return this.state[SetByPropInfoSymbol](propInfo, value);
         });
@@ -3151,10 +3151,10 @@ function setValueToState(nodeProperty, stateProperty) {
     stateProperty.setValue(nodeProperty.getFilteredValue());
 }
 
-function setValueToNode(binding, updator, nodeProperty, stateProperty) {
+function setValueToNode(binding, updater, nodeProperty, stateProperty) {
     if (!nodeProperty.applicable)
         return;
-    updator?.applyNodeUpdatesByBinding(binding, () => {
+    updater?.applyNodeUpdatesByBinding(binding, () => {
         // 値が同じかどうかの判定をするよりも、常に値をセットするようにしたほうが速い
         nodeProperty.setValue(stateProperty.getFilteredValue() ?? "");
     });
@@ -3195,8 +3195,8 @@ class Binding {
     get component() {
         return this.#parentContentBindings.component;
     }
-    get updator() {
-        return this.component?.quelUpdator;
+    get updater() {
+        return this.component?.quelUpdater;
     }
     get quelBindingSummary() {
         return this.component?.quelBindingSummary;
@@ -3229,7 +3229,7 @@ class Binding {
             return;
         event.stopPropagation();
         const { nodeProperty, stateProperty } = this;
-        this.updator?.addProcess(setValueToState, undefined, [nodeProperty, stateProperty], this.parentContentBindings?.currentLoopContext);
+        this.updater?.addProcess(setValueToState, undefined, [nodeProperty, stateProperty], this.parentContentBindings?.currentLoopContext);
     }
     #defaultEventHandler = undefined;
     get defaultEventHandler() {
@@ -3281,15 +3281,15 @@ class Binding {
         this.childrenContentBindings = [];
     }
     rebuild() {
-        const { updator, nodeProperty, stateProperty } = this;
-        setValueToNode(this, updator, nodeProperty, stateProperty);
+        const { updater, nodeProperty, stateProperty } = this;
+        setValueToNode(this, updater, nodeProperty, stateProperty);
     }
     updateNodeForNoRecursive() {
         // rebuildで再帰的にupdateするnodeが決まるため
         // 再帰的に呼び出す必要はない
         if (!this.expandable) {
-            const { updator, nodeProperty, stateProperty } = this;
-            setValueToNode(this, updator, nodeProperty, stateProperty);
+            const { updater, nodeProperty, stateProperty } = this;
+            setValueToNode(this, updater, nodeProperty, stateProperty);
         }
     }
 }
@@ -3964,7 +3964,7 @@ function createNewBindingSummary() {
 
 const callFuncBySymbol = {
     [DirectryCallApiSymbol]: ({ state, stateProxy, handler }) => async (prop, event, loopContext) => state[prop].apply(stateProxy, [event, ...(loopContext?.loopIndexes.values ?? [])]),
-    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, loopIndexes) => handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
+    [NotifyForDependentPropsApiSymbol]: ({ handler }) => (prop, loopIndexes) => handler.updater.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
     [GetDependentPropsApiSymbol]: ({ handler }) => () => handler.dependentProps,
     [ClearCacheApiSymbol]: ({ handler }) => () => handler.clearCache(),
 };
@@ -4070,7 +4070,7 @@ const ADD_PROCESS_PROPERTY = "$addProcess";
 const funcByName = {
     [DEPENDENT_PROPS_PROPERTY]: ({ state }) => state[DEPENDENT_PROPS_PROPERTY],
     [COMPONENT_PROPERTY]: ({ handler }) => createUserComponent(handler.element),
-    [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updator.addProcess(func, stateProxy, [], handler.loopContext)
+    [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updater.addProcess(func, stateProxy, [], handler.loopContext)
 };
 function getSpecialProps(state, stateProxy, handler, prop) {
     return funcByName[prop]?.({ state, stateProxy, handler, prop });
@@ -4177,8 +4177,8 @@ class Handler {
     get component() {
         return this.#component;
     }
-    get updator() {
-        return this.component.quelUpdator;
+    get updater() {
+        return this.component.quelUpdater;
     }
     get loopContext() {
         return undefined;
@@ -4231,7 +4231,7 @@ class Handler {
             return this.getExpandValues(target, propInfo, receiver);
         }
         const _getValue = () => this.getValue(target, propInfo, namedLoopIndexes, receiver);
-        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
+        const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
             namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
             return _getValue();
@@ -4275,7 +4275,7 @@ class Handler {
                 this.notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.wildcardPaths.at(-1) ?? ""));
             }
         };
-        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
+        const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
             namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
             return _setValue();
@@ -4303,7 +4303,7 @@ class Handler {
         if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
             utils.raise(`wildcard type is invalid`);
         }
-        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
+        const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
         const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
         let indexes;
         let lastIndex = undefined;
@@ -4391,7 +4391,7 @@ class Handler {
         if (propInfo.wildcardType === "none" || propInfo.wildcardType === "all") {
             utils.raise(`wildcard type is invalid`);
         }
-        const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
+        const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getExpandValuesFn: namedLoopIndexesStack is undefined");
         const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getExpandValuesFn: namedLoopIndexes is undefined");
         let indexes;
         let lastIndex = undefined;
@@ -4465,7 +4465,7 @@ class Handler {
         }
     }
     notifyCallback(pattern, loopIndexes) {
-        this.updator.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
+        this.updater.addUpdatedStateProperty(createStatePropertyAccessor(pattern, loopIndexes));
     }
     #getBySymbol(target, prop, receiver) {
         return this.#objectBySymbol[prop] ??
@@ -4530,7 +4530,7 @@ class Handler {
                 const index = Number(prop.slice(1));
                 if (isNaN(index))
                     break;
-                const namedLoopIndexesStack = this.updator.namedLoopIndexesStack ?? utils.raise("get: namedLoopIndexesStack is undefined");
+                const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("get: namedLoopIndexesStack is undefined");
                 const namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("get: namedLoopIndexes is undefined");
                 const tmpNamedLoopIndexes = Array.from(namedLoopIndexes.values()).filter(v => v.size === index);
                 if (tmpNamedLoopIndexes.length !== 1) {
@@ -4611,7 +4611,7 @@ const localStyleSheetByTagName = new Map;
  * - quelPseudoParentNode: 親ノード（use, case of useWebComponent is false）
  * - quelPseudoNode: ダミーノード（use, case of useWebComponent is false）
  * - quelBindingSummary: 新規バインディングサマリ
- * - quelUpdator: アップデータ
+ * - quelUpdater: アップデータ
  * - quelProps: プロパティ
  * @param Base 元のコンポーネント
  * @returns {CustomComponent} 拡張されたコンポーネント
@@ -4623,7 +4623,7 @@ function CustomComponent(Base) {
             this.#state = createStateProxy(this, Reflect.construct(this.quelStateClass, [])); // create state
             this.#quelBindingSummary = createNewBindingSummary();
             this.#initialPromises = Promise.withResolvers(); // promises for initialize
-            this.#updator = createUpdator(this);
+            this.#updater = createUpdater(this);
             this.#props = createProps(this);
         }
         #parentComponent;
@@ -4674,9 +4674,9 @@ function CustomComponent(Base) {
         get quelBindingSummary() {
             return this.#quelBindingSummary;
         }
-        #updator;
-        get quelUpdator() {
-            return this.#updator;
+        #updater;
+        get quelUpdater() {
+            return this.#updater;
         }
         #props;
         get quelProps() {
@@ -4723,7 +4723,7 @@ function CustomComponent(Base) {
             // build binding tree and dom 
             const uuid = this.quelTemplate.dataset["uuid"] ?? utils.raise("uuid is undefined");
             const rootOfBindingTree = this.#rootOfBindingTree = createRootContentBindings(this, uuid);
-            this.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
+            this.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
                 rootOfBindingTree.rebuild();
             });
             if (this.quelUseWebComponent) {
@@ -4763,7 +4763,7 @@ function CustomComponent(Base) {
             }
         }
         async disconnectedCallback() {
-            this.quelUpdator.addProcess(async () => {
+            this.quelUpdater.addProcess(async () => {
                 await this.quelState[DisconnectedCallbackSymbol]();
             }, undefined, [], undefined);
         }

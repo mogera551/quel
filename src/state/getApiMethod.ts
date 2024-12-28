@@ -19,7 +19,7 @@ const callFuncBySymbol:{ [key: symbol]: (...args: any[]) => any } = {
   [NotifyForDependentPropsApiSymbol]:
     ({handler}:CallbackParam) => 
       (prop:string, loopIndexes:ILoopIndexes | undefined):void => 
-        handler.updator.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
+        handler.updater.addUpdatedStateProperty(createStatePropertyAccessor(prop, loopIndexes)),
   [GetDependentPropsApiSymbol]:({handler}:CallbackParam) => ():IDependentProps => handler.dependentProps,
   [ClearCacheApiSymbol]:({handler}:CallbackParam) => ():void => handler.clearCache(),
 }

@@ -5,7 +5,7 @@ import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
 import { GetBufferSymbol } from "./symbols";
 
-type IComponentPartial = Pick<IComponent, "quelParentComponent"|"quelUpdator"|"quelState"|"quelProps">;
+type IComponentPartial = Pick<IComponent, "quelParentComponent"|"quelUpdater"|"quelState"|"quelProps">;
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -30,7 +30,7 @@ export const setterFn = (
       const state = component.quelState;
       return state[SetByPropInfoSymbol](propInfo, value);
     };
-    quelParentComponent.quelUpdator?.addProcess(writeProperty, undefined, [ quelParentComponent, parentPropInfo, value ], loopContext);
+    quelParentComponent.quelUpdater?.addProcess(writeProperty, undefined, [ quelParentComponent, parentPropInfo, value ], loopContext);
     return true;
   }
 }

@@ -3,7 +3,7 @@ import { IPropInfo } from "../propertyInfo/types";
 import { IComponent } from "../component/types";
 import { IStatePropertyAccessor, IStateProxy } from "../state/types";
 import { IFilterManager } from "../filter/types";
-import { IUpdator } from "../updator/types";
+import { IUpdater } from "../updater/types";
 
 export interface ILoopable {
   readonly revisionForLoop: number;
@@ -48,7 +48,7 @@ export interface IStateProperty {
 
 export type IComponentPartial = HTMLElement & Pick<IComponent, 
   "quelUseKeyed" | "quelSelectorName" | "quelEventFilterManager" | "quelInputFilterManager" | "quelOutputFilterManager" |
-  "quelState" | "quelBindingSummary" | "quelUpdator" | "quelPopoverInfo" | "quelIsQuelComponent">;
+  "quelState" | "quelBindingSummary" | "quelUpdater" | "quelPopoverInfo" | "quelIsQuelComponent">;
 
 export interface IBindingTreeNode {
   readonly childrenContentBindings: IContentBindingsTreeNode[];
@@ -66,7 +66,7 @@ export interface IBinding extends IBindingTreeNode {
   readonly component?: IComponentPartial;
   readonly expandable: boolean;
   readonly state?: IStateProxy
-  readonly updator?: IUpdator;
+  readonly updater?: IUpdater;
   readonly selectorName?: string;
   readonly eventFilterManager: IFilterManager<"event">;
   readonly inputFilterManager: IFilterManager<"input">;

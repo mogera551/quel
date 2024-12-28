@@ -12,7 +12,7 @@ import { setterFn } from "./setterFn";
 import { BindPropertySymbol, CheckDuplicateSymbol, ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "./symbols";
 import { IPropBuffer, IProps, IPropsBindingInfo } from "./types";
 
-type IComponentPartialForProps = Pick<IComponent,"quelParentComponent"|"quelState"|"quelUpdator"|"quelProps">;
+type IComponentPartialForProps = Pick<IComponent,"quelParentComponent"|"quelState"|"quelUpdater"|"quelProps">;
 
 
 class PropsProxyHandler implements ProxyHandler<IProps> {
@@ -102,7 +102,7 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
       const accessor = (typeof lastWildcardPath !== "undefined") ? 
         createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-      const parentValue = quelParentComponent.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+      const parentValue = quelParentComponent.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
         return parentState[GetByPropInfoSymbol](parentPropInfo);
       });
       propsBuffer[thisProp] = parentValue;
@@ -126,7 +126,7 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
         const state = component.quelState;
         return state[SetByPropInfoSymbol](propInfo, value);
       };
-      quelParentComponent.quelUpdator?.addProcess(writeProperty, undefined, [ quelParentComponent, parentPropInfo, value ], loopContext);
+      quelParentComponent.quelUpdater?.addProcess(writeProperty, undefined, [ quelParentComponent, parentPropInfo, value ], loopContext);
     }
   }
 
@@ -159,7 +159,7 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     }
     const component = this.#component;
     const state = component.quelState;
-    return component.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(
+    return component.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(
       propInfo.wildcardNamedLoopIndexes,
       () => state[GetByPropInfoSymbol](propInfo)
     );
@@ -177,12 +177,12 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
     const component = this.#component;
     const writeProperty = (component: IComponentPartialForProps, propInfo: IPropInfo, value: any) => {
       const state = component.quelState;
-      return component.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(
+      return component.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(
         propInfo.wildcardNamedLoopIndexes,
         () => state[SetByPropInfoSymbol](propInfo, value)
       );
     };
-    component.quelUpdator?.addProcess(writeProperty, undefined, [ component, propInfo, value ], undefined);
+    component.quelUpdater?.addProcess(writeProperty, undefined, [ component, propInfo, value ], undefined);
     return true;
   }
 

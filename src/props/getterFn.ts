@@ -7,7 +7,7 @@ import { createStatePropertyAccessor } from "../state/createStatePropertyAccesso
 import { utils } from "../utils";
 import { GetBufferSymbol } from "./symbols";
 
-type IComponentPartial = Pick<IComponent, "quelParentComponent"|"quelUpdator"|"quelState"|"quelProps">;
+type IComponentPartial = Pick<IComponent, "quelParentComponent"|"quelUpdater"|"quelState"|"quelProps">;
 
 const regexp = RegExp(/^\$[0-9]+$/);
 
@@ -34,7 +34,7 @@ export const getterFn = (
     const accessor = (typeof lastWildcardPath !== "undefined") ? 
       createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
     const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-    return quelParentComponent.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+    return quelParentComponent.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
       return parentState[GetByPropInfoSymbol](parentPropInfo);
     });
   }

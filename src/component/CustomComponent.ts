@@ -3,13 +3,13 @@ import { AsyncSetWritableSymbol, ConnectedCallbackSymbol, DisconnectedCallbackSy
 import { isAttachableShadowRoot } from "./isAttachableShadowRoot";
 import { getStyleSheetListByNames } from "./getStyleSheetListByNames";
 import { localizeStyleSheet } from "./localizeStyleSheet";
-import { createUpdator } from "../updator/Updator";
+import { createUpdater } from "../updater/Updater";
 import { createProps } from "../props/createProps";
 import { IComponent, ICustomComponent, Constructor, IComponentBase } from "./types";
 import { IStateProxy } from "../state/types";
 import { IContentBindings, INewBindingSummary } from "../binding/types";
 import { createRootContentBindings } from "../binding/ContentBindings";
-import { IUpdator } from "../updator/types";
+import { IUpdater } from "../updater/types";
 import { getAdoptedCssNamesFromStyleValue } from "./getAdoptedCssNamesFromStyleValue";
 import { createNewBindingSummary } from "../binding/createNewBindingSummary";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
@@ -60,7 +60,7 @@ const localStyleSheetByTagName:Map<string,CSSStyleSheet> = new Map;
  * - quelPseudoParentNode: 親ノード（use, case of useWebComponent is false）
  * - quelPseudoNode: ダミーノード（use, case of useWebComponent is false）
  * - quelBindingSummary: 新規バインディングサマリ
- * - quelUpdator: アップデータ
+ * - quelUpdater: アップデータ
  * - quelProps: プロパティ
  * @param Base 元のコンポーネント
  * @returns {CustomComponent} 拡張されたコンポーネント
@@ -72,7 +72,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       this.#state = createStateProxy(this, Reflect.construct(this.quelStateClass, [])); // create state
       this.#quelBindingSummary = createNewBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
-      this.#updator = createUpdator(this);
+      this.#updater = createUpdater(this);
       this.#props = createProps(this);
     }
 
@@ -134,9 +134,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       return this.#quelBindingSummary;
     }
 
-    #updator: IUpdator;
-    get quelUpdator(): IUpdator {
-      return this.#updator;
+    #updater: IUpdater;
+    get quelUpdater(): IUpdater {
+      return this.#updater;
     }
 
     #props: IProps;
@@ -185,7 +185,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       // build binding tree and dom 
       const uuid = this.quelTemplate.dataset["uuid"] ?? utils.raise("uuid is undefined");
       const rootOfBindingTree = this.#rootOfBindingTree = createRootContentBindings(this as unknown as IComponent , uuid);
-      this.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
+      this.quelUpdater.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
         rootOfBindingTree.rebuild();
       });
       if (this.quelUseWebComponent) {
@@ -228,7 +228,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
   
     }
     async disconnectedCallback() {
-      this.quelUpdator.addProcess(async () => {
+      this.quelUpdater.addProcess(async () => {
         await this.quelState[DisconnectedCallbackSymbol]();
       }, undefined, [], undefined);
     }

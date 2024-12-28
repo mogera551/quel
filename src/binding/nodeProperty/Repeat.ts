@@ -22,28 +22,28 @@ export class Repeat extends Loop {
     this.revisionUpForLoop();
     if (lastValueLength < value.length) {
       this.binding.childrenContentBindings.forEach((contentBindings, index) => {
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
           contentBindings.rebuild();
         })
       });
       for(let newIndex = lastValueLength; newIndex < value.length; newIndex++) {
         const contentBindings = createContentBindings(uuid, binding);
         this.binding.appendChildContentBindings(contentBindings);
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
+        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, newIndex, () => {
           contentBindings.rebuild();
         })
       }
     } else if (lastValueLength > value.length) {
       const removeContentBindings = this.binding.childrenContentBindings.splice(value.length);
       this.binding.childrenContentBindings.forEach((contentBindings, index) => {
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
           contentBindings.rebuild();
         })
       });
       removeContentBindings.forEach(contentBindings => contentBindings.dispose());
     } else {
       this.binding.childrenContentBindings.forEach((contentBindings, index) => {
-        this.binding.updator?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
+        this.binding.updater?.namedLoopIndexesStack.setSubIndex(parentLastWildCard, wildCardName, index, () => {
           contentBindings.rebuild();
         })
       });

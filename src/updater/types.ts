@@ -4,7 +4,7 @@ import { IBinding } from "../binding/types";
 import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loopContext/types";
 import { IStatePropertyAccessor } from "../state/types";
 
-export interface IUpdator {
+export interface IUpdater {
   executing: boolean;
   loopContextStack: ILoopContextStack;
   namedLoopIndexesStack: INamedLoopIndexesStack;
@@ -16,7 +16,7 @@ export interface IUpdator {
   retrieveAllUpdatedStateProperties(): IStatePropertyAccessor[];
 
   exec(): Promise<void>;
-  applyNodeUpdatesByBinding(binding: IBinding, callback:(updator: IUpdator)=>any): void;
+  applyNodeUpdatesByBinding(binding: IBinding, callback:(updater: IUpdater)=>any): void;
 
   readonly isFullRebuild: boolean;
   setFullRebuild(isFullRebuild:boolean, callback:()=>any): void;

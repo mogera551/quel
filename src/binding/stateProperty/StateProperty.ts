@@ -40,7 +40,7 @@ export class StateProperty implements IStateProperty {
   }
 
   get loopIndexes(): ILoopIndexes | undefined {
-    return this.binding.updator?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard)    
+    return this.binding.updater?.namedLoopIndexesStack?.getLoopIndexes(this.lastWildCard)    
   }
 
   getValue():any {
@@ -107,14 +107,14 @@ export class StateProperty implements IStateProperty {
   }
 
   getChildValue(index:number) {
-    return this.binding.updator?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
+    return this.binding.updater?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
       const propInfo = getPropInfo(this.#childName);
       return this.state[GetByPropInfoSymbol](propInfo);
     });
   }
 
   setChildValue(index:number, value:any) {
-    return this.binding.updator?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
+    return this.binding.updater?.namedLoopIndexesStack?.setSubIndex(this.#name, this.#childName, index, () => {
       const propInfo = getPropInfo(this.#childName);
       return this.state[SetByPropInfoSymbol](propInfo, value);
     });

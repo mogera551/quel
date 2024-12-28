@@ -3,10 +3,10 @@ import { INewBindingSummary } from "../binding/types";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { createStatePropertyAccessor } from "../state/createStatePropertyAccessor";
 import { IStatePropertyAccessor } from "../state/types";
-import { IUpdator } from "./types";
+import { IUpdater } from "./types";
 
 export function updateChildNodes(
-  updator: IUpdator,
+  updater: IUpdater,
   quelBindingSummary: INewBindingSummary, 
   updatedStatePropertyAccesseors: IStatePropertyAccessor[]
 ): void {
@@ -32,8 +32,8 @@ export function updateChildNodes(
     const parentPropertyAccessor = parentPropertyAccessorByKey[parentKey];
     quelBindingSummary.gatherBindings(parentPropertyAccessor).forEach(binding => {
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(parentPropertyAccessor);
-      updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-        setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
+      updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+        setValueToChildNodes(binding, updater, binding.nodeProperty, indexes);
       });
     });
   }

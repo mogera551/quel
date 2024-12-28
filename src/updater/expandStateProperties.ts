@@ -7,10 +7,10 @@ import { getPropInfo } from "../propertyInfo/getPropInfo";
 import { ILoopIndexes } from "../loopContext/types";
 import { createLoopIndexes } from "../loopContext/createLoopIndexes";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
-import { IUpdator } from "./types";
+import { IUpdater } from "./types";
 
 function expandStateProperty(
-  updator: IUpdator,
+  updater: IUpdater,
   state:IStateProxy, 
   accessor:IStatePropertyAccessor, 
   updatedStatePropertiesSet:Set<string>,
@@ -53,7 +53,7 @@ function expandStateProperty(
 
     if ((loopIndexes?.size ?? 0) < curPropertyNameInfo.wildcardPaths.length) {
       // ワイルドカードのインデックスを展開する
-      const listOfIndexes = expandIndexes(updator, state, createStatePropertyAccessor(prop, loopIndexes));
+      const listOfIndexes = expandIndexes(updater, state, createStatePropertyAccessor(prop, loopIndexes));
       propertyAccesses.push(...listOfIndexes.map(loopIndexes => createStatePropertyAccessor(prop, loopIndexes)));
     } else {
       // ワイルドカードのインデックスを展開する必要がない場合
@@ -62,13 +62,13 @@ function expandStateProperty(
     }
 
     // 再帰的に展開
-    propertyAccesses.push(...expandStateProperty(updator, state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
+    propertyAccesses.push(...expandStateProperty(updater, state, createStatePropertyAccessor(prop, loopIndexes), updatedStatePropertiesSet, expandedPropertyAccessKeys));
   }
   return propertyAccesses;
 }
 
 function expandIndexes(
-  updator: IUpdator,
+  updater: IUpdater,
   state:IStateProxy, 
   statePropertyAccessor:IStatePropertyAccessor
 ):ILoopIndexes[] {
@@ -84,7 +84,7 @@ function expandIndexes(
       const accessor = createStatePropertyAccessor(name, _loopIndexes);
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
       const propInfo = getPropInfo(name);
-      return updator.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
+      return updater.namedLoopIndexesStack?.setNamedLoopIndexes(namedLoopIndexes, () => {
         return state[GetByPropInfoSymbol](propInfo).length;
       });
     }
@@ -129,7 +129,7 @@ function expandIndexes(
 }
 
 export function expandStateProperties(
-  updator: IUpdator,
+  updater: IUpdater,
   state: IStateProxy, 
   updatedStateProperties: IStatePropertyAccessor[]
 ): IStatePropertyAccessor[] {
@@ -138,7 +138,7 @@ export function expandStateProperties(
   const updatedStatePropertiesSet = new Set(updatedStateProperties.map(prop => prop.pattern + "\t" + (prop.loopIndexes?.toString() ?? "") ));
   for(let i = 0; i < updatedStateProperties.length; i++) {
     expandedStateProperties.push.apply(expandedStateProperties, expandStateProperty(
-      updator, state, updatedStateProperties[i], updatedStatePropertiesSet
+      updater, state, updatedStateProperties[i], updatedStatePropertiesSet
     ));
   }
   return expandedStateProperties;

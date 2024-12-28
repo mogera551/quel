@@ -1,7 +1,7 @@
 import { IBinding, INewBindingSummary } from "../binding/types";
 import { createNamedLoopIndexesFromAccessor } from "../loopContext/createNamedLoopIndexes";
 import { IStatePropertyAccessor } from "../state/types";
-import { IUpdator } from "./types";
+import { IUpdater } from "./types";
 
 // ソートのための比較関数
 // BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
@@ -9,7 +9,7 @@ const compareExpandableBindings = (a: IBinding, b: IBinding): number => a.stateP
 
 // 
 export function rebuildBindings(
-  updator: IUpdator, 
+  updater: IUpdater, 
   quelBindingSummary: INewBindingSummary, 
   updatedStatePropertyAccessors: IStatePropertyAccessor[],
   updatedKeys: string[]
@@ -23,8 +23,8 @@ export function rebuildBindings(
       const compareKey = binding.stateProperty.name + ".";
       const isFullBuild = updatedKeys.some(key => key.startsWith(compareKey));
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(propertyAccessor);
-      updator.setFullRebuild(isFullBuild, () => {
-        updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+      updater.setFullRebuild(isFullBuild, () => {
+        updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
           binding.rebuild();
         });
       });

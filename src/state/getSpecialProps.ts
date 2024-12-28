@@ -26,7 +26,7 @@ type FuncByName = {
 const funcByName:FuncByName = {
   [DEPENDENT_PROPS_PROPERTY]: ({state}:FuncArgs) => state[DEPENDENT_PROPS_PROPERTY],
   [COMPONENT_PROPERTY]: ({handler}:FuncArgs) => createUserComponent((handler.element as IComponent)),
-  [ADD_PROCESS_PROPERTY]: ({handler, stateProxy}:FuncArgs) => (func:Function) => handler.updator.addProcess(func, stateProxy, [], handler.loopContext)
+  [ADD_PROCESS_PROPERTY]: ({handler, stateProxy}:FuncArgs) => (func:Function) => handler.updater.addProcess(func, stateProxy, [], handler.loopContext)
 }
 
 export function getSpecialProps(
