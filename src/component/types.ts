@@ -124,12 +124,13 @@ export interface IDialogComponent {
 }
 
 export interface IPopoverComponent {
-  canceled: boolean;
-  popoverPromises: PromiseWithResolvers<any> | undefined;
-  readonly popoverInfo: IPopoverInfo
-  asyncShowPopover(props: {[key: string]: any}): Promise<any>;
-  hidePopover(): void;
-  cancelPopover(): void;
+  quelCanceled: boolean;
+  readonly quelPopoverPromises: PromiseWithResolvers<any>;
+  readonly quelPopoverInfo: IPopoverInfo;
+  quelShowPopover(): void;
+  quelAsyncShowPopover(props: {[key: string]: any}): Promise<any>;
+  quelHidePopover(): void;
+  quelCancelPopover(): void;
 }
 
 export type Constructor<T = {}> = new (...args: any[]) => T;
@@ -148,6 +149,6 @@ export type IUserComponent = Pick<
   IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,
   /* "addProcess" | */ "quelElement" | "quelViewRootElement" | "quelQueryRoot" | 
   "quelAsyncShowModal" | "quelAsyncShow" | "quelShow" | "quelShowModal" | "quelClose" |
-  "asyncShowPopover" | "cancelPopover"
+  "quelShowPopover" | "quelAsyncShowPopover" | "quelHidePopover" | "quelCancelPopover"
 >;
 

@@ -56,7 +56,7 @@ export class PopoverTarget extends ElementBase {
     // ポップオーバーがオープンしているかどうかの判定
     // see https://blog.asial.co.jp/3940/
     const popoverOpened = this.target?.matches(":popover-open") ?? false;
-    if (this.binding.component?.popoverInfo.currentButton === this.button && popoverOpened) {
+    if (this.binding.component?.quelPopoverInfo.currentButton === this.button && popoverOpened) {
       return true;
     }
     return false;
@@ -64,8 +64,8 @@ export class PopoverTarget extends ElementBase {
 
   registerCurrentButton() {
     // ボタン押下時、ボタンを登録する
-    this.binding.component?.popoverInfo.addBinding(this.button, this.binding);
-    const popoverInfo = this.binding.component?.popoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
+    this.binding.component?.quelPopoverInfo.addBinding(this.button, this.binding);
+    const popoverInfo = this.binding.component?.quelPopoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
     popoverInfo.currentButton = this.button;
 
     // ボタンのバインドを設定する
@@ -83,10 +83,10 @@ export class PopoverTarget extends ElementBase {
       if (!props[CheckDuplicateSymbol](statePropertyName, nodePropertyName)) {
         const getLoopContext = (binding:IBinding) => ():ILoopContext | undefined => {
           // ポップオーバー情報を取得し、現在のボタンを取得する
-          const component:Pick<IComponent,"popoverInfo"> = binding.component ?? utils.raise("PopoverTarget: no component");
-          const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
+          const component:Pick<IComponent,"quelPopoverInfo"> = binding.component ?? utils.raise("PopoverTarget: no component");
+          const button = component.quelPopoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
           // 現在のボタンに関連するポップオーバー情報を取得する
-          const popoverButton = component.popoverInfo?.get(button);
+          const popoverButton = component.quelPopoverInfo?.get(button);
           // ポップオーバー情報が存在する場合、ループコンテキストを返す
           return popoverButton?.loopContext;
         }

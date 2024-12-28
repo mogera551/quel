@@ -2891,15 +2891,15 @@ class PopoverTarget extends ElementBase {
         // ポップオーバーがオープンしているかどうかの判定
         // see https://blog.asial.co.jp/3940/
         const popoverOpened = this.target?.matches(":popover-open") ?? false;
-        if (this.binding.component?.popoverInfo.currentButton === this.button && popoverOpened) {
+        if (this.binding.component?.quelPopoverInfo.currentButton === this.button && popoverOpened) {
             return true;
         }
         return false;
     }
     registerCurrentButton() {
         // ボタン押下時、ボタンを登録する
-        this.binding.component?.popoverInfo.addBinding(this.button, this.binding);
-        const popoverInfo = this.binding.component?.popoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
+        this.binding.component?.quelPopoverInfo.addBinding(this.button, this.binding);
+        const popoverInfo = this.binding.component?.quelPopoverInfo ?? utils.raise("PopoverTarget: no popoverInfo");
         popoverInfo.currentButton = this.button;
         // ボタンのバインドを設定する
         // ターゲット側でボタンのバインドを設定するのは、難しそうなので、ここで設定する
@@ -2916,9 +2916,9 @@ class PopoverTarget extends ElementBase {
                 const getLoopContext = (binding) => () => {
                     // ポップオーバー情報を取得し、現在のボタンを取得する
                     const component = binding.component ?? utils.raise("PopoverTarget: no component");
-                    const button = component.popoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
+                    const button = component.quelPopoverInfo?.currentButton ?? utils.raise("PopoverTarget: no currentButton");
                     // 現在のボタンに関連するポップオーバー情報を取得する
-                    const popoverButton = component.popoverInfo?.get(button);
+                    const popoverButton = component.quelPopoverInfo?.get(button);
                     // ポップオーバー情報が存在する場合、ループコンテキストを返す
                     return popoverButton?.loopContext;
                 };
@@ -4950,48 +4950,45 @@ function createPopoverInfo() {
 function PopoverComponent(Base) {
     return class extends Base {
         #canceled = false;
-        get canceled() {
+        get quelCanceled() {
             return this.#canceled;
         }
-        set canceled(value) {
+        set quelCanceled(value) {
             this.#canceled = value;
         }
         #popoverPromises;
-        get popoverPromises() {
-            return this.#popoverPromises;
-        }
-        set popoverPromises(value) {
-            this.#popoverPromises = value;
+        get quelPopoverPromises() {
+            return this.#popoverPromises ?? utils.raise("PopoverComponent: popoverPromises is not defined");
         }
         #popoverInfo = createPopoverInfo();
-        get popoverInfo() {
+        get quelPopoverInfo() {
             return this.#popoverInfo;
         }
         constructor(...args) {
             super();
             this.addEventListener("hidden", () => {
-                if (typeof this.popoverPromises !== "undefined") {
-                    if (this.canceled) {
-                        this.popoverPromises.reject();
+                if (typeof this.quelPopoverPromises !== "undefined") {
+                    if (this.quelCanceled) {
+                        this.quelPopoverPromises.reject();
                     }
                     else {
                         const buffer = this.quelProps[GetBufferSymbol]();
                         this.quelProps[ClearBufferSymbol]();
-                        this.popoverPromises.resolve(buffer);
+                        this.quelPopoverPromises.resolve(buffer);
                     }
-                    this.popoverPromises = undefined;
+                    this.#popoverPromises = undefined;
                 }
                 if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                    if (!this.canceled) {
+                    if (!this.quelCanceled) {
                         this.quelProps[FlushBufferSymbol]();
                     }
                 }
-                this.canceled = true;
+                this.quelCanceled = true;
                 // remove loop context
                 this.id;
             });
             this.addEventListener("shown", () => {
-                this.canceled = true;
+                this.quelCanceled = true;
                 if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
                     const buffer = this.quelProps[CreateBufferSymbol]();
                     this.quelProps[SetBufferSymbol](buffer);
@@ -5012,17 +5009,20 @@ function PopoverComponent(Base) {
                 }
             });
         }
-        async asyncShowPopover(props) {
-            this.popoverPromises = Promise.withResolvers();
+        quelShowPopover() {
+            HTMLElement.prototype.showPopover.apply(this);
+        }
+        async quelAsyncShowPopover(props) {
+            const popoverPromises = this.#popoverPromises = Promise.withResolvers();
             this.quelProps[SetBufferSymbol](props);
             HTMLElement.prototype.showPopover.apply(this);
-            return this.popoverPromises.promise;
+            return popoverPromises.promise;
         }
-        hidePopover() {
-            this.canceled = false;
+        quelHidePopover() {
+            this.quelCanceled = false;
             HTMLElement.prototype.hidePopover.apply(this);
         }
-        cancelPopover() {
+        quelCancelPopover() {
             HTMLElement.prototype.hidePopover.apply(this);
         }
     };

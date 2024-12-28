@@ -4,6 +4,7 @@ import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
 import { createPopoverInfo } from "../popover/createPopoverInfo";
 import { IPopoverInfo } from "../popover/types";
+import { utils } from "../utils";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogComponent
 
@@ -22,50 +23,47 @@ type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogCo
 export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base: TBase): Constructor<BaseComponent & IPopoverComponent> {
   return class extends Base implements IPopoverComponent {
     #canceled: boolean = false;
-    get canceled(): boolean {
+    get quelCanceled(): boolean {
       return this.#canceled;
     }
-    set canceled(value: boolean) {
+    set quelCanceled(value: boolean) {
       this.#canceled = value;
     }
 
     #popoverPromises?: PromiseWithResolvers<any>;
-    get popoverPromises(): PromiseWithResolvers<any>|undefined {
-      return this.#popoverPromises;
-    }
-    set popoverPromises(value:PromiseWithResolvers<any>|undefined) {
-      this.#popoverPromises = value;
+    get quelPopoverPromises(): PromiseWithResolvers<any> {
+      return this.#popoverPromises ?? utils.raise("PopoverComponent: popoverPromises is not defined");
     }
 
     #popoverInfo = createPopoverInfo();
-    get popoverInfo(): IPopoverInfo {
+    get quelPopoverInfo(): IPopoverInfo {
       return this.#popoverInfo;
     }
   
     constructor(...args:any[]) {
       super();
       this.addEventListener("hidden", () => {
-        if (typeof this.popoverPromises !== "undefined") {
-          if (this.canceled) {
-            this.popoverPromises.reject();
+        if (typeof this.quelPopoverPromises !== "undefined") {
+          if (this.quelCanceled) {
+            this.quelPopoverPromises.reject();
           } else {
             const buffer = this.quelProps[GetBufferSymbol]();
             this.quelProps[ClearBufferSymbol]();
-            this.popoverPromises.resolve(buffer);
+            this.quelPopoverPromises.resolve(buffer);
           }
-          this.popoverPromises = undefined;
+          this.#popoverPromises = undefined;
         }
         if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-          if (!this.canceled) {
+          if (!this.quelCanceled) {
             this.quelProps[FlushBufferSymbol]();
           }
         }
-        this.canceled = true;
+        this.quelCanceled = true;
         // remove loop context
         const id = this.id;
       });
       this.addEventListener("shown", () => {
-        this.canceled = true;
+        this.quelCanceled = true;
         if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
           const buffer = this.quelProps[CreateBufferSymbol]();
           this.quelProps[SetBufferSymbol](buffer);
@@ -86,19 +84,23 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
       });
     }
 
-    async asyncShowPopover(props:{[key:string]:any}):Promise<any> {
-      this.popoverPromises = Promise.withResolvers();
-      this.quelProps[SetBufferSymbol](props);
+    quelShowPopover(): void {
       HTMLElement.prototype.showPopover.apply(this);
-      return this.popoverPromises.promise;
     }
 
-    hidePopover() {
-      this.canceled = false;
+    async quelAsyncShowPopover(props:{[key:string]:any}):Promise<any> {
+      const popoverPromises = this.#popoverPromises = Promise.withResolvers();
+      this.quelProps[SetBufferSymbol](props);
+      HTMLElement.prototype.showPopover.apply(this);
+      return popoverPromises.promise;
+    }
+
+    quelHidePopover() {
+      this.quelCanceled = false;
       HTMLElement.prototype.hidePopover.apply(this);
     }
 
-    cancelPopover() {
+    quelCancelPopover() {
       HTMLElement.prototype.hidePopover.apply(this);
     }
   };
