@@ -113,9 +113,9 @@ export interface ICustomComponent {
 } 
 
 export interface IDialogComponent {
-  readonly quelDialogPromises: PromiseWithResolvers<any>|undefined;
-  returnValue: string;
-  readonly useBufferedBind: boolean;
+  readonly quelDialogPromises: PromiseWithResolvers<any>;
+  readonly quelUseBufferedBind: boolean;
+  quelReturnValue: string;
   quelAsyncShowModal(props: {[key: string]: any}): Promise<any>;
   quelAsyncShow(props: {[key: string]: any}): Promise<any>;
   quelShowModal(): void;

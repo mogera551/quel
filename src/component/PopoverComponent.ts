@@ -55,7 +55,7 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
           }
           this.popoverPromises = undefined;
         }
-        if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
+        if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
           if (!this.canceled) {
             this.quelProps[FlushBufferSymbol]();
           }
@@ -66,7 +66,7 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
       });
       this.addEventListener("shown", () => {
         this.canceled = true;
-        if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
+        if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
           const buffer = this.quelProps[CreateBufferSymbol]();
           this.quelProps[SetBufferSymbol](buffer);
         }

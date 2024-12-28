@@ -4773,14 +4773,13 @@ function CustomComponent(Base) {
 /**
  * コンポーネントをダイアログを簡単に表示できるように拡張する
  * 拡張内容は以下の通り
- * - dialogPromises: ダイアログ用Promise
- * - returnValue: 戻り値
- * - useBufferedBind: バッファードバインドを使用するかどうか
- * - asyncShowModal: モーダルダイアログ表示
- * - asyncShow: ダイアログ表示
- * - showModal: モーダルダイアログ表示
- * - show: ダイアログ表示
- * - close: ダイアログを閉じる
+ * - quelDialogPromises: ダイアログ用Promise
+ * - quelReturnValue: 戻り値
+ * - quelAsyncShowModal: モーダルダイアログ表示
+ * - quelAsyncShow: ダイアログ表示
+ * - quelShowModal: モーダルダイアログ表示
+ * - quelShow: ダイアログ表示
+ * - quelClose: ダイアログを閉じる
  * @param Base 元のコンポーネント
  * @returns {IDialogComponent} 拡張されたコンポーネント
  */
@@ -4791,20 +4790,20 @@ function DialogComponent(Base) {
             return this.#dialogPromises ?? utils.raise("DialogComponent: quelDialogPromises is not defined");
         }
         #returnValue = "";
-        get returnValue() {
+        get quelReturnValue() {
             return this.#returnValue;
         }
-        set returnValue(value) {
+        set quelReturnValue(value) {
             this.#returnValue = value;
         }
-        get useBufferedBind() {
+        get quelUseBufferedBind() {
             return this.hasAttribute("buffered-bind");
         }
         constructor(...args) {
             super();
             this.addEventListener("closed", () => {
                 if (typeof this.quelDialogPromises !== "undefined") {
-                    if (this.returnValue === "") {
+                    if (this.quelReturnValue === "") {
                         this.quelDialogPromises.reject();
                     }
                     else {
@@ -4814,8 +4813,8 @@ function DialogComponent(Base) {
                     }
                     this.#dialogPromises = undefined;
                 }
-                if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                    if (this.returnValue !== "") {
+                if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                    if (this.quelReturnValue !== "") {
                         this.quelProps[FlushBufferSymbol]();
                     }
                 }
@@ -4826,7 +4825,7 @@ function DialogComponent(Base) {
             });
         }
         async #show(props, modal = true) {
-            this.returnValue = "";
+            this.quelReturnValue = "";
             const dialogPromise = this.#dialogPromises = Promise.withResolvers();
             this.quelProps[SetBufferSymbol](props);
             if (modal) {
@@ -4853,8 +4852,8 @@ function DialogComponent(Base) {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
             }
-            if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                this.returnValue = "";
+            if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                this.quelReturnValue = "";
                 const buffer = this.quelProps[CreateBufferSymbol]();
                 this.quelProps[SetBufferSymbol](buffer);
             }
@@ -4864,8 +4863,8 @@ function DialogComponent(Base) {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: show is only for HTMLDialogElement");
             }
-            if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                this.returnValue = "";
+            if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                this.quelReturnValue = "";
                 const buffer = this.quelProps[CreateBufferSymbol]();
                 this.quelProps[SetBufferSymbol](buffer);
             }
@@ -4982,7 +4981,7 @@ function PopoverComponent(Base) {
                     }
                     this.popoverPromises = undefined;
                 }
-                if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
                     if (!this.canceled) {
                         this.quelProps[FlushBufferSymbol]();
                     }
@@ -4993,7 +4992,7 @@ function PopoverComponent(Base) {
             });
             this.addEventListener("shown", () => {
                 this.canceled = true;
-                if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
                     const buffer = this.quelProps[CreateBufferSymbol]();
                     this.quelProps[SetBufferSymbol](buffer);
                 }
