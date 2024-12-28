@@ -1494,10 +1494,10 @@ function expandStateProperties(updator, state, updatedStateProperties) {
 // BindingのStateのワイルドカード数の少ないものから順に並ぶようにする
 const compareExpandableBindings = (a, b) => a.stateProperty.propInfo.wildcardCount - b.stateProperty.propInfo.wildcardCount;
 // 
-function rebuildBindings(updator, newBindingSummary, updatedStatePropertyAccessors, updatedKeys) {
+function rebuildBindings(updator, quelBindingSummary, updatedStatePropertyAccessors, updatedKeys) {
     for (let i = 0; i < updatedStatePropertyAccessors.length; i++) {
         const propertyAccessor = updatedStatePropertyAccessors[i];
-        const gatheredBindings = newBindingSummary.gatherBindings(propertyAccessor).toSorted(compareExpandableBindings);
+        const gatheredBindings = quelBindingSummary.gatherBindings(propertyAccessor).toSorted(compareExpandableBindings);
         for (let gi = 0; gi < gatheredBindings.length; gi++) {
             const binding = gatheredBindings[gi];
             if (!binding.expandable)
@@ -1520,7 +1520,7 @@ function setValueToChildNodes(binding, updator, nodeProperty, setOfIndex) {
     });
 }
 
-function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccesseors) {
+function updateChildNodes(updator, quelBindingSummary, updatedStatePropertyAccesseors) {
     const parentPropertyAccessorByKey = {};
     const indexesByParentKey = {};
     for (const propertyAccessor of updatedStatePropertyAccesseors) {
@@ -1539,7 +1539,7 @@ function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccess
     }
     for (const [parentKey, indexes] of Object.entries(indexesByParentKey)) {
         const parentPropertyAccessor = parentPropertyAccessorByKey[parentKey];
-        newBindingSummary.gatherBindings(parentPropertyAccessor).forEach(binding => {
+        quelBindingSummary.gatherBindings(parentPropertyAccessor).forEach(binding => {
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(parentPropertyAccessor);
             updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                 setValueToChildNodes(binding, updator, binding.nodeProperty, indexes);
@@ -1548,14 +1548,14 @@ function updateChildNodes(updator, newBindingSummary, updatedStatePropertyAccess
     }
 }
 
-function updateNodes(updator, newBindingSummary, updatedStatePropertyAccessors) {
+function updateNodes(updator, quelBindingSummary, updatedStatePropertyAccessors) {
     const selectBindings = [];
     // select要素以外を更新
     for (let i = 0; i < updatedStatePropertyAccessors.length; i++) {
         const propertyAccessor = updatedStatePropertyAccessors[i];
         const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
         const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
-        newBindingSummary.gatherBindings(propertyAccessor).forEach(async (binding) => {
+        quelBindingSummary.gatherBindings(propertyAccessor).forEach(async (binding) => {
             if (binding.expandable)
                 return;
             if (binding.nodeProperty.isSelectValue) {
@@ -1664,10 +1664,10 @@ class Updator {
     namedLoopIndexesStack = createNamedLoopIndexesStack();
     executing = false;
     get state() {
-        return this.#component.state;
+        return this.#component.quelState;
     }
-    get newBindingSummary() {
-        return this.#component.newBindingSummary;
+    get quelBindingSummary() {
+        return this.#component.quelBindingSummary;
     }
     get component() {
         return this.#component;
@@ -1701,7 +1701,7 @@ class Updator {
     }
     async execCallbackWithPerformance(callback) {
         this.executing = true;
-        const uuid = this.#component.template.dataset["uuid"];
+        const uuid = this.#component.quelTemplate.dataset["uuid"];
         config.debug && performance.mark(`Updator#${uuid}.exec:start`);
         try {
             await callback();
@@ -1728,11 +1728,11 @@ class Updator {
                 // 戻り値は依存関係により更新されたStateのプロパティ情報
                 const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
                 // バインディングの再構築
-                rebuildBindings(this, this.newBindingSummary, updatedStatePropertyAccesses, updatedKeys);
+                rebuildBindings(this, this.quelBindingSummary, updatedStatePropertyAccesses, updatedKeys);
                 // リスト要素の更新
-                updateChildNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+                updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
                 // ノードの更新
-                updateNodes(this, this.newBindingSummary, updatedStatePropertyAccesses);
+                updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
             }
         });
     }
@@ -1799,17 +1799,17 @@ const getterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
             const index = Number(parentPropInfo.name.slice(1));
             return loopIndexes?.at(index);
         }
-        const buffer = component.props[GetBufferSymbol]();
+        const buffer = component.quelProps[GetBufferSymbol]();
         if (buffer) {
             return buffer[thisPropIfo.name];
         }
-        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-        const parentState = parentComponent.state;
+        const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
+        const parentState = quelParentComponent.quelState;
         const lastWildcardPath = parentPropInfo.wildcardPaths.at(-1) ?? "";
         const accessor = (typeof lastWildcardPath !== "undefined") ?
             createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
         const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-        return parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+        return quelParentComponent.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
             return parentState[GetByPropInfoSymbol](parentPropInfo);
         });
     };
@@ -1821,18 +1821,18 @@ const setterFn = (getLoopContext, component, parentPropInfo, thisPropIfo) => {
         if (regexp$2.test(parentPropInfo.name)) {
             utils.raise("Cannot set value to loop index");
         }
-        const buffer = component.props[GetBufferSymbol]();
+        const buffer = component.quelProps[GetBufferSymbol]();
         if (buffer) {
             return buffer[thisPropIfo.name] = value;
         }
         // プロセスキューに積む
-        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
         const loopContext = getLoopContext();
         const writeProperty = (component, propInfo, value) => {
-            const state = component.state;
+            const state = component.quelState;
             return state[SetByPropInfoSymbol](propInfo, value);
         };
-        parentComponent.updator?.addProcess(writeProperty, undefined, [parentComponent, parentPropInfo, value], loopContext);
+        quelParentComponent.quelUpdator?.addProcess(writeProperty, undefined, [quelParentComponent, parentPropInfo, value], loopContext);
         return true;
     };
 };
@@ -1873,7 +1873,7 @@ class PropsProxyHandler {
         this.parentProps.add(parentProp);
         this.thisProps.add(thisProp);
         this.loopContextByParentProp.set(parentProp, getLoopContext);
-        const state = component.state[GetBaseStateSymbol]();
+        const state = component.quelState[GetBaseStateSymbol]();
         const attributes = {
             enumerable: true,
             configurable: true,
@@ -1901,8 +1901,8 @@ class PropsProxyHandler {
         if (this.parentProps.size === 0)
             utils.raise("No binding properties to buffer");
         const propsBuffer = {};
-        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
-        const parentState = parentComponent.state;
+        const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
+        const parentState = quelParentComponent.quelState;
         for (const bindingInfo of this.propsBindingInfos) {
             const { parentProp, thisProp } = bindingInfo;
             const getLoopContext = this.loopContextByParentProp.get(parentProp);
@@ -1913,7 +1913,7 @@ class PropsProxyHandler {
             const accessor = (typeof lastWildcardPath !== "undefined") ?
                 createStatePropertyAccessor(lastWildcardPath, loopIndexes) : undefined;
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(accessor);
-            const parentValue = parentComponent.updator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+            const parentValue = quelParentComponent.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
                 return parentState[GetByPropInfoSymbol](parentPropInfo);
             });
             propsBuffer[thisProp] = parentValue;
@@ -1924,7 +1924,7 @@ class PropsProxyHandler {
         const component = this.#component;
         if (this.#propBuffer === undefined)
             return;
-        const parentComponent = component.parentComponent ?? utils.raise("parentComponent is undefined");
+        const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
         for (const bindingInfo of this.propsBindingInfos) {
             const { parentProp, thisProp } = bindingInfo;
             const getLoopContext = this.loopContextByParentProp.get(parentProp);
@@ -1933,10 +1933,10 @@ class PropsProxyHandler {
             const value = this.#propBuffer[thisProp];
             // プロセスキューに積む
             const writeProperty = (component, propInfo, value) => {
-                const state = component.state;
+                const state = component.quelState;
                 return state[SetByPropInfoSymbol](propInfo, value);
             };
-            parentComponent.updator?.addProcess(writeProperty, undefined, [parentComponent, parentPropInfo, value], loopContext);
+            quelParentComponent.quelUpdator?.addProcess(writeProperty, undefined, [quelParentComponent, parentPropInfo, value], loopContext);
         }
     }
     get(target, prop, receiver) {
@@ -1972,8 +1972,8 @@ class PropsProxyHandler {
             utils.raise(`Invalid prop name: ${prop}`);
         }
         const component = this.#component;
-        const state = component.state;
-        return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[GetByPropInfoSymbol](propInfo));
+        const state = component.quelState;
+        return component.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[GetByPropInfoSymbol](propInfo));
     }
     set(target, prop, value, receiver) {
         if (typeof prop === "symbol" || typeof prop === "number") {
@@ -1986,10 +1986,10 @@ class PropsProxyHandler {
         // プロセスキューに積む
         const component = this.#component;
         const writeProperty = (component, propInfo, value) => {
-            const state = component.state;
-            return component.updator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
+            const state = component.quelState;
+            return component.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(propInfo.wildcardNamedLoopIndexes, () => state[SetByPropInfoSymbol](propInfo, value));
         };
-        component.updator?.addProcess(writeProperty, undefined, [component, propInfo, value], undefined);
+        component.quelUpdator?.addProcess(writeProperty, undefined, [component, propInfo, value], undefined);
         return true;
     }
     ownKeys(target) {
@@ -2550,13 +2550,13 @@ class ElementEvent extends ElementBase {
     }
     async directlyCall(event) {
         // 再構築などでバインドが削除されている場合は処理しない
-        if (!(this.binding.newBindingSummary?.exists(this.binding) ?? false))
+        if (!(this.binding.quelBindingSummary?.exists(this.binding) ?? false))
             return;
         return this.binding.stateProperty.state[DirectryCallApiSymbol](this.binding.stateProperty.name, event, this.binding.parentContentBindings.currentLoopContext);
     }
     eventHandler(event) {
         // 再構築などでバインドが削除されている場合は処理しない
-        if (!(this.binding.newBindingSummary?.exists(this.binding) ?? false))
+        if (!(this.binding.quelBindingSummary?.exists(this.binding) ?? false))
             return;
         // event filter
         event = this.eventFilters.length > 0 ? FilterManager.applyFilter(event, this.eventFilters) : event;
@@ -2640,7 +2640,7 @@ class ComponentProperty extends ElementBase {
         return this.node;
     }
     constructor(binding, node, name, filters) {
-        if (Reflect.get(node, "isQuelComponent") !== true)
+        if (Reflect.get(node, "quelIsQuelComponent") !== true)
             utils.raise("ComponentProperty: not Quel Component");
         // todo: バインドするプロパティ名のチェック
         // 「*」を含まないようにする
@@ -2651,7 +2651,7 @@ class ComponentProperty extends ElementBase {
     }
     setValue(value) {
         try {
-            this.thisComponent.state[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
+            this.thisComponent.quelState[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
         }
         catch (e) {
             console.log(e);
@@ -2662,7 +2662,7 @@ class ComponentProperty extends ElementBase {
      * コンポーネントプロパティのバインドを行う
      */
     initialize() {
-        this.thisComponent.props[BindPropertySymbol](this.binding.stateProperty.name, this.propertyName, () => this.binding.parentContentBindings.currentLoopContext);
+        this.thisComponent.quelProps[BindPropertySymbol](this.binding.stateProperty.name, this.propertyName, () => this.binding.parentContentBindings.currentLoopContext);
     }
     /**
      * 更新後処理
@@ -2674,8 +2674,8 @@ class ComponentProperty extends ElementBase {
             if (propertyAccessor.pattern === statePropertyName ||
                 patternInfo.patternPaths.includes(statePropertyName)) {
                 const remain = propertyAccessor.pattern.slice(statePropertyName.length);
-                this.thisComponent.state[UpdatedCallbackSymbol]([{ name: `${this.propertyName}${remain}`, indexes: propertyAccessor.loopIndexes?.values }]);
-                this.thisComponent.state[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
+                this.thisComponent.quelState[UpdatedCallbackSymbol]([{ name: `${this.propertyName}${remain}`, indexes: propertyAccessor.loopIndexes?.values }]);
+                this.thisComponent.quelState[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
             }
         }
     }
@@ -2858,7 +2858,7 @@ class PopoverTarget extends ElementBase {
     }
     get target() {
         const target = document.getElementById(this.#targetId);
-        if (target != null && target?.isQuelComponent !== true) {
+        if (target != null && target?.quelIsQuelComponent !== true) {
             utils.raise("PopoverTarget: not Quel Component");
         }
         return target;
@@ -2903,10 +2903,10 @@ class PopoverTarget extends ElementBase {
         popoverInfo.currentButton = this.button;
         // ボタンのバインドを設定する
         // ターゲット側でボタンのバインドを設定するのは、難しそうなので、ここで設定する
-        const allBindings = Array.from(this.binding.component?.newBindingSummary?.allBindings ?? []);
+        const allBindings = Array.from(this.binding.component?.quelBindingSummary?.allBindings ?? []);
         // このボタンに関連するバインディングを取得
         const buttonBindings = allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
-        const props = this.target?.props ?? utils.raise("PopoverTarget: no target props");
+        const props = this.target?.quelProps ?? utils.raise("PopoverTarget: no target props");
         for (const binding of buttonBindings) {
             const popoverTarget = binding.nodeProperty;
             const popoverBinding = popoverTarget.binding;
@@ -3196,25 +3196,25 @@ class Binding {
         return this.#parentContentBindings.component;
     }
     get updator() {
-        return this.component?.updator;
+        return this.component?.quelUpdator;
     }
-    get newBindingSummary() {
-        return this.component?.newBindingSummary;
+    get quelBindingSummary() {
+        return this.component?.quelBindingSummary;
     }
     get state() {
-        return this.component?.state;
+        return this.component?.quelState;
     }
     get selectorName() {
-        return this.component?.selectorName;
+        return this.component?.quelSelectorName;
     }
     get eventFilterManager() {
-        return this.component?.eventFilterManager ?? utils.raise("Binding.eventFilterManager: undefined");
+        return this.component?.quelEventFilterManager ?? utils.raise("Binding.eventFilterManager: undefined");
     }
     get inputFilterManager() {
-        return this.component?.inputFilterManager ?? utils.raise("Binding.inputFilterManager: undefined");
+        return this.component?.quelInputFilterManager ?? utils.raise("Binding.inputFilterManager: undefined");
     }
     get outputFilterManager() {
-        return this.component?.outputFilterManager ?? utils.raise("Binding.outputFilterManager: undefined");
+        return this.component?.quelOutputFilterManager ?? utils.raise("Binding.outputFilterManager: undefined");
     }
     constructor(contentBindings, node, nodePropertyName, nodePropertyConstructor, outputFilters, statePropertyName, statePropertyConstructor, inputFilters) {
         this.#id = ++id;
@@ -3225,7 +3225,7 @@ class Binding {
     /**
      */
     execDefaultEventHandler(event) {
-        if (!(this.newBindingSummary?.exists(this) ?? false))
+        if (!(this.quelBindingSummary?.exists(this) ?? false))
             return;
         event.stopPropagation();
         const { nodeProperty, stateProperty } = this;
@@ -3274,7 +3274,7 @@ class Binding {
         return removedContentBindings;
     }
     dispose() {
-        this.newBindingSummary?.delete(this);
+        this.quelBindingSummary?.delete(this);
         this.nodeProperty.dispose();
         this.stateProperty.dispose();
         this.childrenContentBindings.forEach(contentBindings => contentBindings.dispose());
@@ -3680,7 +3680,7 @@ class ContentBindings {
     }
     set component(value) {
         if (typeof value !== "undefined") {
-            (this.#useKeyed !== value.useKeyed) && utils.raise("useKeyed is different");
+            (this.#useKeyed !== value.quelUseKeyed) && utils.raise("useKeyed is different");
         }
         this.#component = value;
     }
@@ -3784,9 +3784,9 @@ class ContentBindings {
      * register bindings to summary
      */
     registerBindingsToSummary() {
-        const newBindingSummary = this.component?.newBindingSummary ?? utils.raise("bindingSummary is undefined");
+        const quelBindingSummary = this.component?.quelBindingSummary ?? utils.raise("bindingSummary is undefined");
         for (let i = 0; i < this.childBindings.length; i++) {
-            newBindingSummary.register(this.childBindings[i]);
+            quelBindingSummary.register(this.childBindings[i]);
         }
     }
     dispose() {
@@ -3819,7 +3819,7 @@ class ContentBindings {
 const _cache$1 = {};
 function createContentBindings(uuid, parentBinding) {
     const component = parentBinding.component ?? utils.raise("component is undefined");
-    const useKeyed = component.useKeyed;
+    const useKeyed = component.quelUseKeyed;
     const loopable = parentBinding.loopable;
     const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
     const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
@@ -3833,7 +3833,7 @@ function createContentBindings(uuid, parentBinding) {
     return contentBindings;
 }
 function createRootContentBindings(component, uuid) {
-    const useKeyed = component.useKeyed;
+    const useKeyed = component.quelUseKeyed;
     const loopable = false;
     const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
     let contentBindings = _cache$1[key]?.pop();
@@ -4035,7 +4035,7 @@ function existsProperty(baseClass, prop) {
     return existsProperty(Object.getPrototypeOf(baseClass), prop);
 }
 const permittedProps = new Set([
-    "element", "addProcess", "viewRootElement ", "queryRoot",
+    "element", "addProcess", "quelViewRootElement ", "quelQueryRoot",
     "asyncShowModal", "asyncShow",
     "asyncShowPopover", "cancelPopover"
 ]);
@@ -4045,11 +4045,11 @@ class UserProxyHandler {
             return Reflect.get(target, prop);
         }
         else {
-            if (existsProperty(target.baseClass, prop)) {
+            if (existsProperty(target.quelBaseClass, prop)) {
                 return Reflect.get(target, prop);
             }
             else {
-                utils.raise(`property ${prop} is not found in ${target.baseClass.name}`);
+                utils.raise(`property ${prop} is not found in ${target.quelBaseClass.name}`);
             }
         }
     }
@@ -4178,7 +4178,7 @@ class Handler {
         return this.#component;
     }
     get updator() {
-        return this.component.updator;
+        return this.component.quelUpdator;
     }
     get loopContext() {
         return undefined;
@@ -4575,10 +4575,10 @@ const getParentComponent = (_node) => {
         node = node.parentNode;
         if (node == null)
             return undefined;
-        if (Reflect.get(node, "isQuelComponent") === true)
+        if (Reflect.get(node, "quelIsQuelComponent") === true)
             return node;
         if (node instanceof ShadowRoot) {
-            if (Reflect.get(node.host, "isQuelComponent") === true)
+            if (Reflect.get(node.host, "quelIsQuelComponent") === true)
                 return node.host;
             node = node.host;
         }
@@ -4587,20 +4587,32 @@ const getParentComponent = (_node) => {
             return psuedoComponent;
     } while (true);
 };
+// find parent shadow root for adoptedCSS 
+function getParentShadowRoot(parentNode) {
+    let node = parentNode;
+    while (node) {
+        if (node instanceof ShadowRoot) {
+            return node;
+        }
+        node = node.parentNode;
+    }
+}
 const localStyleSheetByTagName = new Map;
+/**
+ * ToDo: quelAlivePromisesが必要かどうかを検討する
+ */
 /**
  * コンポーネントを拡張する
  * 拡張内容は以下の通り
- * - state: Stateの生成
- * - initialPromises: 初期化用Promise
- * - alivePromises: アライブ用Promise
- * - rootBindingManager: ルートバインディングマネージャ
- * - viewRootElement: 表示用ルート要素
- * - pseudoParentNode: 親ノード（use, case of useWebComponent is false）
- * - pseudoNode: ダミーノード（use, case of useWebComponent is false）
- * - newBindingSummary: 新規バインディングサマリ
- * - updator: アップデータ
- * - props: プロパティ
+ * - quelState: Stateの生成
+ * - quelInitialPromises: 初期化用Promise
+ * - quelAlivePromises: アライブ用Promise
+ * - quelViewRootElement: 表示用ルート要素
+ * - quelPseudoParentNode: 親ノード（use, case of useWebComponent is false）
+ * - quelPseudoNode: ダミーノード（use, case of useWebComponent is false）
+ * - quelBindingSummary: 新規バインディングサマリ
+ * - quelUpdator: アップデータ
+ * - quelProps: プロパティ
  * @param Base 元のコンポーネント
  * @returns {CustomComponent} 拡張されたコンポーネント
  */
@@ -4608,175 +4620,151 @@ function CustomComponent(Base) {
     return class extends Base {
         constructor(...args) {
             super();
-            this.#state = createStateProxy(this, Reflect.construct(this.State, [])); // create state
-            this.#newBindingSummary = createNewBindingSummary();
+            this.#state = createStateProxy(this, Reflect.construct(this.quelStateClass, [])); // create state
+            this.#quelBindingSummary = createNewBindingSummary();
             this.#initialPromises = Promise.withResolvers(); // promises for initialize
             this.#updator = createUpdator(this);
             this.#props = createProps(this);
         }
-        get component() {
-            return this;
-        }
         #parentComponent;
-        get parentComponent() {
+        get quelParentComponent() {
             if (typeof this.#parentComponent === "undefined") {
                 this.#parentComponent = getParentComponent(this);
             }
             return this.#parentComponent;
         }
         #initialPromises;
-        get initialPromises() {
+        get quelInitialPromises() {
             return this.#initialPromises;
         }
         #alivePromises;
-        get alivePromises() {
-            return this.#alivePromises ?? utils.raise("alivePromises is undefined");
+        get quelAlivePromises() {
+            return this.#alivePromises ?? utils.raise("quelAlivePromises is undefined");
         }
-        set alivePromises(promises) {
+        set quelAlivePromises(promises) {
             this.#alivePromises = promises;
         }
         #state;
-        get state() {
-            return this.#state;
+        get quelState() {
+            return this.#state ?? utils.raise("quelState is undefined");
         }
-        #rootBindingManager;
-        get rootBindingManager() {
-            return this.#rootBindingManager ?? utils.raise("rootBindingManager is undefined");
-        }
-        set rootBindingManager(bindingManager) {
-            this.#rootBindingManager = bindingManager;
-        }
-        get viewRootElement() {
-            return this.useWebComponent ? (this.shadowRoot ?? this) : this.pseudoParentNode;
+        #rootOfBindingTree;
+        get quelViewRootElement() {
+            return this.quelUseWebComponent ? (this.shadowRoot ?? this) : this.quelPseudoParentNode;
         }
         // alias view root element */
-        get queryRoot() {
-            return this.viewRootElement;
+        get quelQueryRoot() {
+            return this.quelViewRootElement;
         }
         // parent node（use, case of useWebComponent is false）
         #pseudoParentNode;
-        get pseudoParentNode() {
-            return !this.useWebComponent ?
+        get quelPseudoParentNode() {
+            return !this.quelUseWebComponent ?
                 (this.#pseudoParentNode ?? utils.raise("pseudoParentNode is undefined")) :
-                utils.raise("mixInComponent: useWebComponent must be false");
-        }
-        set pseudoParentNode(node) {
-            this.#pseudoParentNode = node;
+                utils.raise("useWebComponent must be false");
         }
         // pseudo node（use, case of useWebComponent is false） */
         #pseudoNode;
-        get pseudoNode() {
-            return this.#pseudoNode ?? utils.raise("pseudoNode is undefined");
+        get quelPseudoNode() {
+            return !this.quelUseWebComponent ?
+                (this.#pseudoNode ?? utils.raise("pseudoNode is undefined")) :
+                utils.raise("useWebComponent must be false");
         }
-        set pseudoNode(node) {
-            this.#pseudoNode = node;
-        }
-        // find parent shadow root, or document, for adoptedCSS 
-        get shadowRootOrDocument() {
-            let node = this.parentNode;
-            while (node) {
-                if (node instanceof ShadowRoot) {
-                    return node;
-                }
-                node = node.parentNode;
-            }
-            return document;
-        }
-        #newBindingSummary;
-        get newBindingSummary() {
-            return this.#newBindingSummary;
+        #quelBindingSummary;
+        get quelBindingSummary() {
+            return this.#quelBindingSummary;
         }
         #updator;
-        get updator() {
+        get quelUpdator() {
             return this.#updator;
         }
         #props;
-        get props() {
+        get quelProps() {
             return this.#props;
         }
-        async build() {
-            if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
+        async #build() {
+            if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.quelUseShadowRoot && this.quelUseWebComponent) {
                 const shadowRoot = this.attachShadow({ mode: 'open' });
                 const names = getAdoptedCssNamesFromStyleValue(this);
                 const styleSheets = getStyleSheetListByNames(names);
-                if (typeof this.styleSheet !== "undefined") {
-                    styleSheets.push(this.styleSheet);
+                if (typeof this.quelStyleSheet !== "undefined") {
+                    styleSheets.push(this.quelStyleSheet);
                 }
                 shadowRoot.adoptedStyleSheets = styleSheets;
             }
             else {
-                if (typeof this.styleSheet !== "undefined") {
-                    let adoptedStyleSheet = this.styleSheet;
-                    if (this.useLocalSelector) {
+                if (typeof this.quelStyleSheet !== "undefined") {
+                    let adoptedStyleSheet = this.quelStyleSheet;
+                    if (this.quelUseLocalSelector) {
                         const localStyleSheet = localStyleSheetByTagName.get(this.tagName);
                         if (typeof localStyleSheet !== "undefined") {
                             adoptedStyleSheet = localStyleSheet;
                         }
                         else {
-                            adoptedStyleSheet = localizeStyleSheet(this.styleSheet, this.selectorName);
+                            adoptedStyleSheet = localizeStyleSheet(this.quelStyleSheet, this.quelSelectorName);
                             localStyleSheetByTagName.set(this.tagName, adoptedStyleSheet);
                         }
                     }
-                    const shadowRootOrDocument = this.shadowRootOrDocument;
+                    const shadowRootOrDocument = getParentShadowRoot(this.parentNode) ?? document;
                     const adoptedStyleSheets = shadowRootOrDocument.adoptedStyleSheets;
                     if (!adoptedStyleSheets.includes(adoptedStyleSheet)) {
                         shadowRootOrDocument.adoptedStyleSheets = adoptedStyleSheets.concat(adoptedStyleSheet);
                     }
                 }
             }
-            if (this.useOverscrollBehavior) {
+            if (this.quelUseOverscrollBehavior) {
                 if (this.tagName === "DIALOG" || this.hasAttribute("popover")) {
                     this.style.overscrollBehavior = "contain";
                 }
             }
-            await this.state[AsyncSetWritableSymbol](async () => {
-                await this.state[ConnectedCallbackSymbol]();
+            await this.quelState[AsyncSetWritableSymbol](async () => {
+                await this.quelState[ConnectedCallbackSymbol]();
             });
             // build binding tree and dom 
-            const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
-            this.rootBindingManager = createRootContentBindings(this, uuid);
-            this.updator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
-                this.rootBindingManager.rebuild();
+            const uuid = this.quelTemplate.dataset["uuid"] ?? utils.raise("uuid is undefined");
+            const rootOfBindingTree = this.#rootOfBindingTree = createRootContentBindings(this, uuid);
+            this.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
+                rootOfBindingTree.rebuild();
             });
-            if (this.useWebComponent) {
+            if (this.quelUseWebComponent) {
                 // case of useWebComponent,
-                // then append fragment block to viewRootElement
-                this.viewRootElement.appendChild(this.rootBindingManager.fragment);
+                // then append fragment block to quelViewRootElement
+                this.quelViewRootElement.appendChild(rootOfBindingTree.fragment);
             }
             else {
                 // case of no useWebComponent, 
                 // then insert fragment block before pseudo node nextSibling
-                this.viewRootElement.insertBefore(this.rootBindingManager.fragment, this.pseudoNode?.nextSibling ?? null);
+                this.quelViewRootElement.insertBefore(rootOfBindingTree.fragment, this.quelPseudoNode?.nextSibling ?? null);
                 // child nodes add pseudoComponentByNode
-                this.rootBindingManager.childNodes.forEach(node => pseudoComponentByNode.set(node, this));
+                rootOfBindingTree.childNodes.forEach(node => pseudoComponentByNode.set(node, this));
             }
         }
         async connectedCallback() {
             try {
                 // wait for parent component initialize
-                if (this.parentComponent) {
-                    await this.parentComponent.initialPromises.promise;
+                if (this.quelParentComponent) {
+                    await this.quelParentComponent.quelInitialPromises.promise;
                 }
                 else {
                 }
-                if (!this.useWebComponent) {
+                if (!this.quelUseWebComponent) {
                     // case of no useWebComponent
                     const comment = document.createComment(`@@/${this.tagName}`);
-                    this.pseudoParentNode = this.parentNode ?? utils.raise("parentNode is undefined");
-                    this.pseudoNode = comment;
-                    this.pseudoParentNode.replaceChild(comment, this);
+                    const pseudoParentNode = this.#pseudoParentNode = this.parentNode ?? utils.raise("parentNode is undefined");
+                    this.#pseudoNode = comment;
+                    pseudoParentNode.replaceChild(comment, this);
                 }
                 // promises for alive
-                this.alivePromises = Promise.withResolvers();
-                await this.build();
+                this.#alivePromises = Promise.withResolvers();
+                await this.#build();
             }
             finally {
-                this.initialPromises?.resolve && this.initialPromises.resolve();
+                this.quelInitialPromises?.resolve && this.quelInitialPromises.resolve();
             }
         }
         async disconnectedCallback() {
-            this.updator.addProcess(async () => {
-                await this.state[DisconnectedCallbackSymbol]();
+            this.quelUpdator.addProcess(async () => {
+                await this.quelState[DisconnectedCallbackSymbol]();
             }, undefined, [], undefined);
         }
     };
@@ -4823,15 +4811,15 @@ function DialogComponent(Base) {
                         this.dialogPromises.reject();
                     }
                     else {
-                        const buffer = this.props[GetBufferSymbol]();
-                        this.props[ClearBufferSymbol]();
+                        const buffer = this.quelProps[GetBufferSymbol]();
+                        this.quelProps[ClearBufferSymbol]();
                         this.dialogPromises.resolve(buffer);
                     }
                     this.dialogPromises = undefined;
                 }
-                if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+                if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
                     if (this.returnValue !== "") {
-                        this.props[FlushBufferSymbol]();
+                        this.quelProps[FlushBufferSymbol]();
                     }
                 }
             });
@@ -4843,7 +4831,7 @@ function DialogComponent(Base) {
         async #show(props, modal = true) {
             this.returnValue = "";
             this.dialogPromises = Promise.withResolvers();
-            this.props[SetBufferSymbol](props);
+            this.quelProps[SetBufferSymbol](props);
             if (modal) {
                 HTMLDialogElement.prototype.showModal.apply(this);
             }
@@ -4868,10 +4856,10 @@ function DialogComponent(Base) {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
             }
-            if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+            if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
                 this.returnValue = "";
-                const buffer = this.props[CreateBufferSymbol]();
-                this.props[SetBufferSymbol](buffer);
+                const buffer = this.quelProps[CreateBufferSymbol]();
+                this.quelProps[SetBufferSymbol](buffer);
             }
             return HTMLDialogElement.prototype.showModal.apply(this);
         }
@@ -4879,10 +4867,10 @@ function DialogComponent(Base) {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: show is only for HTMLDialogElement");
             }
-            if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+            if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
                 this.returnValue = "";
-                const buffer = this.props[CreateBufferSymbol]();
-                this.props[SetBufferSymbol](buffer);
+                const buffer = this.quelProps[CreateBufferSymbol]();
+                this.quelProps[SetBufferSymbol](buffer);
             }
             return HTMLDialogElement.prototype.show.apply(this);
         }
@@ -4991,15 +4979,15 @@ function PopoverComponent(Base) {
                         this.popoverPromises.reject();
                     }
                     else {
-                        const buffer = this.props[GetBufferSymbol]();
-                        this.props[ClearBufferSymbol]();
+                        const buffer = this.quelProps[GetBufferSymbol]();
+                        this.quelProps[ClearBufferSymbol]();
                         this.popoverPromises.resolve(buffer);
                     }
                     this.popoverPromises = undefined;
                 }
-                if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
+                if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
                     if (!this.canceled) {
-                        this.props[FlushBufferSymbol]();
+                        this.quelProps[FlushBufferSymbol]();
                     }
                 }
                 this.canceled = true;
@@ -5008,12 +4996,12 @@ function PopoverComponent(Base) {
             });
             this.addEventListener("shown", () => {
                 this.canceled = true;
-                if (this.useBufferedBind && typeof this.parentComponent !== "undefined") {
-                    const buffer = this.props[CreateBufferSymbol]();
-                    this.props[SetBufferSymbol](buffer);
+                if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                    const buffer = this.quelProps[CreateBufferSymbol]();
+                    this.quelProps[SetBufferSymbol](buffer);
                 }
-                for (const key in this.props) {
-                    this.state[NotifyForDependentPropsApiSymbol](key, undefined);
+                for (const key in this.quelProps) {
+                    this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
                 }
             });
             this.addEventListener("toggle", (e) => {
@@ -5030,7 +5018,7 @@ function PopoverComponent(Base) {
         }
         async asyncShowPopover(props) {
             this.popoverPromises = Promise.withResolvers();
-            this.props[SetBufferSymbol](props);
+            this.quelProps[SetBufferSymbol](props);
             HTMLElement.prototype.showPopover.apply(this);
             return this.popoverPromises.promise;
         }
@@ -5066,129 +5054,108 @@ const generateComponentClass = (componentModule) => {
     const getBaseClass = function (module, baseConstructor) {
         const baseClass = class extends baseConstructor {
             #module = module;
-            get module() {
-                return this.#module;
-            }
-            get isQuelComponent() {
+            get quelIsQuelComponent() {
                 return true;
             }
             #customElementInfo;
-            get customElementInfo() {
-                if (typeof this.#customElementInfo === "undefined") {
-                    this.#customElementInfo = customElementInfoByConstructor.get(this.thisClass) ?? utils.raise(`customElementInfo is not found `);
-                }
-                return this.#customElementInfo;
-            }
             #setCustomElementInfo() {
-                const customeElementInfo = customElementInfoByConstructor.get(this.thisClass);
+                let customeElementInfo = customElementInfoByConstructor.get(this.quelThisClass);
                 if (typeof customeElementInfo === "undefined") {
                     const lowerTagName = this.tagName.toLowerCase();
                     const isAutonomousCustomElement = lowerTagName.includes("-");
                     const customName = this.getAttribute("is");
                     const isCostomizedBuiltInElement = customName ? true : false;
                     const selectorName = isAutonomousCustomElement ? lowerTagName : `${lowerTagName}[is="${customName}"]`;
-                    customElementInfoByConstructor.set(this.thisClass, { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement });
+                    customeElementInfo = { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement };
+                    customElementInfoByConstructor.set(this.quelThisClass, customeElementInfo);
                 }
+                this.#customElementInfo = customeElementInfo;
             }
-            get html() {
-                return this.module.html;
+            get quelHtml() {
+                return this.#module.html;
             }
-            set html(value) {
-                this.module.html = value;
+            set quelHtml(value) {
+                this.#module.html = value;
             }
-            get template() {
-                return this.module.template;
+            get quelTemplate() {
+                return this.#module.template;
             }
-            get css() {
-                return this.module.css;
+            get quelCss() {
+                return this.#module.css;
             }
-            set css(value) {
-                this.module.css = value;
+            set quelCss(value) {
+                this.#module.css = value;
             }
-            get styleSheet() {
-                return this.module.styleSheet;
+            get quelStyleSheet() {
+                return this.#module.styleSheet;
             }
-            get State() {
-                return this.module.State;
+            get quelStateClass() {
+                return this.#module.State;
             }
-            get inputFilters() {
-                return this.module.filters.input ?? {};
+            get quelUseShadowRoot() {
+                return this.#module.moduleConfig.useShadowRoot ?? config.useShadowRoot;
             }
-            get outputFilters() {
-                return this.module.filters.output ?? {};
+            get quelUseWebComponent() {
+                return this.#module.moduleConfig.useWebComponent ?? config.useWebComponent;
             }
-            get eventFilters() {
-                return this.module.filters.event ?? {};
+            get quelUseLocalTagName() {
+                return this.#module.moduleConfig.useLocalTagName ?? config.useLocalTagName;
             }
-            get useShadowRoot() {
-                return this.module.moduleConfig.useShadowRoot ?? config.useShadowRoot;
+            get quelUseKeyed() {
+                return this.#module.moduleConfig.useKeyed ?? config.useKeyed;
             }
-            get useWebComponent() {
-                return this.module.moduleConfig.useWebComponent ?? config.useWebComponent;
+            get quelUseLocalSelector() {
+                return this.#module.moduleConfig.useLocalSelector ?? config.useLocalSelector;
             }
-            get useLocalTagName() {
-                return this.module.moduleConfig.useLocalTagName ?? config.useLocalTagName;
+            get quelUseOverscrollBehavior() {
+                return this.#module.moduleConfig.useOverscrollBehavior ?? config.useOverscrollBehavior;
             }
-            get useKeyed() {
-                return this.module.moduleConfig.useKeyed ?? config.useKeyed;
+            get quelLowerTagName() {
+                return this.#customElementInfo?.lowerTagName ?? utils.raise(`lowerTagName is not found for ${this.tagName}`);
             }
-            get useLocalSelector() {
-                return this.module.moduleConfig.useLocalSelector ?? config.useLocalSelector;
-            }
-            get useOverscrollBehavior() {
-                return this.module.moduleConfig.useOverscrollBehavior ?? config.useOverscrollBehavior;
-            }
-            get lowerTagName() {
-                return this.customElementInfo.lowerTagName;
-            }
-            get selectorName() {
-                return this.customElementInfo.selectorName;
+            get quelSelectorName() {
+                return this.#customElementInfo?.selectorName ?? utils.raise(`selectorName is not found for ${this.tagName}`);
             }
             // is autonomous custom element 
-            get isAutonomousCustomElement() {
-                return this.customElementInfo.isAutonomousCustomElement;
+            get quelIsAutonomousCustomElement() {
+                return this.#customElementInfo?.isAutonomousCustomElement ?? utils.raise(`isAutonomousCustomElement is not found for ${this.tagName}`);
             }
             // is costomized built-in element
-            get isCostomizedBuiltInElement() {
-                return this.customElementInfo.isCostomizedBuiltInElement;
+            get quelIsCostomizedBuiltInElement() {
+                return this.#customElementInfo?.isCostomizedBuiltInElement ?? utils.raise(`isCostomizedBuiltInElement is not found for ${this.tagName}`);
             }
             #filterManagers;
-            get filterManagers() {
-                if (typeof this.#filterManagers === "undefined") {
-                    this.#filterManagers = filterManagersByConstructor.get(this.thisClass) ?? utils.raise(`filterManagers is not found for ${this.tagName}`);
-                }
-                return this.#filterManagers;
-            }
             #setFilterManagers() {
-                const filterManagers = filterManagersByConstructor.get(this.thisClass);
+                let filterManagers = filterManagersByConstructor.get(this.quelThisClass);
                 if (typeof filterManagers === "undefined") {
-                    const filterManagers = {
+                    filterManagers = {
                         inputFilterManager: new InputFilterManager,
                         outputFilterManager: new OutputFilterManager,
                         eventFilterManager: new EventFilterManager,
                     };
-                    for (const [name, filterFunc] of Object.entries(this.inputFilters)) {
+                    for (const [name, filterFunc] of Object.entries(this.#module.filters.input ?? {})) {
                         filterManagers.inputFilterManager.registerFilter(name, filterFunc);
                     }
-                    for (const [name, filterFunc] of Object.entries(this.outputFilters)) {
+                    for (const [name, filterFunc] of Object.entries(this.#module.filters.output ?? {})) {
                         filterManagers.outputFilterManager.registerFilter(name, filterFunc);
                     }
-                    for (const [name, filterFunc] of Object.entries(this.eventFilters)) {
+                    for (const [name, filterFunc] of Object.entries(this.#module.filters.event ?? {})) {
                         filterManagers.eventFilterManager.registerFilter(name, filterFunc);
                     }
-                    filterManagersByConstructor.set(this.thisClass, filterManagers);
+                    filterManagersByConstructor.set(this.quelThisClass, filterManagers);
                 }
+                this.#filterManagers = filterManagers;
             }
-            get inputFilterManager() {
-                return this.filterManagers.inputFilterManager;
+            get quelInputFilterManager() {
+                return this.#filterManagers?.inputFilterManager ?? utils.raise("inputFilterManager is not found");
             }
-            get outputFilterManager() {
-                return this.filterManagers.outputFilterManager;
+            get quelOutputFilterManager() {
+                return this.#filterManagers?.outputFilterManager ?? utils.raise("outputFilterManager is not found");
             }
-            get eventFilterManager() {
-                return this.filterManagers.eventFilterManager;
+            get quelEventFilterManager() {
+                return this.#filterManagers?.eventFilterManager ?? utils.raise("eventFilterManager is not found");
             }
-            get element() {
+            get quelElement() {
                 return this;
             }
             constructor() {
@@ -5196,13 +5163,13 @@ const generateComponentClass = (componentModule) => {
                 this.#setCustomElementInfo();
                 this.#setFilterManagers();
             }
-            static baseClass = baseConstructor;
-            get baseClass() {
-                return Reflect.get(this.constructor, "baseClass");
+            static quelBaseClass = baseConstructor;
+            get quelBaseClass() {
+                return Reflect.get(this.constructor, "quelBaseClass");
             }
-            static thisClass;
-            get thisClass() {
-                return Reflect.get(this.constructor, "thisClass");
+            static quelThisClass;
+            get quelThisClass() {
+                return Reflect.get(this.constructor, "quelThisClass");
             }
             static _module = module;
             static get html() {
@@ -5218,7 +5185,7 @@ const generateComponentClass = (componentModule) => {
                 this._module.css = value;
             }
         };
-        baseClass.thisClass = baseClass;
+        baseClass.quelThisClass = baseClass;
         return baseClass;
     };
     const module = createModule(componentModule);

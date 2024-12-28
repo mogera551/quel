@@ -23,9 +23,9 @@ const getParentComponent = (_node:Node): IComponent|undefined => {
   do {
     node = node.parentNode;
     if (node == null) return undefined;
-    if (Reflect.get(node, "isQuelComponent") === true) return node as IComponent;
+    if (Reflect.get(node, "quelIsQuelComponent") === true) return node as IComponent;
     if (node instanceof ShadowRoot) {
-      if (Reflect.get(node.host, "isQuelComponent") === true) return node.host as IComponent;
+      if (Reflect.get(node.host, "quelIsQuelComponent") === true) return node.host as IComponent;
       node = node.host;
     }
     const psuedoComponent = pseudoComponentByNode.get(node);
@@ -69,7 +69,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
   return class extends Base implements ICustomComponent {
     constructor(...args:any[]) {
       super();
-      this.#state = createStateProxy(this, Reflect.construct(this.State, [])); // create state
+      this.#state = createStateProxy(this, Reflect.construct(this.quelStateClass, [])); // create state
       this.#quelBindingSummary = createNewBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
       this.#updator = createUpdator(this);
@@ -105,7 +105,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     #rootOfBindingTree?: IContentBindings;
 
     get quelViewRootElement():ShadowRoot|HTMLElement {
-      return this.useWebComponent ? (this.shadowRoot ?? this) : this.quelPseudoParentNode as HTMLElement;
+      return this.quelUseWebComponent ? (this.shadowRoot ?? this) : this.quelPseudoParentNode as HTMLElement;
     }
 
     // alias view root element */
@@ -116,7 +116,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     // parent node（use, case of useWebComponent is false）
     #pseudoParentNode?:Node;
     get quelPseudoParentNode():Node {
-      return !this.useWebComponent ? 
+      return !this.quelUseWebComponent ? 
         (this.#pseudoParentNode ?? utils.raise("pseudoParentNode is undefined")) : 
         utils.raise("useWebComponent must be false");
     }
@@ -124,7 +124,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     // pseudo node（use, case of useWebComponent is false） */
     #pseudoNode?: Node;
     get quelPseudoNode(): Node {
-      return !this.useWebComponent ? 
+      return !this.quelUseWebComponent ? 
         (this.#pseudoNode ?? utils.raise("pseudoNode is undefined")) :
         utils.raise("useWebComponent must be false");
     }
@@ -145,23 +145,23 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     }
 
     async #build() {
-      if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.useShadowRoot && this.useWebComponent) {
+      if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.quelUseShadowRoot && this.quelUseWebComponent) {
         const shadowRoot = this.attachShadow({mode: 'open'});
         const names = getAdoptedCssNamesFromStyleValue(this);
         const styleSheets = getStyleSheetListByNames(names);
-        if (typeof this.styleSheet !== "undefined" ) {
-          styleSheets.push(this.styleSheet);
+        if (typeof this.quelStyleSheet !== "undefined" ) {
+          styleSheets.push(this.quelStyleSheet);
         }
         shadowRoot.adoptedStyleSheets = styleSheets;
       } else {
-        if (typeof this.styleSheet !== "undefined") {
-          let adoptedStyleSheet = this.styleSheet;
-          if (this.useLocalSelector) {
+        if (typeof this.quelStyleSheet !== "undefined") {
+          let adoptedStyleSheet = this.quelStyleSheet;
+          if (this.quelUseLocalSelector) {
             const localStyleSheet = localStyleSheetByTagName.get(this.tagName);
             if (typeof localStyleSheet !== "undefined") {
               adoptedStyleSheet = localStyleSheet;
             } else {
-              adoptedStyleSheet = localizeStyleSheet(this.styleSheet, this.selectorName);
+              adoptedStyleSheet = localizeStyleSheet(this.quelStyleSheet, this.quelSelectorName);
               localStyleSheetByTagName.set(this.tagName, adoptedStyleSheet);
             }
           }
@@ -172,7 +172,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
           }
         }
       }
-      if (this.useOverscrollBehavior) {
+      if (this.quelUseOverscrollBehavior) {
         if (this.tagName === "DIALOG" || this.hasAttribute("popover")) {
           this.style.overscrollBehavior = "contain";
         }
@@ -183,12 +183,12 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       });
 
       // build binding tree and dom 
-      const uuid = this.template.dataset["uuid"] ?? utils.raise("uuid is undefined");
+      const uuid = this.quelTemplate.dataset["uuid"] ?? utils.raise("uuid is undefined");
       const rootOfBindingTree = this.#rootOfBindingTree = createRootContentBindings(this as unknown as IComponent , uuid);
       this.quelUpdator.namedLoopIndexesStack.setNamedLoopIndexes(createNamedLoopIndexesFromAccessor(), () => {
         rootOfBindingTree.rebuild();
       });
-      if (this.useWebComponent) {
+      if (this.quelUseWebComponent) {
         // case of useWebComponent,
         // then append fragment block to quelViewRootElement
         this.quelViewRootElement.appendChild(rootOfBindingTree.fragment);
@@ -209,7 +209,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         } else {
         }
   
-        if (!this.useWebComponent) {
+        if (!this.quelUseWebComponent) {
           // case of no useWebComponent
           const comment = document.createComment(`@@/${this.tagName}`);
           const pseudoParentNode = this.#pseudoParentNode = this.parentNode ?? utils.raise("parentNode is undefined");

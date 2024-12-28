@@ -13,7 +13,7 @@ import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loop
 import { createLoopContextStack } from "../loopContext/createLoopContextStack";
 import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
-type IComponentForUpdator = Pick<IComponent, "quelState" | "quelBindingSummary" | "template">;
+type IComponentForUpdator = Pick<IComponent, "quelState" | "quelBindingSummary" | "quelTemplate">;
 
 class Updator implements IUpdator {
   #component: IComponentForUpdator;
@@ -77,7 +77,7 @@ class Updator implements IUpdator {
 
   async execCallbackWithPerformance(callback: () => any): Promise<void> {
     this.executing = true;
-    const uuid = this.#component.template.dataset["uuid"];
+    const uuid = this.#component.quelTemplate.dataset["uuid"];
     config.debug && performance.mark(`Updator#${uuid}.exec:start`);
     try {
       await callback();

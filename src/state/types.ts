@@ -119,7 +119,7 @@ export type StatePropertyInfo = {
   readonly dependentProps: IDependentProps;
 }
 
-export type IComponentForHandler = Pick<IComponent, "quelState" | "quelUpdator" | "template"> & HTMLElement;
+export type IComponentForHandler = Pick<IComponent, "quelState" | "quelUpdator" | "quelTemplate"> & HTMLElement;
 
 export interface IStatePropertyAccessor {
   readonly pattern: string;

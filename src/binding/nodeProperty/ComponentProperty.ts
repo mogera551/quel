@@ -1,6 +1,5 @@
 import { utils } from "../../utils";
 import { IFilterText } from "../../filter/types";
-import { IsComponentSymbol } from "../../component/symbols";
 import { NotifyForDependentPropsApiSymbol, UpdatedCallbackSymbol } from "../../state/symbols";
 import { ElementBase } from "./ElementBase";
 import { IBinding } from "../types";
@@ -23,7 +22,7 @@ export class ComponentProperty extends ElementBase {
   }
 
   constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
-    if (Reflect.get(node, "isQuelComponent") !== true) utils.raise("ComponentProperty: not Quel Component");
+    if (Reflect.get(node, "quelIsQuelComponent") !== true) utils.raise("ComponentProperty: not Quel Component");
     // todo: バインドするプロパティ名のチェック
     // 「*」を含まないようにする
     super(binding, node, name, filters);
@@ -34,7 +33,7 @@ export class ComponentProperty extends ElementBase {
   }
   setValue(value:any) {
     try {
-      this.thisComponent.state[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
+      this.thisComponent.quelState[NotifyForDependentPropsApiSymbol](this.propertyName, undefined);
     } catch(e) {
       console.log(e);
     }
@@ -44,7 +43,7 @@ export class ComponentProperty extends ElementBase {
    * コンポーネントプロパティのバインドを行う
    */
   initialize() {
-    this.thisComponent.props[BindPropertySymbol](
+    this.thisComponent.quelProps[BindPropertySymbol](
       this.binding.stateProperty.name, 
       this.propertyName, 
       () => this.binding.parentContentBindings.currentLoopContext);
@@ -60,8 +59,8 @@ export class ComponentProperty extends ElementBase {
       if (propertyAccessor.pattern === statePropertyName || 
         patternInfo.patternPaths.includes(statePropertyName)) {
         const remain = propertyAccessor.pattern.slice(statePropertyName.length);
-        this.thisComponent.state[UpdatedCallbackSymbol]([{name:`${this.propertyName}${remain}`, indexes:propertyAccessor.loopIndexes?.values}]);
-        this.thisComponent.state[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
+        this.thisComponent.quelState[UpdatedCallbackSymbol]([{name:`${this.propertyName}${remain}`, indexes:propertyAccessor.loopIndexes?.values}]);
+        this.thisComponent.quelState[NotifyForDependentPropsApiSymbol](`${this.propertyName}${remain}`, propertyAccessor.loopIndexes);
       }
     }
   }

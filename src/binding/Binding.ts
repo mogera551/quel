@@ -54,16 +54,16 @@ class Binding implements IBinding {
     return this.component?.quelState;
   }
   get selectorName(): string | undefined{
-    return this.component?.selectorName;
+    return this.component?.quelSelectorName;
   }
   get eventFilterManager(): IFilterManager<"event"> {
-    return this.component?.eventFilterManager ?? utils.raise("Binding.eventFilterManager: undefined");
+    return this.component?.quelEventFilterManager ?? utils.raise("Binding.eventFilterManager: undefined");
   }
   get inputFilterManager(): IFilterManager<"input"> {
-    return this.component?.inputFilterManager ?? utils.raise("Binding.inputFilterManager: undefined");
+    return this.component?.quelInputFilterManager ?? utils.raise("Binding.inputFilterManager: undefined");
   }
   get outputFilterManager(): IFilterManager<"output"> {
-    return this.component?.outputFilterManager ?? utils.raise("Binding.outputFilterManager: undefined");
+    return this.component?.quelOutputFilterManager ?? utils.raise("Binding.outputFilterManager: undefined");
   }
 
   constructor(

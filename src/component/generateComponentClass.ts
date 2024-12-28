@@ -21,152 +21,126 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
   const getBaseClass = function (module:IModule, baseConstructor:typeof HTMLElement):Constructor<HTMLElement & IComponentBase>  {
     const baseClass = class extends baseConstructor implements IComponentBase {
       #module:IModule = module;
-      get module():IModule {
-        return this.#module;
-      }
-
-      get isQuelComponent():boolean {
+      get quelIsQuelComponent():boolean {
         return true;
       }
       #customElementInfo?: CustomElementInfo;
-      get customElementInfo(): CustomElementInfo {
-        if (typeof this.#customElementInfo === "undefined") {
-          this.#customElementInfo = customElementInfoByConstructor.get(this.thisClass) ?? utils.raise(`customElementInfo is not found `);
-        }
-        return this.#customElementInfo;
-      }
       #setCustomElementInfo() {
-        const customeElementInfo = customElementInfoByConstructor.get(this.thisClass);
+        let customeElementInfo = customElementInfoByConstructor.get(this.quelThisClass);
         if (typeof customeElementInfo === "undefined") {
           const lowerTagName =  this.tagName.toLowerCase();
           const isAutonomousCustomElement = lowerTagName.includes("-");
           const customName = this.getAttribute("is");
           const isCostomizedBuiltInElement = customName ? true : false;
           const selectorName = isAutonomousCustomElement ? lowerTagName : `${lowerTagName}[is="${customName}"]`;
-          customElementInfoByConstructor.set(this.thisClass, 
-            { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement });
+          customeElementInfo = { selectorName, lowerTagName, isAutonomousCustomElement, isCostomizedBuiltInElement };
+          customElementInfoByConstructor.set(this.quelThisClass, customeElementInfo);
         }
+        this.#customElementInfo = customeElementInfo;
       }
 
-      get html(): string {
-        return this.module.html;
+      get quelHtml(): string {
+        return this.#module.html;
       }
-      set html(value: string) {
-        this.module.html = value;
+      set quelHtml(value: string) {
+        this.#module.html = value;
       }
-      get template(): HTMLTemplateElement {
-        return this.module.template;
-      }
-
-      get css(): string|undefined {
-        return this.module.css;
-      }
-      set css(value: string|undefined) {
-        this.module.css = value;
-      }
-      get styleSheet(): CSSStyleSheet|undefined {
-        return this.module.styleSheet;
+      get quelTemplate(): HTMLTemplateElement {
+        return this.#module.template;
       }
 
-      get State(): typeof Object {
-        return this.module.State;
+      get quelCss(): string|undefined {
+        return this.#module.css;
+      }
+      set quelCss(value: string|undefined) {
+        this.#module.css = value;
+      }
+      get quelStyleSheet(): CSSStyleSheet|undefined {
+        return this.#module.styleSheet;
       }
 
-      get inputFilters():{[key:string]: FilterFuncWithOption} {
-        return this.module.filters.input ?? {};
+      get quelStateClass(): typeof Object {
+        return this.#module.State;
       }
 
-      get outputFilters():{[key:string]: FilterFuncWithOption} {
-        return this.module.filters.output ?? {};
+      get quelUseShadowRoot():boolean {
+        return this.#module.moduleConfig.useShadowRoot ?? config.useShadowRoot;
       }
 
-      get eventFilters():{[key:string]: EventFilterFuncWithOption} {
-        return this.module.filters.event ?? {};
+      get quelUseWebComponent():boolean {
+        return this.#module.moduleConfig.useWebComponent ?? config.useWebComponent;
       }
 
-      get useShadowRoot():boolean {
-        return this.module.moduleConfig.useShadowRoot ?? config.useShadowRoot;
+      get quelUseLocalTagName():boolean {
+        return this.#module.moduleConfig.useLocalTagName ?? config.useLocalTagName;
       }
 
-      get useWebComponent():boolean {
-        return this.module.moduleConfig.useWebComponent ?? config.useWebComponent;
+      get quelUseKeyed():boolean {
+        return this.#module.moduleConfig.useKeyed ?? config.useKeyed;
       }
 
-      get useLocalTagName():boolean {
-        return this.module.moduleConfig.useLocalTagName ?? config.useLocalTagName;
+      get quelUseLocalSelector():boolean {
+        return this.#module.moduleConfig.useLocalSelector ?? config.useLocalSelector;
       }
 
-      get useKeyed():boolean {
-        return this.module.moduleConfig.useKeyed ?? config.useKeyed;
+      get quelUseOverscrollBehavior():boolean {
+        return this.#module.moduleConfig.useOverscrollBehavior ?? config.useOverscrollBehavior;
       }
 
-      get useLocalSelector():boolean {
-        return this.module.moduleConfig.useLocalSelector ?? config.useLocalSelector;
+      get quelLowerTagName():string {
+        return this.#customElementInfo?.lowerTagName ?? utils.raise(`lowerTagName is not found for ${this.tagName}`);
       }
 
-      get useOverscrollBehavior():boolean {
-        return this.module.moduleConfig.useOverscrollBehavior ?? config.useOverscrollBehavior;
-      }
-
-      get lowerTagName():string {
-        return this.customElementInfo.lowerTagName;
-      }
-
-      get selectorName():string {
-        return this.customElementInfo.selectorName;
+      get quelSelectorName():string {
+        return this.#customElementInfo?.selectorName ?? utils.raise(`selectorName is not found for ${this.tagName}`);
       }
 
       // is autonomous custom element 
-      get isAutonomousCustomElement():boolean {
-        return this.customElementInfo.isAutonomousCustomElement;
+      get quelIsAutonomousCustomElement():boolean {
+        return this.#customElementInfo?.isAutonomousCustomElement ?? utils.raise(`isAutonomousCustomElement is not found for ${this.tagName}`);
       }
 
       // is costomized built-in element
-      get isCostomizedBuiltInElement() {
-        return this.customElementInfo.isCostomizedBuiltInElement;
+      get quelIsCostomizedBuiltInElement() {
+        return this.#customElementInfo?.isCostomizedBuiltInElement ?? utils.raise(`isCostomizedBuiltInElement is not found for ${this.tagName}`);
       }
 
       #filterManagers?: FilterManagers;
-      get filterManagers(): FilterManagers {
-        if (typeof this.#filterManagers === "undefined") {
-          this.#filterManagers = filterManagersByConstructor.get(this.thisClass) ?? utils.raise(`filterManagers is not found for ${this.tagName}`);
-        }
-        return this.#filterManagers;
-      }
       #setFilterManagers() {
-        const filterManagers = filterManagersByConstructor.get(this.thisClass);
+        let filterManagers = filterManagersByConstructor.get(this.quelThisClass);
         if (typeof filterManagers === "undefined") {
-          const filterManagers = {
+          filterManagers = {
             inputFilterManager: new InputFilterManager,
             outputFilterManager: new OutputFilterManager,
             eventFilterManager: new EventFilterManager,
           };
-          for(const [name, filterFunc] of Object.entries(this.inputFilters)) {
+          for(const [name, filterFunc] of Object.entries(this.#module.filters.input ?? {})) {
             filterManagers.inputFilterManager.registerFilter(name, filterFunc);
           }
-          for(const [name, filterFunc] of Object.entries(this.outputFilters)) {
+          for(const [name, filterFunc] of Object.entries(this.#module.filters.output ?? {})) {
             filterManagers.outputFilterManager.registerFilter(name, filterFunc);
           }
-          for(const [name, filterFunc] of Object.entries(this.eventFilters)) {
+          for(const [name, filterFunc] of Object.entries(this.#module.filters.event ?? {})) {
             filterManagers.eventFilterManager.registerFilter(name, filterFunc);
           }
-          filterManagersByConstructor.set(this.thisClass, filterManagers);
+          filterManagersByConstructor.set(this.quelThisClass, filterManagers);
         }
+        this.#filterManagers = filterManagers;
       }
 
-      get inputFilterManager(): InputFilterManager {
-        return this.filterManagers.inputFilterManager;
+      get quelInputFilterManager(): InputFilterManager {
+        return this.#filterManagers?.inputFilterManager ?? utils.raise("inputFilterManager is not found");
       }
 
-      get outputFilterManager(): OutputFilterManager {
-        return this.filterManagers.outputFilterManager;
+      get quelOutputFilterManager(): OutputFilterManager {
+        return this.#filterManagers?.outputFilterManager ?? utils.raise("outputFilterManager is not found");
       }
 
-      get eventFilterManager(): EventFilterManager {
-        return this.filterManagers.eventFilterManager;
+      get quelEventFilterManager(): EventFilterManager {
+        return this.#filterManagers?.eventFilterManager ?? utils.raise("eventFilterManager is not found");
       }
 
-      get element(): HTMLElement {
+      get quelElement(): HTMLElement {
         return this;
       }
 
@@ -175,13 +149,13 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         this.#setCustomElementInfo();
         this.#setFilterManagers();
       }
-      static baseClass: Function = baseConstructor;
-      get baseClass():Function {
-        return Reflect.get(this.constructor, "baseClass");
+      static quelBaseClass: Function = baseConstructor;
+      get quelBaseClass():Function {
+        return Reflect.get(this.constructor, "quelBaseClass");
       }
-      static thisClass: Function|undefined;
-      get thisClass(): Function {
-        return Reflect.get(this.constructor, "thisClass");
+      static quelThisClass: Function|undefined;
+      get quelThisClass(): Function {
+        return Reflect.get(this.constructor, "quelThisClass");
       }
       static _module: IModule = module;
       static get html():string {
@@ -197,7 +171,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         this._module.css = value;
       }
     };
-    baseClass.thisClass = baseClass;
+    baseClass.quelThisClass = baseClass;
     return baseClass;
   };
 

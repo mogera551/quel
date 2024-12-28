@@ -19,10 +19,10 @@ class UserProxyHandler {
     if (permittedProps.has(prop)) {
       return Reflect.get(target, prop);
     } else {
-      if (existsProperty(target.baseClass, prop)) {
+      if (existsProperty(target.quelBaseClass, prop)) {
         return Reflect.get(target, prop);
       } else {
-        utils.raise(`property ${prop} is not found in ${target.baseClass.name}`);
+        utils.raise(`property ${prop} is not found in ${target.quelBaseClass.name}`);
       }
     }
   }

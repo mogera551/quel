@@ -67,36 +67,33 @@ export type FilterManagers = {
 };
 
 export interface IComponentBase {
-  readonly module: IModule;
-  readonly isQuelComponent: boolean;
-  readonly customElementInfo: CustomElementInfo;
-  html: string;
-  readonly template: HTMLTemplateElement;
-  css?: string;
-  readonly styleSheet?: CSSStyleSheet;
-  readonly State: typeof Object;
-  readonly inputFilters: {[key: string]: FilterFuncWithOption};
-  readonly outputFilters: {[key: string]: FilterFuncWithOption};
-  readonly eventFilters: {[key: string]: EventFilterFuncWithOption};
-  readonly useShadowRoot: boolean;
-  readonly useWebComponent: boolean;
-  readonly useLocalTagName: boolean;
-  readonly useKeyed: boolean;
-  readonly useLocalSelector: boolean;
-  readonly useOverscrollBehavior: boolean;
-  readonly lowerTagName: string;
-  readonly selectorName: string;
+  readonly quelIsQuelComponent: boolean;
+  quelHtml: string;
+  readonly quelTemplate: HTMLTemplateElement;
+  quelCss?: string;
+  readonly quelStyleSheet?: CSSStyleSheet;
+  readonly quelStateClass: typeof Object;
+  readonly quelUseShadowRoot: boolean;
+  readonly quelUseWebComponent: boolean;
+  readonly quelUseLocalTagName: boolean;
+  readonly quelUseKeyed: boolean;
+  readonly quelUseLocalSelector: boolean;
+  readonly quelUseOverscrollBehavior: boolean;
+  readonly quelLowerTagName: string;
+  readonly quelSelectorName: string;
   // is autonomous custom element 
-  readonly isAutonomousCustomElement: boolean;
+  readonly quelIsAutonomousCustomElement: boolean;
   // is costomized built-in element
-  readonly isCostomizedBuiltInElement: boolean;
-  readonly filterManagers: FilterManagers;
-  readonly inputFilterManager: IFilterManager<"input">;
-  readonly outputFilterManager: IFilterManager<"output">;
-  readonly eventFilterManager: IFilterManager<"event">;
-  readonly baseClass: Function;
-  readonly thisClass: Function;
-  readonly element: HTMLElement;
+  readonly quelIsCostomizedBuiltInElement: boolean;
+  readonly quelInputFilterManager: IFilterManager<"input">;
+  readonly quelOutputFilterManager: IFilterManager<"output">;
+  readonly quelEventFilterManager: IFilterManager<"event">;
+  readonly quelBaseClass: Function;
+  readonly quelThisClass: Function;
+  /**
+   * ToDo: このプロパティを廃止するかどうかの検討
+   */
+  readonly quelElement: HTMLElement;
 }
 
 export interface ICustomComponent {
@@ -149,6 +146,6 @@ export interface IProcess {
 // ToDo: addProcessをどうするか検討
 export type IUserComponent = Pick<
   IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,
-  /* "addProcess" | */ "element" | "quelViewRootElement" | "quelQueryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
+  /* "addProcess" | */ "quelElement" | "quelViewRootElement" | "quelQueryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
 >;
 

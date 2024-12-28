@@ -24,7 +24,7 @@ class ContentBindings implements IContentBindings {
   }
   set component(value: IComponentPartial | undefined) {
     if (typeof value !== "undefined") {
-      (this.#useKeyed !== value.useKeyed) && utils.raise("useKeyed is different");  
+      (this.#useKeyed !== value.quelUseKeyed) && utils.raise("useKeyed is different");  
     }
     this.#component = value;
   }
@@ -188,7 +188,7 @@ export function createContentBindings(
   parentBinding: IBinding, 
 ): IContentBindings {
   const component = parentBinding.component ?? utils.raise("component is undefined");
-  const useKeyed = component.useKeyed;
+  const useKeyed = component.quelUseKeyed;
   const loopable = parentBinding.loopable;
   const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
   const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
@@ -206,7 +206,7 @@ export function createRootContentBindings(
   component: IComponentPartial,
   uuid: string,
 ): IContentBindings {
-  const useKeyed = component.useKeyed;
+  const useKeyed = component.quelUseKeyed;
   const loopable = false;
   const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
   let contentBindings = _cache[key]?.pop();
