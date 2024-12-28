@@ -4787,11 +4787,8 @@ function CustomComponent(Base) {
 function DialogComponent(Base) {
     return class extends Base {
         #dialogPromises;
-        get dialogPromises() {
-            return this.#dialogPromises;
-        }
-        set dialogPromises(value) {
-            this.#dialogPromises = value;
+        get quelDialogPromises() {
+            return this.#dialogPromises ?? utils.raise("DialogComponent: quelDialogPromises is not defined");
         }
         #returnValue = "";
         get returnValue() {
@@ -4806,16 +4803,16 @@ function DialogComponent(Base) {
         constructor(...args) {
             super();
             this.addEventListener("closed", () => {
-                if (typeof this.dialogPromises !== "undefined") {
+                if (typeof this.quelDialogPromises !== "undefined") {
                     if (this.returnValue === "") {
-                        this.dialogPromises.reject();
+                        this.quelDialogPromises.reject();
                     }
                     else {
                         const buffer = this.quelProps[GetBufferSymbol]();
                         this.quelProps[ClearBufferSymbol]();
-                        this.dialogPromises.resolve(buffer);
+                        this.quelDialogPromises.resolve(buffer);
                     }
-                    this.dialogPromises = undefined;
+                    this.#dialogPromises = undefined;
                 }
                 if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
                     if (this.returnValue !== "") {
@@ -4830,7 +4827,7 @@ function DialogComponent(Base) {
         }
         async #show(props, modal = true) {
             this.returnValue = "";
-            this.dialogPromises = Promise.withResolvers();
+            const dialogPromise = this.#dialogPromises = Promise.withResolvers();
             this.quelProps[SetBufferSymbol](props);
             if (modal) {
                 HTMLDialogElement.prototype.showModal.apply(this);
@@ -4838,21 +4835,21 @@ function DialogComponent(Base) {
             else {
                 HTMLDialogElement.prototype.show.apply(this);
             }
-            return this.dialogPromises.promise;
+            return dialogPromise.promise;
         }
-        async asyncShowModal(props) {
+        async quelAsyncShowModal(props) {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: asyncShowModal is only for HTMLDialogElement");
             }
             return this.#show(props, true);
         }
-        async asyncShow(props) {
+        async quelAsyncShow(props) {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: asyncShow is only for HTMLDialogElement");
             }
             return this.#show(props, false);
         }
-        showModal() {
+        quelShowModal() {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
             }
@@ -4863,7 +4860,7 @@ function DialogComponent(Base) {
             }
             return HTMLDialogElement.prototype.showModal.apply(this);
         }
-        show() {
+        quelShow() {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: show is only for HTMLDialogElement");
             }
@@ -4874,7 +4871,7 @@ function DialogComponent(Base) {
             }
             return HTMLDialogElement.prototype.show.apply(this);
         }
-        close(returnValue = "") {
+        quelClose(returnValue = "") {
             if (!(this instanceof HTMLDialogElement)) {
                 utils.raise("DialogComponent: close is only for HTMLDialogElement");
             }

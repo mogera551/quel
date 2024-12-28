@@ -22,11 +22,8 @@ type BaseComponent = HTMLElement & IComponentBase & ICustomComponent;
 export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: TBase): Constructor<BaseComponent & IDialogComponent> {
   return class extends Base implements IDialogComponent {
     #dialogPromises?: PromiseWithResolvers<any>;
-    get dialogPromises(): PromiseWithResolvers<any>|undefined {
-      return this.#dialogPromises;
-    }
-    set dialogPromises(value: PromiseWithResolvers<any>|undefined) {
-      this.#dialogPromises = value;
+    get quelDialogPromises(): PromiseWithResolvers<any> {
+      return this.#dialogPromises ?? utils.raise("DialogComponent: quelDialogPromises is not defined");
     }
 
     #returnValue:string = "";
@@ -44,15 +41,15 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
     constructor(...args:any[]) {
       super();
       this.addEventListener("closed", () => {
-        if (typeof this.dialogPromises !== "undefined") {
+        if (typeof this.quelDialogPromises !== "undefined") {
           if (this.returnValue === "") {
-            this.dialogPromises.reject();
+            this.quelDialogPromises.reject();
           } else {
             const buffer = this.quelProps[GetBufferSymbol]();
             this.quelProps[ClearBufferSymbol]();
-            this.dialogPromises.resolve(buffer);
+            this.quelDialogPromises.resolve(buffer);
           }
-          this.dialogPromises = undefined;
+          this.#dialogPromises = undefined;
         }
         if (this.useBufferedBind && typeof this.quelParentComponent !== "undefined") {
           if (this.returnValue !== "") {
@@ -68,31 +65,31 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
 
     async #show(props:{[key:string]:any}, modal = true) {
       this.returnValue = "";
-      this.dialogPromises = Promise.withResolvers();
+      const dialogPromise = this.#dialogPromises = Promise.withResolvers();
       this.quelProps[SetBufferSymbol](props);
       if (modal) {
         HTMLDialogElement.prototype.showModal.apply(this);
       } else {
         HTMLDialogElement.prototype.show.apply(this);
       }
-      return this.dialogPromises.promise;
+      return dialogPromise.promise;
     }
   
-    async asyncShowModal(props: {[key: string]: any}): Promise<void> {
+    async quelAsyncShowModal(props: {[key: string]: any}): Promise<void> {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: asyncShowModal is only for HTMLDialogElement");
       }
       return this.#show(props, true);
     }
 
-    async asyncShow(props: {[key: string]: any}): Promise<void> {
+    async quelAsyncShow(props: {[key: string]: any}): Promise<void> {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: asyncShow is only for HTMLDialogElement");
       }
       return this.#show(props, false);
     }
   
-    showModal() {
+    quelShowModal() {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
       }
@@ -104,7 +101,7 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
       return HTMLDialogElement.prototype.showModal.apply(this);
     }
 
-    show() {
+    quelShow() {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: show is only for HTMLDialogElement");
       }
@@ -116,7 +113,7 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
       return HTMLDialogElement.prototype.show.apply(this);
     }
 
-    close(returnValue:string = "") {
+    quelClose(returnValue:string = "") {
       if (!(this instanceof HTMLDialogElement)) {
         utils.raise("DialogComponent: close is only for HTMLDialogElement");
       }

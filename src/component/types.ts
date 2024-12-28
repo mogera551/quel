@@ -113,14 +113,14 @@ export interface ICustomComponent {
 } 
 
 export interface IDialogComponent {
-  dialogPromises: PromiseWithResolvers<any>|undefined;
+  readonly quelDialogPromises: PromiseWithResolvers<any>|undefined;
   returnValue: string;
   readonly useBufferedBind: boolean;
-  asyncShowModal(props: {[key: string]: any}): Promise<any>;
-  asyncShow(props: {[key: string]: any}): Promise<any>;
-  showModal(): void;
-  show(): void;
-  close(result:any): void;
+  quelAsyncShowModal(props: {[key: string]: any}): Promise<any>;
+  quelAsyncShow(props: {[key: string]: any}): Promise<any>;
+  quelShowModal(): void;
+  quelShow(): void;
+  quelClose(result:any): void;
 }
 
 export interface IPopoverComponent {
@@ -146,6 +146,8 @@ export interface IProcess {
 // ToDo: addProcessをどうするか検討
 export type IUserComponent = Pick<
   IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,
-  /* "addProcess" | */ "quelElement" | "quelViewRootElement" | "quelQueryRoot" | "asyncShowModal" | "asyncShow" | "asyncShowPopover" | "cancelPopover"
+  /* "addProcess" | */ "quelElement" | "quelViewRootElement" | "quelQueryRoot" | 
+  "quelAsyncShowModal" | "quelAsyncShow" | "quelShow" | "quelShowModal" | "quelClose" |
+  "asyncShowPopover" | "cancelPopover"
 >;
 
