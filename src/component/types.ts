@@ -125,7 +125,7 @@ export interface IDialogComponent {
 
 export interface IPopoverComponent {
   quelCanceled: boolean;
-  readonly quelPopoverPromises: PromiseWithResolvers<any>;
+  readonly quelPopoverPromises: PromiseWithResolvers<any>|undefined;
   readonly quelPopoverInfo: IPopoverInfo;
   quelShowPopover(): void;
   quelAsyncShowPopover(props: {[key: string]: any}): Promise<any>;
@@ -143,12 +143,3 @@ export interface IProcess {
   readonly argumentList: any[];
   readonly loopContext: ILoopContext | undefined;
 }
-
-// ToDo: addProcessをどうするか検討
-export type IUserComponent = Pick<
-  IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent,
-  /* "addProcess" | */ "quelElement" | "quelViewRootElement" | "quelQueryRoot" | 
-  "quelAsyncShowModal" | "quelAsyncShow" | "quelShow" | "quelShowModal" | "quelClose" |
-  "quelShowPopover" | "quelAsyncShowPopover" | "quelHidePopover" | "quelCancelPopover"
->;
-

@@ -4025,51 +4025,12 @@ function getCallbackMethod(state, stateProxy, handler, prop) {
         undefined;
 }
 
-function existsProperty(baseClass, prop) {
-    if (typeof baseClass.prototype === "undefined")
-        return false;
-    if (baseClass.prototype === Object.prototype)
-        return false;
-    if (typeof baseClass.prototype[prop] !== "undefined")
-        return true;
-    return existsProperty(Object.getPrototypeOf(baseClass), prop);
-}
-const permittedProps = new Set([
-    "element", "addProcess", "quelViewRootElement ", "quelQueryRoot",
-    "asyncShowModal", "asyncShow",
-    "asyncShowPopover", "cancelPopover"
-]);
-class UserProxyHandler {
-    get(target, prop) {
-        if (permittedProps.has(prop)) {
-            return Reflect.get(target, prop);
-        }
-        else {
-            if (existsProperty(target.quelBaseClass, prop)) {
-                return Reflect.get(target, prop);
-            }
-            else {
-                utils.raise(`property ${prop} is not found in ${target.quelBaseClass.name}`);
-            }
-        }
-    }
-}
-/**
- * State内で使用するコンポーネントを生成する
- * アクセス制限をかけるためのProxyを生成する
- * @param component コンポーネントを元にProxyを生成する
- * @returns {IUserComponent} ユーザーコンポーネント
- */
-function createUserComponent(component) {
-    return new Proxy(component, new UserProxyHandler);
-}
-
 const DEPENDENT_PROPS_PROPERTY = "$dependentProps";
 const COMPONENT_PROPERTY = "$component";
 const ADD_PROCESS_PROPERTY = "$addProcess";
 const funcByName = {
     [DEPENDENT_PROPS_PROPERTY]: ({ state }) => state[DEPENDENT_PROPS_PROPERTY],
-    [COMPONENT_PROPERTY]: ({ handler }) => createUserComponent(handler.element),
+    [COMPONENT_PROPERTY]: ({ handler }) => handler.element, //createUserComponent((handler.element as IComponent)),
     [ADD_PROCESS_PROPERTY]: ({ handler, stateProxy }) => (func) => handler.updater.addProcess(func, stateProxy, [], handler.loopContext)
 };
 function getSpecialProps(state, stateProxy, handler, prop) {
@@ -4958,7 +4919,7 @@ function PopoverComponent(Base) {
         }
         #popoverPromises;
         get quelPopoverPromises() {
-            return this.#popoverPromises ?? utils.raise("PopoverComponent: popoverPromises is not defined");
+            return this.#popoverPromises;
         }
         #popoverInfo = createPopoverInfo();
         get quelPopoverInfo() {

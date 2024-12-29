@@ -4,7 +4,6 @@ import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 import { IPopoverComponent, Constructor, IDialogComponent, ICustomComponent, IComponentBase } from "./types";
 import { createPopoverInfo } from "../popover/createPopoverInfo";
 import { IPopoverInfo } from "../popover/types";
-import { utils } from "../utils";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IDialogComponent
 
@@ -31,8 +30,8 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
     }
 
     #popoverPromises?: PromiseWithResolvers<any>;
-    get quelPopoverPromises(): PromiseWithResolvers<any> {
-      return this.#popoverPromises ?? utils.raise("PopoverComponent: popoverPromises is not defined");
+    get quelPopoverPromises(): PromiseWithResolvers<any>|undefined {
+      return this.#popoverPromises;
     }
 
     #popoverInfo = createPopoverInfo();

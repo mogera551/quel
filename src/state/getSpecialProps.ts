@@ -1,4 +1,3 @@
-import { createUserComponent } from "../component/createUserComponent";
 import { IStateHandler, IStateProxy } from "./types";
 import { IComponent } from "../component/types";
 
@@ -25,7 +24,7 @@ type FuncByName = {
 
 const funcByName:FuncByName = {
   [DEPENDENT_PROPS_PROPERTY]: ({state}:FuncArgs) => state[DEPENDENT_PROPS_PROPERTY],
-  [COMPONENT_PROPERTY]: ({handler}:FuncArgs) => createUserComponent((handler.element as IComponent)),
+  [COMPONENT_PROPERTY]: ({handler}:FuncArgs) => handler.element as IComponent, //createUserComponent((handler.element as IComponent)),
   [ADD_PROCESS_PROPERTY]: ({handler, stateProxy}:FuncArgs) => (func:Function) => handler.updater.addProcess(func, stateProxy, [], handler.loopContext)
 }
 
