@@ -2857,7 +2857,8 @@ class PopoverTarget extends ElementBase {
         return this.#targetId;
     }
     get target() {
-        const target = document.getElementById(this.#targetId);
+        const target = document.getElementById(this.#targetId) ??
+            (this.binding.component?.shadowRoot?.getElementById(this.#targetId) ?? null);
         if (target != null && target?.quelIsQuelComponent !== true) {
             utils.raise("PopoverTarget: not Quel Component");
         }
