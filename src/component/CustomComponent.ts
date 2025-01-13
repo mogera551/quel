@@ -18,7 +18,7 @@ import { createStateProxy } from "../state/createStateProxy";
 
 const pseudoComponentByNode:Map<Node, IComponent> = new Map;
 
-const getParentComponent = (_node:Node): IComponent|undefined => {
+export const getParentComponent = (_node:Node): IComponent|undefined => {
   let node:Node|null = _node;
   do {
     node = node.parentNode;

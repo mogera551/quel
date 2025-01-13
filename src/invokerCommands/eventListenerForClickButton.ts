@@ -1,17 +1,7 @@
 
+import { getParentComponent } from "../component/CustomComponent";
 import { eventListenerForCommand } from "./eventListenerForCommand";
 import { ICommandEvent } from "./types";
-
-function getParentComponent(element: HTMLElement): HTMLElement | null {
-  let parent = element.parentElement;
-  while (parent != null) {
-    if (Reflect.has(parent, "quelIsQuelComponent") && Reflect.get(parent, "quelIsQuelComponent")) {
-      return parent;
-    }
-    parent = parent.parentElement;
-  }
-  return null;
-}
 
 function getCommandForElement(element: HTMLElement): HTMLElement | null {
   const commandFor = element.getAttribute("commandfor"); // ToDo: commandForElement
@@ -19,7 +9,14 @@ function getCommandForElement(element: HTMLElement): HTMLElement | null {
     return null;
   }
   if (commandFor === ":host") {
-    return getParentComponent(element);
+    return getParentComponent(element) as HTMLElement;
+  }
+  const component = getParentComponent(element);
+  if (component != null) {
+    const target = component.quelQueryRoot.querySelector("#" + commandFor);
+    if (target != null) {
+      return target as HTMLElement;
+    }
   }
   const target = document.getElementById(commandFor);
   if (target == null) {

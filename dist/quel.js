@@ -6,6 +6,7 @@ const config = {
     useLocalTagName: true, // use local tag name
     useLocalSelector: true, // use local selector
     useOverscrollBehavior: true, // use overscroll-behavior
+    useInvokeCommands: false, // use invoke commands
 };
 
 function getCustomTagFromImportMeta(importMeta) {
@@ -1924,7 +1925,7 @@ class PropsProxyHandler {
         const component = this.#component;
         if (this.#propBuffer === undefined)
             return;
-        const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
+        const parentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
         for (const bindingInfo of this.propsBindingInfos) {
             const { parentProp, thisProp } = bindingInfo;
             const getLoopContext = this.loopContextByParentProp.get(parentProp);
@@ -1936,7 +1937,7 @@ class PropsProxyHandler {
                 const state = component.quelState;
                 return state[SetByPropInfoSymbol](propInfo, value);
             };
-            quelParentComponent.quelUpdater?.addProcess(writeProperty, undefined, [quelParentComponent, parentPropInfo, value], loopContext);
+            parentComponent.quelUpdater?.addProcess(writeProperty, undefined, [parentComponent, parentPropInfo, value], loopContext);
         }
     }
     get(target, prop, receiver) {
@@ -3564,6 +3565,74 @@ function createBinder(template, useKeyed) {
     return _cache$2[uuid] ?? (_cache$2[uuid] = new Binder(template, useKeyed));
 }
 
+function eventListenerForCommand(event) {
+    const target = event.detail?.target ?? null;
+    if (target == null) {
+        return;
+    }
+    const command = event.detail?.command ?? null;
+    if (command == null) {
+        return;
+    }
+    const upperCamelCommand = command.split("-").map((text, index) => {
+        if (typeof text[0] !== "undefined") {
+            text = text[0].toUpperCase() + text.slice(1);
+        }
+        return text;
+    }).join("");
+    const lowerCamelCommand = (upperCamelCommand.length > 0) ? upperCamelCommand[0].toLowerCase() + upperCamelCommand.slice(1) : upperCamelCommand;
+    if (Reflect.has(target, lowerCamelCommand)) {
+        const commandFn = Reflect.get(target, lowerCamelCommand);
+        Reflect.apply(commandFn, target, [event]);
+    }
+}
+
+function getCommandForElement(element) {
+    const commandFor = element.getAttribute("commandfor"); // ToDo: commandForElement
+    if (commandFor == null) {
+        return null;
+    }
+    if (commandFor === ":host") {
+        return getParentComponent(element);
+    }
+    const component = getParentComponent(element);
+    if (component != null) {
+        const target = component.quelQueryRoot.querySelector("#" + commandFor);
+        if (target != null) {
+            return target;
+        }
+    }
+    const target = document.getElementById(commandFor);
+    if (target == null) {
+        return null;
+    }
+    return target;
+}
+function eventListenerForClickButton(event) {
+    const button = event.target;
+    if (button == null) {
+        return;
+    }
+    const cmd = button.getAttribute("command");
+    if (cmd == null) {
+        return;
+    }
+    const element = getCommandForElement(button);
+    if (element == null) {
+        return;
+    }
+    element.addEventListener("command", eventListenerForCommand);
+    const detail = { command: cmd, source: button, target: element };
+    element.dispatchEvent(new CustomEvent("command", { detail }));
+}
+
+function setupInvokeCommands(rootElement) {
+    const buttons = rootElement.querySelectorAll("button[command]");
+    buttons.forEach((button) => {
+        button.addEventListener("click", eventListenerForClickButton);
+    });
+}
+
 class LoopContext {
     #revision;
     #contentBindings;
@@ -3757,7 +3826,7 @@ class ContentBindings {
     get localTreeNodes() {
         return this.#localTreeNodes;
     }
-    constructor(uuid, useKeyed = false, loopable = false, patternName = "") {
+    constructor(uuid, useKeyed = false, useInvokeCommands = false, loopable = false, patternName = "") {
         this.#uuid = uuid;
         this.#useKeyed = useKeyed;
         this.#loopable = loopable;
@@ -3765,6 +3834,9 @@ class ContentBindings {
         const binder = createBinder(this.template, this.useKeyed);
         this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
         this.#childBindings = binder.createBindings(this.#fragment, this);
+        if (useInvokeCommands) {
+            setupInvokeCommands(this.#fragment);
+        }
         this.#childNodes = Array.from(this.#fragment.childNodes);
         if (loopable) {
             this.#loopContext = createLoopContext(this);
@@ -3821,12 +3893,13 @@ const _cache$1 = {};
 function createContentBindings(uuid, parentBinding) {
     const component = parentBinding.component ?? utils.raise("component is undefined");
     const useKeyed = component.quelUseKeyed;
+    const useInvokeCommands = component.quelUseInvokeCommands;
     const loopable = parentBinding.loopable;
     const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
     const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
     let contentBindings = _cache$1[key]?.pop();
     if (typeof contentBindings === "undefined") {
-        contentBindings = new ContentBindings(uuid, useKeyed, loopable, patterName);
+        contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable, patterName);
     }
     contentBindings.component = component;
     contentBindings.parentBinding = parentBinding;
@@ -4735,12 +4808,6 @@ function CustomComponent(Base) {
 /**
  * コンポーネントをダイアログを簡単に表示できるように拡張する
  * 拡張内容は以下の通り
- * - quelDialogPromises: ダイアログ用Promise
- * - quelAsyncShowModal: モーダルダイアログ表示
- * - quelAsyncShow: ダイアログ表示
- * - quelShowModal: モーダルダイアログ表示
- * - quelShow: ダイアログ表示
- * - quelClose: ダイアログを閉じる
  * - show: override
  * - showModal: override
  * - close: override
@@ -4751,9 +4818,6 @@ function CustomComponent(Base) {
 function DialogComponent(Base) {
     return class extends Base {
         #dialogPromises;
-        get quelDialogPromises() {
-            return this.#dialogPromises ?? utils.raise("DialogComponent: quelDialogPromises is not defined");
-        }
         #returnValue = "";
         get returnValue() {
             return this.#returnValue;
@@ -4761,103 +4825,56 @@ function DialogComponent(Base) {
         set returnValue(value) {
             this.#returnValue = value;
         }
-        get quelUseBufferedBind() {
-            return this.hasAttribute("buffered-bind");
-        }
         constructor(...args) {
             super();
-            this.addEventListener("closed", () => {
-                if (typeof this.quelDialogPromises !== "undefined") {
-                    if (this.returnValue === "") {
-                        this.quelDialogPromises.reject();
+            if (this instanceof HTMLDialogElement) {
+                this.addEventListener("close", () => {
+                    if (typeof this.#dialogPromises !== "undefined") {
+                        if (this.returnValue === "") {
+                            this.#dialogPromises.resolve(undefined);
+                        }
+                        else {
+                            const buffer = this.quelProps[GetBufferSymbol]();
+                            this.#dialogPromises.resolve(buffer);
+                        }
+                        this.#dialogPromises = undefined;
                     }
-                    else {
-                        const buffer = this.quelProps[GetBufferSymbol]();
-                        this.quelProps[ClearBufferSymbol]();
-                        this.quelDialogPromises.resolve(buffer);
-                    }
-                    this.#dialogPromises = undefined;
-                }
-                if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                    if (this.returnValue !== "") {
-                        this.quelProps[FlushBufferSymbol]();
-                    }
-                }
-            });
-            this.addEventListener("close", () => {
-                const closedEvent = new CustomEvent("closed");
-                this.dispatchEvent(closedEvent);
-            });
+                    this.quelProps[ClearBufferSymbol]();
+                });
+            }
         }
-        async #asyncShow(props, modal = true) {
-            this.returnValue = "";
-            const dialogPromise = this.#dialogPromises = Promise.withResolvers();
-            this.quelProps[SetBufferSymbol](props);
-            if (modal) {
-                HTMLDialogElement.prototype.showModal.apply(this);
-            }
-            else {
-                HTMLDialogElement.prototype.show.apply(this);
-            }
-            return dialogPromise.promise;
-        }
-        async quelAsyncShowModal(props) {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: quelAsyncShowModal is only for HTMLDialogElement");
-            }
-            return this.#asyncShow(props, true);
-        }
-        async quelAsyncShow(props) {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: quelAsyncShow is only for HTMLDialogElement");
-            }
-            return this.#asyncShow(props, false);
-        }
-        quelShowModal() {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: quelShowModal is only for HTMLDialogElement");
-            }
+        #setBuffer() {
             if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                this.returnValue = "";
                 const buffer = this.quelProps[CreateBufferSymbol]();
                 this.quelProps[SetBufferSymbol](buffer);
             }
-            return HTMLDialogElement.prototype.showModal.apply(this);
+            for (const key in this.quelProps) {
+                this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
+            }
         }
-        showModal() {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
-            }
-            return this.quelShowModal();
+        show(props = undefined, withAsync = false) {
+            !(this instanceof HTMLDialogElement) && utils.raise("This method can only be called from a dialog element.");
+            const dialogPromise = this.#dialogPromises = withAsync ? Promise.withResolvers() : undefined;
+            if (props)
+                this.quelProps[SetBufferSymbol](props);
+            this.#setBuffer();
+            HTMLDialogElement.prototype.show.apply(this);
+            if (dialogPromise)
+                return dialogPromise;
         }
-        quelShow() {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: quelShow is only for HTMLDialogElement");
-            }
-            if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                this.returnValue = "";
-                const buffer = this.quelProps[CreateBufferSymbol]();
-                this.quelProps[SetBufferSymbol](buffer);
-            }
-            return HTMLDialogElement.prototype.show.apply(this);
-        }
-        show() {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: show is only for HTMLDialogElement");
-            }
-            return this.quelShow();
-        }
-        quelClose(returnValue = "") {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: close is only for HTMLDialogElement");
-            }
-            return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
+        showModal(props = undefined, withAsync = false) {
+            !(this instanceof HTMLDialogElement) && utils.raise("This method can only be called from a dialog element.");
+            const dialogPromise = this.#dialogPromises = withAsync ? Promise.withResolvers() : undefined;
+            if (props)
+                this.quelProps[SetBufferSymbol](props);
+            this.#setBuffer();
+            HTMLDialogElement.prototype.showModal.apply(this);
+            if (dialogPromise)
+                return dialogPromise;
         }
         close(returnValue = "") {
-            if (!(this instanceof HTMLDialogElement)) {
-                utils.raise("DialogComponent: close is only for HTMLDialogElement");
-            }
-            return this.quelClose(returnValue);
+            !(this instanceof HTMLDialogElement) && utils.raise("This method can only be called from a dialog element.");
+            HTMLDialogElement.prototype.close.apply(this, [returnValue]);
         }
     };
 }
@@ -4932,80 +4949,58 @@ function createPopoverInfo() {
  */
 function PopoverComponent(Base) {
     return class extends Base {
-        #canceled = false;
-        get quelCanceled() {
-            return this.#canceled;
-        }
-        set quelCanceled(value) {
-            this.#canceled = value;
-        }
         #popoverPromises;
-        get quelPopoverPromises() {
-            return this.#popoverPromises;
-        }
         #popoverInfo = createPopoverInfo();
         get quelPopoverInfo() {
             return this.#popoverInfo;
         }
+        get isPopover() {
+            return this.hasAttribute("popover");
+        }
         constructor(...args) {
             super();
-            this.addEventListener("hidden", () => {
-                if (typeof this.quelPopoverPromises !== "undefined") {
-                    if (this.quelCanceled) {
-                        this.quelPopoverPromises.reject();
-                    }
-                    else {
+            if (this.isPopover) {
+                this.addEventListener("hidden", () => {
+                    if (typeof this.#popoverPromises !== "undefined") {
                         const buffer = this.quelProps[GetBufferSymbol]();
                         this.quelProps[ClearBufferSymbol]();
-                        this.quelPopoverPromises.resolve(buffer);
+                        this.#popoverPromises.resolve(buffer);
+                        this.#popoverPromises = undefined;
                     }
-                    this.#popoverPromises = undefined;
-                }
-                if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                    if (!this.quelCanceled) {
-                        this.quelProps[FlushBufferSymbol]();
+                });
+                this.addEventListener("shown", () => {
+                    if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                        const buffer = this.quelProps[CreateBufferSymbol]();
+                        this.quelProps[SetBufferSymbol](buffer);
                     }
-                }
-                this.quelCanceled = true;
-                // remove loop context
-                this.id;
-            });
-            this.addEventListener("shown", () => {
-                this.quelCanceled = true;
-                if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                    const buffer = this.quelProps[CreateBufferSymbol]();
-                    this.quelProps[SetBufferSymbol](buffer);
-                }
-                for (const key in this.quelProps) {
-                    this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
-                }
-            });
-            this.addEventListener("toggle", (e) => {
-                const toggleEvent = e;
-                if (toggleEvent.newState === "closed") {
-                    const hiddenEvent = new CustomEvent("hidden");
-                    this.dispatchEvent(hiddenEvent);
-                }
-                else if (toggleEvent.newState === "open") {
-                    const shownEvent = new CustomEvent("shown");
-                    this.dispatchEvent(shownEvent);
-                }
-            });
+                    for (const key in this.quelProps) {
+                        this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
+                    }
+                });
+                this.addEventListener("toggle", (e) => {
+                    const toggleEvent = e;
+                    if (toggleEvent.newState === "closed") {
+                        const hiddenEvent = new CustomEvent("hidden");
+                        this.dispatchEvent(hiddenEvent);
+                    }
+                    else if (toggleEvent.newState === "open") {
+                        const shownEvent = new CustomEvent("shown");
+                        this.dispatchEvent(shownEvent);
+                    }
+                });
+            }
         }
-        quelShowPopover() {
+        showPopover(props, withAsync = false) {
+            !(this.isPopover) && utils.raise("This method can only be called from a popover element.");
+            const popoverPromises = this.#popoverPromises = withAsync ? Promise.withResolvers() : undefined;
+            if (props)
+                this.quelProps[SetBufferSymbol](props);
             HTMLElement.prototype.showPopover.apply(this);
+            if (popoverPromises)
+                return popoverPromises;
         }
-        async quelAsyncShowPopover(props) {
-            const popoverPromises = this.#popoverPromises = Promise.withResolvers();
-            this.quelProps[SetBufferSymbol](props);
-            HTMLElement.prototype.showPopover.apply(this);
-            return popoverPromises.promise;
-        }
-        quelHidePopover() {
-            this.quelCanceled = false;
-            HTMLElement.prototype.hidePopover.apply(this);
-        }
-        quelCancelPopover() {
+        hidePopover() {
+            !(this.isPopover) && utils.raise("This method can only be called from a popover element.");
             HTMLElement.prototype.hidePopover.apply(this);
         }
     };
@@ -5020,6 +5015,19 @@ function registerComponentModules(componentModules) {
     for (const [customElementName, userComponentModule] of Object.entries(componentModules)) {
         registerComponentModule(customElementName, userComponentModule);
     }
+}
+
+function BufferedBindComponent(Base) {
+    return class extends Base {
+        get quelUseBufferedBind() {
+            return this.hasAttribute("buffered-bind");
+        }
+        quelCommitBufferedBindProps() {
+            if (this.quelUseBufferedBind) {
+                this.quelProps[FlushBufferSymbol]();
+            }
+        }
+    };
 }
 
 const customElementInfoByConstructor = new Map;
@@ -5088,6 +5096,9 @@ const generateComponentClass = (componentModule) => {
             }
             get quelUseOverscrollBehavior() {
                 return this.#module.moduleConfig.useOverscrollBehavior ?? config.useOverscrollBehavior;
+            }
+            get quelUseInvokeCommands() {
+                return this.#module.moduleConfig.useInvokeCommands ?? config.useInvokeCommands;
             }
             get quelLowerTagName() {
                 return this.#customElementInfo?.lowerTagName ?? utils.raise(`lowerTagName is not found for ${this.tagName}`);
@@ -5176,7 +5187,7 @@ const generateComponentClass = (componentModule) => {
     // generate new class, for customElements not define same class
     const componentClass = getBaseClass(module, baseConstructor);
     // mix in component class
-    const extendedComponentClass = PopoverComponent(DialogComponent(CustomComponent(componentClass)));
+    const extendedComponentClass = PopoverComponent(DialogComponent(BufferedBindComponent(CustomComponent(componentClass))));
     // register component's subcomponents 
     registerComponentModules(module.componentModulesForRegister ?? {});
     return extendedComponentClass;
