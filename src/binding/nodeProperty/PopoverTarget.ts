@@ -18,8 +18,8 @@ export class PopoverTarget extends ElementBase {
     return this.#targetId; 
   }
   get target():IComponent | null {
-    const target = document.getElementById(this.#targetId) as IComponent ?? 
-      (this.binding.component?.shadowRoot?.getElementById(this.#targetId) as IComponent ?? null);
+    const target = document.getElementById(this.#targetId) as IComponent | null ?? 
+      (this.binding.component?.shadowRoot?.getElementById(this.#targetId) ?? null) as IComponent | null;
     if (target != null && target?.quelIsQuelComponent !== true) {
       utils.raise("PopoverTarget: not Quel Component");
     }

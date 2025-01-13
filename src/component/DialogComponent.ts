@@ -1,19 +1,14 @@
 
 import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../props/symbols";
-import { IDialogComponent, Constructor, ICustomComponent, IComponentBase } from "./types";
+import { IDialogComponent, Constructor, ICustomComponent, IComponentBase, IBufferedBindComponent } from "./types";
+import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
 
-type BaseComponent = HTMLElement & IComponentBase & ICustomComponent;
+type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IBufferedBindComponent;
 
 /**
  * コンポーネントをダイアログを簡単に表示できるように拡張する
  * 拡張内容は以下の通り
- * - quelDialogPromises: ダイアログ用Promise
- * - quelAsyncShowModal: モーダルダイアログ表示
- * - quelAsyncShow: ダイアログ表示
- * - quelShowModal: モーダルダイアログ表示
- * - quelShow: ダイアログ表示
- * - quelClose: ダイアログを閉じる
  * - show: override
  * - showModal: override
  * - close: override
@@ -23,126 +18,65 @@ type BaseComponent = HTMLElement & IComponentBase & ICustomComponent;
  */
 export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: TBase): Constructor<BaseComponent & IDialogComponent> {
   return class extends Base implements IDialogComponent {
-    #dialogPromises?: PromiseWithResolvers<any>;
-    get quelDialogPromises(): PromiseWithResolvers<any> {
-      return this.#dialogPromises ?? utils.raise("DialogComponent: quelDialogPromises is not defined");
-    }
+    #dialogPromises?: PromiseWithResolvers<{[key: string]: any}|undefined>;
 
-    #returnValue:string = "";
-    get returnValue() {
+    #returnValue: string = "";
+    get returnValue(): string {
       return this.#returnValue;
     }
-    set returnValue(value:string) {
+    set returnValue(value: string) {
       this.#returnValue = value;
     }
 
-    get quelUseBufferedBind() {
-      return this.hasAttribute("buffered-bind");
-    }
-  
     constructor(...args:any[]) {
       super();
-      this.addEventListener("closed", () => {
-        if (typeof this.quelDialogPromises !== "undefined") {
-          if (this.returnValue === "") {
-            this.quelDialogPromises.reject();
-          } else {
-            const buffer = this.quelProps[GetBufferSymbol]();
-            this.quelProps[ClearBufferSymbol]();
-            this.quelDialogPromises.resolve(buffer);
+      if (this instanceof HTMLDialogElement) {
+        this.addEventListener("close", () => {
+          if (typeof this.#dialogPromises !== "undefined") {
+            if (this.returnValue === "") {
+              this.#dialogPromises.resolve(undefined);
+            } else {
+              const buffer = this.quelProps[GetBufferSymbol]();
+              this.#dialogPromises.resolve(buffer);
+            }
+            this.#dialogPromises = undefined;
           }
-          this.#dialogPromises = undefined;
-        }
-        if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-          if (this.returnValue !== "") {
-            this.quelProps[FlushBufferSymbol]();
-          }
-        }
-      });
-      this.addEventListener("close", () => {
-        const closedEvent = new CustomEvent("closed");
-        this.dispatchEvent(closedEvent);
-      });
+          this.quelProps[ClearBufferSymbol]();
+        });
+      }
     }
 
-    async #asyncShow(props:{[key:string]:any}, modal = true) {
-      this.returnValue = "";
-      const dialogPromise = this.#dialogPromises = Promise.withResolvers();
-      this.quelProps[SetBufferSymbol](props);
-      if (modal) {
-        HTMLDialogElement.prototype.showModal.apply(this);
-      } else {
-        HTMLDialogElement.prototype.show.apply(this);
-      }
-      return dialogPromise.promise;
-    }
-  
-    async quelAsyncShowModal(props: {[key: string]: any}): Promise<void> {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: quelAsyncShowModal is only for HTMLDialogElement");
-      }
-      return this.#asyncShow(props, true);
-    }
-
-    async quelAsyncShow(props: {[key: string]: any}): Promise<void> {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: quelAsyncShow is only for HTMLDialogElement");
-      }
-      return this.#asyncShow(props, false);
-    }
-  
-    quelShowModal() {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: quelShowModal is only for HTMLDialogElement");
-      }
+    #setBuffer() {
       if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-        this.returnValue = "";
         const buffer = this.quelProps[CreateBufferSymbol]();
         this.quelProps[SetBufferSymbol](buffer);
       }
-      return HTMLDialogElement.prototype.showModal.apply(this);
+      for(const key in this.quelProps) {
+        this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
+      }
+    }
+    show(props:{[key:string]:any}|undefined = undefined, withAsync:boolean = false): PromiseWithResolvers<{[key: string]: any}|undefined>|void {
+      !(this instanceof HTMLDialogElement) && utils.raise("This method can only be called from a dialog element.");
+      const dialogPromise = this.#dialogPromises = withAsync ? Promise.withResolvers() : undefined;
+      if (props) this.quelProps[SetBufferSymbol](props);
+      this.#setBuffer();
+      HTMLDialogElement.prototype.show.apply(this);
+      if (dialogPromise) return dialogPromise;
     }
 
-    showModal() {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: showModal is only for HTMLDialogElement");
-      }
-      return this.quelShowModal();
+    showModal(props:{[key:string]:any}|undefined = undefined, withAsync:boolean = false): PromiseWithResolvers<{[key: string]: any}|undefined>|void {
+      !(this instanceof HTMLDialogElement) && utils.raise("This method can only be called from a dialog element.");
+      const dialogPromise = this.#dialogPromises = withAsync ? Promise.withResolvers() : undefined;
+      if (props) this.quelProps[SetBufferSymbol](props);
+      this.#setBuffer();
+      HTMLDialogElement.prototype.showModal.apply(this);
+      if (dialogPromise) return dialogPromise;
     }
 
-    quelShow() {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: quelShow is only for HTMLDialogElement");
-      }
-      if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-        this.returnValue = "";
-        const buffer = this.quelProps[CreateBufferSymbol]();
-        this.quelProps[SetBufferSymbol](buffer);
-      }
-      return HTMLDialogElement.prototype.show.apply(this);
+    close(returnValue:string = ""): void {
+      !(this instanceof HTMLDialogElement) && utils.raise("This method can only be called from a dialog element.");
+      HTMLDialogElement.prototype.close.apply(this, [returnValue]);
     }
-
-    show() {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: show is only for HTMLDialogElement");
-      }
-      return this.quelShow();
-    }
-
-    quelClose(returnValue:string = "") {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: close is only for HTMLDialogElement");
-      }
-      return HTMLDialogElement.prototype.close.apply(this, [returnValue]);
-    }
-
-    close(returnValue:string = "") {
-      if (!(this instanceof HTMLDialogElement)) {
-        utils.raise("DialogComponent: close is only for HTMLDialogElement");
-      }
-      return this.quelClose(returnValue);
-    }
-      
   };
 }
 

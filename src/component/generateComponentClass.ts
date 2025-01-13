@@ -6,8 +6,9 @@ import { EventFilterManager, InputFilterManager, OutputFilterManager } from "../
 import { CustomComponent } from "./CustomComponent";
 import { DialogComponent } from "./DialogComponent";
 import { PopoverComponent } from "./PopoverComponent";
-import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers } from "./types";
+import { Constructor, IComponentBase, IModule, ComponentModule, CustomElementInfo, FilterManagers, IBufferedBindComponent, ICustomComponent } from "./types";
 import { registerComponentModules } from "./registerComponentModules";
+import { BufferedBindComponent } from "./BufferedBindComponent";
 
 const customElementInfoByConstructor:Map<Function,CustomElementInfo> = new Map;
 const filterManagersByConstructor:Map<Function,FilterManagers> = new Map;
@@ -85,6 +86,10 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
 
       get quelUseOverscrollBehavior():boolean {
         return this.#module.moduleConfig.useOverscrollBehavior ?? config.useOverscrollBehavior;
+      }
+
+      get quelUseInvokeCommands():boolean {
+        return this.#module.moduleConfig.useInvokeCommands ?? config.useInvokeCommands;
       }
 
       get quelLowerTagName():string {
@@ -186,7 +191,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
   const componentClass = getBaseClass(module, baseConstructor as typeof HTMLElement);
 
   // mix in component class
-  const extendedComponentClass = PopoverComponent(DialogComponent(CustomComponent(componentClass))); 
+  const extendedComponentClass = PopoverComponent(DialogComponent(BufferedBindComponent(CustomComponent(componentClass))));
 
   // register component's subcomponents 
   registerComponentModules(module.componentModulesForRegister ?? {});

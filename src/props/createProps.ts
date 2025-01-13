@@ -113,7 +113,7 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
   flushBuffer(): void {
     const component = this.#component;
     if (this.#propBuffer === undefined) return;
-    const quelParentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
+    const parentComponent = component.quelParentComponent ?? utils.raise("quelParentComponent is undefined");
     for(const bindingInfo of this.propsBindingInfos) {
       const { parentProp, thisProp } = bindingInfo;
       const getLoopContext = this.loopContextByParentProp.get(parentProp);
@@ -126,7 +126,7 @@ class PropsProxyHandler implements ProxyHandler<IProps> {
         const state = component.quelState;
         return state[SetByPropInfoSymbol](propInfo, value);
       };
-      quelParentComponent.quelUpdater?.addProcess(writeProperty, undefined, [ quelParentComponent, parentPropInfo, value ], loopContext);
+      parentComponent.quelUpdater?.addProcess(writeProperty, undefined, [ parentComponent, parentPropInfo, value ], loopContext);
     }
   }
 

@@ -47,7 +47,7 @@ export interface IStateProperty {
 }
 
 export type IComponentPartial = HTMLElement & Pick<IComponent, 
-  "quelUseKeyed" | "quelSelectorName" | "quelEventFilterManager" | "quelInputFilterManager" | "quelOutputFilterManager" |
+  "quelUseKeyed" | "quelUseInvokeCommands" | "quelSelectorName" | "quelEventFilterManager" | "quelInputFilterManager" | "quelOutputFilterManager" |
   "quelState" | "quelBindingSummary" | "quelUpdater" | "quelPopoverInfo" | "quelIsQuelComponent">;
 
 export interface IBindingTreeNode {

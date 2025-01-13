@@ -15,6 +15,7 @@ export type ComponentModuleConfig = {
   readonly useLocalTagName?: boolean; // use local tag name, default is true. local custom tag is unique in the document.
   readonly useLocalSelector?: boolean; // use local selector, default is true. local selector is unique in the document.
   readonly useOverscrollBehavior?: boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
+  readonly useInvokeCommands?: boolean; // use invoke commands, default is false. invoke commands is used for the component instance.
 }
 
 export type ComponentModuleOptions = {
@@ -79,6 +80,7 @@ export interface IComponentBase {
   readonly quelUseKeyed: boolean;
   readonly quelUseLocalSelector: boolean;
   readonly quelUseOverscrollBehavior: boolean;
+  readonly quelUseInvokeCommands: boolean;
   readonly quelLowerTagName: string;
   readonly quelSelectorName: string;
   // is autonomous custom element 
@@ -112,29 +114,27 @@ export interface ICustomComponent {
   disconnectedCallback():Promise<void>;
 } 
 
-export interface IDialogComponent {
-  readonly quelDialogPromises: PromiseWithResolvers<any>;
+export interface IBufferedBindComponent {
   readonly quelUseBufferedBind: boolean;
-  quelAsyncShowModal(props: {[key: string]: any}): Promise<any>;
-  quelAsyncShow(props: {[key: string]: any}): Promise<any>;
-  quelShowModal(): void;
-  quelShow(): void;
-  quelClose(result:any): void;
+  quelCommitBufferedBindProps(): void;
+}
+
+export interface IDialogComponent {
+  returnValue: string;
+  showModal(props?: {[key: string]: any}, withAsync?:boolean): PromiseWithResolvers<{[key: string]: any}|undefined>|void;
+  show(props?: {[key: string]: any}, withAsync?:boolean): PromiseWithResolvers<{[key: string]: any}|undefined>|void;
+  close(returnValue?: string): void;
 }
 
 export interface IPopoverComponent {
-  quelCanceled: boolean;
-  readonly quelPopoverPromises: PromiseWithResolvers<any>|undefined;
   readonly quelPopoverInfo: IPopoverInfo;
-  quelShowPopover(): void;
-  quelAsyncShowPopover(props: {[key: string]: any}): Promise<any>;
-  quelHidePopover(): void;
-  quelCancelPopover(): void;
+  showPopover(props?: {[key: string]: any}, withAsync?:boolean): PromiseWithResolvers<{[key: string]: any}|undefined>|void;
+  hidePopover(): void;
 }
 
 export type Constructor<T = {}> = new (...args: any[]) => T;
 
-export type IComponent = IComponentBase & ICustomComponent & IDialogComponent & IPopoverComponent & HTMLElement;
+export type IComponent = IComponentBase & ICustomComponent & IBufferedBindComponent & IDialogComponent & IPopoverComponent & HTMLElement;
 
 export interface IProcess {
   readonly target: Function;

@@ -1,5 +1,6 @@
 import { createBinder } from "../binder/createBinder";
 import { getTemplateByUUID } from "../component/Template";
+import { setupInvokeCommands } from "../invokerCommands/setupInvokeCommands";
 import { createLoopContext } from "../loopContext/createLoopContext";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
@@ -115,9 +116,10 @@ class ContentBindings implements IContentBindings {
 
   constructor(
     uuid: string,
-    useKeyed: boolean = false,
-    loopable: boolean = false,
-    patternName: string = "", // loopable === trueの場合のみ有効
+    useKeyed: boolean          = false,
+    useInvokeCommands: boolean = false, 
+    loopable: boolean          = false,
+    patternName: string        = "", // loopable === trueの場合のみ有効
   ) {
     this.#uuid = uuid;
     this.#useKeyed = useKeyed;
@@ -126,6 +128,9 @@ class ContentBindings implements IContentBindings {
     const binder = createBinder(this.template, this.useKeyed);
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#childBindings = binder.createBindings(this.#fragment, this);
+    if (useInvokeCommands) {
+      setupInvokeCommands(this.#fragment);
+    }
     this.#childNodes = Array.from(this.#fragment.childNodes);
     if (loopable) {
       this.#loopContext = createLoopContext(this);
@@ -189,12 +194,13 @@ export function createContentBindings(
 ): IContentBindings {
   const component = parentBinding.component ?? utils.raise("component is undefined");
   const useKeyed = component.quelUseKeyed;
+  const useInvokeCommands = component.quelUseInvokeCommands;
   const loopable = parentBinding.loopable;
   const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
   const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
   let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(uuid, useKeyed, loopable, patterName);
+    contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable, patterName);
   }
   contentBindings.component = component;
   contentBindings.parentBinding = parentBinding;
