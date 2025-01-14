@@ -213,11 +213,12 @@ export function createRootContentBindings(
   uuid: string,
 ): IContentBindings {
   const useKeyed = component.quelUseKeyed;
+  const useInvokeCommands = component.quelUseInvokeCommands;
   const loopable = false;
   const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
   let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(uuid, useKeyed, loopable);
+    contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable);
   }
   contentBindings.component = component;
   contentBindings.registerBindingsToSummary();

@@ -1722,6 +1722,8 @@ class Updater {
     async exec() {
         await this.execCallbackWithPerformance(async () => {
             while (this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
+                const getInitialPromises = async () => this.component.quelInitialPromises;
+                await getInitialPromises?.();
                 this.updatedBindings.clear();
                 // 戻り値は更新されたStateのプロパティ情報
                 const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
@@ -3908,11 +3910,12 @@ function createContentBindings(uuid, parentBinding) {
 }
 function createRootContentBindings(component, uuid) {
     const useKeyed = component.quelUseKeyed;
+    const useInvokeCommands = component.quelUseInvokeCommands;
     const loopable = false;
     const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
     let contentBindings = _cache$1[key]?.pop();
     if (typeof contentBindings === "undefined") {
-        contentBindings = new ContentBindings(uuid, useKeyed, loopable);
+        contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable);
     }
     contentBindings.component = component;
     contentBindings.registerBindingsToSummary();

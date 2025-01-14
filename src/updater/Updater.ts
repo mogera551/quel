@@ -13,7 +13,7 @@ import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loop
 import { createLoopContextStack } from "../loopContext/createLoopContextStack";
 import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
-type IComponentForUpdater = Pick<IComponent, "quelState" | "quelBindingSummary" | "quelTemplate">;
+type IComponentForUpdater = Pick<IComponent, "quelState" | "quelBindingSummary" | "quelTemplate" | "quelInitialPromises">;
 
 class Updater implements IUpdater {
   #component: IComponentForUpdater;
@@ -97,6 +97,9 @@ class Updater implements IUpdater {
   async exec():Promise<void> {
     await this.execCallbackWithPerformance(async () => {
       while(this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
+        const getInitialPromises = async () => this.component.quelInitialPromises;
+        await getInitialPromises?.();
+
         this.updatedBindings.clear();
 
         // 戻り値は更新されたStateのプロパティ情報
