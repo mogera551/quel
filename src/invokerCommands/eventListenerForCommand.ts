@@ -18,6 +18,6 @@ export function eventListenerForCommand(event: CommandEvent): void {
   const lowerCamelCommand = (upperCamelCommand.length > 0) ? upperCamelCommand[0].toLowerCase() + upperCamelCommand.slice(1) : upperCamelCommand;
   if (Reflect.has(target, lowerCamelCommand)) {
     const commandFn = Reflect.get(target, lowerCamelCommand);
-    Reflect.apply(commandFn, target, [event]);
+    Reflect.apply(commandFn, target, []);
   }
 }
