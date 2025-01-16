@@ -3,6 +3,8 @@ import { utils } from "../utils";
 import { ClearBufferSymbol, CreateBufferSymbol, FlushBufferSymbol, GetBufferSymbol, SetBufferSymbol } from "../props/symbols";
 import { IDialogComponent, Constructor, ICustomComponent, IComponentBase, IBufferedBindComponent } from "./types";
 import { NotifyForDependentPropsApiSymbol } from "../state/symbols";
+import { createInvokerCommandsInfo } from "../invokerCommands/createInvokerCommandsInfo";
+import { IInvokerCommandsInfo } from "../invokerCommands/types";
 
 type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IBufferedBindComponent;
 
@@ -19,6 +21,11 @@ type BaseComponent = HTMLElement & IComponentBase & ICustomComponent & IBuffered
 export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: TBase): Constructor<BaseComponent & IDialogComponent> {
   return class extends Base implements IDialogComponent {
     #dialogPromises?: PromiseWithResolvers<{[key: string]: any}|undefined>;
+
+    #invokerCommandsInfo = createInvokerCommandsInfo();
+    get quelInvokerCommandsInfo(): IInvokerCommandsInfo {
+      return this.#invokerCommandsInfo;
+    }
 
     #returnValue: string = "";
     get returnValue(): string {

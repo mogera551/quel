@@ -3,6 +3,7 @@ import { Checkbox } from "../binding/nodeProperty/Checkbox";
 import { Radio } from "../binding/nodeProperty/Radio";
 import { IBinding } from "../binding/types";
 import { PopoverTarget } from "../binding/nodeProperty/PopoverTarget";
+import { CommandForTarget } from "../binding/nodeProperty/CommandForTarget";
 
 const DEFAULT_EVENT = "oninput";
 const DEFAULT_EVENT_TYPE = "input";
@@ -31,12 +32,15 @@ function initializeHTMLElement(
 
   let targetPopoverBinding:(Pick<IBinding, "defaultEventHandler">|null) = null;
 
+  let commandForTargetBinding:(Pick<IBinding, "defaultEventHandler">|null) = null;
+
   for(let i = 0; i < bindings.length; i++) {
     const binding = bindings[i];
     hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
     radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
     checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
     targetPopoverBinding = (binding.nodeProperty.constructor === PopoverTarget) ? binding : targetPopoverBinding;
+    commandForTargetBinding = (binding.nodeProperty.constructor === CommandForTarget) ? binding : commandForTargetBinding;
     defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
   }
 
@@ -49,6 +53,8 @@ function initializeHTMLElement(
       setDefaultEventHandler(checkboxBinding);
     } else if (targetPopoverBinding) {
       setDefaultEventHandler(targetPopoverBinding, "click");
+    } else if (commandForTargetBinding) {
+      setDefaultEventHandler(commandForTargetBinding, "click");
     } else if (defaultBinding && acceptInput) {
       // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
       // ・デフォルト値のバインドがある → イベントが発生しても設定する値がなければダメ

@@ -2851,6 +2851,27 @@ class RepeatKeyed extends Loop {
     }
 }
 
+function getPopoverElement(element, targetId) {
+    if (targetId == null) {
+        return null;
+    }
+    if (targetId === ":host") {
+        return getParentComponent(element);
+    }
+    const component = getParentComponent(element);
+    if (component != null) {
+        const target = component.quelQueryRoot.querySelector("#" + targetId);
+        if (target != null) {
+            return target;
+        }
+    }
+    const target = document.getElementById(targetId);
+    if (target == null) {
+        return null;
+    }
+    return target;
+}
+
 class PopoverTarget extends ElementBase {
     #targetId = "";
     get propertyName() {
@@ -2860,8 +2881,10 @@ class PopoverTarget extends ElementBase {
         return this.#targetId;
     }
     get target() {
-        const target = document.getElementById(this.#targetId) ??
-            (this.binding.component?.shadowRoot?.getElementById(this.#targetId) ?? null);
+        const target = getPopoverElement(this.node, this.#targetId);
+        if (target == null) {
+            utils.raise("PopoverTarget: no target");
+        }
         if (target != null && target?.quelIsQuelComponent !== true) {
             utils.raise("PopoverTarget: not Quel Component");
         }
@@ -2929,6 +2952,115 @@ class PopoverTarget extends ElementBase {
     }
 }
 
+function getCommandForElement$1(element, commandFor) {
+    if (commandFor == null) {
+        return null;
+    }
+    if (commandFor === ":host") {
+        return getParentComponent(element);
+    }
+    const component = getParentComponent(element);
+    if (component != null) {
+        const target = component.quelQueryRoot.querySelector("#" + commandFor);
+        if (target != null) {
+            return target;
+        }
+    }
+    const target = document.getElementById(commandFor);
+    if (target == null) {
+        return null;
+    }
+    return target;
+}
+
+class CommandForTarget extends ElementBase {
+    #commandFor = "";
+    get propertyName() {
+        return this.nameElements[1];
+    }
+    get commandFor() {
+        return this.#commandFor;
+    }
+    get commandForElement() {
+        const commandForElement = getCommandForElement$1(this.node, this.#commandFor);
+        if (commandForElement == null) {
+            utils.raise("CommandForTarget: no target");
+        }
+        if (commandForElement != null && commandForElement?.quelIsQuelComponent !== true) {
+            utils.raise("CommandForTarget: not Quel Component");
+        }
+        return commandForElement;
+    }
+    #command;
+    get command() {
+        return this.#command;
+    }
+    get button() {
+        if (this.node instanceof HTMLButtonElement) {
+            return this.node;
+        }
+        utils.raise("CommandForTarget: not button element");
+    }
+    constructor(binding, node, name, filters) {
+        if (!(node instanceof HTMLButtonElement)) {
+            utils.raise("CommandForTarget: not button element");
+        }
+        if (!node.hasAttribute("commandfor")) {
+            utils.raise("CommandForTarget: missing commandfor attribute");
+        }
+        if (!node.hasAttribute("command")) {
+            utils.raise("CommandForTarget: missing command attribute");
+        }
+        super(binding, node, name, filters);
+        this.#commandFor = node.getAttribute("commandfor");
+        this.#command = node.getAttribute("command");
+    }
+    initialize() {
+        super.initialize();
+        this.binding.defaultEventHandler =
+            (commandForTarget => event => commandForTarget.registerCurrentButton())(this);
+    }
+    get applicable() {
+        // ポップオーバーがオープンしているかどうかの判定
+        // see https://blog.asial.co.jp/3940/
+        const dialogOpened = this.commandForElement?.hasAttribute("open") ?? false;
+        if (this.binding.component?.quelInvokerCommandsInfo.currentButton === this.button && dialogOpened) {
+            return true;
+        }
+        return false;
+    }
+    registerCurrentButton() {
+        // ボタン押下時、ボタンを登録する
+        this.binding.component?.quelInvokerCommandsInfo.addBinding(this.button, this.binding);
+        const invokerCommandsInfo = this.binding.component?.quelInvokerCommandsInfo ?? utils.raise("CommandForTarget: no invokerCommandsInfo");
+        invokerCommandsInfo.currentButton = this.button;
+        // ボタンのバインドを設定する
+        // ターゲット側でボタンのバインドを設定するのは、難しそうなので、ここで設定する
+        const allBindings = Array.from(this.binding.component?.quelBindingSummary?.allBindings ?? []);
+        // このボタンに関連するバインディングを取得
+        const buttonBindings = allBindings.filter(binding => (binding.nodeProperty instanceof CommandForTarget) && (binding.nodeProperty.node === this.node));
+        const props = this.commandForElement?.quelProps ?? utils.raise("CommandForTarget: no target props");
+        for (const binding of buttonBindings) {
+            const commandForTarget = binding.nodeProperty;
+            const commandForBinding = commandForTarget.binding;
+            const statePropertyName = commandForTarget.binding.statePropertyName;
+            const nodePropertyName = commandForTarget.propertyName;
+            if (!props[CheckDuplicateSymbol](statePropertyName, nodePropertyName)) {
+                const getLoopContext = (binding) => () => {
+                    // ポップオーバー情報を取得し、現在のボタンを取得する
+                    const component = binding.component ?? utils.raise("CommandForTarget: no component");
+                    const button = component.quelInvokerCommandsInfo?.currentButton ?? utils.raise("CommandForTarget: no currentButton");
+                    // 現在のボタンに関連するInvokerCommands情報を取得する
+                    const commandForButton = component.quelInvokerCommandsInfo?.get(button);
+                    // InvokerCommands情報が存在する場合、ループコンテキストを返す
+                    return commandForButton?.loopContext;
+                };
+                props[BindPropertySymbol](statePropertyName, nodePropertyName, getLoopContext(commandForBinding));
+            }
+        }
+    }
+}
+
 const nodePropertyConstructorByNameByIsComment = {
     0: {
         "class": ElementClassName,
@@ -2947,7 +3079,8 @@ const nodePropertyConstructorByFirstName = {
     "attr": ElementAttribute,
     "style": ElementStyle,
     "props": ComponentProperty,
-    "target": PopoverTarget,
+    "popover": PopoverTarget,
+    "commandfor": CommandForTarget,
 };
 function _getNodePropertyConstructor(isComment, isElement, propertyName, useKeyed) {
     let nodePropertyConstructor;
@@ -3336,12 +3469,14 @@ function initializeHTMLElement(node, acceptInput, bindings, defaultName) {
     let radioBinding = null;
     let checkboxBinding = null;
     let targetPopoverBinding = null;
+    let commandForTargetBinding = null;
     for (let i = 0; i < bindings.length; i++) {
         const binding = bindings[i];
         hasDefaultEvent ||= binding.nodeProperty.name === DEFAULT_EVENT;
         radioBinding = (binding.nodeProperty.constructor === Radio) ? binding : radioBinding;
         checkboxBinding = (binding.nodeProperty.constructor === Checkbox) ? binding : checkboxBinding;
         targetPopoverBinding = (binding.nodeProperty.constructor === PopoverTarget) ? binding : targetPopoverBinding;
+        commandForTargetBinding = (binding.nodeProperty.constructor === CommandForTarget) ? binding : commandForTargetBinding;
         defaultBinding = (binding.nodeProperty.name === defaultName) ? binding : defaultBinding;
     }
     if (!hasDefaultEvent) {
@@ -3354,6 +3489,9 @@ function initializeHTMLElement(node, acceptInput, bindings, defaultName) {
         }
         else if (targetPopoverBinding) {
             setDefaultEventHandler(targetPopoverBinding, "click");
+        }
+        else if (commandForTargetBinding) {
+            setDefaultEventHandler(commandForTargetBinding, "click");
         }
         else if (defaultBinding && acceptInput) {
             // 以下の条件を満たすと、双方向バインドのためのデフォルトイベントハンドラ（oninput）を設定する
@@ -4805,6 +4943,67 @@ function CustomComponent(Base) {
     };
 }
 
+class InvokerCommandsButton {
+    #commandFor;
+    #button;
+    #bindings = new Set();
+    get commandFor() {
+        return this.#commandFor;
+    }
+    get button() {
+        return this.#button;
+    }
+    get bindings() {
+        return this.#bindings;
+    }
+    get commandForElement() {
+        return getCommandForElement$1(this.#button, this.#commandFor);
+    }
+    #command;
+    get command() {
+        return this.#command;
+    }
+    get loopContext() {
+        return this.#bindings.values().next().value?.parentContentBindings.loopContext;
+    }
+    constructor(button) {
+        this.#button = button;
+        this.#commandFor = button.getAttribute("commandfor") ?? "";
+        this.#command = button.getAttribute("command") ?? "";
+    }
+    addBinding(binding) {
+        this.#bindings.add(binding);
+    }
+}
+class InvokerCommandsInfo {
+    #invokerCommandsButtonByButton = new Map();
+    #currentButton;
+    add(button) {
+        const invokerCommandsButton = new InvokerCommandsButton(button);
+        this.#invokerCommandsButtonByButton.set(button, invokerCommandsButton);
+        return invokerCommandsButton;
+    }
+    addBinding(button, binding) {
+        let invokerCommandsButton = this.#invokerCommandsButtonByButton.get(button);
+        if (!invokerCommandsButton) {
+            invokerCommandsButton = this.add(button);
+        }
+        invokerCommandsButton.addBinding(binding);
+    }
+    get(button) {
+        return this.#invokerCommandsButtonByButton.get(button);
+    }
+    get currentButton() {
+        return this.#currentButton;
+    }
+    set currentButton(value) {
+        this.#currentButton = value;
+    }
+}
+function createInvokerCommandsInfo() {
+    return new InvokerCommandsInfo();
+}
+
 /**
  * コンポーネントをダイアログを簡単に表示できるように拡張する
  * 拡張内容は以下の通り
@@ -4818,6 +5017,10 @@ function CustomComponent(Base) {
 function DialogComponent(Base) {
     return class extends Base {
         #dialogPromises;
+        #invokerCommandsInfo = createInvokerCommandsInfo();
+        get quelInvokerCommandsInfo() {
+            return this.#invokerCommandsInfo;
+        }
         #returnValue = "";
         get returnValue() {
             return this.#returnValue;
@@ -4893,7 +5096,7 @@ class PopoverButton {
         return this.#bindings;
     }
     get target() {
-        return document.getElementById(this.#targetId);
+        return getPopoverElement(this.#button, this.#targetId);
     }
     get loopContext() {
         return this.#bindings.values().next().value?.parentContentBindings.loopContext;
@@ -4963,16 +5166,11 @@ function PopoverComponent(Base) {
                 this.addEventListener("hidden", () => {
                     if (typeof this.#popoverPromises !== "undefined") {
                         const buffer = this.quelProps[GetBufferSymbol]();
-                        this.quelProps[ClearBufferSymbol]();
                         this.#popoverPromises.resolve(buffer);
                         this.#popoverPromises = undefined;
                     }
                 });
                 this.addEventListener("shown", () => {
-                    if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-                        const buffer = this.quelProps[CreateBufferSymbol]();
-                        this.quelProps[SetBufferSymbol](buffer);
-                    }
                     for (const key in this.quelProps) {
                         this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
                     }

@@ -5,6 +5,7 @@ import { IUpdater } from "../updater/types";
 import { ILoopContext } from "../loopContext/types";
 import { IProps } from "../props/types";
 import { IPopoverInfo } from "../popover/types";
+import { IInvokerCommandsInfo } from "../invokerCommands/types";
 
 export type ComponentModuleConfig = {
   readonly extends?: string; // for customized built-in element, like extends="button"
@@ -121,6 +122,7 @@ export interface IBufferedBindComponent {
 
 export interface IDialogComponent {
   returnValue: string;
+  readonly quelInvokerCommandsInfo: IInvokerCommandsInfo;
   showModal(props?: {[key: string]: any}, withAsync?:boolean): PromiseWithResolvers<{[key: string]: any}|undefined>|void;
   show(props?: {[key: string]: any}, withAsync?:boolean): PromiseWithResolvers<{[key: string]: any}|undefined>|void;
   close(returnValue?: string): void;

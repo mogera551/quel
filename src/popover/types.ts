@@ -1,11 +1,9 @@
 import { IBinding } from "../binding/types";
 import { ILoopContext } from "../loopContext/types";
 
-export type IButton = HTMLButtonElement | HTMLInputElement;
-
 export interface IPopoverButton {
   readonly targetId: string;
-  readonly button: IButton;
+  readonly button: HTMLButtonElement;
   readonly bindings: Set<IBinding>;
   readonly target: HTMLElement;
   readonly loopContext: ILoopContext | undefined
@@ -13,8 +11,8 @@ export interface IPopoverButton {
 }
 
 export interface IPopoverInfo {
-  currentButton: IButton | undefined;
-  add(button: IButton): IPopoverButton;
-  addBinding(button: IButton, binding: IBinding): void;
-  get(button: IButton): IPopoverButton | undefined;
+  currentButton: HTMLButtonElement | undefined;
+  add(button: HTMLButtonElement): IPopoverButton;
+  addBinding(button: HTMLButtonElement, binding: IBinding): void;
+  get(button: HTMLButtonElement): IPopoverButton | undefined;
 }

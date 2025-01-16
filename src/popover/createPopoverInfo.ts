@@ -2,28 +2,29 @@
 //  ポップオーバーの情報を保管するクラス
 import { IBinding } from "../binding/types";
 import { ILoopContext } from "../loopContext/types";
-import { IButton, IPopoverButton, IPopoverInfo } from "./types";
+import { getPopoverElement } from "./getPopoverElement";
+import { IPopoverButton, IPopoverInfo } from "./types";
 
 class PopoverButton implements IPopoverButton {
   #targetId: string;
-  #button: IButton;
+  #button: HTMLButtonElement;
   #bindings: Set<IBinding> = new Set();
   get targetId(): string {
     return this.#targetId;
   }
-  get button(): IButton {
+  get button(): HTMLButtonElement {
     return this.#button;
   }
   get bindings(): Set<IBinding> {
     return this.#bindings;
   }
   get target(): HTMLElement {
-    return document.getElementById(this.#targetId) as HTMLElement;
+    return getPopoverElement(this.#button, this.#targetId) as HTMLElement;
   }
   get loopContext(): ILoopContext | undefined {
     return this.#bindings.values().next().value?.parentContentBindings.loopContext;
   }
-  constructor(button: IButton) {
+  constructor(button: HTMLButtonElement) {
     this.#button = button;
     this.#targetId = button.getAttribute("popovertarget") ?? "";
   }
@@ -33,27 +34,27 @@ class PopoverButton implements IPopoverButton {
 }
 
 class PopoverInfo implements IPopoverInfo{
-  #popoverButtonByButton: Map<IButton, IPopoverButton> = new Map();
-  #currentButton: IButton | undefined;
-  add(button: IButton): IPopoverButton {
+  #popoverButtonByButton: Map<HTMLButtonElement, IPopoverButton> = new Map();
+  #currentButton: HTMLButtonElement | undefined;
+  add(button: HTMLButtonElement): IPopoverButton {
     const popoverButton = new PopoverButton(button);
     this.#popoverButtonByButton.set(button, popoverButton);
     return popoverButton;
   }
-  addBinding(button: IButton, binding: IBinding) {
+  addBinding(button: HTMLButtonElement, binding: IBinding) {
     let popoverButton = this.#popoverButtonByButton.get(button);
     if (!popoverButton) {
       popoverButton = this.add(button);
     }
     popoverButton.addBinding(binding);
   }
-  get(button: IButton): IPopoverButton | undefined {
+  get(button: HTMLButtonElement): IPopoverButton | undefined {
     return this.#popoverButtonByButton.get(button);
   }
-  get currentButton(): IButton | undefined {
+  get currentButton(): HTMLButtonElement | undefined {
     return this.#currentButton;
   }
-  set currentButton(value: IButton | undefined) {
+  set currentButton(value: HTMLButtonElement | undefined) {
     this.#currentButton = value;
   }
 }

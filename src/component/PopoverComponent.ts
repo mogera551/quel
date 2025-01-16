@@ -39,16 +39,11 @@ export function PopoverComponent<TBase extends Constructor<BaseComponent>>(Base:
         this.addEventListener("hidden", () => {
           if (typeof this.#popoverPromises !== "undefined") {
             const buffer = this.quelProps[GetBufferSymbol]();
-            this.quelProps[ClearBufferSymbol]();
             this.#popoverPromises.resolve(buffer);
             this.#popoverPromises = undefined;
           }
         });
         this.addEventListener("shown", () => {
-          if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
-            const buffer = this.quelProps[CreateBufferSymbol]();
-            this.quelProps[SetBufferSymbol](buffer);
-          }
           for(const key in this.quelProps) {
             this.quelState[NotifyForDependentPropsApiSymbol](key, undefined);
           }

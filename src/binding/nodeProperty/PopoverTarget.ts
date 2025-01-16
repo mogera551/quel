@@ -1,12 +1,11 @@
 import { IComponent } from "../../component/types";
 import { IFilterText } from "../../filter/types";
 import { ILoopContext } from "../../loopContext/types";
+import { getPopoverElement } from "../../popover/getPopoverElement";
 import { BindPropertySymbol, CheckDuplicateSymbol } from "../../props/symbols";
 import { utils } from "../../utils";
 import { IBinding } from "../types";
 import { ElementBase } from "./ElementBase";
-
-type IButton = HTMLButtonElement | HTMLInputElement;
 
 export class PopoverTarget extends ElementBase {
   #targetId:string = "";
@@ -18,15 +17,17 @@ export class PopoverTarget extends ElementBase {
     return this.#targetId; 
   }
   get target():IComponent | null {
-    const target = document.getElementById(this.#targetId) as IComponent | null ?? 
-      (this.binding.component?.shadowRoot?.getElementById(this.#targetId) ?? null) as IComponent | null;
+    const target = getPopoverElement(this.node as HTMLButtonElement, this.#targetId) as IComponent | null;
+    if (target == null) {
+      utils.raise("PopoverTarget: no target");
+    }
     if (target != null && target?.quelIsQuelComponent !== true) {
       utils.raise("PopoverTarget: not Quel Component");
     }
     return target;
   }
 
-  get button(): IButton {
+  get button(): HTMLButtonElement {
     if (this.node instanceof HTMLButtonElement) {
       return this.node;
     }
