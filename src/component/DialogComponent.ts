@@ -26,19 +26,10 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
     get quelInvokerCommandsInfo(): IInvokerCommandsInfo {
       return this.#invokerCommandsInfo;
     }
-
-    #returnValue: string = "";
-    get returnValue(): string {
-      return this.#returnValue;
-    }
-    set returnValue(value: string) {
-      this.#returnValue = value;
-    }
-
     constructor(...args:any[]) {
       super();
       if (this instanceof HTMLDialogElement) {
-        this.addEventListener("close", () => {
+        this.addEventListener("close", (event) => {
           if (typeof this.#dialogPromises !== "undefined") {
             if (this.returnValue === "") {
               this.#dialogPromises.resolve(undefined);
@@ -47,6 +38,11 @@ export function DialogComponent<TBase extends Constructor<BaseComponent>>(Base: 
               this.#dialogPromises.resolve(buffer);
             }
             this.#dialogPromises = undefined;
+          }
+          if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
+            if (this.returnValue !== "") {
+              this.quelCommitBufferedBindProps();              
+            }
           }
           this.quelProps[ClearBufferSymbol]();
         });

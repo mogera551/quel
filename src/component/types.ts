@@ -121,7 +121,6 @@ export interface IBufferedBindComponent {
 }
 
 export interface IDialogComponent {
-  returnValue: string;
   readonly quelInvokerCommandsInfo: IInvokerCommandsInfo;
   showModal(props?: {[key: string]: any}, withAsync?:boolean): PromiseWithResolvers<{[key: string]: any}|undefined>|void;
   show(props?: {[key: string]: any}, withAsync?:boolean): PromiseWithResolvers<{[key: string]: any}|undefined>|void;

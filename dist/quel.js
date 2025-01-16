@@ -5021,17 +5021,10 @@ function DialogComponent(Base) {
         get quelInvokerCommandsInfo() {
             return this.#invokerCommandsInfo;
         }
-        #returnValue = "";
-        get returnValue() {
-            return this.#returnValue;
-        }
-        set returnValue(value) {
-            this.#returnValue = value;
-        }
         constructor(...args) {
             super();
             if (this instanceof HTMLDialogElement) {
-                this.addEventListener("close", () => {
+                this.addEventListener("close", (event) => {
                     if (typeof this.#dialogPromises !== "undefined") {
                         if (this.returnValue === "") {
                             this.#dialogPromises.resolve(undefined);
@@ -5041,6 +5034,11 @@ function DialogComponent(Base) {
                             this.#dialogPromises.resolve(buffer);
                         }
                         this.#dialogPromises = undefined;
+                    }
+                    if (this.quelUseBufferedBind && typeof this.quelParentComponent !== "undefined") {
+                        if (this.returnValue !== "") {
+                            this.quelCommitBufferedBindProps();
+                        }
                     }
                     this.quelProps[ClearBufferSymbol]();
                 });
