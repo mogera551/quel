@@ -1,6 +1,6 @@
 import { createBinder } from "../binder/createBinder";
 import { getTemplateByUUID } from "../component/Template";
-import { setupInvokeCommands } from "../invokerCommands/setupInvokeCommands";
+import { setupInvokerCommands } from "../polyfill/invokerCommands/setupInvokerCommands";
 import { createLoopContext } from "../loopContext/createLoopContext";
 import { ILoopContext } from "../loopContext/types";
 import { utils } from "../utils";
@@ -117,7 +117,7 @@ class ContentBindings implements IContentBindings {
   constructor(
     uuid: string,
     useKeyed: boolean          = false,
-    useInvokeCommands: boolean = false, 
+    useInvokerCommands: boolean = false, 
     loopable: boolean          = false,
     patternName: string        = "", // loopable === trueの場合のみ有効
   ) {
@@ -128,8 +128,8 @@ class ContentBindings implements IContentBindings {
     const binder = createBinder(this.template, this.useKeyed);
     this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
     this.#childBindings = binder.createBindings(this.#fragment, this);
-    if (useInvokeCommands) {
-      setupInvokeCommands(this.#fragment);
+    if (useInvokerCommands) {
+      setupInvokerCommands(this.#fragment);
     }
     this.#childNodes = Array.from(this.#fragment.childNodes);
     if (loopable) {
@@ -194,13 +194,13 @@ export function createContentBindings(
 ): IContentBindings {
   const component = parentBinding.component ?? utils.raise("component is undefined");
   const useKeyed = component.quelUseKeyed;
-  const useInvokeCommands = component.quelUseInvokeCommands;
+  const useInvokerCommands = component.quelUseInvokeCommands;
   const loopable = parentBinding.loopable;
   const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
   const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
   let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable, patterName);
+    contentBindings = new ContentBindings(uuid, useKeyed, useInvokerCommands, loopable, patterName);
   }
   contentBindings.component = component;
   contentBindings.parentBinding = parentBinding;
@@ -213,12 +213,12 @@ export function createRootContentBindings(
   uuid: string,
 ): IContentBindings {
   const useKeyed = component.quelUseKeyed;
-  const useInvokeCommands = component.quelUseInvokeCommands;
+  const useInvokerCommands = component.quelUseInvokeCommands;
   const loopable = false;
   const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
   let contentBindings = _cache[key]?.pop();
   if (typeof contentBindings === "undefined") {
-    contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable);
+    contentBindings = new ContentBindings(uuid, useKeyed, useInvokerCommands, loopable);
   }
   contentBindings.component = component;
   contentBindings.registerBindingsToSummary();

@@ -1,5 +1,5 @@
 
-import { getParentComponent } from "../component/CustomComponent";
+import { getParentComponent } from "../../component/CustomComponent";
 import { eventListenerForCommand } from "./eventListenerForCommand";
 import { ICommandEvent } from "./types";
 

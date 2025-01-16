@@ -30,14 +30,11 @@ export class PopoverTarget extends ElementBase {
     if (this.node instanceof HTMLButtonElement) {
       return this.node;
     }
-    if (this.node instanceof HTMLInputElement) {
-      return this.node;
-    }
     utils.raise("PopoverTarget: not button element");
   }
 
   constructor(binding:IBinding, node:Node, name:string, filters:IFilterText[]) {
-    if (!(node instanceof HTMLButtonElement) && !(node instanceof HTMLInputElement && node.type === "button")) {
+    if (!(node instanceof HTMLButtonElement)) {
       utils.raise("PopoverTarget: not button element");
     }
     if (!node.hasAttribute("popovertarget")) {

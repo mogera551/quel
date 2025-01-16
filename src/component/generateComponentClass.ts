@@ -89,7 +89,7 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
       }
 
       get quelUseInvokeCommands():boolean {
-        return this.#module.moduleConfig.useInvokeCommands ?? config.useInvokeCommands;
+        return this.#module.moduleConfig.useInvokerCommands ?? config.useInvokerCommands;
       }
 
       get quelLowerTagName():string {

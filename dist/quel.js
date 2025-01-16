@@ -6,7 +6,7 @@ const config = {
     useLocalTagName: true, // use local tag name
     useLocalSelector: true, // use local selector
     useOverscrollBehavior: true, // use overscroll-behavior
-    useInvokeCommands: false, // use invoke commands
+    useInvokerCommands: false, // use invoke commands
 };
 
 function getCustomTagFromImportMeta(importMeta) {
@@ -2871,13 +2871,10 @@ class PopoverTarget extends ElementBase {
         if (this.node instanceof HTMLButtonElement) {
             return this.node;
         }
-        if (this.node instanceof HTMLInputElement) {
-            return this.node;
-        }
         utils.raise("PopoverTarget: not button element");
     }
     constructor(binding, node, name, filters) {
-        if (!(node instanceof HTMLButtonElement) && !(node instanceof HTMLInputElement && node.type === "button")) {
+        if (!(node instanceof HTMLButtonElement)) {
             utils.raise("PopoverTarget: not button element");
         }
         if (!node.hasAttribute("popovertarget")) {
@@ -3628,7 +3625,7 @@ function eventListenerForClickButton(event) {
     element.dispatchEvent(new CustomEvent("command", { detail }));
 }
 
-function setupInvokeCommands(rootElement) {
+function setupInvokerCommands(rootElement) {
     const buttons = rootElement.querySelectorAll("button[command]");
     buttons.forEach((button) => {
         button.addEventListener("click", eventListenerForClickButton);
@@ -3828,7 +3825,7 @@ class ContentBindings {
     get localTreeNodes() {
         return this.#localTreeNodes;
     }
-    constructor(uuid, useKeyed = false, useInvokeCommands = false, loopable = false, patternName = "") {
+    constructor(uuid, useKeyed = false, useInvokerCommands = false, loopable = false, patternName = "") {
         this.#uuid = uuid;
         this.#useKeyed = useKeyed;
         this.#loopable = loopable;
@@ -3836,8 +3833,8 @@ class ContentBindings {
         const binder = createBinder(this.template, this.useKeyed);
         this.#fragment = document.importNode(this.template.content, true); // See http://var.blog.jp/archives/76177033.html
         this.#childBindings = binder.createBindings(this.#fragment, this);
-        if (useInvokeCommands) {
-            setupInvokeCommands(this.#fragment);
+        if (useInvokerCommands) {
+            setupInvokerCommands(this.#fragment);
         }
         this.#childNodes = Array.from(this.#fragment.childNodes);
         if (loopable) {
@@ -3895,13 +3892,13 @@ const _cache$1 = {};
 function createContentBindings(uuid, parentBinding) {
     const component = parentBinding.component ?? utils.raise("component is undefined");
     const useKeyed = component.quelUseKeyed;
-    const useInvokeCommands = component.quelUseInvokeCommands;
+    const useInvokerCommands = component.quelUseInvokeCommands;
     const loopable = parentBinding.loopable;
     const patterName = loopable ? parentBinding.statePropertyName + ".*" : "";
     const key = `${uuid}\t${useKeyed}\t${loopable}\t${patterName}`;
     let contentBindings = _cache$1[key]?.pop();
     if (typeof contentBindings === "undefined") {
-        contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable, patterName);
+        contentBindings = new ContentBindings(uuid, useKeyed, useInvokerCommands, loopable, patterName);
     }
     contentBindings.component = component;
     contentBindings.parentBinding = parentBinding;
@@ -3910,12 +3907,12 @@ function createContentBindings(uuid, parentBinding) {
 }
 function createRootContentBindings(component, uuid) {
     const useKeyed = component.quelUseKeyed;
-    const useInvokeCommands = component.quelUseInvokeCommands;
+    const useInvokerCommands = component.quelUseInvokeCommands;
     const loopable = false;
     const key = `${uuid}\t${useKeyed}\t${loopable}\t`;
     let contentBindings = _cache$1[key]?.pop();
     if (typeof contentBindings === "undefined") {
-        contentBindings = new ContentBindings(uuid, useKeyed, useInvokeCommands, loopable);
+        contentBindings = new ContentBindings(uuid, useKeyed, useInvokerCommands, loopable);
     }
     contentBindings.component = component;
     contentBindings.registerBindingsToSummary();
@@ -5101,7 +5098,7 @@ const generateComponentClass = (componentModule) => {
                 return this.#module.moduleConfig.useOverscrollBehavior ?? config.useOverscrollBehavior;
             }
             get quelUseInvokeCommands() {
-                return this.#module.moduleConfig.useInvokeCommands ?? config.useInvokeCommands;
+                return this.#module.moduleConfig.useInvokerCommands ?? config.useInvokerCommands;
             }
             get quelLowerTagName() {
                 return this.#customElementInfo?.lowerTagName ?? utils.raise(`lowerTagName is not found for ${this.tagName}`);

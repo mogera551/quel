@@ -15,7 +15,7 @@ export type ComponentModuleConfig = {
   readonly useLocalTagName?: boolean; // use local tag name, default is true. local custom tag is unique in the document.
   readonly useLocalSelector?: boolean; // use local selector, default is true. local selector is unique in the document.
   readonly useOverscrollBehavior?: boolean; // use overscroll-behavior, default is true. overscroll-behavior is used for the component instance.
-  readonly useInvokeCommands?: boolean; // use invoke commands, default is false. invoke commands is used for the component instance.
+  readonly useInvokerCommands?: boolean; // use invoke commands, default is false. invoke commands is used for the component instance.
 }
 
 export type ComponentModuleOptions = {
