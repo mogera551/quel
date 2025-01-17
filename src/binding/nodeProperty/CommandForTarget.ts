@@ -18,9 +18,6 @@ export class CommandForTarget extends ElementBase {
   }
   get commandForElement():IComponent | null {
     const commandForElement = getCommandForElement(this.node as HTMLButtonElement, this.#commandFor) as IComponent | null;
-    if (commandForElement == null) {
-      utils.raise("CommandForTarget: no target");
-    }
     if (commandForElement != null && commandForElement?.quelIsQuelComponent !== true) {
       utils.raise("CommandForTarget: not Quel Component");
     }
@@ -81,7 +78,7 @@ export class CommandForTarget extends ElementBase {
     // このボタンに関連するバインディングを取得
     const buttonBindings = 
       allBindings.filter(binding => (binding.nodeProperty instanceof CommandForTarget) && (binding.nodeProperty.node === this.node));
-    const props = this.commandForElement?.quelProps ?? utils.raise("CommandForTarget: no target props");
+    const props = this.commandForElement?.quelProps ?? utils.raise("CommandForTarget: no target or no target props");
     for(const binding of buttonBindings) {
       const commandForTarget = binding.nodeProperty as CommandForTarget;
       const commandForBinding = commandForTarget.binding;

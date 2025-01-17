@@ -2882,9 +2882,6 @@ class PopoverTarget extends ElementBase {
     }
     get target() {
         const target = getPopoverElement(this.node, this.#targetId);
-        if (target == null) {
-            utils.raise("PopoverTarget: no target");
-        }
         if (target != null && target?.quelIsQuelComponent !== true) {
             utils.raise("PopoverTarget: not Quel Component");
         }
@@ -2930,7 +2927,7 @@ class PopoverTarget extends ElementBase {
         const allBindings = Array.from(this.binding.component?.quelBindingSummary?.allBindings ?? []);
         // このボタンに関連するバインディングを取得
         const buttonBindings = allBindings.filter(binding => (binding.nodeProperty instanceof PopoverTarget) && (binding.nodeProperty.node === this.node));
-        const props = this.target?.quelProps ?? utils.raise("PopoverTarget: no target props");
+        const props = this.target?.quelProps ?? utils.raise("PopoverTarget: no target or no target props");
         for (const binding of buttonBindings) {
             const popoverTarget = binding.nodeProperty;
             const popoverBinding = popoverTarget.binding;
@@ -2983,9 +2980,6 @@ class CommandForTarget extends ElementBase {
     }
     get commandForElement() {
         const commandForElement = getCommandForElement$1(this.node, this.#commandFor);
-        if (commandForElement == null) {
-            utils.raise("CommandForTarget: no target");
-        }
         if (commandForElement != null && commandForElement?.quelIsQuelComponent !== true) {
             utils.raise("CommandForTarget: not Quel Component");
         }
@@ -3039,7 +3033,7 @@ class CommandForTarget extends ElementBase {
         const allBindings = Array.from(this.binding.component?.quelBindingSummary?.allBindings ?? []);
         // このボタンに関連するバインディングを取得
         const buttonBindings = allBindings.filter(binding => (binding.nodeProperty instanceof CommandForTarget) && (binding.nodeProperty.node === this.node));
-        const props = this.commandForElement?.quelProps ?? utils.raise("CommandForTarget: no target props");
+        const props = this.commandForElement?.quelProps ?? utils.raise("CommandForTarget: no target or no target props");
         for (const binding of buttonBindings) {
             const commandForTarget = binding.nodeProperty;
             const commandForBinding = commandForTarget.binding;
