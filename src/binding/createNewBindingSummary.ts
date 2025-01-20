@@ -81,8 +81,8 @@ class NewBindingSummary implements INewBindingSummary {
       const wildcardIndex = loopIndexesIterator.next().value ?? utils.raise(`loopIndexes.at(${index}) is null`);
       const wildcardParentPath = wildcardPathInfo.patternPaths.at(-2) ?? "";
       const loopBindings = typeof loopContext === "undefined" ? 
-        Array.from(this.rootLoopableBindings[wildcardParentPath]) :
-        Array.from(loopContext.loopTreeLoopableNodesByName[wildcardParentPath]);
+        Array.from(this.rootLoopableBindings[wildcardParentPath] ?? []) :
+        Array.from(loopContext.loopTreeLoopableNodesByName[wildcardParentPath] ?? []);
       for(let i = 0; i < loopBindings.length; i++) {
         // リストが削除されている場合があるのでチェック
         if (typeof loopBindings[i].childrenContentBindings[wildcardIndex] === "undefined") continue;
