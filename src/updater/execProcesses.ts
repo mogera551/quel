@@ -5,24 +5,37 @@ import { IUpdater } from "./types";
 
 async function execProcess (updater: IUpdater, process: IProcess): Promise<void> {
   if (typeof process.loopContext === "undefined") {
-    return await updater.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
-      return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
-    })
+//    console.log(`execProcess.1 ${updater.component.tagName} in`);
+    try {
+      return await updater.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
+        return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
+      })
+    } finally {
+//      console.log(`execProcess.1 ${updater.component.tagName} out`);
+    }
   } else {
-    return await updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, process.loopContext, async () => {
-      return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
-    });
+//    console.log(`execProcess.2 ${updater.component.tagName} in`);
+    try {
+      return await updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, process.loopContext, async () => {
+        return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
+      });
+    } finally {
+//      console.log(`execProcess.2 ${updater.component.tagName} out`);
+    }
   }
 }
 
 async function _execProcesses(updater:IUpdater, processes: IProcess[]): Promise<IStatePropertyAccessor[]> {
+  const promises = [];
   for(let i = 0; i < processes.length; i++) {
     // Stateのイベント処理を実行する
     // Stateのプロパティに更新があった場合、
     // UpdaterのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
-    await execProcess(updater, processes[i]);
+    promises.push(execProcess(updater, processes[i]));
   }
-  return updater.retrieveAllUpdatedStateProperties();
+  return await Promise.all(promises).then(() => {
+    return updater.retrieveAllUpdatedStateProperties();
+  });
 }
 
 function enqueueUpdatedCallback(updater:IUpdater, state: IStateProxy, updatedStateProperties: IStatePropertyAccessor[]): void {
@@ -37,18 +50,34 @@ export async function execProcesses(
   updater: IUpdater, 
   state: IStateProxy
 ): Promise<IStatePropertyAccessor[]> {
-  const totalUpdatedStateProperties: IStatePropertyAccessor[] = 
-    updater.retrieveAllUpdatedStateProperties();
-  await state[AsyncSetWritableSymbol](async () => {
-    do {
-      const processes = updater.retrieveAllProcesses();
-      if (processes.length === 0) break;
-      const updateStateProperties = await _execProcesses(updater, processes);
-      if (updateStateProperties.length > 0) {
-        totalUpdatedStateProperties.push(...updateStateProperties);
-        enqueueUpdatedCallback(updater, state, updateStateProperties)
+  updater.stacks.push(`execProcesses in`);
+  try {
+    const totalUpdatedStateProperties: IStatePropertyAccessor[] = 
+      updater.retrieveAllUpdatedStateProperties();
+    const asyncSetWritable = state[AsyncSetWritableSymbol];
+    return await asyncSetWritable(updater, async () => {
+      updater.stacks.push(`AsyncSetWritableSymbol callback in`);
+      try {
+        const promises = [];
+        do {
+          const processes = updater.retrieveAllProcesses();
+          if (processes.length === 0) break;
+          const promise = _execProcesses(updater, processes).then((updateStateProperties) => {
+            if (updateStateProperties.length > 0) {
+              totalUpdatedStateProperties.push(...updateStateProperties);
+              enqueueUpdatedCallback(updater, state, updateStateProperties)
+            }
+          });
+          promises.push(promise);
+        } while(true);
+        return await Promise.all(promises);
+      } finally {
+        updater.stacks.push(`AsyncSetWritableSymbol callback out`);
       }
-    } while(true);
-  });
-  return totalUpdatedStateProperties;
+    }).then(() => {
+      return totalUpdatedStateProperties;
+    });
+  } finally {
+    updater.stacks.push(`execProcesses out`);
+  }
 }

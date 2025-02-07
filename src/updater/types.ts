@@ -1,8 +1,10 @@
 
-import { IProcess } from "../component/types";
+import { IComponent, IProcess } from "../component/types";
 import { IBinding } from "../binding/types";
 import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loopContext/types";
 import { IStatePropertyAccessor } from "../state/types";
+
+//export type IComponentForUpdater = Pick<IComponent, "quelState" | "quelBindingSummary" | "quelTemplate" | "quelInitialPromises">;
 
 export interface IUpdater {
   executing: boolean;
@@ -20,6 +22,10 @@ export interface IUpdater {
 
   readonly isFullRebuild: boolean;
   setFullRebuild(isFullRebuild:boolean, callback:()=>any): void;
+  component: IComponent;
+  stacks: string[];
+  start(initialPromises: PromiseWithResolvers<void>): void;
+  terminate(): Promise<void>;
 }
 
 export type UpdateInfo = { name:string, indexes:number[] }

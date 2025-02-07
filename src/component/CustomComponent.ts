@@ -72,7 +72,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       this.#state = createStateProxy(this, Reflect.construct(this.quelStateClass, [])); // create state
       this.#quelBindingSummary = createNewBindingSummary();
       this.#initialPromises = Promise.withResolvers<void>(); // promises for initialize
-      this.#updater = createUpdater(this);
+      this.#updater = createUpdater(this as unknown as IComponent); // create updater
       this.#props = createProps(this);
     }
 
@@ -144,7 +144,9 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       return this.#props;
     }
 
+    #disconnectedCallbackPromise: Promise<void>|undefined;
     async #build() {
+      this.quelUpdater.start(this.quelInitialPromises);
       if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.quelUseShadowRoot && this.quelUseWebComponent) {
         const shadowRoot = this.attachShadow({mode: 'open'});
         const names = getAdoptedCssNamesFromStyleValue(this);
@@ -178,9 +180,16 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         }
       }
 
-      await this.quelState[AsyncSetWritableSymbol](async () => {
-        await this.quelState[ConnectedCallbackSymbol]();
-      });
+      this.quelUpdater.stacks.push(`connectedCallback in ${this.quelUUID}`);
+      try {
+        await this.quelState[AsyncSetWritableSymbol](this.quelUpdater, async () => {
+          await this.quelState[ConnectedCallbackSymbol]();
+        });
+      } catch(e) {
+        console.error(e);
+      } finally {
+        this.quelUpdater.stacks.push(`connectedCallback out ${this.quelUUID}`);
+      }
 
       // build binding tree and dom 
       const uuid = this.quelTemplate.dataset["uuid"] ?? utils.raise("uuid is undefined");
@@ -202,6 +211,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
     }
 
     async connectedCallback() {
+      await this.#disconnectedCallbackPromise;
       try {
         // wait for parent component initialize
         if (this.quelParentComponent) {
@@ -223,6 +233,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         await this.#build();
         
       } finally {
+        this.quelUpdater.stacks.push(`quelInitialPromises.resolve() ${this.quelUUID}`);
         this.quelInitialPromises?.resolve && this.quelInitialPromises.resolve();
       }
   
@@ -231,6 +242,10 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       this.quelUpdater.addProcess(async () => {
         await this.quelState[DisconnectedCallbackSymbol]();
       }, undefined, [], undefined);
+      // updaterが終了するまで待つ
+      this.#disconnectedCallbackPromise = this.quelUpdater.terminate();
+      // initialPromiseを再生成する
+      this.#initialPromises = Promise.withResolvers<void>();
     }
   };
 }

@@ -15,7 +15,7 @@ class NamedLoopIndexesStack implements INamedLoopIndexesStack {
     const tempNamedLoopIndexes = new Map(Object.entries(namedLoopIndexes));
     this.stack.push(tempNamedLoopIndexes);
     try {
-      await callback();
+      return await callback();
     } finally {
       this.stack.pop();
     }

@@ -110,6 +110,11 @@ export const generateComponentClass = (componentModule:ComponentModule):typeof H
         return this.#customElementInfo?.isCostomizedBuiltInElement ?? utils.raise(`isCostomizedBuiltInElement is not found for ${this.tagName}`);
       }
 
+      #uuid = utils.createUUID();
+      get quelUUID():string {
+        return this.#uuid;
+      }
+
       #filterManagers?: FilterManagers;
       #setFilterManagers() {
         let filterManagers = filterManagersByConstructor.get(this.quelThisClass);

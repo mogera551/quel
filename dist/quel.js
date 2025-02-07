@@ -1055,24 +1055,39 @@ function localizeStyleSheet(styleSheet, localSelector) {
 
 async function execProcess(updater, process) {
     if (typeof process.loopContext === "undefined") {
-        return await updater.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
-            return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
-        });
+        //    console.log(`execProcess.1 ${updater.component.tagName} in`);
+        try {
+            return await updater.namedLoopIndexesStack.asyncSetNamedLoopIndexes({}, async () => {
+                return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
+            });
+        }
+        finally {
+            //      console.log(`execProcess.1 ${updater.component.tagName} out`);
+        }
     }
     else {
-        return await updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, process.loopContext, async () => {
-            return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
-        });
+        //    console.log(`execProcess.2 ${updater.component.tagName} in`);
+        try {
+            return await updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, process.loopContext, async () => {
+                return await Reflect.apply(process.target, process.thisArgument, process.argumentList);
+            });
+        }
+        finally {
+            //      console.log(`execProcess.2 ${updater.component.tagName} out`);
+        }
     }
 }
 async function _execProcesses(updater, processes) {
+    const promises = [];
     for (let i = 0; i < processes.length; i++) {
         // Stateのイベント処理を実行する
         // Stateのプロパティに更新があった場合、
         // UpdaterのupdatedStatePropertiesに更新したプロパティの情報（pattern、indexes）が追加される
-        await execProcess(updater, processes[i]);
+        promises.push(execProcess(updater, processes[i]));
     }
-    return updater.retrieveAllUpdatedStateProperties();
+    return await Promise.all(promises).then(() => {
+        return updater.retrieveAllUpdatedStateProperties();
+    });
 }
 function enqueueUpdatedCallback(updater, state, updatedStateProperties) {
     // Stateの$updatedCallbackを呼び出す、updatedCallbackの実行をキューに入れる
@@ -1082,20 +1097,38 @@ function enqueueUpdatedCallback(updater, state, updatedStateProperties) {
     }, undefined, [], undefined);
 }
 async function execProcesses(updater, state) {
-    const totalUpdatedStateProperties = updater.retrieveAllUpdatedStateProperties();
-    await state[AsyncSetWritableSymbol](async () => {
-        do {
-            const processes = updater.retrieveAllProcesses();
-            if (processes.length === 0)
-                break;
-            const updateStateProperties = await _execProcesses(updater, processes);
-            if (updateStateProperties.length > 0) {
-                totalUpdatedStateProperties.push(...updateStateProperties);
-                enqueueUpdatedCallback(updater, state, updateStateProperties);
+    updater.stacks.push(`execProcesses in`);
+    try {
+        const totalUpdatedStateProperties = updater.retrieveAllUpdatedStateProperties();
+        const asyncSetWritable = state[AsyncSetWritableSymbol];
+        return await asyncSetWritable(updater, async () => {
+            updater.stacks.push(`AsyncSetWritableSymbol callback in`);
+            try {
+                const promises = [];
+                do {
+                    const processes = updater.retrieveAllProcesses();
+                    if (processes.length === 0)
+                        break;
+                    const promise = _execProcesses(updater, processes).then((updateStateProperties) => {
+                        if (updateStateProperties.length > 0) {
+                            totalUpdatedStateProperties.push(...updateStateProperties);
+                            enqueueUpdatedCallback(updater, state, updateStateProperties);
+                        }
+                    });
+                    promises.push(promise);
+                } while (true);
+                return await Promise.all(promises);
             }
-        } while (true);
-    });
-    return totalUpdatedStateProperties;
+            finally {
+                updater.stacks.push(`AsyncSetWritableSymbol callback out`);
+            }
+        }).then(() => {
+            return totalUpdatedStateProperties;
+        });
+    }
+    finally {
+        updater.stacks.push(`execProcesses out`);
+    }
 }
 
 /**
@@ -1446,12 +1479,17 @@ function expandIndexes(updater, state, statePropertyAccessor) {
             if (isTerminate) {
                 // 終端の場合
                 if (element === "*") {
-                    const indexesArray = [];
-                    const len = getValuesLength(parentName, _loopIndexes);
-                    for (let i = 0; i < len; i++) {
-                        indexesArray.push(createLoopIndexes(_loopIndexes, i));
+                    if (loopIndexesSize > 0 && loopIndexesSize > (_loopIndexes?.size ?? 0)) {
+                        return [loopIndexes?.truncate((_loopIndexes?.size ?? 0) + 1) ?? createLoopIndexes(undefined, 0)];
                     }
-                    return indexesArray;
+                    else {
+                        const indexesArray = [];
+                        const len = getValuesLength(parentName, _loopIndexes);
+                        for (let i = 0; i < len; i++) {
+                            indexesArray.push(createLoopIndexes(_loopIndexes, i));
+                        }
+                        return indexesArray;
+                    }
                 }
                 else {
                     return (typeof _loopIndexes !== "undefined") ? [_loopIndexes] : [];
@@ -1461,8 +1499,8 @@ function expandIndexes(updater, state, statePropertyAccessor) {
                 // 終端でない場合
                 const currentName = parentNameDot + element;
                 if (element === "*") {
-                    if (loopIndexesSize < (_loopIndexes?.size ?? 0)) {
-                        return traverse(currentName, elementIndex + 1, _loopIndexes?.truncate(loopIndexesSize + 1));
+                    if (loopIndexesSize > 0 && loopIndexesSize > (_loopIndexes?.size ?? 0)) {
+                        return traverse(currentName, elementIndex + 1, loopIndexes?.truncate((_loopIndexes?.size ?? 0) + 1));
                     }
                     else {
                         const indexesArray = [];
@@ -1474,7 +1512,7 @@ function expandIndexes(updater, state, statePropertyAccessor) {
                     }
                 }
                 else {
-                    return traverse(currentName, elementIndex + 1, loopIndexes);
+                    return traverse(currentName, elementIndex + 1, _loopIndexes);
                 }
             }
         };
@@ -1620,7 +1658,7 @@ class NamedLoopIndexesStack {
         const tempNamedLoopIndexes = new Map(Object.entries(namedLoopIndexes));
         this.stack.push(tempNamedLoopIndexes);
         try {
-            await callback();
+            return await callback();
         }
         finally {
             this.stack.pop();
@@ -1680,7 +1718,7 @@ class Updater {
         this.processQueue.push({ target, thisArgument, argumentList, loopContext });
         if (this.executing)
             return;
-        this.exec();
+        this.#waitingForMainLoop.resolve(undefined);
     }
     // 取得後processQueueは空になる
     retrieveAllProcesses() {
@@ -1692,13 +1730,17 @@ class Updater {
         this.updatedStateProperties.push(accessor);
         if (this.executing)
             return;
-        this.exec();
+        this.#waitingForMainLoop.resolve(undefined);
     }
     // 取得後updateStatePropertiesは空になる
     retrieveAllUpdatedStateProperties() {
         const updatedStateProperties = this.updatedStateProperties;
         this.updatedStateProperties = [];
         return updatedStateProperties;
+    }
+    #stacks = [];
+    get stacks() {
+        return this.#stacks;
     }
     async execCallbackWithPerformance(callback) {
         this.executing = true;
@@ -1719,25 +1761,70 @@ class Updater {
             this.executing = false;
         }
     }
-    async exec() {
-        await this.execCallbackWithPerformance(async () => {
-            while (this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
-                const getInitialPromises = async () => this.component.quelInitialPromises;
-                await getInitialPromises?.();
-                this.updatedBindings.clear();
-                // 戻り値は更新されたStateのプロパティ情報
-                const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
-                const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
-                // 戻り値は依存関係により更新されたStateのプロパティ情報
-                const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
-                // バインディングの再構築
-                rebuildBindings(this, this.quelBindingSummary, updatedStatePropertyAccesses, updatedKeys);
-                // リスト要素の更新
-                updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
-                // ノードの更新
-                updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
+    async start(initialPromises) {
+        return this.#mainLoop(initialPromises);
+    }
+    async terminate() {
+        const terminatResolvers = Promise.withResolvers();
+        this.#waitingForMainLoop.resolve(terminatResolvers);
+        return terminatResolvers.promise;
+    }
+    #waitingForMainLoop = Promise.withResolvers();
+    async #mainLoop(initialPromises) {
+        do {
+            this.#stacks.push(`mainLoop ${this.component.tagName} loop start`);
+            try {
+                console.log("mainLoop.1", this.component.quelUUID, initialPromises.promise);
+                const [terminateResolvers] = await Promise.all([
+                    this.#waitingForMainLoop.promise,
+                    initialPromises.promise
+                ]);
+                console.log("mainLoop.2", this.component.quelUUID, initialPromises.promise);
+                try {
+                    await this.exec();
+                }
+                finally {
+                    if (terminateResolvers) {
+                        terminateResolvers.resolve();
+                        break;
+                    }
+                }
             }
-        });
+            catch (e) {
+                console.error(e);
+            }
+            finally {
+                this.#stacks.push(`mainLoop ${this.component.tagName} loop end`);
+                this.#waitingForMainLoop = Promise.withResolvers();
+                console.log(this.#stacks.join("\n"));
+                this.#stacks = [];
+            }
+        } while (true);
+        this.#stacks.push(`mainLoop ${this.component.tagName} terminated`);
+    }
+    async exec() {
+        this.#stacks.push("exec in");
+        try {
+            await this.execCallbackWithPerformance(async () => {
+                while (this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
+                    this.updatedBindings.clear();
+                    // 戻り値は更新されたStateのプロパティ情報
+                    const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
+                    const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
+                    // 戻り値は依存関係により更新されたStateのプロパティ情報
+                    const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
+                    // バインディングの再構築
+                    rebuildBindings(this, this.quelBindingSummary, updatedStatePropertyAccesses, updatedKeys);
+                    // リスト要素の更新
+                    updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
+                    // ノードの更新
+                    updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
+                }
+            });
+        }
+        finally {
+            this.#stacks.push("exec out");
+        }
     }
     applyNodeUpdatesByBinding(binding, callback) {
         if (this.updatedBindings.has(binding))
@@ -4373,7 +4460,7 @@ class Handler {
     getValue(target, propInfo, namedLoopIndexes, receiver, pathIndex = propInfo.paths.length - 1, wildcardIndex = propInfo.wildcardCount - 1) {
         let value, element, isWildcard, path = propInfo.patternPaths[pathIndex], cacheKey;
         this.findPropertyCallback(path);
-        const wildcardLoopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[wildcardIndex]);
+        const wildcardLoopIndexes = namedLoopIndexes?.get(propInfo.wildcardPaths[wildcardIndex]);
         // @ts-ignore
         return (!this.writable) ?
             ( /* use cache */
@@ -4400,7 +4487,7 @@ class Handler {
         const _getValue = () => this.getValue(target, propInfo, namedLoopIndexes, receiver);
         const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
-            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes;
             return _getValue();
         }
         else if (propInfo.wildcardType === "all") {
@@ -4436,15 +4523,15 @@ class Handler {
                 const parentValue = this.getValue(target, parentPropInfo, namedLoopIndexes, receiver);
                 const lastElement = propInfo.elements.at(-1) ?? utils.raise("setValueFromPropInfoFn: lastElement is undefined");
                 const isWildcard = lastElement === "*";
-                return Reflect.set(parentValue, isWildcard ? (namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, value);
+                return Reflect.set(parentValue, isWildcard ? (namedLoopIndexes?.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")) : lastElement, value);
             }
             finally {
-                this.notifyCallback(propInfo.pattern, namedLoopIndexes.get(propInfo.wildcardPaths.at(-1) ?? ""));
+                this.notifyCallback(propInfo.pattern, namedLoopIndexes?.get(propInfo.wildcardPaths.at(-1) ?? ""));
             }
         };
         const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
         if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
-            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+            namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes;
             return _setValue();
         }
         else if (propInfo.wildcardType === "all") {
@@ -4659,23 +4746,33 @@ class Handler {
             this.clearCache();
         }
     }
-    async asyncSetWritable(callbackFn) {
+    async asyncSetWritable(updater, callbackFn) {
         if (this.writable)
             utils.raise("States: already writable");
         this.#wrirtable = true;
+        updater.stacks.push(`asyncSetWritable in`);
         try {
             return await callbackFn();
         }
         finally {
             this.#wrirtable = false;
             this.clearCache();
+            updater.stacks.push(`asyncSetWritable out`);
         }
     }
     funcBySymbol = {
         [GetByPropInfoSymbol]: (target, receiver) => (propInfo) => this.getValueByPropInfo(target, propInfo, receiver),
         [SetByPropInfoSymbol]: (target, receiver) => (propInfo, value) => this.setValueByPropInfo(target, propInfo, value, receiver),
         [SetWritableSymbol]: (target, receiver) => (callbackFn) => this.setWritable(callbackFn),
-        [AsyncSetWritableSymbol]: (target, receiver) => (callbackFn) => this.asyncSetWritable(callbackFn),
+        [AsyncSetWritableSymbol]: (target, receiver) => async (updater, callbackFn) => {
+            updater.stacks.push(`AsyncSetWritableSymbol in`);
+            try {
+                return await this.asyncSetWritable(updater, callbackFn);
+            }
+            finally {
+                updater.stacks.push(`AsyncSetWritableSymbol out`);
+            }
+        },
         [GetBaseStateSymbol]: (target, receiver) => () => target
     };
     get(target, prop, receiver) {
@@ -4790,7 +4887,7 @@ function CustomComponent(Base) {
             this.#state = createStateProxy(this, Reflect.construct(this.quelStateClass, [])); // create state
             this.#quelBindingSummary = createNewBindingSummary();
             this.#initialPromises = Promise.withResolvers(); // promises for initialize
-            this.#updater = createUpdater(this);
+            this.#updater = createUpdater(this); // create updater
             this.#props = createProps(this);
         }
         #parentComponent;
@@ -4849,7 +4946,9 @@ function CustomComponent(Base) {
         get quelProps() {
             return this.#props;
         }
+        #disconnectedCallbackPromise;
         async #build() {
+            this.quelUpdater.start(this.quelInitialPromises);
             if (isAttachableShadowRoot(this.tagName.toLowerCase()) && this.quelUseShadowRoot && this.quelUseWebComponent) {
                 const shadowRoot = this.attachShadow({ mode: 'open' });
                 const names = getAdoptedCssNamesFromStyleValue(this);
@@ -4884,9 +4983,18 @@ function CustomComponent(Base) {
                     this.style.overscrollBehavior = "contain";
                 }
             }
-            await this.quelState[AsyncSetWritableSymbol](async () => {
-                await this.quelState[ConnectedCallbackSymbol]();
-            });
+            this.quelUpdater.stacks.push(`connectedCallback in ${this.quelUUID}`);
+            try {
+                await this.quelState[AsyncSetWritableSymbol](this.quelUpdater, async () => {
+                    await this.quelState[ConnectedCallbackSymbol]();
+                });
+            }
+            catch (e) {
+                console.error(e);
+            }
+            finally {
+                this.quelUpdater.stacks.push(`connectedCallback out ${this.quelUUID}`);
+            }
             // build binding tree and dom 
             const uuid = this.quelTemplate.dataset["uuid"] ?? utils.raise("uuid is undefined");
             const rootOfBindingTree = this.#rootOfBindingTree = createRootContentBindings(this, uuid);
@@ -4907,6 +5015,7 @@ function CustomComponent(Base) {
             }
         }
         async connectedCallback() {
+            await this.#disconnectedCallbackPromise;
             try {
                 // wait for parent component initialize
                 if (this.quelParentComponent) {
@@ -4926,6 +5035,7 @@ function CustomComponent(Base) {
                 await this.#build();
             }
             finally {
+                this.quelUpdater.stacks.push(`quelInitialPromises.resolve() ${this.quelUUID}`);
                 this.quelInitialPromises?.resolve && this.quelInitialPromises.resolve();
             }
         }
@@ -4933,6 +5043,10 @@ function CustomComponent(Base) {
             this.quelUpdater.addProcess(async () => {
                 await this.quelState[DisconnectedCallbackSymbol]();
             }, undefined, [], undefined);
+            // updaterが終了するまで待つ
+            this.#disconnectedCallbackPromise = this.quelUpdater.terminate();
+            // initialPromiseを再生成する
+            this.#initialPromises = Promise.withResolvers();
         }
     };
 }
@@ -5303,6 +5417,10 @@ const generateComponentClass = (componentModule) => {
             // is costomized built-in element
             get quelIsCostomizedBuiltInElement() {
                 return this.#customElementInfo?.isCostomizedBuiltInElement ?? utils.raise(`isCostomizedBuiltInElement is not found for ${this.tagName}`);
+            }
+            #uuid = utils.createUUID();
+            get quelUUID() {
+                return this.#uuid;
             }
             #filterManagers;
             #setFilterManagers() {

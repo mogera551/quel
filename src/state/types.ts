@@ -72,7 +72,7 @@ export interface IStateProxy {
   [GetByPropInfoSymbol](propInfo:IPropInfo): any;
   [SetByPropInfoSymbol](propInfo:IPropInfo, value:any): boolean;
   [SetWritableSymbol](callbackFn:()=>any): any;
-  [AsyncSetWritableSymbol](callbackFn:()=>Promise<any>): Promise<any>;
+  [AsyncSetWritableSymbol](updater:IUpdater, callbackFn:()=>Promise<any>): Promise<any>;
   [GetBaseStateSymbol]() : Object;
   readonly [AccessorPropertiesSymbol]: Set<string>;
   readonly [DependenciesSymbol]: IDependentProps;

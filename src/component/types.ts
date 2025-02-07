@@ -97,6 +97,7 @@ export interface IComponentBase {
    * ToDo: このプロパティを廃止するかどうかの検討
    */
   readonly quelElement: HTMLElement;
+  readonly quelUUID: string;
 }
 
 export interface ICustomComponent {

@@ -83,14 +83,14 @@ export class Handler implements IStateHandler {
   getValue(
     target:           object, 
     propInfo:         IPropInfo,
-    namedLoopIndexes: INamedLoopIndexes,
+    namedLoopIndexes: INamedLoopIndexes | undefined,
     receiver:         object,
     pathIndex:        number = propInfo.paths.length - 1, 
     wildcardIndex:    number = propInfo.wildcardCount - 1
   ): any {
     let value, element, isWildcard, path = propInfo.patternPaths[pathIndex], cacheKey;
     this.findPropertyCallback(path);
-    const wildcardLoopIndexes = namedLoopIndexes.get(propInfo.wildcardPaths[wildcardIndex]);
+    const wildcardLoopIndexes = namedLoopIndexes?.get(propInfo.wildcardPaths[wildcardIndex]);
     // @ts-ignore
     return (!this.writable) ? 
       (/* use cache */ 
@@ -143,7 +143,7 @@ export class Handler implements IStateHandler {
     propInfo: IPropInfo,
     receiver: object
   ): any {
-    let namedLoopIndexes: INamedLoopIndexes;
+    let namedLoopIndexes: INamedLoopIndexes | undefined;
     if (propInfo.expandable) {
       return this.getExpandValues(target, propInfo, receiver);
     }
@@ -156,7 +156,7 @@ export class Handler implements IStateHandler {
 
     const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
-      namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+      namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes;
       return _getValue();
     } else if (propInfo.wildcardType === "all") {
       namedLoopIndexes = propInfo.wildcardNamedLoopIndexes;
@@ -182,7 +182,7 @@ export class Handler implements IStateHandler {
       return this.setExpandValues(target, propInfo, value, receiver);
     }
 
-    let namedLoopIndexes: INamedLoopIndexes;
+    let namedLoopIndexes: INamedLoopIndexes | undefined;
     const _setValue = () => {
       try {
         if (propInfo.elements.length === 1) {
@@ -205,17 +205,17 @@ export class Handler implements IStateHandler {
         return Reflect.set(
           parentValue, 
           isWildcard ? (
-            namedLoopIndexes.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")
+            namedLoopIndexes?.get(propInfo.pattern)?.value ?? utils.raise("setValueFromPropInfoFn: wildcard index is undefined")
           ) : lastElement  , value);
       } finally {
         this.notifyCallback(
           propInfo.pattern, 
-          namedLoopIndexes.get(propInfo.wildcardPaths.at(-1) ?? ""));
+          namedLoopIndexes?.get(propInfo.wildcardPaths.at(-1) ?? ""));
       }
     };
     const namedLoopIndexesStack = this.updater.namedLoopIndexesStack ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexesStack is undefined");
     if (propInfo.wildcardType === "context" || propInfo.wildcardType === "none") {
-      namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes ?? utils.raise("getValueFromPropInfoFn: namedLoopIndexes is undefined");
+      namedLoopIndexes = namedLoopIndexesStack.lastNamedLoopIndexes;
       return _setValue();
     } else if (propInfo.wildcardType === "all") {
       namedLoopIndexes = propInfo.wildcardNamedLoopIndexes;
@@ -470,14 +470,16 @@ export class Handler implements IStateHandler {
     }
   }
 
-  async asyncSetWritable(callbackFn:()=>Promise<any>): Promise<any> {
+  async asyncSetWritable(updater:IUpdater, callbackFn:()=>Promise<any>): Promise<any> {
     if (this.writable) utils.raise("States: already writable");
     this.#wrirtable = true;
+    updater.stacks.push(`asyncSetWritable in`);
     try {
       return await callbackFn();
     } finally {
       this.#wrirtable = false;
       this.clearCache();
+      updater.stacks.push(`asyncSetWritable out`);
     }
   }
 
@@ -485,7 +487,14 @@ export class Handler implements IStateHandler {
     [GetByPropInfoSymbol]: (target:object, receiver: object)=>(propInfo:IPropInfo):any=>this.getValueByPropInfo(target, propInfo, receiver),
     [SetByPropInfoSymbol]: (target:object, receiver: object)=>(propInfo:IPropInfo, value:any):boolean=>this.setValueByPropInfo(target, propInfo, value, receiver),
     [SetWritableSymbol]: (target:object, receiver: object)=>(callbackFn:()=>any):any=>this.setWritable(callbackFn),
-    [AsyncSetWritableSymbol]: (target:object, receiver: object)=>(callbackFn:()=>Promise<any>):Promise<any>=>this.asyncSetWritable(callbackFn),
+    [AsyncSetWritableSymbol]: (target:object, receiver: object)=>async (updater:IUpdater, callbackFn:()=>Promise<any>):Promise<any>=>{
+      updater.stacks.push(`AsyncSetWritableSymbol in`);
+      try {
+        return await this.asyncSetWritable(updater, callbackFn);
+      } finally {
+        updater.stacks.push(`AsyncSetWritableSymbol out`);
+      }
+    },
     [GetBaseStateSymbol]: (target:object, receiver: object)=>():object=>target
   };
 

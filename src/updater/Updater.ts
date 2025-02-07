@@ -13,10 +13,9 @@ import { ILoopContext, ILoopContextStack, INamedLoopIndexesStack } from "../loop
 import { createLoopContextStack } from "../loopContext/createLoopContextStack";
 import { createNamedLoopIndexesStack } from "../loopContext/createNamedLoopIndexesStack";
 
-type IComponentForUpdater = Pick<IComponent, "quelState" | "quelBindingSummary" | "quelTemplate" | "quelInitialPromises">;
 
 class Updater implements IUpdater {
-  #component: IComponentForUpdater;
+  #component: IComponent;
   processQueue: IProcess[] = [];
   updatedStateProperties: IStatePropertyAccessor[] = [];
   expandedStateProperties: IStatePropertyAccessor[] = [];
@@ -36,11 +35,11 @@ class Updater implements IUpdater {
     return this.#component.quelBindingSummary;
   }
 
-  get component(): IComponentForUpdater {
+  get component(): IComponent {
     return this.#component;
   }
 
-  constructor(component:IComponentForUpdater) {
+  constructor(component:IComponent) {
     this.#component = component;
   }
 
@@ -52,7 +51,7 @@ class Updater implements IUpdater {
   ): void {
     this.processQueue.push({ target, thisArgument, argumentList, loopContext });
     if (this.executing) return;
-    this.exec();
+    this.#waitingForMainLoop.resolve(undefined);
   }
 
   // 取得後processQueueは空になる
@@ -65,7 +64,7 @@ class Updater implements IUpdater {
   addUpdatedStateProperty(accessor: IStatePropertyAccessor):void {
     this.updatedStateProperties.push(accessor);
     if (this.executing) return;
-    this.exec();
+    this.#waitingForMainLoop.resolve(undefined);
   }
 
   // 取得後updateStatePropertiesは空になる
@@ -73,6 +72,11 @@ class Updater implements IUpdater {
     const updatedStateProperties = this.updatedStateProperties;
     this.updatedStateProperties = [];
     return updatedStateProperties;
+  }
+
+  #stacks:string[] = [];
+  get stacks(): string[] {
+    return this.#stacks;
   }
 
   async execCallbackWithPerformance(callback: () => any): Promise<void> {
@@ -94,32 +98,76 @@ class Updater implements IUpdater {
     }
   }
 
-  async exec():Promise<void> {
-    await this.execCallbackWithPerformance(async () => {
-      while(this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
-        const getInitialPromises = async () => this.component.quelInitialPromises;
-        await getInitialPromises?.();
+  async start(initialPromises: PromiseWithResolvers<void>):Promise<void> {
+    return this.#mainLoop(initialPromises);
+  }
 
-        this.updatedBindings.clear();
+  async terminate():Promise<void> {
+    const terminatResolvers = Promise.withResolvers<void>();
+    this.#waitingForMainLoop.resolve(terminatResolvers);
+    return terminatResolvers.promise;
+  }
 
-        // 戻り値は更新されたStateのプロパティ情報
-        const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
-        const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => 
-          propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
-        // 戻り値は依存関係により更新されたStateのプロパティ情報
-        const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
-
-        // バインディングの再構築
-        rebuildBindings(this, this.quelBindingSummary, updatedStatePropertyAccesses, updatedKeys);
-
-        // リスト要素の更新
-        updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
-
-        // ノードの更新
-        updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
-
+  #waitingForMainLoop: PromiseWithResolvers<PromiseWithResolvers<void> | undefined> = 
+    Promise.withResolvers<PromiseWithResolvers<void> | undefined>();
+  async #mainLoop(initialPromises: PromiseWithResolvers<void>):Promise<void> {
+    do {
+      this.#stacks.push(`mainLoop ${this.component.tagName} loop start`);
+      try {
+        console.log("mainLoop.1", this.component.quelUUID, initialPromises.promise);
+        const [terminateResolvers] = await Promise.all([
+          this.#waitingForMainLoop.promise,
+          initialPromises.promise
+        ]);
+        console.log("mainLoop.2", this.component.quelUUID, initialPromises.promise);
+        try {
+          await this.exec();
+        } finally {
+          if (terminateResolvers) {
+            terminateResolvers.resolve();
+            break;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.#stacks.push(`mainLoop ${this.component.tagName} loop end`);
+        this.#waitingForMainLoop = Promise.withResolvers<PromiseWithResolvers<void> | undefined>();
+        console.log(this.#stacks.join("\n"));
+        this.#stacks = [];
       }
-    });
+    } while(true);
+    this.#stacks.push(`mainLoop ${this.component.tagName} terminated`);
+  }
+
+  async exec():Promise<void> {
+    this.#stacks.push("exec in");
+    try {
+      await this.execCallbackWithPerformance(async () => {
+        while(this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
+          this.updatedBindings.clear();
+  
+          // 戻り値は更新されたStateのプロパティ情報
+          const _updatedStatePropertyAccessors = await execProcesses(this, this.state);
+
+          const updatedKeys = _updatedStatePropertyAccessors.map(propertyAccessor => 
+            propertyAccessor.pattern + "\t" + (propertyAccessor.loopIndexes?.toString() ?? ""));
+          // 戻り値は依存関係により更新されたStateのプロパティ情報
+          const updatedStatePropertyAccesses = expandStateProperties(this, this.state, _updatedStatePropertyAccessors);
+  
+          // バインディングの再構築
+          rebuildBindings(this, this.quelBindingSummary, updatedStatePropertyAccesses, updatedKeys);
+  
+          // リスト要素の更新
+          updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
+  
+          // ノードの更新
+          updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
+        }
+      });
+    } finally {
+      this.#stacks.push("exec out");
+    }
   }
 
   applyNodeUpdatesByBinding(
@@ -152,6 +200,6 @@ class Updater implements IUpdater {
   }
 }
 
-export function createUpdater(component:IComponentForUpdater):IUpdater {
+export function createUpdater(component:IComponent):IUpdater {
   return new Updater(component);
 }

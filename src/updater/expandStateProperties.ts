@@ -96,12 +96,16 @@ function expandIndexes(
       if (isTerminate) {
         // 終端の場合
         if (element === "*") {
-          const indexesArray: ILoopIndexes[] = [];
-          const len = getValuesLength(parentName, _loopIndexes);
-          for(let i = 0; i < len; i++) {
-            indexesArray.push(createLoopIndexes(_loopIndexes, i));
+          if (loopIndexesSize > 0 && loopIndexesSize > (_loopIndexes?.size ?? 0)) {
+            return [loopIndexes?.truncate((_loopIndexes?.size ?? 0) + 1) ?? createLoopIndexes(undefined, 0)];
+          } else {
+            const indexesArray: ILoopIndexes[] = [];
+            const len = getValuesLength(parentName, _loopIndexes);
+            for(let i = 0; i < len; i++) {
+              indexesArray.push(createLoopIndexes(_loopIndexes, i));
+            }
+            return indexesArray;
           }
-          return indexesArray;
         } else {
           return (typeof _loopIndexes !== "undefined") ? [ _loopIndexes ] : [];
         }
@@ -109,8 +113,8 @@ function expandIndexes(
         // 終端でない場合
         const currentName = parentNameDot + element;
         if (element === "*") {
-          if (loopIndexesSize < (_loopIndexes?.size ?? 0)) {
-            return traverse(currentName, elementIndex + 1, _loopIndexes?.truncate(loopIndexesSize + 1));
+          if (loopIndexesSize > 0 && loopIndexesSize > (_loopIndexes?.size ?? 0)) {
+            return traverse(currentName, elementIndex + 1, loopIndexes?.truncate((_loopIndexes?.size ?? 0) + 1));
           } else {
             const indexesArray = [];
             const len = getValuesLength(parentName, _loopIndexes);
@@ -120,7 +124,7 @@ function expandIndexes(
             return indexesArray;
           }
         } else {
-          return traverse(currentName, elementIndex + 1, loopIndexes);
+          return traverse(currentName, elementIndex + 1, _loopIndexes);
         }
       }
     };
