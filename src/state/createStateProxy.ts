@@ -473,13 +473,11 @@ export class Handler implements IStateHandler {
   async asyncSetWritable(updater:IUpdater, callbackFn:()=>Promise<any>): Promise<any> {
     if (this.writable) utils.raise("States: already writable");
     this.#wrirtable = true;
-    updater.stacks.push(`asyncSetWritable in`);
     try {
       return await callbackFn();
     } finally {
       this.#wrirtable = false;
       this.clearCache();
-      updater.stacks.push(`asyncSetWritable out`);
     }
   }
 
@@ -488,11 +486,9 @@ export class Handler implements IStateHandler {
     [SetByPropInfoSymbol]: (target:object, receiver: object)=>(propInfo:IPropInfo, value:any):boolean=>this.setValueByPropInfo(target, propInfo, value, receiver),
     [SetWritableSymbol]: (target:object, receiver: object)=>(callbackFn:()=>any):any=>this.setWritable(callbackFn),
     [AsyncSetWritableSymbol]: (target:object, receiver: object)=>async (updater:IUpdater, callbackFn:()=>Promise<any>):Promise<any>=>{
-      updater.stacks.push(`AsyncSetWritableSymbol in`);
       try {
         return await this.asyncSetWritable(updater, callbackFn);
       } finally {
-        updater.stacks.push(`AsyncSetWritableSymbol out`);
       }
     },
     [GetBaseStateSymbol]: (target:object, receiver: object)=>():object=>target

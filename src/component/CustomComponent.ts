@@ -180,7 +180,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         }
       }
 
-      this.quelUpdater.stacks.push(`connectedCallback in ${this.quelUUID}`);
       try {
         await this.quelState[AsyncSetWritableSymbol](this.quelUpdater, async () => {
           await this.quelState[ConnectedCallbackSymbol]();
@@ -188,7 +187,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       } catch(e) {
         console.error(e);
       } finally {
-        this.quelUpdater.stacks.push(`connectedCallback out ${this.quelUUID}`);
       }
 
       // build binding tree and dom 
@@ -233,7 +231,6 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
         await this.#build();
         
       } finally {
-        this.quelUpdater.stacks.push(`quelInitialPromises.resolve() ${this.quelUUID}`);
         this.quelInitialPromises?.resolve && this.quelInitialPromises.resolve();
       }
   
@@ -242,7 +239,7 @@ export function CustomComponent<TBase extends Constructor<HTMLElement & ICompone
       this.quelUpdater.addProcess(async () => {
         await this.quelState[DisconnectedCallbackSymbol]();
       }, undefined, [], undefined);
-      // updaterが終了するまで待つ
+      // updaterが終了完了を検知するPromiseを生成
       this.#disconnectedCallbackPromise = this.quelUpdater.terminate();
       // initialPromiseを再生成する
       this.#initialPromises = Promise.withResolvers<void>();

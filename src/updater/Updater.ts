@@ -74,9 +74,9 @@ class Updater implements IUpdater {
     return updatedStateProperties;
   }
 
-  #stacks:string[] = [];
-  get stacks(): string[] {
-    return this.#stacks;
+  #debugStacks:string[] = [];
+  get debugStacks(): string[] {
+    return this.#debugStacks;
   }
 
   async execCallbackWithPerformance(callback: () => any): Promise<void> {
@@ -112,7 +112,6 @@ class Updater implements IUpdater {
     Promise.withResolvers<PromiseWithResolvers<void> | undefined>();
   async #mainLoop(initialPromises: PromiseWithResolvers<void>):Promise<void> {
     do {
-      this.#stacks.push(`mainLoop ${this.component.tagName} loop start`);
       try {
         console.log("mainLoop.1", this.component.quelUUID, initialPromises.promise);
         const [terminateResolvers] = await Promise.all([
@@ -131,17 +130,16 @@ class Updater implements IUpdater {
       } catch (e) {
         console.error(e);
       } finally {
-        this.#stacks.push(`mainLoop ${this.component.tagName} loop end`);
         this.#waitingForMainLoop = Promise.withResolvers<PromiseWithResolvers<void> | undefined>();
-        console.log(this.#stacks.join("\n"));
-        this.#stacks = [];
+        if (this.#debugStacks.length > 0) {
+          console.log(this.#debugStacks.join("\n"));
+          this.#debugStacks = [];
+        }
       }
     } while(true);
-    this.#stacks.push(`mainLoop ${this.component.tagName} terminated`);
   }
 
   async exec():Promise<void> {
-    this.#stacks.push("exec in");
     try {
       await this.execCallbackWithPerformance(async () => {
         while(this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
@@ -166,7 +164,6 @@ class Updater implements IUpdater {
         }
       });
     } finally {
-      this.#stacks.push("exec out");
     }
   }
 

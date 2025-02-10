@@ -23,7 +23,7 @@ export interface IUpdater {
   readonly isFullRebuild: boolean;
   setFullRebuild(isFullRebuild:boolean, callback:()=>any): void;
   component: IComponent;
-  stacks: string[];
+  debugStacks: string[];
   start(initialPromises: PromiseWithResolvers<void>): void;
   terminate(): Promise<void>;
 }

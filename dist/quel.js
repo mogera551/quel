@@ -1097,12 +1097,10 @@ function enqueueUpdatedCallback(updater, state, updatedStateProperties) {
     }, undefined, [], undefined);
 }
 async function execProcesses(updater, state) {
-    updater.stacks.push(`execProcesses in`);
     try {
         const totalUpdatedStateProperties = updater.retrieveAllUpdatedStateProperties();
         const asyncSetWritable = state[AsyncSetWritableSymbol];
         return await asyncSetWritable(updater, async () => {
-            updater.stacks.push(`AsyncSetWritableSymbol callback in`);
             try {
                 const promises = [];
                 do {
@@ -1120,14 +1118,12 @@ async function execProcesses(updater, state) {
                 return await Promise.all(promises);
             }
             finally {
-                updater.stacks.push(`AsyncSetWritableSymbol callback out`);
             }
         }).then(() => {
             return totalUpdatedStateProperties;
         });
     }
     finally {
-        updater.stacks.push(`execProcesses out`);
     }
 }
 
@@ -1738,9 +1734,9 @@ class Updater {
         this.updatedStateProperties = [];
         return updatedStateProperties;
     }
-    #stacks = [];
-    get stacks() {
-        return this.#stacks;
+    #debugStacks = [];
+    get debugStacks() {
+        return this.#debugStacks;
     }
     async execCallbackWithPerformance(callback) {
         this.executing = true;
@@ -1772,7 +1768,6 @@ class Updater {
     #waitingForMainLoop = Promise.withResolvers();
     async #mainLoop(initialPromises) {
         do {
-            this.#stacks.push(`mainLoop ${this.component.tagName} loop start`);
             try {
                 console.log("mainLoop.1", this.component.quelUUID, initialPromises.promise);
                 const [terminateResolvers] = await Promise.all([
@@ -1794,16 +1789,15 @@ class Updater {
                 console.error(e);
             }
             finally {
-                this.#stacks.push(`mainLoop ${this.component.tagName} loop end`);
                 this.#waitingForMainLoop = Promise.withResolvers();
-                console.log(this.#stacks.join("\n"));
-                this.#stacks = [];
+                if (this.#debugStacks.length > 0) {
+                    console.log(this.#debugStacks.join("\n"));
+                    this.#debugStacks = [];
+                }
             }
         } while (true);
-        this.#stacks.push(`mainLoop ${this.component.tagName} terminated`);
     }
     async exec() {
-        this.#stacks.push("exec in");
         try {
             await this.execCallbackWithPerformance(async () => {
                 while (this.processQueue.length > 0 || this.updatedStateProperties.length > 0) {
@@ -1823,7 +1817,6 @@ class Updater {
             });
         }
         finally {
-            this.#stacks.push("exec out");
         }
     }
     applyNodeUpdatesByBinding(binding, callback) {
@@ -4750,14 +4743,12 @@ class Handler {
         if (this.writable)
             utils.raise("States: already writable");
         this.#wrirtable = true;
-        updater.stacks.push(`asyncSetWritable in`);
         try {
             return await callbackFn();
         }
         finally {
             this.#wrirtable = false;
             this.clearCache();
-            updater.stacks.push(`asyncSetWritable out`);
         }
     }
     funcBySymbol = {
@@ -4765,12 +4756,10 @@ class Handler {
         [SetByPropInfoSymbol]: (target, receiver) => (propInfo, value) => this.setValueByPropInfo(target, propInfo, value, receiver),
         [SetWritableSymbol]: (target, receiver) => (callbackFn) => this.setWritable(callbackFn),
         [AsyncSetWritableSymbol]: (target, receiver) => async (updater, callbackFn) => {
-            updater.stacks.push(`AsyncSetWritableSymbol in`);
             try {
                 return await this.asyncSetWritable(updater, callbackFn);
             }
             finally {
-                updater.stacks.push(`AsyncSetWritableSymbol out`);
             }
         },
         [GetBaseStateSymbol]: (target, receiver) => () => target
@@ -4983,7 +4972,6 @@ function CustomComponent(Base) {
                     this.style.overscrollBehavior = "contain";
                 }
             }
-            this.quelUpdater.stacks.push(`connectedCallback in ${this.quelUUID}`);
             try {
                 await this.quelState[AsyncSetWritableSymbol](this.quelUpdater, async () => {
                     await this.quelState[ConnectedCallbackSymbol]();
@@ -4993,7 +4981,6 @@ function CustomComponent(Base) {
                 console.error(e);
             }
             finally {
-                this.quelUpdater.stacks.push(`connectedCallback out ${this.quelUUID}`);
             }
             // build binding tree and dom 
             const uuid = this.quelTemplate.dataset["uuid"] ?? utils.raise("uuid is undefined");
@@ -5035,7 +5022,6 @@ function CustomComponent(Base) {
                 await this.#build();
             }
             finally {
-                this.quelUpdater.stacks.push(`quelInitialPromises.resolve() ${this.quelUUID}`);
                 this.quelInitialPromises?.resolve && this.quelInitialPromises.resolve();
             }
         }
@@ -5043,7 +5029,7 @@ function CustomComponent(Base) {
             this.quelUpdater.addProcess(async () => {
                 await this.quelState[DisconnectedCallbackSymbol]();
             }, undefined, [], undefined);
-            // updaterが終了するまで待つ
+            // updaterが終了完了を検知するPromiseを生成
             this.#disconnectedCallbackPromise = this.quelUpdater.terminate();
             // initialPromiseを再生成する
             this.#initialPromises = Promise.withResolvers();

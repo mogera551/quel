@@ -50,13 +50,11 @@ export async function execProcesses(
   updater: IUpdater, 
   state: IStateProxy
 ): Promise<IStatePropertyAccessor[]> {
-  updater.stacks.push(`execProcesses in`);
   try {
     const totalUpdatedStateProperties: IStatePropertyAccessor[] = 
       updater.retrieveAllUpdatedStateProperties();
     const asyncSetWritable = state[AsyncSetWritableSymbol];
     return await asyncSetWritable(updater, async () => {
-      updater.stacks.push(`AsyncSetWritableSymbol callback in`);
       try {
         const promises = [];
         do {
@@ -72,12 +70,10 @@ export async function execProcesses(
         } while(true);
         return await Promise.all(promises);
       } finally {
-        updater.stacks.push(`AsyncSetWritableSymbol callback out`);
       }
     }).then(() => {
       return totalUpdatedStateProperties;
     });
   } finally {
-    updater.stacks.push(`execProcesses out`);
   }
 }
