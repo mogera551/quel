@@ -1769,12 +1769,10 @@ class Updater {
     async #mainLoop(initialPromises) {
         do {
             try {
-                console.log("mainLoop.1", this.component.quelUUID, initialPromises.promise);
                 const [terminateResolvers] = await Promise.all([
                     this.#waitingForMainLoop.promise,
                     initialPromises.promise
                 ]);
-                console.log("mainLoop.2", this.component.quelUUID, initialPromises.promise);
                 try {
                     await this.exec();
                 }
