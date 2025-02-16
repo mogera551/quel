@@ -10,22 +10,32 @@ export function updateNodes(
   updatedStatePropertyAccessors: IStatePropertyAccessor[]
 ) {
   const selectBindings: {binding:IBinding, propertyAccessor:IStatePropertyAccessor}[] = [];
+  const updateNode = (binding:IBinding, wildcardPropertyAccessor:IStatePropertyAccessor) => {
+    const loopContext = binding.parentContentBindings.loopContext;
+    if (typeof loopContext === "undefined") {
+      const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
+      updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
+        binding.updateNodeForNoRecursive();
+      });
+    } else {
+      updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, loopContext, async () => {
+        binding.updateNodeForNoRecursive();
+      });
+    }
+  }
   // select要素以外を更新
   for(let i = 0; i < updatedStatePropertyAccessors.length; i++) {
     const propertyAccessor = updatedStatePropertyAccessors[i];
     const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
     const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
-    quelBindingSummary.gatherBindings(propertyAccessor).forEach(async binding => {
-      if (binding.expandable) return;
+    for(const binding of quelBindingSummary.gatherBindings(propertyAccessor)) {
+      if (binding.expandable) continue;
       if (binding.nodeProperty.isSelectValue) {
         selectBindings.push({binding, propertyAccessor});
       } else {
-        const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
-        updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-          binding.updateNodeForNoRecursive();
-        });
+        updateNode(binding, wildcardPropertyAccessor);
       }
-    });
+    }
   }
   // select要素を更新
   for(let si = 0; si < selectBindings.length; si++) {
@@ -33,9 +43,6 @@ export function updateNodes(
     const propertyAccessor = info.propertyAccessor;
     const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
     const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
-    const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
-    updater.namedLoopIndexesStack.setNamedLoopIndexes(namedLoopIndexes, () => {
-      info.binding.updateNodeForNoRecursive();
-    });
+    updateNode(info.binding, wildcardPropertyAccessor);
   }
 }
