@@ -158,7 +158,7 @@ class Updater implements IUpdater {
           updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
   
           // ノードの更新
-          updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
+          await updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
         }
       });
     } finally {

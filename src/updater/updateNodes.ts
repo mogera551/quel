@@ -4,13 +4,13 @@ import { createStatePropertyAccessor } from "../state/createStatePropertyAccesso
 import { IStatePropertyAccessor } from "../state/types";
 import { IUpdater } from "./types";
 
-export function updateNodes(
+export async function updateNodes(
   updater: IUpdater,
   quelBindingSummary: INewBindingSummary,
   updatedStatePropertyAccessors: IStatePropertyAccessor[]
-) {
+):Promise<void> {
   const selectBindings: {binding:IBinding, propertyAccessor:IStatePropertyAccessor}[] = [];
-  const updateNode = (binding:IBinding, wildcardPropertyAccessor:IStatePropertyAccessor) => {
+  const updateNode = async (binding:IBinding, wildcardPropertyAccessor:IStatePropertyAccessor):Promise<void> => {
     const loopContext = binding.parentContentBindings.loopContext;
     if (typeof loopContext === "undefined") {
       const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
@@ -18,7 +18,7 @@ export function updateNodes(
         binding.updateNodeForNoRecursive();
       });
     } else {
-      updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, loopContext, async () => {
+      await updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, loopContext, async () => {
         binding.updateNodeForNoRecursive();
       });
     }
@@ -33,7 +33,7 @@ export function updateNodes(
       if (binding.nodeProperty.isSelectValue) {
         selectBindings.push({binding, propertyAccessor});
       } else {
-        updateNode(binding, wildcardPropertyAccessor);
+        await updateNode(binding, wildcardPropertyAccessor);
       }
     }
   }
@@ -43,6 +43,6 @@ export function updateNodes(
     const propertyAccessor = info.propertyAccessor;
     const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
     const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
-    updateNode(info.binding, wildcardPropertyAccessor);
+    await updateNode(info.binding, wildcardPropertyAccessor);
   }
 }

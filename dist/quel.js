@@ -1583,9 +1583,9 @@ function updateChildNodes(updater, quelBindingSummary, updatedStatePropertyAcces
     }
 }
 
-function updateNodes(updater, quelBindingSummary, updatedStatePropertyAccessors) {
+async function updateNodes(updater, quelBindingSummary, updatedStatePropertyAccessors) {
     const selectBindings = [];
-    const updateNode = (binding, wildcardPropertyAccessor) => {
+    const updateNode = async (binding, wildcardPropertyAccessor) => {
         const loopContext = binding.parentContentBindings.loopContext;
         if (typeof loopContext === "undefined") {
             const namedLoopIndexes = createNamedLoopIndexesFromAccessor(wildcardPropertyAccessor);
@@ -1594,7 +1594,7 @@ function updateNodes(updater, quelBindingSummary, updatedStatePropertyAccessors)
             });
         }
         else {
-            updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, loopContext, async () => {
+            await updater.loopContextStack.setLoopContext(updater.namedLoopIndexesStack, loopContext, async () => {
                 binding.updateNodeForNoRecursive();
             });
         }
@@ -1611,7 +1611,7 @@ function updateNodes(updater, quelBindingSummary, updatedStatePropertyAccessors)
                 selectBindings.push({ binding, propertyAccessor });
             }
             else {
-                updateNode(binding, wildcardPropertyAccessor);
+                await updateNode(binding, wildcardPropertyAccessor);
             }
         }
     }
@@ -1621,7 +1621,7 @@ function updateNodes(updater, quelBindingSummary, updatedStatePropertyAccessors)
         const propertyAccessor = info.propertyAccessor;
         const lastWildCardPath = propertyAccessor.patternInfo.wildcardPaths.at(-1) ?? "";
         const wildcardPropertyAccessor = createStatePropertyAccessor(lastWildCardPath, propertyAccessor.loopIndexes);
-        updateNode(info.binding, wildcardPropertyAccessor);
+        await updateNode(info.binding, wildcardPropertyAccessor);
     }
 }
 
@@ -1818,7 +1818,7 @@ class Updater {
                     // リスト要素の更新
                     updateChildNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
                     // ノードの更新
-                    updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
+                    await updateNodes(this, this.quelBindingSummary, updatedStatePropertyAccesses);
                 }
             });
         }
